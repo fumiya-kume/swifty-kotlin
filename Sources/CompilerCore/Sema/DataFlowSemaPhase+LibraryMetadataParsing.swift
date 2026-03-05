@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -109,9 +110,10 @@ extension DataFlowSemaPhase {
         metadataPath: String,
         cache: LibraryMetadataCache? = nil
     ) -> FunctionSignature {
+        let platformAny = types.withNullability(.platformType, for: types.anyType)
         let fallback = FunctionSignature(
-            parameterTypes: Array(repeating: types.anyType, count: max(0, record.arity)),
-            returnType: types.anyType,
+            parameterTypes: Array(repeating: platformAny, count: max(0, record.arity)),
+            returnType: platformAny,
             isSuspend: record.isSuspend
         )
         guard let encodedSignature = record.typeSignature else {
@@ -161,8 +163,9 @@ extension DataFlowSemaPhase {
         metadataPath: String,
         cache: LibraryMetadataCache? = nil
     ) -> TypeID {
+        let platformAny = types.withNullability(.platformType, for: types.anyType)
         guard let encodedSignature = record.typeSignature else {
-            return types.anyType
+            return platformAny
         }
         return decodeImportedTypeSignature(
             token: encodedSignature,
@@ -173,7 +176,7 @@ extension DataFlowSemaPhase {
             metadataPath: metadataPath,
             ownerFQName: record.fqName,
             cache: cache
-        ) ?? types.anyType
+        ) ?? platformAny
     }
 
     func importedTypeAliasUnderlyingType(

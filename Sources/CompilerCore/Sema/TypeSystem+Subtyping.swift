@@ -12,22 +12,22 @@ extension TypeSystem {
             return true
         }
         if case .nothing(.nullable) = lhs {
-            // Nothing? is subtype of all nullable types, Any?, and Nothing? itself
+            // Nothing? is subtype of all nullable and platform types, Any?, and Nothing? itself
             switch rhs {
             case .error:
                 return true
-            case .any(.nullable):
-                return true
-            case .nothing(.nullable):
-                return true
-            case .primitive(_, .nullable):
-                return true
-            case let .classType(ct) where ct.nullability == .nullable:
-                return true
-            case let .typeParam(tp) where tp.nullability == .nullable:
-                return true
-            case let .functionType(ft) where ft.nullability == .nullable:
-                return true
+            case let .any(n):
+                return nullabilitySubtype(.nullable, n)
+            case let .nothing(n):
+                return nullabilitySubtype(.nullable, n)
+            case let .primitive(_, n):
+                return nullabilitySubtype(.nullable, n)
+            case let .classType(ct):
+                return nullabilitySubtype(.nullable, ct.nullability)
+            case let .typeParam(tp):
+                return nullabilitySubtype(.nullable, tp.nullability)
+            case let .functionType(ft):
+                return nullabilitySubtype(.nullable, ft.nullability)
             case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }
             default:
@@ -53,18 +53,22 @@ extension TypeSystem {
         if case .any(.nullable) = rhs {
             return true
         }
+        if case .any(.platformType) = rhs {
+            // Any! accepts all types (platform type has unknown nullability)
+            return true
+        }
         if case .any(.nonNull) = rhs {
             switch lhs {
-            case .any(.nonNull), .unit, .nothing(.nonNull):
+            case .any(.nonNull), .any(.platformType), .unit, .nothing(.nonNull):
                 return true
             case let .primitive(_, nullability):
-                return nullability == .nonNull
+                return nullabilitySubtype(nullability, .nonNull)
             case let .classType(classType):
-                return classType.nullability == .nonNull
+                return nullabilitySubtype(classType.nullability, .nonNull)
             case let .functionType(functionType):
-                return functionType.nullability == .nonNull
+                return nullabilitySubtype(functionType.nullability, .nonNull)
             case let .typeParam(typeParam):
-                return typeParam.nullability == .nonNull
+                return nullabilitySubtype(typeParam.nullability, .nonNull)
             case .intersection:
                 return isSubtype(subtype, supertype)
             default:
@@ -212,7 +216,13 @@ extension TypeSystem {
     }
 
     func nullabilitySubtype(_ lhs: Nullability, _ rhs: Nullability) -> Bool {
-        lhs == rhs || (lhs == .nonNull && rhs == .nullable)
+        if lhs == rhs { return true }
+        if lhs == .nonNull, rhs == .nullable { return true }
+        // Platform type (T!) is assignable to both nullable and non-null
+        if lhs == .platformType { return true }
+        // Both nullable and non-null are assignable to platform type
+        if rhs == .platformType { return true }
+        return false
     }
 
     func isNominalSubtypeSymbol(_ candidate: SymbolID, of base: SymbolID) -> Bool {

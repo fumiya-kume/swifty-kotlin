@@ -11,6 +11,7 @@ final class ExprTypeChecker {
 
     // MARK: - Main Dispatch (from +ExprInference.swift)
 
+    // swiftlint:disable:next function_body_length
     func inferExpr(
         _ id: ExprID,
         ctx: TypeInferenceContext,
@@ -163,7 +164,8 @@ final class ExprTypeChecker {
                         range: range,
                         solver: ConstraintSolver(),
                         sema: sema,
-                        diagnostics: ctx.semaCtx.diagnostics
+                        diagnostics: ctx.semaCtx.diagnostics,
+                        suppressPlatformWarning: ctx.suppressPlatformReturnWarning
                     )
                 }
             } else if let expectedType {
@@ -174,7 +176,8 @@ final class ExprTypeChecker {
                     range: range,
                     solver: ConstraintSolver(),
                     sema: sema,
-                    diagnostics: ctx.semaCtx.diagnostics
+                    diagnostics: ctx.semaCtx.diagnostics,
+                    suppressPlatformWarning: ctx.suppressPlatformReturnWarning
                 )
             }
             sema.bindings.bindExprType(id, type: sema.types.nothingType)

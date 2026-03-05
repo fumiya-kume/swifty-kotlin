@@ -150,7 +150,7 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
 
     func testInferLocalFunDeclExprBindsFunctionForAllBodyKinds() {
         let fixture = makeTypeCheckFixture()
-        var ctx = fixture.makeInferenceContext()
+        let ctx = fixture.makeInferenceContext()
         var locals: LocalBindings = [:]
         let range = makeRange()
 
@@ -341,22 +341,65 @@ final class TypeCheckDelegateCoverageTests: XCTestCase {
             ctx: ctx,
             locals: &locals
         )
-
         XCTAssertEqual(inferred, fixture.types.unitType)
         XCTAssertEqual(fixture.bindings.exprType(for: loopID), fixture.types.unitType)
-
         XCTAssertTrue(ControlFlowTypeChecker.isRangeExpression(rangeExpr, ast: fixture.ast))
-
         let rangeUntilExpr = fixture.astArena.appendExpr(.binary(op: .rangeUntil, lhs: lhs, rhs: rhs, range: range))
         let downToExpr = fixture.astArena.appendExpr(.binary(op: .downTo, lhs: lhs, rhs: rhs, range: range))
         let stepExpr = fixture.astArena.appendExpr(.binary(op: .step, lhs: lhs, rhs: rhs, range: range))
         let addExpr = fixture.astArena.appendExpr(.binary(op: .add, lhs: lhs, rhs: rhs, range: range))
-
         XCTAssertTrue(ControlFlowTypeChecker.isRangeExpression(rangeUntilExpr, ast: fixture.ast))
         XCTAssertTrue(ControlFlowTypeChecker.isRangeExpression(downToExpr, ast: fixture.ast))
         XCTAssertTrue(ControlFlowTypeChecker.isRangeExpression(stepExpr, ast: fixture.ast))
         XCTAssertFalse(ControlFlowTypeChecker.isRangeExpression(addExpr, ast: fixture.ast))
         XCTAssertFalse(ControlFlowTypeChecker.isRangeExpression(ExprID(rawValue: 9999), ast: fixture.ast))
+    }
+
+    func testEmitSubtypeConstraintEmitsPlatformWarningWithRange() {
+        let fixture = makeTypeCheckFixture()
+        let range = makeRange(start: 10, end: 20)
+        let platformAny = fixture.types.withNullability(.platformType, for: fixture.types.anyType)
+        fixture.driver.emitSubtypeConstraint(
+            left: platformAny,
+            right: fixture.types.anyType,
+            range: range,
+            solver: ConstraintSolver(),
+            sema: fixture.sema,
+            diagnostics: fixture.diagnostics
+        )
+        let warning = fixture.diagnostics.diagnostics.first { $0.code == "KSWIFTK-SEMA-PLATFORM" }
+        XCTAssertNotNil(warning)
+        XCTAssertEqual(warning?.primaryRange, range)
+    }
+
+    func testEmitSubtypeConstraintSuppressesPlatformWarningWhenFlagIsSet() {
+        let fixture = makeTypeCheckFixture()
+        let range = makeRange(start: 30, end: 40)
+        let platformAny = fixture.types.withNullability(.platformType, for: fixture.types.anyType)
+        fixture.driver.emitSubtypeConstraint(
+            left: platformAny,
+            right: fixture.types.anyType,
+            range: range,
+            solver: ConstraintSolver(),
+            sema: fixture.sema,
+            diagnostics: fixture.diagnostics,
+            suppressPlatformWarning: true
+        )
+        XCTAssertFalse(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-PLATFORM" })
+    }
+
+    func testEmitSubtypeConstraintSkipsPlatformWarningWithoutRange() {
+        let fixture = makeTypeCheckFixture()
+        let platformAny = fixture.types.withNullability(.platformType, for: fixture.types.anyType)
+        fixture.driver.emitSubtypeConstraint(
+            left: platformAny,
+            right: fixture.types.anyType,
+            range: nil,
+            solver: ConstraintSolver(),
+            sema: fixture.sema,
+            diagnostics: fixture.diagnostics
+        )
+        XCTAssertFalse(fixture.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-SEMA-PLATFORM" })
     }
 }
 

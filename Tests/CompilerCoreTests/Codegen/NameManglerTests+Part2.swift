@@ -195,6 +195,30 @@ extension NameManglerTests {
         XCTAssertTrue(sig.contains("Q<"))
     }
 
+    func testMangledSignaturePlatformTypeErasesToNullableEncoding() throws {
+        let mangler = NameMangler()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        let sym = symbols.define(
+            kind: .property,
+            name: interner.intern("platformProp"),
+            fqName: [interner.intern("platformProp")],
+            declSite: nil,
+            visibility: .public
+        )
+        let platformInt = types.make(.primitive(.int, .platformType))
+        symbols.setPropertyType(platformInt, for: sym)
+
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(sym)),
+            symbols: symbols,
+            types: types
+        )
+        XCTAssertEqual(sig, "Q<I>")
+    }
+
     // MARK: - All Primitive Encodings
 
     func testMangledSignatureAllPrimitives() throws {
