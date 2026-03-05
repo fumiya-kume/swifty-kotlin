@@ -154,7 +154,7 @@
 
 - [x] ANNO-001: `@Suppress` / `@Deprecated` / `@JvmStatic` など built-in アノテーションの特別処理を追加する（spec.md J6）
   - [x] `@Suppress("UNCHECKED_CAST")` で指定した診断コードを当該 node で抑制する compiler ルールを追加する（`Diagnostics.swift`）
-  - [x] `@Deprecated(..., level = ERROR/WARNING)` で呼び出し元に診断を発生させる（`TypeCheckHelpers+Deprecation.swift`）
+  - [x] `@Deprecated(..., level = ERROR/WARNING)` で呼び出し元に診断を発生させる（`TypeCheck/Helpers+Deprecation.swift`）
   - [x] `@JvmStatic` on companion member → companion singleton 上の static-like (toplevel) 関数扱いへの lowering を追加する（`JvmStaticLoweringPass.swift`）
   - [x] `@Suppress`/`@Deprecated` の動作を確認する diff/golden ケースを追加する（`GoldenCases/Sema/suppress_annotation.kt`, `deprecated_annotation.kt`）
   - **完了条件**: `@Suppress` が対象診断を抑制し、`@Deprecated(level = ERROR)` が呼び出し元をコンパイルエラーにする ✓
@@ -177,7 +177,7 @@
 
 - [x] MPP-001: `expect`/`actual` 宣言を parser/sema/metadata で扱う（spec.md J14 / Kotlin MPP）
   - [x] `expect fun foo()` を abstract-like 宣言として Parser/AST で保持する（`SemanticsModels.swift` の `SymbolFlags`）
-  - [x] `actual fun foo()` を対応する `expect` の実装として Sema でマッチングする（`DataFlowSemaPhase+ExpectActual.swift`）
+  - [x] `actual fun foo()` を対応する `expect` の実装として Sema でマッチングする（`DataFlow/ExpectActual.swift`）
   - [x] `expect` に対する `actual` が存在しない場合に `KSWIFTK-MPP-UNRESOLVED` を出す
   - [x] diff/golden ケースを追加する → `GoldenCases/Sema/expect_actual.kt`
   - **完了条件**: `expect fun platform()` に対する `actual fun platform()` が正しくリンクされ動作する ✓

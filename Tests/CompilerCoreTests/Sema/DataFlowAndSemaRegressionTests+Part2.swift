@@ -4,9 +4,9 @@ import XCTest
 
 // MARK: - DataFlow + Sema Regression Tests
 
-// Targets: DataFlowSemaPhase+BodyAnalysis.swift (45.8%)
-//          DataFlowSemaPhase+HeaderCollection.swift (49.9%)
-//          TypeCheckSemaPhase+ExprInference.swift (51.4%)
+// Targets: DataFlow/BodyAnalysis.swift (45.8%)
+//          DataFlow/HeaderCollection.swift (49.9%)
+//          TypeCheck/TypeCheckSemaPhase.swift (51.4%)
 
 extension DataFlowAndSemaRegressionTests {
     func testContinueOutsideLoopEmitsDiagnostic() throws {

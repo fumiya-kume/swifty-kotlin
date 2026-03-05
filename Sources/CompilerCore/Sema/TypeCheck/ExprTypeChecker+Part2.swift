@@ -3,7 +3,7 @@ import Foundation
 // swiftlint:disable file_length
 
 // Handles expression type inference dispatch and specific expression cases.
-// Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
+// Derived from the previous monolithic type-check phase expression inference extensions.
 
 extension ExprTypeChecker {
     func inferCompoundAssignExpr(

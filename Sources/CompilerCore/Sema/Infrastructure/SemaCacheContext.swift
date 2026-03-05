@@ -1,6 +1,6 @@
 /// Caching layer for sema hot paths.
 ///
-/// When the `-Xfrontend sema-cache` flag is active, ``TypeCheckSemaPassPhase``
+/// When the `-Xfrontend sema-cache` flag is active, ``TypeCheckSemaPhase``
 /// creates a non-nil ``SemaCacheContext`` and threads it through the type-checking
 /// pipeline.  This context currently provides:
 ///
