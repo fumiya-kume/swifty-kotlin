@@ -546,6 +546,54 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_box_long = ExternDecl(
+        name: "kk_box_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_box_float = ExternDecl(
+        name: "kk_box_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_box_double = ExternDecl(
+        name: "kk_box_double",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_box_char = ExternDecl(
+        name: "kk_box_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_unbox_long = ExternDecl(
+        name: "kk_unbox_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_unbox_float = ExternDecl(
+        name: "kk_unbox_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_unbox_double = ExternDecl(
+        name: "kk_unbox_double",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_unbox_char = ExternDecl(
+        name: "kk_unbox_char",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Array
 
     public static let kk_array_new = ExternDecl(
@@ -857,6 +905,14 @@ public enum RuntimeABIExterns {
         kk_box_bool,
         kk_unbox_int,
         kk_unbox_bool,
+        kk_box_long,
+        kk_box_float,
+        kk_box_double,
+        kk_box_char,
+        kk_unbox_long,
+        kk_unbox_float,
+        kk_unbox_double,
+        kk_unbox_char,
         // Array
         kk_array_new,
         kk_object_new,

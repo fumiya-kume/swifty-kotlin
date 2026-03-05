@@ -104,6 +104,38 @@ final class RuntimeBoolBox {
     }
 }
 
+final class RuntimeLongBox {
+    let value: Int
+
+    init(_ value: Int) {
+        self.value = value
+    }
+}
+
+final class RuntimeFloatBox {
+    let value: Float
+
+    init(_ value: Float) {
+        self.value = value
+    }
+}
+
+final class RuntimeDoubleBox {
+    let value: Double
+
+    init(_ value: Double) {
+        self.value = value
+    }
+}
+
+final class RuntimeCharBox {
+    let value: Int
+
+    init(_ value: Int) {
+        self.value = value
+    }
+}
+
 // MARK: - Collection Types (STDLIB-001)
 
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.

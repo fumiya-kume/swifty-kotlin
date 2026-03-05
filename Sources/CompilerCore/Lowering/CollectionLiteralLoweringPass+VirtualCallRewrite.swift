@@ -221,30 +221,64 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
-        // TODO: Support zero-arg first()/last() by lowering to kk_list_get equivalents
-        if callee == lookup.countName || callee == lookup.firstName || callee == lookup.lastName {
-            if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
-                let kkName: InternedString = switch callee {
-                case lookup.countName: lookup.kkListCountName
-                case lookup.firstName: lookup.kkListFirstName
-                case lookup.lastName: lookup.kkListLastName
-                default: callee
+        if callee == lookup.countName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListCountName,
+                arguments: [receiver] + arguments,
+                result: hofResult,
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
+            ))
+            if let result {
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.firstName || callee == lookup.lastName {
+            if listExprIDs.contains(receiver.rawValue) {
+                let kkName: InternedString = callee == lookup.firstName
+                    ? lookup.kkListFirstName
+                    : lookup.kkListLastName
+                if arguments.isEmpty {
+                    // Zero-arg first()/last(): call kk_list_first/kk_list_last with receiver only
+                    let hofResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)), type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: kkName,
+                        arguments: [receiver],
+                        result: hofResult,
+                        canThrow: origCanThrow,
+                        thrownResult: origThrownResult
+                    ))
+                    if let result {
+                        loweredBody.append(.copy(from: hofResult, to: result))
+                    }
+                    return true
+                } else if arguments.count == 1 {
+                    // Predicate form first { ... }/last { ... }
+                    let hofResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)), type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: kkName,
+                        arguments: [receiver] + arguments,
+                        result: hofResult,
+                        canThrow: origCanThrow,
+                        thrownResult: origThrownResult
+                    ))
+                    if let result {
+                        loweredBody.append(.copy(from: hofResult, to: result))
+                    }
+                    return true
                 }
-                let hofResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: kkName,
-                    arguments: [receiver] + arguments,
-                    result: hofResult,
-                    canThrow: origCanThrow,
-                    thrownResult: origThrownResult
-                ))
-                if let result {
-                    loweredBody.append(.copy(from: hofResult, to: result))
-                }
-                return true
             }
         }
 

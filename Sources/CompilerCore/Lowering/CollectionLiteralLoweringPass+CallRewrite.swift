@@ -584,7 +584,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // sequence { ... } builder → kk_sequence_builder_build
-                    if symbol == nil, callee == lookup.sequenceName, arguments.count == 1 {
+                    if callee == lookup.sequenceName, arguments.count == 1 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceBuilderBuildName,
@@ -598,7 +598,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // yield(value) inside sequence builder → kk_sequence_builder_yield
-                    if symbol == nil, callee == lookup.yieldName, arguments.count == 2 {
+                    if callee == lookup.yieldName, arguments.count == 2 {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceBuilderYieldName,
@@ -812,7 +812,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.kkAnyToStringName, arguments.count == 1 {
+                    if callee == lookup.kkAnyToStringName, arguments.count >= 1 {
                         let argID = arguments[0]
                         if listExprIDs.contains(argID.rawValue) {
                             loweredBody.append(.call(
