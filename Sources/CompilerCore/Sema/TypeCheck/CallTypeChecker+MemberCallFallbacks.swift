@@ -76,18 +76,18 @@ extension CallTypeChecker {
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
         case "size", "isEmpty", "iterator", "asSequence", "toList":
-            return argCount == 0
+            argCount == 0
         case "get", "contains", "containsKey", "indexOf",
              "map", "filter", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "reduce", "take":
-            return argCount == 1
+            argCount == 1
         case "fold":
-            return argCount == 2
+            argCount == 2
         case "count", "first", "last":
-            return argCount == 0 || argCount == 1
+            argCount == 0 || argCount == 1
         default:
-            return true
+            true
         }
     }
 
