@@ -1,7 +1,7 @@
 import Foundation
 
 extension CollectionLiteralLoweringPass {
-    // Collect builder lambda function names and their owning DSL callee names.
+    /// Collect builder lambda function names and their owning DSL callee names.
     func collectBuilderLambdaKinds(
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
@@ -42,7 +42,7 @@ extension CollectionLiteralLoweringPass {
         return builderLambdaKinds
     }
 
-    // Phase 1: identify collection-like expression IDs before instruction rewriting.
+    /// Phase 1: identify collection-like expression IDs before instruction rewriting.
     func collectInitialCollectionExprIDs(
         function: KIRFunction,
         lookup: CollectionLiteralLookupTables,

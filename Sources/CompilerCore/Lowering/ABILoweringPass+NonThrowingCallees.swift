@@ -2,7 +2,7 @@ import Foundation
 
 extension ABILoweringPass {
     func nonThrowingCallees(interner: StringInterner) -> Set<InternedString> {
-        return Set([
+        Set([
             interner.intern("kk_op_add"),
             interner.intern("kk_op_sub"),
             interner.intern("kk_op_mul"),

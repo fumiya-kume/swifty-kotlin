@@ -215,5 +215,4 @@ extension TypeCheckHelpersCoverageTests {
             fixture.types.errorType
         )
     }
-
 }

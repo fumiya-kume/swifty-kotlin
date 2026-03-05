@@ -50,5 +50,4 @@ extension CallTypeChecker {
             secondaryRanges: []
         )
     }
-
 }

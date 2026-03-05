@@ -969,5 +969,4 @@ extension CallTypeChecker {
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }
-
 }

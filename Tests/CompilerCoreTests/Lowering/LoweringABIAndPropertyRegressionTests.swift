@@ -38,5 +38,5 @@ final class LoweringABIAndPropertyRegressionTests: XCTestCase {
         ctx.sema = sema
         try LoweringPhase().run(ctx)
         return ctx
-}
+    }
 }

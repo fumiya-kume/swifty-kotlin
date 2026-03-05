@@ -34,7 +34,6 @@ extension CallTypeChecker {
         return nil
     }
 
-
     func resolveExtensionPropertyGetter(
         id: ExprID,
         calleeName: InternedString,
@@ -103,5 +102,4 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
-
 }
