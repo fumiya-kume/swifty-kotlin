@@ -1,7 +1,7 @@
 import Foundation
 
 /// Handles declaration-level type checking (functions, properties, classes, objects).
-/// Derived from TypeCheckSemaPass.swift (second extension) and TypeCheckSemaPass+DeclTypeCheck.swift.
+/// Derived from declaration-checking logic in the prior monolithic type-check phase.
 final class DeclTypeChecker {
     unowned let driver: TypeCheckDriver
 

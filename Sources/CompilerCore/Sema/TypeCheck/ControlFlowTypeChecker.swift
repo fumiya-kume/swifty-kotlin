@@ -1,7 +1,7 @@
 import Foundation
 
 /// Handles control flow expression type inference (for, while, do-while, if, try, when).
-/// Derived from TypeCheckSemaPass+InferControlFlow.swift.
+/// Derived from legacy TypeCheckSemaPhase+InferControlFlow.swift.
 final class ControlFlowTypeChecker {
     unowned let driver: TypeCheckDriver
 

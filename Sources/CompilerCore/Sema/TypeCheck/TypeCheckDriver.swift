@@ -4,7 +4,7 @@ import Foundation
 typealias LocalBindings = [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
 
 /// Dispatch hub for type checking. Replaces the monolithic extension-based splitting
-/// of `TypeCheckSemaPassPhase` with independent delegate classes.
+/// of `TypeCheckSemaPhase` with independent delegate classes.
 ///
 /// Each delegate holds an `unowned` back-reference to this driver so that mutually
 /// recursive calls (e.g. `inferExpr` → `inferCallExpr` → `inferExpr`) can be

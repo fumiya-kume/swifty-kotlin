@@ -489,7 +489,7 @@ public final class MetadataEncoder {
 // MARK: - MetadataDecoder (Import)
 
 /// Decodes the text-based metadata format into `[MetadataRecord]`.
-/// This replaces the ad-hoc parsing previously done in DataFlowSemaPass+LibraryMetadataParsing.
+/// This replaces the ad-hoc parsing previously done in DataFlow/LibraryMetadataParsing.swift.
 public final class MetadataDecoder {
     public init() {}
 

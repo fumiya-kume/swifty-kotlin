@@ -12,10 +12,10 @@ readonly llvm_cov_bin="${LLVM_COV_BIN:-llvm-cov}"
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
   "Sources/CompilerCore/Driver/SourceManager.swift"
-  "Sources/CompilerCore/Sema/ConstraintSolver.swift"
-  "Sources/CompilerCore/Sema/OverloadResolver.swift"
+  "Sources/CompilerCore/Sema/Resolution/ConstraintSolver.swift"
+  "Sources/CompilerCore/Sema/Resolution/OverloadResolver.swift"
   "Sources/CompilerCore/Parser/SyntaxArena.swift"
-  "Sources/CompilerCore/Sema/CompilerTypes.swift"
+  "Sources/CompilerCore/Sema/Models/CompilerTypes.swift"
   "Sources/CompilerCore/Lexer/TokenModel.swift"
   "Sources/CompilerCore/AST/ASTModels.swift"
 )

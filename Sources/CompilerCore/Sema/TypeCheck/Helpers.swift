@@ -1,7 +1,7 @@
 import Foundation
 
 /// Stateless utility functions for type checking. No back-reference to the driver needed.
-/// Derived from TypeCheckSemaPass+InferHelpers.swift.
+/// Derived from legacy TypeCheckSemaPhase+InferHelpers.swift.
 struct TypeCheckHelpers {
     func emitVisibilityError(
         for symbol: SemanticSymbol,

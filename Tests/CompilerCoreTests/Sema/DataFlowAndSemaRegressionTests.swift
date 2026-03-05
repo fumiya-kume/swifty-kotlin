@@ -4,9 +4,9 @@ import XCTest
 
 // MARK: - DataFlow + Sema Regression Tests
 
-// Targets: DataFlowSemaPass+BodyAnalysis.swift (45.8%)
-//          DataFlowSemaPass+HeaderCollection.swift (49.9%)
-//          TypeCheckSemaPass+ExprInference.swift (51.4%)
+// Targets: DataFlow/BodyAnalysis.swift (45.8%)
+//          DataFlow/HeaderCollection.swift (49.9%)
+//          TypeCheck/TypeCheckSemaPhase.swift (51.4%)
 
 final class DataFlowAndSemaRegressionTests: XCTestCase {
     // MARK: - BodyAnalysis: duplicate parameter name

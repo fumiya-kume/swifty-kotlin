@@ -1,7 +1,7 @@
 import Foundation
 
 /// Handles expression type inference dispatch and specific expression cases.
-/// Derived from TypeCheckSemaPass+ExprInference.swift and TypeCheckSemaPass+ExprInferCases.swift.
+/// Derived from legacy TypeCheckSemaPhase+ExprInference.swift and legacy TypeCheckSemaPhase+ExprInferCases.swift.
 final class ExprTypeChecker {
     unowned let driver: TypeCheckDriver
 
