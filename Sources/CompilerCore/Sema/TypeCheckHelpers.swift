@@ -90,7 +90,7 @@ struct TypeCheckHelpers {
         switch interner.resolve(calleeName) {
         case "runBlocking":
             guard argumentCount >= 1 else { return nil }
-            return sema.types.nullableAnyType
+            return sema.types.anyType
         case "launch":
             guard argumentCount >= 1 else { return nil }
             return sema.types.unitType

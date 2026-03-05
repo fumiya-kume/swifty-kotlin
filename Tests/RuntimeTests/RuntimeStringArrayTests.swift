@@ -122,55 +122,29 @@ final class RuntimeStringArrayTests: XCTestCase {
     }
 
     func testStringSplitProducesListOfStrings() {
-        let delimiterArray = kk_array_new(1)
-        var thrown = 0
-        kk_array_set(delimiterArray, 0, rawFromRuntimeString(","), &thrown)
-        XCTAssertEqual(thrown, 0)
-
         let splitRaw = kk_string_split(
             rawFromRuntimeString("1,2,3"),
-            delimiterArray,
-            0,
-            0,
-            &thrown
+            rawFromRuntimeString(",")
         )
-        XCTAssertEqual(thrown, 0)
         let list = runtimeListBox(from: splitRaw)
         XCTAssertEqual(list?.elements.count, 3)
         XCTAssertEqual(list?.elements.map(runtimeStringValue), ["1", "2", "3"])
     }
 
-    func testStringSplitWithNegativeLimitSetsThrown() {
-        let delimiterArray = kk_array_new(1)
-        var thrown = 0
-        kk_array_set(delimiterArray, 0, rawFromRuntimeString(","), &thrown)
-        XCTAssertEqual(thrown, 0)
-
-        _ = kk_string_split(
-            rawFromRuntimeString("1,2,3"),
-            delimiterArray,
-            0,
-            -1,
-            &thrown
-        )
-        XCTAssertNotEqual(thrown, 0)
-    }
-
-    func testStringReplaceSupportsIgnoreCase() {
+    func testStringReplaceSupportsLiteralReplacement() {
         let replaced = kk_string_replace(
-            rawFromRuntimeString("AaA"),
+            rawFromRuntimeString("aba"),
             rawFromRuntimeString("a"),
-            rawFromRuntimeString("z"),
-            1
+            rawFromRuntimeString("z")
         )
-        XCTAssertEqual(runtimeStringValue(replaced), "zzz")
+        XCTAssertEqual(runtimeStringValue(replaced), "zbz")
     }
 
-    func testStringStartsWithEndsWithContainsSupportIgnoreCase() {
+    func testStringStartsWithEndsWithContains() {
         let source = rawFromRuntimeString("HelloWorld")
-        XCTAssertEqual(kk_unbox_bool(kk_string_startsWith(source, rawFromRuntimeString("hello"), 0, 1)), 1)
-        XCTAssertEqual(kk_unbox_bool(kk_string_endsWith(source, rawFromRuntimeString("WORLD"), 1)), 1)
-        XCTAssertEqual(kk_unbox_bool(kk_string_contains(source, rawFromRuntimeString("LOWO"), 1)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_string_startsWith(source, rawFromRuntimeString("Hello"))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_string_endsWith(source, rawFromRuntimeString("World"))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString("World"))), 1)
     }
 
     func testStringToIntSuccessAndFailure() {
@@ -201,19 +175,6 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
         let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
-    }
-
-    func testStringFormatSupportsBasicSpecifiersAndWidthPrecision() {
-        let args = kk_array_new(3)
-        var thrown = 0
-        kk_array_set(args, 0, rawFromRuntimeString("x"), &thrown)
-        kk_array_set(args, 1, 7, &thrown)
-        let doubleBits = Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern))
-        kk_array_set(args, 2, doubleBits, &thrown)
-        XCTAssertEqual(thrown, 0)
-
-        let formatRaw = kk_string_format(rawFromRuntimeString("%s-%04d-%.1f"), args)
-        XCTAssertEqual(runtimeStringValue(formatRaw), "x-0007-3.5")
     }
 
     // MARK: - kk_throwable_new

@@ -90,6 +90,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         try assertDeterministicCodegenOutput(source: source, emit: .object)
     }
 
+    func testSyntheticCBackendCompilesStringStdlibMixedThrowCalls() throws {
+        let source = """
+        fun main() {
+            val maybe: String? = null
+            println("  hello  ".trim())
+            println("banana".replace("na", "NA"))
+            println("1,2,3".split(","))
+            println(maybe.isNullOrEmpty())
+            println(maybe.isNullOrBlank())
+            println("42".toInt())
+            println("3.14".toDouble())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SyntheticCStringStdlib",
+                emit: .object,
+                outputPath: outputBase,
+                irFlags: ["backend=synthetic-c"]
+            )
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+        }
+    }
+
     func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in

@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 KSWIFTC="${KSWIFTC:-$ROOT_DIR/.build/debug/kswiftc}"
 KOTLINC="${KOTLINC:-kotlinc}"
+KOTLINC_CLASSPATH="${KOTLINC_CLASSPATH:-${KOTLINC_CP:-}}"
 JAVA_BIN="${JAVA_BIN:-java}"
 KEEP_TEMP=0
 REPORT_PATH=""
@@ -21,6 +22,8 @@ Usage: $(basename "$0") [options] <file-or-dir>
 Options:
   --kswiftc <path>   Path to kswiftc binary (default: .build/debug/kswiftc)
   --kotlinc <path>   Path to kotlinc command (default: kotlinc)
+  --kotlinc-classpath <path>
+                     Additional classpath for kotlinc and java (default: \$KOTLINC_CLASSPATH)
   --java <path>      Path to java command (default: java)
   --parallel [0|1]   Enable (or disable) parallel execution (default: env DIFF_PARALLEL)
   --no-parallel      Disable parallel execution
@@ -54,6 +57,17 @@ while [[ $# -gt 0 ]]; do
     --kotlinc)
       shift
       KOTLINC="$1"
+      ;;
+    --kotlinc-classpath)
+      shift
+      if [[ $# -eq 0 ]]; then
+        echo "Missing value for --kotlinc-classpath" >&2
+        exit 1
+      fi
+      KOTLINC_CLASSPATH="$1"
+      ;;
+    --kotlinc-classpath=*)
+      KOTLINC_CLASSPATH="${1#*=}"
       ;;
     --java)
       shift
@@ -172,6 +186,11 @@ if ! command -v "$JAVA_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -n "$KOTLINC_CLASSPATH" ]] && ! command -v unzip >/dev/null 2>&1; then
+  echo "unzip command not found: unzip" >&2
+  exit 1
+fi
+
 detect_workers() {
   local detected
 
@@ -197,6 +216,13 @@ detect_workers() {
   fi
 
   printf "" 
+}
+
+jar_main_class() {
+  local jar_path="$1"
+  unzip -p "$jar_path" META-INF/MANIFEST.MF 2>/dev/null \
+    | tr -d '\r' \
+    | awk -F': ' '/^Main-Class:/ { print $2; exit }'
 }
 
 WORKER_COUNT="$DIFF_WORKERS"
@@ -277,7 +303,11 @@ run_case() {
     local kts_tmp="$tmp_dir/${basename%.kt}.kts"
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
-    "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    if [[ -n "$KOTLINC_CLASSPATH" ]]; then
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -classpath "$KOTLINC_CLASSPATH" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    else
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+    fi
     if [[ $script_exit -eq 124 ]]; then
       # Timeout in script mode is a runtime timeout, not a compile timeout
       ref_run_exit=124
@@ -287,9 +317,24 @@ run_case() {
       ref_run_exit=$script_exit
     fi
   else
-    "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    if [[ -n "$KOTLINC_CLASSPATH" ]]; then
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -classpath "$KOTLINC_CLASSPATH" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    else
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+    fi
     if [[ $ref_compile_exit -eq 0 ]]; then
-      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+      if [[ -n "$KOTLINC_CLASSPATH" ]]; then
+        local main_class
+        main_class="$(jar_main_class "$ref_jar")"
+        if [[ -z "$main_class" ]]; then
+          ref_run_exit=1
+          echo "Missing Main-Class in reference jar manifest." >"$ref_run_stderr"
+        else
+          "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -cp "$ref_jar:$KOTLINC_CLASSPATH" "$main_class" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+        fi
+      else
+        "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+      fi
     fi
   fi
 

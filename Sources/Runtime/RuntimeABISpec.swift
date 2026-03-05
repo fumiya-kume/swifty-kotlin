@@ -184,35 +184,10 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_split",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "delimitersArrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
-                RuntimeABIParameter(name: "limit", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_replace",
-            parameters: [
-                RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "oldValueRaw", type: .intptr),
-                RuntimeABIParameter(name: "newValueRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
             name: "kk_string_startsWith",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "prefixRaw", type: .intptr),
-                RuntimeABIParameter(name: "startIndex", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -222,17 +197,34 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "suffixRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_contains",
+            name: "kk_string_contains_str",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
-                RuntimeABIParameter(name: "needleRaw", type: .intptr),
-                RuntimeABIParameter(name: "ignoreCase", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replace",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "oldRaw", type: .intptr),
+                RuntimeABIParameter(name: "newRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_split",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -251,15 +243,6 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_string_format",
-            parameters: [
-                RuntimeABIParameter(name: "formatRaw", type: .intptr),
-                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -516,11 +499,12 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Flow (CORO-003)
+        // Flow (P5-88)
         RuntimeABIFunctionSpec(
             name: "kk_flow_create",
             parameters: [
                 RuntimeABIParameter(name: "emitterFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -528,7 +512,9 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_flow_emit",
             parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "tag", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -538,33 +524,23 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_flow_map",
+            name: "kk_flow_retain",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
-                RuntimeABIParameter(name: "mapFnPtr", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_flow_filter",
+            name: "kk_flow_release",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
-                RuntimeABIParameter(name: "filterFnPtr", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Coroutine"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_flow_take",
-            parameters: [
-                RuntimeABIParameter(name: "flowHandle", type: .intptr),
-                RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

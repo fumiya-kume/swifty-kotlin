@@ -97,11 +97,13 @@ extension BuildKIRRegressionTests {
     func testStringStdlibThrowFlagsAreClassifiedByABI() throws {
         let source = """
         fun main() {
+            val maybe: String? = null
             "  hi  ".trim()
             "1,2,3".split(",")
+            maybe.isNullOrEmpty()
+            maybe.isNullOrBlank()
             "42".toInt()
             "3.14".toDouble()
-            "%s-%d".format("x", 1)
         }
         """
 
@@ -114,10 +116,11 @@ extension BuildKIRRegressionTests {
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
             XCTAssertEqual(throwFlags["kk_string_trim"]?.allSatisfy { $0 == false }, true)
-            XCTAssertEqual(throwFlags["kk_string_split"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_string_split"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_string_isNullOrEmpty"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_string_isNullOrBlank"]?.allSatisfy { $0 == false }, true)
             XCTAssertEqual(throwFlags["kk_string_toInt"]?.allSatisfy { $0 == true }, true)
             XCTAssertEqual(throwFlags["kk_string_toDouble"]?.allSatisfy { $0 == true }, true)
-            XCTAssertEqual(throwFlags["kk_string_format"]?.allSatisfy { $0 == false }, true)
         }
     }
 

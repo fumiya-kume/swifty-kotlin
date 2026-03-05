@@ -3,142 +3,227 @@ import Foundation
 import XCTest
 
 extension LoweringPassRegressionTests {
-    func testCoroutineLoweringRewritesFlowMemberChainToRuntimeABI() throws {
+    func testFlowLoweringRewritesFlowCallsToRuntimeABI() throws {
         let source = """
         fun main() {
-            val stream = flow {
-                emit(1)
-                emit(2)
+            runBlocking {
+                flow {
+                    emit(1)
+                    emit(2)
+                }.map { it * 2 }
+                    .collect { println(it) }
             }
-            stream.map { it }.filter { true }.take(1).collect { println(it) }
         }
         """
 
         try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowMemberLowering", emit: .kirDump)
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowLoweringRewrite", emit: .kirDump)
             try runToKIR(ctx)
-
-            let errorCodesBeforeLowering = ctx.diagnostics.diagnostics
-                .filter { $0.severity == .error }
-                .map(\.code)
-            XCTAssertTrue(
-                errorCodesBeforeLowering.isEmpty,
-                "Unexpected diagnostics before lowering: \(errorCodesBeforeLowering)"
-            )
-
             try LoweringPhase().run(ctx)
 
             let module = try XCTUnwrap(ctx.kir)
-            let allFunctionBodies: [[KIRInstruction]] = module.arena.declarations.compactMap { decl in
+            var allCallees: [String] = []
+            for decl in module.arena.declarations {
                 guard case let .function(function) = decl else {
-                    return nil
+                    continue
                 }
-                return function.body
+                allCallees.append(contentsOf: extractCallees(from: function.body, interner: ctx.interner))
             }
-            let allCallNames = allFunctionBodies.flatMap { extractCallees(from: $0, interner: ctx.interner) }
 
-            XCTAssertTrue(allCallNames.contains("kk_flow_create"))
-            XCTAssertTrue(allCallNames.contains("kk_flow_emit"))
-            XCTAssertTrue(allCallNames.contains("kk_flow_map"))
-            XCTAssertTrue(allCallNames.contains("kk_flow_filter"))
-            XCTAssertTrue(allCallNames.contains("kk_flow_take"))
-            XCTAssertTrue(allCallNames.contains("kk_flow_collect"))
-
-            XCTAssertFalse(allCallNames.contains("flow"))
-            XCTAssertFalse(allCallNames.contains("emit"))
-            XCTAssertFalse(allCallNames.contains("map"))
-            XCTAssertFalse(allCallNames.contains("filter"))
-            XCTAssertFalse(allCallNames.contains("take"))
-            XCTAssertFalse(allCallNames.contains("collect"))
+            XCTAssertTrue(allCallees.contains("kk_flow_create"))
+            XCTAssertTrue(allCallees.contains("kk_flow_emit"))
+            XCTAssertTrue(allCallees.contains("kk_flow_collect"))
+            XCTAssertFalse(allCallees.contains("flow"))
+            XCTAssertFalse(allCallees.contains("map"))
+            XCTAssertFalse(allCallees.contains("collect"))
+            XCTAssertFalse(allCallees.contains("emit"))
         }
     }
 
-    func testCoroutineLoweringPreservesThrowMetadataWhenRewritingVirtualCollect() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let types = TypeSystem()
+    func testCoroutineLoweringFlowCollectInjectsSuspendCollectorFunctionID() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                flow {
+                    emit(1)
+                }.collect {
+                    delay(1)
+                    println(it)
+                }
+            }
+        }
+        """
 
-        let functionSymbol = SymbolID(rawValue: 4600)
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowCollectSuspend", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
 
-        let flowLambda = arena.appendExpr(.temporary(0), type: types.anyType)
-        let flowHandle = arena.appendExpr(.temporary(1), type: types.anyType)
-        let collectorLambda = arena.appendExpr(.temporary(2), type: types.anyType)
-        let collectResult = arena.appendExpr(.temporary(3), type: types.unitType)
-        let thrownSlot = arena.appendExpr(.temporary(4), type: types.anyType)
+            let module = try XCTUnwrap(ctx.kir)
+            var collectCallArgs: [KIRExprID]?
+            for decl in module.arena.declarations {
+                guard case let .function(function) = decl else {
+                    continue
+                }
+                for instruction in function.body {
+                    guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                          ctx.interner.resolve(callee) == "kk_flow_collect"
+                    else {
+                        continue
+                    }
+                    collectCallArgs = arguments
+                    break
+                }
+                if collectCallArgs != nil {
+                    break
+                }
+            }
 
-        let function = KIRFunction(
-            symbol: functionSymbol,
-            name: interner.intern("main"),
-            params: [],
-            returnType: types.unitType,
-            body: [
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("flow"),
-                    arguments: [flowLambda],
-                    result: flowHandle,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .virtualCall(
-                    symbol: nil,
-                    callee: interner.intern("collect"),
-                    receiver: flowHandle,
-                    arguments: [collectorLambda],
-                    result: collectResult,
-                    canThrow: true,
-                    thrownResult: thrownSlot,
-                    dispatch: .vtable(slot: 0)
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
+            let callArgs = try XCTUnwrap(collectCallArgs, "Expected kk_flow_collect call after lowering.")
+            XCTAssertEqual(callArgs.count, 3)
 
-        let functionID = arena.appendDecl(.function(function))
-        let module = KIRModule(
-            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [functionID])],
-            arena: arena
-        )
-        let ctx = CompilationContext(
-            options: CompilerOptions(
-                moduleName: "FlowVirtualCollectThrow",
-                inputs: [],
-                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
-                emit: .kirDump,
-                target: defaultTargetTriple()
-            ),
-            sourceManager: SourceManager(),
-            diagnostics: DiagnosticEngine(),
-            interner: interner
-        )
-        ctx.kir = module
+            guard let collectorExpr = module.arena.expr(callArgs[1]),
+                  case let .symbolRef(collectorSymbol) = collectorExpr
+            else {
+                XCTFail("kk_flow_collect collector argument must be a symbol reference.")
+                return
+            }
 
-        let kirCtx = KIRContext(
-            diagnostics: ctx.diagnostics,
-            options: ctx.options,
-            interner: interner,
-            sema: ctx.sema
-        )
-        try CoroutineLoweringPass().run(module: module, ctx: kirCtx)
+            let collectorFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else { return nil }
+                return function.symbol == collectorSymbol ? function : nil
+            }.first
+            let collectorName = collectorFunction.map { ctx.interner.resolve($0.name) } ?? ""
+            XCTAssertTrue(
+                collectorName.hasPrefix("kk_suspend_"),
+                "Collector argument should be rewritten to suspend-lowered entry point."
+            )
 
-        guard case let .function(lowered)? = module.arena.decl(functionID) else {
-            XCTFail("expected lowered function")
+            guard let functionIDExpr = module.arena.expr(callArgs[2]),
+                  case let .intLiteral(functionID) = functionIDExpr
+            else {
+                XCTFail("kk_flow_collect third argument must be a function ID literal.")
+                return
+            }
+            XCTAssertNotEqual(functionID, 0)
+            XCTAssertEqual(functionID, Int64(collectorSymbol.rawValue))
+        }
+    }
+
+    func testFlowMapCollectExecutablePrintsExpectedOutput() throws {
+        let source = """
+        suspend fun runFlowCollectExecutable() {
+            flow {
+                emit(1)
+                emit(2)
+            }.map { it * 2 }
+                .collect { println(it) }
+        }
+
+        fun main() {
+            runBlocking(::runFlowCollectExecutable)
             return
         }
+        """
 
-        let rewrittenCollectCalls: [(canThrow: Bool, thrownResult: KIRExprID?)] = lowered.body.compactMap { instruction in
-            guard case let .call(_, callee, _, _, canThrow, thrownResult, _) = instruction,
-                  interner.resolve(callee) == "kk_flow_collect"
-            else {
-                return nil
-            }
-            return (canThrow: canThrow, thrownResult: thrownResult)
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer { try? FileManager.default.removeItem(atPath: outputPath) }
+
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "FlowExecutable",
+                emit: .executable,
+                outputPath: outputPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let runResult = try CommandRunner.run(executable: outputPath, arguments: [])
+            let normalizedStdout = runResult.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(runResult.exitCode, 0)
+            XCTAssertEqual(normalizedStdout, "2\n4\n")
+        }
+    }
+
+    func testFlowCollectTwiceReexecutesEmitterForColdSemantics() throws {
+        let source = """
+        suspend fun runFlowCollectTwice() {
+            val stream = flow {
+                emit(1)
+                emit(2)
+            }.map { it * 2 }
+            stream.collect { println(it) }
+            stream.collect { println(it) }
         }
 
-        XCTAssertEqual(rewrittenCollectCalls.count, 1, "Expected exactly one rewritten kk_flow_collect call.")
-        XCTAssertEqual(rewrittenCollectCalls[0].canThrow, true)
-        XCTAssertEqual(rewrittenCollectCalls[0].thrownResult, thrownSlot)
+        fun main() {
+            runBlocking(::runFlowCollectTwice)
+            return
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer { try? FileManager.default.removeItem(atPath: outputPath) }
+
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "FlowColdExecutable",
+                emit: .executable,
+                outputPath: outputPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let runResult = try CommandRunner.run(executable: outputPath, arguments: [])
+            let normalizedStdout = runResult.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(runResult.exitCode, 0)
+            XCTAssertEqual(normalizedStdout, "2\n4\n2\n4\n")
+        }
+    }
+
+    func testFlowLoweringInsertsFlowHandleReleaseCalls() throws {
+        let source = """
+        suspend fun runFlowOwnership() {
+            val stream = flow {
+                emit(1)
+                emit(2)
+            }
+            val mapped = stream.map { it }
+            stream.collect { println(it) }
+            mapped.collect { println(it) }
+        }
+
+        fun main() {
+            runBlocking(::runFlowOwnership)
+            return
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowOwnership", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            var allCallees: [String] = []
+            for decl in module.arena.declarations {
+                guard case let .function(function) = decl else {
+                    continue
+                }
+                allCallees.append(contentsOf: extractCallees(from: function.body, interner: ctx.interner))
+            }
+
+            XCTAssertTrue(allCallees.contains("kk_flow_release"))
+        }
     }
 }

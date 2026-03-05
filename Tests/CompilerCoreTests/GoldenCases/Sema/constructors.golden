@@ -21,54 +21,45 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=class fq=Point vis=public flags=_
-symbol s46 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#45 params=[Int,Int] ret=Class#45 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s47 kind=valueParameter fq=Point.<init>.$46.x vis=private flags=_
-symbol s48 kind=valueParameter fq=Point.<init>.$46.y vis=private flags=_
-symbol s49 kind=class fq=Named vis=public flags=_
-symbol s50 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#49 params=[String] ret=Class#49 suspend=0 defaults=[0] vararg=[0]
-symbol s51 kind=valueParameter fq=Named.<init>.$50.name vis=private flags=_
-symbol s52 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#49 params=[] ret=Class#49 suspend=0 defaults=[] vararg=[]
-symbol s53 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s54 kind=local fq=__local_5.p vis=private flags=_
-symbol s55 kind=local fq=__local_9.n vis=private flags=_
-symbol s56 kind=local fq=__local_12.d vis=private flags=_
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=class fq=Point vis=public flags=_
+symbol s37 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#36 params=[Int,Int] ret=Class#36 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s38 kind=valueParameter fq=Point.<init>.$37.x vis=private flags=_
+symbol s39 kind=valueParameter fq=Point.<init>.$37.y vis=private flags=_
+symbol s40 kind=class fq=Named vis=public flags=_
+symbol s41 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#40 params=[String] ret=Class#40 suspend=0 defaults=[0] vararg=[0]
+symbol s42 kind=valueParameter fq=Named.<init>.$41.name vis=private flags=_
+symbol s43 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#40 params=[] ret=Class#40 suspend=0 defaults=[] vararg=[]
+symbol s44 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s45 kind=local fq=__local_5.p vis=private flags=_
+symbol s46 kind=local fq=__local_9.n vis=private flags=_
+symbol s47 kind=local fq=__local_12.d vis=private flags=_
 file f0 package=_
-  decl d0 class Point sym=s45
-  decl d1 class Named sym=s49
-  decl d2 fun main suspend=0 inline=0 sym=s53
+  decl d0 class Point sym=s36
+  decl d1 class Named sym=s40
+  decl d2 fun main suspend=0 inline=0 sym=s44
 expr e0 string(default) type=String
 expr e1 name(Point) type=_
 expr e2 int(1) type=Int
 expr e3 int(2) type=Int
-expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#45 call=s46 map=[0->0,1->1] targs=[]
-expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s54
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#36 call=s37 map=[0->0,1->1] targs=[]
+expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s45
 expr e6 name(Named) type=_
 expr e7 string(hello) type=String
-expr e8 call callee=e6 args=[_:e7] type=Class#49 call=s50 map=[0->0] targs=[]
-expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s55
+expr e8 call callee=e6 args=[_:e7] type=Class#40 call=s41 map=[0->0] targs=[]
+expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s46
 expr e10 name(Named) type=_
-expr e11 call callee=e10 args=[] type=Class#49 call=s52 map=[] targs=[]
-expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s56
+expr e11 call callee=e10 args=[] type=Class#40 call=s43 map=[] targs=[]
+expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s47

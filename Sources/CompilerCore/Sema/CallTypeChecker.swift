@@ -1,5 +1,7 @@
 import Foundation
 
+// swiftlint:disable file_length
+
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
 final class CallTypeChecker {
@@ -103,6 +105,60 @@ final class CallTypeChecker {
             sema.bindings.markScopeFunctionExpr(id, kind: .scopeWith)
             sema.bindings.bindExprType(id, type: returnType)
             return returnType
+        }
+
+        // --- Flow builder function (CORO-003) ---
+        // `flow { emit(...) }` is treated as a builtin cold stream factory.
+        // We infer the lambda with a flow-builder scope so unqualified `emit`
+        // resolves in Sema fallback.
+        if let calleeName,
+           interner.resolve(calleeName) == "flow",
+           args.count == 1,
+           ctx.cachedScopeLookup(calleeName).isEmpty,
+           locals[calleeName] == nil
+        {
+            let flowLambdaExprID = args[0].expr
+            guard isValidBuilderLambdaArgument(flowLambdaExprID, ast: ast) else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for call.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            var flowBuilderCtx = ctx.with(implicitReceiverType: sema.types.anyType)
+            flowBuilderCtx.isFlowBuilderLambdaScope = true
+            let flowLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.unitType,
+                isSuspend: true,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
+                flowLambdaExprID,
+                ctx: flowBuilderCtx,
+                locals: &locals,
+                expectedType: flowLambdaExpectedType
+            )
+            sema.bindings.markFlowExpr(id)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
+        // --- Flow builder lambda calls (CORO-003) ---
+        // Inside `flow { ... }`, unqualified `emit` resolves as a builtin
+        // effect call and returns Unit.
+        if ctx.isFlowBuilderLambdaScope,
+           let calleeName,
+           interner.resolve(calleeName) == "emit",
+           args.count == 1,
+           ctx.cachedScopeLookup(calleeName).isEmpty,
+           locals[calleeName] == nil
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
         }
 
         let argTypes = args.map { argument in
@@ -492,3 +548,5 @@ final class CallTypeChecker {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }
 }
+
+// swiftlint:enable file_length

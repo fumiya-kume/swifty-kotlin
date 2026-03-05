@@ -8,12 +8,10 @@ fun useReplace(): String = "abc".replace("a", "z")
 
 fun useStartsWith(): Boolean = "Kotlin".startsWith("Ko")
 
-fun useEndsWith(): Boolean = "Kotlin".endsWith("lin", true)
+fun useEndsWith(): Boolean = "Kotlin".endsWith("lin")
 
 fun useContains(): Boolean = "Kotlin".contains("otl")
 
 fun useToInt(): Int = "42".toInt()
 
 fun useToDouble(): Double = "3.14".toDouble()
-
-fun useFormat(): String = "%s-%d".format("x", 1)

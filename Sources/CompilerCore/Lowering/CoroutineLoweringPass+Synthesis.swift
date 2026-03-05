@@ -177,18 +177,21 @@ extension CoroutineLoweringPass {
         loweredName: InternedString,
         nextSyntheticSymbol: inout Int32,
         sema: SemaModule?
-    ) -> SymbolID {
+    ) -> (kirSymbol: SymbolID, semaSymbol: SymbolID?) {
         guard let sema, let originalSymbol = sema.symbols.symbol(original.symbol) else {
-            return allocateSyntheticSymbol(&nextSyntheticSymbol)
+            return (kirSymbol: allocateSyntheticSymbol(&nextSyntheticSymbol), semaSymbol: nil)
         }
-        let loweredFQName = Array(originalSymbol.fqName.dropLast()) + [loweredName]
-        return sema.symbols.define(
+        let loweredSemaSymbol = sema.symbols.define(
             kind: .function,
             name: loweredName,
-            fqName: loweredFQName,
+            fqName: Array(originalSymbol.fqName.dropLast()) + [loweredName],
             declSite: originalSymbol.declSite,
             visibility: originalSymbol.visibility,
             flags: [.synthetic, .static]
+        )
+        return (
+            kirSymbol: allocateSyntheticSymbol(&nextSyntheticSymbol),
+            semaSymbol: loweredSemaSymbol
         )
     }
 

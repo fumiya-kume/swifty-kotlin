@@ -2,33 +2,39 @@
 import XCTest
 
 extension CodegenBackendIntegrationTests {
-    func testFixedExternDeclarationsUseFlowABIWithoutContinuationParameter() {
+    func testFixedExternDeclarationsUseFlowABIWithContinuationParameter() {
         let externs = LLVMBackend.fixedExternDeclarations
 
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t value);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr);"))
-        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_take(intptr_t flowHandle, intptr_t count);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_retain(intptr_t flowHandle);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_release(intptr_t flowHandle);"))
 
-        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);"))
-        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t continuation);"))
-        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);"))
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr);"))
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr);"))
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_take(intptr_t flowHandle, intptr_t count);"))
+
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr);"))
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_emit(intptr_t value);"))
+        XCTAssertFalse(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr);"))
     }
 
     func testFixedRuntimePreambleContainsFlowOperatorStubsForNewABI() {
         let preamble = LLVMBackend.fixedRuntimePreamble
 
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t value) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr) {"))
-        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_take(intptr_t flowHandle, intptr_t count) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_retain(intptr_t flowHandle) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_release(intptr_t flowHandle) {"))
 
-        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation) {"))
-        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t continuation) {"))
-        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation) {"))
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr) {"))
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr) {"))
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_take(intptr_t flowHandle, intptr_t count) {"))
+
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr) {"))
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t value) {"))
+        XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr) {"))
     }
 }

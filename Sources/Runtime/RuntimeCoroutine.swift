@@ -349,10 +349,17 @@ public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> I
 @_cdecl("kk_coroutine_state_exit")
 public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
     if let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) {
+        var shouldRelease = false
         runtimeStorage.withLock { state in
-            state.objectPointers.remove(UInt(bitPattern: continuationPtr))
+            let key = UInt(bitPattern: continuationPtr)
+            if state.objectPointers.contains(key) {
+                state.objectPointers.remove(key)
+                shouldRelease = true
+            }
         }
-        Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
+        if shouldRelease {
+            Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).release()
+        }
     }
     return value
 }
@@ -525,166 +532,310 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     return Int(bitPattern: kk_coroutine_suspended())
 }
 
-// MARK: - Flow Runtime (CORO-003)
+// MARK: - Flow Runtime Stubs (P5-88)
 
-private enum FlowStepKind {
-    case mapStep(fnPtr: Int)
-    case filterStep(fnPtr: Int)
-    case takeStep(count: Int)
+private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
+
+/// Runtime flow op tags must be aligned with C preamble constants in
+/// LLVMBackend+CRuntimePreambleData.swift.
+private enum RuntimeFlowTag: Int {
+    case emit = 0
+    case map = 1
+    case filter = 2
+    case take = 3
 }
 
-/// Opaque handle for a cold Flow: stores emitter fn ptr and a lazy step chain.
+private struct RuntimeFlowOp {
+    let kind: RuntimeFlowTag
+    let argument: Int
+}
+
+private final class RuntimeFlowCollectContext {
+    var emittedValues: [Int] = []
+}
+
+/// Opaque flow handle. Immutable operation chain; source emitter is re-executed
+/// for every collect to guarantee cold-stream semantics.
 private final class RuntimeFlowHandle {
     let emitterFnPtr: Int
-    var steps: [FlowStepKind] = []
-    var collectorFnPtr: Int = 0
-    var takeRemainingByStepIndex: [Int: Int] = [:]
-    var isTerminated = false
+    let opChain: [RuntimeFlowOp]
 
-    init(emitterFnPtr: Int) {
+    init(emitterFnPtr: Int, opChain: [RuntimeFlowOp] = []) {
         self.emitterFnPtr = emitterFnPtr
+        self.opChain = opChain
     }
 }
 
-/// Thread-local current flow handle (set by kk_flow_collect before invoking emitter).
-/// nonisolated(unsafe) suppresses Swift 6 strict concurrency warnings.
-private let flowEmitContextThreadKey = "KSwiftK.flowEmitContext"
-nonisolated(unsafe) var flowEmitContext: Int {
-    get {
-        Thread.current.threadDictionary[flowEmitContextThreadKey] as? Int ?? 0
-    }
-    set {
-        Thread.current.threadDictionary[flowEmitContextThreadKey] = newValue
-    }
-}
-
-private func runtimeFlowHandle(from handle: Int) -> RuntimeFlowHandle? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else { return nil }
-    guard runtimeStorage.withLock({ $0.objectPointers.contains(UInt(bitPattern: ptr)) }) else { return nil }
-    return Unmanaged<RuntimeFlowHandle>.fromOpaque(ptr).takeUnretainedValue()
-}
-
-private func registerFlowHandle(_ flow: RuntimeFlowHandle) -> Int {
-    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
+private func runtimeRegisterFlowHandle(_ flow: RuntimeFlowHandle) -> Int {
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(flow).toOpaque())
+    let key = UInt(bitPattern: ptr)
     runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: ptr))
+        state.objectPointers.insert(key)
+        state.flowHandles[key] = flow
+        state.flowRetainCounts[key] = 1
     }
     return Int(bitPattern: ptr)
 }
 
-@_cdecl("kk_flow_create")
-public func kk_flow_create(_ emitterFnPtr: Int) -> Int {
-    registerFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
+private func runtimeFlowHandle(from rawValue: Int) -> RuntimeFlowHandle? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let key = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        state.flowHandles[key] as? RuntimeFlowHandle
+    }
 }
 
-/// Emit a value into the current flow context.
-/// ABI: (value: intptr) -> intptr
-/// Uses flowEmitContext (set by kk_flow_collect) to locate the active flow handle.
-@_cdecl("kk_flow_emit")
-public func kk_flow_emit(_ value: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowEmitContext) else { return 0 }
-    guard flow.collectorFnPtr != 0, !flow.isTerminated else { return 0 }
-
-    var current = value
-    for (stepIndex, step) in flow.steps.enumerated() {
-        switch step {
-        case let .mapStep(fnPtr):
-            let mapFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
-            var thrown = 0
-            current = mapFn(current, &thrown)
-            if thrown != 0 {
-                flow.isTerminated = true
-                return 0
-            }
-        case let .filterStep(fnPtr):
-            let filterFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
-            var thrown = 0
-            let predicateResult = filterFn(current, &thrown)
-            if thrown != 0 {
-                flow.isTerminated = true
-                return 0
-            }
-            if kk_unbox_bool(predicateResult) == 0 { return 0 }
-        case .takeStep:
-            let remaining = flow.takeRemainingByStepIndex[stepIndex] ?? 0
-            guard remaining > 0 else {
-                flow.isTerminated = true
-                return 0
-            }
-            flow.takeRemainingByStepIndex[stepIndex] = remaining - 1
-        }
-    }
-    let collector = unsafeBitCast(
-        flow.collectorFnPtr,
-        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
-    )
-    var thrown = 0
-    _ = collector(current, &thrown)
-    if thrown != 0 {
-        flow.isTerminated = true
-    }
-    return 0
+private func runtimeFlowCollectStack() -> [RuntimeFlowCollectContext] {
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] as? [RuntimeFlowCollectContext] ?? []
 }
 
-/// Collect all values from a cold flow by invoking its emitter.
-/// ABI: (flowHandle: intptr, collectorFnPtr: intptr) -> intptr
-@_cdecl("kk_flow_collect")
-public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int) -> Int {
-    guard let flow = runtimeFlowHandle(from: flowHandle) else { return 0 }
-    // Reset per-take limits for cold semantics (re-run per collect).
-    flow.takeRemainingByStepIndex.removeAll(keepingCapacity: true)
-    for (stepIndex, step) in flow.steps.enumerated() {
-        if case let .takeStep(count) = step {
-            flow.takeRemainingByStepIndex[stepIndex] = max(0, count)
-        }
+private func runtimeFlowPushCollectContext(_ context: RuntimeFlowCollectContext) {
+    var stack = runtimeFlowCollectStack()
+    stack.append(context)
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+}
+
+private func runtimeFlowPopCollectContext() {
+    var stack = runtimeFlowCollectStack()
+    guard !stack.isEmpty else {
+        return
     }
-    flow.collectorFnPtr = collectorFnPtr
-    flow.isTerminated = false
-    defer {
-        flow.collectorFnPtr = 0
-        flow.takeRemainingByStepIndex.removeAll(keepingCapacity: true)
-        flow.isTerminated = false
+    _ = stack.popLast()
+    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+}
+
+private func runtimeFlowCurrentCollectContext() -> RuntimeFlowCollectContext? {
+    runtimeFlowCollectStack().last
+}
+
+private func runtimeFlowMaybeUnbox(_ value: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+        return value
     }
-    let previous = flowEmitContext
-    flowEmitContext = flowHandle
-    defer { flowEmitContext = previous }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return value
+    }
+    if let intBox = tryCast(ptr, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1 : 0
+    }
+    return value
+}
+
+private func runtimeFlowEvaluateSource(_ flow: RuntimeFlowHandle) -> [Int] {
+    let context = RuntimeFlowCollectContext()
+    runtimeFlowPushCollectContext(context)
+    defer { runtimeFlowPopCollectContext() }
+
+    guard flow.emitterFnPtr != 0 else {
+        return []
+    }
     let emitter = unsafeBitCast(
         flow.emitterFnPtr,
         to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self
     )
-    var thrown = 0
-    _ = emitter(&thrown)
-    if thrown != 0 {
-        flow.isTerminated = true
+    var outThrown = 0
+    _ = emitter(&outThrown)
+    if outThrown != 0 {
+        return []
+    }
+    return context.emittedValues
+}
+
+// swiftlint:disable:next cyclomatic_complexity
+private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int] {
+    var values = source
+    for op in ops {
+        switch op.kind {
+        case .emit:
+            // Emit operations are handled during flow construction.
+            break
+
+        case .map:
+            guard op.argument != 0 else {
+                values = []
+                continue
+            }
+            let transform = unsafeBitCast(
+                op.argument,
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            var mapped: [Int] = []
+            mapped.reserveCapacity(values.count)
+            for value in values {
+                var thrown = 0
+                let transformed = transform(value, &thrown)
+                if thrown != 0 {
+                    return mapped
+                }
+                mapped.append(runtimeFlowMaybeUnbox(transformed))
+            }
+            values = mapped
+
+        case .filter:
+            guard op.argument != 0 else {
+                values = []
+                continue
+            }
+            let predicate = unsafeBitCast(
+                op.argument,
+                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+            )
+            var filtered: [Int] = []
+            filtered.reserveCapacity(values.count)
+            for value in values {
+                var thrown = 0
+                let decision = predicate(value, &thrown)
+                if thrown != 0 {
+                    return filtered
+                }
+                if runtimeFlowMaybeUnbox(decision) != 0 {
+                    filtered.append(value)
+                }
+            }
+            values = filtered
+
+        case .take:
+            let count = max(0, runtimeFlowMaybeUnbox(op.argument))
+            if count < values.count {
+                values = Array(values.prefix(count))
+            }
+        }
+    }
+    return values
+}
+
+private func runtimeFlowCollectNonSuspend(_ values: [Int], collectorFnPtr: Int) -> Int {
+    guard collectorFnPtr != 0 else {
+        return 0
+    }
+    let collector = unsafeBitCast(
+        collectorFnPtr,
+        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    for value in values {
+        var thrown = 0
+        _ = collector(value, &thrown)
+        if thrown != 0 {
+            return 0
+        }
     }
     return 0
 }
 
-/// Build a new Flow that applies a map transform on top of an existing Flow.
-@_cdecl("kk_flow_map")
-public func kk_flow_map(_ flowHandle: Int, _ mapFnPtr: Int) -> Int {
-    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
-    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
-    derived.steps = source.steps + [.mapStep(fnPtr: mapFnPtr)]
-    return registerFlowHandle(derived)
+private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, functionID: Int) -> Int {
+    guard collectorFnPtr != 0 else {
+        return 0
+    }
+    let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
+    let collector = unsafeBitCast(
+        collectorFnPtr,
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+    )
+    for value in values {
+        let continuation = kk_coroutine_continuation_new(functionID)
+        while true {
+            var outThrown = 0
+            let result = collector(value, continuation, &outThrown)
+            if outThrown != 0 {
+                _ = kk_coroutine_state_exit(continuation, 0)
+                return 0
+            }
+            if result != suspendedToken {
+                break
+            }
+            guard let state = runtimeContinuationState(from: continuation) else {
+                _ = kk_coroutine_state_exit(continuation, 0)
+                return 0
+            }
+            state.waitForResumeSignal()
+        }
+        _ = kk_coroutine_state_exit(continuation, 0)
+    }
+    return 0
 }
 
-/// Build a new Flow that applies a filter predicate on top of an existing Flow.
-@_cdecl("kk_flow_filter")
-public func kk_flow_filter(_ flowHandle: Int, _ filterFnPtr: Int) -> Int {
-    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
-    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
-    derived.steps = source.steps + [.filterStep(fnPtr: filterFnPtr)]
-    return registerFlowHandle(derived)
+@_cdecl("kk_flow_create")
+public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
 }
 
-/// Build a new Flow that stops emitting after `count` items.
-@_cdecl("kk_flow_take")
-public func kk_flow_take(_ flowHandle: Int, _ count: Int) -> Int {
-    guard let source = runtimeFlowHandle(from: flowHandle) else { return 0 }
-    let derived = RuntimeFlowHandle(emitterFnPtr: source.emitterFnPtr)
-    derived.steps = source.steps + [.takeStep(count: count)]
-    return registerFlowHandle(derived)
+@_cdecl("kk_flow_emit")
+public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
+    if tag == RuntimeFlowTag.emit.rawValue {
+        runtimeFlowCurrentCollectContext()?.emittedValues.append(runtimeFlowMaybeUnbox(value))
+        return value
+    }
+    guard let opKind = RuntimeFlowTag(rawValue: tag),
+          let flow = runtimeFlowHandle(from: flowHandle)
+    else {
+        return 0
+    }
+    let derived = RuntimeFlowHandle(
+        emitterFnPtr: flow.emitterFnPtr,
+        opChain: flow.opChain + [RuntimeFlowOp(kind: opKind, argument: value)]
+    )
+    return runtimeRegisterFlowHandle(derived)
+}
+
+@_cdecl("kk_flow_collect")
+public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continuation: Int) -> Int {
+    guard let flow = runtimeFlowHandle(from: flowHandle) else {
+        return 0
+    }
+
+    // Cold-stream semantics: evaluate source emissions anew on each collect.
+    let sourceValues = runtimeFlowEvaluateSource(flow)
+    let collectedValues = runtimeFlowApplyOps(sourceValues, ops: flow.opChain)
+
+    if continuation == 0 {
+        return runtimeFlowCollectNonSuspend(collectedValues, collectorFnPtr: collectorFnPtr)
+    }
+    return runtimeFlowCollectSuspend(collectedValues, collectorFnPtr: collectorFnPtr, functionID: continuation)
+}
+
+@_cdecl("kk_flow_retain")
+public func kk_flow_retain(_ flowHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let key = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        guard state.flowHandles[key] != nil else {
+            return 0
+        }
+        state.flowRetainCounts[key, default: 0] += 1
+        return flowHandle
+    }
+}
+
+@_cdecl("kk_flow_release")
+public func kk_flow_release(_ flowHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let key = UInt(bitPattern: ptr)
+    runtimeStorage.withLock { state in
+        guard let count = state.flowRetainCounts[key] else {
+            return
+        }
+        let nextCount = count - 1
+        if nextCount <= 0 {
+            state.flowRetainCounts.removeValue(forKey: key)
+            state.flowHandles.removeValue(forKey: key)
+            state.objectPointers.remove(key)
+        } else {
+            state.flowRetainCounts[key] = nextCount
+        }
+    }
+    return 0
 }
 
 // MARK: - Dispatcher Runtime Stubs (P5-133)

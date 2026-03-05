@@ -44,6 +44,27 @@ extension LLVMBackend {
             lines.append("  kk_gc_roots[\(slot)] = \(varName(id));")
         }
 
+        func ensureDeclaredResolved(_ id: KIRExprID) {
+            guard declared.insert(id.rawValue).inserted else {
+                return
+            }
+
+            if let expression = arena.expr(id) {
+                if case let .symbolRef(symbol) = expression,
+                   let parameterName = parameterNameBySymbol[symbol]
+                {
+                    lines.append("  intptr_t \(varName(id)) = \(parameterName);")
+                } else {
+                    lines.append(
+                        "  intptr_t \(varName(id)) = \(valueExpr(expression, interner: interner, functionSymbols: functionSymbols, globalValueSymbols: globalValueSymbols));"
+                    )
+                }
+            } else {
+                lines.append("  intptr_t \(varName(id)) = 0;")
+            }
+            syncRoot(id)
+        }
+
         for instruction in function.body {
             switch instruction {
             case .nop:
@@ -59,12 +80,12 @@ extension LLVMBackend {
                 lines.append("  goto \(labelName(target));")
 
             case let .jumpIfEqual(lhs, rhs, target):
-                ensureDeclared(lhs, declared: &declared, lines: &lines)
-                ensureDeclared(rhs, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(lhs)
+                ensureDeclaredResolved(rhs)
                 lines.append("  if (\(varName(lhs)) == \(varName(rhs))) goto \(labelName(target));")
 
             case let .constValue(result, value):
-                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(result)
                 if case let .symbolRef(symbol) = value,
                    let parameterName = parameterNameBySymbol[symbol]
                 {
@@ -77,9 +98,9 @@ extension LLVMBackend {
                 syncRoot(result)
 
             case let .binary(op, lhs, rhs, result):
-                ensureDeclared(result, declared: &declared, lines: &lines)
-                ensureDeclared(lhs, declared: &declared, lines: &lines)
-                ensureDeclared(rhs, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(result)
+                ensureDeclaredResolved(lhs)
+                ensureDeclaredResolved(rhs)
                 let opText = switch op {
                 case .add:
                     "+"
@@ -112,8 +133,8 @@ extension LLVMBackend {
                 syncRoot(result)
 
             case let .unary(op, operand, result):
-                ensureDeclared(result, declared: &declared, lines: &lines)
-                ensureDeclared(operand, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(result)
+                ensureDeclaredResolved(operand)
                 let unaryOpText = switch op {
                 case .not:
                     "!"
@@ -126,8 +147,8 @@ extension LLVMBackend {
                 syncRoot(result)
 
             case let .nullAssert(operand, result):
-                ensureDeclared(result, declared: &declared, lines: &lines)
-                ensureDeclared(operand, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(result)
+                ensureDeclaredResolved(operand)
                 let thrSlot = "thrown_\(callIndex)"
                 callIndex += 1
                 lines.append("  intptr_t \(thrSlot) = 0;")
@@ -145,15 +166,15 @@ extension LLVMBackend {
                 _ = isSuperCall
                 let calleeName = interner.resolve(callee)
                 let argVars = arguments.map { arg -> String in
-                    ensureDeclared(arg, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(arg)
                     return varName(arg)
                 }
 
                 if let result {
-                    ensureDeclared(result, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(result)
                 }
                 if let thrownResult {
-                    ensureDeclared(thrownResult, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(thrownResult)
                 }
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
@@ -312,6 +333,32 @@ extension LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_string_trim" {
+                    let value = argVars.count > 0 ? argVars[0] : "0"
+                    let expr = "(intptr_t)kk_string_trim(\(value))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
+                if calleeName == "kk_string_replace" {
+                    let value = argVars.count > 0 ? argVars[0] : "0"
+                    let oldValue = argVars.count > 1 ? argVars[1] : "0"
+                    let newValue = argVars.count > 2 ? argVars[2] : "0"
+                    let expr = "(intptr_t)kk_string_replace(\(value), \(oldValue), \(newValue))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if calleeName == "kk_int_toString_radix" {
                     let value = argVars.count > 0 ? argVars[0] : "0"
                     let radix = argVars.count > 1 ? argVars[1] : "10"
@@ -373,17 +420,17 @@ extension LLVMBackend {
 
             case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, dispatch):
                 let calleeName = interner.resolve(callee)
-                ensureDeclared(receiver, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(receiver)
                 let argVars = arguments.map { arg -> String in
-                    ensureDeclared(arg, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(arg)
                     return varName(arg)
                 }
 
                 if let result {
-                    ensureDeclared(result, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(result)
                 }
                 if let thrownResult {
-                    ensureDeclared(thrownResult, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(thrownResult)
                 }
 
                 let lookupExpr = switch dispatch {
@@ -443,11 +490,11 @@ extension LLVMBackend {
                 }
 
             case let .jumpIfNotNull(value, target):
-                ensureDeclared(value, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(value)
                 lines.append("  if (\(varName(value)) != 0) goto \(labelName(target));")
 
             case let .copy(from, to):
-                ensureDeclared(from, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(from)
                 // If the copy target is a global symbolRef, write to the global slot
                 // instead of the local register so the store persists.
                 if let targetExpr = arena.expr(to),
@@ -456,32 +503,32 @@ extension LLVMBackend {
                 {
                     lines.append("  \(globalSlot) = \(varName(from));")
                 } else {
-                    ensureDeclared(to, declared: &declared, lines: &lines)
+                    ensureDeclaredResolved(to)
                     lines.append("  \(varName(to)) = \(varName(from));")
                 }
 
             case let .storeGlobal(value, symbol):
-                ensureDeclared(value, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(value)
                 if let globalName = globalValueSymbols[symbol] {
                     lines.append("  \(globalName) = \(varName(value));")
                 }
 
             case let .loadGlobal(result, symbol):
-                ensureDeclared(result, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(result)
                 if let globalName = globalValueSymbols[symbol] {
                     lines.append("  \(varName(result)) = \(globalName);")
                 }
                 syncRoot(result)
 
             case let .rethrow(value):
-                ensureDeclared(value, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(value)
                 lines.append("  if (outThrown) { *outThrown = \(varName(value)); }")
                 lines.append("  kk_pop_frame();")
                 lines.append("  return 0;")
 
             case let .returnIfEqual(lhs, rhs):
-                ensureDeclared(lhs, declared: &declared, lines: &lines)
-                ensureDeclared(rhs, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(lhs)
+                ensureDeclaredResolved(rhs)
                 lines.append("  if (\(varName(lhs)) == \(varName(rhs))) {")
                 lines.append("    kk_pop_frame();")
                 lines.append("    return \(varName(lhs));")
@@ -492,7 +539,7 @@ extension LLVMBackend {
                 lines.append("  return 0;")
 
             case let .returnValue(value):
-                ensureDeclared(value, declared: &declared, lines: &lines)
+                ensureDeclaredResolved(value)
                 lines.append("  kk_pop_frame();")
                 lines.append("  return \(varName(value));")
             }

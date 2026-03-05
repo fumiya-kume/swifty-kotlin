@@ -1,5 +1,7 @@
 import Foundation
 
+// swiftlint:disable file_length type_body_length
+
 final class CoroutineLoweringPass: LoweringPass {
     /// Internal visibility is required for cross-file extension decomposition
     static let name = "CoroutineLowering"
@@ -24,9 +26,6 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("kk_flow_create"),
             ctx.interner.intern("kk_flow_emit"),
             ctx.interner.intern("kk_flow_collect"),
-            ctx.interner.intern("kk_flow_map"),
-            ctx.interner.intern("kk_flow_filter"),
-            ctx.interner.intern("kk_flow_take"),
         ]
         let virtualCallees: Set<InternedString> = [
             ctx.interner.intern("collect"),
@@ -56,6 +55,7 @@ final class CoroutineLoweringPass: LoweringPass {
         return false
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         // Lower flow { }, emit, map, filter, take, collect before suspend-function lowering.
         lowerFlowExpressions(module: module, ctx: ctx)
@@ -73,6 +73,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
         let runtimeCoroutineScopeRunCallee = ctx.interner.intern("kk_coroutine_scope_run")
         let runtimeDelayCallee = ctx.interner.intern("kk_kxmini_delay")
+        let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
         let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
@@ -113,12 +114,14 @@ final class CoroutineLoweringPass: LoweringPass {
                 existingFunctionNames: &existingFunctionNames,
                 interner: ctx.interner
             )
-            let loweredSymbol = defineSyntheticCoroutineFunctionSymbol(
+            let loweredFunctionSymbol = defineSyntheticCoroutineFunctionSymbol(
                 original: suspendFunction,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema
             )
+            let loweredSymbol = loweredFunctionSymbol.kirSymbol
+            let loweredSemaSymbol = loweredFunctionSymbol.semaSymbol
             let suspendLoweringPlan = analyzeSuspendLoweringPlan(
                 originalBody: suspendFunction.body,
                 suspendFunctionSymbols: suspendFunctionSymbols,
@@ -136,7 +139,7 @@ final class CoroutineLoweringPass: LoweringPass {
             let continuationType = continuationNominal?.continuationType
                 ?? (ctx.sema?.types.nullableAnyType ?? suspendFunction.returnType)
             let continuationParameterSymbol = defineSyntheticContinuationParameterSymbol(
-                owner: loweredSymbol,
+                owner: loweredSemaSymbol ?? loweredSymbol,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema,
@@ -181,13 +184,15 @@ final class CoroutineLoweringPass: LoweringPass {
             loweredByNameBuckets[suspendFunction.name, default: []].append(lowered)
             let byNameArityKey = SuspendCallLookupKey(name: suspendFunction.name, arity: suspendFunction.params.count)
             loweredByNameArityBuckets[byNameArityKey, default: []].append(lowered)
-            updateLoweredFunctionSignatureIfPossible(
-                loweredSymbol: loweredSymbol,
-                continuationParameterSymbol: continuationParameterSymbol,
-                originalSymbol: suspendFunction.symbol,
-                continuationType: continuationType,
-                sema: ctx.sema
-            )
+            if let loweredSemaSymbol {
+                updateLoweredFunctionSignatureIfPossible(
+                    loweredSymbol: loweredSemaSymbol,
+                    continuationParameterSymbol: continuationParameterSymbol,
+                    originalSymbol: suspendFunction.symbol,
+                    continuationType: continuationType,
+                    sema: ctx.sema
+                )
+            }
         }
 
         var launcherThunkByOriginalSymbol: [SymbolID: (name: InternedString, symbol: SymbolID)] = [:]
@@ -296,8 +301,45 @@ final class CoroutineLoweringPass: LoweringPass {
             var updated = function
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
+
+            // Resolve temporary/copy aliases back to original symbol references.
+            // Some call arguments are not direct `.symbolRef` expressions because
+            // they are first materialized via `constValue` and propagated by `copy`.
+            var symbolByExprRaw: [Int32: SymbolID] = [:]
+            var propagated = true
+            while propagated {
+                propagated = false
+                for instruction in function.body {
+                    switch instruction {
+                    case let .constValue(result, .symbolRef(symbol)):
+                        if symbolByExprRaw[result.rawValue] != symbol {
+                            symbolByExprRaw[result.rawValue] = symbol
+                            propagated = true
+                        }
+                    case let .copy(from, to):
+                        if let symbol = symbolByExprRaw[from.rawValue],
+                           symbolByExprRaw[to.rawValue] != symbol
+                        {
+                            symbolByExprRaw[to.rawValue] = symbol
+                            propagated = true
+                        }
+                    default:
+                        continue
+                    }
+                }
+            }
+
+            func symbolReference(for exprID: KIRExprID) -> SymbolID? {
+                if let expr = module.arena.expr(exprID),
+                   case let .symbolRef(symbol) = expr
+                {
+                    return symbol
+                }
+                return symbolByExprRaw[exprID.rawValue]
+            }
+
             for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, _, isSuperCall) = instruction else {
+                guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
                     continue
                 }
@@ -315,8 +357,7 @@ final class CoroutineLoweringPass: LoweringPass {
                         continue
                     }
 
-                    guard let argumentExpr = module.arena.expr(arguments[0]),
-                          case let .symbolRef(referencedSymbol) = argumentExpr,
+                    guard let referencedSymbol = symbolReference(for: arguments[0]),
                           let loweredTarget = loweredBySymbol[referencedSymbol]
                     else {
                         ctx.diagnostics.error(
@@ -371,7 +412,7 @@ final class CoroutineLoweringPass: LoweringPass {
                                 arguments: [entryPointExpr, entryFunctionID],
                                 result: result,
                                 canThrow: canThrow,
-                                thrownResult: nil
+                                thrownResult: thrownResult
                             )
                         )
                     } else {
@@ -443,6 +484,37 @@ final class CoroutineLoweringPass: LoweringPass {
                             )
                         )
                     }
+                    continue
+                }
+
+                if callee == flowCollectCallee,
+                   arguments.count == 3,
+                   let collectorSymbol = symbolReference(for: arguments[1]),
+                   let loweredCollector = loweredBySymbol[collectorSymbol]
+                {
+                    let collectorEntryPoint = module.arena.appendExpr(
+                        .symbolRef(loweredCollector.symbol),
+                        type: intType
+                    )
+                    let collectorFunctionID = module.arena.appendExpr(
+                        .intLiteral(Int64(loweredCollector.symbol.rawValue)),
+                        type: intType
+                    )
+
+                    var rewrittenArguments = arguments
+                    rewrittenArguments[1] = collectorEntryPoint
+                    rewrittenArguments[2] = collectorFunctionID
+                    loweredBody.append(
+                        .call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: rewrittenArguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult,
+                            isSuperCall: isSuperCall
+                        )
+                    )
                     continue
                 }
 
@@ -551,3 +623,5 @@ final class CoroutineLoweringPass: LoweringPass {
         }
     }
 }
+
+// swiftlint:enable file_length type_body_length

@@ -21,70 +21,61 @@ symbol s19 kind=typeParameter fq=kotlin.Comparable.T vis=private flags=_
 symbol s20 kind=function fq=kotlin.Comparable.compareTo vis=public flags=synthetic|operatorFunction sig=recv=Class#18<T#19> params=[T#19] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s21 kind=package fq=kotlin.text vis=public flags=synthetic
 symbol s22 kind=function fq=kotlin.text.trim vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String,Boolean,Int] ret=Class#12<out String> suspend=0 defaults=[0,1,1] vararg=[1,0,0]
+symbol s23 kind=function fq=kotlin.text.split vis=public flags=synthetic sig=recv=String params=[String] ret=Class#12<out String> suspend=0 defaults=[0] vararg=[0]
 symbol s24 kind=valueParameter fq=kotlin.text.split.delimiters vis=private flags=synthetic
-symbol s25 kind=valueParameter fq=kotlin.text.split.ignoreCase vis=private flags=synthetic
-symbol s26 kind=valueParameter fq=kotlin.text.split.limit vis=private flags=synthetic
-symbol s27 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String,Boolean] ret=String suspend=0 defaults=[0,0,1] vararg=[0,0,0]
-symbol s28 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
-symbol s29 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
-symbol s30 kind=valueParameter fq=kotlin.text.replace.ignoreCase vis=private flags=synthetic
-symbol s31 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String,Int,Boolean] ret=Boolean suspend=0 defaults=[0,1,1] vararg=[0,0,0]
-symbol s32 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
-symbol s33 kind=valueParameter fq=kotlin.text.startsWith.startIndex vis=private flags=synthetic
-symbol s34 kind=valueParameter fq=kotlin.text.startsWith.ignoreCase vis=private flags=synthetic
-symbol s35 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s36 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
-symbol s37 kind=valueParameter fq=kotlin.text.endsWith.ignoreCase vis=private flags=synthetic
-symbol s38 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String,Boolean] ret=Boolean suspend=0 defaults=[0,1] vararg=[0,0]
-symbol s39 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
-symbol s40 kind=valueParameter fq=kotlin.text.contains.ignoreCase vis=private flags=synthetic
-symbol s41 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
-symbol s44 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s45 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s46 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s47 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s48 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s49 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s50 kind=local fq=__local_1.x vis=private flags=_
-symbol s51 kind=local fq=__local_6.y vis=private flags=_
-symbol s52 kind=local fq=__local_11.z vis=private flags=mutable
-symbol s53 kind=local fq=__local_18.a vis=private flags=_
-symbol s54 kind=local fq=__local_25.b vis=private flags=mutable
+symbol s25 kind=function fq=kotlin.text.replace vis=public flags=synthetic sig=recv=String params=[String,String] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s26 kind=valueParameter fq=kotlin.text.replace.oldValue vis=private flags=synthetic
+symbol s27 kind=valueParameter fq=kotlin.text.replace.newValue vis=private flags=synthetic
+symbol s28 kind=function fq=kotlin.text.startsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s29 kind=valueParameter fq=kotlin.text.startsWith.prefix vis=private flags=synthetic
+symbol s30 kind=function fq=kotlin.text.endsWith vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s31 kind=valueParameter fq=kotlin.text.endsWith.suffix vis=private flags=synthetic
+symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=recv=String params=[String] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
+symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s37 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s38 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s41 kind=local fq=__local_1.x vis=private flags=_
+symbol s42 kind=local fq=__local_6.y vis=private flags=_
+symbol s43 kind=local fq=__local_11.z vis=private flags=mutable
+symbol s44 kind=local fq=__local_18.a vis=private flags=_
+symbol s45 kind=local fq=__local_25.b vis=private flags=mutable
 file f0 package=_
-  decl d0 fun typedLocal suspend=0 inline=0 sym=s45
-  decl d1 fun inferredLocal suspend=0 inline=0 sym=s46
-  decl d2 fun mutableTyped suspend=0 inline=0 sym=s47
-  decl d3 fun deferredValInit suspend=0 inline=0 sym=s48
-  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s49
+  decl d0 fun typedLocal suspend=0 inline=0 sym=s36
+  decl d1 fun inferredLocal suspend=0 inline=0 sym=s37
+  decl d2 fun mutableTyped suspend=0 inline=0 sym=s38
+  decl d3 fun deferredValInit suspend=0 inline=0 sym=s39
+  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s40
 expr e0 int(10) type=Int
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s50
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s41
 expr e2 name(println) type=_
-expr e3 name(x) type=Int ref=s50
+expr e3 name(x) type=Int ref=s41
 expr e4 call callee=e2 args=[_:e3] type=Unit
 expr e5 int(20) type=Int
-expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s51
+expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s42
 expr e7 name(println) type=_
-expr e8 name(y) type=Int ref=s51
+expr e8 name(y) type=Int ref=s42
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 int(30) type=Int
-expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s52
+expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s43
 expr e12 name(z) type=_
 expr e13 int(40) type=Int
-expr e14 localAssign z value=e13 type=Unit ref=s52
+expr e14 localAssign z value=e13 type=Unit ref=s43
 expr e15 name(println) type=_
-expr e16 name(z) type=Int ref=s52
+expr e16 name(z) type=Int ref=s43
 expr e17 call callee=e15 args=[_:e16] type=Unit
-expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s53
+expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s44
 expr e19 name(a) type=_
 expr e20 int(5) type=Int
-expr e21 localAssign a value=e20 type=Unit ref=s53
+expr e21 localAssign a value=e20 type=Unit ref=s44
 expr e22 name(println) type=_
-expr e23 name(a) type=Int ref=s53
+expr e23 name(a) type=Int ref=s44
 expr e24 call callee=e22 args=[_:e23] type=Unit
-expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s54
+expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s45
 expr e26 name(println) type=_
-expr e27 name(b) type=Int ref=s54
+expr e27 name(b) type=Int ref=s45
 expr e28 call callee=e26 args=[_:e27] type=Unit
