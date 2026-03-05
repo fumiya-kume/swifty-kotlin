@@ -18,22 +18,11 @@ extension CollectionLiteralLoweringPass {
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
 
-            var exprSymbolMap: [Int32: SymbolID] = [:]
-            var builderLambdaArgEntries: [(argID: Int32, callee: InternedString)] = []
-            for instruction in function.body {
-                switch instruction {
-                case let .constValue(result, .symbolRef(symbol)):
-                    exprSymbolMap[result.rawValue] = symbol
-                case let .call(symbol, callee, arguments, _, _, _, _):
-                    if symbol == nil, lookup.builderDSLNames.contains(callee), !arguments.isEmpty {
-                        builderLambdaArgEntries.append((argID: arguments[0].rawValue, callee: callee))
-                    }
-                default:
-                    break
-                }
-            }
+            let (exprSymbolMap, entries) = scanBuilderLambdaEntries(
+                body: function.body, lookup: lookup
+            )
 
-            for entry in builderLambdaArgEntries {
+            for entry in entries {
                 if let symbol = exprSymbolMap[entry.argID] {
                     let lambdaName = interner.intern("kk_lambda_\(entry.argID)")
                     builderLambdaKinds[lambdaName] = entry.callee
@@ -44,6 +33,27 @@ extension CollectionLiteralLoweringPass {
             }
         }
         return builderLambdaKinds
+    }
+
+    private func scanBuilderLambdaEntries(
+        body: [KIRInstruction],
+        lookup: CollectionLiteralLookupTables
+    ) -> (exprSymbolMap: [Int32: SymbolID], entries: [(argID: Int32, callee: InternedString)]) {
+        var exprSymbolMap: [Int32: SymbolID] = [:]
+        var entries: [(argID: Int32, callee: InternedString)] = []
+        for instruction in body {
+            switch instruction {
+            case let .constValue(result, .symbolRef(symbol)):
+                exprSymbolMap[result.rawValue] = symbol
+            case let .call(symbol, callee, arguments, _, _, _, _):
+                if symbol == nil, lookup.builderDSLNames.contains(callee), !arguments.isEmpty {
+                    entries.append((argID: arguments[0].rawValue, callee: callee))
+                }
+            default:
+                break
+            }
+        }
+        return (exprSymbolMap, entries)
     }
 
     /// Phase 1: identify collection-like expression IDs before instruction rewriting.
