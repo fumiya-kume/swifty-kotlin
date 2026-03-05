@@ -164,7 +164,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
             ],
-            returnType: .opaquePointer,
+            returnType: .intptr,
             section: "String"
         ),
         RuntimeABIFunctionSpec(
@@ -217,7 +217,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "oldRaw", type: .intptr),
                 RuntimeABIParameter(name: "newRaw", type: .intptr),
             ],
-            returnType: .opaquePointer,
+            returnType: .intptr,
             section: "String"
         ),
         RuntimeABIFunctionSpec(
@@ -525,6 +525,22 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_retain",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_release",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"

@@ -186,6 +186,11 @@ if ! command -v "$JAVA_BIN" >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -n "$KOTLINC_CLASSPATH" ]] && ! command -v unzip >/dev/null 2>&1; then
+  echo "unzip command not found: unzip" >&2
+  exit 1
+fi
+
 detect_workers() {
   local detected
 

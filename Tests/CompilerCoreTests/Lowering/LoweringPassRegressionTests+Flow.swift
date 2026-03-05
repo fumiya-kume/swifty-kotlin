@@ -190,4 +190,40 @@ extension LoweringPassRegressionTests {
             XCTAssertEqual(normalizedStdout, "2\n4\n2\n4\n")
         }
     }
+
+    func testFlowLoweringInsertsFlowHandleReleaseCalls() throws {
+        let source = """
+        suspend fun runFlowOwnership() {
+            val stream = flow {
+                emit(1)
+                emit(2)
+            }
+            val mapped = stream.map { it }
+            stream.collect { println(it) }
+            mapped.collect { println(it) }
+        }
+
+        fun main() {
+            runBlocking(::runFlowOwnership)
+            return
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FlowOwnership", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            var allCallees: [String] = []
+            for decl in module.arena.declarations {
+                guard case let .function(function) = decl else {
+                    continue
+                }
+                allCallees.append(contentsOf: extractCallees(from: function.body, interner: ctx.interner))
+            }
+
+            XCTAssertTrue(allCallees.contains("kk_flow_release"))
+        }
+    }
 }

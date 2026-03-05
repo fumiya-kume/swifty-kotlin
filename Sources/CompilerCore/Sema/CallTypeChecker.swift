@@ -113,8 +113,20 @@ final class CallTypeChecker {
         // resolves in Sema fallback.
         if let calleeName,
            interner.resolve(calleeName) == "flow",
-           args.count == 1
+           args.count == 1,
+           ctx.cachedScopeLookup(calleeName).isEmpty,
+           locals[calleeName] == nil
         {
+            let flowLambdaExprID = args[0].expr
+            guard isValidBuilderLambdaArgument(flowLambdaExprID, ast: ast) else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for call.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             var flowBuilderCtx = ctx.with(implicitReceiverType: sema.types.anyType)
             flowBuilderCtx.isFlowBuilderLambdaScope = true
             let flowLambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -124,7 +136,7 @@ final class CallTypeChecker {
                 nullability: .nonNull
             )))
             _ = driver.inferExpr(
-                args[0].expr,
+                flowLambdaExprID,
                 ctx: flowBuilderCtx,
                 locals: &locals,
                 expectedType: flowLambdaExpectedType
@@ -140,7 +152,9 @@ final class CallTypeChecker {
         if ctx.isFlowBuilderLambdaScope,
            let calleeName,
            interner.resolve(calleeName) == "emit",
-           args.count == 1
+           args.count == 1,
+           ctx.cachedScopeLookup(calleeName).isEmpty,
+           locals[calleeName] == nil
         {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             sema.bindings.bindExprType(id, type: sema.types.unitType)

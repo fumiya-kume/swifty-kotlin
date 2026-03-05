@@ -566,17 +566,25 @@ private final class RuntimeFlowHandle {
     }
 }
 
+private func runtimeRegisterFlowHandle(_ flow: RuntimeFlowHandle) -> Int {
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(flow).toOpaque())
+    let key = UInt(bitPattern: ptr)
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(key)
+        state.flowHandles[key] = flow
+        state.flowRetainCounts[key] = 1
+    }
+    return Int(bitPattern: ptr)
+}
+
 private func runtimeFlowHandle(from rawValue: Int) -> RuntimeFlowHandle? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
+    let key = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        state.flowHandles[key] as? RuntimeFlowHandle
     }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeFlowHandle.self)
 }
 
 private func runtimeFlowCollectStack() -> [RuntimeFlowCollectContext] {
@@ -756,12 +764,7 @@ private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, fun
 
 @_cdecl("kk_flow_create")
 public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
-    let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)
-    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(flow).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: ptr))
-    }
-    return Int(bitPattern: ptr)
+    runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
 }
 
 @_cdecl("kk_flow_emit")
@@ -779,11 +782,7 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
         emitterFnPtr: flow.emitterFnPtr,
         opChain: flow.opChain + [RuntimeFlowOp(kind: opKind, argument: value)]
     )
-    let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(derived).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: ptr))
-    }
-    return Int(bitPattern: ptr)
+    return runtimeRegisterFlowHandle(derived)
 }
 
 @_cdecl("kk_flow_collect")
@@ -800,6 +799,43 @@ public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continua
         return runtimeFlowCollectNonSuspend(collectedValues, collectorFnPtr: collectorFnPtr)
     }
     return runtimeFlowCollectSuspend(collectedValues, collectorFnPtr: collectorFnPtr, functionID: continuation)
+}
+
+@_cdecl("kk_flow_retain")
+public func kk_flow_retain(_ flowHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let key = UInt(bitPattern: ptr)
+    return runtimeStorage.withLock { state in
+        guard state.flowHandles[key] != nil else {
+            return 0
+        }
+        state.flowRetainCounts[key, default: 0] += 1
+        return flowHandle
+    }
+}
+
+@_cdecl("kk_flow_release")
+public func kk_flow_release(_ flowHandle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
+        return 0
+    }
+    let key = UInt(bitPattern: ptr)
+    runtimeStorage.withLock { state in
+        guard let count = state.flowRetainCounts[key] else {
+            return
+        }
+        let nextCount = count - 1
+        if nextCount <= 0 {
+            state.flowRetainCounts.removeValue(forKey: key)
+            state.flowHandles.removeValue(forKey: key)
+            state.objectPointers.remove(key)
+        } else {
+            state.flowRetainCounts[key] = nextCount
+        }
+    }
+    return 0
 }
 
 // MARK: - Dispatcher Runtime Stubs (P5-133)

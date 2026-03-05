@@ -312,6 +312,32 @@ extension LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_string_trim" {
+                    let value = argVars.count > 0 ? argVars[0] : "0"
+                    let expr = "(intptr_t)kk_string_trim(\(value))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
+                if calleeName == "kk_string_replace" {
+                    let value = argVars.count > 0 ? argVars[0] : "0"
+                    let oldValue = argVars.count > 1 ? argVars[1] : "0"
+                    let newValue = argVars.count > 2 ? argVars[2] : "0"
+                    let expr = "(intptr_t)kk_string_replace(\(value), \(oldValue), \(newValue))"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if calleeName == "kk_int_toString_radix" {
                     let value = argVars.count > 0 ? argVars[0] : "0"
                     let radix = argVars.count > 1 ? argVars[1] : "10"

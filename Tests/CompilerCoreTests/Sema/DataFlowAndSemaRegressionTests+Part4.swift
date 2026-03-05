@@ -328,6 +328,24 @@ extension DataFlowAndSemaRegressionTests {
         }
     }
 
+    func testStringSplitMarksCollectionForFallbackMembers() throws {
+        let source = """
+        fun main() {
+            val parts = "1,2,3".split(",")
+            println(parts.size)
+            val mapped = parts.map { it }
+            println(mapped.size)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     // MARK: - ExprInference: local variable with var and reassignment
 
     func testVarLocalReassignment() throws {

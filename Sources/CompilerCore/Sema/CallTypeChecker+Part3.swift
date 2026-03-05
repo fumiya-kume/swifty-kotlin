@@ -748,9 +748,9 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
-            // Flow member access fallback (CORO-003): allow flow chain calls on Any/Any?.
-            if !isClassNameReceiver,
-               lookupReceiverType == sema.types.anyType || lookupReceiverType == sema.types.nullableAnyType
+            // Flow member access fallback (CORO-003): allow flow chain calls
+            // only when receiver provenance is known as Flow.
+            if !isClassNameReceiver, isFlowReceiver
             {
                 let memberName = interner.resolve(calleeName)
                 let flowMembers: Set = ["map", "filter", "take", "collect"]
@@ -774,7 +774,7 @@ extension CallTypeChecker {
                         let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                             params: [sema.types.anyType],
                             returnType: lambdaReturnType,
-                            isSuspend: true,
+                            isSuspend: memberName == "collect",
                             nullability: .nonNull
                         )))
                         if expectsLambdaTypeConstraint {

@@ -8,6 +8,8 @@ extension CodegenBackendIntegrationTests {
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);"))
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);"))
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_retain(intptr_t flowHandle);"))
+        XCTAssertTrue(externs.contains("extern intptr_t kk_flow_release(intptr_t flowHandle);"))
 
         XCTAssertFalse(externs.contains("extern intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr);"))
         XCTAssertFalse(externs.contains("extern intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr);"))
@@ -24,6 +26,8 @@ extension CodegenBackendIntegrationTests {
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation) {"))
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag) {"))
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_retain(intptr_t flowHandle) {"))
+        XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_release(intptr_t flowHandle) {"))
 
         XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_map(intptr_t flowHandle, intptr_t mapFnPtr) {"))
         XCTAssertFalse(preamble.contains("__attribute__((weak)) intptr_t kk_flow_filter(intptr_t flowHandle, intptr_t filterFnPtr) {"))

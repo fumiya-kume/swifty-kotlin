@@ -871,6 +871,10 @@ public final class BindingTable {
         flowSymbolIDs.insert(symbol)
     }
 
+    public func unmarkFlowSymbol(_ symbol: SymbolID) {
+        flowSymbolIDs.remove(symbol)
+    }
+
     public func isFlowSymbol(_ symbol: SymbolID) -> Bool {
         flowSymbolIDs.contains(symbol)
     }

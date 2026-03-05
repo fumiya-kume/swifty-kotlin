@@ -106,7 +106,7 @@ public enum RuntimeABIExterns {
     public static let kk_string_trim = ExternDecl(
         name: "kk_string_trim",
         parameterTypes: ["intptr_t"],
-        returnType: "void *"
+        returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
@@ -134,7 +134,7 @@ public enum RuntimeABIExterns {
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
-        returnType: "void *"
+        returnType: "intptr_t"
     )
 
     // swiftlint:disable:next identifier_name
@@ -369,6 +369,18 @@ public enum RuntimeABIExterns {
     public static let kk_flow_collect = ExternDecl(
         name: "kk_flow_collect",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_retain = ExternDecl(
+        name: "kk_flow_retain",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_release = ExternDecl(
+        name: "kk_flow_release",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -811,6 +823,8 @@ public enum RuntimeABIExterns {
         kk_flow_create,
         kk_flow_emit,
         kk_flow_collect,
+        kk_flow_retain,
+        kk_flow_release,
         // Dispatchers / withContext
         kk_dispatcher_default,
         kk_dispatcher_io,

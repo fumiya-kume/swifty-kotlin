@@ -106,6 +106,11 @@ final class LocalDeclTypeChecker {
                     diagnostics: ctx.semaCtx.diagnostics
                 )
                 locals[name] = (local.type, local.symbol, local.isMutable, true)
+                if ctx.sema.bindings.isFlowExpr(value) {
+                    ctx.sema.bindings.markFlowSymbol(local.symbol)
+                } else {
+                    ctx.sema.bindings.unmarkFlowSymbol(local.symbol)
+                }
             }
             ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
             return ctx.sema.types.unitType

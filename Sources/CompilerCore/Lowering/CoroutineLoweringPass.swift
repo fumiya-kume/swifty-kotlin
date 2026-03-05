@@ -301,6 +301,43 @@ final class CoroutineLoweringPass: LoweringPass {
             var updated = function
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
+
+            // Resolve temporary/copy aliases back to original symbol references.
+            // Some call arguments are not direct `.symbolRef` expressions because
+            // they are first materialized via `constValue` and propagated by `copy`.
+            var symbolByExprRaw: [Int32: SymbolID] = [:]
+            var propagated = true
+            while propagated {
+                propagated = false
+                for instruction in function.body {
+                    switch instruction {
+                    case let .constValue(result, .symbolRef(symbol)):
+                        if symbolByExprRaw[result.rawValue] != symbol {
+                            symbolByExprRaw[result.rawValue] = symbol
+                            propagated = true
+                        }
+                    case let .copy(from, to):
+                        if let symbol = symbolByExprRaw[from.rawValue],
+                           symbolByExprRaw[to.rawValue] != symbol
+                        {
+                            symbolByExprRaw[to.rawValue] = symbol
+                            propagated = true
+                        }
+                    default:
+                        continue
+                    }
+                }
+            }
+
+            func symbolReference(for exprID: KIRExprID) -> SymbolID? {
+                if let expr = module.arena.expr(exprID),
+                   case let .symbolRef(symbol) = expr
+                {
+                    return symbol
+                }
+                return symbolByExprRaw[exprID.rawValue]
+            }
+
             for instruction in function.body {
                 guard case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall) = instruction else {
                     loweredBody.append(instruction)
@@ -320,8 +357,7 @@ final class CoroutineLoweringPass: LoweringPass {
                         continue
                     }
 
-                    guard let argumentExpr = module.arena.expr(arguments[0]),
-                          case let .symbolRef(referencedSymbol) = argumentExpr,
+                    guard let referencedSymbol = symbolReference(for: arguments[0]),
                           let loweredTarget = loweredBySymbol[referencedSymbol]
                     else {
                         ctx.diagnostics.error(
@@ -453,8 +489,7 @@ final class CoroutineLoweringPass: LoweringPass {
 
                 if callee == flowCollectCallee,
                    arguments.count == 3,
-                   let collectorExpr = module.arena.expr(arguments[1]),
-                   case let .symbolRef(collectorSymbol) = collectorExpr,
+                   let collectorSymbol = symbolReference(for: arguments[1]),
                    let loweredCollector = loweredBySymbol[collectorSymbol]
                 {
                     let collectorEntryPoint = module.arena.appendExpr(

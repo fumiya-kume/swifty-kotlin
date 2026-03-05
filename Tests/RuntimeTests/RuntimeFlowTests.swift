@@ -187,4 +187,25 @@ final class RuntimeFlowTests: XCTestCase {
         XCTAssertEqual(snapshot.values, [1], "Collector throw should stop subsequent emissions.")
         XCTAssertEqual(snapshot.collectorCalls, 1)
     }
+
+    func testFlowRetainReleaseKeepsHandleAliveUntilLastRelease() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowUnaryEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let retained = kk_flow_retain(flowHandle)
+        XCTAssertEqual(retained, flowHandle)
+
+        _ = kk_flow_release(flowHandle)
+
+        runtimeFlowTestState.reset()
+        _ = kk_flow_collect(retained, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [1, 2, 3, 4])
+
+        _ = kk_flow_release(retained)
+
+        runtimeFlowTestState.reset()
+        _ = kk_flow_collect(retained, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [])
+    }
 }

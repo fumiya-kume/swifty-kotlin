@@ -44,6 +44,8 @@ extension LLVMBackend {
         "kk_flow_create",
         "kk_flow_emit",
         "kk_flow_collect",
+        "kk_flow_retain",
+        "kk_flow_release",
         // CORO-002: Cancellation ABI
         "kk_coroutine_check_cancellation",
         "kk_is_cancellation_exception",

@@ -18,6 +18,8 @@ extension CoroutineLoweringPass {
         let kkFlowCreateName = ctx.interner.intern("kk_flow_create")
         let kkFlowEmitName = ctx.interner.intern("kk_flow_emit")
         let kkFlowCollectName = ctx.interner.intern("kk_flow_collect")
+        let kkFlowRetainName = ctx.interner.intern("kk_flow_retain")
+        let kkFlowReleaseName = ctx.interner.intern("kk_flow_release")
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -35,6 +37,37 @@ extension CoroutineLoweringPass {
             func markFlowExpr(_ result: KIRExprID?) -> Bool {
                 guard let result else { return false }
                 return flowExprIDs.insert(result.rawValue).inserted
+            }
+
+            var symbolByExprRaw: [Int32: SymbolID] = [:]
+            var propagatedSymbols = true
+            while propagatedSymbols {
+                propagatedSymbols = false
+                for instruction in function.body {
+                    switch instruction {
+                    case let .constValue(result, .symbolRef(symbol)):
+                        if symbolByExprRaw[result.rawValue] != symbol {
+                            symbolByExprRaw[result.rawValue] = symbol
+                            propagatedSymbols = true
+                        }
+                    case let .copy(from, to):
+                        if let symbol = symbolByExprRaw[from.rawValue],
+                           symbolByExprRaw[to.rawValue] != symbol
+                        {
+                            symbolByExprRaw[to.rawValue] = symbol
+                            propagatedSymbols = true
+                        }
+                    default:
+                        continue
+                    }
+                }
+            }
+
+            func isSymbolBackedFlowExpr(_ exprID: KIRExprID) -> Bool {
+                if let expr = module.arena.expr(exprID), case .symbolRef = expr {
+                    return true
+                }
+                return symbolByExprRaw[exprID.rawValue] != nil
             }
 
             func isFlowTransformEmitCall(_ callee: InternedString, _ arguments: [KIRExprID]) -> Bool {
@@ -81,9 +114,11 @@ extension CoroutineLoweringPass {
                         }
                         if callee == collectName || callee == kkFlowCollectName,
                            arguments.count == 2 || arguments.count == 3,
-                           let flowHandleArg = arguments.first,
-                           flowExprIDs.insert(flowHandleArg.rawValue).inserted
+                           let flowHandleArg = arguments.first
                         {
+                            if flowExprIDs.insert(flowHandleArg.rawValue).inserted {
+                                changed = true
+                            }
                             continue
                         }
                         if callee == emitName,
@@ -156,6 +191,42 @@ extension CoroutineLoweringPass {
                 return updated
             }
 
+            var remainingConsumes: [Int32: Int] = [:]
+            func markConsume(_ source: KIRExprID) {
+                guard flowExprIDs.contains(source.rawValue) else {
+                    return
+                }
+                remainingConsumes[source.rawValue, default: 0] += 1
+            }
+            for instruction in function.body {
+                switch instruction {
+                case let .call(_, callee, arguments, _, _, _, _):
+                    if callee == mapName || callee == filterName || callee == takeName,
+                       arguments.count == 2
+                    {
+                        markConsume(arguments[0])
+                        continue
+                    }
+                    if callee == collectName || callee == kkFlowCollectName,
+                       (arguments.count == 2 || arguments.count == 3)
+                    {
+                        markConsume(arguments[0])
+                        continue
+                    }
+                    if isFlowTransformEmitCall(callee, arguments), arguments.count == 3 {
+                        markConsume(arguments[0])
+                    }
+                case let .virtualCall(_, callee, receiver, arguments, _, _, _, _):
+                    if (callee == mapName || callee == filterName || callee == takeName || callee == collectName),
+                       arguments.count == 1
+                    {
+                        markConsume(receiver)
+                    }
+                default:
+                    continue
+                }
+            }
+
             // Phase 2: rewrite flow instructions.
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
@@ -167,6 +238,42 @@ extension CoroutineLoweringPass {
                 )
                 loweredBody.append(.constValue(result: expr, value: .intLiteral(value)))
                 return expr
+            }
+
+            func appendFlowReleaseCall(_ handleExpr: KIRExprID) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: kkFlowReleaseName,
+                    arguments: [handleExpr],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+
+            func prepareFlowHandleForConsume(_ sourceHandle: KIRExprID) -> (callArg: KIRExprID, releaseAfterCall: KIRExprID?) {
+                if isSymbolBackedFlowExpr(sourceHandle) {
+                    let retained = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: ctx.sema?.types.anyType ?? TypeID.invalid
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: kkFlowRetainName,
+                        arguments: [sourceHandle],
+                        result: retained,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return (retained, retained)
+                }
+
+                if let count = remainingConsumes[sourceHandle.rawValue], count > 0 {
+                    let nextCount = count - 1
+                    remainingConsumes[sourceHandle.rawValue] = nextCount
+                    return (sourceHandle, nextCount == 0 ? sourceHandle : nil)
+                }
+                return (sourceHandle, nil)
             }
 
             for instruction in function.body {
@@ -205,15 +312,17 @@ extension CoroutineLoweringPass {
                     if callee == mapName, arguments.count == 2, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
+                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -223,15 +332,17 @@ extension CoroutineLoweringPass {
                     if callee == filterName, arguments.count == 2, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
+                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -241,15 +352,17 @@ extension CoroutineLoweringPass {
                     if callee == takeName, arguments.count == 2, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
+                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -259,30 +372,36 @@ extension CoroutineLoweringPass {
                     if callee == collectName, arguments.count == 2, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCollectName,
-                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
+                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(0)],
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         continue
                     }
 
                     if callee == collectName, arguments.count == 3, symbol == nil,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
+                        var rewrittenArguments = arguments
+                        rewrittenArguments[0] = consume.callArg
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCollectName,
-                            arguments: arguments,
+                            arguments: rewrittenArguments,
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         continue
                     }
 
@@ -290,15 +409,37 @@ extension CoroutineLoweringPass {
                        arguments.count == 2,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
                         loweredBody.append(.call(
                             symbol: symbol,
                             callee: callee,
-                            arguments: [arguments[0], arguments[1], appendIntConstantInBody(0)],
+                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(0)],
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult,
                             isSuperCall: isSuperCall
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
+                        continue
+                    }
+
+                    if callee == kkFlowCollectName,
+                       arguments.count == 3,
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
+                        let consume = prepareFlowHandleForConsume(arguments[0])
+                        var rewrittenArguments = arguments
+                        rewrittenArguments[0] = consume.callArg
+                        loweredBody.append(.call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: rewrittenArguments,
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult,
+                            isSuperCall: isSuperCall
+                        ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         continue
                     }
 
@@ -308,14 +449,16 @@ extension CoroutineLoweringPass {
                     if callee == mapName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(receiver)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
+                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -325,14 +468,16 @@ extension CoroutineLoweringPass {
                     if callee == filterName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(receiver)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
+                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -342,14 +487,16 @@ extension CoroutineLoweringPass {
                     if callee == takeName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(receiver)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [receiver, arguments[0], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
+                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
                             result: result,
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         if let result {
                             flowExprIDs.insert(result.rawValue)
                         }
@@ -359,14 +506,16 @@ extension CoroutineLoweringPass {
                     if callee == collectName, arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {
+                        let consume = prepareFlowHandleForConsume(receiver)
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowCollectName,
-                            arguments: [receiver, arguments[0], appendIntConstantInBody(0)],
+                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(0)],
                             result: result,
                             canThrow: canThrow,
                             thrownResult: thrownResult
                         ))
+                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
                         continue
                     }
 
