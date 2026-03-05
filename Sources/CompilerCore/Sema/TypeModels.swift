@@ -26,6 +26,17 @@ public enum Nullability: Hashable, Sendable {
     case nonNull
     case nullable
     case platformType // T! — nullability unknown (from external declarations)
+
+    /// Nullability used by metadata/signature encodings that only support
+    /// two states (non-null / nullable). Platform types are erased to nullable.
+    public var erasedForMetadata: Nullability {
+        switch self {
+        case .nonNull:
+            .nonNull
+        case .nullable, .platformType:
+            .nullable
+        }
+    }
 }
 
 public struct ClassType: Hashable, Sendable {

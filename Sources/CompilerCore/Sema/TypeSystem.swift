@@ -183,8 +183,9 @@ public final class TypeSystem {
             }
             return type // intersections don't become nullable directly
         case let .nothing(existing):
-            if existing == nullability { return type }
-            return make(.nothing(nullability))
+            let normalized: Nullability = (nullability == .platformType) ? .nullable : nullability
+            if existing == normalized { return type }
+            return make(.nothing(normalized))
         case let .any(existing):
             if existing == nullability { return type }
             return make(.any(nullability))
@@ -212,12 +213,19 @@ public final class TypeSystem {
     }
 
     public func make(_ kind: TypeKind) -> TypeID {
-        if let existing = kindToID[kind] {
+        // Keep Nothing as a two-state type; Nothing! is normalized to Nothing?.
+        let normalizedKind: TypeKind = switch kind {
+        case .nothing(.platformType):
+            .nothing(.nullable)
+        default:
+            kind
+        }
+        if let existing = kindToID[normalizedKind] {
             return existing
         }
         let id = TypeID(rawValue: Int32(idToKind.count))
-        idToKind.append(kind)
-        kindToID[kind] = id
+        idToKind.append(normalizedKind)
+        kindToID[normalizedKind] = id
         return id
     }
 

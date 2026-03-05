@@ -27,6 +27,14 @@ extension TypeSystemTests {
         XCTAssertEqual(ts.renderType(ts.make(.primitive(.int, .nullable))), "Int?")
     }
 
+    func testRenderTypePlatformNullabilitySuffix() {
+        let ts = TypeSystem()
+        let platformInt = ts.make(.primitive(.int, .platformType))
+        let platformAny = ts.withNullability(.platformType, for: ts.anyType)
+        XCTAssertEqual(ts.renderType(platformInt), "Int!")
+        XCTAssertEqual(ts.renderType(platformAny), "Any!")
+    }
+
     func testRenderTypeClassType() {
         let ts = TypeSystem()
         let ct = ts.make(.classType(ClassType(classSymbol: SymbolID(rawValue: 5))))
