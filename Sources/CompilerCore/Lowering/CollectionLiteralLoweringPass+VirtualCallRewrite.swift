@@ -1,7 +1,6 @@
 import Foundation
 
 extension CollectionLiteralLoweringPass {
-    /// Returns true when the virtual call was rewritten and appended.
     func rewriteVirtualCallInstruction(
         callee: InternedString,
         receiver: KIRExprID,

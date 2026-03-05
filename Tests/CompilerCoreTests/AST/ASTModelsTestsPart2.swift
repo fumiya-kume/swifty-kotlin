@@ -60,8 +60,4 @@ final class ASTModelsTestsPart2: XCTestCase {
         XCTAssertEqual(classDeclWithCtor.secondaryConstructors.count, 1)
         XCTAssertTrue(classDeclWithCtor.initBlocks.isEmpty)
     }
-
-    // MARK: - Expr variants
-
-    // MARK: - ASTArena expr() method
 }

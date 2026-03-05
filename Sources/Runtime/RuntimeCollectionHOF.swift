@@ -1,8 +1,5 @@
 import Foundation
 
-// MARK: - Higher-Order Collection Functions (STDLIB-005)
-
-/// Applies a transformation function to each element and returns a new list.
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -20,7 +17,6 @@ public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutable
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
-/// Returns a list containing only elements matching the predicate.
 @_cdecl("kk_list_filter")
 public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -37,7 +33,6 @@ public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMuta
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
 }
 
-/// Performs the given action on each element. Returns Unit (0).
 @_cdecl("kk_list_forEach")
 public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return 0 }
@@ -50,7 +45,6 @@ public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMut
     return 0
 }
 
-/// Applies a transformation returning a list for each element, then flattens.
 @_cdecl("kk_list_flatMap")
 public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -69,7 +63,6 @@ public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMut
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
-/// Returns true if any element matches the predicate. Short-circuit evaluation.
 @_cdecl("kk_list_any")
 public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(0) }
@@ -83,7 +76,6 @@ public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutable
     return kk_box_bool(0)
 }
 
-/// Returns true if no element matches the predicate. Short-circuit evaluation.
 @_cdecl("kk_list_none")
 public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(1) }
@@ -97,7 +89,6 @@ public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutabl
     return kk_box_bool(1)
 }
 
-/// Returns true if all elements match the predicate. Short-circuit evaluation.
 @_cdecl("kk_list_all")
 public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return kk_box_bool(1) }
@@ -111,7 +102,6 @@ public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutable
     return kk_box_bool(1)
 }
 
-/// Accumulates value starting with initial and applying operation from left to right.
 @_cdecl("kk_list_fold")
 public func kk_list_fold(
     _ listRaw: Int, _ initial: Int, _ fnPtr: Int,
@@ -128,8 +118,6 @@ public func kk_list_fold(
     return acc
 }
 
-/// Accumulates value starting with first element and applying operation from left to right.
-/// Throws UnsupportedOperationException on empty collection.
 @_cdecl("kk_list_reduce")
 public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
@@ -146,8 +134,6 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMuta
     return acc
 }
 
-/// Groups elements by the key returned by the selector function.
-/// Returns a Map<K, List<T>> as RuntimeMapBox.
 @_cdecl("kk_list_groupBy")
 public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -178,7 +164,6 @@ public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMut
     return registerRuntimeObject(RuntimeMapBox(keys: groupKeys, values: values))
 }
 
-/// Returns a list sorted by the value returned by the selector function (stable sort).
 @_cdecl("kk_list_sortedBy")
 public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -207,7 +192,6 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMu
     return registerRuntimeObject(RuntimeListBox(elements: sorted.map { elems[$0] }))
 }
 
-/// Returns the count of elements matching the predicate.
 @_cdecl("kk_list_count")
 public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return 0 }
@@ -222,8 +206,6 @@ public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutab
     return count
 }
 
-/// Returns the first element matching the predicate.
-/// Throws NoSuchElementException if no element matches.
 @_cdecl("kk_list_first")
 public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -243,8 +225,6 @@ public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutab
     return 0
 }
 
-/// Returns the last element matching the predicate.
-/// Throws NoSuchElementException if no element matches.
 @_cdecl("kk_list_last")
 public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -266,7 +246,6 @@ public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutabl
     return 0
 }
 
-/// Returns the first element matching the predicate, or null if none found.
 @_cdecl("kk_list_find")
 public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return runtimeNullSentinelInt }

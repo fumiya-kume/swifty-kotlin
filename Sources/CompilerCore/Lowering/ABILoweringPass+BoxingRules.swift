@@ -1,9 +1,6 @@
 import Foundation
 
 extension ABILoweringPass {
-    /// Resolves a value class type to its underlying primitive type kind.
-    /// If the type is a value class with a primitive underlying type, returns
-    /// the underlying type's kind. Otherwise returns the original kind.
     func resolveValueClassKind(
         _ kind: TypeKind,
         types: TypeSystem,
@@ -194,9 +191,6 @@ extension ABILoweringPass {
         return false
     }
 
-    /// Returns true if the type kind is a non-value-class reference type (interface, regular class).
-    /// Value class arguments need boxing when passed to such types.
-    /// Nullable value class types (e.g. Meter?) ARE boxing boundaries since they are boxed at ABI level.
     func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
         if case let .classType(ct) = kind {
             if let symbols,
@@ -211,11 +205,6 @@ extension ABILoweringPass {
         return false
     }
 
-    /// Determines whether unboxing is needed when converting from sourceKind to targetKind.
-    /// Unboxing is required when:
-    /// - Source is Any or Any? and target is a primitive (existing behavior)
-    /// - Source is a non-value-class reference type and target is a primitive (interface → value class)
-    /// - Source is a nullable primitive and target is a non-null primitive of the same kind
     func needsUnboxing(
         sourceKind: TypeKind,
         targetKind: TypeKind,
@@ -243,8 +232,6 @@ extension ABILoweringPass {
         return false
     }
 
-    /// Determines whether a copy from sourceKind to targetKind requires boxing.
-    /// Boxing is needed when a non-null primitive is copied to a nullable primitive slot.
     func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
         if case let .primitive(sourcePrimitive, .nonNull) = sourceKind,
            case let .primitive(targetPrimitive, .nullable) = targetKind,
@@ -255,8 +242,6 @@ extension ABILoweringPass {
         return false
     }
 
-    /// Returns the boxing callee for a given primitive type kind, or nil if the kind is not a
-    /// primitive that needs boxing (e.g., String or non-primitive types).
     func boxCalleeForPrimitive(
         _ kind: TypeKind,
         boxIntCallee: InternedString,

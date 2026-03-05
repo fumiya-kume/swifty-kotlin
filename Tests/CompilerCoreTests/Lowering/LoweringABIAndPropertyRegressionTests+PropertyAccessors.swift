@@ -5,8 +5,6 @@ import XCTest
 extension LoweringABIAndPropertyRegressionTests {
     // MARK: - Property Lowering Tests
 
-    /// Verify that a get call with a property symbol is rewritten to a direct
-    /// accessor call using the synthetic getter symbol (-12_000 - propertySymbol).
     func testPropertyLoweringRewritesGetterCallToDirectAccessorSymbol() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -48,7 +46,6 @@ extension LoweringABIAndPropertyRegressionTests {
             return
         }
 
-        // The getter call should use the synthetic accessor symbol.
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
             guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
@@ -57,13 +54,10 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
                       "Expected synthetic getter symbol \(expectedGetterSymbol), got: \(callSymbols)")
 
-        // kk_property_access must NOT appear.
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertFalse(callees.contains("kk_property_access"))
     }
 
-    /// Verify that a set call with a property symbol is rewritten to a direct
-    /// accessor call using the synthetic setter symbol (-13_000 - propertySymbol).
     func testPropertyLoweringRewritesSetterCallToDirectAccessorSymbol() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -118,7 +112,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertFalse(callees.contains("kk_property_access"))
     }
 
-    /// Verify that get/set calls without a property symbol are left unchanged.
     func testPropertyLoweringPreservesGetSetCallsWithoutSymbol() throws {
         let interner = StringInterner()
         let arena = KIRArena()
@@ -158,20 +151,17 @@ extension LoweringABIAndPropertyRegressionTests {
             return
         }
 
-        // The call should remain unchanged (no symbol to derive accessor from).
         let callees = extractCallees(from: lowered.body, interner: interner)
         XCTAssertTrue(callees.contains("get"))
         XCTAssertFalse(callees.contains("kk_property_access"))
     }
 
-    /// Verify that backing field copy is rewritten to a direct setter call.
     func testPropertyLoweringRewritesBackingFieldCopyToDirectSetterCall() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
         let symbols = SymbolTable()
 
-        // Create a property symbol and its backing field symbol.
         let propertySym = symbols.define(
             kind: .property,
             name: interner.intern("myProp"),
@@ -218,8 +208,6 @@ extension LoweringABIAndPropertyRegressionTests {
             return
         }
 
-        // The copy should be rewritten to a set call with the synthetic setter
-        // symbol derived from the property (not the backing field).
         let expectedSetterSymbol = SymbolID(rawValue: -13000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
             guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
@@ -232,7 +220,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertTrue(callees.contains("set"))
         XCTAssertFalse(callees.contains("kk_property_access"))
 
-        // Verify no copy instruction remains for the backing field.
         let hasCopy = lowered.body.contains { instruction in
             if case .copy = instruction { return true }
             return false
@@ -240,15 +227,12 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertFalse(hasCopy, "Backing field copy should have been rewritten to a setter call")
     }
 
-    /// Verify that a constValue(.symbolRef(propSym)) for a getter-only computed
-    /// property (no backing field) is rewritten to a getter call by PropertyLoweringPass.
     func testPropertyLoweringRewritesComputedPropertySymbolRefToGetterCall() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
         let symbols = SymbolTable()
 
-        // Define a property symbol with NO backing field (getter-only computed).
         let propertySym = symbols.define(
             kind: .property,
             name: interner.intern("computed"),
@@ -257,8 +241,6 @@ extension LoweringABIAndPropertyRegressionTests {
             visibility: .public,
             flags: []
         )
-        // Deliberately do NOT set a backing field symbol for this property.
-
         // Emit a getter accessor function so PropertyLoweringPass recognises
         // this property as a computed property (it checks that the getter
         // function actually exists in the KIR module).
@@ -305,8 +287,6 @@ extension LoweringABIAndPropertyRegressionTests {
             return
         }
 
-        // The constValue(.symbolRef) should be rewritten to a getter call
-        // using the synthetic getter symbol (-12_000 - propSym).
         let expectedGetterSymbol = SymbolID(rawValue: -12000 - propertySym.rawValue)
         let callSymbols = lowered.body.compactMap { instruction -> SymbolID? in
             guard case let .call(sym, _, _, _, _, _, _) = instruction else { return nil }
@@ -315,7 +295,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertTrue(callSymbols.contains(expectedGetterSymbol),
                       "Expected getter call for computed property, got: \(callSymbols)")
 
-        // No constValue(.symbolRef) should remain for the computed property.
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
@@ -329,15 +308,12 @@ extension LoweringABIAndPropertyRegressionTests {
                        "constValue(.symbolRef) for computed property should have been rewritten to a getter call")
     }
 
-    /// Verify that a `var` property with a backing field is NOT rewritten
-    /// (its constValue(.symbolRef) is preserved because it has storage).
     func testPropertyLoweringPreservesBackedPropertySymbolRef() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
         let symbols = SymbolTable()
 
-        // Define a property with a backing field (var with custom getter/setter).
         let propertySym = symbols.define(
             kind: .property,
             name: interner.intern("backed"),
@@ -383,7 +359,6 @@ extension LoweringABIAndPropertyRegressionTests {
             return
         }
 
-        // The constValue(.symbolRef) for a backed property should be preserved.
         let hasSymbolRef = lowered.body.contains { instruction in
             if case let .constValue(_, value) = instruction,
                case let .symbolRef(sym) = value,
@@ -397,8 +372,6 @@ extension LoweringABIAndPropertyRegressionTests {
                       "constValue(.symbolRef) for backed property should NOT be rewritten")
     }
 
-    /// Integration test: compile `val computed: String get() = "hello"` through
-    /// the full pipeline and verify no KIRGlobal is emitted for the computed property.
     func testGetterOnlyComputedPropertyEmitsNoGlobal() throws {
         let source = """
         package test
@@ -421,7 +394,6 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let interner = ctx.interner
 
-        // Collect all global symbols.
         var globalSymbols: [SymbolID] = []
         for decl in module.arena.declarations {
             if case let .global(global) = decl {
@@ -429,7 +401,6 @@ extension LoweringABIAndPropertyRegressionTests {
             }
         }
 
-        // The "computed" property should NOT have a KIRGlobal.
         let computedName = interner.intern("computed")
         let computedSymbols = globalSymbols.filter { sym in
             ctx.sema?.symbols.symbol(sym)?.name == computedName
@@ -437,7 +408,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertTrue(computedSymbols.isEmpty,
                       "Getter-only computed property should NOT have a KIRGlobal, found: \(computedSymbols)")
 
-        // The "backed" property SHOULD have a KIRGlobal (it has storage).
         let backedName = interner.intern("backed")
         let backedSymbols = globalSymbols.filter { sym in
             ctx.sema?.symbols.symbol(sym)?.name == backedName
@@ -466,8 +436,6 @@ extension LoweringABIAndPropertyRegressionTests {
                       "Getter accessor symbol for computed property should be emitted. expected=\(expectedGetterSymbol), actual=\(getterSymbols)")
     }
 
-    /// Verifies that getter-only computed property overrides emit getter
-    /// accessor functions for both base and derived classes (vtable-ready).
     func testGetterOnlyComputedPropertyOverrideEmitsAccessors() throws {
         let source = """
         package test
@@ -490,9 +458,6 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let interner = ctx.interner
 
-        // Both Base and Derived should have getter accessor functions for
-        // the "label" property.  The getter accessor symbol is derived from
-        // the property symbol via SyntheticSymbolScheme.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case let .function(kirFunc) = decl,
@@ -503,13 +468,11 @@ extension LoweringABIAndPropertyRegressionTests {
             return kirFunc
         }
 
-        // There should be at least two getter accessors — one per class.
         XCTAssertGreaterThanOrEqual(
             getterFunctions.count, 2,
             "Both base and override should emit getter accessors, found: \(getterFunctions.count)"
         )
 
-        // Neither base nor derived "label" property should have a KIRGlobal.
         let labelName = interner.intern("label")
         var globalSymbols: [SymbolID] = []
         for decl in module.arena.declarations {
@@ -524,9 +487,6 @@ extension LoweringABIAndPropertyRegressionTests {
                       "Getter-only computed property override should NOT have a KIRGlobal, found: \(labelGlobals)")
     }
 
-    /// Verifies that a class with both custom getter and setter emits accessor
-    /// functions AND a backing field, while a getter-only computed property
-    /// emits only the getter accessor with no backing storage.
     func testCustomGetterSetterPropertyEmitsAccessorsAndBackingField() throws {
         let source = """
         package test
@@ -549,7 +509,6 @@ extension LoweringABIAndPropertyRegressionTests {
 
         let interner = ctx.interner
 
-        // Collect globals.
         var globalSymbols: [SymbolID] = []
         for decl in module.arena.declarations {
             if case let .global(global) = decl {
@@ -557,7 +516,6 @@ extension LoweringABIAndPropertyRegressionTests {
             }
         }
 
-        // "count" SHOULD have a KIRGlobal (has backing field).
         let countName = interner.intern("count")
         let countGlobals = globalSymbols.filter { sym in
             ctx.sema?.symbols.symbol(sym)?.name == countName
@@ -565,7 +523,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertFalse(countGlobals.isEmpty,
                        "Var property with custom getter/setter should have a KIRGlobal")
 
-        // "label" should NOT have a KIRGlobal (getter-only computed).
         let labelName = interner.intern("label")
         let labelGlobals = globalSymbols.filter { sym in
             ctx.sema?.symbols.symbol(sym)?.name == labelName
@@ -573,8 +530,6 @@ extension LoweringABIAndPropertyRegressionTests {
         XCTAssertTrue(labelGlobals.isEmpty,
                       "Getter-only computed property should NOT have a KIRGlobal, found: \(labelGlobals)")
 
-        // The "label" computed property should have a getter accessor
-        // function emitted.
         let getName = interner.intern("get")
         let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
             guard case let .function(kirFunc) = decl,
@@ -590,13 +545,7 @@ extension LoweringABIAndPropertyRegressionTests {
         )
     }
 
-    /// Verifies that a top-level getter-only computed property does not emit
-    /// a KIRGlobal and that reads of a non-literal getter body are lowered
-    /// to getter accessor calls (not loadGlobal) by PropertyLoweringPass.
     func testTopLevelGetterOnlyComputedPropertyEmitsNoGlobal() throws {
-        // Use a non-literal getter body (`= stored`) so the constant
-        // collector does NOT inline the value.  This forces ExprLowerer
-        // to emit .loadGlobal which PropertyLoweringPass must rewrite.
         let source = """
         package test
 
