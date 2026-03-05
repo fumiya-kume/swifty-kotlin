@@ -114,7 +114,6 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
-
     }
 
     private func ensureKotlinTextPackage(

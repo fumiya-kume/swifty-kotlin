@@ -1,5 +1,7 @@
 import Foundation
 
+// swiftlint:disable file_length
+
 // Handles call expression type inference (function calls, member calls, safe member calls).
 // Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
 
@@ -177,11 +179,12 @@ extension CallTypeChecker {
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let isFlowReceiver: Bool = if sema.bindings.isFlowExpr(receiverID) {
+        let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
                   let receiverSymbol = sema.bindings.identifierSymbol(for: receiverID),
-                  sema.bindings.isFlowSymbol(receiverSymbol) {
+                  sema.bindings.isFlowSymbol(receiverSymbol)
+        {
             true
         } else {
             false
@@ -190,7 +193,7 @@ extension CallTypeChecker {
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
             && sema.bindings.isCollectionExpr(receiverID)
         let argTypes = args.map { arg -> TypeID in
-            if (isCollectionHOF || isFlowHOF),
+            if isCollectionHOF || isFlowHOF,
                let argExpr = ast.arena.expr(arg.expr),
                case .lambdaLiteral = argExpr
             {
@@ -389,7 +392,6 @@ extension CallTypeChecker {
                                enclosingClass: ctx.enclosingClassSymbol
                            )
                         {
-                            // swiftlint:disable:next line_length
                             driver.helpers.emitVisibilityError(for: propSym, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                         }
@@ -491,7 +493,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -606,10 +607,8 @@ extension CallTypeChecker {
             {
                 // Check visibility before trying callable-style resolution.
                 if let propSymbol = sema.symbols.symbol(propResult.symbol),
-                   // swiftlint:disable:next line_length
                    !ctx.visibilityChecker.isAccessible(propSymbol, fromFile: ctx.currentFileID, enclosingClass: ctx.enclosingClassSymbol)
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -665,7 +664,6 @@ extension CallTypeChecker {
                         return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                     }
                     if let chosen = resolved.chosenCallee {
-                        // swiftlint:disable:next line_length
                         let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
                         sema.bindings.markInvokeOperatorCall(id)
                         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
@@ -691,7 +689,6 @@ extension CallTypeChecker {
                        enclosingClass: ctx.enclosingClassSymbol
                    )
                 {
-                    // swiftlint:disable:next line_length
                     driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
                 }
@@ -732,7 +729,6 @@ extension CallTypeChecker {
                 return finalType
             }
             if let firstInvisible = invisible.first {
-                // swiftlint:disable:next line_length
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
@@ -834,18 +830,18 @@ extension CallTypeChecker {
                     let acceptsArity = args.count == 1
                     if acceptsArity, memberName == "map" || memberName == "filter" || memberName == "collect" {
                         let expectsLambdaTypeConstraint = switch ast.arena.expr(args[0].expr) {
-                            case .callableRef:
-                                false
-                            default:
-                                true
+                        case .callableRef:
+                            false
+                        default:
+                            true
                         }
                         let lambdaReturnType: TypeID = switch memberName {
-                            case "filter":
-                                sema.types.make(.primitive(.boolean, .nonNull))
-                            case "collect":
-                                sema.types.unitType
-                            default:
-                                sema.types.anyType
+                        case "filter":
+                            sema.types.make(.primitive(.boolean, .nonNull))
+                        case "collect":
+                            sema.types.unitType
+                        default:
+                            sema.types.anyType
                         }
                         let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                             params: [sema.types.anyType],
@@ -1176,5 +1172,4 @@ extension CallTypeChecker {
             typeVarBySymbol: typeVarBySymbol
         )
     }
-    // swiftlint:disable:next file_length
 }

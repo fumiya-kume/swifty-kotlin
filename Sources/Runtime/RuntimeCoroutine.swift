@@ -536,8 +536,8 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 
 private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
 
-// Runtime flow op tags must be aligned with C preamble constants in
-// LLVMBackend+CRuntimePreambleData.swift.
+/// Runtime flow op tags must be aligned with C preamble constants in
+/// LLVMBackend+CRuntimePreambleData.swift.
 private enum RuntimeFlowTag: Int {
     case emit = 0
     case map = 1
@@ -641,6 +641,7 @@ private func runtimeFlowEvaluateSource(_ flow: RuntimeFlowHandle) -> [Int] {
     return context.emittedValues
 }
 
+// swiftlint:disable:next cyclomatic_complexity
 private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int] {
     var values = source
     for op in ops {
@@ -752,6 +753,7 @@ private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, fun
     }
     return 0
 }
+
 @_cdecl("kk_flow_create")
 public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     let flow = RuntimeFlowHandle(emitterFnPtr: emitterFnPtr)

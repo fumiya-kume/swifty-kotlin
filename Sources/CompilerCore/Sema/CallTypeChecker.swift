@@ -1,5 +1,7 @@
 import Foundation
 
+// swiftlint:disable file_length
+
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from TypeCheckSemaPass+InferCallsAndBinary.swift.
 final class CallTypeChecker {
@@ -532,3 +534,5 @@ final class CallTypeChecker {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }
 }
+
+// swiftlint:enable file_length

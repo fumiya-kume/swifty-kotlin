@@ -1704,7 +1704,6 @@ extension LLVMBackend {
         "    char elem[64];",
         "    kk_format_element(list->elements[i], elem, sizeof(elem));",
         "    size_t elen = strlen(elem);",
-        // swiftlint:disable:next line_length
         "    while (pos + elen + 2 >= cap) { cap *= 2; char* tmp = (char*)realloc(out, cap); if (!tmp) { free(out); return (intptr_t)kk_string_from_utf8((const uint8_t*)\"[]\", 2); } out = tmp; }",
         "    memcpy(out + pos, elem, elen); pos += elen;",
         "  }",

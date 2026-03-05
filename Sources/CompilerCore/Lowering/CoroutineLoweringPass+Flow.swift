@@ -71,7 +71,7 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-                        if (callee == mapName || callee == filterName || callee == takeName),
+                        if callee == mapName || callee == filterName || callee == takeName,
                            arguments.count == 2,
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
@@ -79,8 +79,8 @@ extension CoroutineLoweringPass {
                             if markFlowExpr(result) { changed = true }
                             continue
                         }
-                        if (callee == collectName || callee == kkFlowCollectName),
-                           (arguments.count == 2 || arguments.count == 3),
+                        if callee == collectName || callee == kkFlowCollectName,
+                           arguments.count == 2 || arguments.count == 3,
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
                         {
@@ -96,7 +96,7 @@ extension CoroutineLoweringPass {
                         }
 
                     case let .virtualCall(_, callee, receiver, arguments, result, _, _, _):
-                        if (callee == mapName || callee == filterName || callee == takeName),
+                        if callee == mapName || callee == filterName || callee == takeName,
                            arguments.count == 1,
                            flowExprIDs.contains(receiver.rawValue)
                         {
@@ -143,13 +143,13 @@ extension CoroutineLoweringPass {
             let hasFlowLikeCalls = function.body.contains { instruction in
                 switch instruction {
                 case let .call(_, callee, _, _, _, _, _):
-                    return callee == flowName || callee == emitName || callee == collectName ||
+                    callee == flowName || callee == emitName || callee == collectName ||
                         callee == mapName || callee == filterName || callee == takeName ||
                         callee == kkFlowCreateName || callee == kkFlowEmitName || callee == kkFlowCollectName
                 case let .virtualCall(_, callee, _, _, _, _, _, _):
-                    return callee == mapName || callee == filterName || callee == takeName || callee == collectName
+                    callee == mapName || callee == filterName || callee == takeName || callee == collectName
                 default:
-                    return false
+                    false
                 }
             }
 
@@ -204,7 +204,8 @@ extension CoroutineLoweringPass {
                     }
 
                     if callee == mapName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue) {
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
@@ -221,7 +222,8 @@ extension CoroutineLoweringPass {
                     }
 
                     if callee == filterName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue) {
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
@@ -238,7 +240,8 @@ extension CoroutineLoweringPass {
                     }
 
                     if callee == takeName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue) {
+                       flowExprIDs.contains(arguments[0].rawValue)
+                    {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,

@@ -101,7 +101,7 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
     var result: [String] = []
     var cursor = source.startIndex
     while true {
-        guard let match = source.range(of: delimiter, range: cursor..<source.endIndex) else {
+        guard let match = source.range(of: delimiter, range: cursor ..< source.endIndex) else {
             result.append(String(source[cursor...]))
             return result
         }
@@ -140,5 +140,4 @@ private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
-    // swiftlint:disable:next file_length
 }

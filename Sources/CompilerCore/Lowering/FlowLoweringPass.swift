@@ -44,6 +44,7 @@ final class FlowLoweringPass: LoweringPass {
         return false
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let flowName = interner.intern("flow")
@@ -119,10 +120,10 @@ final class FlowLoweringPass: LoweringPass {
             var updated = function
             let isFlowBuilderFunction =
                 flowBuilderFunctionSymbols.contains(function.symbol)
-                || flowBuilderFunctionNames.contains(function.name)
+                    || flowBuilderFunctionNames.contains(function.name)
 
             var flowExprIDs: Set<Int32> = []
-            var activeFlowExpr: KIRExprID? = nil
+            var activeFlowExpr: KIRExprID?
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 16)
 
@@ -179,8 +180,8 @@ final class FlowLoweringPass: LoweringPass {
                             flowExprIDs.insert(result.rawValue)
                             activeFlowExpr = result
                         }
-                    continue
-                }
+                        continue
+                    }
 
                     if callee == emitName, isFlowBuilderFunction {
                         let flowHandleExpr: KIRExprID
@@ -212,7 +213,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if (callee == mapName || callee == filterName || callee == takeName),
+                    if callee == mapName || callee == filterName || callee == takeName,
                        arguments.count == 2,
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
@@ -302,11 +303,11 @@ final class FlowLoweringPass: LoweringPass {
                             flowHandleExpr = appendIntConstant(0)
                             valueExpr = arguments[0]
                         } else {
-                        loweredBody.append(.virtualCall(
-                            symbol: symbol,
-                            callee: callee,
-                            receiver: receiver,
-                            arguments: arguments,
+                            loweredBody.append(.virtualCall(
+                                symbol: symbol,
+                                callee: callee,
+                                receiver: receiver,
+                                arguments: arguments,
                                 result: result,
                                 canThrow: canThrow,
                                 thrownResult: thrownResult,
@@ -329,7 +330,7 @@ final class FlowLoweringPass: LoweringPass {
                         continue
                     }
 
-                    if (callee == mapName || callee == filterName || callee == takeName),
+                    if callee == mapName || callee == filterName || callee == takeName,
                        arguments.count == 1,
                        flowExprIDs.contains(receiver.rawValue)
                     {

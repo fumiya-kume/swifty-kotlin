@@ -1,5 +1,7 @@
 import Foundation
 
+// swiftlint:disable file_length
+
 // Handles expression type inference dispatch and specific expression cases.
 // Derived from TypeCheckSemaPhase+ExprInference.swift and TypeCheckSemaPhase+ExprInferCases.swift.
 
@@ -131,6 +133,7 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -745,3 +748,5 @@ extension ExprTypeChecker {
         return receiverType
     }
 }
+
+// swiftlint:enable file_length
