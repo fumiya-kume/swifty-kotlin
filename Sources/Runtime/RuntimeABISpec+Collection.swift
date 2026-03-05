@@ -1,8 +1,6 @@
-// Collection ABI specs (STDLIB-001)
 // swiftlint:disable trailing_comma
 
 public extension RuntimeABISpec {
-    /// Collection functions for List, Map, and Array operations.
     static let collectionFunctions: [RuntimeABIFunctionSpec] = [
         // List
         RuntimeABIFunctionSpec(

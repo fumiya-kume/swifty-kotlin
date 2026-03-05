@@ -103,6 +103,15 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 
 ---
 
+## 4.1 ファイル分割命名規約
+
+- 分割ファイルの suffix は責務ベースで命名する（例: `+MemberCallResolution.swift`, `+TypeAliasExpansion.swift`）。
+- `+Part`, `+Part2`, `+Part3` のような番号付き分割名は新規追加しない。
+- この規約は `Sources` と `Tests` の両方に適用する。
+- 分割ファイルの責務が変わった場合は、同一 PR でファイル名も更新する。
+
+---
+
 ## 5. テスト構造
 
 ```text

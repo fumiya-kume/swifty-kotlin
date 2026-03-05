@@ -1,7 +1,7 @@
 import Foundation
 
 // Indexed access and assignment type inference.
-// Split from LocalDeclTypeChecker+Part2.swift to satisfy file_length limit.
+// Split from LocalDeclTypeChecker core to keep file size manageable.
 
 extension LocalDeclTypeChecker {
     func inferIndexedAccessExpr(

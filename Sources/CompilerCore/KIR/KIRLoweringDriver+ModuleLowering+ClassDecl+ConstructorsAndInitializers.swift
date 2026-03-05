@@ -207,7 +207,6 @@ extension KIRLoweringDriver {
         }
     }
 
-    /// Emits a single `init { }` block into the constructor body.
     func emitInitBlock(
         _ initBlock: FunctionBody,
         shared: KIRLoweringSharedContext,
@@ -225,8 +224,6 @@ extension KIRLoweringDriver {
         }
     }
 
-    /// Emits a single member property initializer (including delegate
-    /// properties) as a field store in the constructor body.
     func emitPropertyInitializer(
         propDeclID: DeclID,
         shared: KIRLoweringSharedContext,
@@ -277,8 +274,6 @@ extension KIRLoweringDriver {
 
     // MARK: - Secondary constructor body emission
 
-    /// Emits the body of a secondary constructor, including delegation
-    /// call and body statements.
     func emitSecondaryConstructorBody(
         classDecl: ClassDecl,
         ctorSymbol: SymbolID,
@@ -320,8 +315,6 @@ extension KIRLoweringDriver {
         }
     }
 
-    /// Emits a delegated property initializer, handling provideDelegate
-    /// when available on the delegate type.
     private func emitDelegatePropertyInitializer(
         delegateExpr: ExprID,
         propSymbol: SymbolID,
@@ -353,7 +346,6 @@ extension KIRLoweringDriver {
         }
     }
 
-    /// Wraps a delegate value in a provideDelegate call.
     private func emitProvideDelegateCall(
         delegateValue: KIRExprID,
         storageSym: SymbolID,

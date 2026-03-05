@@ -3,7 +3,6 @@
 import XCTest
 
 extension OverloadResolverTests {
-    /// Named arguments select the correct overload from multiple candidates.
     func testResolveCallNamedArgsSelectCorrectOverload() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -50,7 +49,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
     }
 
-    /// Named arguments combined with default argument omission.
     func testResolveCallNamedArgsWithDefaultArgsCombined() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -90,7 +88,6 @@ extension OverloadResolverTests {
 
     // MARK: - Advanced Vararg Tests
 
-    /// Vararg parameter receives zero elements when only non-vararg params provided.
     func testResolveCallVarargReceivesZeroElements() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -123,7 +120,6 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [0: 0])
     }
 
-    /// Vararg-only function accepting multiple elements.
     func testResolveCallVarargOnlyFunctionMultipleElements() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -153,7 +149,6 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 0, 2: 0, 3: 0])
     }
 
-    /// Spread argument on a vararg parameter should be accepted.
     func testResolveCallSpreadArgumentOnVarargParameter() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -181,7 +176,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
     }
 
-    /// Vararg with wrong element type is rejected.
     func testResolveCallVarargWithTypeMismatch() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -212,7 +206,6 @@ extension OverloadResolverTests {
 
     // MARK: - Advanced Default Arguments Tests
 
-    /// All parameters have defaults; calling with zero args should succeed.
     func testResolveCallAllDefaultsOmitted() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -243,7 +236,6 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [:])
     }
 
-    /// Three params: first required, middle default, last required. Provide first and last via named args.
     func testResolveCallDefaultArgMiddleOmittedWithNamedArgs() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -281,7 +273,6 @@ extension OverloadResolverTests {
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 2])
     }
 
-    /// Default args help select between overloads: one candidate matches with defaults, other doesn't.
     func testResolveCallDefaultArgsSelectOverload() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -324,7 +315,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
     }
 
-    /// When a required param is missing (no default), call should fail.
     func testResolveCallRejectsWhenRequiredParamNotProvided() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -355,7 +345,6 @@ extension OverloadResolverTests {
 
     // MARK: - Advanced Receiver Type (Extension Function) Tests
 
-    /// Extension function with wrong receiver type is rejected.
     func testResolveCallRejectsExtensionWithReceiverTypeMismatch() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -390,7 +379,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.chosenCallee)
     }
 
-    /// Multiple extension candidates with different receiver types — correct one selected.
     func testResolveCallSelectsCorrectExtensionByReceiverType() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -437,8 +425,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
     }
 
-    /// When both non-null and nullable receiver extensions are viable,
-    /// the non-null receiver extension should be preferred.
     func testResolveCallPrefersNonNullReceiverExtensionOverNullable() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -487,7 +473,6 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
     }
 
-    /// Extension function with parameters and receiver type.
     func testResolveCallExtensionFunctionWithParameters() {
         let (resolver, types, symbols, interner, ctx) = makeEnv()
 
@@ -523,27 +508,4 @@ extension OverloadResolverTests {
         XCTAssertNil(resolved.diagnostic)
         XCTAssertEqual(resolved.parameterMapping, [0: 0, 1: 1])
     }
-
-    // Extension function with receiver + generic type param.
-
-    // MARK: - Advanced Multiple Type Parameters Tests
-
-    // Multiple type params where one violates its bound.
-
-    // Multiple type params with expected return type constraint.
-
-    // Multiple type params where return type constraint conflicts with argument types.
-
-    // MARK: - Advanced Most Specific Overload Selection Tests
-
-    // Three candidates, one is most specific (Int < Any, String < Any).
-
-    // Multi-parameter most specific selection.
-
-    // Three truly ambiguous candidates → ambiguous diagnostic.
-
-    // Generic candidate instantiated to same types as concrete → ambiguous
-    // (resolver compares instantiated parameter types, not generic vs concrete).
-
-    // Most specific selection with incompatible parameter counts yields no winner.
 }

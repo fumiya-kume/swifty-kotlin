@@ -747,6 +747,70 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Boxing"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_double",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_long",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_float",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_double",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_char",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
     ]
 
     public static let arrayFunctions: [RuntimeABIFunctionSpec] = [

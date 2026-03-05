@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Flow Lowering (CORO-003)
-
 enum RuntimeFlowTag: Int64 {
     case emit = 0
     case map = 1

@@ -1,6 +1,3 @@
-// MARK: - Collection Box Extraction Helpers
-
-/// Extracts a `RuntimeListBox` from an opaque handle.
 func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -14,7 +11,6 @@ func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     return tryCast(ptr, to: RuntimeListBox.self)
 }
 
-/// Extracts a `RuntimeMapBox` from an opaque handle.
 func runtimeMapBox(from rawValue: Int) -> RuntimeMapBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -28,7 +24,6 @@ func runtimeMapBox(from rawValue: Int) -> RuntimeMapBox? {
     return tryCast(ptr, to: RuntimeMapBox.self)
 }
 
-/// Extracts a `RuntimeListIteratorBox` from an opaque handle.
 func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -42,7 +37,6 @@ func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     return tryCast(ptr, to: RuntimeListIteratorBox.self)
 }
 
-/// Extracts a `RuntimeMapIteratorBox` from an opaque handle.
 func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -56,8 +50,6 @@ func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     return tryCast(ptr, to: RuntimeMapIteratorBox.self)
 }
 
-/// Extracts a parallel key/value array pair from opaque handles.
-/// Returns nil if either handle is invalid. Guarantees both arrays are valid.
 func runtimeMapArrayPair(
     keysRaw: Int,
     valuesRaw: Int
@@ -70,8 +62,6 @@ func runtimeMapArrayPair(
     return (keysArray.elements, valuesArray.elements)
 }
 
-/// Registers an opaque handle with the runtime GC tracking.
-/// Shared by RuntimeCollections and RuntimeSequence.
 func registerRuntimeObject(_ box: AnyObject) -> Int {
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
@@ -80,8 +70,6 @@ func registerRuntimeObject(_ box: AnyObject) -> Int {
     return Int(bitPattern: opaque)
 }
 
-/// Unbox a boxed value to its raw integer if it's a RuntimeIntBox or RuntimeBoolBox.
-/// Shared by RuntimeCollections HOFs and RuntimeSequence.
 func maybeUnbox(_ value: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
         return value
@@ -101,8 +89,6 @@ func maybeUnbox(_ value: Int) -> Int {
     return value
 }
 
-/// Converts a runtime element value (intptr_t) to its string representation.
-/// Used by `kk_list_to_string` and `kk_map_to_string`.
 func runtimeElementToString(_ elem: Int) -> String {
     if elem == runtimeNullSentinelInt {
         return "null"

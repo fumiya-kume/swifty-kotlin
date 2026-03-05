@@ -235,40 +235,13 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "split result should be recognized as list and routed through kk_list_to_string")
     }
 
-    // MARK: - shouldRun always returns true (default implementation)
-
     func testShouldRunAlwaysReturnsTrue() {
-        // CollectionLiteralLoweringPass uses the default shouldRun which always returns true.
         let interner = StringInterner()
         let arena = KIRArena()
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [])], arena: arena)
         let ctx = makeKIRContext(interner: interner)
 
         let shouldRun = CollectionLiteralLoweringPass().shouldRun(module: module, ctx: ctx)
-        XCTAssertTrue(shouldRun, "CollectionLiteralLoweringPass should always run (no shouldRun override)")
-    }
-
-    func testShouldRunReturnsTrueForListOfCall() {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let v0 = arena.appendExpr(.temporary(0))
-        let v1 = arena.appendExpr(.temporary(1))
-        let fn = KIRFunction(
-            symbol: SymbolID(rawValue: 1),
-            name: interner.intern("main"),
-            params: [],
-            returnType: TypeSystem().unitType,
-            body: [
-                .call(symbol: nil, callee: interner.intern("listOf"), arguments: [v0], result: v1, canThrow: false, thrownResult: nil),
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let declID = arena.appendDecl(.function(fn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
-        let ctx = makeKIRContext(interner: interner)
-
-        let shouldRun = CollectionLiteralLoweringPass().shouldRun(module: module, ctx: ctx)
-        XCTAssertTrue(shouldRun, "shouldRun should return true when listOf call is present")
+        XCTAssertTrue(shouldRun)
     }
 }

@@ -1,11 +1,8 @@
 import Foundation
 
-/// Rewrites Flow builtins (`flow/emit/map/filter/take/collect`) into
-/// runtime ABI calls (`kk_flow_create/kk_flow_emit/kk_flow_collect`).
 final class FlowLoweringPass: LoweringPass {
     static let name = "FlowLowering"
 
-    /// Runtime ABI tag contract shared by C/Swift flow runtime (see `RuntimeFlowOp`).
     private enum RuntimeFlowTag: Int64 {
         case emit = 0
         case map = 1
