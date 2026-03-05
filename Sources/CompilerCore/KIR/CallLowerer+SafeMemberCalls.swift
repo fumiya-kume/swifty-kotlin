@@ -3,7 +3,6 @@ import Foundation
 extension CallLowerer {
     private static let coroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerSafeMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,

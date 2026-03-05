@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -299,8 +298,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:enable function_body_length function_parameter_count
-
     /// CLASS-008: Create synthetic method symbols for delegated interface methods
     /// that the class does not override. These are used for itable layout and KIR lowering.
     func synthesizeClassDelegationForwardingMethodSymbols(
@@ -424,8 +421,6 @@ extension DataFlowSemaPhase {
             }
         }
     }
-
-    // swiftlint:enable cyclomatic_complexity function_body_length
 
     private func validateAbstractOverridesForDecl(
         declID: DeclID,

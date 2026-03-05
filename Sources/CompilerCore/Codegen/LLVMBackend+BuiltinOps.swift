@@ -1,4 +1,3 @@
-// swiftlint:disable trailing_comma
 
 // MARK: - Builtin Operator Tables
 
@@ -65,8 +64,6 @@ extension LLVMBackend {
             || doubleBuiltinOps.contains(calleeName)
     }
 }
-
-// swiftlint:enable trailing_comma
 
 // MARK: - Symbol & Prototype Helpers
 

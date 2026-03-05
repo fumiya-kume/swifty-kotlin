@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 // Stateless utility functions for type checking. No back-reference to the driver needed.

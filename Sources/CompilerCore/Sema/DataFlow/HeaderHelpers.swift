@@ -186,8 +186,6 @@ extension DataFlowSemaPhase {
         scope.insert(funcSymbol)
     }
 
-    // swiftlint:enable function_parameter_count
-
     /// Registers synthetic `equals(other: Any?): Boolean` for data object (identity comparison).
     func collectSyntheticDataObjectEquals(
         ownerSymbol: SymbolID,
@@ -250,8 +248,6 @@ extension DataFlowSemaPhase {
         )
         scope.insert(funcSymbol)
     }
-
-    // swiftlint:enable function_parameter_count function_body_length
 
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,
     /// and vararg flags.  Shared by constructor and function header collection.

@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Dispatch
 import Foundation
 
@@ -649,7 +648,6 @@ private func runtimeFlowEvaluateSource(_ flow: RuntimeFlowHandle) -> [Int] {
     return context.emittedValues
 }
 
-// swiftlint:disable:next cyclomatic_complexity
 private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int] {
     var values = source
     for op in ops {

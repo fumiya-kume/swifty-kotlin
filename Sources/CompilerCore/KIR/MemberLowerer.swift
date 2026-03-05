@@ -9,7 +9,6 @@ final class MemberLowerer {
         self.driver = driver
     }
 
-    // swiftlint:disable function_body_length
     func lowerMemberDecls(
         memberFunctions: [DeclID],
         memberProperties: [DeclID],
@@ -362,8 +361,6 @@ final class MemberLowerer {
         return (directMembers, allDecls)
     }
 
-    // swiftlint:enable function_body_length
-
     /// Synthesise a getter or setter function for a delegated property.
     ///
     /// Getter emits: `return $delegate_x.getValue(thisRef, KProperty("x"))`
@@ -435,5 +432,3 @@ final class MemberLowerer {
         )
     }
 }
-
-// swiftlint:enable file_length type_body_length

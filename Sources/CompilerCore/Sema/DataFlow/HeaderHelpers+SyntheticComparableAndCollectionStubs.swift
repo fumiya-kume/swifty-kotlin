@@ -70,7 +70,7 @@ extension DataFlowSemaPhase {
     }
 
     /// Register `operator fun compareTo(other: T): Int` on the Comparable interface.
-    private func registerComparableCompareToOperator( // swiftlint:disable:this function_parameter_count
+    private func registerComparableCompareToOperator(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,

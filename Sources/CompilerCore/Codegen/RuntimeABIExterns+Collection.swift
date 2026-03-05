@@ -1,4 +1,3 @@
-// swiftlint:disable identifier_name trailing_comma
 
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
@@ -322,5 +321,3 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 }
-
-// swiftlint:enable identifier_name trailing_comma

@@ -1,5 +1,4 @@
 // Sequence ABI specs (STDLIB-003)
-// swiftlint:disable trailing_comma
 
 public extension RuntimeABISpec {
     /// Sequence functions for lazy evaluation chains.
@@ -76,5 +75,3 @@ public extension RuntimeABISpec {
         ),
     ]
 }
-
-// swiftlint:enable trailing_comma

@@ -113,8 +113,7 @@ extension TypeCheckHelpers {
         return applyAliasSubstitution(typeID, argSubstitution: argSubstitution, sema: sema)
     }
 
-    // Recursively apply type argument substitution to a type.
-    // swiftlint:disable:next cyclomatic_complexity
+    /// Recursively apply type argument substitution to a type.
     func applyAliasSubstitution(
         _ typeID: TypeID,
         argSubstitution: [SymbolID: TypeArg],

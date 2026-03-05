@@ -65,7 +65,6 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private func parsePrimaryNumericOrChar(_ token: Token) -> ExprID? {
         switch token.kind {
         case let .intLiteral(text):
@@ -143,7 +142,6 @@ extension BuildASTPhase.ExpressionParser {
         return nil
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private func parsePrimaryIdentifier(_ token: Token) -> ExprID? {
         let name: InternedString
         switch token.kind {

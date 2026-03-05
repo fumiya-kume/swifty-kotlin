@@ -1,4 +1,3 @@
-// swiftlint:disable trailing_comma
 
 public extension RuntimeABISpec {
     static let collectionFunctions: [RuntimeABIFunctionSpec] = [
@@ -299,5 +298,3 @@ public extension RuntimeABISpec {
         return before.map { hofSpec($0) } + [foldSpec] + after.map { hofSpec($0) }
     }()
 }
-
-// swiftlint:enable trailing_comma

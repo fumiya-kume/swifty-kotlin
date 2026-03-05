@@ -1,6 +1,5 @@
 import Foundation
 
-// swiftlint:disable:next type_body_length
 final class DataEnumSealedSynthesisPass: LoweringPass {
     static let name = "DataEnumSealedSynthesis"
 
@@ -186,12 +185,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: returnType
         )
-        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .intLiteral(value)),
             .returnValue(resultExpr),
         ]
-        // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(
             name: name,
             owner: owner,
@@ -236,12 +233,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: receiverType
         )
-        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
             .returnValue(resultExpr),
         ]
-        // swiftlint:enable trailing_comma
         let signature = FunctionSignature(
             parameterTypes: [receiverType],
             returnType: receiverType,
@@ -302,12 +297,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: stringType
         )
-        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(objectName)),
             .returnValue(resultExpr),
         ]
-        // swiftlint:enable trailing_comma
         let signature = FunctionSignature(
             receiverType: receiverType,
             parameterTypes: [],
@@ -328,8 +321,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             body: body
         )
     }
-
-    // swiftlint:enable function_parameter_count
 
     /// Synthesizes `equals(other: Any?): Boolean` for data object (identity comparison via kk_op_eq).
     private func appendSyntheticDataObjectEqualsIfNeeded(
@@ -383,7 +374,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: boolType
         )
-        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: receiverRef, value: .symbolRef(receiverParam.symbol)),
             .constValue(result: otherRef, value: .symbolRef(paramSymbol)),
@@ -397,7 +387,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             ),
             .returnValue(resultExpr),
         ]
-        // swiftlint:enable trailing_comma
         let signature = FunctionSignature(
             receiverType: receiverType,
             parameterTypes: [nullableAnyType],
@@ -419,8 +408,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    // swiftlint:enable function_parameter_count function_body_length
-
     private func appendSyntheticStringFunctionIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
@@ -435,12 +422,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             .temporary(Int32(module.arena.expressions.count)),
             type: returnType
         )
-        // swiftlint:disable trailing_comma
         let body: [KIRInstruction] = [
             .constValue(result: resultExpr, value: .stringLiteral(value)),
             .returnValue(resultExpr),
         ]
-        // swiftlint:enable trailing_comma
         appendSyntheticFunctionIfNeeded(
             name: name,
             owner: owner,
@@ -639,8 +624,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
         ))
     }
-
-    // swiftlint:enable function_parameter_count
 
     private func appendSyntheticFunctionIfNeeded(
         name: InternedString,

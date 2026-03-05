@@ -326,5 +326,4 @@ extension KIRLoweringDriver {
         ctx.currentImplicitReceiverSymbol = nil
         return declIDs
     }
-    // swiftlint:enable function_body_length
 }

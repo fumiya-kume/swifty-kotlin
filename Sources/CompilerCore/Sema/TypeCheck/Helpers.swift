@@ -77,7 +77,6 @@ struct TypeCheckHelpers {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func kxMiniCoroutineBuiltinReturnType(
         calleeName: InternedString?,
         argumentCount: Int,

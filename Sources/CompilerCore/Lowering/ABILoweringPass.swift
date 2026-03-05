@@ -1,11 +1,8 @@
-// swiftlint:disable file_length
 import Foundation
 
-// swiftlint:disable:next type_body_length
 final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
-    // swiftlint:disable:next function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let nonThrowingCallees = nonThrowingCallees(interner: ctx.interner)
 

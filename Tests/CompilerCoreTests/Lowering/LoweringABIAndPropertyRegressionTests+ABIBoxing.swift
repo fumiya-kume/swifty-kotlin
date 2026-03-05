@@ -461,7 +461,6 @@ extension LoweringABIAndPropertyRegressionTests {
         let anyNullableType = types.make(.any(.nullable))
 
         // Define primitives and their expected boxing callees
-        // swiftlint:disable:next large_tuple
         let primitives: [(TypeKind, KIRExprKind, String)] = [
             (.primitive(.int, .nonNull), .intLiteral(1), "kk_box_int"),
             (.primitive(.boolean, .nonNull), .boolLiteral(true), "kk_box_bool"),

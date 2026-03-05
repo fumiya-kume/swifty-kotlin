@@ -49,7 +49,7 @@ final class TailrecLoweringTests: XCTestCase {
                 // base case
                 .label(1),
                 .returnValue(accExpr),
-                .endBlock, // swiftlint:disable:this trailing_comma
+                .endBlock,
             ],
             isSuspend: false,
             isInline: false,
@@ -142,7 +142,7 @@ final class TailrecLoweringTests: XCTestCase {
                     thrownResult: nil
                 ),
                 .returnValue(callResult),
-                .endBlock, // swiftlint:disable:this trailing_comma
+                .endBlock,
             ],
             isSuspend: false,
             isInline: false,

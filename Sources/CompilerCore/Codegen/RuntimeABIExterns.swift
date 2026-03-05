@@ -1,4 +1,3 @@
-// swiftlint:disable file_length type_body_length
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
@@ -102,70 +101,60 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_trim = ExternDecl(
         name: "kk_string_trim",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_isNullOrEmpty = ExternDecl(
         name: "kk_string_isNullOrEmpty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_isNullOrBlank = ExternDecl(
         name: "kk_string_isNullOrBlank",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_split = ExternDecl(
         name: "kk_string_split",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_startsWith = ExternDecl(
         name: "kk_string_startsWith",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_endsWith = ExternDecl(
         name: "kk_string_endsWith",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_contains_str = ExternDecl(
         name: "kk_string_contains_str",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_toInt = ExternDecl(
         name: "kk_string_toInt",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_string_toDouble = ExternDecl(
         name: "kk_string_toDouble",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
@@ -372,14 +361,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_flow_retain = ExternDecl(
         name: "kk_flow_retain",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_flow_release = ExternDecl(
         name: "kk_flow_release",
         parameterTypes: ["intptr_t"],
@@ -492,28 +479,24 @@ public enum RuntimeABIExterns {
 
     // MARK: - Cancellation (CORO-002)
 
-    // swiftlint:disable:next identifier_name
     public static let kk_coroutine_check_cancellation = ExternDecl(
         name: "kk_coroutine_check_cancellation",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_is_cancellation_exception = ExternDecl(
         name: "kk_is_cancellation_exception",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_job_cancel = ExternDecl(
         name: "kk_job_cancel",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_coroutine_cancel = ExternDecl(
         name: "kk_coroutine_cancel",
         parameterTypes: ["intptr_t"],
@@ -716,7 +699,6 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // swiftlint:disable:next identifier_name
     public static let kk_lazy_is_initialized = ExternDecl(
         name: "kk_lazy_is_initialized",
         parameterTypes: ["intptr_t"],
@@ -960,5 +942,3 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
-
-// swiftlint:enable file_length type_body_length

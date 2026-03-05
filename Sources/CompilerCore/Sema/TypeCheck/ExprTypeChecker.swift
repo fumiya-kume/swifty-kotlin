@@ -11,7 +11,6 @@ final class ExprTypeChecker {
 
     // MARK: - Main Dispatch (from +ExprInference.swift)
 
-    // swiftlint:disable:next function_body_length
     func inferExpr(
         _ id: ExprID,
         ctx: TypeInferenceContext,

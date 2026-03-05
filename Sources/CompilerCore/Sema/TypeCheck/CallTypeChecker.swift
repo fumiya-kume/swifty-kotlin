@@ -1,7 +1,5 @@
 import Foundation
 
-// swiftlint:disable file_length
-
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 /// Derived from legacy TypeCheckSemaPhase+InferCallsAndBinary.swift.
 final class CallTypeChecker {
@@ -11,7 +9,6 @@ final class CallTypeChecker {
         self.driver = driver
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,
@@ -444,7 +441,7 @@ final class CallTypeChecker {
                     let listFQName: [InternedString] = [
                         interner.intern("kotlin"),
                         interner.intern("collections"),
-                        interner.intern("List"), // swiftlint:disable:this trailing_comma
+                        interner.intern("List"),
                     ]
                     if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
                         collectionType = sema.types.make(.classType(ClassType(
@@ -548,5 +545,3 @@ final class CallTypeChecker {
         inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
     }
 }
-
-// swiftlint:enable file_length

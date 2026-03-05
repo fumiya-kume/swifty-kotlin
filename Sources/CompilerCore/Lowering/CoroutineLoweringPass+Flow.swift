@@ -22,10 +22,9 @@ struct FlowLoweringNames {
 }
 
 extension CoroutineLoweringPass {
-    // Lower `flow { }`, `emit`, `map`, `filter`, `take`, `collect` calls to their
-    // runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
-    // `CollectionLiteralLoweringPass`.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    /// Lower `flow { }`, `emit`, `map`, `filter`, `take`, `collect` calls to their
+    /// runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
+    /// `CollectionLiteralLoweringPass`.
     func lowerFlowExpressions(module: KIRModule, ctx: KIRContext) {
         let flowName = ctx.interner.intern("flow")
         let emitName = ctx.interner.intern("emit")

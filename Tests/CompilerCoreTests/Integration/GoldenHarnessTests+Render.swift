@@ -214,7 +214,6 @@ extension GoldenHarnessTests {
         return result
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func renderSymbolFlags(_ flags: SymbolFlags) -> String {
         if flags.isEmpty {
             return "_"

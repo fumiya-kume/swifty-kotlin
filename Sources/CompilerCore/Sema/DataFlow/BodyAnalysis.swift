@@ -1,6 +1,5 @@
 import Foundation
 
-// swiftlint:disable file_length
 extension DataFlowSemaPhase {
     func analyzeBody(
         declID: DeclID,
@@ -26,7 +25,6 @@ extension DataFlowSemaPhase {
                 seenNames.insert(valueParam.name)
             }
 
-            // swiftlint:disable opening_brace
             if let symbol = bindings.declSymbols[declID],
                let signature = symbols.functionSignature(for: symbol),
                case .expr = funDecl.body
@@ -35,7 +33,6 @@ extension DataFlowSemaPhase {
                 let expr = ExprID(rawValue: declID.rawValue)
                 bindings.bindExprType(expr, type: signature.returnType)
             }
-            // swiftlint:enable opening_brace
 
             // Validate tailrec: the terminal expression must be a self-recursive call.
             if funDecl.isTailrec {
@@ -465,7 +462,6 @@ extension DataFlowSemaPhase {
         case let .invariant(inner):
             // If the inner type is a bare type parameter with a substitution,
             // replace the entire arg with the use-site TypeArg (preserving projection).
-            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -474,10 +470,8 @@ extension DataFlowSemaPhase {
                 }
                 return replacement
             }
-            // swiftlint:enable opening_brace
             return .invariant(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .out(inner):
-            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -487,10 +481,8 @@ extension DataFlowSemaPhase {
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
                 return .out(resolved)
             }
-            // swiftlint:enable opening_brace
             return .out(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case let .in(inner):
-            // swiftlint:disable opening_brace
             if case let .typeParam(tp) = types.kind(of: inner),
                let replacement = argSubstitution[tp.symbol]
             {
@@ -499,7 +491,6 @@ extension DataFlowSemaPhase {
                 let resolved = tp.nullability == .nullable ? applyNullability(innerType, types: types) : innerType
                 return .in(resolved)
             }
-            // swiftlint:enable opening_brace
             return .in(applySubstitution(inner, argSubstitution: argSubstitution, types: types, symbols: symbols))
         case .star:
             return .star
@@ -546,7 +537,6 @@ extension DataFlowSemaPhase {
             // is a self-recursive call — the tail call may appear in an
             // early-return branch, not necessarily the last statement.
             for exprID in exprIDs {
-                // swiftlint:disable opening_brace
                 if let expr = ast.arena.expr(exprID),
                    case let .returnExpr(value, _, _) = expr,
                    let value
@@ -555,7 +545,6 @@ extension DataFlowSemaPhase {
                         return true
                     }
                 }
-                // swiftlint:enable opening_brace
             }
             // Also check the last expression for implicit return (expression-body style).
             guard let lastExprID = exprIDs.last else { return false }

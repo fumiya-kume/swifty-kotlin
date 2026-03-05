@@ -1,7 +1,6 @@
 import Foundation
 
 extension CoroutineLoweringPass {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func rewriteFlowInstructions(
         originalBody: [KIRInstruction],
         module: KIRModule,

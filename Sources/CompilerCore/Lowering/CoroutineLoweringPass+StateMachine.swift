@@ -1,7 +1,6 @@
 import Foundation
 
 extension CoroutineLoweringPass {
-    // swiftlint:disable:next function_body_length
     func lowerSuspendBodyToStateMachineSkeleton(
         originalBody: [KIRInstruction],
         continuationParameterSymbol: SymbolID,
