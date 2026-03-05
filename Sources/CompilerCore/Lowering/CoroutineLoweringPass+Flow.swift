@@ -82,9 +82,8 @@ extension CoroutineLoweringPass {
                         if callee == collectName || callee == kkFlowCollectName,
                            arguments.count == 2 || arguments.count == 3,
                            let flowHandleArg = arguments.first,
-                           flowExprIDs.contains(flowHandleArg.rawValue)
+                           flowExprIDs.insert(flowHandleArg.rawValue).inserted
                         {
-                            if flowExprIDs.insert(flowHandleArg.rawValue).inserted { changed = true }
                             continue
                         }
                         if callee == emitName,

@@ -376,7 +376,7 @@ final class CoroutineLoweringPass: LoweringPass {
                                 arguments: [entryPointExpr, entryFunctionID],
                                 result: result,
                                 canThrow: canThrow,
-                                thrownResult: nil
+                                thrownResult: thrownResult
                             )
                         )
                     } else {
