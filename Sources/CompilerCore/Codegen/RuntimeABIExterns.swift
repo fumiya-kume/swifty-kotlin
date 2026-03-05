@@ -372,12 +372,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_flow_retain = ExternDecl(
         name: "kk_flow_retain",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
+    // swiftlint:disable:next identifier_name
     public static let kk_flow_release = ExternDecl(
         name: "kk_flow_release",
         parameterTypes: ["intptr_t"],

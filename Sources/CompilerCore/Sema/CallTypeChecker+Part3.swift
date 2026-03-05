@@ -750,8 +750,7 @@ extension CallTypeChecker {
             }
             // Flow member access fallback (CORO-003): allow flow chain calls
             // only when receiver provenance is known as Flow.
-            if !isClassNameReceiver, isFlowReceiver
-            {
+            if !isClassNameReceiver, isFlowReceiver {
                 let memberName = interner.resolve(calleeName)
                 let flowMembers: Set = ["map", "filter", "take", "collect"]
                 if flowMembers.contains(memberName) {

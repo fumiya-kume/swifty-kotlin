@@ -2,6 +2,27 @@ import Foundation
 
 // MARK: - Flow Lowering (CORO-003)
 
+enum RuntimeFlowTag: Int64 {
+    case emit = 0
+    case map = 1
+    case filter = 2
+    case take = 3
+}
+
+struct FlowLoweringNames {
+    let flow: InternedString
+    let emit: InternedString
+    let collect: InternedString
+    let map: InternedString
+    let filter: InternedString
+    let take: InternedString
+    let kkFlowCreate: InternedString
+    let kkFlowEmit: InternedString
+    let kkFlowCollect: InternedString
+    let kkFlowRetain: InternedString
+    let kkFlowRelease: InternedString
+}
+
 extension CoroutineLoweringPass {
     // Lower `flow { }`, `emit`, `map`, `filter`, `take`, `collect` calls to their
     // runtime ABI equivalents. Mirrors the `sequenceExprIDs` pattern in
@@ -26,13 +47,6 @@ extension CoroutineLoweringPass {
 
             var flowExprIDs: Set<Int32> = []
             var flowGlobalSymbols: Set<SymbolID> = []
-
-            enum RuntimeFlowTag: Int64 {
-                case emit = 0
-                case map = 1
-                case filter = 2
-                case take = 3
-            }
 
             func markFlowExpr(_ result: KIRExprID?) -> Bool {
                 guard let result else { return false }
@@ -208,7 +222,7 @@ extension CoroutineLoweringPass {
                         continue
                     }
                     if callee == collectName || callee == kkFlowCollectName,
-                       (arguments.count == 2 || arguments.count == 3)
+                       arguments.count == 2 || arguments.count == 3
                     {
                         markConsume(arguments[0])
                         continue
@@ -217,7 +231,7 @@ extension CoroutineLoweringPass {
                         markConsume(arguments[0])
                     }
                 case let .virtualCall(_, callee, receiver, arguments, _, _, _, _):
-                    if (callee == mapName || callee == filterName || callee == takeName || callee == collectName),
+                    if callee == mapName || callee == filterName || callee == takeName || callee == collectName,
                        arguments.count == 1
                     {
                         markConsume(receiver)
@@ -228,312 +242,28 @@ extension CoroutineLoweringPass {
             }
 
             // Phase 2: rewrite flow instructions.
-            var loweredBody: [KIRInstruction] = []
-            loweredBody.reserveCapacity(function.body.count)
-
-            func appendIntConstantInBody(_ value: Int64) -> KIRExprID {
-                let expr = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: ctx.sema?.types.intType ?? TypeID.invalid
-                )
-                loweredBody.append(.constValue(result: expr, value: .intLiteral(value)))
-                return expr
-            }
-
-            func appendFlowReleaseCall(_ handleExpr: KIRExprID) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: kkFlowReleaseName,
-                    arguments: [handleExpr],
-                    result: nil,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-            }
-
-            func prepareFlowHandleForConsume(_ sourceHandle: KIRExprID) -> (callArg: KIRExprID, releaseAfterCall: KIRExprID?) {
-                if isSymbolBackedFlowExpr(sourceHandle) {
-                    let retained = module.arena.appendExpr(
-                        .temporary(Int32(module.arena.expressions.count)),
-                        type: ctx.sema?.types.anyType ?? TypeID.invalid
-                    )
-                    loweredBody.append(.call(
-                        symbol: nil,
-                        callee: kkFlowRetainName,
-                        arguments: [sourceHandle],
-                        result: retained,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
-                    return (retained, retained)
-                }
-
-                if let count = remainingConsumes[sourceHandle.rawValue], count > 0 {
-                    let nextCount = count - 1
-                    remainingConsumes[sourceHandle.rawValue] = nextCount
-                    return (sourceHandle, nextCount == 0 ? sourceHandle : nil)
-                }
-                return (sourceHandle, nil)
-            }
-
-            for instruction in function.body {
-                switch instruction {
-                case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
-                    if callee == flowName, arguments.count == 1, symbol == nil {
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowCreateName,
-                            arguments: [arguments[0], appendIntConstantInBody(0)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil,
-                            isSuperCall: isSuperCall
-                        ))
-                        continue
-                    }
-
-                    if callee == emitName, arguments.count == 1, symbol == nil {
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [
-                                appendIntConstantInBody(0),
-                                arguments[0],
-                                appendIntConstantInBody(RuntimeFlowTag.emit.rawValue),
-                            ],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil,
-                            isSuperCall: isSuperCall
-                        ))
-                        continue
-                    }
-
-                    if callee == mapName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == filterName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == takeName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == collectName, arguments.count == 2, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowCollectName,
-                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(0)],
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        continue
-                    }
-
-                    if callee == collectName, arguments.count == 3, symbol == nil,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        var rewrittenArguments = arguments
-                        rewrittenArguments[0] = consume.callArg
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowCollectName,
-                            arguments: rewrittenArguments,
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        continue
-                    }
-
-                    if callee == kkFlowCollectName,
-                       arguments.count == 2,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        loweredBody.append(.call(
-                            symbol: symbol,
-                            callee: callee,
-                            arguments: [consume.callArg, arguments[1], appendIntConstantInBody(0)],
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        continue
-                    }
-
-                    if callee == kkFlowCollectName,
-                       arguments.count == 3,
-                       flowExprIDs.contains(arguments[0].rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(arguments[0])
-                        var rewrittenArguments = arguments
-                        rewrittenArguments[0] = consume.callArg
-                        loweredBody.append(.call(
-                            symbol: symbol,
-                            callee: callee,
-                            arguments: rewrittenArguments,
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult,
-                            isSuperCall: isSuperCall
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        continue
-                    }
-
-                    loweredBody.append(instruction)
-
-                case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
-                    if callee == mapName, arguments.count == 1,
-                       flowExprIDs.contains(receiver.rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(receiver)
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.map.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == filterName, arguments.count == 1,
-                       flowExprIDs.contains(receiver.rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(receiver)
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.filter.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == takeName, arguments.count == 1,
-                       flowExprIDs.contains(receiver.rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(receiver)
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowEmitName,
-                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(RuntimeFlowTag.take.rawValue)],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        if let result {
-                            flowExprIDs.insert(result.rawValue)
-                        }
-                        continue
-                    }
-
-                    if callee == collectName, arguments.count == 1,
-                       flowExprIDs.contains(receiver.rawValue)
-                    {
-                        let consume = prepareFlowHandleForConsume(receiver)
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: kkFlowCollectName,
-                            arguments: [consume.callArg, arguments[0], appendIntConstantInBody(0)],
-                            result: result,
-                            canThrow: canThrow,
-                            thrownResult: thrownResult
-                        ))
-                        if let releaseHandle = consume.releaseAfterCall { appendFlowReleaseCall(releaseHandle) }
-                        continue
-                    }
-
-                    loweredBody.append(.virtualCall(
-                        symbol: symbol,
-                        callee: callee,
-                        receiver: receiver,
-                        arguments: arguments,
-                        result: result,
-                        canThrow: canThrow,
-                        thrownResult: thrownResult,
-                        dispatch: dispatch
-                    ))
-
-                default:
-                    loweredBody.append(instruction)
-                }
-            }
+            let names = FlowLoweringNames(
+                flow: flowName,
+                emit: emitName,
+                collect: collectName,
+                map: mapName,
+                filter: filterName,
+                take: takeName,
+                kkFlowCreate: kkFlowCreateName,
+                kkFlowEmit: kkFlowEmitName,
+                kkFlowCollect: kkFlowCollectName,
+                kkFlowRetain: kkFlowRetainName,
+                kkFlowRelease: kkFlowReleaseName
+            )
+            let loweredBody = rewriteFlowInstructions(
+                originalBody: function.body,
+                module: module,
+                ctx: ctx,
+                flowExprIDs: &flowExprIDs,
+                remainingConsumes: &remainingConsumes,
+                symbolByExprRaw: symbolByExprRaw,
+                names: names
+            )
 
             updated.body = loweredBody
             return updated
