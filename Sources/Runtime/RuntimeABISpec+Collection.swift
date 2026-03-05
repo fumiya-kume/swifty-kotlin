@@ -1,4 +1,3 @@
-
 public extension RuntimeABISpec {
     static let collectionFunctions: [RuntimeABIFunctionSpec] = [
         // List

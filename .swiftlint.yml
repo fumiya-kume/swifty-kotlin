@@ -4,6 +4,8 @@ disabled_rules:
   - opening_brace
   - large_tuple
   - trailing_comma
+  - optional_data_string_conversion
+  - blanket_disable_command
 
 identifier_name:
   min_length:
@@ -12,6 +14,17 @@ identifier_name:
   max_length:
     warning: 60
     error: 80
+  excluded:
+    - super_
+    - init_
+    - is_
+    - S0
+    - S1
+    - O0
+    - O1
+    - O2
+    - O3
+    - v2_3_10
 
 function_body_length:
   warning: 200

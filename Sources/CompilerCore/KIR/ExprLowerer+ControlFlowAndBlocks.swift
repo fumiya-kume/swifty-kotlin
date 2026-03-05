@@ -247,13 +247,46 @@ extension ExprLowerer {
             return id
 
         case let .forExpr(_, iterableExpr, bodyExpr, label, _):
-            return driver.controlFlowLowerer.lowerForExpr(exprID, iterableExpr: iterableExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerForExpr(
+                exprID,
+                iterableExpr: iterableExpr,
+                bodyExpr: bodyExpr,
+                label: label,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .whileExpr(conditionExpr, bodyExpr, label, _):
-            return driver.controlFlowLowerer.lowerWhileExpr(exprID, conditionExpr: conditionExpr, bodyExpr: bodyExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerWhileExpr(
+                exprID,
+                conditionExpr: conditionExpr,
+                bodyExpr: bodyExpr,
+                label: label,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .doWhileExpr(bodyExpr, conditionExpr, label, _):
-            return driver.controlFlowLowerer.lowerDoWhileExpr(exprID, bodyExpr: bodyExpr, conditionExpr: conditionExpr, label: label, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerDoWhileExpr(
+                exprID,
+                bodyExpr: bodyExpr,
+                conditionExpr: conditionExpr,
+                label: label,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .breakExpr(label, _):
             let targetLabel: Int32? = if let label {
@@ -690,10 +723,31 @@ extension ExprLowerer {
             )
 
         case let .indexedAccess(receiverExpr, indices, _):
-            return driver.callLowerer.lowerIndexedAccessExpr(exprID, receiverExpr: receiverExpr, indices: indices, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerIndexedAccessExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                indices: indices,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .indexedAssign(receiverExpr, indices, valueExpr, _):
-            return driver.callLowerer.lowerIndexedAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerIndexedAssignExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                indices: indices,
+                valueExpr: valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .returnExpr(value, _, _):
             if let value {
@@ -715,19 +769,73 @@ extension ExprLowerer {
             return unit
 
         case let .ifExpr(condition, thenExpr, elseExpr, _):
-            return driver.controlFlowLowerer.lowerIfExpr(exprID, condition: condition, thenExpr: thenExpr, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerIfExpr(
+                exprID,
+                condition: condition,
+                thenExpr: thenExpr,
+                elseExpr: elseExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .tryExpr(bodyExpr, catchClauses, finallyExpr, _):
-            return driver.controlFlowLowerer.lowerTryExpr(exprID, bodyExpr: bodyExpr, catchClauses: catchClauses, finallyExpr: finallyExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerTryExpr(
+                exprID,
+                bodyExpr: bodyExpr,
+                catchClauses: catchClauses,
+                finallyExpr: finallyExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .binary(op, lhs, rhs, _):
-            return driver.callLowerer.lowerBinaryExpr(exprID, op: op, lhs: lhs, rhs: rhs, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerBinaryExpr(
+                exprID,
+                op: op,
+                lhs: lhs,
+                rhs: rhs,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .call(calleeExpr, _, args, _):
-            return driver.callLowerer.lowerCallExpr(exprID, calleeExpr: calleeExpr, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerCallExpr(
+                exprID,
+                calleeExpr: calleeExpr,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .memberCall(receiverExpr, calleeName, _, args, _):
-            return driver.callLowerer.lowerMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerMemberCallExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                calleeName: calleeName,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .unaryExpr(op, operandExpr, _):
             let operandID = lowerExpr(
@@ -856,7 +964,18 @@ extension ExprLowerer {
             return result
 
         case let .safeMemberCall(receiverExpr, calleeName, _, args, _):
-            return driver.callLowerer.lowerSafeMemberCallExpr(exprID, receiverExpr: receiverExpr, calleeName: calleeName, args: args, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerSafeMemberCallExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                calleeName: calleeName,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .compoundAssign(op, _, valueExpr, _):
             let rhsID = lowerExpr(
@@ -917,7 +1036,18 @@ extension ExprLowerer {
             return unit
 
         case let .indexedCompoundAssign(_, receiverExpr, indices, valueExpr, _):
-            return driver.callLowerer.lowerIndexedCompoundAssignExpr(exprID, receiverExpr: receiverExpr, indices: indices, valueExpr: valueExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.callLowerer.lowerIndexedCompoundAssignExpr(
+                exprID,
+                receiverExpr: receiverExpr,
+                indices: indices,
+                valueExpr: valueExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .throwExpr(valueExpr, _):
             let thrownValue = lowerExpr(
@@ -983,7 +1113,18 @@ extension ExprLowerer {
             )
 
         case let .whenExpr(subject, branches, elseExpr, _):
-            return driver.controlFlowLowerer.lowerWhenExpr(exprID, subject: subject, branches: branches, elseExpr: elseExpr, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions)
+            return driver.controlFlowLowerer.lowerWhenExpr(
+                exprID,
+                subject: subject,
+                branches: branches,
+                elseExpr: elseExpr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
 
         case let .blockExpr(statements, trailingExpr, _):
             for stmt in statements {

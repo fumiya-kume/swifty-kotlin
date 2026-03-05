@@ -31,7 +31,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxReturn", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxReturn", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -76,7 +80,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABICopyBox", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABICopyBox", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -127,7 +135,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABICopyUnbox", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABICopyUnbox", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -210,7 +222,11 @@ extension LoweringPassRegressionTests {
 
             let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
             let ctx = CompilationContext(
-                options: CompilerOptions(moduleName: "ABIBoxAll_\(index)", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+                options: CompilerOptions(
+                    moduleName: "ABIBoxAll_\(index)", inputs: [],
+                    outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                    emit: .kirDump, target: defaultTargetTriple()
+                ),
                 sourceManager: SourceManager(),
                 diagnostics: DiagnosticEngine(),
                 interner: interner
@@ -256,7 +272,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: SymbolTable(), types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABICopyNullableBox", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABICopyNullableBox", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -310,7 +330,11 @@ extension LoweringPassRegressionTests {
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "PropGetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "PropGetter", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -375,7 +399,11 @@ extension LoweringPassRegressionTests {
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "PropSetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "PropSetter", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner

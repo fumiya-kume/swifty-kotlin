@@ -534,7 +534,12 @@ final class CallTypeChecker {
         args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
         locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
-        inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: false)
+        inferMemberCallImpl(
+            id, receiverID: receiverID, calleeName: calleeName,
+            args: args, range: range, ctx: ctx, locals: &locals,
+            expectedType: expectedType, explicitTypeArgs: explicitTypeArgs,
+            safeCall: false
+        )
     }
 
     func inferSafeMemberCallExpr(
@@ -542,6 +547,11 @@ final class CallTypeChecker {
         args: [CallArgument], range: SourceRange, ctx: TypeInferenceContext,
         locals: inout LocalBindings, expectedType: TypeID?, explicitTypeArgs: [TypeID] = []
     ) -> TypeID {
-        inferMemberCallImpl(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs, safeCall: true)
+        inferMemberCallImpl(
+            id, receiverID: receiverID, calleeName: calleeName,
+            args: args, range: range, ctx: ctx, locals: &locals,
+            expectedType: expectedType, explicitTypeArgs: explicitTypeArgs,
+            safeCall: true
+        )
     }
 }

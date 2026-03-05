@@ -1,4 +1,4 @@
-
+// swiftlint:disable identifier_name
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,

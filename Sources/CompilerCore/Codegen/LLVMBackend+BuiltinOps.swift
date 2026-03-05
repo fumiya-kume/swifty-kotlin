@@ -1,4 +1,3 @@
-
 // MARK: - Builtin Operator Tables
 
 extension LLVMBackend {

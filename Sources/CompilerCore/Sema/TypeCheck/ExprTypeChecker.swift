@@ -197,7 +197,11 @@ final class ExprTypeChecker {
 
         case let .memberCall(receiverID, calleeName, typeArgRefs, args, range):
             let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, scope: ctx.scope, diagnostics: ctx.semaCtx.diagnostics)
-            return driver.callChecker.inferMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
+            return driver.callChecker.inferMemberCallExpr(
+                id, receiverID: receiverID, calleeName: calleeName,
+                args: args, range: range, ctx: ctx, locals: &locals,
+                expectedType: expectedType, explicitTypeArgs: explicitTypeArgs
+            )
 
         case let .unaryExpr(op, operandID, range):
             let operandType = driver.inferExpr(operandID, ctx: ctx, locals: &locals)
@@ -311,7 +315,11 @@ final class ExprTypeChecker {
 
         case let .safeMemberCall(receiverID, calleeName, typeArgRefs, args, range):
             let explicitTypeArgs = driver.helpers.resolveExplicitTypeArgs(typeArgRefs, ast: ast, sema: sema, interner: interner, scope: ctx.scope, diagnostics: ctx.semaCtx.diagnostics)
-            return driver.callChecker.inferSafeMemberCallExpr(id, receiverID: receiverID, calleeName: calleeName, args: args, range: range, ctx: ctx, locals: &locals, expectedType: expectedType, explicitTypeArgs: explicitTypeArgs)
+            return driver.callChecker.inferSafeMemberCallExpr(
+                id, receiverID: receiverID, calleeName: calleeName,
+                args: args, range: range, ctx: ctx, locals: &locals,
+                expectedType: expectedType, explicitTypeArgs: explicitTypeArgs
+            )
 
         case let .compoundAssign(op, name, valueExpr, range):
             return inferCompoundAssignExpr(id, op: op, name: name, valueExpr: valueExpr, range: range, ctx: ctx, locals: &locals)

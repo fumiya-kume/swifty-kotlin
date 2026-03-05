@@ -73,9 +73,9 @@ extension LibraryMetadataCacheBehaviorTests {
         try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
 
         // Load WITHOUT cache
-        var noCache_fn1_paramType: TypeKind?
-        var noCache_fn1_returnType: TypeKind?
-        var noCache_fn2_paramType: TypeKind?
+        var noCacheFn1ParamType: TypeKind?
+        var noCacheFn1ReturnType: TypeKind?
+        var noCacheFn2ParamType: TypeKind?
         try withTemporaryFile(contents: "fun main() = 0") { path in
             let ctx = makeCompilationContext(inputs: [path], moduleName: "NoCacheTypeID", emit: .kirDump, searchPaths: [libDir.path])
             let symbols = SymbolTable()
@@ -91,19 +91,19 @@ extension LibraryMetadataCacheBehaviorTests {
             let fn1 = symbols.allSymbols().first { interner.resolve($0.name) == "fn1" }
             let fn2 = symbols.allSymbols().first { interner.resolve($0.name) == "fn2" }
             if let fn1ID = fn1?.id, let sig = symbols.functionSignature(for: fn1ID) {
-                noCache_fn1_paramType = types.kind(of: sig.parameterTypes[0])
-                noCache_fn1_returnType = types.kind(of: sig.returnType)
+                noCacheFn1ParamType = types.kind(of: sig.parameterTypes[0])
+                noCacheFn1ReturnType = types.kind(of: sig.returnType)
             }
             if let fn2ID = fn2?.id, let sig = symbols.functionSignature(for: fn2ID) {
-                noCache_fn2_paramType = types.kind(of: sig.parameterTypes[0])
+                noCacheFn2ParamType = types.kind(of: sig.parameterTypes[0])
             }
         }
 
         // Load WITH cache
         let cache = LibraryMetadataCache()
-        var cached_fn1_paramType: TypeKind?
-        var cached_fn1_returnType: TypeKind?
-        var cached_fn2_paramType: TypeKind?
+        var cachedFn1ParamType: TypeKind?
+        var cachedFn1ReturnType: TypeKind?
+        var cachedFn2ParamType: TypeKind?
         try withTemporaryFile(contents: "fun main() = 0") { path in
             let ctx = makeCompilationContext(inputs: [path], moduleName: "CachedTypeID", emit: .kirDump, searchPaths: [libDir.path])
             let symbols = SymbolTable()
@@ -120,19 +120,19 @@ extension LibraryMetadataCacheBehaviorTests {
             let fn1 = symbols.allSymbols().first { interner.resolve($0.name) == "fn1" }
             let fn2 = symbols.allSymbols().first { interner.resolve($0.name) == "fn2" }
             if let fn1ID = fn1?.id, let sig = symbols.functionSignature(for: fn1ID) {
-                cached_fn1_paramType = types.kind(of: sig.parameterTypes[0])
-                cached_fn1_returnType = types.kind(of: sig.returnType)
+                cachedFn1ParamType = types.kind(of: sig.parameterTypes[0])
+                cachedFn1ReturnType = types.kind(of: sig.returnType)
             }
             if let fn2ID = fn2?.id, let sig = symbols.functionSignature(for: fn2ID) {
-                cached_fn2_paramType = types.kind(of: sig.parameterTypes[0])
+                cachedFn2ParamType = types.kind(of: sig.parameterTypes[0])
             }
         }
 
         // Compare TypeKinds (not raw TypeID values, since those are per-TypeSystem)
-        XCTAssertEqual(noCache_fn1_paramType, cached_fn1_paramType, "fn1 param type should match")
-        XCTAssertEqual(noCache_fn1_returnType, cached_fn1_returnType, "fn1 return type should match")
-        XCTAssertEqual(noCache_fn2_paramType, cached_fn2_paramType, "fn2 param type should match")
-        XCTAssertEqual(noCache_fn1_paramType, .primitive(.int, .nonNull))
+        XCTAssertEqual(noCacheFn1ParamType, cachedFn1ParamType, "fn1 param type should match")
+        XCTAssertEqual(noCacheFn1ReturnType, cachedFn1ReturnType, "fn1 return type should match")
+        XCTAssertEqual(noCacheFn2ParamType, cachedFn2ParamType, "fn2 param type should match")
+        XCTAssertEqual(noCacheFn1ParamType, .primitive(.int, .nonNull))
     }
 
     /// B7: Suspend functions work with cache

@@ -1,3 +1,4 @@
+// swiftlint:disable identifier_name
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
