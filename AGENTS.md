@@ -51,6 +51,9 @@ Scripts/diff_kotlinc.sh [--kswiftc path] [--kotlinc path] path/to/tests
 - Indentation: 4 spaces.
 - Types/enums/protocols: `UpperCamelCase`; functions/vars: `lowerCamelCase`; test methods: `testXxx...`.
 - Keep modules focused (e.g., `CompilerCore`, `KSwiftKCLI`, `Runtime`).
+- Split file names must use responsibility-based suffixes (for example, `+MemberCallResolution.swift`, `+TypeAliasExpansion.swift`).
+- Do not introduce numeric split suffixes such as `+Part`, `+Part2`, `+Part3`; this rule applies to both `Sources` and `Tests`.
+- When a split file's responsibility changes, rename the file in the same PR so the filename stays semantically accurate.
 - Preserve existing structure of diagnostic/error code prefixes like `KSWIFTK-*`.
 - No repo-wide formatter/linter config is present; follow existing file style and use readable, minimal APIs.
 

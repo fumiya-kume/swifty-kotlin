@@ -85,15 +85,15 @@
 ### 🛡️ Null Safety
 
 - [ ] NULL-001: platform type（nullability 不明型 `T!`）の扱いを実装する（spec.md J8）
-  - [ ] externally-declared symbol（`.kklib` import）で nullability 情報がない型を platform type として表現する
-  - [ ] platform type は nullable にも non-null にも代入でき、利用時に nullability 警告を出す
-  - [ ] platform type を明示した nullable/non-null へ代入する文脈で型チェックを緩和する
+  - [x] externally-declared symbol（`.kklib` import）で nullability 情報がない型を platform type として表現する
+  - [x] platform type は nullable にも non-null にも代入でき、利用時に nullability 警告を出す
+  - [x] platform type を明示した nullable/non-null へ代入する文脈で型チェックを緩和する
   - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task NULL-001`
   - **完了条件**: 外部 API から返された型が `T!` として扱われ、null チェックなし使用に `KSWIFTK-SEMA-PLATFORM` warning が出る
 
 
 - [ ] NULL-002: nullable receiver（`T?.foo()`）拡張関数を Sema で解決する（spec.md J7/J9）
-  - [x] `fun String?.isNullOrEmpty()` / `isNullOrBlank()` を stdlib ハードコードとして Sema で登録・解決する（`CallTypeChecker+Part3.swift`）
+  - [x] `fun String?.isNullOrEmpty()` / `isNullOrBlank()` を stdlib ハードコードとして Sema で登録・解決する（`CallTypeChecker+MemberCallResolution.swift`）
   - [x] nullable receiver 拡張は `?.` なしに直接呼べることを Sema で許可する（isNullOrEmpty/isNullOrBlank 限定）
   - [ ] 汎用 nullable receiver 拡張（ユーザー定義 `fun T?.foo()`）の登録・解決規則を Sema で実装する
   - [x] diff/golden ケースを追加する → `nullable_receiver_ext.kt` / `null_receiver_is_null_or_empty.kt`
