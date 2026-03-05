@@ -157,6 +157,7 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
+        // TODO: Support zero-arg first()/last() by lowering to kk_list_get equivalents
         if callee == lookup.countName || callee == lookup.firstName || callee == lookup.lastName {
             if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
                 let kkName: InternedString = switch callee {
@@ -223,7 +224,7 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
-        if callee == lookup.sizeName || callee == lookup.countName {
+        if callee == lookup.sizeName || callee == lookup.countName, arguments.isEmpty {
             if listExprIDs.contains(receiver.rawValue) {
                 loweredBody.append(.call(
                     symbol: nil,
@@ -248,7 +249,7 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
-        if callee == lookup.isEmptyName {
+        if callee == lookup.isEmptyName, arguments.isEmpty {
             if listExprIDs.contains(receiver.rawValue) {
                 loweredBody.append(.call(
                     symbol: nil,

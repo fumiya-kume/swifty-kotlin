@@ -259,6 +259,8 @@ extension LoweringABIAndPropertyRegressionTests {
             name: targetName,
             params: [],
             returnType: anyNullableType,
+            // .returnUnit is intentional – this is a stub for testing caller-side
+            // ABI instrumentation (box/unbox insertion); callee body is not under test.
             body: [.returnUnit],
             isSuspend: false,
             isInline: false
@@ -314,6 +316,8 @@ extension LoweringABIAndPropertyRegressionTests {
             name: targetName,
             params: [],
             returnType: nullableIntType,
+            // .returnUnit is intentional – this is a stub for testing caller-side
+            // ABI instrumentation (box/unbox insertion); callee body is not under test.
             body: [.returnUnit],
             isSuspend: false,
             isInline: false

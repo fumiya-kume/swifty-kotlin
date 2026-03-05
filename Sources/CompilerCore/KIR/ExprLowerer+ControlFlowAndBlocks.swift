@@ -224,11 +224,15 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: id, value: constant))
                     return id
                 }
-                // For top-level property symbols, emit loadGlobal so the
+                // For top-level or object-member property symbols, emit loadGlobal so the
                 // backend reads the current value from the global slot.
                 if let sym = sema.symbols.symbol(symbol),
                    sym.kind == .property || sym.kind == .field,
-                   sema.symbols.parentSymbol(for: symbol) == nil || sema.symbols.symbol(sema.symbols.parentSymbol(for: symbol)!)?.kind == .package
+                   {
+                       let p = sema.symbols.parentSymbol(for: symbol)
+                       let pk = p.flatMap { sema.symbols.symbol($0) }?.kind
+                       return pk == nil || pk == .package || pk == .object
+                   }()
                 {
                     let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                     instructions.append(.loadGlobal(result: id, symbol: symbol))
@@ -503,18 +507,24 @@ extension ExprLowerer {
                 let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
                 driver.ctx.localValuesBySymbol[symbol] = bodyFunRef
-                let recursiveCaptureArguments: [KIRExprID] = captureBindings.map { binding in
+                var recursiveCaptureArguments: [KIRExprID] = []
+                var captureResolutionFailed = false
+                for binding in captureBindings {
                     guard let value = driver.ctx.localValuesBySymbol[binding.capturedSymbol] else {
-                        preconditionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
+                        assertionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
+                        captureResolutionFailed = true
+                        break
                     }
-                    return value
+                    recursiveCaptureArguments.append(value)
                 }
-                driver.ctx.registerCallableValue(
-                    bodyFunRef,
-                    symbol: symbol,
-                    callee: localFunCalleeName,
-                    captureArguments: recursiveCaptureArguments
-                )
+                if !captureResolutionFailed {
+                    driver.ctx.registerCallableValue(
+                        bodyFunRef,
+                        symbol: symbol,
+                        callee: localFunCalleeName,
+                        captureArguments: recursiveCaptureArguments
+                    )
+                }
 
                 switch localFunBody {
                 case let .block(bodyExprIDs, _):

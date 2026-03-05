@@ -21,7 +21,9 @@ extension CallTypeChecker {
         }
 
         let memberName = interner.resolve(calleeName)
-        guard isSupportedCollectionFallbackMember(memberName) else {
+        guard isSupportedCollectionFallbackMember(memberName),
+              isValidCollectionFallbackArity(memberName, argCount: args.count)
+        else {
             return nil
         }
 
@@ -66,9 +68,27 @@ extension CallTypeChecker {
 
     func isCollectionReturningMember(_ memberName: String) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "flatMap", "sortedBy", "toList", "take", // swiftlint:disable:this trailing_comma
+            "asSequence", "map", "filter", "flatMap", "sortedBy", "groupBy", "toList", "take", // swiftlint:disable:this trailing_comma
         ]
         return collectionReturningMembers.contains(memberName)
+    }
+
+    func isValidCollectionFallbackArity(_ memberName: String, argCount: Int) -> Bool {
+        switch memberName {
+        case "size", "isEmpty", "iterator", "asSequence", "toList":
+            return argCount == 0
+        case "get", "contains", "containsKey", "indexOf",
+             "map", "filter", "forEach", "flatMap",
+             "any", "none", "all",
+             "groupBy", "sortedBy", "find", "reduce", "take":
+            return argCount == 1
+        case "fold":
+            return argCount == 2
+        case "count", "first", "last":
+            return argCount == 0 || argCount == 1
+        default:
+            return true
+        }
     }
 
     func collectionFallbackResultType(memberName: String, sema: SemaModule) -> TypeID {
