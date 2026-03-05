@@ -63,21 +63,30 @@ extension CollectionLiteralLoweringPass {
 
         if callee == lookup.toListName, arguments.isEmpty {
             if sequenceExprIDs.contains(receiver.rawValue) {
-                let toListResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkSequenceToListName,
-                    arguments: [receiver],
-                    result: toListResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
                 if let result {
+                    let toListResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)), type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: lookup.kkSequenceToListName,
+                        arguments: [receiver],
+                        result: toListResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
                     listExprIDs.insert(result.rawValue)
                     listExprIDs.insert(toListResult.rawValue)
                     loweredBody.append(.copy(from: toListResult, to: result))
+                } else {
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: lookup.kkSequenceToListName,
+                        arguments: [receiver],
+                        result: nil,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
                 }
                 return true
             }

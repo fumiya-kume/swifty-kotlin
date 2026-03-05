@@ -7,6 +7,13 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         interner: StringInterner
     ) -> [InternedString: InternedString] {
+        var symbolToFuncName: [SymbolID: InternedString] = [:]
+        for decl in module.arena.declarations {
+            if case let .function(funcDecl) = decl {
+                symbolToFuncName[funcDecl.symbol] = funcDecl.name
+            }
+        }
+
         var builderLambdaKinds: [InternedString: InternedString] = [:]
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
@@ -30,11 +37,8 @@ extension CollectionLiteralLoweringPass {
                 if let symbol = exprSymbolMap[entry.argID] {
                     let lambdaName = interner.intern("kk_lambda_\(entry.argID)")
                     builderLambdaKinds[lambdaName] = entry.callee
-                    for innerDecl in module.arena.declarations {
-                        if case let .function(funcDecl) = innerDecl, funcDecl.symbol == symbol {
-                            builderLambdaKinds[funcDecl.name] = entry.callee
-                            break
-                        }
+                    if let funcName = symbolToFuncName[symbol] {
+                        builderLambdaKinds[funcName] = entry.callee
                     }
                 }
             }

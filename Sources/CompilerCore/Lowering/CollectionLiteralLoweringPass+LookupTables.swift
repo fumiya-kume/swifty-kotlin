@@ -200,7 +200,6 @@ struct CollectionLiteralLookupTables {
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
         kkMapIteratorNextName = interner.intern("kk_map_iterator_next")
 
-        _ = interner.intern("kk_array_of")
         kkArraySizeName = interner.intern("kk_array_size")
         kkArrayNewName = interner.intern("kk_array_new")
         kkArraySetName = interner.intern("kk_array_set")
