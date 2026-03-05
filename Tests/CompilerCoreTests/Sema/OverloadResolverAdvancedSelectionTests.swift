@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 @testable import CompilerCore
 import XCTest
 

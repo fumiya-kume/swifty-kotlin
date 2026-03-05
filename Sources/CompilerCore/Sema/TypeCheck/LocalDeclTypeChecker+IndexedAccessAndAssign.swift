@@ -196,5 +196,3 @@ extension LocalDeclTypeChecker {
         return sema.types.unitType
     }
 }
-
-// swiftlint:enable function_body_length function_parameter_count

@@ -54,7 +54,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxInt", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -120,7 +124,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxBool", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxBool", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -186,7 +194,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIBoxNullableInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIBoxNullableInt", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -250,7 +262,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIUnboxAny", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIUnboxAny", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -314,7 +330,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ABIUnboxNullableInt", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ABIUnboxNullableInt", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner

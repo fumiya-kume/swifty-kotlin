@@ -3,7 +3,6 @@ import Foundation
 extension CallLowerer {
     // MARK: - Binary Operations
 
-    // swiftlint:disable:next function_body_length
     func lowerBinaryExpr(
         _ exprID: ExprID,
         op: BinaryOp,
@@ -510,5 +509,4 @@ extension CallLowerer {
         instructions.append(.constValue(result: unit, value: .unit))
         return unit
     }
-    // swiftlint:disable:next file_length
 }

@@ -61,14 +61,14 @@ extension CallTypeChecker {
             "map", "filter", "forEach", "flatMap",
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find",
-            "asSequence", "toList", "take", // swiftlint:disable:this trailing_comma
+            "asSequence", "toList", "take",
         ]
         return collectionMembers.contains(memberName)
     }
 
     func isCollectionReturningMember(_ memberName: String) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "flatMap", "sortedBy", "groupBy", "toList", "take", // swiftlint:disable:this trailing_comma
+            "asSequence", "map", "filter", "flatMap", "sortedBy", "groupBy", "toList", "take",
         ]
         return collectionReturningMembers.contains(memberName)
     }

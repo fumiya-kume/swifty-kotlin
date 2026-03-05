@@ -1,4 +1,3 @@
-// swiftlint:disable:next type_body_length
 public final class TypeSystem {
     private var kindToID: [TypeKind: TypeID] = [:]
     private var idToKind: [TypeKind] = []

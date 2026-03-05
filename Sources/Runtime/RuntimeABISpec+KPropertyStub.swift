@@ -1,5 +1,4 @@
 // KProperty stub ABI specs (PROP-007)
-// swiftlint:disable trailing_comma
 
 public extension RuntimeABISpec {
     /// KProperty stub functions used by the provideDelegate operator.
@@ -31,5 +30,3 @@ public extension RuntimeABISpec {
         ),
     ]
 }
-
-// swiftlint:enable trailing_comma

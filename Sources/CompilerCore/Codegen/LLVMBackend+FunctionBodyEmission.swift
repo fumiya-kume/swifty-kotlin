@@ -1,8 +1,6 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension LLVMBackend {
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitFunctionBody(
         function: KIRFunction,
         frameMapPlan: FrameMapPlan,
@@ -257,7 +255,10 @@ extension LLVMBackend {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
-                    let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
+                    let isComparison = calleeName.hasSuffix("eq")
+                        || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt")
+                        || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt")
+                        || calleeName.hasSuffix("ge")
                     let expr = if calleeName == "kk_op_fmod" {
                         "kk_float_to_bits(fmodf(kk_bits_to_float(\(lhs)), kk_bits_to_float(\(rhs))))"
                     } else if isComparison {
@@ -278,7 +279,10 @@ extension LLVMBackend {
                     let lhs = argVars.count > 0 ? argVars[0] : "0"
                     let rhs = argVars.count > 1 ? argVars[1] : "0"
                     let cOp = Self.fpOpSymbol(calleeName)
-                    let isComparison = calleeName.hasSuffix("eq") || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt") || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt") || calleeName.hasSuffix("ge")
+                    let isComparison = calleeName.hasSuffix("eq")
+                        || calleeName.hasSuffix("ne") || calleeName.hasSuffix("lt")
+                        || calleeName.hasSuffix("le") || calleeName.hasSuffix("gt")
+                        || calleeName.hasSuffix("ge")
                     let expr = if calleeName == "kk_op_dmod" {
                         "kk_double_to_bits(fmod(kk_bits_to_double(\(lhs)), kk_bits_to_double(\(rhs))))"
                     } else if isComparison {

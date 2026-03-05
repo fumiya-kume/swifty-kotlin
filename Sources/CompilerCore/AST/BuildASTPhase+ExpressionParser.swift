@@ -263,11 +263,6 @@ extension BuildASTPhase {
             }
         }
 
-        private enum Associativity {
-            case left
-            case right
-        }
-
         private func precedence(of op: BinaryOp) -> Int {
             switch op {
             case .multiply, .divide, .modulo:
@@ -413,5 +408,10 @@ extension BuildASTPhase {
             }
             return consume()
         }
+    }
+
+    private enum Associativity {
+        case left
+        case right
     }
 }

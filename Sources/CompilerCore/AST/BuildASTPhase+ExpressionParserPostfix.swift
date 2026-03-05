@@ -18,7 +18,7 @@ extension BuildASTPhase.ExpressionParser {
                         if matches(.symbol(.lBrace)),
                            let braceToken = current(),
                            let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
-                        { // swiftlint:disable:this opening_brace
+                        {
                             args.append(CallArgument(expr: trailingLambda))
                             callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                         }
@@ -32,7 +32,7 @@ extension BuildASTPhase.ExpressionParser {
                     if matches(.symbol(.lBrace)),
                        let braceToken = current(),
                        let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
-                    { // swiftlint:disable:this opening_brace
+                    {
                         let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                         let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
                         expr = astArena.appendExpr(.call(
@@ -56,7 +56,7 @@ extension BuildASTPhase.ExpressionParser {
                 if matches(.symbol(.lBrace)),
                    let braceToken = current(),
                    let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
-                { // swiftlint:disable:this opening_brace
+                {
                     args.append(CallArgument(expr: trailingLambda))
                     callEndRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                 }
@@ -71,7 +71,7 @@ extension BuildASTPhase.ExpressionParser {
             if matches(.symbol(.lBrace)),
                let braceToken = current(),
                let trailingLambda = parseLambdaLiteral(allowImplicitEmptyParams: true)
-            { // swiftlint:disable:this opening_brace
+            {
                 let trailingRange = astArena.exprRange(trailingLambda) ?? braceToken.range
                 let range = mergeRanges(astArena.exprRange(expr), trailingRange, fallback: trailingRange)
                 expr = astArena.appendExpr(.call(
@@ -152,7 +152,7 @@ extension BuildASTPhase.ExpressionParser {
             }
             if matches(.symbol(.lParen)),
                let open = consume()
-            { // swiftlint:disable:this opening_brace
+            {
                 args = parseCallArguments()
                 let close = consumeIf(.symbol(.rParen))
                 memberEndRange = close?.range ?? open.range

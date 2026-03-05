@@ -41,7 +41,6 @@ final class FlowLoweringPass: LoweringPass {
         return false
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let interner = ctx.interner
         let flowName = interner.intern("flow")

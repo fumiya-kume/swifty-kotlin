@@ -45,7 +45,8 @@ extension CallTypeChecker {
         return Diagnostic(
             severity: .error,
             code: "KSWIFTK-SEMA-VAR-OUT",
-            message: "A type projection on the receiver prevents calling '\(interner.resolve(calleeName))' because the type parameter appears in an 'in' position (parameter type '\(renderedParamType)').",
+            message: "A type projection on the receiver prevents calling '\(interner.resolve(calleeName))'"
+                + " because the type parameter appears in an 'in' position (parameter type '\(renderedParamType)').",
             primaryRange: range,
             secondaryRanges: []
         )

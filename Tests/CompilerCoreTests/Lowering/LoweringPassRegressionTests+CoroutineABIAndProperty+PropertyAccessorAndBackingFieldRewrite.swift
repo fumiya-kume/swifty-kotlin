@@ -36,7 +36,11 @@ extension LoweringPassRegressionTests {
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "PropNoSym", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "PropNoSym", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -103,7 +107,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "BFSetter", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "BFSetter", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -198,7 +206,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "ComputedProp", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "ComputedProp", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner
@@ -284,7 +296,11 @@ extension LoweringPassRegressionTests {
 
         let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         let ctx = CompilationContext(
-            options: CompilerOptions(moduleName: "BackedProp", inputs: [], outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path, emit: .kirDump, target: defaultTargetTriple()),
+            options: CompilerOptions(
+                moduleName: "BackedProp", inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump, target: defaultTargetTriple()
+            ),
             sourceManager: SourceManager(),
             diagnostics: DiagnosticEngine(),
             interner: interner

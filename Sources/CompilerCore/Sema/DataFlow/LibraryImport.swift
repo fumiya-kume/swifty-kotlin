@@ -167,7 +167,8 @@ extension DataFlowSemaPhase {
                 } else {
                     diagnostics.warning(
                         "KSWIFTK-LIB-0007",
-                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
+                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature"
+                            + " in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
                         range: nil
                     )
                 }

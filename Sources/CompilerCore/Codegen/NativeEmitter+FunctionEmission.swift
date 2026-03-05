@@ -1,8 +1,6 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension NativeEmitter {
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitFunctionBody(
         function: KIRFunction,
         llvmFunction: LLVMFunction,
@@ -823,7 +821,6 @@ extension NativeEmitter {
                     lookupFunction = declareExternalFunction(named: "kk_vtable_lookup", argumentCount: 2, appendThrownChannel: false)
                     lookupArgs = [
                         resolveValue(receiver),
-                        // swiftlint:disable:next trailing_comma
                         bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!,
                     ]
                 case let .itable(interfaceSlot, methodSlot):

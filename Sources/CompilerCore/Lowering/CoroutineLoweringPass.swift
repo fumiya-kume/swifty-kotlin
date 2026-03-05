@@ -1,7 +1,5 @@
 import Foundation
 
-// swiftlint:disable file_length type_body_length
-
 final class CoroutineLoweringPass: LoweringPass {
     /// Internal visibility is required for cross-file extension decomposition
     static let name = "CoroutineLowering"
@@ -55,7 +53,6 @@ final class CoroutineLoweringPass: LoweringPass {
         return false
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         // Lower flow { }, emit, map, filter, take, collect before suspend-function lowering.
         lowerFlowExpressions(module: module, ctx: ctx)
@@ -623,5 +620,3 @@ final class CoroutineLoweringPass: LoweringPass {
         }
     }
 }
-
-// swiftlint:enable file_length type_body_length

@@ -108,7 +108,6 @@ extension ABILoweringPass {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func unboxingCallee(
         sourceKind: TypeKind,
         targetKind: TypeKind,

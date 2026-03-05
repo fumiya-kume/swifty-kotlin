@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
@@ -513,7 +512,6 @@ public final class SymbolTable {
     /// CLASS-008: Synthetic forwarding method symbols created for class delegation.
     /// Maps forwarding method symbol -> (interfaceSymbol, interfaceMethodSymbol, fieldSymbol).
     private var classDelegationForwardingMethodInfo: [SymbolID: (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)] = [:]
-    // swiftlint:enable large_tuple line_length
 
     /// CLASS-008: Per-class list of synthetic forwarding method symbols.
     private var classDelegationForwardingMethodsByClass: [SymbolID: [SymbolID]] = [:]
@@ -539,8 +537,6 @@ public final class SymbolTable {
     public func classDelegationForwardingMethodInfo(for forwardingSymbol: SymbolID) -> (interfaceSymbol: SymbolID, interfaceMethodSymbol: SymbolID, fieldSymbol: SymbolID)? {
         classDelegationForwardingMethodInfo[forwardingSymbol]
     }
-
-    // swiftlint:enable large_tuple line_length
 
     public func setNominalLayout(_ layout: NominalLayout, for symbol: SymbolID) {
         nominalLayouts[symbol] = layout

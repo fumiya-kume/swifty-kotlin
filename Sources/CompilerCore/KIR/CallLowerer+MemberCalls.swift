@@ -12,7 +12,6 @@ extension CallLowerer {
         "to", // FUNC-002
     ]
 
-    // swiftlint:disable:next function_body_length
     func lowerMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -166,7 +165,6 @@ extension CallLowerer {
         )
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -694,7 +692,6 @@ extension CallLowerer {
         }
     }
 
-    // swiftlint:disable:next function_body_length
     private func emitMemberCallInstruction(
         normalized: NormalizedCallResult,
         callBinding: CallBinding?,
@@ -781,9 +778,8 @@ extension CallLowerer {
         ))
     }
 
-    // Callees with an externalLinkName (C runtime functions such as
-    // kk_array_get) are never dispatched virtually.
-    // swiftlint:disable:next function_parameter_count
+    /// Callees with an externalLinkName (C runtime functions such as
+    /// kk_array_get) are never dispatched virtually.
     private func tryEmitVirtualDispatch(
         chosenCallee: SymbolID?,
         calleeName: InternedString,
@@ -972,7 +968,6 @@ extension CallLowerer {
 
     // MARK: - Scope Function Lowering (STDLIB-004)
 
-    // swiftlint:disable:next function_body_length function_parameter_count
     /// Attempts to lower a scope function call (let/run/apply/also).
     /// Returns nil if the expression is not a scope function call.
     func tryScopeFunctionLowering(
@@ -1090,6 +1085,4 @@ extension CallLowerer {
             return nil // with is handled in lowerCallExpr
         }
     }
-
-    // swiftlint:disable:next file_length
 }

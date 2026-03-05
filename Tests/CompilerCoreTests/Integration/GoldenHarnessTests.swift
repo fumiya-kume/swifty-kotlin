@@ -66,8 +66,11 @@ final class GoldenHarnessTests: XCTestCase {
                     extra.append("type=\(sema.types.renderType(propertyType))")
                 }
                 let extras = extra.isEmpty ? "" : " " + extra.joined(separator: " ")
+                let fq = renderFQName(symbol.fqName, interner: ctx.interner)
+                let flags = renderSymbolFlags(symbol.flags)
                 lines.append(
-                    "symbol s\(symbol.id.rawValue) kind=\(symbol.kind) fq=\(renderFQName(symbol.fqName, interner: ctx.interner)) vis=\(symbol.visibility) flags=\(renderSymbolFlags(symbol.flags))\(extras)"
+                    "symbol s\(symbol.id.rawValue) kind=\(symbol.kind) fq=\(fq)"
+                        + " vis=\(symbol.visibility) flags=\(flags)\(extras)"
                 )
             }
 

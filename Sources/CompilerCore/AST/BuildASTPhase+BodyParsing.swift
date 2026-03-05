@@ -307,7 +307,7 @@ extension BuildASTPhase {
                 if let candidateName = tokenText(candidate, interner: interner) {
                     let knownTargets: Set = [
                         "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file", // swiftlint:disable:this trailing_comma
+                        "delegate", "property", "receiver", "file",
                     ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
@@ -398,8 +398,7 @@ extension BuildASTPhase {
         }
     }
 
-    // Returns a raw text representation for any token, used for annotation argument parsing.
-    // swiftlint:disable:next cyclomatic_complexity
+    /// Returns a raw text representation for any token, used for annotation argument parsing.
     private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
         switch token.kind {
         case let .identifier(interned), let .backtickedIdentifier(interned):

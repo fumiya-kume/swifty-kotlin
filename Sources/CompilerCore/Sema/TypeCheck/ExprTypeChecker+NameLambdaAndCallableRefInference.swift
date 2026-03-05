@@ -1,7 +1,5 @@
 import Foundation
 
-// swiftlint:disable file_length
-
 // Handles expression type inference dispatch and specific expression cases.
 // Derived from the previous monolithic type-check phase expression inference extensions.
 
@@ -133,7 +131,6 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
 
-    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -430,7 +427,6 @@ extension ExprTypeChecker {
         return inferredFunctionType
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func inferCallableRefExpr(
         _ id: ExprID,
         receiver: ExprID?,
@@ -748,5 +744,3 @@ extension ExprTypeChecker {
         return receiverType
     }
 }
-
-// swiftlint:enable file_length

@@ -50,7 +50,7 @@ extension CallTypeChecker {
             let mutableListFQName: [InternedString] = [
                 interner.intern("kotlin"),
                 interner.intern("collections"),
-                interner.intern("MutableList"), // swiftlint:disable:this trailing_comma
+                interner.intern("MutableList"),
             ]
             guard let mutableListSymbol = sema.symbols.lookup(fqName: mutableListFQName) else {
                 return sema.types.anyType

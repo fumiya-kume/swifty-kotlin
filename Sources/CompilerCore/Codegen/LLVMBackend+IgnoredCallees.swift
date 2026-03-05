@@ -1,5 +1,3 @@
-// swiftlint:disable trailing_comma
-
 // MARK: - Ignored External Callees
 
 extension LLVMBackend {
@@ -216,5 +214,3 @@ extension LLVMBackend {
         }
     }
 }
-
-// swiftlint:enable trailing_comma

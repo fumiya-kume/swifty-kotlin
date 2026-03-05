@@ -1,6 +1,5 @@
 import Foundation
 
-// swiftlint:disable:next type_body_length
 /// Delegate class for KIR lowering: CallLowerer.
 /// Holds an unowned reference to the driver for mutual recursion.
 final class CallLowerer {
@@ -10,7 +9,6 @@ final class CallLowerer {
         self.driver = driver
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
