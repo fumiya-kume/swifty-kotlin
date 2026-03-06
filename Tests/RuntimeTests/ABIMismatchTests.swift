@@ -74,8 +74,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 3)
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 4)
     }
 
     func testStringFunctionCount() {
@@ -261,6 +261,14 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(
             spec.cDeclaration,
             "_Noreturn void kk_panic(const char * cstr);"
+        )
+    }
+
+    func testCDeclarationForKKAbortUnreachable() throws {
+        let spec = try requireSpec("kk_abort_unreachable")
+        XCTAssertEqual(
+            spec.cDeclaration,
+            "intptr_t kk_abort_unreachable(intptr_t * _Nullable outThrown);"
         )
     }
 

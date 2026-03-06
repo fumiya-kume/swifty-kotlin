@@ -198,7 +198,10 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
 
             let forwardingBody = forwardingFunctions[0].body
             let callees = extractCallees(from: forwardingBody, interner: ctx.interner)
-            XCTAssertTrue(callees.contains("abort"), "Expected explicit abort fallback in delegation forwarder, got: \(callees)")
+            XCTAssertTrue(
+                callees.contains("kk_abort_unreachable"),
+                "Expected explicit abort fallback in delegation forwarder, got: \(callees)"
+            )
         }
     }
 
@@ -298,7 +301,7 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
             }
 
             switch interner.resolve(callee) {
-            case "kk_array_get", "kk_object_type_id", "abort":
+            case "kk_array_get", "kk_object_type_id", "kk_abort_unreachable":
                 return nil
             default:
                 return symbol

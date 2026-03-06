@@ -66,7 +66,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J20"
+    public static let specVersion = "J21"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -118,6 +118,14 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "cstr", type: .constCCharPointer),
             ],
             returnType: .noreturn,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_abort_unreachable",
+            parameters: [
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
             section: "Exception"
         ),
     ]

@@ -84,6 +84,7 @@ extension LLVMBackend {
         "extern void kk_println_char(intptr_t v);",
         "extern void kk_println_any(void* obj);",
         "extern intptr_t kk_throwable_is_cancellation(intptr_t throwableRaw);",
+        "extern intptr_t kk_abort_unreachable(intptr_t* outThrown);",
         "/* CORO-002: Cancellation ABI */",
         "extern intptr_t kk_coroutine_check_cancellation(intptr_t continuation, intptr_t* outThrown);",
         "extern intptr_t kk_is_cancellation_exception(intptr_t throwableRaw);",

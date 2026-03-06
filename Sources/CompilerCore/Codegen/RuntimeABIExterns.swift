@@ -11,7 +11,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J20"
+    public static let specVersion = "J21"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -74,6 +74,12 @@ public enum RuntimeABIExterns {
         name: "kk_panic",
         parameterTypes: ["const char *"],
         returnType: "_Noreturn void"
+    )
+
+    public static let kk_abort_unreachable = ExternDecl(
+        name: "kk_abort_unreachable",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
     )
 
     // MARK: - String
@@ -822,6 +828,7 @@ public enum RuntimeABIExterns {
         kk_throwable_new,
         kk_throwable_is_cancellation,
         kk_panic,
+        kk_abort_unreachable,
         // String
         kk_string_from_utf8,
         kk_string_concat,

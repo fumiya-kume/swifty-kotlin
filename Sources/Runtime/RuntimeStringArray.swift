@@ -20,6 +20,12 @@ public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))
 }
 
+@_cdecl("kk_abort_unreachable")
+public func kk_abort_unreachable(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = outThrown
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: reached unreachable delegation fallback")
+}
+
 let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
 
 private enum RuntimeTypeTokenEncoding {

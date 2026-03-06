@@ -208,7 +208,7 @@ extension KIRLoweringDriver {
             } else {
                 body.append(.call(
                     symbol: nil,
-                    callee: compilationCtx.interner.intern("abort"),
+                    callee: compilationCtx.interner.intern("kk_abort_unreachable"),
                     arguments: [],
                     result: nil,
                     canThrow: false,
