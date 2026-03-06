@@ -155,7 +155,7 @@ final class ObjectLiteralLowerer {
 
     private func registerObjectLiteralSupertypes(
         objectSymbol: SymbolID,
-        objectValue: KIRExprID,
+        objectValue _: KIRExprID,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,

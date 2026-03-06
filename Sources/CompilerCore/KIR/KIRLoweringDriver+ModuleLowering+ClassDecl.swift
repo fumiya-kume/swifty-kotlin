@@ -171,7 +171,7 @@ extension KIRLoweringDriver {
             for (target, label) in zip(dispatchTargets, branchLabels) {
                 body.append(.label(label))
                 let targetCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: target.methodSymbol),
-                                                         !externalLinkName.isEmpty
+                                                          !externalLinkName.isEmpty
                 {
                     compilationCtx.interner.intern(externalLinkName)
                 } else {
@@ -317,19 +317,19 @@ extension KIRLoweringDriver {
     private func delegationDefaultValue(for type: TypeID, sema: SemaModule) -> KIRExprKind {
         switch sema.types.kind(of: type) {
         case .unit:
-            return .unit
+            .unit
         case .primitive(.boolean, _):
-            return .boolLiteral(false)
+            .boolLiteral(false)
         case .primitive(.float, _):
-            return .floatLiteral(0)
+            .floatLiteral(0)
         case .primitive(.double, _):
-            return .doubleLiteral(0)
+            .doubleLiteral(0)
         case .primitive, .nothing:
-            return .intLiteral(0)
+            .intLiteral(0)
         case .classType, .functionType, .typeParam, .any, .intersection:
-            return .null
+            .null
         case .error:
-            return .intLiteral(0)
+            .intLiteral(0)
         }
     }
 

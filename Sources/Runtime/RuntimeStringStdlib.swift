@@ -421,8 +421,7 @@ private func runtimeFormatCharacterValue(_ argument: Int) -> String {
     guard let scalar = UnicodeScalar(scalarValue) else {
         return "?"
     }
-    let value = String(scalar)
-    return value
+    return String(scalar)
 }
 
 private func runtimeApplyStringWidth(_ value: String, specifier: RuntimeFormatSpecifier) -> String {

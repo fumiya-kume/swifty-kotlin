@@ -128,7 +128,6 @@ extension BuildASTPhase.ExpressionParser {
                     }
                 default:
                     bodyTokens.append(token)
-                    break
                 }
                 end = token.range.end
                 if depth == 0 {
