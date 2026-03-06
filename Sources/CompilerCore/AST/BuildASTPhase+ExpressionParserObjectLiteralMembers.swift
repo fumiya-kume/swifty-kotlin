@@ -53,9 +53,9 @@ extension BuildASTPhase.ExpressionParser {
             }
             let currentGroup = tokens[start ..< end]
             if !merged.isEmpty,
-               (objectLiteralRangeStartsWithAccessor(currentGroup)
-                   || (objectLiteralRangeStartsWithBlock(currentGroup)
-                       && objectLiteralRangeNeedsBraceContinuation(tokens[merged[merged.count - 1].0 ..< merged[merged.count - 1].1])))
+               objectLiteralRangeStartsWithAccessor(currentGroup)
+               || (objectLiteralRangeStartsWithBlock(currentGroup)
+                   && objectLiteralRangeNeedsBraceContinuation(tokens[merged[merged.count - 1].0 ..< merged[merged.count - 1].1]))
             {
                 merged[merged.count - 1].1 = end
                 continue
@@ -346,14 +346,13 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
 
-        let trailingLambdaExprID: ExprID?
-        switch expr {
+        let trailingLambdaExprID: ExprID? = switch expr {
         case let .call(_, _, args, _):
-            trailingLambdaExprID = args.last?.expr
+            args.last?.expr
         case let .memberCall(_, _, _, args, _):
-            trailingLambdaExprID = args.last?.expr
+            args.last?.expr
         default:
-            trailingLambdaExprID = nil
+            nil
         }
 
         guard let trailingLambdaExprID,
@@ -586,13 +585,13 @@ extension BuildASTPhase.ExpressionParser {
     private func objectLiteralDeclarationName(from token: Token) -> InternedString? {
         switch token.kind {
         case let .identifier(name), let .backtickedIdentifier(name):
-            return name
+            name
         case let .keyword(keyword):
-            return interner.intern(keyword.rawValue)
+            interner.intern(keyword.rawValue)
         case let .softKeyword(keyword):
-            return interner.intern(keyword.rawValue)
+            interner.intern(keyword.rawValue)
         default:
-            return nil
+            nil
         }
     }
 }
