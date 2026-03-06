@@ -7,17 +7,7 @@ import XCTest
     import Darwin
 #endif
 
-final class RuntimePrintlnTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimePrintlnTests: IsolatedRuntimeXCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)

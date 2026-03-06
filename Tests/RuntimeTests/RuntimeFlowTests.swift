@@ -112,17 +112,9 @@ func runtime_test_flow_collect_throw_on_first(_ value: Int, _ outThrown: UnsafeM
     return 0
 }
 
-final class RuntimeFlowTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
+final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
         runtimeFlowTestState.reset()
-    }
-
-    override func tearDown() {
-        runtimeFlowTestState.reset()
-        kk_runtime_force_reset()
-        super.tearDown()
     }
 
     func testChainedTakeAppliesAllTakeStepsAndResetsPerCollect() {

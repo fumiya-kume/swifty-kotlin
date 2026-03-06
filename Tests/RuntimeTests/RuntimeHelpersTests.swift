@@ -1,17 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeHelpersTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimeHelpersTests: IsolatedRuntimeXCTestCase {
     // MARK: - Null sentinel constants
 
     func testNullSentinelInt64EqualsInt64Min() {

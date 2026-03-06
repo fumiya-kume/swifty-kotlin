@@ -135,16 +135,9 @@ private let vetoableOrderCallback: @convention(c) (Int, Int, Int) -> Int = { _, 
     return 1
 }
 
-final class RuntimeDelegateTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
+final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
         gDelegateState.reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
     }
 
     // MARK: - Lazy Delegate Tests
