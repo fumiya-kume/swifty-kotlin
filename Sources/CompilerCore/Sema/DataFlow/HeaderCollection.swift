@@ -549,6 +549,14 @@ extension DataFlowSemaPhase {
                 ),
                 for: symbol
             )
+            checkAndReportJVMErasedCallableConflict(
+                for: symbol,
+                fqName: fqName,
+                range: funDecl.range,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
+            )
 
         case let .propertyDecl(propertyDecl):
             let resolvedType = resolveTypeRef(

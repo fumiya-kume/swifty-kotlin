@@ -52,10 +52,12 @@ extension DataFlowSemaPhase {
     ) -> Visibility {
         let explicitVisibilityModifiers: Modifiers = [.private, .internal, .protected, .public]
         let explicitVisibility = visibility(from: classDecl.primaryConstructorModifiers)
-        if classDecl.primaryConstructorModifiers.intersection(explicitVisibilityModifiers).isEmpty == false {
+        if !classDecl.primaryConstructorModifiers.isDisjoint(with: explicitVisibilityModifiers) {
             return explicitVisibility
         }
-        if classKind == .class && classDecl.modifiers.contains(.sealed) {
+        if classKind == .class,
+           classDecl.modifiers.contains(.sealed)
+        {
             return .protected
         }
         return declarationVisibility

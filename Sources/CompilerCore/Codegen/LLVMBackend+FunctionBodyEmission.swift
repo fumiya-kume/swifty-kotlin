@@ -349,6 +349,17 @@ extension LLVMBackend {
                     continue
                 }
 
+                if calleeName == "kk_abort_unreachable" {
+                    let expr = "kk_abort_unreachable(NULL)"
+                    if let result {
+                        lines.append("  \(varName(result)) = \(expr);")
+                        syncRoot(result)
+                    } else {
+                        lines.append("  (void)\(expr);")
+                    }
+                    continue
+                }
+
                 if calleeName == "kk_string_replace" {
                     let value = argVars.count > 0 ? argVars[0] : "0"
                     let oldValue = argVars.count > 1 ? argVars[1] : "0"

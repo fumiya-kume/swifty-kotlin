@@ -669,7 +669,7 @@ extension LLVMBackend {
         "static void kk_string_format_uppercase_ascii(char* text) {",
         "  if (!text) return;",
         "  for (size_t i = 0; text[i] != '\\0'; i++) {",
-            "    text[i] = (char)toupper((unsigned char)text[i]);",
+        "    text[i] = (char)toupper((unsigned char)text[i]);",
         "  }",
         "}",
         "static intptr_t* kk_rt_box_ptrs = NULL;",

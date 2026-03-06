@@ -133,6 +133,14 @@ extension DataFlowSemaPhase {
                 ),
                 for: memberSymbol
             )
+            checkAndReportJVMErasedCallableConflict(
+                for: memberSymbol,
+                fqName: memberFQName,
+                range: funDecl.range,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
+            )
         }
 
         for declID in memberProperties {

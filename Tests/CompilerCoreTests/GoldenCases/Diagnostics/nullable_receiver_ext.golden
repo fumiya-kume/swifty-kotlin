@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "nullable_receiver_ext.kt",
+      "range": {
+        "start": { "line": 5, "character": 0 },
+        "end": { "line": 5, "character": 32 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0001",
+      "source": "kswiftk",
+      "message": "Duplicate declaration in the same package scope.",
+      "codeActions": []
+    }
+  ]
+}

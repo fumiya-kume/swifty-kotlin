@@ -106,6 +106,8 @@ extension LLVMBackend {
         "extern intptr_t kk_kxmini_launch(intptr_t entryRaw, intptr_t functionId);",
         "extern intptr_t kk_kxmini_async(intptr_t entryRaw, intptr_t functionId);",
         "extern intptr_t kk_kxmini_async_await(intptr_t handle);",
+        "extern int64_t kk_coroutine_launcher_arg_set(intptr_t continuation, int64_t index, int64_t value);",
+        "extern int64_t kk_coroutine_launcher_arg_get(intptr_t continuation, int64_t index);",
         "extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);",
         "extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);",
         "extern intptr_t kk_flow_collect(intptr_t flowHandle, intptr_t collectorFnPtr, intptr_t continuation);",
