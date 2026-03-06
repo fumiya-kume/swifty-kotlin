@@ -985,7 +985,6 @@ extension CallTypeChecker {
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }
-    // swiftlint:enable function_body_length cyclomatic_complexity
 
     private func isJavaUtilLocaleType(
         _ type: TypeID,
@@ -1024,4 +1023,6 @@ extension CallTypeChecker {
         }
         return signature.receiverType == sema.types.stringType
     }
+
+    // swiftlint:enable function_body_length cyclomatic_complexity
 }

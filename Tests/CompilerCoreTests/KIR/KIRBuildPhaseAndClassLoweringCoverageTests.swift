@@ -190,14 +190,8 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
 
-            let forwardingFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case let .function(function) = decl else { return nil }
-                return function.body.contains { instruction in
-                    if case let .call(_, callee, _, _, _, _, _) = instruction {
-                        return ctx.interner.resolve(callee) == "kk_array_get"
-                    }
-                    return false
-                } ? function : nil
+            let forwardingFunctions = loweredFunctions(in: module).filter {
+                hasCall(named: "kk_array_get", in: $0.body, interner: ctx.interner)
             }
 
             XCTAssertEqual(forwardingFunctions.count, 1, "Expected one delegation forwarder with no dispatch target match")
@@ -230,39 +224,20 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
 
-            let forwarderFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
-                guard case let .function(function) = decl else { return nil }
-
-                let instructionHasDelegationLookup = function.body.contains { instruction in
-                    if case let .call(_, callee, _, _, _, _, _) = instruction {
-                        return ctx.interner.resolve(callee) == "kk_object_type_id"
-                    }
-                    return false
-                }
-
-                let hasEvaluateName = ctx.interner.resolve(function.name) == "evaluate"
-                return hasEvaluateName && instructionHasDelegationLookup ? function : nil
-            }.first
+            let forwarderFunction = loweredFunctions(in: module).first {
+                ctx.interner.resolve($0.name) == "evaluate"
+                    && hasCall(named: "kk_object_type_id", in: $0.body, interner: ctx.interner)
+            }
 
             let forwardingBody = try XCTUnwrap(
                 forwarderFunction,
                 "Expected delegation forwarder for ComparableInput.evaluate()"
             ).body
 
-            let delegateCallSymbols = forwardingBody.compactMap { instruction -> SymbolID? in
-                guard case let .call(symbol, callee, _, _, _, _, _) = instruction,
-                      let symbol
-                else {
-                    return nil
-                }
-
-                let calleeName = ctx.interner.resolve(callee)
-                if calleeName == "kk_array_get" || calleeName == "kk_object_type_id" || calleeName == "abort" {
-                    return nil
-                }
-
-                return symbol
-            }
+            let delegateCallSymbols = delegationTargetSymbols(
+                in: forwardingBody,
+                interner: ctx.interner
+            )
 
             let nonSyntheticOverrideCalls = delegateCallSymbols.compactMap { symbol -> SymbolID? in
                 guard let signatureSymbol = ctx.sema?.symbols.symbol(symbol),
@@ -288,6 +263,46 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
                 },
                 "Expected delegation dispatch targets to exclude synthetic forwarding functions, got: \(delegateCallSymbols)"
             )
+        }
+    }
+
+    private func loweredFunctions(in module: KIRModule) -> [KIRFunction] {
+        module.arena.declarations.compactMap { decl -> KIRFunction? in
+            guard case let .function(function) = decl else { return nil }
+            return function
+        }
+    }
+
+    private func hasCall(
+        named calleeName: String,
+        in body: [KIRInstruction],
+        interner: StringInterner
+    ) -> Bool {
+        body.contains { instruction in
+            guard case let .call(_, callee, _, _, _, _, _) = instruction else {
+                return false
+            }
+            return interner.resolve(callee) == calleeName
+        }
+    }
+
+    private func delegationTargetSymbols(
+        in body: [KIRInstruction],
+        interner: StringInterner
+    ) -> [SymbolID] {
+        body.compactMap { instruction -> SymbolID? in
+            guard case let .call(symbol, callee, _, _, _, _, _) = instruction,
+                  let symbol
+            else {
+                return nil
+            }
+
+            switch interner.resolve(callee) {
+            case "kk_array_get", "kk_object_type_id", "abort":
+                return nil
+            default:
+                return symbol
+            }
         }
     }
 }
