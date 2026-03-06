@@ -1,3 +1,4 @@
+// swiftlint:disable file_length cyclomatic_complexity
 import Foundation
 
 // MARK: - STDLIB-006 String Functions

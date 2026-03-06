@@ -1,3 +1,4 @@
+// swiftlint:disable cyclomatic_complexity function_body_length
 import Foundation
 
 /// Delegate class for KIR lowering: MemberLowerer.

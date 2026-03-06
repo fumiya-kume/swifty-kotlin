@@ -1,3 +1,4 @@
+// swiftlint:disable file_length function_body_length
 import Foundation
 
 extension DataFlowSemaPhase {

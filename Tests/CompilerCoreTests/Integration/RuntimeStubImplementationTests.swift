@@ -321,7 +321,10 @@ final class RuntimeStubImplementationTests: XCTestCase {
 
     func testStringFormatPreambleDecodesBoxedFloatAndDouble() {
         let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("static intptr_t kk_rt_is_box_ptr(intptr_t ptrRaw)"))
+        XCTAssertTrue(preamble.contains("static KKBoxedValue* kk_rt_as_box(intptr_t value)"))
         XCTAssertTrue(preamble.contains("static double kk_string_format_to_double(intptr_t value)"))
+        XCTAssertTrue(preamble.contains("KKBoxedValue* box = kk_rt_as_box(value);"))
         XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_FLOAT"))
         XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_DOUBLE"))
         XCTAssertTrue(preamble.contains("case 'f':"))
@@ -343,6 +346,8 @@ final class RuntimeStubImplementationTests: XCTestCase {
 
     func testCompareAnyDecodesBoxedFloatingValues() {
         let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("KKBoxedValue* lhsBox = kk_rt_as_box(lhs);"))
+        XCTAssertTrue(preamble.contains("KKBoxedValue* rhsBox = kk_rt_as_box(rhs);"))
         XCTAssertTrue(preamble.contains("if (lhsBox->tag == KK_BOX_TAG_FLOAT)"))
         XCTAssertTrue(preamble.contains("if (lhsBox->tag == KK_BOX_TAG_DOUBLE)"))
         XCTAssertTrue(preamble.contains("if (rhsBox->tag == KK_BOX_TAG_FLOAT)"))
