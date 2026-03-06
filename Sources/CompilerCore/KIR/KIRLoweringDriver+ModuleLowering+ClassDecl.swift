@@ -83,10 +83,10 @@ extension KIRLoweringDriver {
                 sema: sema,
                 interner: compilationCtx.interner
             )
-            guard !dispatchTargets.isEmpty else {
-                continue
-            }
-
+            let fallbackMethodSymbol = classDelegationDefaultMethodSymbol(
+                interfaceMethodSymbol: info.interfaceMethodSymbol,
+                sema: sema
+            )
             ctx.resetScopeForFunction()
             ctx.beginCallableLoweringScope()
             ctx.currentFunctionSymbol = forwardingSymbol
@@ -155,9 +155,6 @@ extension KIRLoweringDriver {
                     delegationDefaultValue(for: signature.returnType, sema: sema),
                     type: signature.returnType
                 )
-                if let defaultValue = arena.expr(resultExpr) {
-                    body.append(.constValue(result: resultExpr, value: defaultValue))
-                }
                 resultExprID = resultExpr
             }
 
@@ -190,6 +187,34 @@ extension KIRLoweringDriver {
             }
 
             body.append(.label(fallbackLabel))
+            if let fallbackMethodSymbol {
+                let fallbackCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: fallbackMethodSymbol),
+                                                            !externalLinkName.isEmpty
+                {
+                    compilationCtx.interner.intern(externalLinkName)
+                } else {
+                    sema.symbols.symbol(fallbackMethodSymbol)?.name ?? calleeName
+                }
+                body.append(.call(
+                    symbol: fallbackMethodSymbol,
+                    callee: fallbackCalleeName,
+                    arguments: [delegateResultID] + callArgExprs,
+                    result: resultExprID,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false
+                ))
+            } else {
+                body.append(.call(
+                    symbol: nil,
+                    callee: compilationCtx.interner.intern("abort"),
+                    arguments: [],
+                    result: nil,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false
+                ))
+            }
             body.append(.jump(endLabel))
             body.append(.label(endLabel))
 
@@ -280,6 +305,7 @@ extension KIRLoweringDriver {
             return nil
         }
 
+        var fallbackMatch: SymbolID?
         var queue: [SymbolID] = [concreteTypeSymbol]
         var visited: Set<SymbolID> = []
         while !queue.isEmpty {
@@ -293,14 +319,22 @@ extension KIRLoweringDriver {
             let fqName = ownerSymbol.fqName + [interfaceMethod.name]
             for candidate in sema.symbols.lookupAll(fqName: fqName) {
                 guard sema.symbols.parentSymbol(for: candidate) == owner,
+                      let methodSymbol = sema.symbols.symbol(candidate),
+                      !methodSymbol.flags.contains(.synthetic),
                       let signature = sema.symbols.functionSignature(for: candidate),
                       signature.receiverType != nil,
-                      signature.parameterTypes.count == interfaceSignature.parameterTypes.count,
+                      signature.parameterTypes == interfaceSignature.parameterTypes,
                       signature.isSuspend == interfaceSignature.isSuspend
                 else {
                     continue
                 }
-                return candidate
+
+                if methodSymbol.flags.contains(.overrideMember) {
+                    return candidate
+                }
+                if fallbackMatch == nil {
+                    fallbackMatch = candidate
+                }
             }
 
             queue.append(contentsOf: sema.symbols.directSupertypes(for: owner).filter { supertype in
@@ -311,7 +345,22 @@ extension KIRLoweringDriver {
             })
         }
 
-        return nil
+        if let fallbackMatch {
+            return fallbackMatch
+        }
+        return classDelegationDefaultMethodSymbol(interfaceMethodSymbol: interfaceMethodSymbol, sema: sema)
+    }
+
+    private func classDelegationDefaultMethodSymbol(
+        interfaceMethodSymbol: SymbolID,
+        sema: SemaModule
+    ) -> SymbolID? {
+        guard let interfaceMethod = sema.symbols.symbol(interfaceMethodSymbol),
+              !interfaceMethod.flags.contains(.abstractType)
+        else {
+            return nil
+        }
+        return interfaceMethodSymbol
     }
 
     private func delegationDefaultValue(for type: TypeID, sema: SemaModule) -> KIRExprKind {

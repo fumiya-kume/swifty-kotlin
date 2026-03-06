@@ -172,4 +172,122 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
             XCTAssertTrue(callees.contains("DelegateBox"), "Expected delegate constructor call, got: \(callees)")
         }
     }
+
+    func testClassLoweringEmitsDelegationForwarderEvenWithNoDispatchTargets() throws {
+        let source = """
+        interface EventSink {
+            fun send(message: String): Int
+        }
+
+        class Box(delegate: EventSink) : EventSink by delegate
+
+        fun main(): Int = 0
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+
+            let forwardingFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else { return nil }
+                return function.body.contains { instruction in
+                    if case let .call(_, callee, _, _, _, _, _) = instruction {
+                        return ctx.interner.resolve(callee) == "kk_array_get"
+                    }
+                    return false
+                } ? function : nil
+            }
+
+            XCTAssertEqual(forwardingFunctions.count, 1, "Expected one delegation forwarder with no dispatch target match")
+
+            let forwardingBody = forwardingFunctions[0].body
+            let callees = extractCallees(from: forwardingBody, interner: ctx.interner)
+            XCTAssertTrue(callees.contains("abort"), "Expected explicit abort fallback in delegation forwarder, got: \(callees)")
+        }
+    }
+
+    func testClassLoweringResolvesDelegationDispatchByExactSignature() throws {
+        let source = """
+        interface ComparableInput {
+            fun evaluate(value: Int): Int
+        }
+
+        class OverloadedSink : ComparableInput {
+            fun evaluate(value: String): Int = 0
+            override fun evaluate(value: Int): Int = 10
+        }
+
+        class Box(delegate: ComparableInput) : ComparableInput by delegate
+
+        fun main(): Int = Box(OverloadedSink()).evaluate(1)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+
+            let forwarderFunction = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl else { return nil }
+
+                let instructionHasDelegationLookup = function.body.contains { instruction in
+                    if case let .call(_, callee, _, _, _, _, _) = instruction {
+                        return ctx.interner.resolve(callee) == "kk_object_type_id"
+                    }
+                    return false
+                }
+
+                let hasEvaluateName = ctx.interner.resolve(function.name) == "evaluate"
+                return hasEvaluateName && instructionHasDelegationLookup ? function : nil
+            }.first
+
+            let forwardingBody = try XCTUnwrap(
+                forwarderFunction,
+                "Expected delegation forwarder for ComparableInput.evaluate()"
+            ).body
+
+            let delegateCallSymbols = forwardingBody.compactMap { instruction -> SymbolID? in
+                guard case let .call(symbol, callee, _, _, _, _, _) = instruction,
+                      let symbol
+                else {
+                    return nil
+                }
+
+                let calleeName = ctx.interner.resolve(callee)
+                if calleeName == "kk_array_get" || calleeName == "kk_object_type_id" || calleeName == "abort" {
+                    return nil
+                }
+
+                return symbol
+            }
+
+            let nonSyntheticOverrideCalls = delegateCallSymbols.compactMap { symbol -> SymbolID? in
+                guard let signatureSymbol = ctx.sema?.symbols.symbol(symbol),
+                      signatureSymbol.flags.contains(.overrideMember),
+                      !signatureSymbol.flags.contains(.synthetic)
+                else {
+                    return nil
+                }
+                return symbol
+            }
+
+            XCTAssertEqual(
+                nonSyntheticOverrideCalls.isEmpty,
+                false,
+                "Expected delegation forwarder to call non-synthetic override target for ComparableInput.evaluate, got: \(delegateCallSymbols)"
+            )
+            XCTAssertTrue(
+                delegateCallSymbols.allSatisfy { symbol in
+                    guard let signatureSymbol = ctx.sema?.symbols.symbol(symbol) else {
+                        return false
+                    }
+                    return !signatureSymbol.flags.contains(.synthetic)
+                },
+                "Expected delegation dispatch targets to exclude synthetic forwarding functions, got: \(delegateCallSymbols)"
+            )
+        }
+    }
 }
