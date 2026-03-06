@@ -46,7 +46,7 @@ file f0 package=golden.sema
   decl d1 fun useMax suspend=0 inline=0 sym=s40
 expr e0 name(a) type=T#37 ref=s38
 expr e1 name(b) type=T#37 ref=s39
-expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=<error>
+expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean call=s20 map=[0->0] targs=[T#37]
 expr e3 name(a) type=T#37 ref=s38
 expr e4 name(b) type=T#37 ref=s39
 expr e5 if cond=e2 then=e3 else=e4 type=T#37

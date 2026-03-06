@@ -177,6 +177,22 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
     }
 
+    func testStringFormatSupportsStringIntAndDoubleSpecifiers() {
+        let args = makeRuntimeArray([
+            rawFromRuntimeString("age"),
+            7,
+            Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern)),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%s:%d %.2f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "age:7 3.50")
+    }
+
+    func testStringFormatSupportsEscapedPercentWithoutArguments() {
+        let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
+        XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
+    }
+
     // MARK: - kk_throwable_new
 
     func testThrowableNewCreatesThrowable() {
@@ -351,6 +367,16 @@ final class RuntimeStringArrayTests: XCTestCase {
 
     private func rawFromRuntimeString(_ value: String) -> Int {
         Int(bitPattern: makeRuntimeString(value))
+    }
+
+    private func makeRuntimeArray(_ values: [Int]) -> Int {
+        let array = kk_array_new(values.count)
+        var thrown = 0
+        for (index, value) in values.enumerated() {
+            kk_array_set(array, index, value, &thrown)
+            XCTAssertEqual(thrown, 0)
+        }
+        return array
     }
 
     private func runtimeStringValue(_ raw: Int) -> String {

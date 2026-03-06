@@ -590,6 +590,17 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            // String stdlib: format(vararg args) (STDLIB-006)
+            if interner.resolve(calleeName) == "format" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // For non-empty-arg member calls, try member property/field lookup.
             // This handles callable property syntax (e.g. `receiver.f(...)`).
             // Skip this for class-name receivers — only companion members are

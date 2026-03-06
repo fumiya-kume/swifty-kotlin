@@ -9,4 +9,7 @@ fun main() {
     println(if ("Kotlin".contains("otl")) "true" else "false")
 
     println(" 3.14 ".toDouble())
+    println("%s:%d".format("age", 7))
+    println("%.2f".format(3.5))
+    println("progress=100%%".format())
 }

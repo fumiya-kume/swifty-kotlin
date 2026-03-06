@@ -67,18 +67,25 @@ extension KIRLoweringDriver {
         let sema = shared.sema
         let arena = shared.arena
         var declIDs: [KIRDeclID] = []
+        let intType = sema.types.intType
 
         for forwardingSymbol in sema.symbols.classDelegationForwardingMethodSymbols(forClass: classSymbol) {
             guard let info = sema.symbols.classDelegationForwardingMethodInfo(for: forwardingSymbol),
                   let signature = sema.symbols.functionSignature(for: forwardingSymbol),
-                  let interfaceLayout = sema.symbols.nominalLayout(for: info.interfaceSymbol),
-                  let methodSlot = interfaceLayout.vtableSlots[info.interfaceMethodSymbol],
-                  let interfaceSlot = interfaceLayout.itableSlots[info.interfaceSymbol],
                   let interfaceMethodSym = sema.symbols.symbol(info.interfaceMethodSymbol)
             else {
                 continue
             }
             let calleeName = interfaceMethodSym.name
+            let dispatchTargets = classDelegationDispatchTargets(
+                interfaceSymbol: info.interfaceSymbol,
+                interfaceMethodSymbol: info.interfaceMethodSymbol,
+                sema: sema,
+                interner: compilationCtx.interner
+            )
+            guard !dispatchTargets.isEmpty else {
+                continue
+            }
 
             ctx.resetScopeForFunction()
             ctx.beginCallableLoweringScope()
@@ -125,25 +132,71 @@ extension KIRLoweringDriver {
                 callArgExprs.append(arena.appendExpr(.symbolRef(paramSym), type: paramType))
             }
 
-            let resultExprID = arena.appendExpr(
+            let delegateTypeIDExpr = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
-                type: signature.returnType
+                type: intType
             )
-            body.append(.virtualCall(
-                symbol: info.interfaceMethodSymbol,
-                callee: calleeName,
-                receiver: delegateResultID,
-                arguments: callArgExprs,
-                result: resultExprID,
+            body.append(.call(
+                symbol: nil,
+                callee: compilationCtx.interner.intern("kk_object_type_id"),
+                arguments: [delegateResultID],
+                result: delegateTypeIDExpr,
                 canThrow: false,
                 thrownResult: nil,
-                dispatch: .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
+                isSuperCall: false
             ))
 
-            if signature.returnType == sema.types.unitType {
-                body.append(.returnUnit)
-            } else {
+            let branchLabels = dispatchTargets.map { _ in ctx.makeLoopLabel() }
+            let fallbackLabel = ctx.makeLoopLabel()
+            let endLabel = ctx.makeLoopLabel()
+            var resultExprID: KIRExprID?
+            if signature.returnType != sema.types.unitType {
+                let resultExpr = arena.appendExpr(
+                    delegationDefaultValue(for: signature.returnType, sema: sema),
+                    type: signature.returnType
+                )
+                if let defaultValue = arena.expr(resultExpr) {
+                    body.append(.constValue(result: resultExpr, value: defaultValue))
+                }
+                resultExprID = resultExpr
+            }
+
+            for (target, label) in zip(dispatchTargets, branchLabels) {
+                let typeIDExpr = arena.appendExpr(.intLiteral(target.typeID), type: intType)
+                body.append(.constValue(result: typeIDExpr, value: .intLiteral(target.typeID)))
+                body.append(.jumpIfEqual(lhs: delegateTypeIDExpr, rhs: typeIDExpr, target: label))
+            }
+            body.append(.jump(fallbackLabel))
+
+            for (target, label) in zip(dispatchTargets, branchLabels) {
+                body.append(.label(label))
+                let targetCalleeName: InternedString = if let externalLinkName = sema.symbols.externalLinkName(for: target.methodSymbol),
+                                                         !externalLinkName.isEmpty
+                {
+                    compilationCtx.interner.intern(externalLinkName)
+                } else {
+                    sema.symbols.symbol(target.methodSymbol)?.name ?? calleeName
+                }
+                body.append(.call(
+                    symbol: target.methodSymbol,
+                    callee: targetCalleeName,
+                    arguments: [delegateResultID] + callArgExprs,
+                    result: resultExprID,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: false
+                ))
+                body.append(.jump(endLabel))
+            }
+
+            body.append(.label(fallbackLabel))
+            body.append(.jump(endLabel))
+            body.append(.label(endLabel))
+
+            if let resultExprID {
                 body.append(.returnValue(resultExprID))
+            } else {
+                body.append(.returnUnit)
             }
             body.append(.endBlock)
 
@@ -164,6 +217,120 @@ extension KIRLoweringDriver {
         ctx.currentImplicitReceiverExprID = nil
         ctx.currentImplicitReceiverSymbol = nil
         return declIDs
+    }
+
+    private struct ClassDelegationDispatchTarget {
+        let typeID: Int64
+        let methodSymbol: SymbolID
+    }
+
+    private func classDelegationDispatchTargets(
+        interfaceSymbol: SymbolID,
+        interfaceMethodSymbol: SymbolID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> [ClassDelegationDispatchTarget] {
+        var targets: [ClassDelegationDispatchTarget] = []
+        var queue = sema.symbols.directSubtypes(of: interfaceSymbol)
+        var visited: Set<SymbolID> = []
+
+        while !queue.isEmpty {
+            let candidate = queue.removeFirst()
+            guard visited.insert(candidate).inserted,
+                  let candidateSymbol = sema.symbols.symbol(candidate)
+            else {
+                continue
+            }
+            queue.append(contentsOf: sema.symbols.directSubtypes(of: candidate))
+
+            guard candidateSymbol.kind == .class || candidateSymbol.kind == .object || candidateSymbol.kind == .enumClass,
+                  !candidateSymbol.flags.contains(.abstractType),
+                  let methodSymbol = resolveClassDelegationDispatchMethod(
+                      interfaceMethodSymbol: interfaceMethodSymbol,
+                      concreteTypeSymbol: candidate,
+                      sema: sema
+                  )
+            else {
+                continue
+            }
+
+            targets.append(ClassDelegationDispatchTarget(
+                typeID: RuntimeTypeCheckToken.stableNominalTypeID(
+                    symbol: candidate,
+                    sema: sema,
+                    interner: interner
+                ),
+                methodSymbol: methodSymbol
+            ))
+        }
+
+        return targets.sorted { lhs, rhs in
+            lhs.typeID < rhs.typeID
+        }
+    }
+
+    private func resolveClassDelegationDispatchMethod(
+        interfaceMethodSymbol: SymbolID,
+        concreteTypeSymbol: SymbolID,
+        sema: SemaModule
+    ) -> SymbolID? {
+        guard let interfaceMethod = sema.symbols.symbol(interfaceMethodSymbol),
+              let interfaceSignature = sema.symbols.functionSignature(for: interfaceMethodSymbol)
+        else {
+            return nil
+        }
+
+        var queue: [SymbolID] = [concreteTypeSymbol]
+        var visited: Set<SymbolID> = []
+        while !queue.isEmpty {
+            let owner = queue.removeFirst()
+            guard visited.insert(owner).inserted,
+                  let ownerSymbol = sema.symbols.symbol(owner)
+            else {
+                continue
+            }
+
+            let fqName = ownerSymbol.fqName + [interfaceMethod.name]
+            for candidate in sema.symbols.lookupAll(fqName: fqName) {
+                guard sema.symbols.parentSymbol(for: candidate) == owner,
+                      let signature = sema.symbols.functionSignature(for: candidate),
+                      signature.receiverType != nil,
+                      signature.parameterTypes.count == interfaceSignature.parameterTypes.count,
+                      signature.isSuspend == interfaceSignature.isSuspend
+                else {
+                    continue
+                }
+                return candidate
+            }
+
+            queue.append(contentsOf: sema.symbols.directSupertypes(for: owner).filter { supertype in
+                guard let symbol = sema.symbols.symbol(supertype) else {
+                    return false
+                }
+                return symbol.kind == .class || symbol.kind == .object || symbol.kind == .enumClass
+            })
+        }
+
+        return nil
+    }
+
+    private func delegationDefaultValue(for type: TypeID, sema: SemaModule) -> KIRExprKind {
+        switch sema.types.kind(of: type) {
+        case .unit:
+            return .unit
+        case .primitive(.boolean, _):
+            return .boolLiteral(false)
+        case .primitive(.float, _):
+            return .floatLiteral(0)
+        case .primitive(.double, _):
+            return .doubleLiteral(0)
+        case .primitive, .nothing:
+            return .intLiteral(0)
+        case .classType, .functionType, .typeParam, .any, .intersection:
+            return .null
+        case .error:
+            return .intLiteral(0)
+        }
     }
 
     /// Emits a constructor delegation call (`this(...)` or `super(...)`).

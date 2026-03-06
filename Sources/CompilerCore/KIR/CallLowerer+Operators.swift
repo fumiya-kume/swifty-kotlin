@@ -57,6 +57,34 @@ extension CallLowerer {
             } else {
                 result
             }
+            if isCompareToDesugaring,
+               shouldLowerComparableTypeParamViaRuntime(
+                   chosenCallee: callBinding.chosenCallee,
+                   receiverExpr: lhs,
+                   sema: sema
+               )
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_compare_any"),
+                    arguments: [lhsID, rhsID],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let cmpOp: KIRBinaryOp
+                switch op {
+                case .lessThan: cmpOp = .lessThan
+                case .lessOrEqual: cmpOp = .lessOrEqual
+                case .greaterThan: cmpOp = .greaterThan
+                case .greaterOrEqual: cmpOp = .greaterOrEqual
+                default: fatalError("Unreachable: erased Comparable runtime path only applies to comparison operators")
+                }
+                instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+                return result
+            }
             let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: [rhsID],
                 callBinding: callBinding,
@@ -283,6 +311,23 @@ extension CallLowerer {
         }
         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: result))
         return result
+    }
+
+    private func shouldLowerComparableTypeParamViaRuntime(
+        chosenCallee: SymbolID,
+        receiverExpr: ExprID,
+        sema: SemaModule
+    ) -> Bool {
+        guard let comparableSymbol = sema.types.comparableInterfaceSymbol,
+              sema.symbols.parentSymbol(for: chosenCallee) == comparableSymbol,
+              let receiverType = sema.bindings.exprTypes[receiverExpr]
+        else {
+            return false
+        }
+        if case .typeParam = sema.types.kind(of: receiverType) {
+            return true
+        }
+        return false
     }
 
     // MARK: - Array Operations

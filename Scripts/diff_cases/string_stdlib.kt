@@ -29,4 +29,9 @@ fun main() {
     println("3.14".toDouble())
     println("-0.5".toDouble())
     println("42.0".toDouble())
+
+    // format
+    println("%s:%d".format("age", 7))
+    println("%.2f".format(3.5))
+    println("progress=100%%".format())
 }

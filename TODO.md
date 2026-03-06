@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-05
+最終更新: 2026-03-06
 
 ## 運用ルール
 
@@ -15,7 +15,7 @@
 
 ---
 
-## 未完了バックログ（6件 + 完了11件）
+## 未完了バックログ（0件 + 完了17件）
 
 ### 📐 Type System
 
@@ -33,9 +33,9 @@
 
 - [x] CLASS-006: `data object` の型と等値比較を実装する（spec.md J6）
   - [x] `data object Singleton` を singleton かつ equals/toString 合成ありとして扱う（hashCode は未実装）
-  - [ ] anonymous object の型を local nominal として推論し、呼び出しスコープ内で有効にする
+  - [x] anonymous object の型を local nominal として推論し、呼び出しスコープ内で有効にする
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-006`
-  - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返す ✓
+  - **完了条件**: `data object None` が `None == None` → `true`、`None.toString()` → `"None"` を返し、`val x = object { val value = 7 }; x.value` が解決される ✓
 
 
 - [x] CLASS-008: クラス委譲（`class A : Interface by delegateInstance`）を front-to-back で実装する（spec.md J7/J12）
@@ -46,10 +46,10 @@
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CLASS-008`
   - **完了条件**: `class Logger(impl: Printer) : Printer by impl` が `impl` のメソッドを委譲し、override したメソッドだけ自前実装を呼ぶ（※itable 未実装のため diff は SKIP-DIFF、CLASS-008-FOLLOW 参照）
 
-- [ ] CLASS-008-FOLLOW: クラス委譲の既知の制限を解消する
+- [x] CLASS-008-FOLLOW: クラス委譲の既知の制限を解消する
   - [x] NativeEmitter（LLVM C API バックエンド）で `virtualCall` の itable ディスパッチを実装する（`kk_itable_lookup` を呼び、戻り値を関数ポインタとして indirect call する）
-  - [ ] 委譲フィールドを KIRGlobal ではなくインスタンスフィールド（receiver + fieldOffset）として保持する
-  - **完了条件**: `-Xir backend=synthetic-c` なしで `logger.print()` が正しく動作し、複数インスタンスで委譲が独立して動作する
+  - [x] 委譲フィールドを KIRGlobal ではなくインスタンスフィールド（receiver + fieldOffset）として保持する
+  - **完了条件**: `-Xir backend=synthetic-c` なしで `logger.print()` が正しく動作し、複数インスタンスで委譲が独立して動作する ✓
 
 ---
 
@@ -73,43 +73,43 @@
 
 ### 🧬 Generics
 
-- [ ] GEN-001: 複数 upper bound（`where T : A, T : B`）と F-bound（`T : Comparable<T>`）を完全実装する（spec.md J8）
+- [x] GEN-001: 複数 upper bound（`where T : A, T : B`）と F-bound（`T : Comparable<T>`）を完全実装する（spec.md J8）
   - [x] `where` 句の複数 upper bound を `TypeParamDecl` に保持し、overload 解決で全境界を検証する
   - [x] `T : Comparable<T>` のような自己参照 upper bound（F-bound）を循環検出せずに解決する
   - [x] 複数 upper bound に違反する型引数に `KSWIFTK-SEMA-BOUND` 診断を出す
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-001`（SKIP-DIFF: ジェネリック本体内での比較演算が E2E 未完全）
-  - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-001`
+  - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する ✓
 
 ---
 
 ### 🛡️ Null Safety
 
-- [ ] NULL-001: platform type（nullability 不明型 `T!`）の扱いを実装する（spec.md J8）
+- [x] NULL-001: platform type（nullability 不明型 `T!`）の扱いを実装する（spec.md J8）
   - [x] externally-declared symbol（`.kklib` import）で nullability 情報がない型を platform type として表現する
   - [x] platform type は nullable にも non-null にも代入でき、利用時に nullability 警告を出す
   - [x] platform type を明示した nullable/non-null へ代入する文脈で型チェックを緩和する
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task NULL-001`
-  - **完了条件**: 外部 API から返された型が `T!` として扱われ、null チェックなし使用に `KSWIFTK-SEMA-PLATFORM` warning が出る
+  - [x] golden / integration ケースを追加する → `platform_type.kt` / `LibraryMetadataImportIntegrationTests`
+  - **完了条件**: 外部 API から返された型が `T!` として扱われ、null チェックなし使用に `KSWIFTK-SEMA-PLATFORM` warning が出る ✓
 
 
-- [ ] NULL-002: nullable receiver（`T?.foo()`）拡張関数を Sema で解決する（spec.md J7/J9）
+- [x] NULL-002: nullable receiver（`T?.foo()`）拡張関数を Sema で解決する（spec.md J7/J9）
   - [x] `fun String?.isNullOrEmpty()` / `isNullOrBlank()` を stdlib ハードコードとして Sema で登録・解決する（`CallTypeChecker+MemberCallResolution.swift`）
   - [x] nullable receiver 拡張は `?.` なしに直接呼べることを Sema で許可する（isNullOrEmpty/isNullOrBlank 限定）
-  - [ ] 汎用 nullable receiver 拡張（ユーザー定義 `fun T?.foo()`）の登録・解決規則を Sema で実装する
+  - [x] 汎用 nullable receiver 拡張（ユーザー定義 `fun T?.foo()`）の登録・解決規則を Sema で実装する
   - [x] diff/golden ケースを追加する → `nullable_receiver_ext.kt` / `null_receiver_is_null_or_empty.kt`
-  - **完了条件**: `null.isNullOrEmpty()` が `NullPointerException` を出さず `true` を返し `kotlinc` と一致する ✓（stdlib 限定）
+  - **完了条件**: `null.isNullOrEmpty()` が `NullPointerException` を出さず `true` を返し、ユーザー定義 `fun T?.foo()` も `?.` なしで解決される ✓
 
 ---
 
 ### ⚡ Coroutines
 
-- [ ] CORO-003: `Flow<T>` コールドストリームを実装する（spec.md J17）
-  - [x] runtime に `kk_flow_create` / `kk_flow_collect` / `kk_flow_emit` の C ABI 関数を追加する（stub: `kk_flow_collect` は collector 未呼び出し）
-  - [ ] `flow { emit(x) }` builder の lowering を実装し、collector lambda に suspension point を挿入する
-  - [ ] `Flow.map`・`Flow.filter`・`Flow.take`・`Flow.collect` 中間オペレーターを stub として実装する
-  - [ ] `Flow` はコールド（collect のたびに再実行）であることを runtime で保証する（現在 `kk_flow_collect` は no-op）
-  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-003`
-  - **完了条件**: `flow { emit(1); emit(2) }.map { it * 2 }.collect { println(it) }` が `2\n4` を出力し `kotlinc` と一致する
+- [x] CORO-003: `Flow<T>` コールドストリームを実装する（spec.md J17）
+  - [x] runtime に `kk_flow_create` / `kk_flow_collect` / `kk_flow_emit` の C ABI 関数を追加する
+  - [x] `flow { emit(x) }` builder の lowering を実装し、collector lambda に suspension point を挿入する
+  - [x] `Flow.map`・`Flow.filter`・`Flow.take`・`Flow.collect` 中間オペレーターを stub として実装する
+  - [x] `Flow` はコールド（collect のたびに再実行）であることを runtime で保証する
+  - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-003`
+  - **完了条件**: `flow { emit(1); emit(2) }.map { it * 2 }.collect { println(it) }` が `2\n4` を出力し `kotlinc` と一致する ✓
 
 ---
 
@@ -140,13 +140,13 @@
   - **完了条件**: `listOf(1,2,3).filter { it > 1 }.map { it * 2 }` が `[4, 6]` を返し `kotlinc` と一致する ✓
 
 
-- [ ] STDLIB-006: String stdlib 関数（`trim`/`split`/`replace`/`startsWith`/`endsWith`/`toInt`/`toDouble`/`format`）を実装する（spec.md J15）
+- [x] STDLIB-006: String stdlib 関数（`trim`/`split`/`replace`/`startsWith`/`endsWith`/`toInt`/`toDouble`/`format`）を実装する（spec.md J15）
   - [x] runtime/stdlib stub に `kk_string_trim` / `kk_string_split` / `kk_string_replace` 等を追加する（`RuntimeStringArray.swift`）
   - [x] `String.toInt()` / `String.toDouble()` の失敗時に `NumberFormatException` を投げる動作を実装する
-  - [ ] `String.format(vararg args)` を printf 相当の C ABI 関数へ lowering する（未実装）
+  - [x] `String.format(vararg args)` を printf 相当の C ABI 関数へ lowering する
   - [x] `startsWith`/`endsWith`/`contains`（文字列検索版）を stdlib stub として実装する
-  - [x] diff/golden ケースを追加する → `Scripts/diff_cases/string_stdlib.kt`
-  - **完了条件**: `"  hello  ".trim()` / `"1,2,3".split(",")` / `"42".toInt()` が `kotlinc` と同一出力になる ✓（`String.format` を除く）
+  - [x] diff/golden ケースを追加する → `Scripts/diff_cases/stdlib_string_ops.kt` / `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_string_ops.kt`
+  - **完了条件**: `"  hello  ".trim()` / `"1,2,3".split(",")` / `"42".toInt()` / `"%s:%d".format("age", 7)` が `kotlinc` と同一出力になる ✓
 
 ---
 

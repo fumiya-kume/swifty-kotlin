@@ -151,6 +151,15 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_compare_any",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_length",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
@@ -162,6 +171,15 @@ public enum RuntimeABISpec {
             name: "kk_string_trim",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_format",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -826,6 +844,14 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "length", type: .intptr),
                 RuntimeABIParameter(name: "classId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_object_type_id",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Array"

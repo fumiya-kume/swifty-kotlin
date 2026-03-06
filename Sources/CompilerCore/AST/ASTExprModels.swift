@@ -160,7 +160,7 @@ public enum Expr: Equatable {
     case indexedCompoundAssign(op: CompoundAssignOp, receiver: ExprID, indices: [ExprID], value: ExprID, range: SourceRange)
     case throwExpr(value: ExprID, range: SourceRange)
     case lambdaLiteral(params: [InternedString], body: ExprID, label: InternedString? = nil, range: SourceRange)
-    case objectLiteral(superTypes: [TypeRefID], range: SourceRange)
+    case objectLiteral(superTypes: [TypeRefID], decl: DeclID?, range: SourceRange)
     case callableRef(receiver: ExprID?, member: InternedString, range: SourceRange)
     case localFunDecl(name: InternedString, valueParams: [ValueParamDecl], returnType: TypeRefID?, body: FunctionBody, range: SourceRange)
     case blockExpr(statements: [ExprID], trailingExpr: ExprID?, range: SourceRange)

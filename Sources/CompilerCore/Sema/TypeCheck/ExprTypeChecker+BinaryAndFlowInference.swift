@@ -136,6 +136,16 @@ extension ExprTypeChecker {
                 ctx: ctx.semaCtx
             )
             if let diagnostic = resolved.diagnostic {
+                if let fallbackType = bindComparableUpperBoundOperatorFallback(
+                    id,
+                    op: op,
+                    lhs: lhs,
+                    rhs: rhs,
+                    candidates: operatorCandidates,
+                    sema: sema
+                ) {
+                    return fallbackType
+                }
                 if lhs != sema.types.errorType, rhs != sema.types.errorType {
                     ctx.semaCtx.diagnostics.emit(diagnostic)
                 }
@@ -143,6 +153,16 @@ extension ExprTypeChecker {
                 return sema.types.errorType
             }
             guard let chosen = resolved.chosenCallee else {
+                if let fallbackType = bindComparableUpperBoundOperatorFallback(
+                    id,
+                    op: op,
+                    lhs: lhs,
+                    rhs: rhs,
+                    candidates: operatorCandidates,
+                    sema: sema
+                ) {
+                    return fallbackType
+                }
                 if lhs != sema.types.errorType, rhs != sema.types.errorType {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0002",
@@ -292,6 +312,94 @@ extension ExprTypeChecker {
         }
         sema.bindings.bindExprType(id, type: type)
         return type
+    }
+
+    private func bindComparableUpperBoundOperatorFallback(
+        _ exprID: ExprID,
+        op: BinaryOp,
+        lhs: TypeID,
+        rhs: TypeID,
+        candidates: [SymbolID],
+        sema: SemaModule
+    ) -> TypeID? {
+        switch op {
+        case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
+            break
+        default:
+            return nil
+        }
+        guard case let .typeParam(lhsParam) = sema.types.kind(of: lhs),
+              rhs == lhs || sema.types.isSubtype(rhs, lhs),
+              let comparableSymbol = sema.types.comparableInterfaceSymbol,
+              typeParameter(lhsParam.symbol, hasComparableSelfBound: lhs, comparableSymbol: comparableSymbol, sema: sema),
+              let chosen = candidates.first(where: { candidate in
+                  guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                      return false
+                  }
+                  return signature.receiverType != nil && signature.parameterTypes.count == 1
+              })
+        else {
+            return nil
+        }
+
+        sema.bindings.bindCall(
+            exprID,
+            binding: CallBinding(
+                chosenCallee: chosen,
+                substitutedTypeArguments: [lhs],
+                parameterMapping: [0: 0]
+            )
+        )
+        sema.bindings.bindCallableTarget(exprID, target: .symbol(chosen))
+        sema.bindings.bindExprType(exprID, type: sema.types.booleanType)
+        return sema.types.booleanType
+    }
+
+    private func typeParameter(
+        _ symbol: SymbolID,
+        hasComparableSelfBound targetType: TypeID,
+        comparableSymbol: SymbolID,
+        sema: SemaModule
+    ) -> Bool {
+        sema.symbols.typeParameterUpperBounds(for: symbol).contains { bound in
+            comparableSelfBoundContains(
+                bound,
+                targetType: targetType,
+                comparableSymbol: comparableSymbol,
+                sema: sema
+            )
+        }
+    }
+
+    private func comparableSelfBoundContains(
+        _ bound: TypeID,
+        targetType: TypeID,
+        comparableSymbol: SymbolID,
+        sema: SemaModule
+    ) -> Bool {
+        switch sema.types.kind(of: bound) {
+        case let .classType(classType):
+            guard classType.classSymbol == comparableSymbol,
+                  classType.args.count == 1,
+                  case let .invariant(argumentType) = classType.args[0]
+            else {
+                return false
+            }
+            return argumentType == targetType
+
+        case let .intersection(parts):
+            return parts.contains {
+                comparableSelfBoundContains(
+                    $0,
+                    targetType: targetType,
+                    comparableSymbol: comparableSymbol,
+                    sema: sema
+                )
+            }
+
+        default:
+            return false
+        }
     }
 
     // MARK: - Compound Assignment

@@ -79,11 +79,11 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length,
-        // kk_string_trim, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
+        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_compare_any, kk_string_length,
+        // kk_string_trim, kk_string_format, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
         // kk_string_startsWith, kk_string_endsWith, kk_string_contains_str,
         // kk_string_replace, kk_string_split, kk_string_toInt, kk_string_toDouble
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 14)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 16)
     }
 
     func testPrintlnFunctionCount() {
@@ -112,8 +112,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testArrayFunctionCount() {
-        // kk_array_new, kk_object_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
-        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 5)
+        // kk_array_new, kk_object_new, kk_object_type_id, kk_array_get, kk_array_set, kk_vararg_spread_concat
+        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 6)
     }
 
     func testBitwiseFunctionCount() {

@@ -35,19 +35,25 @@ symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=s
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
 symbol s36 kind=function fq=golden.sema.isNullOrEmptyCompat vis=public flags=_ sig=recv=String? params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s37 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s38 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String? params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s39 kind=function fq=golden.sema.useNullableReceiver vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s40 kind=local fq=__local_11.s vis=private flags=_
-symbol s41 kind=local fq=__local_14.fromNullable vis=private flags=_
-symbol s42 kind=local fq=__local_17.fromNullLiteral vis=private flags=_
-symbol s43 kind=local fq=__local_20.nonNullPreferred vis=private flags=_
-symbol s44 kind=local fq=__local_23.nullableFallback vis=private flags=_
+symbol s37 kind=function fq=golden.sema.isPresentCompat vis=public flags=_ sig=recv=T#38? params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s38 kind=typeParameter fq=golden.sema.isPresentCompat.$37.T vis=private flags=_
+symbol s39 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=golden.sema.tagCompat vis=public flags=_ sig=recv=String? params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s41 kind=function fq=golden.sema.useNullableReceiver vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s42 kind=local fq=__local_14.s vis=private flags=_
+symbol s43 kind=local fq=__local_17.fromNullable vis=private flags=_
+symbol s44 kind=local fq=__local_20.fromNullLiteral vis=private flags=_
+symbol s45 kind=local fq=__local_23.genericFromNullable vis=private flags=_
+symbol s46 kind=local fq=__local_26.genericFromNullLiteral vis=private flags=_
+symbol s47 kind=local fq=__local_29.genericFromNonNull vis=private flags=_
+symbol s48 kind=local fq=__local_32.nonNullPreferred vis=private flags=_
+symbol s49 kind=local fq=__local_35.nullableFallback vis=private flags=_
 file f0 package=golden.sema
   decl d0 fun isNullOrEmptyCompat suspend=0 inline=0 sym=s36
-  decl d1 fun tagCompat suspend=0 inline=0 sym=s37
-  decl d2 fun tagCompat suspend=0 inline=0 sym=s38
-  decl d3 fun useNullableReceiver suspend=0 inline=0 sym=s39
+  decl d1 fun isPresentCompat suspend=0 inline=0 sym=s37
+  decl d2 fun tagCompat suspend=0 inline=0 sym=s39
+  decl d3 fun tagCompat suspend=0 inline=0 sym=s40
+  decl d4 fun useNullableReceiver suspend=0 inline=0 sym=s41
 expr e0 this type=String?
 expr e1 name(null) type=Nothing?
 expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean
@@ -56,19 +62,31 @@ expr e4 memberCall recv=e3 callee=length args=[] type=Int
 expr e5 int(0) type=Int
 expr e6 binary(equal) lhs=e4 rhs=e5 type=Boolean
 expr e7 binary(logicalOr) lhs=e2 rhs=e6 type=Boolean
-expr e8 int(1) type=Int
-expr e9 int(0) type=Int
-expr e10 name(null) type=Nothing?
-expr e11 localDecl s mutable=0 type=t6 init=e10 type=Unit ref=s40
-expr e12 name(s) type=String? ref=s40
-expr e13 memberCall recv=e12 callee=isNullOrEmptyCompat args=[] type=Boolean call=s36 map=[] targs=[]
-expr e14 localDecl fromNullable mutable=0 type=_ init=e13 type=Unit ref=s41
-expr e15 name(null) type=Nothing?
+expr e8 this type=T#38?
+expr e9 name(null) type=Nothing?
+expr e10 binary(notEqual) lhs=e8 rhs=e9 type=Boolean
+expr e11 int(1) type=Int
+expr e12 int(0) type=Int
+expr e13 name(null) type=Nothing?
+expr e14 localDecl s mutable=0 type=t8 init=e13 type=Unit ref=s42
+expr e15 name(s) type=String? ref=s42
 expr e16 memberCall recv=e15 callee=isNullOrEmptyCompat args=[] type=Boolean call=s36 map=[] targs=[]
-expr e17 localDecl fromNullLiteral mutable=0 type=_ init=e16 type=Unit ref=s42
-expr e18 string(abc) type=String
-expr e19 memberCall recv=e18 callee=tagCompat args=[] type=Int call=s37 map=[] targs=[]
-expr e20 localDecl nonNullPreferred mutable=0 type=_ init=e19 type=Unit ref=s43
-expr e21 name(s) type=String? ref=s40
-expr e22 memberCall recv=e21 callee=tagCompat args=[] type=Int call=s38 map=[] targs=[]
-expr e23 localDecl nullableFallback mutable=0 type=_ init=e22 type=Unit ref=s44
+expr e17 localDecl fromNullable mutable=0 type=_ init=e16 type=Unit ref=s43
+expr e18 name(null) type=Nothing?
+expr e19 memberCall recv=e18 callee=isNullOrEmptyCompat args=[] type=Boolean call=s36 map=[] targs=[]
+expr e20 localDecl fromNullLiteral mutable=0 type=_ init=e19 type=Unit ref=s44
+expr e21 name(s) type=String? ref=s42
+expr e22 memberCall recv=e21 callee=isPresentCompat args=[] type=Boolean call=s37 map=[] targs=[String]
+expr e23 localDecl genericFromNullable mutable=0 type=_ init=e22 type=Unit ref=s45
+expr e24 name(null) type=Nothing?
+expr e25 memberCall recv=e24 callee=isPresentCompat args=[] type=Boolean call=s37 map=[] targs=[String]
+expr e26 localDecl genericFromNullLiteral mutable=0 type=_ init=e25 type=Unit ref=s46
+expr e27 string(abc) type=String
+expr e28 memberCall recv=e27 callee=isPresentCompat args=[] type=Boolean call=s37 map=[] targs=[String]
+expr e29 localDecl genericFromNonNull mutable=0 type=_ init=e28 type=Unit ref=s47
+expr e30 string(abc) type=String
+expr e31 memberCall recv=e30 callee=tagCompat args=[] type=Int call=s39 map=[] targs=[]
+expr e32 localDecl nonNullPreferred mutable=0 type=_ init=e31 type=Unit ref=s48
+expr e33 name(s) type=String? ref=s42
+expr e34 memberCall recv=e33 callee=tagCompat args=[] type=Int call=s40 map=[] targs=[]
+expr e35 localDecl nullableFallback mutable=0 type=_ init=e34 type=Unit ref=s49

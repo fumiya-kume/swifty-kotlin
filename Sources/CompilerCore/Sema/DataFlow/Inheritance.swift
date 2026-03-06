@@ -370,8 +370,8 @@ extension DataFlowSemaPhase {
                             name: methodName,
                             fqName: forwardingFQName,
                             declSite: classDecl.range,
-                            visibility: .private,
-                            flags: [.synthetic]
+                            visibility: .public,
+                            flags: [.synthetic, .overrideMember]
                         )
                         symbols.setParentSymbol(classSymbol, for: forwardingSymbol)
 

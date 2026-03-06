@@ -338,12 +338,8 @@ final class ExprTypeChecker {
         case let .lambdaLiteral(params, body, _, _):
             return inferLambdaLiteralExpr(id, params: params, body: body, ctx: ctx, locals: &locals, expectedType: expectedType)
 
-        case let .objectLiteral(superTypes, _):
-            let objectType = superTypes.first.map {
-                driver.helpers.resolveTypeRef($0, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
-            } ?? sema.types.anyType
-            sema.bindings.bindExprType(id, type: objectType)
-            return objectType
+        case let .objectLiteral(superTypes, declID, _):
+            return inferObjectLiteralExpr(id, superTypes: superTypes, declID: declID, ctx: ctx, locals: &locals)
 
         case let .callableRef(receiver, member, range):
             return inferCallableRefExpr(id, receiver: receiver, member: member, range: range, ctx: ctx, locals: &locals, expectedType: expectedType)

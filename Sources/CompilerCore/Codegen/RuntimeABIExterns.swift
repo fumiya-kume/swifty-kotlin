@@ -96,6 +96,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_compare_any = ExternDecl(
+        name: "kk_compare_any",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_length = ExternDecl(
         name: "kk_string_length",
         parameterTypes: ["intptr_t"],
@@ -108,6 +114,11 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_format = ExternDecl(
+        name: "kk_string_format",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
     public static let kk_string_isNullOrEmpty = ExternDecl(
         name: "kk_string_isNullOrEmpty",
         parameterTypes: ["intptr_t"],
@@ -592,6 +603,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_object_type_id = ExternDecl(
+        name: "kk_object_type_id",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_array_get = ExternDecl(
         name: "kk_array_get",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -809,8 +826,10 @@ public enum RuntimeABIExterns {
         kk_string_from_utf8,
         kk_string_concat,
         kk_string_compareTo,
+        kk_compare_any,
         kk_string_length,
         kk_string_trim,
+        kk_string_format,
         kk_string_isNullOrEmpty,
         kk_string_isNullOrBlank,
         kk_string_startsWith,
@@ -899,6 +918,7 @@ public enum RuntimeABIExterns {
         // Array
         kk_array_new,
         kk_object_new,
+        kk_object_type_id,
         kk_array_get,
         kk_array_set,
         kk_vararg_spread_concat,

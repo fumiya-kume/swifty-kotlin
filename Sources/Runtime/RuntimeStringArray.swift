@@ -222,6 +222,11 @@ public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+@_cdecl("kk_object_type_id")
+public func kk_object_type_id(_ objectRaw: Int) -> Int {
+    Int(runtimeObjectTypeID(rawValue: objectRaw) ?? 0)
+}
+
 /// Returns the simple name of the type encoded in the given type token as a
 /// runtime string pointer.  For builtin types the name is derived from the
 /// token base; for nominal types the compiler supplies a `nameHint` string

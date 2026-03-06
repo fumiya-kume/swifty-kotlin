@@ -762,6 +762,7 @@ public final class BindingTable {
     public private(set) var flowExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
     public private(set) var flowSymbolIDs: Set<SymbolID> = []
+    public private(set) var objectLiteralPropertySymbolIDs: Set<SymbolID> = []
     /// Maps `T::class` callable-ref expression IDs to the resolved type that
     /// `T` refers to.  Used by KIR lowering to emit the correct type token
     /// and name hint for `T::class.simpleName` / `.qualifiedName`.
@@ -853,6 +854,14 @@ public final class BindingTable {
 
     public func isFlowExpr(_ expr: ExprID) -> Bool {
         flowExprIDs.contains(expr)
+    }
+
+    public func markObjectLiteralPropertySymbol(_ symbol: SymbolID) {
+        objectLiteralPropertySymbolIDs.insert(symbol)
+    }
+
+    public func isObjectLiteralPropertySymbol(_ symbol: SymbolID) -> Bool {
+        objectLiteralPropertySymbolIDs.contains(symbol)
     }
 
     public func markCollectionSymbol(_ symbol: SymbolID) {

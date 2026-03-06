@@ -219,6 +219,20 @@ extension OverloadResolver {
         if case let .typeParam(typeParam) = supertypeKind,
            let variable = typeVarBySymbol[typeParam.symbol]
         {
+            if typeParam.nullability != .nonNull {
+                let nonNullSubtype = typeSystem.makeNonNullable(subtype)
+                if case .nothing = typeSystem.kind(of: nonNullSubtype) {
+                    // `null` / `Nothing?` is compatible with `T?` but does not
+                    // constrain the underlying non-null type variable.
+                    return []
+                }
+                return [VariableConstraint(
+                    kind: .subtype,
+                    left: .type(nonNullSubtype),
+                    right: .variable(variable),
+                    blameRange: blameRange
+                )]
+            }
             return [VariableConstraint(
                 kind: .subtype,
                 left: .type(subtype),
