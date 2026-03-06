@@ -1,6 +1,7 @@
 package golden.sema
 
-class Counter(val initial: Int) {
+class Counter(initial0: Int) {
+    val initial: Int = initial0
     var count: Int = initial
     val label: String = "counter"
 

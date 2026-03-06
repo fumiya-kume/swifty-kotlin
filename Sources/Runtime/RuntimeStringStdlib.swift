@@ -117,18 +117,75 @@ public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
         return runtimeCompareStrings(lhsString, rhsString)
     }
 
-    let lhsValue = maybeUnbox(lhsRaw)
-    let rhsValue = maybeUnbox(rhsRaw)
-    if lhsValue != lhsRaw || rhsValue != rhsRaw ||
-        (UnsafeMutableRawPointer(bitPattern: lhsRaw) == nil && UnsafeMutableRawPointer(bitPattern: rhsRaw) == nil)
+    if let lhsValue = runtimeComparableScalar(from: lhsRaw),
+       let rhsValue = runtimeComparableScalar(from: rhsRaw)
     {
-        if lhsValue == rhsValue {
-            return 0
+        switch (lhsValue, rhsValue) {
+        case let (.floating(lhs), .floating(rhs)):
+            if lhs == rhs {
+                return 0
+            }
+            return lhs < rhs ? -1 : 1
+        case let (.floating(lhs), .integer(rhs)):
+            let rhsDouble = Double(rhs)
+            if lhs == rhsDouble {
+                return 0
+            }
+            return lhs < rhsDouble ? -1 : 1
+        case let (.integer(lhs), .floating(rhs)):
+            let lhsDouble = Double(lhs)
+            if lhsDouble == rhs {
+                return 0
+            }
+            return lhsDouble < rhs ? -1 : 1
+        case let (.integer(lhs), .integer(rhs)):
+            if lhs == rhs {
+                return 0
+            }
+            return lhs < rhs ? -1 : 1
         }
-        return lhsValue < rhsValue ? -1 : 1
     }
 
     return lhsRaw < rhsRaw ? -1 : 1
+}
+
+private enum RuntimeComparableScalar {
+    case integer(Int)
+    case floating(Double)
+}
+
+private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? {
+    guard raw != runtimeNullSentinelInt else {
+        return nil
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return .integer(raw)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return .integer(raw)
+    }
+    if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+        return .floating(Double(floatBox.value))
+    }
+    if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+        return .floating(doubleBox.value)
+    }
+    if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+        return .integer(intBox.value)
+    }
+    if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+        return .integer(boolBox.value ? 1 : 0)
+    }
+    if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+        return .integer(longBox.value)
+    }
+    if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+        return .integer(charBox.value)
+    }
+    return nil
 }
 
 private func runtimeSplitString(_ source: String, delimiter: String) -> [String] {
@@ -208,6 +265,12 @@ private struct RuntimeFormatSpecifier {
         if let precision {
             token += ".\(precision)"
         }
+        switch normalizedConversion {
+        case "d", "i", "x", "o":
+            token += "ll"
+        default:
+            break
+        }
         token.append(conversion)
         return token
     }
@@ -220,7 +283,7 @@ private enum RuntimeParsedFormatToken {
     case invalid
 }
 
-private let runtimeFormatFlagCharacters: Set<Character> = ["-", "+", " ", "0", "#", ",", "("]
+private let runtimeFormatFlagCharacters: Set<Character> = ["-", "+", " ", "0", "#"]
 private let runtimeFormatLengthCharacters: Set<Character> = ["h", "l", "L", "z", "j", "t"]
 private let runtimeSupportedFormatConversions: Set<Character> = [
     "s", "S", "b", "B", "d", "i", "x", "X", "o", "f", "e", "E", "g", "G", "c", "C",
@@ -346,10 +409,10 @@ private func runtimeRenderFormattedArgument(_ argument: Int, specifier: RuntimeF
         let normalized = specifier.conversion.isUppercase ? value.uppercased() : value
         return runtimeApplyStringWidth(normalized, specifier: specifier)
     case "d", "i":
-        let value = Int32(truncatingIfNeeded: runtimeFormatIntegerValue(argument))
+        let value = Int64(runtimeFormatIntegerValue(argument))
         return String(format: specifier.cStyleToken, value)
     case "x", "o":
-        let value = UInt32(truncatingIfNeeded: runtimeFormatIntegerValue(argument))
+        let value = UInt64(bitPattern: Int64(runtimeFormatIntegerValue(argument)))
         return String(format: specifier.cStyleToken, value)
     case "f", "e", "g":
         return String(format: specifier.cStyleToken, runtimeFormatDoubleValue(argument))

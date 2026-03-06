@@ -157,6 +157,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -201,6 +202,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -248,6 +250,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -322,6 +325,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -366,6 +370,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -404,6 +409,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """

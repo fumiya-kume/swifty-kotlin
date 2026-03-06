@@ -39,8 +39,14 @@ public final class CodegenPhase: CompilerPhase {
                 try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedLLVMIRPath = path
 
-            case .object, .executable:
+            case .object:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
+                try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
+                ctx.generatedObjectPath = path
+                ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
+
+            case .executable:
+                let path = executableObjectPath(base: ctx.options.outputPath)
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
                 ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
@@ -82,6 +88,10 @@ public final class CodegenPhase: CompilerPhase {
             return fileURL.appendingPathExtension(defaultExtension).path
         }
         return base
+    }
+
+    private func executableObjectPath(base: String) -> String {
+        URL(fileURLWithPath: base).appendingPathExtension("o").path
     }
 
     private func emitLibrary(

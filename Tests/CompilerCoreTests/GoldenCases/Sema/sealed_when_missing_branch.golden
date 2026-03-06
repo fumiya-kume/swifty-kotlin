@@ -37,7 +37,7 @@ symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=
 symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
 symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
 symbol s38 kind=class fq=Animal vis=public flags=sealedType
-symbol s39 kind=constructor fq=Animal.<init> vis=public flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s39 kind=constructor fq=Animal.<init> vis=protected flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
 symbol s40 kind=class fq=Dog vis=public flags=_
 symbol s41 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#40 params=[] ret=Class#40 suspend=0 defaults=[] vararg=[]
 symbol s42 kind=class fq=Cat vis=public flags=_

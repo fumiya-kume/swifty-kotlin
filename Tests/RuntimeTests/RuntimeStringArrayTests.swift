@@ -114,6 +114,22 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(kk_string_compareTo(nil, nil), 0)
     }
 
+    func testCompareAnyDecodesBoxedDoubleValues() {
+        let lhs = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 1.25.bitPattern)))
+        let rhs = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern)))
+
+        XCTAssertEqual(kk_compare_any(lhs, rhs), -1)
+        XCTAssertEqual(kk_compare_any(rhs, lhs), 1)
+    }
+
+    func testCompareAnyPromotesMixedFloatingAndIntegerValues() {
+        let lhs = kk_box_float(Int(Float(3).bitPattern))
+
+        XCTAssertEqual(kk_compare_any(lhs, 5), -1)
+        XCTAssertEqual(kk_compare_any(5, lhs), 1)
+        XCTAssertEqual(kk_compare_any(lhs, 3), 0)
+    }
+
     // MARK: - STDLIB-006 string runtime ABI
 
     func testStringTrimRemovesLeadingAndTrailingWhitespace() {
@@ -209,6 +225,15 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "true FALSE false")
     }
 
+    func testStringFormatPreservesSixtyFourBitIntegerWidth() {
+        let signed = Int(Int64.max)
+        let unsigned = Int(bitPattern: UInt(truncatingIfNeeded: UInt64.max))
+        let args = makeRuntimeArray([signed, unsigned])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%d %x"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 ffffffffffffffff")
+    }
+
     func testStringFormatSupportsEscapedPercentWithoutArguments() {
         let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
         XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
@@ -218,6 +243,12 @@ final class RuntimeStringArrayTests: XCTestCase {
         let args = makeRuntimeArray([7])
         let formatted = kk_string_format(rawFromRuntimeString("%u"), args)
         XCTAssertEqual(runtimeStringValue(formatted), "%u")
+    }
+
+    func testStringFormatTreatsUnsupportedGroupingFlagsAsLiteral() {
+        let args = makeRuntimeArray([1234])
+        let formatted = kk_string_format(rawFromRuntimeString("%,d"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "%,d")
     }
 
     // MARK: - kk_throwable_new

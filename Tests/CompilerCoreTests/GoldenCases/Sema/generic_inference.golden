@@ -58,4 +58,4 @@ expr e8 localDecl b mutable=0 type=t3 init=e7 type=Unit ref=s43
 expr e9 name(id) type=_
 expr e10 bool(true) type=Boolean
 expr e11 call callee=e9 args=[_:e10] type=Boolean call=s38 map=[0->0] targs=[Boolean]
-expr e12 localDecl c mutable=0 type=_ init=e11 type=Unit ref=s44
+expr e12 localDecl c mutable=0 type=t4 init=e11 type=Unit ref=s44

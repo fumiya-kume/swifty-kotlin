@@ -38,7 +38,7 @@ symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=re
 symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
 symbol s38 kind=class fq=golden.sema.Validated vis=public flags=_
 symbol s39 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
-symbol s40 kind=property fq=golden.sema.Validated.Int vis=public flags=mutable type=Int
+symbol s40 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
 symbol s41 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
 file f0 package=golden.sema
   decl d2 class Validated sym=s38

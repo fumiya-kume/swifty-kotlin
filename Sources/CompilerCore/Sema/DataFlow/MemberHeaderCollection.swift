@@ -284,12 +284,15 @@ extension DataFlowSemaPhase {
                 let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
                 let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
                 if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
+                    let nestedPrimaryCtorVisibility: Visibility = classSymbolKind(for: nestedClass) == .class && nestedClass.modifiers.contains(.sealed)
+                        ? .protected
+                        : visibility(from: nestedClass.modifiers)
                     let nestedPrimaryCtorSymbol = symbols.define(
                         kind: .constructor,
                         name: nestedClass.name,
                         fqName: nestedCtorFQName,
                         declSite: nestedClass.range,
-                        visibility: visibility(from: nestedClass.modifiers),
+                        visibility: nestedPrimaryCtorVisibility,
                         flags: []
                     )
                     nestedScope.insert(nestedPrimaryCtorSymbol)

@@ -45,23 +45,24 @@ symbol s43 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public flag
 symbol s44 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#42 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s45 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$44.thisRef vis=private flags=_
 symbol s46 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$44.property vis=private flags=_
-symbol s47 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#42 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s47 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#42 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s48 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$47.thisRef vis=private flags=_
 symbol s49 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$47.property vis=private flags=_
-symbol s50 kind=class fq=golden.sema.Holder vis=public flags=_
-symbol s51 kind=constructor fq=golden.sema.Holder.<init> vis=public flags=_ sig=recv=Class#50 params=[] ret=Class#50 suspend=0 defaults=[] vararg=[]
-symbol s52 kind=property fq=golden.sema.Holder.name vis=public flags=_ type=String
-symbol s53 kind=field fq=golden.sema.Holder.$delegate_name vis=private flags=_
-symbol s54 kind=property fq=golden.sema.Holder.mutable vis=public flags=mutable type=String
-symbol s55 kind=field fq=golden.sema.Holder.$delegate_mutable vis=private flags=_
+symbol s50 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$47.value vis=private flags=_
+symbol s51 kind=class fq=golden.sema.Holder vis=public flags=_
+symbol s52 kind=constructor fq=golden.sema.Holder.<init> vis=public flags=_ sig=recv=Class#51 params=[] ret=Class#51 suspend=0 defaults=[] vararg=[]
+symbol s53 kind=property fq=golden.sema.Holder.name vis=public flags=_ type=String
+symbol s54 kind=field fq=golden.sema.Holder.$delegate_name vis=private flags=_
+symbol s55 kind=property fq=golden.sema.Holder.mutable vis=public flags=mutable type=String
+symbol s56 kind=field fq=golden.sema.Holder.$delegate_mutable vis=private flags=_
 file f0 package=golden.sema
   decl d1 class LazyHolder sym=s38
   decl d4 class CustomDelegate sym=s42
-  decl d7 class Holder sym=s50
+  decl d7 class Holder sym=s51
 expr e0 name(lazy) type=Int ref=s40
 expr e1 int(42) type=_
 expr e2 string(hello) type=String
 expr e3 name(CustomDelegate) type=_
 expr e4 call callee=e3 args=[] type=Class#42 call=s43 map=[] targs=[]
-expr e5 name(CustomDelegate) type=String ref=s52
-expr e6 call callee=e5 args=[] type=String ref=s54 call=s43 map=[] targs=[]
+expr e5 name(CustomDelegate) type=String ref=s53
+expr e6 call callee=e5 args=[] type=String ref=s55 call=s43 map=[] targs=[]

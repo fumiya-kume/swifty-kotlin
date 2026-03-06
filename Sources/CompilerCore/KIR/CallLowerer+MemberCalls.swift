@@ -512,7 +512,7 @@ extension CallLowerer {
                     arena: arena,
                     interner: interner,
                     intType: intType,
-                    anyType: sema.types.anyType,
+                    anyType: sema.types.nullableAnyType,
                     instructions: &instructions
                 )
                 instructions.append(.call(

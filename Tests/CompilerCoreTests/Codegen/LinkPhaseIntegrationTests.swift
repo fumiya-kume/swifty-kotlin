@@ -253,6 +253,39 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
+    func testExecutableEmissionWithOutputExtensionUsesSeparateObjectPath() throws {
+        let source = """
+        fun main() {
+            println("%b %B".format(true, false))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("out")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "ExtensionOutput",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            XCTAssertEqual(ctx.generatedObjectPath, outputPath + ".o")
+            XCTAssertNotEqual(ctx.generatedObjectPath, outputPath)
+
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines), "true FALSE")
+        }
+    }
+
     func testLinkPhaseReportsDiagnosticForUnsupportedTargetArchitecture() throws {
         let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
         try Data().write(to: tempObjectURL)

@@ -193,12 +193,15 @@ extension DataFlowSemaPhase {
             let hasPrimaryCtorSyntax = classDecl.hasPrimaryConstructorSyntax
             let hasSecondaryCtors = !classDecl.secondaryConstructors.isEmpty
             if hasPrimaryCtorSyntax || !hasSecondaryCtors {
+                let primaryCtorVisibility: Visibility = declaration.kind == .class && classDecl.modifiers.contains(.sealed)
+                    ? .protected
+                    : declaration.visibility
                 let primaryCtorSymbol = symbols.define(
                     kind: .constructor,
                     name: declaration.name,
                     fqName: primaryCtorFQName,
                     declSite: classDecl.range,
-                    visibility: declaration.visibility,
+                    visibility: primaryCtorVisibility,
                     flags: []
                 )
                 scope.insert(primaryCtorSymbol)
