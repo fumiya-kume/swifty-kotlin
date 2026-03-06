@@ -1,6 +1,8 @@
 // MARK: - Ignored External Callees
 
 extension LLVMBackend {
+    static let runtimeABIExternalCallees: Set<String> = Set(RuntimeABIExterns.allExterns.map(\.name))
+
     static let ignoredExternalCallees: Set<String> = [
         "println",
         "kk_println_any",
@@ -183,6 +185,7 @@ extension LLVMBackend {
                 let calleeName = interner.resolve(calleeInfo.callee)
                 guard !calleeName.isEmpty,
                       !Self.isBuiltinOp(calleeName),
+                      !Self.runtimeABIExternalCallees.contains(calleeName),
                       !Self.ignoredExternalCallees.contains(calleeName)
                 else {
                     continue
