@@ -3,7 +3,7 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
-    func testSyntheticCBackendObjectContainsDebugSectionWhenDebugInfoEnabled() throws {
+    func testCodegenObjectContainsDebugSectionWhenDebugInfoEnabled() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory
@@ -57,7 +57,7 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testSyntheticCBackendLLVMIRContainsDebugFlagWhenDebugInfoEnabled() throws {
+    func testCodegenLLVMIRContainsDebugFlagWhenDebugInfoEnabled() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory

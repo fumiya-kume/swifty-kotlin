@@ -198,11 +198,7 @@ extension LLVMBackend {
     }
 
     func clangTargetArgs() -> [String] {
-        var triple = "\(target.arch)-\(target.vendor)-\(target.os)"
-        if let version = target.osVersion, !version.isEmpty {
-            triple += version
-        }
-        return ["-target", triple]
+        CodegenRuntimeSupport.clangTargetArgs(target)
     }
 
     func reportBackendError(code: String, message: String, error: CommandRunnerError) {

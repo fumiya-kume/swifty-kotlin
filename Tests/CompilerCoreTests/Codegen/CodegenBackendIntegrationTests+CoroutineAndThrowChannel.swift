@@ -211,8 +211,7 @@ extension CodegenBackendIntegrationTests {
             inputPath: inputPath,
             moduleName: "Determinism",
             emit: emit,
-            outputPath: outputPath,
-            irFlags: emit == .object ? ["backend=synthetic-c"] : []
+            outputPath: outputPath
         )
 
         let artifactPath: String

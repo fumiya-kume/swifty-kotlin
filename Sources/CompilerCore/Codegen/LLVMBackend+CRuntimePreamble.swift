@@ -2,10 +2,10 @@ import Foundation
 
 extension LLVMBackend {
     func cRuntimeExternDeclarations() -> [String] {
-        Self.fixedExternDeclarations
+        CodegenRuntimeSupport.fixedExternDeclarations
     }
 
     func cRuntimePreamble() -> [String] {
-        Self.fixedRuntimePreamble
+        CodegenRuntimeSupport.fixedRuntimePreamble
     }
 }

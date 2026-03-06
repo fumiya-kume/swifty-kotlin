@@ -1,6 +1,6 @@
 import Foundation
 
-extension LLVMBackend {
+extension CodegenRuntimeSupport {
     /// Minimal C declarations sufficient for compiling user code when the full
     /// runtime preamble has already been compiled into a cached stub object.
     /// Includes type definitions, macros, and extern declarations for all

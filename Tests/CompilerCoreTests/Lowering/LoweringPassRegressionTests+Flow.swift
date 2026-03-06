@@ -132,7 +132,7 @@ extension LoweringPassRegressionTests {
         )
     }
 
-    func testFlowMapCollectExecutablePrintsExpectedOutputWithSyntheticCBackend() throws {
+    func testFlowMapCollectExecutablePrintsExpectedOutputWithExplicitLlvmCApiFlag() throws {
         let source = """
         suspend fun runFlowCollectExecutable() {
             flow {
@@ -150,9 +150,9 @@ extension LoweringPassRegressionTests {
 
         try assertFlowExecutableOutput(
             source: source,
-            moduleName: "FlowExecutableSyntheticC",
+            moduleName: "FlowExecutableLlvmCApi",
             expectedStdout: "2\n4\n",
-            irFlags: ["backend=synthetic-c"]
+            irFlags: ["backend=llvm-c-api"]
         )
     }
 

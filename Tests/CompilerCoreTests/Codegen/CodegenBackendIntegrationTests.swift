@@ -90,7 +90,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         try assertDeterministicCodegenOutput(source: source, emit: .object)
     }
 
-    func testSyntheticCBackendCompilesStringStdlibMixedThrowCalls() throws {
+    func testCodegenCompilesStringStdlibMixedThrowCalls() throws {
         let source = """
         fun main() {
             val maybe: String? = null
@@ -108,17 +108,16 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SyntheticCStringStdlib",
+                moduleName: "StringStdlibMixedThrowCalls",
                 emit: .object,
-                outputPath: outputBase,
-                irFlags: ["backend=synthetic-c"]
+                outputPath: outputBase
             )
             let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
             XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
         }
     }
 
-    func testSyntheticCBackendGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
+    func testCodegenGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
         let source = """
         fun <T> pickGreater(a: T, b: T): T where T : Comparable<T> = if (a > b) a else b
 
@@ -133,10 +132,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let ctx = try runCodegenPipeline(
                 inputPath: path,
-                moduleName: "SyntheticCNaNComparable",
+                moduleName: "NaNComparable",
                 emit: .executable,
-                outputPath: outputBase,
-                irFlags: ["backend=synthetic-c"]
+                outputPath: outputBase
             )
             try LinkPhase().run(ctx)
 
@@ -236,7 +234,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenBackendSelectionWarnsOnUnknownBackendAndFallsBack() throws {
+    func testCodegenBackendSelectionRejectsUnknownBackend() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
@@ -257,11 +255,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
-            try CodegenPhase().run(ctx)
+            XCTAssertThrowsError(try CodegenPhase().run(ctx))
+            XCTAssertNil(ctx.generatedObjectPath)
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1008" })
+        }
+    }
 
-            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1002" })
+    func testCodegenBackendSelectionRejectsSyntheticBackendFlag() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "SyntheticBackendFlag",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .object,
+                target: defaultTargetTriple(),
+                irFlags: ["backend=synthetic-c"]
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            XCTAssertThrowsError(try CodegenPhase().run(ctx))
+            XCTAssertNil(ctx.generatedObjectPath)
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1008" })
         }
     }
 
@@ -354,7 +377,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         XCTAssertFalse(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1005" })
     }
 
-    func testCodegenBackendSelectionLlvmCApiAndSyntheticBackendObjectCompatibilitySmoke() throws {
+    func testCodegenBackendSelectionDefaultAndExplicitLlvmCApiObjectCompatibilitySmoke() throws {
         guard llvmCapiBindingsAvailable() else {
             throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
         }
@@ -367,26 +390,25 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let tempDir = FileManager.default.temporaryDirectory
 
-            let syntheticBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let syntheticOptions = CompilerOptions(
-                moduleName: "CompatSynthetic",
+            let defaultBase = tempDir.appendingPathComponent(UUID().uuidString).path
+            let defaultOptions = CompilerOptions(
+                moduleName: "CompatDefault",
                 inputs: [path],
-                outputPath: syntheticBase,
+                outputPath: defaultBase,
                 emit: .object,
-                target: defaultTargetTriple(),
-                irFlags: ["backend=synthetic-c"]
+                target: defaultTargetTriple()
             )
-            let syntheticCtx = CompilationContext(
-                options: syntheticOptions,
+            let defaultCtx = CompilationContext(
+                options: defaultOptions,
                 sourceManager: SourceManager(),
                 diagnostics: DiagnosticEngine(),
                 interner: StringInterner()
             )
-            try runToKIR(syntheticCtx)
-            try LoweringPhase().run(syntheticCtx)
-            try CodegenPhase().run(syntheticCtx)
-            let syntheticObject = try XCTUnwrap(syntheticCtx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: syntheticObject))
+            try runToKIR(defaultCtx)
+            try LoweringPhase().run(defaultCtx)
+            try CodegenPhase().run(defaultCtx)
+            let defaultObject = try XCTUnwrap(defaultCtx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: defaultObject))
 
             let llvmCapiBase = tempDir.appendingPathComponent(UUID().uuidString).path
             let llvmCapiOptions = CompilerOptions(
@@ -409,9 +431,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let llvmCapiObject = try XCTUnwrap(llvmCapiCtx.generatedObjectPath)
             XCTAssertTrue(FileManager.default.fileExists(atPath: llvmCapiObject))
 
-            let syntheticSize = (try? FileManager.default.attributesOfItem(atPath: syntheticObject)[.size] as? NSNumber)?.intValue ?? 0
+            let defaultSize = (try? FileManager.default.attributesOfItem(atPath: defaultObject)[.size] as? NSNumber)?.intValue ?? 0
             let llvmCapiSize = (try? FileManager.default.attributesOfItem(atPath: llvmCapiObject)[.size] as? NSNumber)?.intValue ?? 0
-            XCTAssertGreaterThan(syntheticSize, 0)
+            XCTAssertGreaterThan(defaultSize, 0)
             XCTAssertGreaterThan(llvmCapiSize, 0)
         }
     }

@@ -9,10 +9,6 @@ public final class LLVMBackend {
     /// Optional phase timer for recording subprocess wall-clock durations.
     var phaseTimer: PhaseTimer?
 
-    /// Process-wide cache for the pre-compiled runtime stub object.
-    /// Protected by a lock for Swift 6 concurrency compliance in synchronous APIs.
-    private static let stubCache = RuntimeStubCache()
-
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
@@ -41,10 +37,9 @@ public final class LLVMBackend {
         )
     }
 
-    /// Returns the path to the cached runtime stub `.o` if available,
-    /// for use by the link phase as an additional link input.
+    /// Returns the path to the cached runtime stub `.o` used by the LLVM link step.
     public func runtimeStubPath() -> String? {
-        cachedRuntimeStubPath()
+        CodegenRuntimeSupport.runtimeStubObjectPath(target: target)
     }
 
     public func emitLLVMIR(
@@ -63,25 +58,6 @@ public final class LLVMBackend {
         )
     }
 
-    /// Returns the path to a pre-compiled runtime stub `.o` for the current
-    /// target triple, compiling it on first access and caching the result for
-    /// subsequent compilations within the same process.
-    func cachedRuntimeStubPath() -> String? {
-        let triple = targetTripleString()
-        let source = cRuntimePreamble().joined(separator: "\n")
-        let cacheKey = Self.stableFNV1a64Hex(triple + "_" + Self.stableFNV1a64Hex(source))
-        let stubDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("kswiftk_rt_stubs")
-        let context = StubCompilationContext(
-            source: source,
-            cacheKey: cacheKey,
-            clangTargetArgs: clangTargetArgs(),
-            stubDir: stubDir
-        )
-
-        return Self.stubCache.getOrInsert(triple: triple, context: context)
-    }
-
     private func compileWithClang(
         module: KIRModule,
         interner: StringInterner,
@@ -91,7 +67,7 @@ public final class LLVMBackend {
         errorContext: String
     ) throws {
         let isIRDump = extraArgs.contains("-S") || extraArgs.contains("-emit-llvm")
-        let runtimeStub = isIRDump ? nil : cachedRuntimeStubPath()
+        let runtimeStub = isIRDump ? nil : runtimeStubPath()
         let source = emitCModule(module: module, interner: interner, useExternRuntime: runtimeStub != nil)
         let sourceURL = deterministicTempSourceURL(outputPath: outputPath)
         defer {
@@ -139,12 +115,7 @@ public final class LLVMBackend {
     }
 
     static func stableFNV1a64Hex(_ value: String) -> String {
-        var hash: UInt64 = 0xCBF2_9CE4_8422_2325
-        for byte in value.utf8 {
-            hash ^= UInt64(byte)
-            hash &*= 0x100_0000_01B3
-        }
-        return String(hash, radix: 16)
+        CodegenRuntimeSupport.stableFNV1a64Hex(value)
     }
 
     private func emitCModule(module: KIRModule, interner: StringInterner, useExternRuntime: Bool = false) -> String {

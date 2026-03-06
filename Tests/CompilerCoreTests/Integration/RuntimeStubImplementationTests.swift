@@ -9,13 +9,7 @@ final class RuntimeStubImplementationTests: XCTestCase {
     // MARK: - Helpers
 
     private func makePreamble() -> String {
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-        return backend.cRuntimePreamble().joined(separator: "\n")
+        CodegenRuntimeSupport.fixedRuntimePreamble.joined(separator: "\n")
     }
 
     private func makeSimpleModule(interner: StringInterner) -> KIRModule {

@@ -589,10 +589,10 @@ public enum DiagnosticRegistry {
             summary: "C compilation (clang) failure."
         ),
         DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1002",
+            code: "KSWIFTK-BACKEND-1008",
             pass: "BACKEND",
-            defaultSeverity: .warning,
-            summary: "LLVM C API backend: non-fatal codegen warning."
+            defaultSeverity: .error,
+            summary: "Unsupported backend selection."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1003",

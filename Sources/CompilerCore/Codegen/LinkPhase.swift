@@ -163,7 +163,7 @@ public final class LinkPhase: CompilerPhase {
     /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
     /// collisions with unrelated entries in the shared temp directory.
     private func stableEntryWrapperURL(outputPath: String) -> URL {
-        let key = LLVMBackend.stableFNV1a64Hex(outputPath)
+        let key = CodegenRuntimeSupport.stableFNV1a64Hex(outputPath)
         let cacheDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("kswiftk", isDirectory: true)
         do {

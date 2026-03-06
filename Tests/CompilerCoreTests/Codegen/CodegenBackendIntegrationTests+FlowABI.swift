@@ -3,7 +3,7 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testFixedExternDeclarationsUseFlowABIWithContinuationParameter() {
-        let externs = LLVMBackend.fixedExternDeclarations
+        let externs = CodegenRuntimeSupport.fixedExternDeclarations
 
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation);"))
         XCTAssertTrue(externs.contains("extern intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag);"))
@@ -21,7 +21,7 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testFixedRuntimePreambleContainsFlowOperatorStubsForNewABI() {
-        let preamble = LLVMBackend.fixedRuntimePreamble
+        let preamble = CodegenRuntimeSupport.fixedRuntimePreamble
 
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_create(intptr_t emitterFnPtr, intptr_t continuation) {"))
         XCTAssertTrue(preamble.contains("__attribute__((weak)) intptr_t kk_flow_emit(intptr_t flowHandle, intptr_t value, intptr_t tag) {"))

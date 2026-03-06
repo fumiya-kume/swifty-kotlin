@@ -17,5 +17,3 @@ protocol CodegenBackend {
         sourceManager: SourceManager?
     ) throws
 }
-
-extension LLVMBackend: CodegenBackend {}

@@ -3,13 +3,7 @@ import Foundation
 public final class CodegenPhase: CompilerPhase {
     public static let name = "Codegen"
 
-    private enum BackendKind {
-        case syntheticC
-        case llvmCAPI
-    }
-
     private struct BackendSelection {
-        let kind: BackendKind
         let isStrictMode: Bool
     }
 
@@ -25,7 +19,7 @@ public final class CodegenPhase: CompilerPhase {
             libraries: ctx.options.linkLibraries,
             extraObjects: []
         )
-        let backend = makeBackend(ctx: ctx)
+        let backend = try makeBackend(ctx: ctx)
 
         do {
             switch ctx.options.emit {
@@ -43,13 +37,13 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
-                ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
+                ctx.runtimeStubObjectPath = runtimeStubObjectPath(ctx: ctx)
 
             case .executable:
                 let path = executableObjectPath(base: ctx.options.outputPath)
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
-                ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
+                ctx.runtimeStubObjectPath = runtimeStubObjectPath(ctx: ctx)
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
@@ -60,26 +54,9 @@ public final class CodegenPhase: CompilerPhase {
     }
 
     /// Returns the path to a pre-compiled runtime stub `.o` that provides
-    /// weak definitions for all runtime helper functions.  Both the synthetic-C
-    /// backend (`LLVMBackend`) and the native LLVM-C-API backend
-    /// (`LLVMCAPIBackend`) emit code that references these helpers as external
-    /// symbols, so the stub must be linked regardless of which backend produced
-    /// the user-code object file.
-    private func runtimeStubObjectPath(backend: any CodegenBackend, ctx: CompilationContext) -> String? {
-        if let llvmBackend = backend as? LLVMBackend {
-            return llvmBackend.runtimeStubPath()
-        }
-        // For non-synthetic backends (e.g. LLVMCAPIBackend) we still need the
-        // runtime stub at link time.  Create a lightweight LLVMBackend solely
-        // to compile / retrieve the cached stub object.
-        let stubProvider = LLVMBackend(
-            target: ctx.options.target,
-            optLevel: ctx.options.optLevel,
-            debugInfo: ctx.options.debugInfo,
-            diagnostics: ctx.diagnostics
-        )
-        stubProvider.phaseTimer = ctx.phaseTimer
-        return stubProvider.runtimeStubPath()
+    /// weak definitions for runtime helper functions referenced by linked code.
+    private func runtimeStubObjectPath(ctx: CompilationContext) -> String? {
+        CodegenRuntimeSupport.runtimeStubObjectPath(target: ctx.options.target)
     }
 
     private func outputPath(base: String, defaultExtension: String) -> String {
@@ -142,33 +119,20 @@ public final class CodegenPhase: CompilerPhase {
         try metadata.write(to: URL(fileURLWithPath: metadataPath), atomically: true, encoding: .utf8)
     }
 
-    private func makeBackend(ctx: CompilationContext) -> any CodegenBackend {
-        let selection = selectedBackend(irFlags: ctx.options.irFlags, target: ctx.options.target,
-                                        diagnostics: ctx.diagnostics)
-        switch selection.kind {
-        case .syntheticC:
-            let backend = LLVMBackend(
-                target: ctx.options.target,
-                optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
-                diagnostics: ctx.diagnostics
-            )
-            backend.phaseTimer = ctx.phaseTimer
-            return backend
-        case .llvmCAPI:
-            return LLVMCAPIBackend(
-                target: ctx.options.target,
-                optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
-                diagnostics: ctx.diagnostics,
-                isStrictMode: selection.isStrictMode
-            )
-        }
+    private func makeBackend(ctx: CompilationContext) throws -> any CodegenBackend {
+        let selection = try selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
+        return LLVMCAPIBackend(
+            target: ctx.options.target,
+            optLevel: ctx.options.optLevel,
+            debugInfo: ctx.options.debugInfo,
+            diagnostics: ctx.diagnostics,
+            isStrictMode: selection.isStrictMode
+        )
     }
 
     private func selectedBackend(
-        irFlags: [String], target: TargetTriple, diagnostics: DiagnosticEngine
-    ) -> BackendSelection {
+        irFlags: [String], diagnostics: DiagnosticEngine
+    ) throws -> BackendSelection {
         var requestedBackend: String?
         var isStrictMode = false
 
@@ -189,21 +153,26 @@ public final class CodegenPhase: CompilerPhase {
         }
 
         guard let requestedBackend else {
-            return llvmCapiBackendUsableForDefaultSelection(target: target)
-                ? BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
-                : BackendSelection(kind: .syntheticC, isStrictMode: false)
+            return BackendSelection(isStrictMode: isStrictMode)
         }
 
         switch requestedBackend {
-        case "synthetic-c", "synthetic":
-            return BackendSelection(kind: .syntheticC, isStrictMode: false)
         case "llvm-c-api", "llvm-capi":
-            return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
+            return BackendSelection(isStrictMode: isStrictMode)
+        case "synthetic-c", "synthetic":
+            diagnostics.error(
+                "KSWIFTK-BACKEND-1008",
+                "Unsupported backend '\(requestedBackend)'; the LLVM C API backend is now the only supported backend.",
+                range: nil
+            )
+            throw CompilerPipelineError.outputUnavailable
         default:
-            diagnostics.warning("KSWIFTK-BACKEND-1002",
-                                "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
-                                range: nil)
-            return BackendSelection(kind: .syntheticC, isStrictMode: false)
+            diagnostics.error(
+                "KSWIFTK-BACKEND-1008",
+                "Unknown backend '\(requestedBackend)'; the LLVM C API backend is now the only supported backend.",
+                range: nil
+            )
+            throw CompilerPipelineError.outputUnavailable
         }
     }
 
