@@ -15,7 +15,7 @@
 
 ---
 
-## 未完了バックログ（0件 + 完了17件）
+## 未完了バックログ（10件 + 完了17件）
 
 ### 📐 Type System
 
@@ -26,6 +26,17 @@
   - [x] 符号なし型リテラル（`42u`/`42uL`）を Lexer/Parser で認識し型推論する
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task TYPE-005`
   - **完了条件**: `val x: UInt = 4294967295u` が overflow せず正しく演算され、`toInt()` で符号変換が動作する
+
+---
+
+### 🧱 Declarations
+
+- [ ] DECL-004: `lateinit var` と `::prop.isInitialized` を front-to-back で実装する（registry: `P5-110`, spec.md J7/J9）
+  - [ ] `lateinit` 修飾子を property symbol / metadata に保持し、`val`・nullable 型・primitive 型・initializer 付き宣言を禁止して `KSWIFTK-SEMA-LATEINIT` 系診断を出す
+  - [ ] backing storage に未初期化状態を保持し、未初期化読み取り時は `UninitializedPropertyAccessException` を投げ、代入後は通常 getter / setter として動作させる
+  - [ ] bound property reference `::name.isInitialized` を owner scope 内で解決し、member / top-level property の初期化状態を参照できるようにする
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-110`
+  - **完了条件**: `lateinit var name: String` が未初期化読み取りで例外を投げ、`::name.isInitialized` が代入前 `false` / 代入後 `true` を返す
 
 ---
 
@@ -69,6 +80,14 @@
   - [x] Build cases and implement `to` in `RuntimeCollections.swift` that returns `Any` (underneath it produces a Pair struct)diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task FUNC-002`
   - **完了条件**: `1 to "one"` が `Pair(1, "one")` に、カスタム infix 関数が正しい優先順位で評価される（優先順位設定は既存実装済み）
 
+
+- [ ] FUNC-004: class / data class receiver 上の `operator fun` を front-to-back で揃える（registry: `P5-120`, spec.md J7/J9）
+  - [ ] member operator body から primary constructor property / member property を正しく解決し、`x` / `other.x` 参照が class / data class 内で通るようにする
+  - [ ] `plus` / `minus` / `times` / `unaryMinus` / `get` の member operator declaration を overload 解決に載せ、operator desugaring と通常メソッド呼び出しを同じ symbol に束縛する
+  - [ ] top-level / extension operator は `既存実装済み` とし、member operator の KIR / lowering / codegen parity を揃える
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-120`
+  - **完了条件**: `data class Vec(val x: Int, val y: Int)` 上の `a + b` / `-a` / `vec[0]` が `kotlinc` と同一出力になる
+
 ---
 
 ### 🧬 Generics
@@ -79,6 +98,14 @@
   - [x] 複数 upper bound に違反する型引数に `KSWIFTK-SEMA-BOUND` 診断を出す
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-001`
   - **完了条件**: `fun <T> max(a: T, b: T): T where T : Comparable<T>` が `max(1, 2)` / `max("a", "b")` で動作する ✓
+
+
+- [ ] GEN-004: `fun interface` の SAM conversion を end-to-end で実装する（registry: `GEN-004`, spec.md J9/J12）
+  - [ ] `fun interface` を single abstract method を持つ nominal type として検証し、SAM 条件違反に `KSWIFTK-SEMA-SAM` 系診断を出す
+  - [ ] lambda / callable reference を期待型の SAM signature に合わせて型推論し、Sema binding と hidden bridge 情報を KIR へ渡す
+  - [ ] lowering / codegen で SAM wrapper 生成と call-site rewrite を実装し、引数位置 lambda が interface instance として渡るようにする
+  - [ ] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task GEN-004`
+  - **完了条件**: `fun interface Action { fun run(): String }` に対して `execute { "hello" }` が `"hello"` を出力し `kotlinc` と一致する
 
 ---
 
@@ -103,6 +130,12 @@
 
 ### ⚡ Coroutines
 
+- [ ] CORO-002: coroutine cancellation の end-to-end parity を復旧する（spec.md J17）
+  - [ ] `job.cancel()` / `job.join()` / `CancellationException` の surface API 解決を通し、runtime ABI は `既存実装済み` として `kk_job_cancel` / `kk_job_join` / cancellation helpers へ lowering する
+  - [ ] `repeat(times)` 依存は `STDLIB-008` で補完し、`Scripts/diff_cases/coroutine_cancellation.kt` を diff ハーネスで常時実行できる状態に戻す
+  - [ ] `--kotlinc-classpath` に `kotlinx-coroutines-core` を渡す parity ワークフローを前提条件として明記する
+  - **完了条件**: `job.cancel(); job.join()` が `CancellationException` を catch して `cancelled\ndone` を `kotlinc` と一致して出力する
+
 - [x] CORO-003: `Flow<T>` コールドストリームを実装する（spec.md J17）
   - [x] runtime に `kk_flow_create` / `kk_flow_collect` / `kk_flow_emit` の C ABI 関数を追加する
   - [x] `flow { emit(x) }` builder の lowering を実装し、collector lambda に suspension point を挿入する
@@ -110,6 +143,27 @@
   - [x] `Flow` はコールド（collect のたびに再実行）であることを runtime で保証する
   - [x] diff/golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task CORO-003`
   - **完了条件**: `flow { emit(1); emit(2) }.map { it * 2 }.collect { println(it) }` が `2\n4` を出力し `kotlinc` と一致する ✓
+
+
+- [ ] CORO-004: `withContext` / `Dispatchers` の解決・lowering を追加する（registry: `P5-133`, spec.md J17）
+  - [ ] `Dispatchers.Default` / `Dispatchers.IO` stub と `withContext` signature を Sema に登録し、import 解決から参照できるようにする
+  - [ ] `withContext(dispatcher) { ... }` を coroutine lowering で runtime `kk_with_context` へ rewrite する
+  - [ ] `kotlinx-coroutines-core` classpath 前提の diff ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-133`
+  - **完了条件**: `withContext(Dispatchers.Default) { "hello" }` が `"hello"` を返し `kotlinc` と同一出力になる
+
+
+- [ ] CORO-005: `Channel<T>` / `send` / `receive` / `close` を実装する（registry: `P5-134`, spec.md J17）
+  - [ ] `Channel<T>` nominal type と `kotlinx.coroutines.channels.*` import 解決を Sema に追加する
+  - [ ] `Channel()` / `send` / `receive` / `close` を runtime `kk_channel_create` / `kk_channel_send` / `kk_channel_receive` / `kk_channel_close` ABI へ lowering する
+  - [ ] `kotlinx-coroutines-core` classpath 前提の diff ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-134`
+  - **完了条件**: `Channel<Int>()`, `send(42)`, `receive()` が `42` を出力し `kotlinc` と同一出力になる
+
+
+- [ ] CORO-006: Kotlin 形式の `async { ... }` / `await()` parity を実装する（registry: `P5-135`, spec.md J17）
+  - [ ] suspend function reference 専用の launcher lowering を、suspend lambda / inline block 受け取りにも対応させる
+  - [ ] `Deferred<T>` 相当の型と `.await()` member 解決を Sema / KIR で揃える
+  - [ ] `kotlinx-coroutines-core` classpath 前提の diff ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-135`
+  - **完了条件**: `val deferred = async { 1 + 2 }; println(deferred.await())` が `3` を出力し `kotlinc` と同一出力になる
 
 ---
 
@@ -148,6 +202,20 @@
   - [x] diff/golden ケースを追加する → `Scripts/diff_cases/stdlib_string_ops.kt` / `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_string_ops.kt`
   - **完了条件**: `"  hello  ".trim()` / `"1,2,3".split(",")` / `"42".toInt()` / `"%s:%d".format("age", 7)` が `kotlinc` と同一出力になる ✓
 
+
+- [ ] STDLIB-007: multiline string helper `trimIndent()` / `trimMargin()` を実装する（spec.md J15）
+  - [ ] raw string literal 本体は `既存実装済み` とし、`String.trimIndent()` / `trimMargin()` の synthetic stdlib signature と runtime helper を追加する
+  - [ ] 改行・共通インデント除去・custom margin prefix の挙動を `kotlinc` に合わせる
+  - [ ] diff/golden ケースを追加する → `Scripts/test_templates/diff/raw_string_basic.kt` を正式 diff ケースへ昇格し、`trimMargin()` 用ケースを追加する
+  - **完了条件**: triple-quoted string に `trimIndent()` / `trimMargin()` を適用した出力が `kotlinc` と一致する
+
+
+- [ ] STDLIB-008: `repeat(times) {}` を stdlib stub として実装する（spec.md J15）
+  - [ ] `repeat(Int, action)` signature を Sema に登録し、lambda 引数 `it` を loop index として型推論できるようにする
+  - [ ] lowering / codegen で counted loop へ展開し、単純な inline loop として実行できるようにする
+  - [ ] standalone golden と `Scripts/diff_cases/coroutine_cancellation.kt` の unblock 用 diff ケースを追加する
+  - **完了条件**: `repeat(3) { print(it) }` が `012` を出力し、coroutine parity ケースの前提を満たす
+
 ---
 
 ### 🏷️ Annotations
@@ -158,6 +226,13 @@
   - [x] `@JvmStatic` on companion member → companion singleton 上の static-like (toplevel) 関数扱いへの lowering を追加する（`JvmStaticLoweringPass.swift`）
   - [x] `@Suppress`/`@Deprecated` の動作を確認する diff/golden ケースを追加する（`GoldenCases/Sema/suppress_annotation.kt`, `deprecated_annotation.kt`）
   - **完了条件**: `@Suppress` が対象診断を抑制し、`@Deprecated(level = ERROR)` が呼び出し元をコンパイルエラーにする ✓
+
+
+- [ ] ANNO-002: `@file:Suppress` / `@file:JvmName` など file-level annotation を AST / Sema / metadata で扱う（registry: `P5-141`, spec.md J6/J14）
+  - [ ] `ASTFile` に file annotation を保持し、package / import 前の `@file:` を parse / build AST で落とさず運ぶ
+  - [ ] `@file:Suppress` を file-scope diagnostics に適用し、`@file:JvmName` を metadata / file facade naming に反映する
+  - [ ] metadata serialize / deserialize と golden ケースを追加する → `bash Scripts/generate_test_case.sh --from-registry Scripts/test_case_registry.json --task P5-141`
+  - **完了条件**: `@file:Suppress("UNUSED")` が file 内の unused 診断を抑制し、`@file:JvmName("CustomName")` が metadata / export 名に反映される
 
 ---
 
