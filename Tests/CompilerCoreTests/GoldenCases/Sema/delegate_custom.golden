@@ -41,18 +41,19 @@ symbol s39 kind=constructor fq=golden.sema.StringDelegate.<init> vis=public flag
 symbol s40 kind=function fq=golden.sema.StringDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#38 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s41 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$40.thisRef vis=private flags=_
 symbol s42 kind=valueParameter fq=golden.sema.StringDelegate.getValue.$40.property vis=private flags=_
-symbol s43 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#38 params=[Any?,Any?] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s43 kind=function fq=golden.sema.StringDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#38 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s44 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$43.thisRef vis=private flags=_
 symbol s45 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$43.property vis=private flags=_
-symbol s46 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
-symbol s47 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s46 kind=valueParameter fq=golden.sema.StringDelegate.setValue.$43.value vis=private flags=_
+symbol s47 kind=property fq=golden.sema.greeting vis=public flags=mutable type=String
+symbol s48 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
   decl d2 class StringDelegate sym=s38
-  decl d3 property greeting var=1 sym=s46
-  decl d4 fun main suspend=0 inline=0 sym=s47
+  decl d3 property greeting var=1 sym=s47
+  decl d4 fun main suspend=0 inline=0 sym=s48
 expr e0 string(default) type=String
 expr e1 name(StringDelegate) type=_
 expr e2 call callee=e1 args=[] type=Class#38 call=s39 map=[] targs=[]
-expr e3 name(println) type=String ref=s46
-expr e4 name(greeting) type=String ref=s46
+expr e3 name(println) type=String ref=s47
+expr e4 name(greeting) type=String ref=s47
 expr e5 call callee=e3 args=[_:e4] type=Unit

@@ -365,7 +365,10 @@ extension BuildASTPhase {
         guard let name = internedIdentifier(from: nameToken, interner: interner) else {
             return
         }
-        if case let .keyword(keyword) = nameToken.kind, isLeadingDeclarationKeyword(keyword) {
+        if case let .keyword(keyword) = nameToken.kind,
+           isLeadingDeclarationKeyword(keyword),
+           keyword != .value
+        {
             return
         }
 

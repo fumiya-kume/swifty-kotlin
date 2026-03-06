@@ -6,7 +6,7 @@ class LazyHolder {
 
 class CustomDelegate {
     operator fun getValue(thisRef: Any?, property: Any?): String = "hello"
-    operator fun setValue(thisRef: Any?, property: Any?, `value`: String) {}
+    operator fun setValue(thisRef: Any?, property: Any?, value: String) {}
 }
 
 class Holder {

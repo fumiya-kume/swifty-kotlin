@@ -127,7 +127,7 @@ expr e61 int(2) type=Int
 expr e62 binary(multiply) lhs=e60 rhs=e61 type=Class#38 call=s46 map=[0->0] targs=[]
 expr e63 localDecl e mutable=0 type=_ init=e62 type=Unit ref=s58
 expr e64 name(a) type=Class#38 ref=s54
-expr e65 unary(unaryMinus) operand=e64 type=Class#38
+expr e65 unary(unaryMinus) operand=e64 type=Class#38 call=s48 map=[] targs=[]
 expr e66 localDecl f mutable=0 type=_ init=e65 type=Unit ref=s59
 expr e67 name(a) type=Class#38 ref=s54
 expr e68 int(0) type=Int

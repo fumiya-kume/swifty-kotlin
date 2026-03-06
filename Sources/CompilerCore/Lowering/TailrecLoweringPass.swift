@@ -77,8 +77,11 @@ final class TailrecLoweringPass: LoweringPass {
     ) -> [KIRInstruction] {
         var result: [KIRInstruction] = []
         result.reserveCapacity(body.count + 2)
-        let canonicalParamExprs = canonicalParameterExprs(body: body, params: params)
         let loopInsertIndex = loopEntryIndex(body: body, params: params)
+        let canonicalParamExprs = canonicalParameterExprs(
+            body: Array(body[..<loopInsertIndex]),
+            params: params
+        )
         if loopInsertIndex > 0 {
             result.append(contentsOf: body[..<loopInsertIndex])
         }

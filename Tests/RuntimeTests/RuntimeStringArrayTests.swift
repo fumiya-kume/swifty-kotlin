@@ -120,6 +120,15 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_compare_any(lhs, 3), 0)
     }
 
+    func testCompareAnyOrdersNaNAfterNonNaNValues() {
+        let nan = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: Double.nan.bitPattern)))
+        let finite = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 4.0.bitPattern)))
+
+        XCTAssertEqual(kk_compare_any(nan, finite), 1)
+        XCTAssertEqual(kk_compare_any(finite, nan), -1)
+        XCTAssertEqual(kk_compare_any(nan, nan), 0)
+    }
+
     // MARK: - STDLIB-006 string runtime ABI
 
     func testStringTrimRemovesLeadingAndTrailingWhitespace() {

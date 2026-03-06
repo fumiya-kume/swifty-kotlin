@@ -7,66 +7,72 @@ extension BuildASTPhase {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena)
             {
-                switch token.kind {
+                let modifier: Modifiers.Element? = switch token.kind {
                 case .keyword(.public):
-                    modifiers.insert(.public)
+                    .public
                 case .keyword(.private):
-                    modifiers.insert(.private)
+                    .private
                 case .keyword(.internal):
-                    modifiers.insert(.internal)
+                    .internal
                 case .keyword(.protected):
-                    modifiers.insert(.protected)
+                    .protected
                 case .keyword(.final):
-                    modifiers.insert(.final)
+                    .final
                 case .keyword(.open):
-                    modifiers.insert(.open)
+                    .open
                 case .keyword(.abstract):
-                    modifiers.insert(.abstract)
+                    .abstract
                 case .keyword(.sealed):
-                    modifiers.insert(.sealed)
+                    .sealed
                 case .keyword(.data):
-                    modifiers.insert(.data)
+                    .data
                 case .keyword(.annotation):
-                    modifiers.insert(.annotationClass)
+                    .annotationClass
                 case .keyword(.inline):
-                    modifiers.insert(.inline)
+                    .inline
                 case .keyword(.suspend):
-                    modifiers.insert(.suspend)
+                    .suspend
                 case .keyword(.tailrec):
-                    modifiers.insert(.tailrec)
+                    .tailrec
                 case .keyword(.operator):
-                    modifiers.insert(.operator)
+                    .operator
                 case .keyword(.infix):
-                    modifiers.insert(.infix)
+                    .infix
                 case .keyword(.crossinline):
-                    modifiers.insert(.crossinline)
+                    .crossinline
                 case .keyword(.noinline):
-                    modifiers.insert(.noinline)
+                    .noinline
                 case .keyword(.vararg):
-                    modifiers.insert(.vararg)
+                    .vararg
                 case .keyword(.external):
-                    modifiers.insert(.external)
+                    .external
                 case .keyword(.expect):
-                    modifiers.insert(.expect)
+                    .expect
                 case .keyword(.actual):
-                    modifiers.insert(.actual)
+                    .actual
                 case .keyword(.value):
-                    modifiers.insert(.value)
+                    .value
                 case .keyword(.enum):
-                    modifiers.insert(.enumModifier)
+                    .enumModifier
                 case .keyword(.inner):
-                    modifiers.insert(.inner)
+                    .inner
                 case .keyword(.companion):
-                    modifiers.insert(.companion)
+                    .companion
                 case .keyword(.const):
-                    modifiers.insert(.const)
+                    .const
                 case .keyword(.override):
-                    modifiers.insert(.override)
+                    .override
                 case .keyword(.fun):
-                    modifiers.insert(.funModifier)
+                    .funModifier
                 default:
+                    nil
+                }
+
+                if let modifier {
+                    modifiers.insert(modifier)
                     continue
                 }
+                break
             }
         }
         return modifiers

@@ -118,6 +118,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testSyntheticCBackendGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
+        let source = """
+        fun <T> pickGreater(a: T, b: T): T where T : Comparable<T> = if (a > b) a else b
+
+        fun main() {
+            val nan = "NaN".toDouble()
+            println(pickGreater(nan, 1.0))
+            println(pickGreater(1.0, nan))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SyntheticCNaNComparable",
+                emit: .executable,
+                outputPath: outputBase,
+                irFlags: ["backend=synthetic-c"]
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "nan\nnan\n")
+        }
+    }
+
     func testLLVMBackendCollectExternalCalleesSkipsRuntimeABIExterns() {
         let interner = StringInterner()
         let arena = KIRArena()

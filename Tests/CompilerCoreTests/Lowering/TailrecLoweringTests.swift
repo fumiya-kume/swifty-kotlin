@@ -117,6 +117,92 @@ final class TailrecLoweringTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(copyCount, 2, "Expected parameter reassignment copies")
     }
 
+    func testTailrecDoesNotReuseBranchLocalCanonicalParameterExprs() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let fnSymbol = SymbolID(rawValue: 300)
+        let paramN = SymbolID(rawValue: 301)
+        let paramAcc = SymbolID(rawValue: 302)
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let zeroExpr = arena.appendExpr(.intLiteral(0))
+        let oneExpr = arena.appendExpr(.intLiteral(1))
+        let recursiveArg0 = arena.appendExpr(.temporary(0))
+        let recursiveArg1 = arena.appendExpr(.temporary(1))
+        let callResult = arena.appendExpr(.temporary(2))
+        let lateParamExpr = arena.appendExpr(.symbolRef(paramN))
+        let lateAccExpr = arena.appendExpr(.symbolRef(paramAcc))
+
+        let tailrecFunction = KIRFunction(
+            symbol: fnSymbol,
+            name: interner.intern("factLike"),
+            params: [KIRParameter(symbol: paramN, type: intType), KIRParameter(symbol: paramAcc, type: intType)],
+            returnType: intType,
+            body: [
+                .beginBlock,
+                .jumpIfEqual(lhs: recursiveArg0, rhs: zeroExpr, target: 1),
+                .binary(op: .subtract, lhs: recursiveArg0, rhs: oneExpr, result: recursiveArg0),
+                .copy(from: recursiveArg1, to: recursiveArg1),
+                .call(
+                    symbol: fnSymbol,
+                    callee: interner.intern("factLike"),
+                    arguments: [recursiveArg0, recursiveArg1],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+                .label(1),
+                .constValue(result: lateParamExpr, value: .symbolRef(paramN)),
+                .constValue(result: lateAccExpr, value: .symbolRef(paramAcc)),
+                .returnValue(lateAccExpr),
+                .endBlock,
+            ],
+            isSuspend: false,
+            isInline: false,
+            isTailrec: true
+        )
+
+        let fnID = arena.appendDecl(.function(tailrecFunction))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
+            arena: arena
+        )
+
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "TailrecBranchExprs",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            interner: interner
+        )
+
+        try TailrecLoweringPass().run(module: module, ctx: ctx)
+
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected lowered function")
+            return
+        }
+
+        let reusedLateBranchExpr = lowered.body.contains { instruction in
+            guard case let .copy(_, to) = instruction else {
+                return false
+            }
+            return to == lateParamExpr || to == lateAccExpr
+        }
+        XCTAssertFalse(
+            reusedLateBranchExpr,
+            "Tailrec lowering must not reuse canonical parameter exprs that appear after the loop header."
+        )
+    }
+
     /// Verify that non-tailrec functions are NOT rewritten.
     func testNonTailrecFunctionIsNotModified() {
         let interner = StringInterner()

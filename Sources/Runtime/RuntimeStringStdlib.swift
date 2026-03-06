@@ -123,22 +123,11 @@ public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     {
         switch (lhsValue, rhsValue) {
         case let (.floating(lhs), .floating(rhs)):
-            if lhs == rhs {
-                return 0
-            }
-            return lhs < rhs ? -1 : 1
+            return runtimeCompareFloating(lhs, rhs)
         case let (.floating(lhs), .integer(rhs)):
-            let rhsDouble = Double(rhs)
-            if lhs == rhsDouble {
-                return 0
-            }
-            return lhs < rhsDouble ? -1 : 1
+            return runtimeCompareFloating(lhs, Double(rhs))
         case let (.integer(lhs), .floating(rhs)):
-            let lhsDouble = Double(lhs)
-            if lhsDouble == rhs {
-                return 0
-            }
-            return lhsDouble < rhs ? -1 : 1
+            return runtimeCompareFloating(Double(lhs), rhs)
         case let (.integer(lhs), .integer(rhs)):
             if lhs == rhs {
                 return 0
@@ -153,6 +142,19 @@ public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
 private enum RuntimeComparableScalar {
     case integer(Int)
     case floating(Double)
+}
+
+private func runtimeCompareFloating(_ lhs: Double, _ rhs: Double) -> Int {
+    if lhs.isNaN {
+        return rhs.isNaN ? 0 : 1
+    }
+    if rhs.isNaN {
+        return -1
+    }
+    if lhs == rhs {
+        return 0
+    }
+    return lhs < rhs ? -1 : 1
 }
 
 private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? {

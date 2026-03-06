@@ -235,6 +235,7 @@ extension CallLowerer {
             exprID,
             loweredReceiverID: loweredReceiverID,
             args: args,
+            ast: ast,
             sema: sema,
             arena: arena,
             interner: interner,
@@ -600,6 +601,7 @@ extension CallLowerer {
         _ exprID: ExprID,
         loweredReceiverID: KIRExprID,
         args: [CallArgument],
+        ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
@@ -607,8 +609,26 @@ extension CallLowerer {
     ) -> KIRExprID? {
         guard args.isEmpty,
               let propertySymbol = sema.bindings.identifierSymbol(for: exprID),
-              sema.bindings.isObjectLiteralPropertySymbol(propertySymbol),
-              let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
+              sema.bindings.isObjectLiteralPropertySymbol(propertySymbol)
+        else {
+            return nil
+        }
+
+        let resultType = sema.bindings.exprTypes[exprID] ?? sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
+        if objectLiteralPropertyUsesAccessor(propertySymbol, ast: ast, sema: sema) {
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: propertySymbol,
+                callee: interner.intern("get"),
+                arguments: [loweredReceiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
+        guard let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
               let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[propertySymbol]
         else {
             return nil
@@ -617,7 +637,6 @@ extension CallLowerer {
         let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
         instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
 
-        let resultType = sema.bindings.exprTypes[exprID] ?? sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
         instructions.append(.call(
             symbol: nil,
@@ -628,6 +647,24 @@ extension CallLowerer {
             thrownResult: nil
         ))
         return result
+    }
+
+    private func objectLiteralPropertyUsesAccessor(
+        _ propertySymbol: SymbolID,
+        ast: ASTModule,
+        sema: SemaModule
+    ) -> Bool {
+        for rawDecl in ast.arena.decls.indices {
+            let declID = DeclID(rawValue: Int32(rawDecl))
+            guard sema.bindings.declSymbols[declID] == propertySymbol,
+                  let decl = ast.arena.decl(declID),
+                  case let .propertyDecl(propertyDecl) = decl
+            else {
+                continue
+            }
+            return propertyDecl.getter != nil || propertyDecl.delegateExpression != nil
+        }
+        return false
     }
 
     private func tryLowerClassNameMemberValueExpr(
@@ -906,13 +943,15 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
-        guard let chosenCallee,
-              let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              !externalLinkName.isEmpty
-        else {
+        guard let chosenCallee else {
             return fallback
         }
-        return interner.intern(externalLinkName)
+        if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+           !externalLinkName.isEmpty
+        {
+            return interner.intern(externalLinkName)
+        }
+        return fallback
     }
 
     // MARK: - Member Assignment

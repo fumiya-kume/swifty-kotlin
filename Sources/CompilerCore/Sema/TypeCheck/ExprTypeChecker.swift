@@ -216,6 +216,16 @@ final class ExprTypeChecker {
                 )
                 type = boolType
             case .unaryPlus, .unaryMinus:
+                if let overloadedType = inferUnaryOperatorExpr(
+                    id,
+                    op: op,
+                    operandType: operandType,
+                    range: range,
+                    ctx: ctx,
+                    expectedType: expectedType
+                ) {
+                    return overloadedType
+                }
                 type = operandType
             }
             sema.bindings.bindExprType(id, type: type)
@@ -427,5 +437,96 @@ final class ExprTypeChecker {
         case let .forDestructuringExpr(names, iterableExpr, bodyExpr, range):
             return driver.controlFlowChecker.inferForDestructuringExpr(id, names: names, iterableExpr: iterableExpr, bodyExpr: bodyExpr, range: range, ctx: ctx, locals: &locals)
         }
+    }
+
+    private func inferUnaryOperatorExpr(
+        _ id: ExprID,
+        op: UnaryOp,
+        operandType: TypeID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let lhsIsPrimitive = if case .primitive = sema.types.kind(of: operandType) { true } else { false }
+        let operatorName = interner.intern(op.kotlinFunctionName)
+
+        let memberCandidates = lhsIsPrimitive ? [] : driver.helpers.collectMemberFunctionCandidates(
+            named: operatorName,
+            receiverType: operandType,
+            sema: sema
+        ).filter { candidate in
+            guard let symbol = sema.symbols.symbol(candidate) else { return false }
+            return symbol.flags.contains(.operatorFunction)
+        }
+        let operatorCandidates: [SymbolID] = if !memberCandidates.isEmpty {
+            memberCandidates
+        } else if !lhsIsPrimitive {
+            ctx.cachedScopeLookup(operatorName).filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate),
+                      symbol.kind == .function,
+                      symbol.flags.contains(.operatorFunction),
+                      let signature = sema.symbols.functionSignature(for: candidate)
+                else {
+                    return false
+                }
+                return signature.receiverType != nil
+            }
+        } else {
+            []
+        }
+
+        if !operatorCandidates.isEmpty {
+            let resolved = ctx.resolver.resolveCall(
+                candidates: operatorCandidates,
+                call: CallExpr(
+                    range: range,
+                    calleeName: operatorName,
+                    args: []
+                ),
+                expectedType: expectedType,
+                implicitReceiverType: operandType,
+                ctx: ctx.semaCtx
+            )
+            if let diagnostic = resolved.diagnostic {
+                ctx.semaCtx.diagnostics.emit(diagnostic)
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            guard let chosen = resolved.chosenCallee else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0002",
+                    "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
+            let returnType = driver.callChecker.bindCallAndResolveReturnType(
+                id,
+                chosen: chosen,
+                resolved: resolved,
+                sema: sema
+            )
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
+        if !lhsIsPrimitive,
+           operandType != sema.types.anyType,
+           operandType != sema.types.nullableAnyType,
+           operandType != sema.types.errorType
+        {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0002",
+                "No viable overload found for operator '\(interner.resolve(operatorName))'.",
+                range: range
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+
+        return nil
     }
 }

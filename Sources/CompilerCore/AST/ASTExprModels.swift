@@ -69,6 +69,14 @@ public enum UnaryOp: Equatable {
     case not
     case unaryPlus
     case unaryMinus
+
+    public var kotlinFunctionName: String {
+        switch self {
+        case .not: "not"
+        case .unaryPlus: "unaryPlus"
+        case .unaryMinus: "unaryMinus"
+        }
+    }
 }
 
 public enum CompoundAssignOp: Equatable {

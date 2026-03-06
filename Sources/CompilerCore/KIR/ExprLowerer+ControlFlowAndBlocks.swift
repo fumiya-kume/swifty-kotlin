@@ -856,6 +856,24 @@ extension ExprLowerer {
             )
 
         case let .unaryExpr(op, operandExpr, _):
+            if op != .not,
+               let callBinding = sema.bindings.callBindings[exprID],
+               let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+               signature.receiverType != nil
+            {
+                return driver.callLowerer.lowerMemberCallExpr(
+                    exprID,
+                    receiverExpr: operandExpr,
+                    calleeName: interner.intern(op.kotlinFunctionName),
+                    args: [],
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let operandID = lowerExpr(
                 operandExpr,
                 ast: ast,

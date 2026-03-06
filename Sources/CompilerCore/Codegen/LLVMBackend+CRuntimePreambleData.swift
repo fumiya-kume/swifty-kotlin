@@ -1133,6 +1133,8 @@ extension LLVMBackend {
         "  if (lhsIsFloating || rhsIsFloating) {",
         "    if (!lhsIsFloating) lhsDouble = (double)lhsValue;",
         "    if (!rhsIsFloating) rhsDouble = (double)rhsValue;",
+        "    if (isnan(lhsDouble)) return isnan(rhsDouble) ? (intptr_t)0 : (intptr_t)1;",
+        "    if (isnan(rhsDouble)) return (intptr_t)-1;",
         "    if (lhsDouble < rhsDouble) return (intptr_t)-1;",
         "    if (lhsDouble > rhsDouble) return (intptr_t)1;",
         "    return (intptr_t)0;",

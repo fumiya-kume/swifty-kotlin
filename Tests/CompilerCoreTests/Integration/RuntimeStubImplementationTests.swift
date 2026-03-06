@@ -353,6 +353,8 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("if (rhsBox->tag == KK_BOX_TAG_FLOAT)"))
         XCTAssertTrue(preamble.contains("if (rhsBox->tag == KK_BOX_TAG_DOUBLE)"))
         XCTAssertTrue(preamble.contains("if (lhsIsFloating || rhsIsFloating)"))
+        XCTAssertTrue(preamble.contains("if (isnan(lhsDouble)) return isnan(rhsDouble) ? (intptr_t)0 : (intptr_t)1;"))
+        XCTAssertTrue(preamble.contains("if (isnan(rhsDouble)) return (intptr_t)-1;"))
     }
 
     func testSyntheticCBackendEmitsFrameMapDescriptorSymbols() throws {

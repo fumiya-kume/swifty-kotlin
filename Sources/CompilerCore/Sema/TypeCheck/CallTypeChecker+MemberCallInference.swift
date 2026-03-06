@@ -608,6 +608,20 @@ extension CallTypeChecker {
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    if let boundType = tryBindSyntheticStringFormatFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
@@ -1022,6 +1036,54 @@ extension CallTypeChecker {
             return false
         }
         return signature.receiverType == sema.types.stringType
+    }
+
+    private func tryBindSyntheticStringFormatFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let candidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+            isSyntheticStringFormatCandidate(candidate, sema: sema, interner: interner)
+        }
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverType,
+            ctx: ctx.semaCtx
+        )
+        guard resolved.diagnostic == nil,
+              let chosen = resolved.chosenCallee
+        else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 
     // swiftlint:enable function_body_length cyclomatic_complexity

@@ -367,5 +367,29 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRObjectLiteralCustomGetterUsesAccessorCall() throws {
+        let source = """
+        fun main(): Int {
+            val instance = object {
+                val seed: Int = 7
+                val value: Int
+                    get() = seed + 1
+            }
+            return instance.value
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertFalse(callNames.contains("kk_array_get"))
+            XCTAssertTrue(callNames.contains("get"))
+        }
+    }
+
     // MARK: - Lambda / CallableRef Lowering (P5-20)
 }

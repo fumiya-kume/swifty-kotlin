@@ -91,6 +91,8 @@ public final class CodegenPhase: CompilerPhase {
     }
 
     private func executableObjectPath(base: String) -> String {
+        // Keep the linker output path and the intermediate object path distinct,
+        // even when the user passes an executable filename with an extension.
         URL(fileURLWithPath: base).appendingPathExtension("o").path
     }
 
