@@ -622,9 +622,6 @@ extension CallTypeChecker {
                     ) {
                         return boundType
                     }
-                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
                 }
             }
             // For non-empty-arg member calls, try member property/field lookup.

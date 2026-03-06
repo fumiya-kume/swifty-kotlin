@@ -202,6 +202,15 @@ final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
                 callees.contains("kk_abort_unreachable"),
                 "Expected explicit abort fallback in delegation forwarder, got: \(callees)"
             )
+            let abortCallArgumentCounts = forwardingBody.compactMap { instruction -> Int? in
+                guard case let .call(_, callee, arguments, _, _, _, _) = instruction,
+                      ctx.interner.resolve(callee) == "kk_abort_unreachable"
+                else {
+                    return nil
+                }
+                return arguments.count
+            }
+            XCTAssertEqual(abortCallArgumentCounts, [1], "Expected kk_abort_unreachable to receive null outThrown.")
         }
     }
 

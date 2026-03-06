@@ -206,10 +206,12 @@ extension KIRLoweringDriver {
                     isSuperCall: false
                 ))
             } else {
+                let nullOutThrown = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                body.append(.constValue(result: nullOutThrown, value: .null))
                 body.append(.call(
                     symbol: nil,
                     callee: compilationCtx.interner.intern("kk_abort_unreachable"),
-                    arguments: [],
+                    arguments: [nullOutThrown],
                     result: nil,
                     canThrow: false,
                     thrownResult: nil,

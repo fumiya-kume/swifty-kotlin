@@ -87,8 +87,19 @@ extension ExprTypeChecker {
                 directSuperSymbols.append(classType.classSymbol)
             }
         }
-        if directSuperSymbols.count > 1 {
-            let classNames = directSuperSymbols.compactMap { sema.symbols.symbol($0)?.fqName.last }
+        let concreteClassSupers = directSuperSymbols.filter { symbolID in
+            guard let symbol = sema.symbols.symbol(symbolID) else {
+                return false
+            }
+            switch symbol.kind {
+            case .class, .enumClass, .object, .annotationClass:
+                return true
+            default:
+                return false
+            }
+        }
+        if concreteClassSupers.count > 1 {
+            let classNames = concreteClassSupers.compactMap { sema.symbols.symbol($0)?.fqName.last }
                 .map { interner.resolve($0) }
                 .joined(separator: ", ")
             ctx.semaCtx.diagnostics.error(

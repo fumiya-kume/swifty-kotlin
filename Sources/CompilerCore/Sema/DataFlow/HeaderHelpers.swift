@@ -45,6 +45,22 @@ extension DataFlowSemaPhase {
         return .public
     }
 
+    func primaryConstructorVisibility(
+        for classDecl: ClassDecl,
+        classKind: SymbolKind,
+        declarationVisibility: Visibility
+    ) -> Visibility {
+        let explicitVisibilityModifiers: Modifiers = [.private, .internal, .protected, .public]
+        let explicitVisibility = visibility(from: classDecl.primaryConstructorModifiers)
+        if classDecl.primaryConstructorModifiers.intersection(explicitVisibilityModifiers).isEmpty == false {
+            return explicitVisibility
+        }
+        if classKind == .class && classDecl.modifiers.contains(.sealed) {
+            return .protected
+        }
+        return declarationVisibility
+    }
+
     func flags(from modifiers: Modifiers) -> SymbolFlags {
         var value: SymbolFlags = []
         insertFunctionFlags(modifiers, into: &value)

@@ -79,6 +79,44 @@ final class AnonymousObjectLocalTypingTests: XCTestCase {
         }
     }
 
+    func testAnonymousObjectCanImplementMultipleInterfacesWithoutClassInheritanceDiagnostic() throws {
+        let source = """
+        interface First
+        interface Second
+        fun main() {
+            val local = object : First, Second {
+                val marker = 1
+            }
+            println(local)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            guard let declID = firstObjectDeclID(in: ast)
+            else {
+                XCTFail("Expected object literal declaration.")
+                return
+            }
+
+            let objectSymbol = try XCTUnwrap(sema.bindings.declSymbol(for: declID))
+            let directSupertypes = sema.symbols.directSupertypes(for: objectSymbol)
+            let supertypeNames = Set(
+                directSupertypes.compactMap { symbolID in
+                    sema.symbols.symbol(symbolID)?.fqName.last.map(ctx.interner.resolve)
+                }
+            )
+
+            XCTAssertEqual(supertypeNames, ["First", "Second"])
+            assertNoDiagnostic("KSWIFTK-SEMA-0170", in: ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError, "Unexpected diagnostics: \(renderDiagnostics(ctx))")
+        }
+    }
+
     private func topLevelFunction(
         named name: String,
         in ast: ASTModule,
@@ -173,6 +211,78 @@ final class AnonymousObjectLocalTypingTests: XCTestCase {
             return nil
         }
         return receiver
+    }
+
+    private func findObjectLiteralInitializer(
+        in exprIDs: [ExprID],
+        ast: ASTModule
+    ) -> (ExprID, DeclID)? {
+        for exprID in exprIDs {
+            if let match = findObjectLiteralInitializer(in: exprID, ast: ast) {
+                return match
+            }
+        }
+        return nil
+    }
+
+    private func findObjectLiteralInitializer(
+        in exprID: ExprID,
+        ast: ASTModule
+    ) -> (ExprID, DeclID)? {
+        guard let expr = ast.arena.expr(exprID) else {
+            return nil
+        }
+        switch expr {
+        case let .localDecl(_, _, _, initializer, _):
+            guard let initializer,
+                  let objectExpr = ast.arena.expr(initializer),
+                  case let .objectLiteral(_, declID, _) = objectExpr,
+                  let declID
+            else {
+                return nil
+            }
+            return (initializer, declID)
+        case let .blockExpr(statements, trailingExpr, _):
+            if let match = findObjectLiteralInitializer(in: statements, ast: ast) {
+                return match
+            }
+            if let trailingExpr {
+                return findObjectLiteralInitializer(in: trailingExpr, ast: ast)
+            }
+            return nil
+        case let .call(callee, _, args, _):
+            if let match = findObjectLiteralInitializer(in: callee, ast: ast) {
+                return match
+            }
+            for arg in args {
+                if let match = findObjectLiteralInitializer(in: arg.expr, ast: ast) {
+                    return match
+                }
+            }
+            return nil
+        case let .memberCall(receiver, _, _, args, _):
+            if let match = findObjectLiteralInitializer(in: receiver, ast: ast) {
+                return match
+            }
+            for arg in args {
+                if let match = findObjectLiteralInitializer(in: arg.expr, ast: ast) {
+                    return match
+                }
+            }
+            return nil
+        default:
+            return nil
+        }
+    }
+
+    private func firstObjectDeclID(in ast: ASTModule) -> DeclID? {
+        for (index, decl) in ast.arena.declarations().enumerated() {
+            guard case .objectDecl = decl else {
+                continue
+            }
+            return DeclID(rawValue: Int32(index))
+        }
+        return nil
     }
 
     private func renderDiagnostics(_ ctx: CompilationContext) -> String {

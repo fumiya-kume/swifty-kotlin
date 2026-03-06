@@ -505,10 +505,18 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let boxedArgIDs = loweredArgIDs.map { argID in
+                    let boxedArg = arena.appendExpr(
+                        .temporary(Int32(arena.expressions.count)),
+                        type: sema.types.nullableAnyType
+                    )
+                    instructions.append(.copy(from: argID, to: boxedArg))
+                    return boxedArg
+                }
                 let intType = sema.types.make(.primitive(.int, .nonNull))
                 let packedArgs = driver.callSupportLowerer.packVarargArguments(
-                    argIndices: Array(loweredArgIDs.indices),
-                    providedArguments: loweredArgIDs,
+                    argIndices: Array(boxedArgIDs.indices),
+                    providedArguments: boxedArgIDs,
                     spreadFlags: args.map(\.isSpread),
                     arena: arena,
                     interner: interner,

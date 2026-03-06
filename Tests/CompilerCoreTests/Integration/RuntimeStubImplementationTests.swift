@@ -317,6 +317,7 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("case 'B':"))
         XCTAssertTrue(preamble.contains("box->tag == KK_BOX_TAG_BOOL"))
         XCTAssertTrue(preamble.contains("boolText = (boolValue ? \"true\" : \"false\");"))
+        XCTAssertTrue(preamble.contains("if (conv == 'B') kk_string_format_uppercase_ascii(tmp);"))
     }
 
     func testStringFormatPreambleDecodesBoxedFloatAndDouble() {
@@ -334,6 +335,16 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("double value = kk_string_format_to_double(arg);"))
     }
 
+    func testStringFormatPreambleUnboxesBoxedIntegerSpecifiers() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("static long long kk_string_format_to_integer(intptr_t value)"))
+        XCTAssertTrue(preamble.contains("static unsigned long long kk_string_format_to_unsigned_integer(intptr_t value)"))
+        XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_LONG"))
+        XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_CHAR"))
+        XCTAssertTrue(preamble.contains("written = snprintf(tmp, sizeof(tmp), token, kk_string_format_to_integer(arg));"))
+        XCTAssertTrue(preamble.contains("written = snprintf(tmp, sizeof(tmp), token, kk_string_format_to_unsigned_integer(arg));"))
+    }
+
     func testStringFormatPreambleHandlesCharacterWithUtf8Encoding() {
         let preamble = makePreamble()
         XCTAssertTrue(preamble.contains("static uint32_t kk_string_format_to_codepoint(intptr_t value)"))
@@ -342,6 +353,19 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("kk_string_format_to_codepoint(arg)"))
         XCTAssertTrue(preamble.contains("kk_string_format_encode_utf8(codePoint, encoded, sizeof(encoded));"))
         XCTAssertTrue(preamble.contains("kk_string_format_build_token(token, sizeof(token), fmt->bytes + bodyStart, bodyEnd - bodyStart, NULL, 's');"))
+    }
+
+    func testStringFormatPreambleFormatsBoxedScalarsForStringSpecifiers() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("static char* kk_string_format_floating_cstr(double value, int useDoublePrecision, char* scratch, size_t scratchSize)"))
+        XCTAssertTrue(preamble.contains("static char* kk_string_format_value_cstr(intptr_t value, char* scratch, size_t scratchSize)"))
+        XCTAssertTrue(preamble.contains("if (tag == KK_BOX_TAG_BOOL)"))
+        XCTAssertTrue(preamble.contains("if (tag == KK_BOX_TAG_INT || tag == KK_BOX_TAG_LONG)"))
+        XCTAssertTrue(preamble.contains("if (tag == KK_BOX_TAG_CHAR)"))
+        XCTAssertTrue(preamble.contains("if (tag == KK_BOX_TAG_FLOAT)"))
+        XCTAssertTrue(preamble.contains("if (tag == KK_BOX_TAG_DOUBLE)"))
+        XCTAssertTrue(preamble.contains("return kk_string_format_floating_cstr((double)floatValue, 0, scratch, scratchSize);"))
+        XCTAssertTrue(preamble.contains("return kk_string_format_floating_cstr(doubleValue, 1, scratch, scratchSize);"))
     }
 
     func testCompareAnyDecodesBoxedFloatingValues() {

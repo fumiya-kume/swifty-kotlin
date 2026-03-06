@@ -286,6 +286,41 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
+    func testExecutableStringFormatHandlesBoxedScalarsInSyntheticRuntimePreamble() throws {
+        let source = """
+        fun main() {
+            val big: Any? = 9223372036854775807L
+            val fp: Any? = 2.5
+            val ch: Any? = 'A'
+            val flag: Any? = true
+            println("%d %x %s %s %s".format(big, big, fp, ch, flag))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "StringFormatBoxes",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(
+                result.stdout.trimmingCharacters(in: .whitespacesAndNewlines),
+                "9223372036854775807 7fffffffffffffff 2.5 A true"
+            )
+        }
+    }
+
     func testLinkPhaseReportsDiagnosticForUnsupportedTargetArchitecture() throws {
         let tempObjectURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o")
         try Data().write(to: tempObjectURL)

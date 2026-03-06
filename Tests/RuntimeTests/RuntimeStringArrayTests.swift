@@ -244,6 +244,28 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 ffffffffffffffff")
     }
 
+    func testStringFormatSupportsBoxedIntegerSpecifiers() {
+        let boxedSigned = kk_box_long(Int(Int64.max))
+        let boxedUnsigned = kk_box_long(Int(bitPattern: UInt(truncatingIfNeeded: UInt64.max)))
+        let args = makeRuntimeArray([boxedSigned, boxedUnsigned])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%d %x"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 ffffffffffffffff")
+    }
+
+    func testStringFormatSupportsBoxedScalarStringSpecifiers() {
+        let args = makeRuntimeArray([
+            kk_box_long(Int(Int64.max)),
+            kk_box_float(Int(Float(1.5).bitPattern)),
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern))),
+            kk_box_char(Int(Character("A").unicodeScalars.first?.value ?? 0)),
+            kk_box_bool(1),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%s %s %s %s %s"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 1.5 2.5 A true")
+    }
+
     func testStringFormatSupportsEscapedPercentWithoutArguments() {
         let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
         XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
