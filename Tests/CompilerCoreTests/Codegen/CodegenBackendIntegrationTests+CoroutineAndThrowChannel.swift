@@ -3,101 +3,6 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
-    func testLLVMBackendEmitsCoroutineRootLifecycleHooks() throws {
-        let interner = StringInterner()
-        let types = TypeSystem()
-        let arena = KIRArena()
-
-        let mainSymbol = SymbolID(rawValue: 990)
-        let functionIDValue = arena.appendExpr(.intLiteral(7))
-        let returnSeed = arena.appendExpr(.intLiteral(0))
-        let continuation = arena.appendExpr(.temporary(1))
-        let exited = arena.appendExpr(.temporary(2))
-
-        let main = KIRFunction(
-            symbol: mainSymbol,
-            name: interner.intern("main"),
-            params: [],
-            returnType: types.anyType,
-            body: [
-                .constValue(result: functionIDValue, value: .intLiteral(7)),
-                .constValue(result: returnSeed, value: .intLiteral(0)),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_coroutine_continuation_new"),
-                    arguments: [functionIDValue],
-                    result: continuation,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_coroutine_state_exit"),
-                    arguments: [continuation, returnSeed],
-                    result: exited,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnValue(exited),
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-
-        let mainID = arena.appendDecl(.function(main))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
-        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-        XCTAssertTrue(ir.contains("call void @kk_register_coroutine_root"))
-        XCTAssertTrue(ir.contains("call void @kk_unregister_coroutine_root"))
-    }
-
-    func testLLVMBackendSupportsExternalThrowChannelCalls() throws {
-        let interner = StringInterner()
-        let types = TypeSystem()
-        let arena = KIRArena()
-
-        let mainSymbol = SymbolID(rawValue: 910)
-        let callResult = arena.appendExpr(.temporary(0))
-
-        let main = KIRFunction(
-            symbol: mainSymbol,
-            name: interner.intern("main"),
-            params: [],
-            returnType: types.anyType,
-            body: [
-                .call(symbol: nil, callee: interner.intern("external_throwing"), arguments: [], result: callResult, canThrow: true, thrownResult: nil),
-                .returnValue(callResult),
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let mainID = arena.appendDecl(.function(main))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])], arena: arena)
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let objectPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o").path
-        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objectPath, interner: interner)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-    }
-
     // MARK: - Private Helpers
 
     func runCodegenPipeline(
@@ -158,27 +63,7 @@ extension CodegenBackendIntegrationTests {
     func stripPathDependentBytes(_ data: Data, outputPath: String) -> Data {
         var result = data
 
-        // 1. Synthetic C backend: strip the hash in "kswiftk_codegen_<hash>.c" paths
-        //    embedded by clang in the object file's string table.
-        let prefix = "kswiftk_codegen_"
-        if let prefixData = prefix.data(using: .utf8) {
-            var searchStart = result.startIndex
-            while let range = result.range(of: prefixData, in: searchStart ..< result.endIndex) {
-                let hashStart = range.upperBound
-                var hashEnd = hashStart
-                while hashEnd < result.endIndex {
-                    let byte = result[hashEnd]
-                    if byte == 0x2E || byte == 0x00 { break }
-                    hashEnd = result.index(after: hashEnd)
-                }
-                for i in hashStart ..< hashEnd {
-                    result[i] = 0x30
-                }
-                searchStart = hashEnd
-            }
-        }
-
-        // 2. LLVM C API backend: LLVM embeds the output path itself in the object file
+        // LLVM embeds the output path itself in the object file
         //    (e.g. the basename "deterministic_1" in Mach-O STABS / ELF debug sections).
         //    Replace every occurrence of the output path with a fixed placeholder so that
         //    two compilations with different paths produce identical bytes.

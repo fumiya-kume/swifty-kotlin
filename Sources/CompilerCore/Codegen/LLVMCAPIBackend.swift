@@ -1,6 +1,6 @@
 import Foundation
 
-public final class LLVMCAPIBackend: CodegenBackend {
+public final class LLVMCAPIBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
     private let debugInfo: Bool

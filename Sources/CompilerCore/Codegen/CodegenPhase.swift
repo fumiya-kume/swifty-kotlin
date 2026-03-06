@@ -75,7 +75,7 @@ public final class CodegenPhase: CompilerPhase {
 
     private func emitLibrary(
         module: KIRModule,
-        backend: any CodegenBackend,
+        backend: LLVMCAPIBackend,
         runtime: RuntimeLinkInfo,
         ctx: CompilationContext
     ) throws {
@@ -119,7 +119,7 @@ public final class CodegenPhase: CompilerPhase {
         try metadata.write(to: URL(fileURLWithPath: metadataPath), atomically: true, encoding: .utf8)
     }
 
-    private func makeBackend(ctx: CompilationContext) throws -> any CodegenBackend {
+    private func makeBackend(ctx: CompilationContext) throws -> LLVMCAPIBackend {
         let selection = try selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
         return LLVMCAPIBackend(
             target: ctx.options.target,
@@ -346,7 +346,7 @@ public final class CodegenPhase: CompilerPhase {
                 guard case let .function(function) = decl else {
                     return
                 }
-                partial[function.symbol] = LLVMBackend.cFunctionSymbol(for: function, interner: ctx.interner)
+                partial[function.symbol] = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: ctx.interner)
             }
         }()
         let encoder = MetadataEncoder()

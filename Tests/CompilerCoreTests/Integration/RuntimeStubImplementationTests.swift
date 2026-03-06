@@ -255,56 +255,6 @@ final class RuntimeStubImplementationTests: XCTestCase {
         )
     }
 
-    // MARK: - Synthetic C Backend Integration Tests
-
-    func testSyntheticCBackendEmitsFrameMapRegistrationInFunctionBody() throws {
-        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-        guard FileManager.default.fileExists(atPath: clangPath) else {
-            throw XCTSkip("clang is not available in this environment.")
-        }
-        let interner = StringInterner()
-        let module = makeSimpleModule(interner: interner)
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
-        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-
-        // The generated C code (compiled to LLVM IR) should reference runtime functions
-        XCTAssertTrue(ir.contains("kk_register_frame_map"), "Synthetic backend must emit kk_register_frame_map calls")
-        XCTAssertTrue(ir.contains("kk_push_frame"), "Synthetic backend must emit kk_push_frame calls")
-        XCTAssertTrue(ir.contains("kk_pop_frame"), "Synthetic backend must emit kk_pop_frame calls")
-    }
-
-    func testSyntheticCBackendCompilesWithRuntimeStubs() throws {
-        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-        guard FileManager.default.fileExists(atPath: clangPath) else {
-            throw XCTSkip("clang is not available in this environment.")
-        }
-        let interner = StringInterner()
-        let module = makeSimpleModule(interner: interner)
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let objPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o").path
-
-        // This must not throw - the C preamble with runtime stubs must compile cleanly
-        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objPath, interner: interner)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: objPath), "Object file must be generated successfully")
-    }
-
     func testStringFormatPreambleSupportsBooleanSpecifiers() {
         let preamble = makePreamble()
         XCTAssertTrue(preamble.contains("case 'b':"))
@@ -373,31 +323,6 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("if (lhsIsFloating || rhsIsFloating)"))
         XCTAssertTrue(preamble.contains("if (isnan(lhsDouble)) return isnan(rhsDouble) ? (intptr_t)0 : (intptr_t)1;"))
         XCTAssertTrue(preamble.contains("if (isnan(rhsDouble)) return (intptr_t)-1;"))
-    }
-
-    func testSyntheticCBackendEmitsFrameMapDescriptorSymbols() throws {
-        let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
-        guard FileManager.default.fileExists(atPath: clangPath) else {
-            throw XCTSkip("clang is not available in this environment.")
-        }
-        let interner = StringInterner()
-        let module = makeSimpleModule(interner: interner)
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
-        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-
-        // Frame map descriptors should be emitted as globals
-        XCTAssertTrue(ir.contains("kk_frame_map_offsets_") || ir.contains("KKFrameMapDescriptor"),
-                      "Synthetic backend must emit frame map descriptor data")
     }
 
     // MARK: - LLVM C API Backend Tests

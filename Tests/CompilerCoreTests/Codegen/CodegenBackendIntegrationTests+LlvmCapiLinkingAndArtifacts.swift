@@ -216,37 +216,9 @@ extension CodegenBackendIntegrationTests {
         XCTAssertFalse(pathsWithMissing.contains(missing))
     }
 
-    func testLLVMBackendEmitsOutputsAndReportsCommandFailure() throws {
+    func testCodegenFunctionSymbolSanitizesNames() {
         let interner = StringInterner()
-        let module = makeComplexKIRModule(interner: interner)
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O2,
-            debugInfo: true,
-            diagnostics: DiagnosticEngine()
-        )
-
-        let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-        let tempDir = FileManager.default.temporaryDirectory
-        let irPath = tempDir.appendingPathComponent(UUID().uuidString + ".ll").path
-        let objPath = tempDir.appendingPathComponent(UUID().uuidString + ".o").path
-
-        try backend.emitLLVMIR(module: module, runtime: runtime, outputIRPath: irPath, interner: interner)
-        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objPath, interner: interner)
-        XCTAssertTrue(FileManager.default.fileExists(atPath: irPath))
-        XCTAssertTrue(FileManager.default.fileExists(atPath: objPath))
-        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-        XCTAssertTrue(ir.contains("!llvm.dbg.cu"))
-        XCTAssertTrue(ir.contains("kk_register_frame_map"))
-        XCTAssertTrue(ir.contains("kk_push_frame"))
-        XCTAssertTrue(ir.contains("kk_pop_frame"))
-        XCTAssertTrue(ir.contains("kk_frame_map_offsets_"))
-        XCTAssertTrue(ir.contains("kk_register_module_globals"))
-        XCTAssertTrue(ir.contains("kk_unregister_module_globals"))
-        XCTAssertTrue(ir.contains("kk_register_global_root"))
-        XCTAssertTrue(ir.contains("kk_unregister_global_root"))
-
-        let fnName = LLVMBackend.cFunctionSymbol(
+        let fnName = CodegenSymbolSupport.cFunctionSymbol(
             for: KIRFunction(
                 symbol: SymbolID(rawValue: 9),
                 name: interner.intern("1 bad-name"),
@@ -259,18 +231,5 @@ extension CodegenBackendIntegrationTests {
             interner: interner
         )
         XCTAssertTrue(fnName.hasPrefix("kk_fn__1_bad_name_9"))
-
-        let failingDiagnostics = DiagnosticEngine()
-        let failingBackend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: failingDiagnostics
-        )
-        let missingDir = tempDir.appendingPathComponent(UUID().uuidString).path + "/sub/out.o"
-        XCTAssertThrowsError(
-            try failingBackend.emitObject(module: module, runtime: runtime, outputObjectPath: missingDir, interner: interner)
-        )
-        XCTAssertTrue(failingDiagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-0001" })
     }
 }

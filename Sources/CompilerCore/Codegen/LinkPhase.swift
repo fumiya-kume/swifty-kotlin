@@ -107,7 +107,7 @@ public final class LinkPhase: CompilerPhase {
                 continue
             }
             if interner.resolve(function.name) == "main" {
-                return LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+                return CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
             }
         }
         return nil

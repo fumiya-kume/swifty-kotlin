@@ -144,62 +144,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testLLVMBackendCollectExternalCalleesSkipsRuntimeABIExterns() {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let types = TypeSystem()
-
-        let formatString = interner.intern("%s")
-        let formatLiteral = arena.appendExpr(.stringLiteral(formatString))
-        let formatResult = arena.appendExpr(.temporary(0))
-        let externalResult = arena.appendExpr(.temporary(1))
-
-        let main = KIRFunction(
-            symbol: SymbolID(rawValue: 1300),
-            name: interner.intern("main"),
-            params: [],
-            returnType: types.unitType,
-            body: [
-                .constValue(result: formatLiteral, value: .stringLiteral(formatString)),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_string_format"),
-                    arguments: [formatLiteral, formatLiteral],
-                    result: formatResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("external_helper"),
-                    arguments: [],
-                    result: externalResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-
-        let mainID = arena.appendDecl(.function(main))
-        let module = KIRModule(
-            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainID])],
-            arena: arena
-        )
-
-        let backend = LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
-
-        let callees = backend.collectExternalCallees(module: module, interner: interner, functionSymbols: [:])
-        XCTAssertEqual(callees, ["external_helper"])
-    }
-
     func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in

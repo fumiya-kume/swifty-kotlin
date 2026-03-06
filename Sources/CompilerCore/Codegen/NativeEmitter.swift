@@ -161,7 +161,7 @@ struct NativeEmitter {
             guard case let .function(function) = declaration else {
                 continue
             }
-            let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
             var parameterTypes = Array(repeating: int64Type, count: function.params.count)
             parameterTypes.append(outThrownPointerType)
 
@@ -310,7 +310,7 @@ struct NativeEmitter {
             else {
                 continue
             }
-            let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
 
             // Determine real line number and file for this function.
             var lineNo: UInt32 = 0

@@ -536,7 +536,7 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
 
 /// Runtime flow op tags must be aligned with C preamble constants in
-/// LLVMBackend+CRuntimePreambleData.swift.
+/// CodegenRuntimeSupport+CRuntimePreambleData.swift.
 private enum RuntimeFlowTag: Int {
     case emit = 0
     case map = 1

@@ -258,9 +258,9 @@ extension VirtualDispatchTests {
         XCTAssertTrue(dump.contains("dispatch=itable[0:0]"), "KIR dump should contain dispatch=itable[0:0]")
     }
 
-    // MARK: - 8. C backend receiver prepend: test via KIR dump
+    // MARK: - 8. Receiver serialization via KIR dump
 
-    func testCBackendVirtualCallReceiverInOutput() {
+    func testVirtualCallReceiverAppearsInKIRDump() {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -321,9 +321,12 @@ extension VirtualDispatchTests {
         XCTAssertTrue(dump.contains("dispatch=vtable[0]"), "Dump should have dispatch info")
     }
 
-    // MARK: - 9. C backend via emitObject: virtualCall compiles without error
+    // MARK: - 9. LLVM backend via emitObject: virtualCall compiles without error
 
-    func testCBackendCompilesVirtualCallWithoutError() throws {
+    func testLlvmCapiBackendCompilesVirtualCallWithoutError() throws {
+        guard llvmCapiBindingsAvailable() else {
+            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+        }
         let fixture = makeVtableFixture()
         let sema = SemaModule(
             symbols: fixture.symbols,
@@ -348,28 +351,18 @@ extension VirtualDispatchTests {
 
         try LoweringPhase().run(ctx)
 
-        // Compile via LLVMBackend (C backend path) - should not crash
-        let backend = LLVMBackend(
+        let backend = LLVMCAPIBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
-            diagnostics: DiagnosticEngine()
+            diagnostics: DiagnosticEngine(),
+            isStrictMode: true
         )
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
-        // emitLLVMIR generates C source -> passes through clang -> LLVM IR
-        // If it throws, it means the C code generation has a bug
-        do {
-            try backend.emitLLVMIR(module: fixture.module, runtime: runtime, outputIRPath: irPath, interner: fixture.interner)
-            // If we get here, the C backend successfully compiled the virtualCall
-            let ir = try String(contentsOfFile: irPath, encoding: .utf8)
-            // The IR should contain our function
-            XCTAssertTrue(ir.contains("callSpeak") || ir.contains("kk_fn_"), "IR should contain our function")
-        } catch {
-            // emitLLVMIR may fail if clang is not available or runtime headers
-            // are missing, which is a CI environment issue, not a code issue.
-            // The key test is that the C code generation itself doesn't crash.
-        }
+        try backend.emitLLVMIR(module: fixture.module, runtime: runtime, outputIRPath: irPath, interner: fixture.interner)
+        let ir = try String(contentsOfFile: irPath, encoding: .utf8)
+        XCTAssertTrue(ir.contains("kk_vtable_lookup") || ir.contains("kk_fn_"), "IR should contain vtable dispatch or emitted functions")
     }
 
     // MARK: - 10. Codegen serialization of virtualCall
