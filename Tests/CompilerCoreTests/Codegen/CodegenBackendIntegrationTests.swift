@@ -144,12 +144,45 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenBackendSelectionSupportsLlvmCApiFlag() throws {
+    func testCodegenRequiresLlvmBindingsForObjectEmission() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let options = CompilerOptions(
-                moduleName: "LLVMCAPIFlag",
+                moduleName: "LLVMRequired",
+                inputs: [path],
+                outputPath: outputBase,
+                emit: .object,
+                target: defaultTargetTriple()
+            )
+            let ctx = CompilationContext(
+                options: options,
+                sourceManager: SourceManager(),
+                diagnostics: DiagnosticEngine(),
+                interner: StringInterner()
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            if llvmBackendAvailable() {
+                try CodegenPhase().run(ctx)
+
+                let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+                XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+                XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
+            } else {
+                XCTAssertThrowsError(try CodegenPhase().run(ctx))
+                XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1007" })
+            }
+        }
+    }
+
+    func testCodegenRejectsRemovedBackendSelectionFlag() throws {
+        let source = "fun main() = 0"
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "RemovedBackendFlag",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .object,
@@ -165,30 +198,23 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
-            if llvmCapiBindingsAvailable() {
-                try CodegenPhase().run(ctx)
-
-                let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
-                XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-                XCTAssertFalse(ctx.diagnostics.diagnostics.contains { $0.severity == .error })
-            } else {
-                XCTAssertThrowsError(try CodegenPhase().run(ctx))
-                XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1007" })
-            }
+            XCTAssertThrowsError(try CodegenPhase().run(ctx))
+            XCTAssertNil(ctx.generatedObjectPath)
+            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1008" })
         }
     }
 
-    func testCodegenBackendSelectionRejectsUnknownBackend() throws {
+    func testCodegenRejectsRemovedBackendStrictFlag() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
             let options = CompilerOptions(
-                moduleName: "UnknownBackendFlag",
+                moduleName: "RemovedBackendStrictFlag",
                 inputs: [path],
                 outputPath: outputBase,
                 emit: .object,
                 target: defaultTargetTriple(),
-                irFlags: ["backend=unknown-backend"]
+                irFlags: ["backend-strict=true"]
             )
             let ctx = CompilationContext(
                 options: options,
@@ -205,74 +231,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenBackendSelectionRejectsSyntheticBackendFlag() throws {
-        let source = "fun main() = 0"
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let options = CompilerOptions(
-                moduleName: "SyntheticBackendFlag",
-                inputs: [path],
-                outputPath: outputBase,
-                emit: .object,
-                target: defaultTargetTriple(),
-                irFlags: ["backend=synthetic-c"]
-            )
-            let ctx = CompilationContext(
-                options: options,
-                sourceManager: SourceManager(),
-                diagnostics: DiagnosticEngine(),
-                interner: StringInterner()
-            )
-
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-            XCTAssertThrowsError(try CodegenPhase().run(ctx))
-            XCTAssertNil(ctx.generatedObjectPath)
-            XCTAssertTrue(ctx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1008" })
-        }
-    }
-
-    func testCodegenBackendSelectionLlvmCApiStrictModeFails() throws {
-        let source = "fun main() = 0"
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let options = CompilerOptions(
-                moduleName: "LLVMCAPIStrict",
-                inputs: [path],
-                outputPath: outputBase,
-                emit: .object,
-                target: defaultTargetTriple(),
-                irFlags: ["backend=llvm-c-api", "backend-strict=true"]
-            )
-            let ctx = CompilationContext(
-                options: options,
-                sourceManager: SourceManager(),
-                diagnostics: DiagnosticEngine(),
-                interner: StringInterner()
-            )
-
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-            do {
-                try CodegenPhase().run(ctx)
-                let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
-                XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-                XCTAssertFalse(ctx.diagnostics.diagnostics.contains {
-                    $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
-                })
-            } catch {
-                XCTAssertTrue(ctx.diagnostics.diagnostics.contains {
-                    $0.code == "KSWIFTK-BACKEND-1003" || $0.code == "KSWIFTK-BACKEND-1004"
-                })
-            }
-        }
-    }
-
-    func testLlvmCapiBackendNativeFailureReportsErrorWithoutFallback() throws {
-        guard let bindings = LLVMCAPIBindings.load(),
-              bindings.smokeTestContextLifecycle()
-        else {
-            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+    func testLLVMBackendNativeFailureReportsEmissionError() throws {
+        guard LLVMCAPIBindings.loadUsable() != nil else {
+            throw XCTSkip("LLVM backend is unavailable in this environment.")
         }
 
         let diagnostics = DiagnosticEngine()
@@ -294,12 +255,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             arena: arena
         )
 
-        let backend = LLVMCAPIBackend(
+        let backend = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
 
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
@@ -321,9 +281,9 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         XCTAssertFalse(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1005" })
     }
 
-    func testCodegenBackendSelectionDefaultAndExplicitLlvmCApiObjectCompatibilitySmoke() throws {
-        guard llvmCapiBindingsAvailable() else {
-            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+    func testCodegenDefaultObjectEmissionSmoke() throws {
+        guard llvmBackendAvailable() else {
+            throw XCTSkip("LLVM backend is unavailable in this environment.")
         }
 
         let source = """
@@ -334,51 +294,28 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let tempDir = FileManager.default.temporaryDirectory
 
-            let defaultBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let defaultOptions = CompilerOptions(
-                moduleName: "CompatDefault",
+            let outputBase = tempDir.appendingPathComponent(UUID().uuidString).path
+            let options = CompilerOptions(
+                moduleName: "DefaultObjectSmoke",
                 inputs: [path],
-                outputPath: defaultBase,
+                outputPath: outputBase,
                 emit: .object,
                 target: defaultTargetTriple()
             )
-            let defaultCtx = CompilationContext(
-                options: defaultOptions,
+            let ctx = CompilationContext(
+                options: options,
                 sourceManager: SourceManager(),
                 diagnostics: DiagnosticEngine(),
                 interner: StringInterner()
             )
-            try runToKIR(defaultCtx)
-            try LoweringPhase().run(defaultCtx)
-            try CodegenPhase().run(defaultCtx)
-            let defaultObject = try XCTUnwrap(defaultCtx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: defaultObject))
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
 
-            let llvmCapiBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let llvmCapiOptions = CompilerOptions(
-                moduleName: "CompatLlvmCApi",
-                inputs: [path],
-                outputPath: llvmCapiBase,
-                emit: .object,
-                target: defaultTargetTriple(),
-                irFlags: ["backend=llvm-c-api"]
-            )
-            let llvmCapiCtx = CompilationContext(
-                options: llvmCapiOptions,
-                sourceManager: SourceManager(),
-                diagnostics: DiagnosticEngine(),
-                interner: StringInterner()
-            )
-            try runToKIR(llvmCapiCtx)
-            try LoweringPhase().run(llvmCapiCtx)
-            try CodegenPhase().run(llvmCapiCtx)
-            let llvmCapiObject = try XCTUnwrap(llvmCapiCtx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: llvmCapiObject))
-
-            let defaultSize = (try? FileManager.default.attributesOfItem(atPath: defaultObject)[.size] as? NSNumber)?.intValue ?? 0
-            let llvmCapiSize = (try? FileManager.default.attributesOfItem(atPath: llvmCapiObject)[.size] as? NSNumber)?.intValue ?? 0
-            XCTAssertGreaterThan(defaultSize, 0)
-            XCTAssertGreaterThan(llvmCapiSize, 0)
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+            let objectSize = (try? FileManager.default.attributesOfItem(atPath: objectPath)[.size] as? NSNumber)?.intValue ?? 0
+            XCTAssertGreaterThan(objectSize, 0)
         }
     }
 

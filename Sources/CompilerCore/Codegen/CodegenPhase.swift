@@ -3,10 +3,6 @@ import Foundation
 public final class CodegenPhase: CompilerPhase {
     public static let name = "Codegen"
 
-    private struct BackendSelection {
-        let isStrictMode: Bool
-    }
-
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
@@ -37,13 +33,11 @@ public final class CodegenPhase: CompilerPhase {
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
-                ctx.runtimeStubObjectPath = runtimeStubObjectPath(ctx: ctx)
 
             case .executable:
                 let path = executableObjectPath(base: ctx.options.outputPath)
                 try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
                 ctx.generatedObjectPath = path
-                ctx.runtimeStubObjectPath = runtimeStubObjectPath(ctx: ctx)
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
@@ -51,12 +45,6 @@ public final class CodegenPhase: CompilerPhase {
         } catch {
             throw CompilerPipelineError.outputUnavailable
         }
-    }
-
-    /// Returns the path to a pre-compiled runtime stub `.o` that provides
-    /// weak definitions for runtime helper functions referenced by linked code.
-    private func runtimeStubObjectPath(ctx: CompilationContext) -> String? {
-        CodegenRuntimeSupport.runtimeStubObjectPath(target: ctx.options.target)
     }
 
     private func outputPath(base: String, defaultExtension: String) -> String {
@@ -75,7 +63,7 @@ public final class CodegenPhase: CompilerPhase {
 
     private func emitLibrary(
         module: KIRModule,
-        backend: LLVMCAPIBackend,
+        backend: LLVMBackend,
         runtime: RuntimeLinkInfo,
         ctx: CompilationContext
     ) throws {
@@ -119,71 +107,32 @@ public final class CodegenPhase: CompilerPhase {
         try metadata.write(to: URL(fileURLWithPath: metadataPath), atomically: true, encoding: .utf8)
     }
 
-    private func makeBackend(ctx: CompilationContext) throws -> LLVMCAPIBackend {
-        let selection = try selectedBackend(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
-        return LLVMCAPIBackend(
+    private func makeBackend(ctx: CompilationContext) throws -> LLVMBackend {
+        try rejectLegacyBackendFlags(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
+        return try LLVMBackend(
             target: ctx.options.target,
             optLevel: ctx.options.optLevel,
             debugInfo: ctx.options.debugInfo,
-            diagnostics: ctx.diagnostics,
-            isStrictMode: selection.isStrictMode
+            diagnostics: ctx.diagnostics
         )
     }
 
-    private func selectedBackend(
+    private func rejectLegacyBackendFlags(
         irFlags: [String], diagnostics: DiagnosticEngine
-    ) throws -> BackendSelection {
-        var requestedBackend: String?
-        var isStrictMode = false
-
+    ) throws {
         for flag in irFlags {
-            if flag == "backend-strict" {
-                isStrictMode = true
+            guard flag == "backend-strict"
+                || flag.hasPrefix("backend-strict=")
+                || flag.hasPrefix("backend=")
+            else {
                 continue
             }
-            if flag.hasPrefix("backend-strict=") {
-                let value = String(flag.dropFirst("backend-strict=".count))
-                isStrictMode = parseStrictModeFlag(value) ?? isStrictMode
-                continue
-            }
-            guard flag.hasPrefix("backend=") else {
-                continue
-            }
-            requestedBackend = String(flag.dropFirst("backend=".count))
-        }
-
-        guard let requestedBackend else {
-            return BackendSelection(isStrictMode: isStrictMode)
-        }
-
-        switch requestedBackend {
-        case "llvm-c-api", "llvm-capi":
-            return BackendSelection(isStrictMode: isStrictMode)
-        case "synthetic-c", "synthetic":
             diagnostics.error(
                 "KSWIFTK-BACKEND-1008",
-                "Unsupported backend '\(requestedBackend)'; the LLVM C API backend is now the only supported backend.",
+                "Backend selection flags were removed; the compiler always uses the LLVM backend.",
                 range: nil
             )
             throw CompilerPipelineError.outputUnavailable
-        default:
-            diagnostics.error(
-                "KSWIFTK-BACKEND-1008",
-                "Unknown backend '\(requestedBackend)'; the LLVM C API backend is now the only supported backend.",
-                range: nil
-            )
-            throw CompilerPipelineError.outputUnavailable
-        }
-    }
-
-    private func parseStrictModeFlag(_ value: String) -> Bool? {
-        switch value.lowercased() {
-        case "1", "true", "yes", "on":
-            true
-        case "0", "false", "no", "off":
-            false
-        default:
-            nil
         }
     }
 

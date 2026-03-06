@@ -26,6 +26,8 @@ final class LLVMCAPIBindings {
     typealias LLVMSetTargetFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
     typealias LLVMSetDataLayoutFn = @convention(c) (LLVMModuleRef?, UnsafePointer<CChar>?) -> Void
     typealias LLVMSetLinkageFn = @convention(c) (LLVMValueRef?, UInt32) -> Void
+    typealias LLVMVoidTypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
+    typealias LLVMInt8TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     typealias LLVMInt64TypeInContextFn = @convention(c) (LLVMContextRef?) -> LLVMTypeRef?
     typealias LLVMPointerTypeFn = @convention(c) (LLVMTypeRef?, UInt32) -> LLVMTypeRef?
     typealias LLVMFunctionTypeFn = @convention(c) (LLVMTypeRef?, UnsafeMutablePointer<LLVMTypeRef?>?, UInt32, LLVMBool) -> LLVMTypeRef?
@@ -223,6 +225,8 @@ final class LLVMCAPIBindings {
     let setTargetFn: LLVMSetTargetFn
     let setDataLayoutFn: LLVMSetDataLayoutFn
     let setLinkageFn: LLVMSetLinkageFn
+    let voidTypeInContextFn: LLVMVoidTypeInContextFn
+    let int8TypeInContextFn: LLVMInt8TypeInContextFn
     let int64TypeFn: LLVMInt64TypeInContextFn
     let pointerTypeFn: LLVMPointerTypeFn
     let functionTypeFn: LLVMFunctionTypeFn
@@ -315,6 +319,8 @@ final class LLVMCAPIBindings {
         setTargetFn: @escaping LLVMSetTargetFn,
         setDataLayoutFn: @escaping LLVMSetDataLayoutFn,
         setLinkageFn: @escaping LLVMSetLinkageFn,
+        voidTypeInContextFn: @escaping LLVMVoidTypeInContextFn,
+        int8TypeInContextFn: @escaping LLVMInt8TypeInContextFn,
         int64TypeFn: @escaping LLVMInt64TypeInContextFn,
         pointerTypeFn: @escaping LLVMPointerTypeFn,
         functionTypeFn: @escaping LLVMFunctionTypeFn,
@@ -406,6 +412,8 @@ final class LLVMCAPIBindings {
         self.setTargetFn = setTargetFn
         self.setDataLayoutFn = setDataLayoutFn
         self.setLinkageFn = setLinkageFn
+        self.voidTypeInContextFn = voidTypeInContextFn
+        self.int8TypeInContextFn = int8TypeInContextFn
         self.int64TypeFn = int64TypeFn
         self.pointerTypeFn = pointerTypeFn
         self.functionTypeFn = functionTypeFn
@@ -545,6 +553,14 @@ final class LLVMCAPIBindings {
     func setInternalLinkage(_ value: LLVMValueRef?) {
         // LLVMLinkage enum value for LLVMInternalLinkage.
         setLinkageFn(value, 8)
+    }
+
+    func voidType(context: LLVMContextRef?) -> LLVMTypeRef? {
+        voidTypeInContextFn(context)
+    }
+
+    func int8Type(context: LLVMContextRef?) -> LLVMTypeRef? {
+        int8TypeInContextFn(context)
     }
 
     func int64Type(context: LLVMContextRef?) -> LLVMTypeRef? {

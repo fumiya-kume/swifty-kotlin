@@ -64,10 +64,8 @@ func firstExprID(
     return nil
 }
 
-func llvmCapiBindingsAvailable() -> Bool {
-    guard let bindings = LLVMCAPIBindings.load(),
-          bindings.smokeTestContextLifecycle()
-    else {
+func llvmBackendAvailable() -> Bool {
+    guard let bindings = LLVMCAPIBindings.loadUsable() else {
         return false
     }
 

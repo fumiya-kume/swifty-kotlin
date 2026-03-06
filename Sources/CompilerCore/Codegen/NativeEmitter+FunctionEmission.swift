@@ -13,7 +13,7 @@ extension NativeEmitter {
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMCreateBuilderInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMCreateBuilderInContext returned null")
         }
         defer {
             // Clear debug location before disposing the builder.
@@ -48,7 +48,7 @@ extension NativeEmitter {
         }
 
         guard let entryBlock = bindings.appendBasicBlock(context: context, function: llvmFunction.value, name: "entry") else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create entry block")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create entry block")
         }
 
         var labelBlocks: [Int32: LLVMCAPIBindings.LLVMBasicBlockRef] = [:]
@@ -136,10 +136,10 @@ extension NativeEmitter {
         )
 
         guard let zeroValue = bindings.constInt(int64Type, value: 0) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMConstInt returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMConstInt returned null")
         }
         guard let undefThrownPointer = bindings.getUndef(type: outThrownPointerType) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMGetUndef for outThrown pointer returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMGetUndef for outThrown pointer returned null")
         }
         let nullThrownPointer = bindings.constPointerNull(outThrownPointerType) ?? undefThrownPointer
 
@@ -915,7 +915,6 @@ extension NativeEmitter {
                     // Fallback path: use the direct callee.
                     bindings.positionBuilder(builder, at: fallbackBlock)
                     var fbCallArguments = argumentValues
-                    var fbThrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
                     if shouldAppendThrownChannel {
                         if usesThrownChannel {
                             let thrownSlot = bindings.buildAlloca(
@@ -926,7 +925,6 @@ extension NativeEmitter {
                             if let thrownSlot {
                                 _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
                                 fbCallArguments.append(thrownSlot)
-                                fbThrownSlotPointer = thrownSlot
                             } else {
                                 fbCallArguments.append(nullThrownPointer)
                             }

@@ -29,36 +29,15 @@ public final class LinkPhase: CompilerPhase {
             throw CompilerPipelineError.outputUnavailable
         }
 
-        let wrapperSource = """
-        #include <stdint.h>
-        #include <stddef.h>
-        #include <stdio.h>
-        extern intptr_t \(entrySymbol)(intptr_t* outThrown);
-        int main(void) {
-          intptr_t thrown = 0;
-          intptr_t result = \(entrySymbol)(&thrown);
-          if (thrown != 0) {
-            fprintf(
-              stderr,
-              "KSwiftK panic [KSWIFTK-LINK-0003]: Unhandled top-level exception (%p)\\n",
-              (void*)(uintptr_t)thrown
-            );
-            return 1;
-          }
-          return (int)result;
-        }
-        """
-        let wrapperURL = stableEntryWrapperURL(outputPath: ctx.options.outputPath)
         let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
 
         do {
-            try writeIfChanged(content: wrapperSource, to: wrapperURL)
-
-            var linkInputs: [String] = [objectPath, wrapperURL.path]
-            if let stubPath = ctx.runtimeStubObjectPath,
-               FileManager.default.fileExists(atPath: stubPath)
-            {
-                linkInputs.append(stubPath)
+            let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: ctx.options.target)
+            let entryWrapperObjectPath = try LLVMEntryPointObjectEmitter(target: ctx.options.target)
+                .emit(entrySymbol: entrySymbol, outputPath: ctx.options.outputPath)
+            var linkInputs: [String] = [objectPath, entryWrapperObjectPath]
+            for runtimeObject in runtimeObjects where !linkInputs.contains(runtimeObject) {
+                linkInputs.append(runtimeObject)
             }
             for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
                 linkInputs.append(extraObject)
@@ -70,19 +49,19 @@ public final class LinkPhase: CompilerPhase {
             }
             args.append("-o")
             args.append(ctx.options.outputPath)
-            args.append(contentsOf: clangTargetArgs(ctx.options.target))
+            args.append(contentsOf: linkerTargetArgs(ctx.options.target))
             for path in ctx.options.libraryPaths {
                 args.append("-L\(path)")
             }
             for library in ctx.options.linkLibraries {
                 args.append("-l\(library)")
             }
-            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            let swiftcPath = CommandRunner.resolveExecutable("swiftc", fallback: "/usr/bin/swiftc")
             _ = try CommandRunner.run(
-                executable: clangPath,
+                executable: swiftcPath,
                 arguments: args,
                 phaseTimer: ctx.phaseTimer,
-                subPhaseName: "Link/clang"
+                subPhaseName: "Link/swiftc"
             )
         } catch let error as CommandRunnerError {
             let message: String
@@ -113,12 +92,19 @@ public final class LinkPhase: CompilerPhase {
         return nil
     }
 
-    private func clangTargetArgs(_ target: TargetTriple) -> [String] {
-        var triple = "\(target.arch)-\(target.vendor)-\(target.os)"
+    private func linkerTargetArgs(_ target: TargetTriple) -> [String] {
+        ["-target", linkerTargetTriple(target)]
+    }
+
+    private func linkerTargetTriple(_ target: TargetTriple) -> String {
         if let version = target.osVersion, !version.isEmpty {
-            triple += version
+            return CodegenRuntimeSupport.targetTripleString(target)
         }
-        return ["-target", triple]
+        if target.vendor == "apple", target.os == "macosx" {
+            let minimumVersion = target.arch == "arm64" ? "11.0" : "10.9"
+            return CodegenRuntimeSupport.targetTripleString(target) + minimumVersion
+        }
+        return CodegenRuntimeSupport.targetTripleString(target)
     }
 
     private func discoverLibraryObjects(searchPaths: [String]) -> [String] {
@@ -156,43 +142,6 @@ public final class LinkPhase: CompilerPhase {
             }
         }
         return collected
-    }
-
-    /// Returns a deterministic URL for the entry wrapper C source file,
-    /// derived from the output path so the same compilation reuses the file.
-    /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
-    /// collisions with unrelated entries in the shared temp directory.
-    private func stableEntryWrapperURL(outputPath: String) -> URL {
-        let key = CodegenRuntimeSupport.stableFNV1a64Hex(outputPath)
-        let cacheDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("kswiftk", isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
-        } catch {
-            FileHandle.standardError.write(
-                Data("warning: failed to create cache directory at \(cacheDir.path): \(error)\n".utf8)
-            )
-        }
-        return cacheDir.appendingPathComponent("entry_\(key).c")
-    }
-
-    /// Writes `content` to `url` only when the file does not already exist
-    /// or when the existing content differs, avoiding unnecessary I/O and
-    /// downstream rebuilds.
-    private func writeIfChanged(content: String, to url: URL) throws {
-        if FileManager.default.fileExists(atPath: url.path) {
-            do {
-                let existing = try String(contentsOf: url, encoding: .utf8)
-                if existing == content {
-                    return
-                }
-            } catch {
-                FileHandle.standardError.write(
-                    Data("warning: failed to read existing file at \(url.path); overwriting. Error: \(error)\n".utf8)
-                )
-            }
-        }
-        try content.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func objectPaths(from libraryDir: String) -> [String] {

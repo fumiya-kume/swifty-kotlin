@@ -89,7 +89,9 @@ extension CodegenBackendIntegrationTests {
         }
     }
 
-    func testLlvmCapiBackendPassesDebugInfoToNativeEmitter() throws {
+    func testLLVMBackendPassesDebugInfoToNativeEmitter() throws {
+        guard llvmBackendAvailable() else { return }
+
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
         let types = TypeSystem()
@@ -109,71 +111,71 @@ extension CodegenBackendIntegrationTests {
             arena: arena
         )
 
-        let backendWithDebug = LLVMCAPIBackend(
+        let backendWithDebug = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: true,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
-        let backendNoDebug = LLVMCAPIBackend(
+        let backendNoDebug = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
 
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
 
-        if llvmCapiBindingsAvailable() {
-            let debugIRPath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString + "_debug.ll").path
-            let noDebugIRPath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString + "_nodebug.ll").path
-            defer {
-                try? FileManager.default.removeItem(atPath: debugIRPath)
-                try? FileManager.default.removeItem(atPath: noDebugIRPath)
-            }
-
-            try backendWithDebug.emitLLVMIR(
-                module: module,
-                runtime: runtime,
-                outputIRPath: debugIRPath,
-                interner: interner
-            )
-            try backendNoDebug.emitLLVMIR(
-                module: module,
-                runtime: runtime,
-                outputIRPath: noDebugIRPath,
-                interner: interner
-            )
-
-            let debugIR = try String(contentsOfFile: debugIRPath, encoding: .utf8)
-            let noDebugIR = try String(contentsOfFile: noDebugIRPath, encoding: .utf8)
-
-            if LLVMCAPIBindings.load()?.debugInfoAvailable == true {
-                XCTAssertTrue(debugIR.contains("!llvm.dbg") || debugIR.count > noDebugIR.count)
-            }
-            XCTAssertFalse(noDebugIR.contains("!llvm.dbg"))
+        let debugIRPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + "_debug.ll").path
+        let noDebugIRPath = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + "_nodebug.ll").path
+        defer {
+            try? FileManager.default.removeItem(atPath: debugIRPath)
+            try? FileManager.default.removeItem(atPath: noDebugIRPath)
         }
+
+        try backendWithDebug.emitLLVMIR(
+            module: module,
+            runtime: runtime,
+            outputIRPath: debugIRPath,
+            interner: interner
+        )
+        try backendNoDebug.emitLLVMIR(
+            module: module,
+            runtime: runtime,
+            outputIRPath: noDebugIRPath,
+            interner: interner
+        )
+
+        let debugIR = try String(contentsOfFile: debugIRPath, encoding: .utf8)
+        let noDebugIR = try String(contentsOfFile: noDebugIRPath, encoding: .utf8)
+
+        if LLVMCAPIBindings.load()?.debugInfoAvailable == true {
+            XCTAssertTrue(debugIR.contains("!llvm.dbg") || debugIR.count > noDebugIR.count)
+        }
+        XCTAssertFalse(noDebugIR.contains("!llvm.dbg"))
     }
 
-    func testLlvmCapiBindingsReportsDebugInfoAvailability() {
+    func testLlvmBindingsReportsDebugInfoAvailability() {
         guard let bindings = LLVMCAPIBindings.load() else {
             return
         }
         _ = bindings.debugInfoAvailable
     }
 
-    func testLlvmCapiBindingsReportsDebugLocationAvailability() {
+    func testLlvmBindingsReportsDebugLocationAvailability() {
         guard let bindings = LLVMCAPIBindings.load() else {
             return
         }
         _ = bindings.debugLocationAvailable
     }
 
-    func testLlvmCapiBackendDebugIRContainsDebugLocationMetadata() throws {
+    func testLLVMBackendDebugIRContainsDebugLocationMetadata() throws {
+        guard llvmBackendAvailable() else { return }
+        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
+        guard LLVMCAPIBindings.load()?.debugLocationAvailable == true else { return }
+
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
         let types = TypeSystem()
@@ -192,19 +194,14 @@ extension CodegenBackendIntegrationTests {
             files: [KIRFile(fileID: FileID(rawValue: 0), decls: [functionID])], arena: arena
         )
 
-        let backend = LLVMCAPIBackend(
+        let backend = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: true,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
 
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
-        guard llvmCapiBindingsAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
-        guard LLVMCAPIBindings.load()?.debugLocationAvailable == true else { return }
 
         let irPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_dbgloc.ll").path
@@ -224,7 +221,11 @@ extension CodegenBackendIntegrationTests {
         XCTAssertTrue(irText.contains("DISubprogram"), "Expected DISubprogram metadata in IR")
     }
 
-    func testLlvmCapiBackendDebugIRContainsLocalVariableMetadata() throws {
+    func testLLVMBackendDebugIRContainsLocalVariableMetadata() throws {
+        guard llvmBackendAvailable() else { return }
+        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
+        guard LLVMCAPIBindings.load()?.localVariableAvailable == true else { return }
+
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
         let types = TypeSystem()
@@ -249,19 +250,14 @@ extension CodegenBackendIntegrationTests {
             files: [KIRFile(fileID: FileID(rawValue: 0), decls: [functionID])], arena: arena
         )
 
-        let backend = LLVMCAPIBackend(
+        let backend = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: true,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
 
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
-        guard llvmCapiBindingsAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
-        guard LLVMCAPIBindings.load()?.localVariableAvailable == true else { return }
 
         let irPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_localvar.ll").path

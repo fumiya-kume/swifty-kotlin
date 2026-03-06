@@ -1,28 +1,6 @@
 import Foundation
 
 enum CodegenRuntimeSupport {
-    private static let stubCache = RuntimeStubCache()
-
-    static func runtimeStubObjectPath(target: TargetTriple) -> String? {
-        let triple = targetTripleString(target)
-        let source = fixedRuntimePreamble.joined(separator: "\n")
-        let cacheKey = stableFNV1a64Hex(triple + "_" + stableFNV1a64Hex(source))
-        let stubDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("kswiftk_rt_stubs")
-        let context = StubCompilationContext(
-            source: source,
-            cacheKey: cacheKey,
-            clangTargetArgs: clangTargetArgs(target),
-            stubDir: stubDir
-        )
-
-        return stubCache.getOrInsert(triple: triple, context: context)
-    }
-
-    static func clangTargetArgs(_ target: TargetTriple) -> [String] {
-        ["-target", targetTripleString(target)]
-    }
-
     static func targetTripleString(_ target: TargetTriple) -> String {
         if let osVersion = target.osVersion, !osVersion.isEmpty {
             return "\(target.arch)-\(target.vendor)-\(target.os)\(osVersion)"
@@ -37,5 +15,17 @@ enum CodegenRuntimeSupport {
             hash &*= 0x100_0000_01B3
         }
         return String(hash, radix: 16)
+    }
+}
+
+public struct RuntimeLinkInfo {
+    public let libraryPaths: [String]
+    public let libraries: [String]
+    public let extraObjects: [String]
+
+    public init(libraryPaths: [String], libraries: [String], extraObjects: [String]) {
+        self.libraryPaths = libraryPaths
+        self.libraries = libraries
+        self.extraObjects = extraObjects
     }
 }

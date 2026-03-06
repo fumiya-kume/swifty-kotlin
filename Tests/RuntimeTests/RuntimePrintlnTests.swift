@@ -38,4 +38,19 @@ final class RuntimePrintlnTests: IsolatedRuntimeXCTestCase {
         let output = capturePrintln { kk_println_any(ptr) }
         XCTAssertEqual(output, "42")
     }
+
+    func testPrintlnLongPrintsValue() {
+        let output = capturePrintln { kk_println_long(123_456_789) }
+        XCTAssertEqual(output, "123456789")
+    }
+
+    func testPrintlnDoubleDecodesBitPattern() {
+        let output = capturePrintln { kk_println_double(kk_double_to_bits(2.5)) }
+        XCTAssertEqual(output, "2.5")
+    }
+
+    func testPrintlnCharPrintsUnicodeScalar() {
+        let output = capturePrintln { kk_println_char(0x41) }
+        XCTAssertEqual(output, "A")
+    }
 }

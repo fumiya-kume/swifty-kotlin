@@ -224,7 +224,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         XCTAssertThrowsError(try LinkPhase().run(noKirCtx))
     }
 
-    func testLinkPhasePassesDebugFlagToClang() throws {
+    func testLinkPhasePassesDebugFlagToExecutableLink() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputPath = FileManager.default.temporaryDirectory
@@ -286,7 +286,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
-    func testExecutableStringFormatHandlesBoxedScalarsInSyntheticRuntimePreamble() throws {
+    func testExecutableStringFormatHandlesBoxedScalarsInRuntimeObjects() throws {
         let source = """
         fun main() {
             val big: Any? = 9223372036854775807L

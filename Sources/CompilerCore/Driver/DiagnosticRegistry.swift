@@ -592,31 +592,19 @@ public enum DiagnosticRegistry {
             code: "KSWIFTK-BACKEND-1008",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "Unsupported backend selection."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1003",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: function codegen failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1004",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: module verification failure."
+            summary: "Removed backend selection flag."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1006",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: library load failure."
+            summary: "LLVM backend emission failure."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1007",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: symbol resolution failure."
+            summary: "LLVM backend bindings unavailable."
         ),
     ]
 

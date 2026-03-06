@@ -51,10 +51,6 @@ public final class CompilationContext: @unchecked Sendable {
     /// to track per-file tokens, CST, and AST results.
     public var fileIRs: [FileID: FileIR] = [:]
 
-    /// Path to a pre-compiled runtime stub `.o` that should be linked alongside
-    /// the user module object when producing an executable.
-    public var runtimeStubObjectPath: String?
-
     /// Incremental compilation cache (non-nil when incremental mode is active).
     public var incrementalCache: IncrementalCompilationCache?
 

@@ -6,6 +6,17 @@ import Foundation
 #endif
 
 extension LLVMCAPIBindings {
+    static func loadUsable(
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> LLVMCAPIBindings? {
+        guard let bindings = load(environment: environment),
+              bindings.smokeTestContextLifecycle()
+        else {
+            return nil
+        }
+        return bindings
+    }
+
     static func candidateLibraryPaths(environment: [String: String] = ProcessInfo.processInfo.environment) -> [String] {
         var candidates: [String] = []
         if let override = environment["KSWIFTK_LLVM_DYLIB"], !override.isEmpty {
@@ -42,6 +53,8 @@ extension LLVMCAPIBindings {
                   let setTarget = loadSymbol(handle: handle, name: "LLVMSetTarget", as: LLVMSetTargetFn.self),
                   let setDataLayout = loadSymbol(handle: handle, name: "LLVMSetDataLayout", as: LLVMSetDataLayoutFn.self),
                   let setLinkage = loadSymbol(handle: handle, name: "LLVMSetLinkage", as: LLVMSetLinkageFn.self),
+                  let voidType = loadSymbol(handle: handle, name: "LLVMVoidTypeInContext", as: LLVMVoidTypeInContextFn.self),
+                  let int8Type = loadSymbol(handle: handle, name: "LLVMInt8TypeInContext", as: LLVMInt8TypeInContextFn.self),
                   let int64Type = loadSymbol(handle: handle, name: "LLVMInt64TypeInContext", as: LLVMInt64TypeInContextFn.self),
                   let pointerType = loadSymbol(handle: handle, name: "LLVMPointerType", as: LLVMPointerTypeFn.self),
                   let functionType = loadSymbol(handle: handle, name: "LLVMFunctionType", as: LLVMFunctionTypeFn.self),
@@ -93,6 +106,8 @@ extension LLVMCAPIBindings {
                 setTargetFn: setTarget,
                 setDataLayoutFn: setDataLayout,
                 setLinkageFn: setLinkage,
+                voidTypeInContextFn: voidType,
+                int8TypeInContextFn: int8Type,
                 int64TypeFn: int64Type,
                 pointerTypeFn: pointerType,
                 functionTypeFn: functionType,

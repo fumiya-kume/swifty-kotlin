@@ -132,30 +132,6 @@ extension LoweringPassRegressionTests {
         )
     }
 
-    func testFlowMapCollectExecutablePrintsExpectedOutputWithExplicitLlvmCApiFlag() throws {
-        let source = """
-        suspend fun runFlowCollectExecutable() {
-            flow {
-                emit(1)
-                emit(2)
-            }.map { it * 2 }
-                .collect { println(it) }
-        }
-
-        fun main() {
-            runBlocking(::runFlowCollectExecutable)
-            return
-        }
-        """
-
-        try assertFlowExecutableOutput(
-            source: source,
-            moduleName: "FlowExecutableLlvmCApi",
-            expectedStdout: "2\n4\n",
-            irFlags: ["backend=llvm-c-api"]
-        )
-    }
-
     func testFlowCollectTwiceReexecutesEmitterForColdSemantics() throws {
         let source = """
         suspend fun runFlowCollectTwice() {

@@ -323,9 +323,9 @@ extension VirtualDispatchTests {
 
     // MARK: - 9. LLVM backend via emitObject: virtualCall compiles without error
 
-    func testLlvmCapiBackendCompilesVirtualCallWithoutError() throws {
-        guard llvmCapiBindingsAvailable() else {
-            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+    func testLLVMBackendCompilesVirtualCallWithoutError() throws {
+        guard llvmBackendAvailable() else {
+            throw XCTSkip("LLVM backend is unavailable in this environment.")
         }
         let fixture = makeVtableFixture()
         let sema = SemaModule(
@@ -351,12 +351,11 @@ extension VirtualDispatchTests {
 
         try LoweringPhase().run(ctx)
 
-        let backend = LLVMCAPIBackend(
+        let backend = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
-            diagnostics: DiagnosticEngine(),
-            isStrictMode: true
+            diagnostics: DiagnosticEngine()
         )
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path

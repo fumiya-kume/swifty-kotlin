@@ -58,12 +58,12 @@ struct NativeEmitter {
         }
 
         guard let llvmIR = bindings.printModule(built.module) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMPrintModuleToString returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMPrintModuleToString returned null")
         }
         do {
             try llvmIR.write(to: URL(fileURLWithPath: outputPath), atomically: true, encoding: .utf8)
         } catch {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to write LLVM IR to '\(outputPath)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to write LLVM IR to '\(outputPath)'")
         }
     }
 
@@ -89,16 +89,16 @@ struct NativeEmitter {
         }
 
         guard let targetMachine else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create LLVM target machine")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create LLVM target machine")
         }
         defer { bindings.disposeTargetMachine(targetMachine) }
 
         guard bindings.applyTargetMachine(targetMachine, to: built.module) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to apply target data layout")
+            throw LLVMBackendError.nativeEmissionFailed("failed to apply target data layout")
         }
 
         if let errorMessage = bindings.emitObject(targetMachine: targetMachine, module: built.module, outputPath: outputPath) {
-            throw LLVMCAPIBackendError.nativeEmissionFailed(errorMessage)
+            throw LLVMBackendError.nativeEmissionFailed(errorMessage)
         }
     }
 
@@ -107,11 +107,11 @@ struct NativeEmitter {
         module: LLVMCAPIBindings.LLVMModuleRef
     ) {
         guard let context = bindings.createContext() else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMContextCreate returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMContextCreate returned null")
         }
         guard let llvmModule = bindings.createModule(name: "kswiftk_module", context: context) else {
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMModuleCreateWithNameInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMModuleCreateWithNameInContext returned null")
         }
 
         let triple = targetTripleString()
@@ -120,12 +120,12 @@ struct NativeEmitter {
         guard let int64Type = bindings.int64Type(context: context) else {
             bindings.disposeModule(llvmModule)
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMInt64TypeInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMInt64TypeInContext returned null")
         }
         guard let outThrownPointerType = bindings.pointerType(int64Type, addressSpace: 0) else {
             bindings.disposeModule(llvmModule)
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMPointerType returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMPointerType returned null")
         }
 
         do {
@@ -170,7 +170,7 @@ struct NativeEmitter {
             else {
                 bindings.disposeModule(llvmModule)
                 bindings.disposeContext(context)
-                throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare function '\(functionName)'")
+                throw LLVMBackendError.nativeEmissionFailed("failed to declare function '\(functionName)'")
             }
             internalFunctions[function.symbol] = LLVMFunction(value: functionValue, type: functionType)
         }
@@ -418,22 +418,22 @@ struct NativeEmitter {
             parameters: parameterTypes,
             isVarArg: false
         ) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
         }
         guard let functionValue = bindings.getNamedFunction(module: module, name: name)
             ?? bindings.addFunction(module: module, name: name, functionType: functionType)
         else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
         }
         bindings.setWeakAnyLinkage(functionValue)
 
         guard let builder = bindings.createBuilder(context: context) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
         }
         defer { bindings.disposeBuilder(builder) }
 
         guard let entry = bindings.appendBasicBlock(context: context, function: functionValue, name: "entry") else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
         }
         bindings.positionBuilder(builder, at: entry)
         let zero = bindings.constInt(int64Type, value: 0) ?? bindings.getUndef(type: int64Type)

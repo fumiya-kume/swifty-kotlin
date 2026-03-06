@@ -1,30 +1,32 @@
 import Foundation
 
-public final class LLVMCAPIBackend {
+public final class LLVMBackend {
     private let target: TargetTriple
     private let optLevel: OptimizationLevel
     private let debugInfo: Bool
     private let diagnostics: DiagnosticEngine
-    private let isStrictMode: Bool
-    private let bindings: LLVMCAPIBindings?
-    private let hasUsableBindings: Bool
+    private let bindings: LLVMCAPIBindings
 
     public init(
         target: TargetTriple,
         optLevel: OptimizationLevel,
         debugInfo: Bool,
-        diagnostics: DiagnosticEngine,
-        isStrictMode: Bool = false
-    ) {
+        diagnostics: DiagnosticEngine
+    ) throws {
         self.target = target
         self.optLevel = optLevel
         self.debugInfo = debugInfo
         self.diagnostics = diagnostics
-        self.isStrictMode = isStrictMode
 
-        let loadedBindings = LLVMCAPIBindings.load()
-        bindings = loadedBindings
-        hasUsableBindings = loadedBindings?.smokeTestContextLifecycle() == true
+        guard let bindings = LLVMCAPIBindings.loadUsable() else {
+            diagnostics.error(
+                "KSWIFTK-BACKEND-1007",
+                "LLVM backend is unavailable because the LLVM C API bindings could not be loaded.",
+                range: nil
+            )
+            throw LLVMBackendError.bindingsUnavailable
+        }
+        self.bindings = bindings
     }
 
     public func emitObject(
@@ -81,46 +83,21 @@ public final class LLVMCAPIBackend {
         context: String,
         nativeEmit: (LLVMCAPIBindings) throws -> Void
     ) throws {
-        guard let bindings, hasUsableBindings else {
-            if isStrictMode {
-                diagnostics.error(
-                    "KSWIFTK-BACKEND-1003",
-                    "LLVM C API backend is requested in strict mode, but LLVM C API bindings are unavailable.",
-                    range: nil
-                )
-                throw LLVMCAPIBackendError.bindingsUnavailable
-            }
-            diagnostics.error(
-                "KSWIFTK-BACKEND-1007",
-                "LLVM C API backend is requested, but LLVM C API bindings are unavailable and fallback backend is disabled.",
-                range: nil
-            )
-            throw LLVMCAPIBackendError.bindingsUnavailable
-        }
-
         do {
             try nativeEmit(bindings)
         } catch {
             let reason = describe(error: error)
-            if isStrictMode {
-                diagnostics.error(
-                    "KSWIFTK-BACKEND-1004",
-                    "LLVM C API backend failed to emit \(context) in strict mode: \(reason)",
-                    range: nil
-                )
-                throw LLVMCAPIBackendError.nativeEmissionFailed(reason)
-            }
             diagnostics.error(
                 "KSWIFTK-BACKEND-1006",
-                "LLVM C API backend failed to emit \(context): \(reason)",
+                "LLVM backend failed to emit \(context): \(reason)",
                 range: nil
             )
-            throw LLVMCAPIBackendError.nativeEmissionFailed(reason)
+            throw LLVMBackendError.nativeEmissionFailed(reason)
         }
     }
 
     private func describe(error: Error) -> String {
-        if let backendError = error as? LLVMCAPIBackendError {
+        if let backendError = error as? LLVMBackendError {
             switch backendError {
             case .bindingsUnavailable:
                 return "backend unavailable"
@@ -132,7 +109,7 @@ public final class LLVMCAPIBackend {
     }
 }
 
-enum LLVMCAPIBackendError: Error {
+enum LLVMBackendError: Error {
     case bindingsUnavailable
     case nativeEmissionFailed(String)
 }

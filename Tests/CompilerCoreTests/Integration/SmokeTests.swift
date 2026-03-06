@@ -105,9 +105,9 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(result.diagnostics.contains(where: { $0.code == "KSWIFTK-SOURCE-0002" }))
     }
 
-    func testSmokeLlvmCApiObjectEmissionWhenBackendAvailable() throws {
-        guard llvmCapiBindingsAvailable() else {
-            throw XCTSkip("LLVM C API bindings are unavailable in this environment.")
+    func testSmokeLLVMObjectEmissionWhenBackendAvailable() throws {
+        guard llvmBackendAvailable() else {
+            throw XCTSkip("LLVM backend is unavailable in this environment.")
         }
 
         try withTemporaryFile(contents: "fun main() = 0") { path in
@@ -121,11 +121,10 @@ final class SmokeTests: XCTestCase {
             }
 
             let options = makeOptions(
-                moduleName: "SmokeLlvmCApi",
+                moduleName: "SmokeLLVM",
                 inputs: [path],
                 outputPath: outputBase,
-                emit: .object,
-                irFlags: ["backend=llvm-c-api"]
+                emit: .object
             )
             let result = makeDriver().runForTesting(options: options)
 

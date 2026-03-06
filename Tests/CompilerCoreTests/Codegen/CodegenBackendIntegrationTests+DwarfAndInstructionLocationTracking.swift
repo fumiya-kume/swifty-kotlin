@@ -3,7 +3,10 @@ import Foundation
 import XCTest
 
 extension CodegenBackendIntegrationTests {
-    func testLlvmCapiBackendDebugObjectContainsDwarfSections() throws {
+    func testLLVMBackendDebugObjectContainsDwarfSections() throws {
+        guard llvmBackendAvailable() else { return }
+        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
+
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
         let types = TypeSystem()
@@ -22,25 +25,20 @@ extension CodegenBackendIntegrationTests {
             files: [KIRFile(fileID: FileID(rawValue: 0), decls: [functionID])], arena: arena
         )
 
-        let backendDebug = LLVMCAPIBackend(
+        let backendDebug = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: true,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
-        let backendNoDebug = LLVMCAPIBackend(
+        let backendNoDebug = try LLVMBackend(
             target: defaultTargetTriple(),
             optLevel: .O0,
             debugInfo: false,
-            diagnostics: diagnostics,
-            isStrictMode: false
+            diagnostics: diagnostics
         )
 
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
-
-        guard llvmCapiBindingsAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
 
         let debugObjPath = FileManager.default.temporaryDirectory
             .appendingPathComponent(UUID().uuidString + "_debug.o").path
