@@ -318,6 +318,37 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(preamble.contains("boolText = (arg ? \"true\" : \"false\");"))
     }
 
+    func testStringFormatPreambleDecodesBoxedFloatAndDouble() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("static double kk_string_format_to_double(intptr_t value)"))
+        XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_FLOAT"))
+        XCTAssertTrue(preamble.contains("tag == KK_BOX_TAG_DOUBLE"))
+        XCTAssertTrue(preamble.contains("case 'f':"))
+        XCTAssertTrue(preamble.contains("case 'E':"))
+        XCTAssertTrue(preamble.contains("case 'g':"))
+        XCTAssertTrue(preamble.contains("case 'G':"))
+        XCTAssertTrue(preamble.contains("double value = kk_string_format_to_double(arg);"))
+    }
+
+    func testStringFormatPreambleHandlesCharacterWithUtf8Encoding() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("static uint32_t kk_string_format_to_codepoint(intptr_t value)"))
+        XCTAssertTrue(preamble.contains("case 'c':"))
+        XCTAssertTrue(preamble.contains("case 'C':"))
+        XCTAssertTrue(preamble.contains("kk_string_format_to_codepoint(arg)"))
+        XCTAssertTrue(preamble.contains("kk_string_format_encode_utf8(codePoint, encoded, sizeof(encoded));"))
+        XCTAssertTrue(preamble.contains("kk_string_format_build_token(token, sizeof(token), fmt->bytes + bodyStart, bodyEnd - bodyStart, NULL, 's');"))
+    }
+
+    func testCompareAnyDecodesBoxedFloatingValues() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("if (lhsBox->tag == KK_BOX_TAG_FLOAT)"))
+        XCTAssertTrue(preamble.contains("if (lhsBox->tag == KK_BOX_TAG_DOUBLE)"))
+        XCTAssertTrue(preamble.contains("if (rhsBox->tag == KK_BOX_TAG_FLOAT)"))
+        XCTAssertTrue(preamble.contains("if (rhsBox->tag == KK_BOX_TAG_DOUBLE)"))
+        XCTAssertTrue(preamble.contains("if (lhsIsFloating || rhsIsFloating)"))
+    }
+
     func testSyntheticCBackendEmitsFrameMapDescriptorSymbols() throws {
         let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
         guard FileManager.default.fileExists(atPath: clangPath) else {
