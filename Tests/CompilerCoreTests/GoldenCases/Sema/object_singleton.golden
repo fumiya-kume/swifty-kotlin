@@ -34,25 +34,27 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s37 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#36 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s38 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s39 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
-symbol s40 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=object fq=golden.sema.Counter vis=public flags=_
+symbol s39 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#38 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s40 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s41 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
+symbol s42 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d3 object Counter sym=s36
-  decl d4 fun useCounter suspend=0 inline=0 sym=s40
-expr e0 string(counter) type=String ref=s38
-expr e1 int(0) type=Int ref=s39
+  decl d3 object Counter sym=s38
+  decl d4 fun useCounter suspend=0 inline=0 sym=s42
+expr e0 string(counter) type=String ref=s40
+expr e1 int(0) type=Int ref=s41
 expr e2 name(n) type=_
-expr e3 name(n) type=Int ref=s39
+expr e3 name(n) type=Int ref=s41
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign n value=e5 type=Unit ref=s39
+expr e6 localAssign n value=e5 type=Unit ref=s41
 expr e7 name(n) type=_
 expr e8 int(1) type=Int
-expr e9 localAssign n value=e8 type=Unit ref=s39
-expr e10 name(Counter) type=Class#36 ref=s36
-expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s37 map=[] targs=[]
-expr e12 name(Counter) type=Class#36 ref=s36
-expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s37 map=[] targs=[]
+expr e9 localAssign n value=e8 type=Unit ref=s41
+expr e10 name(Counter) type=Class#38 ref=s38
+expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s39 map=[] targs=[]
+expr e12 name(Counter) type=Class#38 ref=s38
+expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s39 map=[] targs=[]

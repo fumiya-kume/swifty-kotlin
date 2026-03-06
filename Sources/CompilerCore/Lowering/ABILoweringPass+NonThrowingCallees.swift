@@ -28,6 +28,7 @@ extension ABILoweringPass {
             interner.intern("kk_compare_any"),
             interner.intern("kk_string_length"),
             interner.intern("kk_string_trim"),
+            interner.intern("kk_string_format"),
             interner.intern("kk_string_replace"),
             interner.intern("kk_string_startsWith"),
             interner.intern("kk_string_endsWith"),

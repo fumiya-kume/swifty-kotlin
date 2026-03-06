@@ -34,23 +34,25 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s37 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s38 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s39 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.oldFunError vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=golden.sema.oldFunWarning vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=golden.sema.newFun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s41 kind=function fq=golden.sema.caller vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun oldFunError suspend=0 inline=0 sym=s36
-  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s37
-  decl d2 fun newFun suspend=0 inline=0 sym=s38
-  decl d3 fun caller suspend=0 inline=0 sym=s39
+  decl d0 fun oldFunError suspend=0 inline=0 sym=s38
+  decl d1 fun oldFunWarning suspend=0 inline=0 sym=s39
+  decl d2 fun newFun suspend=0 inline=0 sym=s40
+  decl d3 fun caller suspend=0 inline=0 sym=s41
 expr e0 int(1) type=Int
 expr e1 int(2) type=Int
 expr e2 int(3) type=Int
 expr e3 name(oldFunError) type=Int
-expr e4 call callee=e3 args=[] type=Int call=s36 map=[] targs=[]
+expr e4 call callee=e3 args=[] type=Int call=s38 map=[] targs=[]
 expr e5 name(oldFunWarning) type=_
-expr e6 call callee=e5 args=[] type=Int call=s37 map=[] targs=[]
+expr e6 call callee=e5 args=[] type=Int call=s39 map=[] targs=[]
 expr e7 binary(add) lhs=e4 rhs=e6 type=Int
 expr e8 name(newFun) type=_
-expr e9 call callee=e8 args=[] type=Int call=s38 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Int call=s40 map=[] targs=[]
 expr e10 binary(add) lhs=e7 rhs=e9 type=Int

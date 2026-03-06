@@ -1,5 +1,8 @@
 import Foundation
 
+// File splitting is still in progress for this legacy member-call lowering surface.
+// swiftlint:disable file_length
+
 extension CallLowerer {
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
@@ -165,6 +168,8 @@ extension CallLowerer {
         )
     }
 
+    // This shared lowering path still centralizes legacy stdlib/member special cases.
+    // swiftlint:disable:next function_body_length
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -492,7 +497,10 @@ extension CallLowerer {
         }
 
         // String stdlib: format(vararg args) (STDLIB-006)
-        if interner.resolve(calleeName) == "format" {
+        if interner.resolve(calleeName) == "format",
+           let chosenCallee = sema.bindings.callBindings[exprID]?.chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee) == "kk_string_format"
+        {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {

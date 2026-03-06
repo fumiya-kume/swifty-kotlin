@@ -34,21 +34,23 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s37 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s38 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s39 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s40 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s41 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s42 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.useLet vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=golden.sema.useRun vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=golden.sema.useRunWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s41 kind=function fq=golden.sema.useApply vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=golden.sema.useAlso vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s43 kind=function fq=golden.sema.useWith vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s44 kind=function fq=golden.sema.useWithThis vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useLet suspend=0 inline=0 sym=s36
-  decl d1 fun useRun suspend=0 inline=0 sym=s37
-  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s38
-  decl d3 fun useApply suspend=0 inline=0 sym=s39
-  decl d4 fun useAlso suspend=0 inline=0 sym=s40
-  decl d5 fun useWith suspend=0 inline=0 sym=s41
-  decl d6 fun useWithThis suspend=0 inline=0 sym=s42
+  decl d0 fun useLet suspend=0 inline=0 sym=s38
+  decl d1 fun useRun suspend=0 inline=0 sym=s39
+  decl d2 fun useRunWithThis suspend=0 inline=0 sym=s40
+  decl d3 fun useApply suspend=0 inline=0 sym=s41
+  decl d4 fun useAlso suspend=0 inline=0 sym=s42
+  decl d5 fun useWith suspend=0 inline=0 sym=s43
+  decl d6 fun useWithThis suspend=0 inline=0 sym=s44
 expr e0 string(hello) type=String
 expr e1 name(it) type=String ref=s-1000768
 expr e2 memberCall recv=e1 callee=length args=[] type=Int

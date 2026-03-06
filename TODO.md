@@ -200,7 +200,8 @@
   - [x] `String.format(vararg args)` を printf 相当の C ABI 関数へ lowering する
   - [x] `startsWith`/`endsWith`/`contains`（文字列検索版）を stdlib stub として実装する
   - [x] diff/golden ケースを追加する → `Scripts/diff_cases/stdlib_string_ops.kt` / `Tests/CompilerCoreTests/GoldenCases/Sema/stdlib_string_ops.kt`
-  - **完了条件**: `"  hello  ".trim()` / `"1,2,3".split(",")` / `"42".toInt()` / `"%s:%d".format("age", 7)` が `kotlinc` と同一出力になる ✓
+  - **完了条件**: `"  hello  ".trim()` / `"42".toInt()` / `"%s:%d".format("age", 7)` が `kotlinc` と同一出力になる ✓
+  - `split()` は runtime / sema 経路では確認済みだが、diff 経路では `List.toString()` 未実装のため `println(list)` の JVM 出力 `[a, b, c]` までまだ比較できない
 
 
 - [ ] STDLIB-007: multiline string helper `trimIndent()` / `trimMargin()` を実装する（spec.md J15）

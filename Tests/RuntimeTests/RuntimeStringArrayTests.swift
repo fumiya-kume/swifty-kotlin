@@ -188,9 +188,25 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "age:7 3.50")
     }
 
+    func testStringFormatSupportsPositionalArguments() {
+        let args = makeRuntimeArray([
+            7,
+            rawFromRuntimeString("age"),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%2$s:%1$d"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "age:7")
+    }
+
     func testStringFormatSupportsEscapedPercentWithoutArguments() {
         let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
         XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
+    }
+
+    func testStringFormatTreatsUnsupportedUnsignedConversionAsLiteral() {
+        let args = makeRuntimeArray([7])
+        let formatted = kk_string_format(rawFromRuntimeString("%u"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "%u")
     }
 
     // MARK: - kk_throwable_new

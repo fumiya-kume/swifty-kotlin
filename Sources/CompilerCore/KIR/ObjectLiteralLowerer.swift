@@ -24,7 +24,6 @@ final class ObjectLiteralLowerer {
         if let declID,
            let decl = ast.arena.decl(declID),
            case let .objectDecl(objectDecl) = decl,
-           !objectDecl.memberProperties.isEmpty,
            case let .classType(classType) = sema.types.kind(of: objectValueType)
         {
             return lowerStoredObjectLiteralExpr(
@@ -124,7 +123,7 @@ final class ObjectLiteralLowerer {
                   let decl = ast.arena.decl(propertyDeclID),
                   case let .propertyDecl(propertyDecl) = decl,
                   let initializer = propertyDecl.initializer,
-                  let fieldOffset = layout?.fieldOffsets[propertySymbol]
+                  let fieldOffset = layout?.fieldOffsets[sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol]
             else {
                 continue
             }

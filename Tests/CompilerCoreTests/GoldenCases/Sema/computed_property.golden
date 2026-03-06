@@ -34,11 +34,13 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s37 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#36 params=[] ret=Class#36 suspend=0 defaults=[] vararg=[]
-symbol s38 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s39 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=class fq=golden.sema.Widget vis=public flags=_
+symbol s39 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s40 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
+symbol s41 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
 file f0 package=golden.sema
-  decl d2 class Widget sym=s36
-expr e0 string(hello) type=String ref=s38
-expr e1 int(0) type=Int ref=s39
+  decl d2 class Widget sym=s38
+expr e0 string(hello) type=String ref=s40
+expr e1 int(0) type=Int ref=s41

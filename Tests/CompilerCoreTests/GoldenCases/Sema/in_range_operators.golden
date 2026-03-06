@@ -34,29 +34,31 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s37 kind=valueParameter fq=checkIn.$36.x vis=private flags=_
-symbol s38 kind=valueParameter fq=checkIn.$36.y vis=private flags=_
-symbol s39 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s40 kind=valueParameter fq=checkNotIn.$39.x vis=private flags=_
-symbol s41 kind=valueParameter fq=checkNotIn.$39.y vis=private flags=_
-symbol s42 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s43 kind=valueParameter fq=rangeUntilExpr.$42.n vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s39 kind=valueParameter fq=checkIn.$38.x vis=private flags=_
+symbol s40 kind=valueParameter fq=checkIn.$38.y vis=private flags=_
+symbol s41 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s42 kind=valueParameter fq=checkNotIn.$41.x vis=private flags=_
+symbol s43 kind=valueParameter fq=checkNotIn.$41.y vis=private flags=_
+symbol s44 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s45 kind=valueParameter fq=rangeUntilExpr.$44.n vis=private flags=_
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s36
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s39
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s42
-expr e0 name(x) type=Int ref=s37
+  decl d0 fun checkIn suspend=0 inline=0 sym=s38
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s41
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s44
+expr e0 name(x) type=Int ref=s39
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s40
+expr e5 name(x) type=Int ref=s42
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s43
+expr e10 name(n) type=Int ref=s45
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int

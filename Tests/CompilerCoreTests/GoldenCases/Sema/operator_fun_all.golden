@@ -34,65 +34,67 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=class fq=golden.sema.Vec vis=public flags=dataType
-symbol s37 kind=constructor fq=golden.sema.Vec.<init> vis=public flags=_ sig=recv=Class#36 params=[Int,Int] ret=Class#36 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s38 kind=valueParameter fq=golden.sema.Vec.<init>.$37.x vis=private flags=_
-symbol s39 kind=valueParameter fq=golden.sema.Vec.<init>.$37.y vis=private flags=_
-symbol s40 kind=function fq=golden.sema.Vec.plus vis=public flags=operatorFunction sig=recv=Class#36 params=[Class#36] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s41 kind=valueParameter fq=golden.sema.Vec.plus.$40.other vis=private flags=_
-symbol s42 kind=function fq=golden.sema.Vec.minus vis=public flags=operatorFunction sig=recv=Class#36 params=[Class#36] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s43 kind=valueParameter fq=golden.sema.Vec.minus.$42.other vis=private flags=_
-symbol s44 kind=function fq=golden.sema.Vec.times vis=public flags=operatorFunction sig=recv=Class#36 params=[Int] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s45 kind=valueParameter fq=golden.sema.Vec.times.$44.scalar vis=private flags=_
-symbol s46 kind=function fq=golden.sema.Vec.unaryMinus vis=public flags=operatorFunction sig=recv=Class#36 params=[] ret=Class#36 suspend=0 defaults=[] vararg=[]
-symbol s47 kind=function fq=golden.sema.Vec.get vis=public flags=operatorFunction sig=recv=Class#36 params=[Int] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s48 kind=valueParameter fq=golden.sema.Vec.get.$47.index vis=private flags=_
-symbol s49 kind=function fq=golden.sema.useOperators vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s50 kind=local fq=__local_44.a vis=private flags=_
-symbol s51 kind=local fq=__local_49.b vis=private flags=_
-symbol s52 kind=local fq=__local_53.c vis=private flags=_
-symbol s53 kind=local fq=__local_57.d vis=private flags=_
-symbol s54 kind=local fq=__local_61.e vis=private flags=_
-symbol s55 kind=local fq=__local_64.f vis=private flags=_
-symbol s56 kind=local fq=__local_68.g vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=class fq=golden.sema.Vec vis=public flags=dataType
+symbol s39 kind=constructor fq=golden.sema.Vec.<init> vis=public flags=_ sig=recv=Class#38 params=[Int,Int] ret=Class#38 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s40 kind=valueParameter fq=golden.sema.Vec.<init>.$39.x vis=private flags=_
+symbol s41 kind=valueParameter fq=golden.sema.Vec.<init>.$39.y vis=private flags=_
+symbol s42 kind=function fq=golden.sema.Vec.plus vis=public flags=operatorFunction sig=recv=Class#38 params=[Class#38] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s43 kind=valueParameter fq=golden.sema.Vec.plus.$42.other vis=private flags=_
+symbol s44 kind=function fq=golden.sema.Vec.minus vis=public flags=operatorFunction sig=recv=Class#38 params=[Class#38] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s45 kind=valueParameter fq=golden.sema.Vec.minus.$44.other vis=private flags=_
+symbol s46 kind=function fq=golden.sema.Vec.times vis=public flags=operatorFunction sig=recv=Class#38 params=[Int] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s47 kind=valueParameter fq=golden.sema.Vec.times.$46.scalar vis=private flags=_
+symbol s48 kind=function fq=golden.sema.Vec.unaryMinus vis=public flags=operatorFunction sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s49 kind=function fq=golden.sema.Vec.get vis=public flags=operatorFunction sig=recv=Class#38 params=[Int] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s50 kind=valueParameter fq=golden.sema.Vec.get.$49.index vis=private flags=_
+symbol s51 kind=function fq=golden.sema.useOperators vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s52 kind=local fq=__local_44.a vis=private flags=_
+symbol s53 kind=local fq=__local_49.b vis=private flags=_
+symbol s54 kind=local fq=__local_53.c vis=private flags=_
+symbol s55 kind=local fq=__local_57.d vis=private flags=_
+symbol s56 kind=local fq=__local_61.e vis=private flags=_
+symbol s57 kind=local fq=__local_64.f vis=private flags=_
+symbol s58 kind=local fq=__local_68.g vis=private flags=_
 file f0 package=golden.sema
-  decl d5 class Vec sym=s36
-  decl d6 fun useOperators suspend=0 inline=0 sym=s49
+  decl d5 class Vec sym=s38
+  decl d6 fun useOperators suspend=0 inline=0 sym=s51
 expr e0 name(Vec) type=_
 expr e1 name(x) type=<error>
-expr e2 name(other) type=Class#36 ref=s41
+expr e2 name(other) type=Class#38 ref=s43
 expr e3 memberCall recv=e2 callee=x args=[] type=<error>
-expr e4 binary(add) lhs=e1 rhs=e3 type=Any call=s40 map=[0->0] targs=[]
+expr e4 binary(add) lhs=e1 rhs=e3 type=Any call=s42 map=[0->0] targs=[]
 expr e5 name(y) type=<error>
-expr e6 name(other) type=Class#36 ref=s41
+expr e6 name(other) type=Class#38 ref=s43
 expr e7 memberCall recv=e6 callee=y args=[] type=<error>
-expr e8 binary(add) lhs=e5 rhs=e7 type=Any call=s40 map=[0->0] targs=[]
+expr e8 binary(add) lhs=e5 rhs=e7 type=Any call=s42 map=[0->0] targs=[]
 expr e9 call callee=e0 args=[_:e4,_:e8] type=<error>
 expr e10 name(Vec) type=_
 expr e11 name(x) type=<error>
-expr e12 name(other) type=Class#36 ref=s43
+expr e12 name(other) type=Class#38 ref=s45
 expr e13 memberCall recv=e12 callee=x args=[] type=<error>
-expr e14 binary(subtract) lhs=e11 rhs=e13 type=Any call=s42 map=[0->0] targs=[]
+expr e14 binary(subtract) lhs=e11 rhs=e13 type=Any call=s44 map=[0->0] targs=[]
 expr e15 name(y) type=<error>
-expr e16 name(other) type=Class#36 ref=s43
+expr e16 name(other) type=Class#38 ref=s45
 expr e17 memberCall recv=e16 callee=y args=[] type=<error>
-expr e18 binary(subtract) lhs=e15 rhs=e17 type=Any call=s42 map=[0->0] targs=[]
+expr e18 binary(subtract) lhs=e15 rhs=e17 type=Any call=s44 map=[0->0] targs=[]
 expr e19 call callee=e10 args=[_:e14,_:e18] type=<error>
 expr e20 name(Vec) type=_
 expr e21 name(x) type=<error>
-expr e22 name(scalar) type=Int ref=s45
-expr e23 binary(multiply) lhs=e21 rhs=e22 type=Any call=s44 map=[0->0] targs=[]
+expr e22 name(scalar) type=Int ref=s47
+expr e23 binary(multiply) lhs=e21 rhs=e22 type=Any call=s46 map=[0->0] targs=[]
 expr e24 name(y) type=<error>
-expr e25 name(scalar) type=Int ref=s45
-expr e26 binary(multiply) lhs=e24 rhs=e25 type=Any call=s44 map=[0->0] targs=[]
+expr e25 name(scalar) type=Int ref=s47
+expr e26 binary(multiply) lhs=e24 rhs=e25 type=Any call=s46 map=[0->0] targs=[]
 expr e27 call callee=e20 args=[_:e23,_:e26] type=<error>
 expr e28 name(Vec) type=_
 expr e29 name(x) type=<error>
 expr e30 unary(unaryMinus) operand=e29 type=<error>
 expr e31 name(y) type=<error>
 expr e32 unary(unaryMinus) operand=e31 type=<error>
-expr e33 call callee=e28 args=[_:e30,_:e32] type=Class#36 call=s37 map=[0->0,1->1] targs=[]
-expr e34 name(index) type=Int ref=s48
+expr e33 call callee=e28 args=[_:e30,_:e32] type=Class#38 call=s39 map=[0->0,1->1] targs=[]
+expr e34 name(index) type=Int ref=s50
 expr e35 int(0) type=Int
 expr e36 binary(equal) lhs=e34 rhs=e35 type=Boolean
 expr e37 name(x) type=<error>
@@ -101,29 +103,29 @@ expr e39 if cond=e36 then=e37 else=e38 type=<error>
 expr e40 name(Vec) type=_
 expr e41 int(1) type=Int
 expr e42 int(2) type=Int
-expr e43 call callee=e40 args=[_:e41,_:e42] type=Class#36 call=s37 map=[0->0,1->1] targs=[]
-expr e44 localDecl a mutable=0 type=_ init=e43 type=Unit ref=s50
+expr e43 call callee=e40 args=[_:e41,_:e42] type=Class#38 call=s39 map=[0->0,1->1] targs=[]
+expr e44 localDecl a mutable=0 type=_ init=e43 type=Unit ref=s52
 expr e45 name(Vec) type=_
 expr e46 int(3) type=Int
 expr e47 int(4) type=Int
-expr e48 call callee=e45 args=[_:e46,_:e47] type=Class#36 call=s37 map=[0->0,1->1] targs=[]
-expr e49 localDecl b mutable=0 type=_ init=e48 type=Unit ref=s51
-expr e50 name(a) type=Class#36 ref=s50
-expr e51 name(b) type=Class#36 ref=s51
-expr e52 binary(add) lhs=e50 rhs=e51 type=Any call=s40 map=[0->0] targs=[]
-expr e53 localDecl c mutable=0 type=_ init=e52 type=Unit ref=s52
-expr e54 name(a) type=Class#36 ref=s50
-expr e55 name(b) type=Class#36 ref=s51
-expr e56 binary(subtract) lhs=e54 rhs=e55 type=Any call=s42 map=[0->0] targs=[]
-expr e57 localDecl d mutable=0 type=_ init=e56 type=Unit ref=s53
-expr e58 name(a) type=Class#36 ref=s50
+expr e48 call callee=e45 args=[_:e46,_:e47] type=Class#38 call=s39 map=[0->0,1->1] targs=[]
+expr e49 localDecl b mutable=0 type=_ init=e48 type=Unit ref=s53
+expr e50 name(a) type=Class#38 ref=s52
+expr e51 name(b) type=Class#38 ref=s53
+expr e52 binary(add) lhs=e50 rhs=e51 type=Any call=s42 map=[0->0] targs=[]
+expr e53 localDecl c mutable=0 type=_ init=e52 type=Unit ref=s54
+expr e54 name(a) type=Class#38 ref=s52
+expr e55 name(b) type=Class#38 ref=s53
+expr e56 binary(subtract) lhs=e54 rhs=e55 type=Any call=s44 map=[0->0] targs=[]
+expr e57 localDecl d mutable=0 type=_ init=e56 type=Unit ref=s55
+expr e58 name(a) type=Class#38 ref=s52
 expr e59 int(2) type=Int
-expr e60 binary(multiply) lhs=e58 rhs=e59 type=Any call=s44 map=[0->0] targs=[]
-expr e61 localDecl e mutable=0 type=_ init=e60 type=Unit ref=s54
-expr e62 name(a) type=Class#36 ref=s50
-expr e63 unary(unaryMinus) operand=e62 type=Class#36
-expr e64 localDecl f mutable=0 type=_ init=e63 type=Unit ref=s55
-expr e65 name(a) type=Class#36 ref=s50
+expr e60 binary(multiply) lhs=e58 rhs=e59 type=Any call=s46 map=[0->0] targs=[]
+expr e61 localDecl e mutable=0 type=_ init=e60 type=Unit ref=s56
+expr e62 name(a) type=Class#38 ref=s52
+expr e63 unary(unaryMinus) operand=e62 type=Class#38
+expr e64 localDecl f mutable=0 type=_ init=e63 type=Unit ref=s57
+expr e65 name(a) type=Class#38 ref=s52
 expr e66 int(0) type=Int
-expr e67 indexedAccess receiver=e65 indices=[e66] type=Any call=s47 map=[0->0] targs=[]
-expr e68 localDecl g mutable=0 type=_ init=e67 type=Unit ref=s56
+expr e67 indexedAccess receiver=e65 indices=[e66] type=Any call=s49 map=[0->0] targs=[]
+expr e68 localDecl g mutable=0 type=_ init=e67 type=Unit ref=s58

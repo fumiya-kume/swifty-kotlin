@@ -65,7 +65,7 @@ extension ExprTypeChecker {
             name: objectDecl.name,
             fqName: [objectDecl.name],
             declSite: objectDecl.range,
-            visibility: .public,
+            visibility: .private,
             flags: [.synthetic]
         )
         sema.bindings.bindDecl(declID, symbol: objectSymbol)
@@ -86,6 +86,16 @@ extension ExprTypeChecker {
             {
                 directSuperSymbols.append(classType.classSymbol)
             }
+        }
+        if directSuperSymbols.count > 1 {
+            let classNames = directSuperSymbols.compactMap { sema.symbols.symbol($0)?.fqName.last }
+                .map { interner.resolve($0) }
+                .joined(separator: ", ")
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0170",
+                "Object literal '\(interner.resolve(objectDecl.name))' cannot inherit from more than one class. Found: \(classNames).",
+                range: objectDecl.range
+            )
         }
         sema.symbols.setDirectSupertypes(directSuperSymbols, for: objectSymbol)
 
@@ -181,12 +191,7 @@ extension ExprTypeChecker {
             )
         }
 
-        let superClass = directSuperSymbols.first(where: { symbolID in
-            guard let symbol = sema.symbols.symbol(symbolID) else {
-                return false
-            }
-            return symbol.kind != .interface
-        })
+        let superClass = directSuperSymbols.first
         let inheritedLayout = superClass.flatMap { sema.symbols.nominalLayout(for: $0) }
         var fieldOffsets = inheritedLayout?.fieldOffsets ?? [:]
         let objectHeaderWords = inheritedLayout?.objectHeaderWords ?? 2

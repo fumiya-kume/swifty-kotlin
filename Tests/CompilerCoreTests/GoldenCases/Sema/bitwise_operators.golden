@@ -34,51 +34,53 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s37 kind=valueParameter fq=golden.sema.bitwiseAnd.$36.a vis=private flags=_
-symbol s38 kind=valueParameter fq=golden.sema.bitwiseAnd.$36.b vis=private flags=_
-symbol s39 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s40 kind=valueParameter fq=golden.sema.bitwiseOr.$39.a vis=private flags=_
-symbol s41 kind=valueParameter fq=golden.sema.bitwiseOr.$39.b vis=private flags=_
-symbol s42 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s43 kind=valueParameter fq=golden.sema.bitwiseXor.$42.a vis=private flags=_
-symbol s44 kind=valueParameter fq=golden.sema.bitwiseXor.$42.b vis=private flags=_
-symbol s45 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s46 kind=valueParameter fq=golden.sema.bitwiseInv.$45.a vis=private flags=_
-symbol s47 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s48 kind=valueParameter fq=golden.sema.shiftLeft.$47.a vis=private flags=_
-symbol s49 kind=valueParameter fq=golden.sema.shiftLeft.$47.n vis=private flags=_
-symbol s50 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s51 kind=valueParameter fq=golden.sema.shiftRight.$50.a vis=private flags=_
-symbol s52 kind=valueParameter fq=golden.sema.shiftRight.$50.n vis=private flags=_
-symbol s53 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s54 kind=valueParameter fq=golden.sema.unsignedShiftRight.$53.a vis=private flags=_
-symbol s55 kind=valueParameter fq=golden.sema.unsignedShiftRight.$53.n vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s39 kind=valueParameter fq=golden.sema.bitwiseAnd.$38.a vis=private flags=_
+symbol s40 kind=valueParameter fq=golden.sema.bitwiseAnd.$38.b vis=private flags=_
+symbol s41 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s42 kind=valueParameter fq=golden.sema.bitwiseOr.$41.a vis=private flags=_
+symbol s43 kind=valueParameter fq=golden.sema.bitwiseOr.$41.b vis=private flags=_
+symbol s44 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s45 kind=valueParameter fq=golden.sema.bitwiseXor.$44.a vis=private flags=_
+symbol s46 kind=valueParameter fq=golden.sema.bitwiseXor.$44.b vis=private flags=_
+symbol s47 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s48 kind=valueParameter fq=golden.sema.bitwiseInv.$47.a vis=private flags=_
+symbol s49 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s50 kind=valueParameter fq=golden.sema.shiftLeft.$49.a vis=private flags=_
+symbol s51 kind=valueParameter fq=golden.sema.shiftLeft.$49.n vis=private flags=_
+symbol s52 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s53 kind=valueParameter fq=golden.sema.shiftRight.$52.a vis=private flags=_
+symbol s54 kind=valueParameter fq=golden.sema.shiftRight.$52.n vis=private flags=_
+symbol s55 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s56 kind=valueParameter fq=golden.sema.unsignedShiftRight.$55.a vis=private flags=_
+symbol s57 kind=valueParameter fq=golden.sema.unsignedShiftRight.$55.n vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s36
-  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s39
-  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s42
-  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s45
-  decl d4 fun shiftLeft suspend=0 inline=0 sym=s47
-  decl d5 fun shiftRight suspend=0 inline=0 sym=s50
-  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s53
-expr e0 name(a) type=Int ref=s37
-expr e1 name(b) type=Int ref=s38
+  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s38
+  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s41
+  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s44
+  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s47
+  decl d4 fun shiftLeft suspend=0 inline=0 sym=s49
+  decl d5 fun shiftRight suspend=0 inline=0 sym=s52
+  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s55
+expr e0 name(a) type=Int ref=s39
+expr e1 name(b) type=Int ref=s40
 expr e2 memberCall recv=e0 callee=and args=[_:e1] type=Int
-expr e3 name(a) type=Int ref=s40
-expr e4 name(b) type=Int ref=s41
+expr e3 name(a) type=Int ref=s42
+expr e4 name(b) type=Int ref=s43
 expr e5 memberCall recv=e3 callee=or args=[_:e4] type=Int
-expr e6 name(a) type=Int ref=s43
-expr e7 name(b) type=Int ref=s44
+expr e6 name(a) type=Int ref=s45
+expr e7 name(b) type=Int ref=s46
 expr e8 memberCall recv=e6 callee=xor args=[_:e7] type=Int
-expr e9 name(a) type=Int ref=s46
+expr e9 name(a) type=Int ref=s48
 expr e10 memberCall recv=e9 callee=inv args=[] type=Int
-expr e11 name(a) type=Int ref=s48
-expr e12 name(n) type=Int ref=s49
+expr e11 name(a) type=Int ref=s50
+expr e12 name(n) type=Int ref=s51
 expr e13 memberCall recv=e11 callee=shl args=[_:e12] type=Int
-expr e14 name(a) type=Int ref=s51
-expr e15 name(n) type=Int ref=s52
+expr e14 name(a) type=Int ref=s53
+expr e15 name(n) type=Int ref=s54
 expr e16 memberCall recv=e14 callee=shr args=[_:e15] type=Int
-expr e17 name(a) type=Int ref=s54
-expr e18 name(n) type=Int ref=s55
+expr e17 name(a) type=Int ref=s56
+expr e18 name(n) type=Int ref=s57
 expr e19 memberCall recv=e17 callee=ushr args=[_:e18] type=Int

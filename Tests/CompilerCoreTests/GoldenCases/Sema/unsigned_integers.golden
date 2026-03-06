@@ -34,103 +34,105 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s37 kind=local fq=__local_1.x vis=private flags=_
-symbol s38 kind=local fq=__local_3.y vis=private flags=_
-symbol s39 kind=local fq=__local_6.a vis=private flags=_
-symbol s40 kind=local fq=__local_9.b vis=private flags=_
-symbol s41 kind=local fq=__local_12.c vis=private flags=_
-symbol s42 kind=local fq=__local_15.d vis=private flags=_
-symbol s43 kind=local fq=__local_18.e vis=private flags=_
-symbol s44 kind=local fq=__local_22.f vis=private flags=_
-symbol s45 kind=local fq=__local_26.g vis=private flags=_
-symbol s46 kind=local fq=__local_30.i vis=private flags=_
-symbol s47 kind=local fq=__local_34.j vis=private flags=_
-symbol s48 kind=local fq=__local_38.k vis=private flags=_
-symbol s49 kind=local fq=__local_42.l vis=private flags=_
-symbol s50 kind=local fq=__local_46.m vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s39 kind=local fq=__local_1.x vis=private flags=_
+symbol s40 kind=local fq=__local_3.y vis=private flags=_
+symbol s41 kind=local fq=__local_6.a vis=private flags=_
+symbol s42 kind=local fq=__local_9.b vis=private flags=_
+symbol s43 kind=local fq=__local_12.c vis=private flags=_
+symbol s44 kind=local fq=__local_15.d vis=private flags=_
+symbol s45 kind=local fq=__local_18.e vis=private flags=_
+symbol s46 kind=local fq=__local_22.f vis=private flags=_
+symbol s47 kind=local fq=__local_26.g vis=private flags=_
+symbol s48 kind=local fq=__local_30.i vis=private flags=_
+symbol s49 kind=local fq=__local_34.j vis=private flags=_
+symbol s50 kind=local fq=__local_38.k vis=private flags=_
+symbol s51 kind=local fq=__local_42.l vis=private flags=_
+symbol s52 kind=local fq=__local_46.m vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s36
+  decl d0 fun main suspend=0 inline=0 sym=s38
 expr e0 uint(42) type=UInt
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s37
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s39
 expr e2 ulong(42) type=ULong
-expr e3 localDecl y mutable=0 type=t1 init=e2 type=Unit ref=s38
-expr e4 name(x) type=UInt ref=s37
+expr e3 localDecl y mutable=0 type=t1 init=e2 type=Unit ref=s40
+expr e4 name(x) type=UInt ref=s39
 expr e5 memberCall recv=e4 callee=toInt args=[] type=Int
-expr e6 localDecl a mutable=0 type=_ init=e5 type=Unit ref=s39
-expr e7 name(x) type=UInt ref=s37
+expr e6 localDecl a mutable=0 type=_ init=e5 type=Unit ref=s41
+expr e7 name(x) type=UInt ref=s39
 expr e8 memberCall recv=e7 callee=toUInt args=[] type=UInt
-expr e9 localDecl b mutable=0 type=_ init=e8 type=Unit ref=s40
-expr e10 name(x) type=UInt ref=s37
+expr e9 localDecl b mutable=0 type=_ init=e8 type=Unit ref=s42
+expr e10 name(x) type=UInt ref=s39
 expr e11 memberCall recv=e10 callee=toLong args=[] type=Long
-expr e12 localDecl c mutable=0 type=_ init=e11 type=Unit ref=s41
-expr e13 name(x) type=UInt ref=s37
+expr e12 localDecl c mutable=0 type=_ init=e11 type=Unit ref=s43
+expr e13 name(x) type=UInt ref=s39
 expr e14 memberCall recv=e13 callee=toULong args=[] type=ULong
-expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s42
-expr e16 name(y) type=ULong ref=s38
+expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s44
+expr e16 name(y) type=ULong ref=s40
 expr e17 memberCall recv=e16 callee=toInt args=[] type=Int
-expr e18 localDecl e mutable=0 type=_ init=e17 type=Unit ref=s43
+expr e18 localDecl e mutable=0 type=_ init=e17 type=Unit ref=s45
 expr e19 uint(100) type=UInt
 expr e20 uint(3) type=UInt
 expr e21 binary(divide) lhs=e19 rhs=e20 type=UInt
-expr e22 localDecl f mutable=0 type=_ init=e21 type=Unit ref=s44
+expr e22 localDecl f mutable=0 type=_ init=e21 type=Unit ref=s46
 expr e23 uint(100) type=UInt
 expr e24 uint(3) type=UInt
 expr e25 binary(modulo) lhs=e23 rhs=e24 type=UInt
-expr e26 localDecl g mutable=0 type=_ init=e25 type=Unit ref=s45
+expr e26 localDecl g mutable=0 type=_ init=e25 type=Unit ref=s47
 expr e27 uint(255) type=UInt
 expr e28 uint(15) type=UInt
 expr e29 memberCall recv=e27 callee=and args=[_:e28] type=UInt
-expr e30 localDecl i mutable=0 type=_ init=e29 type=Unit ref=s46
+expr e30 localDecl i mutable=0 type=_ init=e29 type=Unit ref=s48
 expr e31 uint(240) type=UInt
 expr e32 uint(15) type=UInt
 expr e33 memberCall recv=e31 callee=or args=[_:e32] type=UInt
-expr e34 localDecl j mutable=0 type=_ init=e33 type=Unit ref=s47
+expr e34 localDecl j mutable=0 type=_ init=e33 type=Unit ref=s49
 expr e35 uint(255) type=UInt
 expr e36 uint(15) type=UInt
 expr e37 memberCall recv=e35 callee=xor args=[_:e36] type=UInt
-expr e38 localDecl k mutable=0 type=_ init=e37 type=Unit ref=s48
+expr e38 localDecl k mutable=0 type=_ init=e37 type=Unit ref=s50
 expr e39 uint(255) type=UInt
 expr e40 int(2) type=Int
 expr e41 memberCall recv=e39 callee=shl args=[_:e40] type=UInt
-expr e42 localDecl l mutable=0 type=_ init=e41 type=Unit ref=s49
+expr e42 localDecl l mutable=0 type=_ init=e41 type=Unit ref=s51
 expr e43 uint(240) type=UInt
 expr e44 int(2) type=Int
 expr e45 memberCall recv=e43 callee=shr args=[_:e44] type=UInt
-expr e46 localDecl m mutable=0 type=_ init=e45 type=Unit ref=s50
+expr e46 localDecl m mutable=0 type=_ init=e45 type=Unit ref=s52
 expr e47 name(println) type=_
-expr e48 name(a) type=Int ref=s39
+expr e48 name(a) type=Int ref=s41
 expr e49 call callee=e47 args=[_:e48] type=Unit
 expr e50 name(println) type=_
-expr e51 name(b) type=UInt ref=s40
+expr e51 name(b) type=UInt ref=s42
 expr e52 call callee=e50 args=[_:e51] type=Unit
 expr e53 name(println) type=_
-expr e54 name(c) type=Long ref=s41
+expr e54 name(c) type=Long ref=s43
 expr e55 call callee=e53 args=[_:e54] type=Unit
 expr e56 name(println) type=_
-expr e57 name(d) type=ULong ref=s42
+expr e57 name(d) type=ULong ref=s44
 expr e58 call callee=e56 args=[_:e57] type=Unit
 expr e59 name(println) type=_
-expr e60 name(e) type=Int ref=s43
+expr e60 name(e) type=Int ref=s45
 expr e61 call callee=e59 args=[_:e60] type=Unit
 expr e62 name(println) type=_
-expr e63 name(f) type=UInt ref=s44
+expr e63 name(f) type=UInt ref=s46
 expr e64 call callee=e62 args=[_:e63] type=Unit
 expr e65 name(println) type=_
-expr e66 name(g) type=UInt ref=s45
+expr e66 name(g) type=UInt ref=s47
 expr e67 call callee=e65 args=[_:e66] type=Unit
 expr e68 name(println) type=_
-expr e69 name(i) type=UInt ref=s46
+expr e69 name(i) type=UInt ref=s48
 expr e70 call callee=e68 args=[_:e69] type=Unit
 expr e71 name(println) type=_
-expr e72 name(j) type=UInt ref=s47
+expr e72 name(j) type=UInt ref=s49
 expr e73 call callee=e71 args=[_:e72] type=Unit
 expr e74 name(println) type=_
-expr e75 name(k) type=UInt ref=s48
+expr e75 name(k) type=UInt ref=s50
 expr e76 call callee=e74 args=[_:e75] type=Unit
 expr e77 name(println) type=_
-expr e78 name(l) type=UInt ref=s49
+expr e78 name(l) type=UInt ref=s51
 expr e79 call callee=e77 args=[_:e78] type=Unit
 expr e80 name(println) type=_
-expr e81 name(m) type=UInt ref=s50
+expr e81 name(m) type=UInt ref=s52
 expr e82 call callee=e80 args=[_:e81] type=Unit

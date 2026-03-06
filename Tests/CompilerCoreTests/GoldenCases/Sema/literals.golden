@@ -34,36 +34,38 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=printLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s37 kind=function fq=printFloat vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s38 kind=function fq=printDouble vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s39 kind=function fq=printChar vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s40 kind=local fq=__local_1.x vis=private flags=_
-symbol s41 kind=local fq=__local_6.y vis=private flags=_
-symbol s42 kind=local fq=__local_11.z vis=private flags=_
-symbol s43 kind=local fq=__local_16.c vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=printLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=printFloat vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=printDouble vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s41 kind=function fq=printChar vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s42 kind=local fq=__local_1.x vis=private flags=_
+symbol s43 kind=local fq=__local_6.y vis=private flags=_
+symbol s44 kind=local fq=__local_11.z vis=private flags=_
+symbol s45 kind=local fq=__local_16.c vis=private flags=_
 file f0 package=_
-  decl d0 fun printLong suspend=0 inline=0 sym=s36
-  decl d1 fun printFloat suspend=0 inline=0 sym=s37
-  decl d2 fun printDouble suspend=0 inline=0 sym=s38
-  decl d3 fun printChar suspend=0 inline=0 sym=s39
+  decl d0 fun printLong suspend=0 inline=0 sym=s38
+  decl d1 fun printFloat suspend=0 inline=0 sym=s39
+  decl d2 fun printDouble suspend=0 inline=0 sym=s40
+  decl d3 fun printChar suspend=0 inline=0 sym=s41
 expr e0 long(42) type=Long
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s40
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s42
 expr e2 name(println) type=_
-expr e3 name(x) type=Long ref=s40
+expr e3 name(x) type=Long ref=s42
 expr e4 call callee=e2 args=[_:e3] type=Unit
 expr e5 float(3.14) type=Float
-expr e6 localDecl y mutable=0 type=t1 init=e5 type=Unit ref=s41
+expr e6 localDecl y mutable=0 type=t1 init=e5 type=Unit ref=s43
 expr e7 name(println) type=_
-expr e8 name(y) type=Float ref=s41
+expr e8 name(y) type=Float ref=s43
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 double(2.718) type=Double
-expr e11 localDecl z mutable=0 type=t2 init=e10 type=Unit ref=s42
+expr e11 localDecl z mutable=0 type=t2 init=e10 type=Unit ref=s44
 expr e12 name(println) type=_
-expr e13 name(z) type=Double ref=s42
+expr e13 name(z) type=Double ref=s44
 expr e14 call callee=e12 args=[_:e13] type=Unit
 expr e15 char(65) type=Char
-expr e16 localDecl c mutable=0 type=t3 init=e15 type=Unit ref=s43
+expr e16 localDecl c mutable=0 type=t3 init=e15 type=Unit ref=s45
 expr e17 name(println) type=_
-expr e18 name(c) type=Char ref=s43
+expr e18 name(c) type=Char ref=s45
 expr e19 call callee=e17 args=[_:e18] type=Unit

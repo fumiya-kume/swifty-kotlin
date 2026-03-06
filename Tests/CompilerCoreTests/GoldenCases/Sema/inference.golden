@@ -34,29 +34,31 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s37 kind=valueParameter fq=choose.$36.flag vis=private flags=_
-symbol s38 kind=valueParameter fq=choose.$36.left vis=private flags=_
-symbol s39 kind=valueParameter fq=choose.$36.right vis=private flags=_
-symbol s40 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s41 kind=valueParameter fq=useWhen.$40.v vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s39 kind=valueParameter fq=choose.$38.flag vis=private flags=_
+symbol s40 kind=valueParameter fq=choose.$38.left vis=private flags=_
+symbol s41 kind=valueParameter fq=choose.$38.right vis=private flags=_
+symbol s42 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s43 kind=valueParameter fq=useWhen.$42.v vis=private flags=_
 file f0 package=_
-  decl d0 fun choose suspend=0 inline=0 sym=s36
-  decl d1 fun useWhen suspend=0 inline=0 sym=s40
-expr e0 name(flag) type=Boolean ref=s37
-expr e1 name(left) type=Int ref=s38
-expr e2 name(right) type=Int ref=s39
+  decl d0 fun choose suspend=0 inline=0 sym=s38
+  decl d1 fun useWhen suspend=0 inline=0 sym=s42
+expr e0 name(flag) type=Boolean ref=s39
+expr e1 name(left) type=Int ref=s40
+expr e2 name(right) type=Int ref=s41
 expr e3 if cond=e0 then=e1 else=e2 type=Int
-expr e4 name(v) type=Int ref=s41
+expr e4 name(v) type=Int ref=s43
 expr e5 int(1) type=Int
 expr e6 name(choose) type=_
 expr e7 bool(true) type=Boolean
-expr e8 name(v) type=Int ref=s41
+expr e8 name(v) type=Int ref=s43
 expr e9 int(0) type=Int
-expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s36 map=[0->0,1->1,2->2] targs=[]
+expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s38 map=[0->0,1->1,2->2] targs=[]
 expr e11 name(choose) type=_
 expr e12 bool(false) type=Boolean
 expr e13 int(0) type=Int
-expr e14 name(v) type=Int ref=s41
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s36 map=[0->0,1->1,2->2] targs=[]
+expr e14 name(v) type=Int ref=s43
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s38 map=[0->0,1->1,2->2] targs=[]
 expr e16 when subject=e4 branches=[e5->e10] else=e15 type=Int

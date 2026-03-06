@@ -34,15 +34,17 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s37 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#36 params=[] ret=Class#36 suspend=0 defaults=[] vararg=[]
-symbol s38 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#36
-symbol s39 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#36
-symbol s40 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#36
-symbol s41 kind=enumClass fq=golden.sema.Direction vis=public flags=_
-symbol s42 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#41 params=[] ret=Class#41 suspend=0 defaults=[] vararg=[]
-symbol s43 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#41
-symbol s44 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#41
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s39 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#38 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s40 kind=field fq=golden.sema.Color.RED vis=public flags=_ type=Class#38
+symbol s41 kind=field fq=golden.sema.Color.GREEN vis=public flags=_ type=Class#38
+symbol s42 kind=field fq=golden.sema.Color.BLUE vis=public flags=_ type=Class#38
+symbol s43 kind=enumClass fq=golden.sema.Direction vis=public flags=_
+symbol s44 kind=constructor fq=golden.sema.Direction.<init> vis=public flags=_ sig=recv=Class#43 params=[] ret=Class#43 suspend=0 defaults=[] vararg=[]
+symbol s45 kind=field fq=golden.sema.Direction.NORTH vis=public flags=_ type=Class#43
+symbol s46 kind=field fq=golden.sema.Direction.SOUTH vis=public flags=_ type=Class#43
 file f0 package=golden.sema
-  decl d0 class Color sym=s36
-  decl d1 class Direction sym=s41
+  decl d0 class Color sym=s38
+  decl d1 class Direction sym=s43

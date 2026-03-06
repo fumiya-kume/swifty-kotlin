@@ -34,17 +34,19 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
-symbol s37 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
-symbol s38 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
+symbol s39 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
+symbol s40 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property pi var=0 sym=s36
-  decl d1 property counter var=1 sym=s37
-  decl d2 fun increment suspend=0 inline=0 sym=s38
-expr e0 double(3.14) type=Double ref=s36
-expr e1 int(0) type=Int ref=s37
+  decl d0 property pi var=0 sym=s38
+  decl d1 property counter var=1 sym=s39
+  decl d2 fun increment suspend=0 inline=0 sym=s40
+expr e0 double(3.14) type=Double ref=s38
+expr e1 int(0) type=Int ref=s39
 expr e2 name(counter) type=_
-expr e3 name(counter) type=Int ref=s37
+expr e3 name(counter) type=Int ref=s39
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign counter value=e5 type=Unit ref=s37
+expr e6 localAssign counter value=e5 type=Unit ref=s39

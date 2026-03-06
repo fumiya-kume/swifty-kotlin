@@ -34,18 +34,20 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=cumulativeNarrow vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s37 kind=valueParameter fq=cumulativeNarrow.$36.x vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=cumulativeNarrow vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=cumulativeNarrow.$38.x vis=private flags=_
 file f0 package=_
-  decl d0 fun cumulativeNarrow suspend=0 inline=0 sym=s36
-expr e0 name(x) type=Int? ref=s37
+  decl d0 fun cumulativeNarrow suspend=0 inline=0 sym=s38
+expr e0 name(x) type=Int? ref=s39
 expr e1 name(null) type=Nothing?
 expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean
 expr e3 int(0) type=Int
-expr e4 name(x) type=Int ref=s37
+expr e4 name(x) type=Int ref=s39
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
-expr e7 name(x) type=Int ref=s37
-expr e8 name(x) type=Int ref=s37
+expr e7 name(x) type=Int ref=s39
+expr e8 name(x) type=Int ref=s39
 expr e9 when subject=_ branches=[e2->e3,e6->e7] else=e8 type=Int
 expr e10 return value=e9 type=Nothing

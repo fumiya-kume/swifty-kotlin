@@ -131,8 +131,9 @@ extension ASTModelsTests {
         let arena = ASTArena()
         let typeRefID = arena.appendTypeRef(.named(path: [], args: [], nullable: false))
         let obj = Expr.objectLiteral(superTypes: [typeRefID], decl: nil, range: r)
-        if case let .objectLiteral(st, _, _) = obj {
+        if case let .objectLiteral(st, decl, _) = obj {
             XCTAssertEqual(st.count, 1)
+            XCTAssertNil(decl)
         } else { XCTFail("Expected .objectLiteral") }
     }
 

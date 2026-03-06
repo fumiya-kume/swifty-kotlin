@@ -34,14 +34,16 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=object fq=golden.sema.None vis=public flags=dataType
-symbol s37 kind=function fq=golden.sema.None.toString vis=public flags=synthetic sig=recv=Class#36 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s38 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#36 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s39 kind=valueParameter fq=golden.sema.None.equals.other vis=private flags=synthetic
-symbol s40 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=object fq=golden.sema.None vis=public flags=dataType
+symbol s39 kind=function fq=golden.sema.None.toString vis=public flags=synthetic sig=recv=Class#38 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=golden.sema.None.equals vis=public flags=synthetic sig=recv=Class#38 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s41 kind=valueParameter fq=golden.sema.None.equals.other vis=private flags=synthetic
+symbol s42 kind=function fq=golden.sema.useDataObject vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 object None sym=s36
-  decl d1 fun useDataObject suspend=0 inline=0 sym=s40
-expr e0 name(None) type=Class#36 ref=s36
-expr e1 name(None) type=Class#36 ref=s36
-expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean call=s38 map=[0->0] targs=[]
+  decl d0 object None sym=s38
+  decl d1 fun useDataObject suspend=0 inline=0 sym=s42
+expr e0 name(None) type=Class#38 ref=s38
+expr e1 name(None) type=Class#38 ref=s38
+expr e2 binary(equal) lhs=e0 rhs=e1 type=Boolean call=s40 map=[0->0] targs=[]

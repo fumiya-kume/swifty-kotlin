@@ -223,7 +223,7 @@ private enum RuntimeParsedFormatToken {
 private let runtimeFormatFlagCharacters: Set<Character> = ["-", "+", " ", "0", "#", ",", "("]
 private let runtimeFormatLengthCharacters: Set<Character> = ["h", "l", "L", "z", "j", "t"]
 private let runtimeSupportedFormatConversions: Set<Character> = [
-    "s", "S", "b", "B", "d", "i", "u", "x", "X", "o", "f", "e", "E", "g", "G", "c", "C",
+    "s", "S", "b", "B", "d", "i", "x", "X", "o", "f", "e", "E", "g", "G", "c", "C",
 ]
 
 private func runtimeFormatString(_ template: String, arguments: [Int]) -> String {
@@ -348,7 +348,7 @@ private func runtimeRenderFormattedArgument(_ argument: Int, specifier: RuntimeF
     case "d", "i":
         let value = Int32(truncatingIfNeeded: runtimeFormatIntegerValue(argument))
         return String(format: specifier.cStyleToken, value)
-    case "u", "x", "o":
+    case "x", "o":
         let value = UInt32(truncatingIfNeeded: runtimeFormatIntegerValue(argument))
         return String(format: specifier.cStyleToken, value)
     case "f", "e", "g":

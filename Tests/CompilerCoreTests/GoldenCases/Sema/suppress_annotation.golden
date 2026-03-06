@@ -34,14 +34,16 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.suppressedCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s37 kind=valueParameter fq=golden.sema.suppressedCast.$36.x vis=private flags=_
-symbol s38 kind=function fq=golden.sema.unsuppressedCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s39 kind=valueParameter fq=golden.sema.unsuppressedCast.$38.x vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.suppressedCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=golden.sema.suppressedCast.$38.x vis=private flags=_
+symbol s40 kind=function fq=golden.sema.unsuppressedCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s41 kind=valueParameter fq=golden.sema.unsuppressedCast.$40.x vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun suppressedCast suspend=0 inline=0 sym=s36
-  decl d1 fun unsuppressedCast suspend=0 inline=0 sym=s38
-expr e0 name(x) type=Any ref=s37
+  decl d0 fun suppressedCast suspend=0 inline=0 sym=s38
+  decl d1 fun unsuppressedCast suspend=0 inline=0 sym=s40
+expr e0 name(x) type=Any ref=s39
 expr e1 asCast expr=e0 type=t2 type=String
-expr e2 name(x) type=Any ref=s39
+expr e2 name(x) type=Any ref=s41
 expr e3 asCast expr=e2 type=t5 type=String
