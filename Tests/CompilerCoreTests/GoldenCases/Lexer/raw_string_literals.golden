@@ -1,0 +1,30 @@
+keyword(val) f0:0..3
+identifier(single) f0:4..10
+symbol(=) f0:11..12
+rawStringQuote f0:13..16
+stringSegment(hello) f0:16..21
+rawStringQuote f0:21..24
+keyword(val) f0:25..28
+identifier(multi) f0:29..34
+symbol(=) f0:35..36
+rawStringQuote f0:37..40
+stringSegment(
+    line1
+    line2
+) f0:40..61
+rawStringQuote f0:61..64
+symbol(.) f0:64..65
+identifier(trimIndent) f0:65..75
+symbol(() f0:75..76
+symbol()) f0:76..77
+keyword(val) f0:78..81
+identifier(interpolated) f0:82..94
+symbol(=) f0:95..96
+rawStringQuote f0:97..100
+stringSegment(name = ) f0:100..107
+templateExprStart f0:107..109
+intLiteral(1) f0:109..110
+symbol(+) f0:111..112
+intLiteral(2) f0:113..114
+templateExprEnd f0:114..115
+rawStringQuote f0:115..118
