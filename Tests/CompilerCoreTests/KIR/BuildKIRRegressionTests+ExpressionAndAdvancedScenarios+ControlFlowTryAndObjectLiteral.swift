@@ -343,5 +343,29 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testBuildKIRObjectLiteralStoredPropertyReadUsesNonThrowingFastPath() throws {
+        let source = """
+        fun main(): Int {
+            val instance = object {
+                val value: Int = 7
+            }
+            return instance.value
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_array_get"))
+
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy { $0 == false }, true)
+        }
+    }
+
     // MARK: - Lambda / CallableRef Lowering (P5-20)
 }

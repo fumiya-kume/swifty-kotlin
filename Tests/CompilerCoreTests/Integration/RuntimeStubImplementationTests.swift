@@ -315,7 +315,8 @@ final class RuntimeStubImplementationTests: XCTestCase {
         let preamble = makePreamble()
         XCTAssertTrue(preamble.contains("case 'b':"))
         XCTAssertTrue(preamble.contains("case 'B':"))
-        XCTAssertTrue(preamble.contains("boolText = (arg ? \"true\" : \"false\");"))
+        XCTAssertTrue(preamble.contains("box->tag == KK_BOX_TAG_BOOL"))
+        XCTAssertTrue(preamble.contains("boolText = (boolValue ? \"true\" : \"false\");"))
     }
 
     func testStringFormatPreambleDecodesBoxedFloatAndDouble() {

@@ -624,7 +624,7 @@ extension CallLowerer {
             callee: interner.intern("kk_array_get"),
             arguments: [loweredReceiverID, offsetExpr],
             result: result,
-            canThrow: true,
+            canThrow: false,
             thrownResult: nil
         ))
         return result

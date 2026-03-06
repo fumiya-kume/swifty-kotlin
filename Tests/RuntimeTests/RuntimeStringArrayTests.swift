@@ -204,6 +204,17 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "age:7 3.50")
     }
 
+    func testStringFormatSupportsFloatingSpecifiersForIntegersAndBoxedFloats() {
+        let args = makeRuntimeArray([
+            3,
+            kk_box_float(Int(Float(1.5).bitPattern)),
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern))),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%.1f %.1f %.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3.0 1.5 2.5")
+    }
+
     func testStringFormatSupportsPositionalArguments() {
         let args = makeRuntimeArray([
             7,

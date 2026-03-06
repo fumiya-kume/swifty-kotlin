@@ -463,14 +463,29 @@ private func runtimeFormatDoubleValue(_ argument: Int) -> Double {
     if argument == runtimeNullSentinelInt {
         return 0
     }
+    if argument > -0x1_0000_0000, argument < 0x1_0000_0000 {
+        return Double(argument)
+    }
     if let pointer = UnsafeMutableRawPointer(bitPattern: argument),
        runtimeIsObjectPointer(pointer)
     {
+        if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+            return Double(floatBox.value)
+        }
+        if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+            return doubleBox.value
+        }
         if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
             return Double(intBox.value)
         }
         if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
             return boolBox.value ? 1 : 0
+        }
+        if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+            return Double(longBox.value)
+        }
+        if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+            return Double(charBox.value)
         }
         if let stringBox = tryCast(pointer, to: RuntimeStringBox.self) {
             return Double(stringBox.value) ?? 0

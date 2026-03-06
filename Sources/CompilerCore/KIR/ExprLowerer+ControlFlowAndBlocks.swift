@@ -215,7 +215,7 @@ extension ExprLowerer {
                         callee: interner.intern("kk_array_get"),
                         arguments: [receiverExprID, offsetExpr],
                         result: result,
-                        canThrow: true,
+                        canThrow: false,
                         thrownResult: nil
                     ))
                     return result
