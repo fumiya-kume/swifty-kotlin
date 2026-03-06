@@ -1,11 +1,14 @@
 package golden.sema
 
-data class Vec(val x: Int, val y: Int) {
-    operator fun plus(other: Vec) = Vec(x + other.x, y + other.y)
-    operator fun minus(other: Vec) = Vec(x - other.x, y - other.y)
-    operator fun times(scalar: Int) = Vec(x * scalar, y * scalar)
-    operator fun unaryMinus() = Vec(-x, -y)
-    operator fun get(index: Int) = if (index == 0) x else y
+class Vec(x0: Int, y0: Int) {
+    val x: Int = x0
+    val y: Int = y0
+
+    operator fun plus(other: Vec): Vec = Vec(x + other.x, y + other.y)
+    operator fun minus(other: Vec): Vec = Vec(x - other.x, y - other.y)
+    operator fun times(scalar: Int): Vec = Vec(x * scalar, y * scalar)
+    operator fun unaryMinus(): Vec = Vec(-x, -y)
+    operator fun get(index: Int): Int = if (index == 0) x else y
 }
 
 fun useOperators() {

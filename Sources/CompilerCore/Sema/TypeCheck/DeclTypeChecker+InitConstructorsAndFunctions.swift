@@ -183,7 +183,8 @@ extension DeclTypeChecker {
                 : sema.types.anyType
             locals[param.name] = (type, paramSymbol, false, true)
         }
-        if let receiverType = signature.receiverType {
+        let effectiveReceiverType = signature.receiverType ?? ctx.implicitReceiverType
+        if let receiverType = effectiveReceiverType {
             let thisName = ctx.interner.intern("this")
             let syntheticThisSymbol = SyntheticSymbolScheme.receiverParameterSymbol(for: symbol)
             locals[thisName] = (receiverType, syntheticThisSymbol, false, true)
@@ -193,7 +194,7 @@ extension DeclTypeChecker {
         for typeParameterSymbol in signature.typeParameterSymbols {
             functionScope.insert(typeParameterSymbol)
         }
-        var functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: signature.receiverType)
+        var functionCtx = ctx.copying(scope: functionScope, implicitReceiverType: effectiveReceiverType)
         // Propagate suppression flag so that individual `return` statements inside
         // functions with inferred return types also skip the platform-type warning.
         functionCtx.suppressPlatformReturnWarning = (function.returnType == nil)

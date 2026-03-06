@@ -1,6 +1,8 @@
-tailrec fun factorial(n: Int, acc: Int = 1): Int =
-    if (n <= 1) acc else factorial(n - 1, n * acc)
+tailrec fun countDown(n: Int): Int {
+    if (n == 0) return 0
+    return countDown(n - 1)
+}
 
 fun main() {
-    println(factorial(10))
+    println(countDown(100000))
 }

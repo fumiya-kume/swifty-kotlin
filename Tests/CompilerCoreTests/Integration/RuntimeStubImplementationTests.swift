@@ -311,6 +311,13 @@ final class RuntimeStubImplementationTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: objPath), "Object file must be generated successfully")
     }
 
+    func testStringFormatPreambleSupportsBooleanSpecifiers() {
+        let preamble = makePreamble()
+        XCTAssertTrue(preamble.contains("case 'b':"))
+        XCTAssertTrue(preamble.contains("case 'B':"))
+        XCTAssertTrue(preamble.contains("boolText = (arg ? \"true\" : \"false\");"))
+    }
+
     func testSyntheticCBackendEmitsFrameMapDescriptorSymbols() throws {
         let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
         guard FileManager.default.fileExists(atPath: clangPath) else {

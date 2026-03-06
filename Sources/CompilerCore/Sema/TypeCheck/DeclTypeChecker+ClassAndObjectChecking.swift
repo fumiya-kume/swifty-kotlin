@@ -51,7 +51,7 @@ extension DeclTypeChecker {
         let classLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let classCtx = ctx
             .withOuterReceiver(label: classLabel, type: classType)
-            .copying(scope: classScope, implicitReceiverType: classType)
+            .copying(scope: classScope, implicitReceiverType: classType, enclosingClassSymbol: symbol)
 
         typeCheckInitBlocks(classDecl.initBlocks, ctx: classCtx)
         typeCheckSecondaryConstructors(classDecl.secondaryConstructors, ctx: classCtx, ownerSymbol: symbol, hasPrimaryConstructor: classDecl.hasPrimaryConstructorSyntax)
@@ -126,7 +126,7 @@ extension DeclTypeChecker {
         let objectLabel = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let objectCtx = ctx
             .withOuterReceiver(label: objectLabel, type: objectType)
-            .copying(scope: objectScope, implicitReceiverType: objectType)
+            .copying(scope: objectScope, implicitReceiverType: objectType, enclosingClassSymbol: symbol)
 
         typeCheckInitBlocks(objectDecl.initBlocks, ctx: objectCtx)
         typeCheckClassLikeMembers(
@@ -167,7 +167,7 @@ extension DeclTypeChecker {
         let label = sema.symbols.symbol(symbol)?.name ?? ctx.interner.intern("")
         let interfaceCtx = ctx
             .withOuterReceiver(label: label, type: interfaceType)
-            .copying(scope: interfaceScope, implicitReceiverType: interfaceType)
+            .copying(scope: interfaceScope, implicitReceiverType: interfaceType, enclosingClassSymbol: symbol)
 
         typeCheckClassLikeMembers(
             memberFunctions: interfaceDecl.memberFunctions,

@@ -17,9 +17,7 @@ extension KIRLoweringDriver {
         let params = buildFunDeclParams(function, symbol: symbol, signature: signature, shared: shared)
         let returnType = signature?.returnType ?? sema.types.unitType
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let recvExpr = ctx.currentImplicitReceiverExprID, let recvSym = ctx.currentImplicitReceiverSymbol {
-            body.append(.constValue(result: recvExpr, value: .symbolRef(recvSym)))
-        }
+        bindFunctionParameterLocals(params: params, body: &body, arena: arena)
         lowerFunDeclBody(function, shared: shared, body: &body)
         body.append(.endBlock)
         let kirID = arena.appendDecl(.function(KIRFunction(
@@ -146,6 +144,25 @@ extension KIRLoweringDriver {
             } else {
                 body.append(.returnUnit)
             }
+        }
+    }
+
+    private func bindFunctionParameterLocals(
+        params: [KIRParameter],
+        body: inout KIRLoweringEmitContext,
+        arena: KIRArena
+    ) {
+        if let receiverExpr = ctx.currentImplicitReceiverExprID,
+           let receiverSym = ctx.currentImplicitReceiverSymbol
+        {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+            ctx.localValuesBySymbol[receiverSym] = receiverExpr
+        }
+
+        for param in params where param.symbol != ctx.currentImplicitReceiverSymbol {
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+            ctx.localValuesBySymbol[param.symbol] = paramExpr
         }
     }
 }

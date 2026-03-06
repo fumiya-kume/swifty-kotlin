@@ -198,6 +198,17 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(runtimeStringValue(formatted), "age:7")
     }
 
+    func testStringFormatSupportsBooleanSpecifiers() {
+        let args = makeRuntimeArray([
+            kk_box_bool(1),
+            kk_box_bool(0),
+            runtimeNullSentinelInt,
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%b %B %b"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "true FALSE false")
+    }
+
     func testStringFormatSupportsEscapedPercentWithoutArguments() {
         let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
         XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
