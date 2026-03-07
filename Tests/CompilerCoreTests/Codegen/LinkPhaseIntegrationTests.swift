@@ -38,7 +38,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
                 try runToKIR(appCtx)
                 try LoweringPhase().run(appCtx)
                 try CodegenPhase().run(appCtx)
-                try LinkPhase().run(appCtx)
+                assertLinkSucceeds(appCtx)
 
                 XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
                 do {
@@ -85,7 +85,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: out))
         }
@@ -104,7 +104,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: out))
 
@@ -190,7 +190,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(appCtx)
             try LoweringPhase().run(appCtx)
             try CodegenPhase().run(appCtx)
-            try LinkPhase().run(appCtx)
+            assertLinkSucceeds(appCtx)
 
             XCTAssertTrue(fm.fileExists(atPath: outputPath))
             do {
@@ -247,7 +247,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
         }
@@ -286,7 +286,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             XCTAssertEqual(ctx.generatedObjectPath, outputPath + ".o")
             XCTAssertNotEqual(ctx.generatedObjectPath, outputPath)
 
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
             let result = try CommandRunner.run(executable: outputPath, arguments: [])
@@ -385,4 +385,28 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             XCTAssertTrue(runtimeObjects.allSatisfy { $0.contains("\(alternateArch)-apple-macosx") })
         }
     #endif
+}
+
+private func assertLinkSucceeds(
+    _ ctx: CompilationContext,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    do {
+        try LinkPhase().run(ctx)
+    } catch {
+        let diagnostics = ctx.diagnostics.diagnostics
+            .map { "\($0.code): \($0.message)" }
+            .joined(separator: "\n")
+        let diagnosticSummary = diagnostics.isEmpty ? "No diagnostics were recorded." : diagnostics
+        XCTFail(
+            """
+            LinkPhase failed with error: \(error)
+            Diagnostics:
+            \(diagnosticSummary)
+            """,
+            file: file,
+            line: line
+        )
+    }
 }

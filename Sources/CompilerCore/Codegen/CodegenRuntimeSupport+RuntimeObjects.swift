@@ -142,6 +142,7 @@ extension CodegenRuntimeSupport {
         var arguments = [
             "build",
             "--target", "Runtime",
+            "--disable-code-coverage",
             "--scratch-path", runtimeBuildScratchDirectory(target: target).path,
         ]
         if target != TargetTriple.hostDefault() {
@@ -167,7 +168,7 @@ extension CodegenRuntimeSupport {
     }
 
     private static func runtimeBuildCacheKey(target: TargetTriple) -> String {
-        "\(targetTripleString(target))-\(runtimeSourceFingerprint())"
+        "runtime-nocov-v2-\(targetTripleString(target))-\(runtimeSourceFingerprint())"
     }
 
     private static func runtimeSourceFingerprint() -> String {
