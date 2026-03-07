@@ -204,6 +204,22 @@ extension CodegenBackendIntegrationTests {
         XCTAssertFalse(pathsWithMissing.contains(missing))
     }
 
+    func testLlvmBindingsCandidatePathsIncludeVersionedLibrariesFromLibraryPath() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDirectory) }
+
+        let versionedLibrary = tempDirectory.appendingPathComponent("libLLVM-18.so")
+        FileManager.default.createFile(atPath: versionedLibrary.path, contents: Data())
+
+        let paths = LLVMCAPIBindings.candidateLibraryPaths(environment: [
+            "LIBRARY_PATH": tempDirectory.path,
+        ])
+
+        XCTAssertTrue(paths.contains(versionedLibrary.standardized.path))
+    }
+
     func testCodegenFunctionSymbolSanitizesNames() {
         let interner = StringInterner()
         let fnName = CodegenSymbolSupport.cFunctionSymbol(

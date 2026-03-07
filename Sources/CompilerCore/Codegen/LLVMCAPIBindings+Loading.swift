@@ -25,17 +25,88 @@ extension LLVMCAPIBindings {
                 candidates.append(resolved)
             }
         }
+        let commonLibraryNames = [
+            "libLLVM.dylib",
+            "libLLVM.so",
+            "libLLVM-19.so",
+            "libLLVM-18.so",
+            "libLLVM-17.so",
+            "libLLVM-16.so",
+            "libLLVM-15.so",
+            "libLLVM-14.so",
+        ]
+        for directory in candidateLibraryDirectories(environment: environment) {
+            candidates.append(contentsOf: discoveredLibraryPaths(in: directory))
+            candidates.append(contentsOf: commonLibraryNames.map {
+                URL(fileURLWithPath: directory).appendingPathComponent($0).standardized.path
+            })
+        }
         candidates.append(contentsOf: [
             "/opt/homebrew/opt/llvm/lib/libLLVM.dylib",
             "/usr/local/opt/llvm/lib/libLLVM.dylib",
             "/Library/Developer/CommandLineTools/usr/lib/libLLVM.dylib",
             "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/lib/libLLVM.dylib",
             "libLLVM.dylib",
+            "/usr/lib/llvm-19/lib/libLLVM.so",
+            "/usr/lib/llvm-18/lib/libLLVM.so",
+            "/usr/lib/llvm-17/lib/libLLVM.so",
+            "/usr/lib/llvm-16/lib/libLLVM.so",
             "/usr/lib/x86_64-linux-gnu/libLLVM-15.so",
             "/usr/lib/x86_64-linux-gnu/libLLVM.so",
+            "/usr/lib/aarch64-linux-gnu/libLLVM.so",
             "libLLVM.so",
         ])
         return deduplicated(candidates)
+    }
+
+    private static func candidateLibraryDirectories(environment: [String: String]) -> [String] {
+        var directories: [String] = []
+        let pathVariables = [
+            "LIBRARY_PATH",
+            "LD_LIBRARY_PATH",
+            "DYLD_LIBRARY_PATH",
+        ]
+        for variable in pathVariables {
+            guard let rawValue = environment[variable], !rawValue.isEmpty else {
+                continue
+            }
+            let paths = rawValue
+                .split(separator: ":")
+                .map { String($0) }
+                .filter { !$0.isEmpty }
+            directories.append(contentsOf: paths)
+        }
+        directories.append(contentsOf: [
+            "/opt/homebrew/opt/llvm/lib",
+            "/usr/local/opt/llvm/lib",
+            "/usr/lib",
+            "/usr/local/lib",
+            "/usr/lib/x86_64-linux-gnu",
+            "/usr/lib/aarch64-linux-gnu",
+            "/usr/lib/llvm-19/lib",
+            "/usr/lib/llvm-18/lib",
+            "/usr/lib/llvm-17/lib",
+            "/usr/lib/llvm-16/lib",
+            "/usr/lib/llvm-15/lib",
+            "/usr/lib/llvm-14/lib",
+        ])
+        return deduplicated(directories.map { URL(fileURLWithPath: $0).standardized.path })
+    }
+
+    private static func discoveredLibraryPaths(in directory: String) -> [String] {
+        guard let entries = try? FileManager.default.contentsOfDirectory(atPath: directory) else {
+            return []
+        }
+        return entries
+            .filter { entry in
+                if !entry.hasPrefix("libLLVM") {
+                    return false
+                }
+                return entry.hasSuffix(".dylib")
+                    || entry.contains(".so")
+            }
+            .sorted()
+            .map { URL(fileURLWithPath: directory).appendingPathComponent($0).standardized.path }
     }
 
     static func load(environment: [String: String] = ProcessInfo.processInfo.environment) -> LLVMCAPIBindings? {

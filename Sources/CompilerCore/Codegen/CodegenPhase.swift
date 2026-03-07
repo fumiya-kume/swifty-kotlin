@@ -10,6 +10,17 @@ public final class CodegenPhase: CompilerPhase {
             throw CompilerPipelineError.invalidInput("KIR not available for codegen.")
         }
 
+        if ctx.options.emit == .kirDump {
+            let path = outputPath(base: ctx.options.outputPath, defaultExtension: "kir")
+            let dump = kir.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
+            do {
+                try dump.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                return
+            } catch {
+                throw CompilerPipelineError.outputUnavailable
+            }
+        }
+
         let runtime = RuntimeLinkInfo(
             libraryPaths: ctx.options.libraryPaths,
             libraries: ctx.options.linkLibraries,
@@ -19,11 +30,6 @@ public final class CodegenPhase: CompilerPhase {
 
         do {
             switch ctx.options.emit {
-            case .kirDump:
-                let path = outputPath(base: ctx.options.outputPath, defaultExtension: "kir")
-                let dump = kir.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
-                try dump.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-
             case .llvmIR:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "ll")
                 try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
@@ -41,6 +47,9 @@ public final class CodegenPhase: CompilerPhase {
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
+
+            case .kirDump:
+                break
             }
         } catch {
             throw CompilerPipelineError.outputUnavailable
