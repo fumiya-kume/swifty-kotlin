@@ -41,8 +41,8 @@ extension CodegenRuntimeSupport {
     private static let runtimeObjectCache = RuntimeObjectCache()
 
     static func runtimeObjectPaths(target: TargetTriple) throws -> [String] {
-        let requestedTriple = targetTripleString(target)
-        return try runtimeObjectCache.getOrLoad(cacheKey: requestedTriple) {
+        let cacheKey = runtimeBuildCacheKey(target: target)
+        return try runtimeObjectCache.getOrLoad(cacheKey: cacheKey) {
             let discovered = discoverRuntimeObjectPaths(target: target)
             if !discovered.isEmpty {
                 return discovered
@@ -128,21 +128,21 @@ extension CodegenRuntimeSupport {
     }
 
     private static func runtimeBuildDirectory(target: TargetTriple) -> URL {
-        runtimeBuildRootDirectory(target: target)
+        runtimeBuildScratchDirectory(target: target)
             .appendingPathComponent("debug", isDirectory: true)
             .appendingPathComponent("Runtime.build", isDirectory: true)
     }
 
     private static func runtimeBuildRootDirectory(target: TargetTriple) -> URL {
         runtimeScratchRootDirectory()
-            .appendingPathComponent(targetTripleString(target), isDirectory: true)
+            .appendingPathComponent(runtimeBuildCacheKey(target: target), isDirectory: true)
     }
 
     private static func swiftBuildArguments(target: TargetTriple) -> [String] {
         var arguments = [
             "build",
             "--target", "Runtime",
-            "--scratch-path", runtimeScratchRootDirectory().path,
+            "--scratch-path", runtimeBuildScratchDirectory(target: target).path,
         ]
         if target != TargetTriple.hostDefault() {
             arguments.append(contentsOf: ["--triple", targetTripleString(target)])
@@ -160,5 +160,42 @@ extension CodegenRuntimeSupport {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
+    }
+
+    private static func runtimeBuildScratchDirectory(target: TargetTriple) -> URL {
+        runtimeBuildRootDirectory(target: target)
+    }
+
+    private static func runtimeBuildCacheKey(target: TargetTriple) -> String {
+        "\(targetTripleString(target))-\(runtimeSourceFingerprint())"
+    }
+
+    private static func runtimeSourceFingerprint() -> String {
+        let runtimeSourcesURL = packageRootURL()
+            .appendingPathComponent("Sources", isDirectory: true)
+            .appendingPathComponent("Runtime", isDirectory: true)
+        guard let enumerator = FileManager.default.enumerator(
+            at: runtimeSourcesURL,
+            includingPropertiesForKeys: nil,
+            options: [.skipsHiddenFiles]
+        ) else {
+            return "runtime-sources-missing"
+        }
+
+        let files = (enumerator.allObjects as? [URL] ?? [])
+            .filter { $0.pathExtension == "swift" }
+            .sorted { $0.path < $1.path }
+
+        var payload = ""
+        payload.reserveCapacity(files.count * 256)
+        for fileURL in files {
+            payload.append(fileURL.path)
+            payload.append("\u{0}")
+            if let data = try? Data(contentsOf: fileURL) {
+                payload.append(String(decoding: data, as: UTF8.self))
+            }
+            payload.append("\u{1}")
+        }
+        return stableFNV1a64Hex(payload)
     }
 }

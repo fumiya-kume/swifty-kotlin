@@ -160,6 +160,7 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_string_startsWith(source, rawFromRuntimeString("Hello"))), 1)
         XCTAssertEqual(kk_unbox_bool(kk_string_endsWith(source, rawFromRuntimeString("World"))), 1)
         XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString("World"))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString(""))), 1)
     }
 
     func testStringToIntSuccessAndFailure() {
@@ -449,7 +450,7 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
 
     private func makeRuntimeString(_ value: String) -> UnsafeMutableRawPointer {
         value.withCString { cstr in
-            cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { ptr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in
                 kk_string_from_utf8(ptr, Int32(value.utf8.count))
             }
         }

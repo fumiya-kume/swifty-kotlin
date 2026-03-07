@@ -47,6 +47,9 @@ public func kk_string_endsWith(_ strRaw: Int, _ suffixRaw: Int) -> Int {
 public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
     let other = runtimeStringFromRaw(otherRaw) ?? ""
+    if other.isEmpty {
+        return kk_box_bool(1)
+    }
     return kk_box_bool(source.contains(other) ? 1 : 0)
 }
 

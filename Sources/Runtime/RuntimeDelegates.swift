@@ -167,8 +167,9 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     // Invoke callback: (property, oldValue, newValue) -> void
     // property arg is 0 (KProperty stub) to match Kotlin's 3-param lambda signature.
     if box.callbackFnPtr != 0 {
-        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int, Int) -> Void).self)
-        callback(0, oldValue, newValue)
+        let callback = unsafeBitCast(box.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
+        var thrown = 0
+        _ = callback(0, oldValue, newValue, &thrown)
     }
     return newValue
 }
@@ -226,8 +227,9 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     // Invoke callback: (property, oldValue, newValue) -> intptr_t (boolean)
     // property arg is 0 (KProperty stub) to match Kotlin's 3-param lambda signature.
     if box.callbackFnPtr != 0 {
-        let callback = unsafeBitCast(box.callbackFnPtr, to: (@convention(c) (Int, Int, Int) -> Int).self)
-        let accepted = callback(0, oldValue, newValue)
+        let callback = unsafeBitCast(box.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
+        var thrown = 0
+        let accepted = callback(0, oldValue, newValue, &thrown)
         if accepted != 0 {
             box.currentValue = newValue
         }
