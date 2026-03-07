@@ -90,7 +90,7 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testLLVMBackendPassesDebugInfoToNativeEmitter() throws {
-        guard llvmBackendAvailable() else { return }
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.loadUsable())
 
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
@@ -151,30 +151,26 @@ extension CodegenBackendIntegrationTests {
         let debugIR = try String(contentsOfFile: debugIRPath, encoding: .utf8)
         let noDebugIR = try String(contentsOfFile: noDebugIRPath, encoding: .utf8)
 
-        if LLVMCAPIBindings.load()?.debugInfoAvailable == true {
+        if bindings.debugInfoAvailable {
             XCTAssertTrue(debugIR.contains("!llvm.dbg") || debugIR.count > noDebugIR.count)
         }
         XCTAssertFalse(noDebugIR.contains("!llvm.dbg"))
     }
 
-    func testLlvmBindingsReportsDebugInfoAvailability() {
-        guard let bindings = LLVMCAPIBindings.load() else {
-            return
-        }
+    func testLlvmBindingsReportsDebugInfoAvailability() throws {
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.load())
         _ = bindings.debugInfoAvailable
     }
 
-    func testLlvmBindingsReportsDebugLocationAvailability() {
-        guard let bindings = LLVMCAPIBindings.load() else {
-            return
-        }
+    func testLlvmBindingsReportsDebugLocationAvailability() throws {
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.load())
         _ = bindings.debugLocationAvailable
     }
 
     func testLLVMBackendDebugIRContainsDebugLocationMetadata() throws {
-        guard llvmBackendAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
-        guard LLVMCAPIBindings.load()?.debugLocationAvailable == true else { return }
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.loadUsable())
+        XCTAssertTrue(bindings.debugInfoAvailable)
+        XCTAssertTrue(bindings.debugLocationAvailable)
 
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()
@@ -222,9 +218,11 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testLLVMBackendDebugIRContainsLocalVariableMetadata() throws {
-        guard llvmBackendAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
-        guard LLVMCAPIBindings.load()?.localVariableAvailable == true else { return }
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.loadUsable())
+        XCTAssertTrue(bindings.debugInfoAvailable)
+        guard bindings.localVariableAvailable else {
+            return
+        }
 
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()

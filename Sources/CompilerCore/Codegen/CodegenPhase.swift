@@ -108,32 +108,12 @@ public final class CodegenPhase: CompilerPhase {
     }
 
     private func makeBackend(ctx: CompilationContext) throws -> LLVMBackend {
-        try rejectLegacyBackendFlags(irFlags: ctx.options.irFlags, diagnostics: ctx.diagnostics)
-        return try LLVMBackend(
+        try LLVMBackend(
             target: ctx.options.target,
             optLevel: ctx.options.optLevel,
             debugInfo: ctx.options.debugInfo,
             diagnostics: ctx.diagnostics
         )
-    }
-
-    private func rejectLegacyBackendFlags(
-        irFlags: [String], diagnostics: DiagnosticEngine
-    ) throws {
-        for flag in irFlags {
-            guard flag == "backend-strict"
-                || flag.hasPrefix("backend-strict=")
-                || flag.hasPrefix("backend=")
-            else {
-                continue
-            }
-            diagnostics.error(
-                "KSWIFTK-BACKEND-1008",
-                "Backend selection flags were removed; the compiler always uses the LLVM backend.",
-                range: nil
-            )
-            throw CompilerPipelineError.outputUnavailable
-        }
     }
 
     private func emitInlineKIRArtifacts(

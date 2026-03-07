@@ -106,10 +106,6 @@ final class SmokeTests: XCTestCase {
     }
 
     func testSmokeLLVMObjectEmissionWhenBackendAvailable() throws {
-        guard llvmBackendAvailable() else {
-            throw XCTSkip("LLVM backend is unavailable in this environment.")
-        }
-
         try withTemporaryFile(contents: "fun main() = 0") { path in
             let fileManager = FileManager.default
             let outputBase = fileManager.temporaryDirectory

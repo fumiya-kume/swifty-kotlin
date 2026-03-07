@@ -358,4 +358,23 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         XCTAssertThrowsError(try LinkPhase().run(badTargetCtx))
         XCTAssertTrue(badTargetCtx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-LINK-0001" })
     }
+
+    #if os(macOS)
+        func testRuntimeObjectPathsBuildForAlternateAppleArchitecture() throws {
+            let hostTarget = TargetTriple.hostDefault()
+            let alternateArch = hostTarget.arch == "arm64" ? "x86_64" : "arm64"
+            let alternateTarget = TargetTriple(
+                arch: alternateArch,
+                vendor: hostTarget.vendor,
+                os: hostTarget.os,
+                osVersion: hostTarget.osVersion
+            )
+
+            let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: alternateTarget)
+
+            XCTAssertFalse(runtimeObjects.isEmpty)
+            XCTAssertTrue(runtimeObjects.allSatisfy { FileManager.default.fileExists(atPath: $0) })
+            XCTAssertTrue(runtimeObjects.allSatisfy { $0.contains("\(alternateArch)-apple-macosx") })
+        }
+    #endif
 }

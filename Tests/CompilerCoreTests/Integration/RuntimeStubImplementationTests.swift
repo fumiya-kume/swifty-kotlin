@@ -24,10 +24,6 @@ final class RuntimeStubImplementationTests: XCTestCase {
     }
 
     func testLLVMBackendDefinesFrameRuntimeFunctionsWithWeakLinkage() throws {
-        guard LLVMCAPIBindings.loadUsable() != nil else {
-            throw XCTSkip("LLVM backend is unavailable in this environment.")
-        }
-
         let interner = StringInterner()
         let module = makeSimpleModule(interner: interner)
 

@@ -4,8 +4,8 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testLLVMBackendDebugObjectContainsDwarfSections() throws {
-        guard llvmBackendAvailable() else { return }
-        guard LLVMCAPIBindings.load()?.debugInfoAvailable == true else { return }
+        let bindings = try XCTUnwrap(LLVMCAPIBindings.loadUsable())
+        XCTAssertTrue(bindings.debugInfoAvailable)
 
         let diagnostics = DiagnosticEngine()
         let interner = StringInterner()

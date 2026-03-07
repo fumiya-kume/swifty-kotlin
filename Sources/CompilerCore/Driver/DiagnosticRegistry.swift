@@ -577,24 +577,6 @@ public enum DiagnosticRegistry {
 
     static let backendDescriptors: [DiagnosticDescriptor] = [
         DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0001",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C code generation failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0002",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C compilation (clang) failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1008",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "Removed backend selection flag."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1006",
             pass: "BACKEND",
             defaultSeverity: .error,

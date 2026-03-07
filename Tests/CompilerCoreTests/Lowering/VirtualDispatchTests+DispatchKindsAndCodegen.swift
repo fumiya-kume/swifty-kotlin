@@ -324,9 +324,6 @@ extension VirtualDispatchTests {
     // MARK: - 9. LLVM backend via emitObject: virtualCall compiles without error
 
     func testLLVMBackendCompilesVirtualCallWithoutError() throws {
-        guard llvmBackendAvailable() else {
-            throw XCTSkip("LLVM backend is unavailable in this environment.")
-        }
         let fixture = makeVtableFixture()
         let sema = SemaModule(
             symbols: fixture.symbols,

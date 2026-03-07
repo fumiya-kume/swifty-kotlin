@@ -63,22 +63,3 @@ func firstExprID(
     }
     return nil
 }
-
-func llvmBackendAvailable() -> Bool {
-    guard let bindings = LLVMCAPIBindings.loadUsable() else {
-        return false
-    }
-
-    let target = defaultTargetTriple()
-    let triple = if let osVersion = target.osVersion, !osVersion.isEmpty {
-        "\(target.arch)-\(target.vendor)-\(target.os)\(osVersion)"
-    } else {
-        "\(target.arch)-\(target.vendor)-\(target.os)"
-    }
-
-    guard let machine = bindings.createTargetMachine(triple: triple, optLevel: .O0) else {
-        return false
-    }
-    bindings.disposeTargetMachine(machine)
-    return true
-}

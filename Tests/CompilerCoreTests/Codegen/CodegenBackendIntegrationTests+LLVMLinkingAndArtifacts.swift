@@ -4,10 +4,6 @@ import XCTest
 
 extension CodegenBackendIntegrationTests {
     func testLLVMBackendCanLinkAndRunExecutable() throws {
-        guard llvmBackendAvailable() else {
-            throw XCTSkip("LLVM backend is unavailable in this environment.")
-        }
-
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputPath = FileManager.default.temporaryDirectory
@@ -39,10 +35,6 @@ extension CodegenBackendIntegrationTests {
     }
 
     func testLLVMBackendEmitsRuntimeStringAndCoroutineHelpersInLLVMIR() throws {
-        guard LLVMCAPIBindings.loadUsable() != nil else {
-            throw XCTSkip("LLVM backend is unavailable in this environment.")
-        }
-
         let interner = StringInterner()
         let types = TypeSystem()
         let arena = KIRArena()
