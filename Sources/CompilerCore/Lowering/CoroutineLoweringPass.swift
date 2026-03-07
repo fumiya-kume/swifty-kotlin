@@ -287,6 +287,7 @@ final class CoroutineLoweringPass: LoweringPass {
         }
         let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
         let launcherArgSetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_set")
+        let runtimeRunBlockingWithContCallee = ctx.interner.intern("kk_kxmini_run_blocking_with_cont")
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
@@ -294,8 +295,97 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
         ]
 
+        func buildSuspendWrapperBody(for function: KIRFunction) -> [KIRInstruction]? {
+            guard let loweredTarget = loweredBySymbol[function.symbol] else {
+                return nil
+            }
+
+            let continuationType = continuationTypeByLoweredSymbol[loweredTarget.symbol]
+                ?? anyType
+                ?? function.returnType
+            let loweredFunctionIDExpr = module.arena.appendExpr(
+                .intLiteral(Int64(loweredTarget.symbol.rawValue)),
+                type: intType
+            )
+            let continuationExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: continuationType
+            )
+
+            var wrapperBody: [KIRInstruction] = [
+                .call(
+                    symbol: nil,
+                    callee: continuationFactory,
+                    arguments: [loweredFunctionIDExpr],
+                    result: continuationExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+            ]
+
+            let entryPointSymbol: SymbolID
+            if function.params.isEmpty {
+                entryPointSymbol = loweredTarget.symbol
+            } else {
+                guard let thunk = launcherThunkByOriginalSymbol[function.symbol] else {
+                    return nil
+                }
+                entryPointSymbol = thunk.symbol
+
+                for (index, parameter) in function.params.enumerated() {
+                    let slotExpr = module.arena.appendExpr(
+                        .intLiteral(Int64(index)),
+                        type: intType
+                    )
+                    let argumentExpr = module.arena.appendExpr(
+                        .symbolRef(parameter.symbol),
+                        type: parameter.type
+                    )
+                    wrapperBody.append(
+                        .call(
+                            symbol: nil,
+                            callee: launcherArgSetCallee,
+                            arguments: [continuationExpr, slotExpr, argumentExpr],
+                            result: nil,
+                            canThrow: false,
+                            thrownResult: nil
+                        )
+                    )
+                }
+            }
+
+            let entryPointExpr = module.arena.appendExpr(
+                .symbolRef(entryPointSymbol),
+                type: intType
+            )
+            let callResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: function.returnType
+            )
+            wrapperBody.append(
+                .call(
+                    symbol: nil,
+                    callee: runtimeRunBlockingWithContCallee,
+                    arguments: [entryPointExpr, continuationExpr],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                )
+            )
+            wrapperBody.append(.returnValue(callResult))
+            return wrapperBody
+        }
+
         module.arena.transformFunctions { function in
             var updated = function
+            if function.isSuspend,
+               let wrapperBody = buildSuspendWrapperBody(for: function)
+            {
+                updated.body = wrapperBody
+                updated.instructionLocations = Array(repeating: nil, count: wrapperBody.count)
+                return updated
+            }
+
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count)
 
