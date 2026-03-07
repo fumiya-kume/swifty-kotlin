@@ -469,9 +469,6 @@ private func runtimeFormatDoubleValue(_ argument: Int) -> Double {
     if argument == runtimeNullSentinelInt {
         return 0
     }
-    if argument > -0x1_0000_0000, argument < 0x1_0000_0000 {
-        return Double(argument)
-    }
     if let pointer = UnsafeMutableRawPointer(bitPattern: argument),
        runtimeIsObjectPointer(pointer)
     {
@@ -496,6 +493,9 @@ private func runtimeFormatDoubleValue(_ argument: Int) -> Double {
         if let stringBox = tryCast(pointer, to: RuntimeStringBox.self) {
             return Double(stringBox.value) ?? 0
         }
+    }
+    if argument > -0x1_0000_0000, argument < 0x1_0000_0000 {
+        return Double(argument)
     }
     return Double(bitPattern: UInt64(bitPattern: Int64(argument)))
 }
