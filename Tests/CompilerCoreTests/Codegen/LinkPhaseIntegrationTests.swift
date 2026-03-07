@@ -253,6 +253,14 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
+    func testLinkerDriverArgsDisablePieForLinuxTargets() {
+        let linuxTarget = TargetTriple(arch: "x86_64", vendor: "unknown", os: "linux-gnu", osVersion: nil)
+        let args = LinkPhase().linkerDriverArgs(for: linuxTarget)
+
+        XCTAssertEqual(Array(args.prefix(2)), ["-target", "x86_64-unknown-linux-gnu"])
+        XCTAssertTrue(args.contains("-no-pie"))
+    }
+
     func testExecutableEmissionWithOutputExtensionUsesSeparateObjectPath() throws {
         let source = """
         fun main() {

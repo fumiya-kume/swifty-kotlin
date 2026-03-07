@@ -144,6 +144,36 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListOfIndexingUsesListRuntimeGet() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            println(list.size)
+            println(list.get(0))
+            println(list.get(1))
+            println(list.get(2))
+            println(list.contains(2))
+            println(list.contains(5))
+            println(list.isEmpty())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListGetRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "3\n1\n2\n3\ntrue\nfalse\nfalse\n")
+        }
+    }
+
     func testCodegenEmitsObjectWhenLlvmBindingsAreRequired() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in

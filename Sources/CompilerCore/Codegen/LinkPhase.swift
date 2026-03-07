@@ -49,7 +49,7 @@ public final class LinkPhase: CompilerPhase {
             }
             args.append("-o")
             args.append(ctx.options.outputPath)
-            args.append(contentsOf: linkerTargetArgs(ctx.options.target))
+            args.append(contentsOf: linkerDriverArgs(for: ctx.options.target))
             for path in ctx.options.libraryPaths {
                 args.append("-L\(path)")
             }
@@ -92,8 +92,12 @@ public final class LinkPhase: CompilerPhase {
         return nil
     }
 
-    private func linkerTargetArgs(_ target: TargetTriple) -> [String] {
-        ["-target", linkerTargetTriple(target)]
+    func linkerDriverArgs(for target: TargetTriple) -> [String] {
+        var args = ["-target", linkerTargetTriple(target)]
+        if target.os.hasPrefix("linux") {
+            args.append(contentsOf: ["-Xlinker", "-no-pie"])
+        }
+        return args
     }
 
     private func linkerTargetTriple(_ target: TargetTriple) -> String {

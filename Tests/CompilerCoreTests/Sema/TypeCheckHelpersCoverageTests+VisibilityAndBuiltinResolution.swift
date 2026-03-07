@@ -133,6 +133,15 @@ extension TypeCheckHelpersCoverageTests {
             ),
             fixture.types.anyType
         )
+        XCTAssertEqual(
+            helpers.kxMiniCoroutineBuiltinReturnType(
+                calleeName: fixture.interner.intern("kk_list_get"),
+                argumentCount: 2,
+                sema: fixture.sema,
+                interner: fixture.interner
+            ),
+            fixture.types.anyType
+        )
         XCTAssertNil(
             helpers.kxMiniCoroutineBuiltinReturnType(
                 calleeName: fixture.interner.intern("unknown"),

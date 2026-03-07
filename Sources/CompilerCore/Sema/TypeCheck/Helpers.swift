@@ -102,7 +102,7 @@ struct TypeCheckHelpers {
         case "kk_array_new", "IntArray":
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType
-        case "kk_array_get":
+        case "kk_array_get", "kk_list_get":
             guard argumentCount == 2 else { return nil }
             return sema.types.anyType
         case "kk_array_set":
