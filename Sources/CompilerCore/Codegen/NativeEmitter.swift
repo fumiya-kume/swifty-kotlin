@@ -158,7 +158,9 @@ struct NativeEmitter {
         var internalFunctions: [SymbolID: LLVMFunction] = [:]
 
         for declaration in module.arena.declarations {
-            guard case let .function(function) = declaration else {
+            guard case let .function(function) = declaration,
+                  !function.isSuspend
+            else {
                 continue
             }
             let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
@@ -187,6 +189,7 @@ struct NativeEmitter {
 
         for declaration in module.arena.declarations {
             guard case let .function(function) = declaration,
+                  !function.isSuspend,
                   let llvmFunction = internalFunctions[function.symbol]
             else {
                 continue
