@@ -490,9 +490,10 @@ extension ExprTypeChecker {
                 return symbol.kind == .property
             }
             if let propertySymbol = propertyCandidates.first {
+                let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
                 sema.bindings.bindIdentifier(id, symbol: propertySymbol)
-                sema.bindings.bindExprType(id, type: sema.types.anyType)
-                return sema.types.anyType
+                sema.bindings.bindExprType(id, type: propertyType)
+                return propertyType
             }
             candidates = ctx.cachedScopeLookup(member).filter { symbolID in
                 guard let symbol = ctx.cachedSymbol(symbolID) else {

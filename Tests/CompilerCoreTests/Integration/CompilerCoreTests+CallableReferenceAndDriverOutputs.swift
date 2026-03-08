@@ -350,4 +350,29 @@ extension CompilerCoreTests {
             XCTAssertEqual(exitCode, 1)
         }
     }
+
+    func testPropertyCallableReferenceUsesPropertyTypeForFallbackBinding() throws {
+        let source = """
+        val answer: Int = 42
+        fun use(): Int {
+            val ref = ::answer
+            return answer
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let sema = try XCTUnwrap(ctx.sema)
+        let callableRefExprID = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+            if case .callableRef = expr { return true }
+            return false
+        })
+        let answerSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            symbol.kind == .property && ctx.interner.resolve(symbol.name) == "answer"
+        })?.id)
+
+        XCTAssertEqual(sema.bindings.identifierSymbols[callableRefExprID], answerSymbol)
+        XCTAssertEqual(sema.bindings.exprTypes[callableRefExprID], sema.symbols.propertyType(for: answerSymbol))
+    }
 }

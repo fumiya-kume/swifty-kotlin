@@ -1,6 +1,8 @@
 // swiftlint:disable file_length cyclomatic_complexity
 import Foundation
 
+private let runtimeDefaultTrimMarginPrefixRaw = runtimeMakeStringRaw("|")
+
 // MARK: - STDLIB-006 String Functions
 
 @_cdecl("kk_string_trim")
@@ -112,7 +114,7 @@ public func kk_string_trimIndent(_ strRaw: Int) -> Int {
 
 @_cdecl("kk_string_trimMargin_default")
 public func kk_string_trimMargin_default(_ strRaw: Int) -> Int {
-    kk_string_trimMargin(strRaw, runtimeMakeStringRaw("|"))
+    kk_string_trimMargin(strRaw, runtimeDefaultTrimMarginPrefixRaw)
 }
 
 @_cdecl("kk_string_trimMargin")

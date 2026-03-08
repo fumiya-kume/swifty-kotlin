@@ -1,6 +1,33 @@
 import Foundation
 
 enum CodegenSymbolSupport {
+    static func fileFacadeNames(from ast: ASTModule?) -> [Int32: String] {
+        guard let ast else {
+            return [:]
+        }
+        return ast.files.reduce(into: [:]) { partial, file in
+            guard let name = fileFacadeName(for: file) else {
+                return
+            }
+            partial[file.fileID.rawValue] = name
+        }
+    }
+
+    static func fileFacadeName(for file: ASTFile) -> String? {
+        for annotation in file.annotations where annotation.useSiteTarget == "file" {
+            guard annotation.name == "JvmName" || annotation.name == "kotlin.jvm.JvmName",
+                  let firstArgument = annotation.arguments.first
+            else {
+                continue
+            }
+            let trimmed = firstArgument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+        return nil
+    }
+
     static func cFunctionSymbol(
         for function: KIRFunction,
         interner: StringInterner,

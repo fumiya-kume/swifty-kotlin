@@ -9,7 +9,7 @@ public final class CodegenPhase: CompilerPhase {
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available for codegen.")
         }
-        let fileFacadeNamesByFileID = fileFacadeNames(from: ctx.ast)
+        let fileFacadeNamesByFileID = CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
 
         if ctx.options.emit == .kirDump {
             let path = outputPath(base: ctx.options.outputPath, defaultExtension: "kir")
@@ -125,7 +125,7 @@ public final class CodegenPhase: CompilerPhase {
             outputObjectPath: objectPath,
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,
-            fileFacadeNamesByFileID: fileFacadeNames(from: ctx.ast)
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
         )
         ctx.generatedObjectPath = objectPath
 
@@ -317,7 +317,7 @@ public final class CodegenPhase: CompilerPhase {
         }
         let functionLinkNamesBySymbol: [SymbolID: String] = {
             guard let kir = ctx.kir else { return [:] }
-            let facadeNames = fileFacadeNames(from: ctx.ast)
+            let facadeNames = CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
             return kir.arena.declarations.reduce(into: [:]) { partial, decl in
                 guard case let .function(function) = decl else {
                     return
@@ -340,30 +340,4 @@ public final class CodegenPhase: CompilerPhase {
         return encoder.serialize(records)
     }
 
-    private func fileFacadeNames(from ast: ASTModule?) -> [Int32: String] {
-        guard let ast else {
-            return [:]
-        }
-        return ast.files.reduce(into: [:]) { partial, file in
-            guard let name = fileFacadeName(for: file) else {
-                return
-            }
-            partial[file.fileID.rawValue] = name
-        }
-    }
-
-    private func fileFacadeName(for file: ASTFile) -> String? {
-        for annotation in file.annotations where annotation.useSiteTarget == "file" {
-            guard annotation.name == "JvmName" || annotation.name == "kotlin.jvm.JvmName",
-                  let firstArgument = annotation.arguments.first
-            else {
-                continue
-            }
-            let trimmed = firstArgument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-            if !trimmed.isEmpty {
-                return trimmed
-            }
-        }
-        return nil
-    }
 }

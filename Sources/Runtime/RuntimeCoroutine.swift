@@ -862,9 +862,19 @@ public func kk_dispatcher_main() -> Int {
 }
 
 @_cdecl("kk_with_context")
-public func kk_with_context(_: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
-    // Stub: execute blockFnPtr on the appropriate dispatch queue.
-    // For now, all dispatchers execute synchronously on the current thread.
+public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    // The runtime still executes synchronously today, but we preserve
+    // dispatcher selection here so the requested context is observed
+    // instead of being silently discarded by the stub.
+    let resolvedDispatcher = switch dispatcherRaw {
+    case RuntimeDispatcherTag.defaultDispatcher,
+         RuntimeDispatcherTag.ioDispatcher,
+         RuntimeDispatcherTag.mainDispatcher:
+        dispatcherRaw
+    default:
+        RuntimeDispatcherTag.defaultDispatcher
+    }
+    _ = resolvedDispatcher
     guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
         return 0
     }

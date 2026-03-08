@@ -18,7 +18,7 @@ public final class LinkPhase: CompilerPhase {
         guard let entrySymbol = resolveEntrySymbol(
             kir: kir,
             interner: ctx.interner,
-            fileFacadeNamesByFileID: fileFacadeNames(from: ctx.ast)
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
         ) else {
             ctx.diagnostics.error(
                 "KSWIFTK-LINK-0002",
@@ -104,25 +104,6 @@ public final class LinkPhase: CompilerPhase {
             }
         }
         return nil
-    }
-
-    private func fileFacadeNames(from ast: ASTModule?) -> [Int32: String] {
-        guard let ast else {
-            return [:]
-        }
-        return ast.files.reduce(into: [:]) { partial, file in
-            for annotation in file.annotations where annotation.useSiteTarget == "file" {
-                guard annotation.name == "JvmName" || annotation.name == "kotlin.jvm.JvmName",
-                      let firstArgument = annotation.arguments.first
-                else {
-                    continue
-                }
-                let trimmed = firstArgument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-                if !trimmed.isEmpty {
-                    partial[file.fileID.rawValue] = trimmed
-                }
-            }
-        }
     }
 
     func linkerDriverArgs(for target: TargetTriple) -> [String] {
