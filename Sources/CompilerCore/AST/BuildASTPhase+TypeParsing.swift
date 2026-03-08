@@ -288,24 +288,7 @@ extension BuildASTPhase {
             return nil
         }
 
-        var typeTokens: [Token] = []
-        var depth = BracketDepth()
-        var index = colonIndex + 1
-        while index < tokens.count {
-            let token = tokens[index]
-            if depth.angle == 0 {
-                if token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
-                    break
-                }
-                if case .softKeyword(.by) = token.kind {
-                    break
-                }
-            }
-            depth.track(token.kind)
-            typeTokens.append(token)
-            index += 1
-        }
-
+        let typeTokens = collectPropertyTypeTokens(afterColonIndex: colonIndex, tokens: tokens)
         return parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
     }
 
@@ -341,6 +324,25 @@ extension BuildASTPhase {
             return Array(tokens.prefix(idx))
         }
         return tokens
+    }
+
+    private func collectPropertyTypeTokens(afterColonIndex colonIndex: Int, tokens: [Token]) -> [Token] {
+        var typeTokens: [Token] = []
+        var depth = BracketDepth()
+        var index = colonIndex + 1
+        while index < tokens.count {
+            let token = tokens[index]
+            if depth.angle == 0 {
+                if token.kind == .symbol(.assign) || token.kind == .symbol(.lBrace) || token.kind == .symbol(.semicolon) {
+                    break
+                }
+                if case .softKeyword(.by) = token.kind { break }
+            }
+            depth.track(token.kind)
+            typeTokens.append(token)
+            index += 1
+        }
+        return typeTokens
     }
 
     func firstFunctionParameterCloseParen(in tokens: [Token]) -> Int? {
