@@ -73,7 +73,10 @@ extension DeclTypeChecker {
                for: getValueSymbol
            ), result == nil
         {
+            sema.symbols.setDelegateGetValueSymbol(getValueSymbol, for: symbol)
             result = getValueSig.returnType
+        } else if let getValueSymbol = getValueCandidates.first {
+            sema.symbols.setDelegateGetValueSymbol(getValueSymbol, for: symbol)
         }
         if result == nil {
             result = sema.types.nullableAnyType
@@ -82,7 +85,7 @@ extension DeclTypeChecker {
         // Check setValue for var properties.
         if property.isVar {
             let setValueName = interner.intern("setValue")
-            _ = driver.helpers.collectMemberFunctionCandidates(
+            let setValueCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: setValueName,
                 receiverType: delegateType,
                 sema: sema
@@ -90,6 +93,9 @@ extension DeclTypeChecker {
                 guard let sym = sema.symbols.symbol(candidateID)
                 else { return false }
                 return sym.flags.contains(.operatorFunction)
+            }
+            if let setValueSymbol = setValueCandidates.first {
+                sema.symbols.setDelegateSetValueSymbol(setValueSymbol, for: symbol)
             }
         }
 
@@ -107,6 +113,9 @@ extension DeclTypeChecker {
             }
         if !provideDelegateCandidates.isEmpty {
             sema.symbols.setHasProvideDelegate(for: symbol)
+            if let provideDelegateSymbol = provideDelegateCandidates.first {
+                sema.symbols.setDelegateProvideDelegateSymbol(provideDelegateSymbol, for: symbol)
+            }
         }
 
         return result

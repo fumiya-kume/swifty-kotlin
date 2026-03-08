@@ -25,6 +25,29 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
+        if args.isEmpty,
+           case .callableRef = ast.arena.expr(receiverID),
+           interner.resolve(calleeName) == "isInitialized"
+        {
+            _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+            if let propertySymbol = sema.bindings.identifierSymbol(for: receiverID),
+               let propertyInfo = sema.symbols.symbol(propertySymbol),
+               propertyInfo.kind == .property,
+               propertyInfo.flags.contains(.lateinitProperty)
+            {
+                let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                sema.bindings.bindExprType(id, type: boolType)
+                return boolType
+            }
+
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-LATEINIT",
+                "'isInitialized' is only available on lateinit property references.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+        }
+
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         // Detect member access on a class-reference expression (callableRef
         // with member "class").  The result type is nullable String.
@@ -835,7 +858,12 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
-                case "join", "await":
+                case "join":
+                    let resultType = sema.types.unitType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                case "await":
                     let resultType = sema.types.nullableAnyType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)

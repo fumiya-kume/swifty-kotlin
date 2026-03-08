@@ -75,9 +75,20 @@ final class GoldenHarnessTests: XCTestCase {
             }
 
             for file in ast.sortedFiles {
-                lines.append(
-                    "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
-                )
+                var fileLine = "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
+                if !file.annotations.isEmpty {
+                    let renderedAnnotations = file.annotations.map { annotation in
+                        let targetPrefix = annotation.useSiteTarget.map { "@\($0):" } ?? "@"
+                        let arguments: String = if annotation.arguments.isEmpty {
+                            ""
+                        } else {
+                            "(\(annotation.arguments.joined(separator: ",")))"
+                        }
+                        return "\(targetPrefix)\(annotation.name)\(arguments)"
+                    }.joined(separator: ",")
+                    fileLine += " annotations=[\(renderedAnnotations)]"
+                }
+                lines.append(fileLine)
                 for declID in file.topLevelDecls {
                     guard let decl = ast.arena.decl(declID) else {
                         continue

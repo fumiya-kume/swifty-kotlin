@@ -4,6 +4,41 @@ import Foundation
 // swiftlint:disable file_length
 
 extension CallLowerer {
+    private static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
+
+    private func wrapLateinitReadIfNeeded(
+        _ valueExpr: KIRExprID,
+        symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        guard let symbolInfo = sema.symbols.symbol(symbol),
+              symbolInfo.flags.contains(.lateinitProperty)
+        else {
+            return valueExpr
+        }
+        let propertyNameExpr = arena.appendExpr(
+            .stringLiteral(symbolInfo.name),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        instructions.append(.constValue(result: propertyNameExpr, value: .stringLiteral(symbolInfo.name)))
+        let result = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: arena.exprType(valueExpr) ?? sema.types.anyType
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_lateinit_get_or_throw"),
+            arguments: [valueExpr, propertyNameExpr],
+            result: result,
+            canThrow: true,
+            thrownResult: nil
+        ))
+        return result
+    }
+
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
@@ -27,6 +62,21 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        if let lateinitStatus = tryLowerLateinitIsInitialized(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return lateinitStatus
+        }
+
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         if case let .callableRef(classRefReceiver, refMember, _) = ast.arena.expr(receiverExpr),
            interner.resolve(refMember) == "class",
@@ -70,7 +120,7 @@ extension CallLowerer {
             calleeName
         }
         if let objProp = tryLowerObjectMemberPropertyRead(
-            exprID, args: args, sema: sema, arena: arena,
+            exprID, args: args, sema: sema, arena: arena, interner: interner,
             instructions: &instructions
         ) { return objProp }
         return lowerMemberLikeCallExpr(
@@ -101,6 +151,21 @@ extension CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        if let lateinitStatus = tryLowerLateinitIsInitialized(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return lateinitStatus
+        }
+
         // --- Scope functions with safe call: ?.let, ?.run, etc. (STDLIB-004) ---
         // For safe-call (?.let etc.), we need a null guard: if receiver is null,
         // skip the lambda and produce null; otherwise invoke normally.
@@ -166,6 +231,79 @@ extension CallLowerer {
             prependReceiverForUnresolvedCollectionCall: false,
             instructions: &instructions
         )
+    }
+
+    private func tryLowerLateinitIsInitialized(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty,
+              interner.resolve(calleeName) == "isInitialized",
+              case .callableRef = ast.arena.expr(receiverExpr),
+              let propertySymbol = sema.bindings.identifierSymbol(for: receiverExpr),
+              let propertyInfo = sema.symbols.symbol(propertySymbol),
+              propertyInfo.kind == .property,
+              propertyInfo.flags.contains(.lateinitProperty)
+        else {
+            return nil
+        }
+
+        let storageExpr: KIRExprID
+        if let parentSymbol = sema.symbols.parentSymbol(for: propertySymbol),
+           let parentInfo = sema.symbols.symbol(parentSymbol),
+           parentInfo.kind != .package,
+           parentInfo.kind != .object
+        {
+            guard let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+                  let fieldOffset = sema.symbols.nominalLayout(for: parentSymbol)?.fieldOffsets[
+                      sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+                  ]
+            else {
+                return nil
+            }
+            let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+            instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+            let loaded = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propertyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_get_inbounds"),
+                arguments: [receiverExpr, offsetExpr],
+                result: loaded,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            storageExpr = loaded
+        } else {
+            let storageSymbol = sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+            let storageType = sema.symbols.propertyType(for: storageSymbol)
+                ?? sema.symbols.propertyType(for: propertySymbol)
+                ?? sema.types.anyType
+            let loaded = arena.appendExpr(.symbolRef(storageSymbol), type: storageType)
+            instructions.append(.loadGlobal(result: loaded, symbol: storageSymbol))
+            storageExpr = loaded
+        }
+
+        let resultType = sema.bindings.exprType(for: exprID)
+            ?? sema.types.make(.primitive(.boolean, .nonNull))
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_lateinit_is_initialized"),
+            arguments: [storageExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
     }
 
     // This shared lowering path still centralizes legacy stdlib/member special cases.
@@ -242,6 +380,18 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return storedObjectProperty
+        }
+
+        if let storedMemberProperty = tryLowerStoredMemberPropertyRead(
+            exprID,
+            loweredReceiverID: loweredReceiverID,
+            args: args,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            return storedMemberProperty
         }
 
         // Primitive member function: Int/Long.inv() → kk_op_inv (P5-103)
@@ -537,8 +687,18 @@ extension CallLowerer {
         }
 
         let isSuperCall = sema.bindings.isSuperCallExpr(exprID)
-        let callBinding = sema.bindings.callBindings[exprID]
-        let chosen = callBinding?.chosenCallee
+        let callBinding = recoverMemberCallBinding(
+            exprID: exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            argumentExprs: args.map(\.expr),
+            sema: sema
+        ) ?? sema.bindings.callBindings[exprID]
+        let chosen: SymbolID? = if let chosenCallee = callBinding?.chosenCallee, chosenCallee != .invalid {
+            chosenCallee
+        } else {
+            Optional<SymbolID>.none
+        }
         let normalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
             callBinding: callBinding,
@@ -586,6 +746,7 @@ extension CallLowerer {
         args: [CallArgument],
         sema: SemaModule,
         arena: KIRArena,
+        interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         guard args.isEmpty else { return nil }
@@ -597,12 +758,49 @@ extension CallLowerer {
               let parent = sema.symbols.parentSymbol(for: valueSym),
               sema.symbols.symbol(parent)?.kind == .object
         else { return nil }
+        if let parentInfo = sema.symbols.symbol(parent),
+           interner.resolve(parentInfo.name) == "Dispatchers"
+        {
+            let runtimeCallee: InternedString
+            switch interner.resolve(info.name) {
+            case "Default":
+                runtimeCallee = interner.intern("kk_dispatcher_default")
+            case "IO":
+                runtimeCallee = interner.intern("kk_dispatcher_io")
+            case "Main":
+                runtimeCallee = interner.intern("kk_dispatcher_main")
+            default:
+                return nil
+            }
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.bindings.exprTypes[exprID]
+                    ?? sema.symbols.propertyType(for: valueSym)
+                    ?? sema.types.anyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         let propType = sema.bindings.exprTypes[exprID]
             ?? sema.symbols.propertyType(for: valueSym)
             ?? sema.types.anyType
         let id = arena.appendExpr(.symbolRef(valueSym), type: propType)
         instructions.append(.loadGlobal(result: id, symbol: valueSym))
-        return id
+        return wrapLateinitReadIfNeeded(
+            id,
+            symbol: valueSym,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
     }
 
     private func tryLowerObjectLiteralStoredPropertyRead(
@@ -654,7 +852,61 @@ extension CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
-        return result
+        return wrapLateinitReadIfNeeded(
+            result,
+            symbol: propertySymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
+    }
+
+    private func tryLowerStoredMemberPropertyRead(
+        _ exprID: ExprID,
+        loweredReceiverID: KIRExprID,
+        args: [CallArgument],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty,
+              let propertySymbol = sema.bindings.identifierSymbol(for: exprID),
+              let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
+              let ownerInfo = sema.symbols.symbol(ownerSymbol),
+              ownerInfo.kind == .class || ownerInfo.kind == .interface
+                  || ownerInfo.kind == .object,
+              let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
+                  sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+              ]
+        else {
+            return nil
+        }
+
+        let resultType = sema.bindings.exprTypes[exprID]
+            ?? sema.symbols.propertyType(for: propertySymbol)
+            ?? sema.types.anyType
+        let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+        instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_get_inbounds"),
+            arguments: [loweredReceiverID, offsetExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return wrapLateinitReadIfNeeded(
+            result,
+            symbol: propertySymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
     }
 
     private func objectLiteralPropertyUsesAccessor(
@@ -795,7 +1047,7 @@ extension CallLowerer {
 
     private func appendReceiverToMemberArguments(
         _ loweredReceiverID: KIRExprID,
-        receiverExpr _: ExprID,
+        receiverExpr: ExprID,
         calleeName: InternedString,
         chosenCallee: SymbolID?,
         prependReceiverForUnresolvedCollectionCall: Bool,
@@ -818,10 +1070,23 @@ extension CallLowerer {
         let calleeText = interner.resolve(calleeName)
         if Self.unresolvedCollectionMemberNames.contains(calleeText) {
             arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: nonNullReceiverType) {
+            false
+        } else {
+            true
+        }
+        if isCoroutineHandleReceiver,
+           Self.unresolvedCoroutineHandleMemberNames.contains(calleeText)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
         }
     }
 
-    private func emitMemberCallInstruction(
+    func emitMemberCallInstruction(
         normalized: NormalizedCallResult,
         callBinding: CallBinding?,
         chosenCallee: SymbolID?,
@@ -884,9 +1149,20 @@ extension CallLowerer {
         let loweredCallee = loweredMemberCalleeName(
             chosenCallee: chosenCallee,
             fallback: calleeName,
+            receiverExpr: receiverExpr,
             sema: sema,
             interner: interner
         )
+        if loweredCallee == interner.intern("kk_channel_send")
+            || loweredCallee == interner.intern("kk_channel_receive")
+        {
+            let continuationExpr = arena.appendExpr(
+                .intLiteral(0),
+                type: sema.types.intType
+            )
+            instructions.append(.constValue(result: continuationExpr, value: .intLiteral(0)))
+            finalArguments.append(continuationExpr)
+        }
         if let inst = tryEmitVirtualDispatch(
             chosenCallee: chosenCallee, calleeName: loweredCallee,
             receiverExpr: receiverExpr, loweredReceiverID: loweredReceiverID,
@@ -948,16 +1224,37 @@ extension CallLowerer {
     private func loweredMemberCalleeName(
         chosenCallee: SymbolID?,
         fallback: InternedString,
+        receiverExpr: ExprID,
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
-        guard let chosenCallee else {
+        if let chosenCallee {
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+               !externalLinkName.isEmpty
+            {
+                return interner.intern(externalLinkName)
+            }
             return fallback
         }
-        if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-           !externalLinkName.isEmpty
-        {
-            return interner.intern(externalLinkName)
+
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: nonNullReceiverType) {
+            false
+        } else {
+            true
+        }
+        if isCoroutineHandleReceiver {
+            switch interner.resolve(fallback) {
+            case "await":
+                return interner.intern("kk_kxmini_async_await")
+            case "join":
+                return interner.intern("kk_job_join")
+            case "cancel":
+                return interner.intern("kk_job_cancel")
+            default:
+                break
+            }
         }
         return fallback
     }
@@ -988,10 +1285,39 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        if let propertySymbol = sema.bindings.identifierSymbol(for: exprID),
+           let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
+           let ownerInfo = sema.symbols.symbol(ownerSymbol),
+           ownerInfo.kind == .class || ownerInfo.kind == .interface
+               || ownerInfo.kind == .object,
+           let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
+               sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+           ]
+        {
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+            instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [receiverID, offsetExpr, valueID],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
         // Use the call binding from sema if available (property setter).
         let callBinding = sema.bindings.callBindings[exprID]
         let chosenCallee = callBinding?.chosenCallee
-        let setterName = loweredMemberCalleeName(chosenCallee: chosenCallee, fallback: calleeName, sema: sema, interner: interner)
+        let setterName = loweredMemberCalleeName(
+            chosenCallee: chosenCallee,
+            fallback: calleeName,
+            receiverExpr: receiverExpr,
+            sema: sema,
+            interner: interner
+        )
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
         instructions.append(.call(
             symbol: chosenCallee,

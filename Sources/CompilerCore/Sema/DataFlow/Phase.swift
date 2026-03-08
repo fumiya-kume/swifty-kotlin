@@ -65,6 +65,12 @@ public final class DataFlowSemaPhase: CompilerPhase {
     ) {
         for file in ast.sortedFiles {
             guard let fileScope = fileScopes[file.fileID.rawValue] else { continue }
+            registerFileAnnotations(
+                file: file,
+                symbols: symbols,
+                diagnostics: ctx.diagnostics,
+                interner: ctx.interner
+            )
             for declID in file.topLevelDecls {
                 collectHeader(
                     declID: declID, file: file, ast: ast,

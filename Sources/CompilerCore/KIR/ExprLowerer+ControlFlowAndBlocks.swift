@@ -1,6 +1,39 @@
 import Foundation
 
 extension ExprLowerer {
+    private func wrapLateinitReadIfNeeded(
+        _ valueExpr: KIRExprID,
+        symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        guard let symbolInfo = sema.symbols.symbol(symbol),
+              symbolInfo.flags.contains(.lateinitProperty)
+        else {
+            return valueExpr
+        }
+        let propertyNameExpr = arena.appendExpr(
+            .stringLiteral(symbolInfo.name),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        instructions.append(.constValue(result: propertyNameExpr, value: .stringLiteral(symbolInfo.name)))
+        let result = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: arena.exprType(valueExpr) ?? sema.types.anyType
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_lateinit_get_or_throw"),
+            arguments: [valueExpr, propertyNameExpr],
+            result: result,
+            canThrow: true,
+            thrownResult: nil
+        ))
+        return result
+    }
+
     func lowerExpr(
         _ exprID: ExprID,
         ast: ASTModule,
@@ -218,7 +251,42 @@ extension ExprLowerer {
                         canThrow: false,
                         thrownResult: nil
                     ))
-                    return result
+                    return wrapLateinitReadIfNeeded(
+                        result,
+                        symbol: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                }
+
+                if let symbol = sema.bindings.identifierSymbols[exprID],
+                   let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                   let ownerInfo = sema.symbols.symbol(ownerSymbol),
+                   ownerInfo.kind == .class || ownerInfo.kind == .object || ownerInfo.kind == .interface,
+                   let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
+                       sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                   ]
+                {
+                    let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+                    instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get_inbounds"),
+                        arguments: [receiverExprID, offsetExpr],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return wrapLateinitReadIfNeeded(
+                        result,
+                        symbol: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
                 }
 
                 // General fallback: try to find a getter symbol for the property
@@ -242,6 +310,42 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: id, value: constant))
                     return id
                 }
+                // Member property references inside class/object bodies must read
+                // from the current implicit receiver instance rather than treating
+                // the property symbol as a standalone value.
+                if let sym = sema.symbols.symbol(symbol),
+                   sym.kind == .property || sym.kind == .field,
+                   let receiverExprID = driver.ctx.currentImplicitReceiverExprID,
+                   let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                   let ownerKind = sema.symbols.symbol(ownerSymbol)?.kind,
+                   ownerKind == .class || ownerKind == .interface || ownerKind == .object,
+                   let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
+                       sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                   ]
+                {
+                    let resultType = boundType
+                        ?? sema.symbols.propertyType(for: symbol)
+                        ?? sema.types.anyType
+                    let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+                    instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get_inbounds"),
+                        arguments: [receiverExprID, offsetExpr],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return wrapLateinitReadIfNeeded(
+                        result,
+                        symbol: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                }
                 // For top-level or object-member property symbols, emit loadGlobal so the
                 // backend reads the current value from the global slot.
                 if let sym = sema.symbols.symbol(symbol),
@@ -254,7 +358,14 @@ extension ExprLowerer {
                 {
                     let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                     instructions.append(.loadGlobal(result: id, symbol: symbol))
-                    return id
+                    return wrapLateinitReadIfNeeded(
+                        id,
+                        symbol: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
                 }
                 let id = arena.appendExpr(.symbolRef(symbol), type: boundType)
                 instructions.append(.constValue(result: id, value: .symbolRef(symbol)))
@@ -712,6 +823,22 @@ extension ExprLowerer {
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     instructions.append(.copy(from: valueID, to: globalRef))
+                } else if let receiverExprID = driver.ctx.currentImplicitReceiverExprID,
+                          let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                          let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
+                              sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
+                          ]
+                {
+                    let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+                    instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_set"),
+                        arguments: [receiverExprID, offsetExpr, valueID],
+                        result: nil,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
                 } else {
                     if let storageID = driver.ctx.localValuesBySymbol[symbol] {
                         // Mutable local already has storage: emit a copy so the C variable

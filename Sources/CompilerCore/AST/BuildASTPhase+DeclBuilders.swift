@@ -15,7 +15,18 @@ extension BuildASTPhase {
 
     func makeClassDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ClassDecl {
         let node = arena.node(nodeID)
+        let primaryConstructorParams = declarationValueParameters(
+            from: nodeID,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
         let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let constructorProperties = primaryConstructorPropertyDecls(
+            from: primaryConstructorParams,
+            classRange: node.range,
+            astArena: astArena
+        )
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
@@ -28,7 +39,7 @@ extension BuildASTPhase {
             annotations: annotations,
             isInner: modifiers.contains(.inner),
             typeParams: typeParams,
-            primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            primaryConstructorParams: primaryConstructorParams,
             primaryConstructorModifiers: declarationPrimaryConstructorModifiers(from: nodeID, in: arena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
             superTypeEntries: declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -38,7 +49,7 @@ extension BuildASTPhase {
             classBodyInitOrder: declarationClassBodyInitOrder(from: nodeID, in: arena, interner: interner),
             secondaryConstructors: declarationSecondaryConstructors(from: nodeID, in: arena, interner: interner, astArena: astArena),
             memberFunctions: members.functions,
-            memberProperties: members.properties,
+            memberProperties: constructorProperties + members.properties,
             nestedClasses: members.nestedClasses,
             nestedObjects: members.nestedObjects,
             companionObject: members.companionObject
@@ -202,7 +213,14 @@ extension BuildASTPhase {
         let isTailrec = modifiers.contains(.tailrec)
         let functionName = declarationFunctionName(from: nodeID, in: arena, interner: interner)
         let valueParams = declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
-        let receiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let explicitReceiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let contextReceiverTypes = declarationContextReceiverTypes(
+            from: nodeID,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
+        let receiverType = explicitReceiverType ?? contextReceiverTypes.first
         let returnType = declarationReturnType(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let body = declarationBody(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
@@ -253,7 +271,7 @@ extension BuildASTPhase {
         let propertyName: InternedString = if receiverType != nil {
             declarationPropertyNameAfterDot(from: nodeID, in: arena, interner: interner)
         } else {
-            declarationName(from: nodeID, in: arena, interner: interner)
+            declarationPropertyName(from: nodeID, in: arena, interner: interner)
         }
         return PropertyDecl(
             range: node.range,
@@ -439,6 +457,8 @@ extension BuildASTPhase {
             }
             return false
         })
+        let isValProperty = withoutDefault.contains(where: { $0.kind == .keyword(.val) })
+        let isVarProperty = withoutDefault.contains(where: { $0.kind == .keyword(.var) })
         let defaultValueExpr: ExprID?
         if let defaultTokens = split.defaultTokens?
             .filter({ $0.kind != .symbol(.semicolon) }),
@@ -452,9 +472,32 @@ extension BuildASTPhase {
         parameters.append(ValueParamDecl(
             name: name,
             type: typeRef,
+            isProperty: isValProperty || isVarProperty,
+            isMutableProperty: isVarProperty,
             hasDefaultValue: hasDefaultValue,
             isVararg: isVararg,
             defaultValue: defaultValueExpr
         ))
+    }
+
+    private func primaryConstructorPropertyDecls(
+        from params: [ValueParamDecl],
+        classRange: SourceRange,
+        astArena: ASTArena
+    ) -> [DeclID] {
+        params.compactMap { param in
+            guard param.isProperty else {
+                return nil
+            }
+            let property = PropertyDecl(
+                range: classRange,
+                name: param.name,
+                modifiers: [],
+                type: param.type,
+                isVar: param.isMutableProperty,
+                isSynthesizedPrimaryConstructorProperty: true
+            )
+            return astArena.appendDecl(.propertyDecl(property))
+        }
     }
 }

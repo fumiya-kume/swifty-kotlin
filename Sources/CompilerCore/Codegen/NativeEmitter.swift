@@ -31,6 +31,7 @@ struct NativeEmitter {
     let module: KIRModule
     let interner: StringInterner
     let sourceManager: SourceManager?
+    let fileFacadeNamesByFileID: [Int32: String]
 
     init(
         target: TargetTriple,
@@ -39,7 +40,8 @@ struct NativeEmitter {
         bindings: LLVMCAPIBindings,
         module: KIRModule,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager: SourceManager? = nil,
+        fileFacadeNamesByFileID: [Int32: String] = [:]
     ) {
         self.target = target
         self.optLevel = optLevel
@@ -48,6 +50,7 @@ struct NativeEmitter {
         self.module = module
         self.interner = interner
         self.sourceManager = sourceManager
+        self.fileFacadeNamesByFileID = fileFacadeNamesByFileID
     }
 
     func emitLLVMIR(outputPath: String) throws {
@@ -161,7 +164,11 @@ struct NativeEmitter {
             guard case let .function(function) = declaration else {
                 continue
             }
-            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(
+                for: function,
+                interner: interner,
+                fileFacadeNamesByFileID: fileFacadeNamesByFileID
+            )
             var parameterTypes = Array(repeating: int64Type, count: function.params.count)
             parameterTypes.append(outThrownPointerType)
 
@@ -336,7 +343,11 @@ struct NativeEmitter {
             guard case let .function(function) = declaration,
                   let llvmFunction = internalFunctions[function.symbol]
             else { continue }
-            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(
+                for: function,
+                interner: interner,
+                fileFacadeNamesByFileID: fileFacadeNamesByFileID
+            )
             var lineNo: UInt32 = 0
             var funcDIFile = diFile
             if let sourceRange = function.sourceRange, let sourceManager {

@@ -22,6 +22,28 @@ public func kk_box_bool(_ value: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+@_cdecl("kk_lateinit_is_initialized")
+public func kk_lateinit_is_initialized(_ value: Int) -> Int {
+    kk_box_bool(value != runtimeNullSentinelInt ? 1 : 0)
+}
+
+@_cdecl("kk_lateinit_get_or_throw")
+public func kk_lateinit_get_or_throw(
+    _ value: Int,
+    _ propertyName: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard value == runtimeNullSentinelInt else {
+        return value
+    }
+    let name = extractString(from: UnsafeMutableRawPointer(bitPattern: propertyName)) ?? "<unknown>"
+    outThrown?.pointee = runtimeAllocateThrowable(
+        message: "UninitializedPropertyAccessException: lateinit property \(name) has not been initialized"
+    )
+    return runtimeNullSentinelInt
+}
+
 @_cdecl("kk_unbox_int")
 public func kk_unbox_int(_ obj: Int) -> Int {
     if obj == runtimeNullSentinelInt {

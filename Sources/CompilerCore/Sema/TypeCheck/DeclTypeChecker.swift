@@ -120,6 +120,15 @@ final class DeclTypeChecker {
             ?? sema.types.nullableAnyType
         sema.symbols.setPropertyType(finalPropertyType, for: symbol)
 
+        if property.modifiers.contains(.lateinit) {
+            validateLateinitProperty(
+                property,
+                finalPropertyType: finalPropertyType,
+                diagnostics: diagnostics,
+                sema: sema
+            )
+        }
+
         if let setter = property.setter {
             typeCheckSetter(
                 setter, property: property, symbol: symbol,
@@ -127,6 +136,104 @@ final class DeclTypeChecker {
                 accessorCtx: accessorCtx, solver: solver,
                 diagnostics: diagnostics
             )
+        }
+    }
+
+    private func validateLateinitProperty(
+        _ property: PropertyDecl,
+        finalPropertyType: TypeID,
+        diagnostics: DiagnosticEngine,
+        sema: SemaModule
+    ) {
+        if !property.isVar {
+            diagnostics.error(
+                "KSWIFTK-SEMA-LATEINIT",
+                "'lateinit' is only allowed on mutable properties.",
+                range: property.range
+            )
+        }
+        if property.initializer != nil {
+            diagnostics.error(
+                "KSWIFTK-SEMA-LATEINIT",
+                "'lateinit' property must not have an initializer.",
+                range: property.range
+            )
+        }
+        if property.type == nil {
+            diagnostics.error(
+                "KSWIFTK-SEMA-LATEINIT",
+                "'lateinit' property must declare an explicit non-null reference type.",
+                range: property.range
+            )
+        }
+
+        switch sema.types.kind(of: finalPropertyType) {
+        case let .primitive(primitive, nullability):
+            if nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            } else if primitive == .boolean
+                || primitive == .char
+                || primitive == .int
+                || primitive == .long
+                || primitive == .float
+                || primitive == .double
+                || primitive == .uint
+                || primitive == .ulong
+                || primitive == .ubyte
+                || primitive == .ushort
+            {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' is not allowed on primitive property types.",
+                    range: property.range
+                )
+            }
+        case let .classType(classType):
+            if classType.nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            }
+        case let .typeParam(typeParam):
+            if typeParam.nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            }
+        case let .functionType(functionType):
+            if functionType.nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            }
+        case let .nothing(nullability):
+            if nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            }
+        case let .any(nullability):
+            if nullability == .nullable {
+                diagnostics.error(
+                    "KSWIFTK-SEMA-LATEINIT",
+                    "'lateinit' property type must be non-null.",
+                    range: property.range
+                )
+            }
+        case .error, .unit, .intersection:
+            break
         }
     }
 }

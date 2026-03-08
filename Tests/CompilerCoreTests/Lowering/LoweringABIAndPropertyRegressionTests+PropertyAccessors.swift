@@ -9,9 +9,17 @@ extension LoweringABIAndPropertyRegressionTests {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
+        let symbols = SymbolTable()
 
-        let propertySym = SymbolID(rawValue: 50)
         let callerSym = SymbolID(rawValue: 51)
+        let propertyName = interner.intern("value")
+        let propertySym = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: [propertyName],
+            declSite: nil,
+            visibility: .public
+        )
 
         let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
         let result = arena.appendExpr(.temporary(1), type: types.anyType)
@@ -39,7 +47,8 @@ extension LoweringABIAndPropertyRegressionTests {
         let fnID = arena.appendDecl(.function(callerFn))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        _ = try runLowering(module: module, interner: interner, moduleName: "PropGetter")
+        let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        _ = try runLowering(module: module, interner: interner, moduleName: "PropGetter", sema: sema)
 
         guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")
@@ -62,9 +71,17 @@ extension LoweringABIAndPropertyRegressionTests {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
+        let symbols = SymbolTable()
 
-        let propertySym = SymbolID(rawValue: 60)
         let callerSym = SymbolID(rawValue: 61)
+        let propertyName = interner.intern("value")
+        let propertySym = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: [propertyName],
+            declSite: nil,
+            visibility: .public
+        )
 
         let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
         let value = arena.appendExpr(.temporary(1), type: types.anyType)
@@ -93,7 +110,8 @@ extension LoweringABIAndPropertyRegressionTests {
         let fnID = arena.appendDecl(.function(callerFn))
         let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])], arena: arena)
 
-        _ = try runLowering(module: module, interner: interner, moduleName: "PropSetter")
+        let sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
+        _ = try runLowering(module: module, interner: interner, moduleName: "PropSetter", sema: sema)
 
         guard case let .function(lowered)? = module.arena.decl(fnID) else {
             XCTFail("expected function")

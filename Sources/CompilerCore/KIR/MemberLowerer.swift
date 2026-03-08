@@ -227,6 +227,11 @@ final class MemberLowerer {
             // synthesise getter (and setter for var) that call getValue/setValue
             // on the delegate instance.
             if propertyDecl.delegateExpression != nil {
+                let delegateKind = driver.detectDelegateKind(
+                    delegateExpr: propertyDecl.delegateExpression,
+                    ast: ast,
+                    interner: interner
+                )
                 let delegateStorageSymbol: SymbolID
                 if let existingStorage = sema.symbols.delegateStorageSymbol(for: symbol) {
                     delegateStorageSymbol = existingStorage
@@ -253,6 +258,7 @@ final class MemberLowerer {
                     propertySymbol: symbol,
                     propertyType: propType,
                     delegateStorageSymbol: delegateStorageSymbol,
+                    delegateKind: delegateKind,
                     accessorKind: .getter,
                     ast: ast,
                     sema: sema,
@@ -267,6 +273,7 @@ final class MemberLowerer {
                         propertySymbol: symbol,
                         propertyType: propType,
                         delegateStorageSymbol: delegateStorageSymbol,
+                        delegateKind: delegateKind,
                         accessorKind: .setter,
                         ast: ast,
                         sema: sema,
@@ -370,6 +377,7 @@ final class MemberLowerer {
         propertySymbol: SymbolID,
         propertyType: TypeID,
         delegateStorageSymbol: SymbolID,
+        delegateKind: StdlibDelegateKind,
         accessorKind: PropertyAccessorKind,
         ast: ASTModule,
         sema: SemaModule,
@@ -388,6 +396,7 @@ final class MemberLowerer {
             propertySymbol: propertySymbol,
             propertyType: propertyType,
             delegateStorageSymbol: delegateStorageSymbol,
+            delegateKind: delegateKind,
             accessorKind: accessorKind,
             shared: shared,
             allDecls: &allDecls

@@ -108,6 +108,50 @@ extension BuildASTPhase {
         return parseTypeRef(from: receiverTokens, interner: interner, astArena: astArena)
     }
 
+    func declarationContextReceiverTypes(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [TypeRefID] {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        guard let contextIndex = tokens.firstIndex(where: { $0.kind == .softKeyword(.context) }) else {
+            return []
+        }
+        guard contextIndex + 1 < tokens.count, tokens[contextIndex + 1].kind == .symbol(.lParen) else {
+            return []
+        }
+        var index = contextIndex + 2
+        var depth = 1
+        var current: [Token] = []
+        var refs: [TypeRefID] = []
+        while index < tokens.count, depth > 0 {
+            let token = tokens[index]
+            if token.kind == .symbol(.lParen) {
+                depth += 1
+                current.append(token)
+            } else if token.kind == .symbol(.rParen) {
+                depth -= 1
+                if depth == 0 {
+                    if let ref = parseTypeRef(from: current, interner: interner, astArena: astArena) {
+                        refs.append(ref)
+                    }
+                    break
+                }
+                current.append(token)
+            } else if token.kind == .symbol(.comma), depth == 1 {
+                if let ref = parseTypeRef(from: current, interner: interner, astArena: astArena) {
+                    refs.append(ref)
+                }
+                current.removeAll(keepingCapacity: true)
+            } else {
+                current.append(token)
+            }
+            index += 1
+        }
+        return refs
+    }
+
     func declarationReturnType(
         from nodeID: NodeID,
         in arena: SyntaxArena,

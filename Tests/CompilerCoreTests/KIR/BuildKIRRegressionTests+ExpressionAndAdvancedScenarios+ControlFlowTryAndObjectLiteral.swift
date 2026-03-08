@@ -237,7 +237,16 @@ extension BuildKIRRegressionTests {
                 XCTFail("Expected unmatched-catch path to jump to finally.")
                 return
             }
-            XCTAssertEqual(unmatchedTarget, catchEdge.target, "Unmatched catches must enter finally before rethrow.")
+            if unmatchedTarget != catchEdge.target {
+                guard let unmatchedTargetPos = labelPositions[unmatchedTarget],
+                      body.indices.contains(unmatchedTargetPos + 1),
+                      case let .jump(finallyTarget) = body[unmatchedTargetPos + 1]
+                else {
+                    XCTFail("Expected unmatched-catch trampoline label to jump to finally.")
+                    return
+                }
+                XCTAssertEqual(finallyTarget, catchEdge.target, "Unmatched catches must enter finally before rethrow.")
+            }
 
             let finallyGuardJump = body.enumerated().contains { index, instruction in
                 guard index > finallyEdge.callIndex + 3,

@@ -1,11 +1,23 @@
 import Foundation
 
 enum CodegenSymbolSupport {
-    static func cFunctionSymbol(for function: KIRFunction, interner: StringInterner) -> String {
+    static func cFunctionSymbol(
+        for function: KIRFunction,
+        interner: StringInterner,
+        fileFacadeNamesByFileID: [Int32: String] = [:]
+    ) -> String {
         let rawName = interner.resolve(function.name)
+        let facadePrefix: String = if let fileID = function.sourceRange?.start.file.rawValue,
+                                     let facadeName = fileFacadeNamesByFileID[fileID],
+                                     !facadeName.isEmpty
+        {
+            "\(sanitizeForCSymbol(facadeName))_"
+        } else {
+            ""
+        }
         let safeName = sanitizeForCSymbol(rawName)
         let suffix = abs(function.symbol.rawValue)
-        return "kk_fn_\(safeName)_\(suffix)"
+        return "kk_fn_\(facadePrefix)\(safeName)_\(suffix)"
     }
 
     private static func sanitizeForCSymbol(_ text: String) -> String {

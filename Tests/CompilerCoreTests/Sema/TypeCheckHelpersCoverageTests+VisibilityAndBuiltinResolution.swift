@@ -122,7 +122,7 @@ extension TypeCheckHelpersCoverageTests {
                 sema: fixture.sema,
                 interner: fixture.interner
             ),
-            fixture.types.unitType
+            fixture.types.nullableAnyType
         )
         XCTAssertEqual(
             helpers.kxMiniCoroutineBuiltinReturnType(

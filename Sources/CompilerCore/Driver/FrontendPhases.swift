@@ -164,6 +164,8 @@ public final class BuildASTPhase: CompilerPhase {
         let imports: [ImportDecl]
         let topLevelDecls: [DeclID]
         let scriptBody: [ExprID]
+        let annotations: [AnnotationNode]
+        let range: SourceRange?
         let allDecls: [DeclID]
     }
 
@@ -224,7 +226,9 @@ public final class BuildASTPhase: CompilerPhase {
             packageByFile: merged.packageByFile,
             importsByFile: merged.importsByFile,
             declarationsByFile: merged.declarationsByFile,
-            scriptExprsByFile: merged.scriptExprsByFile
+            scriptExprsByFile: merged.scriptExprsByFile,
+            annotationsByFile: merged.annotationsByFile,
+            fileRangesByFile: merged.fileRangesByFile
         )
     }
 
@@ -272,7 +276,9 @@ public final class BuildASTPhase: CompilerPhase {
             packageByFile: merged.packageByFile,
             importsByFile: merged.importsByFile,
             declarationsByFile: merged.declarationsByFile,
-            scriptExprsByFile: merged.scriptExprsByFile
+            scriptExprsByFile: merged.scriptExprsByFile,
+            annotationsByFile: merged.annotationsByFile,
+            fileRangesByFile: merged.fileRangesByFile
         )
     }
 
@@ -292,6 +298,9 @@ public final class BuildASTPhase: CompilerPhase {
         var imports: [ImportDecl] = []
         var topLevelDecls: [DeclID] = []
         var scriptBody: [ExprID] = []
+        let rootNode = cst.node(root)
+        let fileAnnotations = declarationAnnotations(from: root, in: cst, interner: interner)
+            .filter { $0.useSiteTarget == "file" }
 
         for child in cst.children(of: root) {
             guard case let .node(nodeID) = child else {
@@ -358,7 +367,6 @@ public final class BuildASTPhase: CompilerPhase {
                 interner: interner,
                 astArena: arena
             )
-            let rootNode = cst.node(root)
             scriptBody = scriptExprs
 
             let mainName = interner.intern("main")
@@ -380,6 +388,8 @@ public final class BuildASTPhase: CompilerPhase {
             imports: imports,
             topLevelDecls: topLevelDecls,
             scriptBody: scriptBody,
+            annotations: fileAnnotations,
+            range: rootNode.range,
             allDecls: declarations
         )
     }
@@ -400,19 +410,25 @@ public final class BuildASTPhase: CompilerPhase {
         packageByFile: [Int32: [InternedString]],
         importsByFile: [Int32: [ImportDecl]],
         declarationsByFile: [Int32: [DeclID]],
-        scriptExprsByFile: [Int32: [ExprID]]
+        scriptExprsByFile: [Int32: [ExprID]],
+        annotationsByFile: [Int32: [AnnotationNode]],
+        fileRangesByFile: [Int32: SourceRange?]
     ) {
         var declarations: [DeclID] = []
         var packageByFile: [Int32: [InternedString]] = [:]
         var importsByFile: [Int32: [ImportDecl]] = [:]
         var declarationsByFile: [Int32: [DeclID]] = [:]
         var scriptExprsByFile: [Int32: [ExprID]] = [:]
+        var annotationsByFile: [Int32: [AnnotationNode]] = [:]
+        var fileRangesByFile: [Int32: SourceRange?] = [:]
 
         for result in results.sorted(by: { $0.fileRawID < $1.fileRawID }) {
             declarations.append(contentsOf: result.allDecls)
             packageByFile[result.fileRawID] = result.packageFQName
             importsByFile[result.fileRawID] = result.imports
             declarationsByFile[result.fileRawID] = result.topLevelDecls
+            annotationsByFile[result.fileRawID] = result.annotations
+            fileRangesByFile[result.fileRawID] = result.range
             if !result.scriptBody.isEmpty {
                 scriptExprsByFile[result.fileRawID] = result.scriptBody
             }
@@ -423,7 +439,9 @@ public final class BuildASTPhase: CompilerPhase {
             packageByFile: packageByFile,
             importsByFile: importsByFile,
             declarationsByFile: declarationsByFile,
-            scriptExprsByFile: scriptExprsByFile
+            scriptExprsByFile: scriptExprsByFile,
+            annotationsByFile: annotationsByFile,
+            fileRangesByFile: fileRangesByFile
         )
     }
 
@@ -436,7 +454,9 @@ public final class BuildASTPhase: CompilerPhase {
         packageByFile: [Int32: [InternedString]],
         importsByFile: [Int32: [ImportDecl]],
         declarationsByFile: [Int32: [DeclID]],
-        scriptExprsByFile: [Int32: [ExprID]]
+        scriptExprsByFile: [Int32: [ExprID]],
+        annotationsByFile: [Int32: [AnnotationNode]],
+        fileRangesByFile: [Int32: SourceRange?]
     ) {
         let fileIDs = ctx.syntaxTrees.map(\.0.rawValue).filter { $0 != FileID.invalid.rawValue }
         let uniqueFileIDs = Array(Set(fileIDs)).sorted()
@@ -446,7 +466,9 @@ public final class BuildASTPhase: CompilerPhase {
                 packageFQName: packageByFile[rawID] ?? [],
                 imports: importsByFile[rawID] ?? [],
                 topLevelDecls: declarationsByFile[rawID] ?? [],
-                scriptBody: scriptExprsByFile[rawID] ?? []
+                scriptBody: scriptExprsByFile[rawID] ?? [],
+                annotations: annotationsByFile[rawID] ?? [],
+                range: fileRangesByFile[rawID] ?? nil
             )
         }
 

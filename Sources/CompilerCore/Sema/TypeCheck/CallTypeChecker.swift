@@ -157,8 +157,214 @@ final class CallTypeChecker {
             return sema.types.unitType
         }
 
-        let argTypes = args.map { argument in
-            driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+        // --- Stdlib repeat(times) { ... } (STDLIB-008) ---
+        // Infer the lambda argument with the expected `(Int) -> Unit` type so
+        // implicit `it` resolves to the loop index.
+        if let calleeName,
+           interner.resolve(calleeName) == "repeat",
+           args.count == 2,
+           shouldUseRepeatSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+        {
+            let intType = sema.types.intType
+            let unitType = sema.types.unitType
+            let countType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            driver.emitSubtypeConstraint(
+                left: countType,
+                right: intType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let actionExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [intType],
+                returnType: unitType
+            )))
+            _ = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: actionExpectedType
+            )
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .repeatLoop)
+            sema.bindings.bindExprType(id, type: unitType)
+            return unitType
+        }
+
+        if let calleeName,
+           interner.resolve(calleeName) == "contract",
+           args.count == 1
+        {
+            let builderSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("contracts"),
+                interner.intern("ContractBuilder"),
+            ])
+            let builderType = builderSymbol.map {
+                sema.types.make(.classType(ClassType(classSymbol: $0, args: [], nullability: .nonNull)))
+            } ?? sema.types.anyType
+            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                receiver: builderType,
+                params: [],
+                returnType: sema.types.unitType
+            )))
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx.with(implicitReceiverType: builderType),
+                locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
+        if let calleeName,
+           interner.resolve(calleeName) == "Channel",
+           args.isEmpty
+        {
+            let channelSymbol = sema.symbols.lookupAll(fqName: [calleeName]).first { candidate in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function
+                else {
+                    return false
+                }
+                return sema.symbols.externalLinkName(for: candidate) == "kk_channel_create"
+            }
+            if let channelSymbol {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: channelSymbol,
+                        substitutedTypeArguments: explicitTypeArgs,
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(channelSymbol))
+                let resultType: TypeID = if let explicitTypeArg = explicitTypeArgs.first,
+                                            let signature = sema.symbols.functionSignature(for: channelSymbol),
+                                            case let .classType(classType) = sema.types.kind(of: signature.returnType)
+                {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: classType.classSymbol,
+                        args: [.invariant(explicitTypeArg)],
+                        nullability: classType.nullability
+                    )))
+                } else {
+                    sema.symbols.functionSignature(for: channelSymbol)?.returnType ?? sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
+        if let calleeName,
+           interner.resolve(calleeName) == "delay",
+           args.count == 1
+        {
+            let delayArgType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: sema.types.longType
+            )
+            if delayArgType == sema.types.intType,
+               let argumentExpr = ast.arena.expr(args[0].expr),
+               case .intLiteral = argumentExpr
+            {
+                sema.bindings.bindExprType(args[0].expr, type: sema.types.longType)
+            } else {
+                driver.emitSubtypeConstraint(
+                    left: delayArgType,
+                    right: sema.types.longType,
+                    range: ast.arena.exprRange(args[0].expr) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            sema.bindings.bindExprType(id, type: sema.types.unitType)
+            return sema.types.unitType
+        }
+
+        let coroutineLauncherName = calleeName.map { interner.resolve($0) }
+        let coroutineLauncherExpectedLambdaType: TypeID?
+        if let coroutineLauncherName,
+           ["runBlocking", "launch", "async", "coroutineScope"].contains(coroutineLauncherName),
+           let firstArg = args.first,
+           let firstArgExpr = ast.arena.expr(firstArg.expr),
+           case .lambdaLiteral = firstArgExpr
+        {
+            let lambdaReturnType: TypeID = switch coroutineLauncherName {
+            case "launch":
+                sema.types.unitType
+            default:
+                expectedType ?? sema.types.anyType
+            }
+            coroutineLauncherExpectedLambdaType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: lambdaReturnType,
+                isSuspend: true,
+                nullability: .nonNull
+            )))
+        } else {
+            coroutineLauncherExpectedLambdaType = nil
+        }
+        let withContextExpectedLambdaType: TypeID?
+        if let calleeName,
+           interner.resolve(calleeName) == "withContext",
+           args.count >= 2,
+           let secondArgExpr = ast.arena.expr(args[1].expr),
+           case .lambdaLiteral = secondArgExpr
+        {
+            withContextExpectedLambdaType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: expectedType ?? sema.types.anyType,
+                isSuspend: true,
+                nullability: .nonNull
+            )))
+        } else {
+            withContextExpectedLambdaType = nil
+        }
+
+        if let calleeName,
+           let samCallType = inferSamConvertedCallExpr(
+               id,
+               calleeName: calleeName,
+               args: args,
+               range: range,
+               ctx: ctx,
+               locals: &locals,
+               expectedType: expectedType,
+               explicitTypeArgs: explicitTypeArgs
+           )
+        {
+            sema.bindings.bindExprType(id, type: samCallType)
+            return samCallType
+        }
+
+        let argTypes = args.enumerated().map { index, argument in
+            if index == 0, let coroutineLauncherExpectedLambdaType {
+                return driver.inferExpr(
+                    argument.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: coroutineLauncherExpectedLambdaType
+                )
+            }
+            if index == 1, let withContextExpectedLambdaType {
+                return driver.inferExpr(
+                    argument.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: withContextExpectedLambdaType
+                )
+            }
+            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
 
         var candidates: [SymbolID]
@@ -246,6 +452,13 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            applyContractEffects(
+                chosen: chosen,
+                args: args,
+                argTypes: argTypes,
+                ctx: ctx,
+                locals: &locals
+            )
             if let calleeName {
                 switch interner.resolve(calleeName) {
                 case "listOf", "mutableListOf", "emptyList",
@@ -368,6 +581,13 @@ final class CallTypeChecker {
                 }
                 if let chosen = resolved.chosenCallee {
                     let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+                    applyContractEffects(
+                        chosen: chosen,
+                        args: args,
+                        argTypes: argTypes,
+                        ctx: ctx,
+                        locals: &locals
+                    )
                     sema.bindings.markInvokeOperatorCall(id)
                     sema.bindings.bindExprType(id, type: returnType)
                     return returnType
@@ -526,6 +746,40 @@ final class CallTypeChecker {
         }
         sema.bindings.bindExprType(id, type: sema.types.errorType)
         return sema.types.errorType
+    }
+
+    private func applyContractEffects(
+        chosen: SymbolID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) {
+        let sema = ctx.sema
+        guard let effect = sema.symbols.contractNonNullEffect(for: chosen),
+              effect.appliesOnAnyReturn,
+              let parameterIndex = sema.symbols.functionSignature(for: chosen)?
+              .valueParameterSymbols.firstIndex(of: effect.parameterSymbol),
+              parameterIndex < args.count,
+              parameterIndex < argTypes.count
+        else {
+            return
+        }
+        guard let argumentExpr = ctx.ast.arena.expr(args[parameterIndex].expr),
+              case let .nameRef(argumentName, _) = argumentExpr,
+              let local = locals[argumentName]
+        else {
+            return
+        }
+        let narrowed = ctx.dataFlow.narrowToNonNull(
+            symbol: local.symbol,
+            type: argTypes[parameterIndex],
+            base: ctx.flowState,
+            types: sema.types
+        )
+        if let narrowedType = narrowed.variables[local.symbol]?.possibleTypes.first {
+            locals[argumentName] = (narrowedType, local.symbol, local.isMutable, local.isInitialized)
+        }
     }
 
     func inferMemberCallExpr(

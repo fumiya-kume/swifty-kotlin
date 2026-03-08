@@ -1,5 +1,20 @@
 import Foundation
 
+typealias KKCustomDelegateGetterEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKCustomDelegateSetterEntryPoint = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+
+final class RuntimeCustomDelegateBox {
+    let delegateHandle: Int
+    let getValueFnPtr: Int
+    let setValueFnPtr: Int
+
+    init(delegateHandle: Int, getValueFnPtr: Int, setValueFnPtr: Int) {
+        self.delegateHandle = delegateHandle
+        self.getValueFnPtr = getValueFnPtr
+        self.setValueFnPtr = setValueFnPtr
+    }
+}
+
 // MARK: - KProperty Stub (PROP-007)
 
 /// Minimal KProperty<*> stub carrying property name and return type.
@@ -243,4 +258,143 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
         box.currentValue = newValue
     }
     return box.currentValue
+}
+
+// MARK: - Custom Delegate
+
+@_cdecl("kk_custom_delegate_create")
+public func kk_custom_delegate_create(
+    _ delegateHandle: Int,
+    _ getValueFnPtr: Int,
+    _ setValueFnPtr: Int
+) -> Int {
+    let box = RuntimeCustomDelegateBox(
+        delegateHandle: delegateHandle,
+        getValueFnPtr: getValueFnPtr,
+        setValueFnPtr: setValueFnPtr
+    )
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+        state.customDelegateBoxes[UInt(bitPattern: opaque)] = box
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_custom_delegate_get_value")
+public func kk_custom_delegate_get_value(_ handle: Int, _ thisRef: Int, _ property: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let key = UInt(bitPattern: ptr)
+    let box = runtimeStorage.withLock { state in
+        state.customDelegateBoxes[key]
+    }
+    guard let box, box.getValueFnPtr != 0 else {
+        return 0
+    }
+    let getter = unsafeBitCast(box.getValueFnPtr, to: KKCustomDelegateGetterEntryPoint.self)
+    var thrown = 0
+    let value = getter(box.delegateHandle, thisRef, property, &thrown)
+    if thrown != 0 {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: custom delegate getter threw")
+    }
+    return value
+}
+
+@_cdecl("kk_custom_delegate_set_value")
+public func kk_custom_delegate_set_value(_ handle: Int, _ thisRef: Int, _ property: Int, _ newValue: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return newValue
+    }
+    let key = UInt(bitPattern: ptr)
+    let box = runtimeStorage.withLock { state in
+        state.customDelegateBoxes[key]
+    }
+    guard let box else {
+        return newValue
+    }
+    if box.setValueFnPtr == 0 {
+        return newValue
+    }
+    let setter = unsafeBitCast(box.setValueFnPtr, to: KKCustomDelegateSetterEntryPoint.self)
+    var thrown = 0
+    let result = setter(box.delegateHandle, thisRef, property, newValue, &thrown)
+    if thrown != 0 {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: custom delegate setter threw")
+    }
+    return result
+}
+
+// MARK: - Generic Delegate Operator Shims
+
+/// Bridges compiler-emitted delegated property accessors that still lower to
+/// `getValue` / `setValue` symbols instead of direct runtime helper names.
+@_cdecl("getValue")
+public func getValue(_ handle: Int, _: Int, _: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj else {
+        return 0
+    }
+    if let lazyBox = tryCast(ptr, to: RuntimeLazyBox.self) {
+        return lazyBox.getValue()
+    }
+    if let observableBox = tryCast(ptr, to: RuntimeObservableBox.self) {
+        return observableBox.currentValue
+    }
+    if let vetoableBox = tryCast(ptr, to: RuntimeVetoableBox.self) {
+        return vetoableBox.currentValue
+    }
+    return 0
+}
+
+/// Bridges compiler-emitted delegated property setters that still lower to
+/// `setValue` instead of direct runtime helper names.
+@_cdecl("setValue")
+public func setValue(_ handle: Int, _: Int, _: Int, _ newValue: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        return 0
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj else {
+        return 0
+    }
+    if let observableBox = tryCast(ptr, to: RuntimeObservableBox.self) {
+        let oldValue = observableBox.currentValue
+        observableBox.currentValue = newValue
+        if observableBox.callbackFnPtr != 0 {
+            let callback = unsafeBitCast(observableBox.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
+            var thrown = 0
+            _ = callback(0, oldValue, newValue, &thrown)
+            if thrown != 0 {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: observable callback threw")
+            }
+        }
+        return newValue
+    }
+    if let vetoableBox = tryCast(ptr, to: RuntimeVetoableBox.self) {
+        let oldValue = vetoableBox.currentValue
+        if vetoableBox.callbackFnPtr != 0 {
+            let callback = unsafeBitCast(vetoableBox.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
+            var thrown = 0
+            let accepted = callback(0, oldValue, newValue, &thrown)
+            if thrown != 0 {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: vetoable callback threw")
+            }
+            if accepted != 0 {
+                vetoableBox.currentValue = newValue
+            }
+        } else {
+            vetoableBox.currentValue = newValue
+        }
+        return vetoableBox.currentValue
+    }
+    return newValue
 }

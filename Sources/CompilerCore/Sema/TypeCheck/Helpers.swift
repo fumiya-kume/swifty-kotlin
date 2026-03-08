@@ -91,13 +91,13 @@ struct TypeCheckHelpers {
             return sema.types.anyType
         case "launch":
             guard argumentCount >= 1 else { return nil }
-            return sema.types.unitType
+            return sema.types.nullableAnyType
         case "async":
             guard argumentCount >= 1 else { return nil }
             return sema.types.nullableAnyType
         case "delay":
             guard argumentCount == 1 else { return nil }
-            return sema.types.nullableAnyType
+            return sema.types.unitType
         case "kk_array_new", "IntArray":
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType

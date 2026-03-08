@@ -15,7 +15,11 @@ public final class LinkPhase: CompilerPhase {
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available during link.")
         }
-        guard let entrySymbol = resolveEntrySymbol(kir: kir, interner: ctx.interner) else {
+        guard let entrySymbol = resolveEntrySymbol(
+            kir: kir,
+            interner: ctx.interner,
+            fileFacadeNamesByFileID: fileFacadeNames(from: ctx.ast)
+        ) else {
             ctx.diagnostics.error(
                 "KSWIFTK-LINK-0002",
                 "No entry point 'main' function found for executable emission.",
@@ -82,16 +86,43 @@ public final class LinkPhase: CompilerPhase {
         }
     }
 
-    private func resolveEntrySymbol(kir: KIRModule, interner: StringInterner) -> String? {
+    private func resolveEntrySymbol(
+        kir: KIRModule,
+        interner: StringInterner,
+        fileFacadeNamesByFileID: [Int32: String]
+    ) -> String? {
         for decl in kir.arena.declarations {
             guard case let .function(function) = decl else {
                 continue
             }
             if interner.resolve(function.name) == "main" {
-                return CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+                return CodegenSymbolSupport.cFunctionSymbol(
+                    for: function,
+                    interner: interner,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
             }
         }
         return nil
+    }
+
+    private func fileFacadeNames(from ast: ASTModule?) -> [Int32: String] {
+        guard let ast else {
+            return [:]
+        }
+        return ast.files.reduce(into: [:]) { partial, file in
+            for annotation in file.annotations where annotation.useSiteTarget == "file" {
+                guard annotation.name == "JvmName" || annotation.name == "kotlin.jvm.JvmName",
+                      let firstArgument = annotation.arguments.first
+                else {
+                    continue
+                }
+                let trimmed = firstArgument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                if !trimmed.isEmpty {
+                    partial[file.fileID.rawValue] = trimmed
+                }
+            }
+        }
     }
 
     func linkerDriverArgs(for target: TargetTriple) -> [String] {

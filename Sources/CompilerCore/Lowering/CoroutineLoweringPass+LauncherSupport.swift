@@ -124,8 +124,7 @@ extension CoroutineLoweringPass {
         symbolByExprRaw: [Int32: SymbolID],
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction]? {
-        guard call.symbol == nil,
-              let runtimeLauncherCallee = rewrite.kxMiniLauncherRuntimeCallees[call.callee]
+        guard let runtimeLauncherCallee = rewrite.kxMiniLauncherRuntimeCallees[call.callee]
         else {
             return nil
         }

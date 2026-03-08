@@ -267,41 +267,56 @@ extension BuildASTPhase {
         var companionObject: DeclID?
 
         for child in arena.children(of: bodyBlockID) {
-            guard case let .node(childID) = child else {
-                continue
-            }
-            let childNode = arena.node(childID)
-            switch childNode.kind {
-            case .funDecl:
-                let funDecl = makeFunDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.funDecl(funDecl))
-                functions.append(declID)
-            case .propertyDecl:
-                let propDecl = makePropertyDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.propertyDecl(propDecl))
-                properties.append(declID)
-            case .classDecl:
-                let classDecl = makeClassDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.classDecl(classDecl))
-                nestedClasses.append(declID)
-            case .interfaceDecl:
-                let interfaceDecl = makeInterfaceDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.interfaceDecl(interfaceDecl))
-                nestedClasses.append(declID)
-            case .objectDecl:
-                let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.objectDecl(objectDecl))
-                if objectDecl.modifiers.contains(.companion) {
-                    companionObject = declID
-                } else {
-                    nestedObjects.append(declID)
-                }
-            default:
-                continue
-            }
+            guard case let .node(childID) = child else { continue }
+            processMemberChild(
+                childID,
+                in: arena, interner: interner, astArena: astArena,
+                functions: &functions, properties: &properties,
+                nestedClasses: &nestedClasses, nestedObjects: &nestedObjects,
+                companionObject: &companionObject
+            )
         }
 
         return (functions, properties, nestedClasses, nestedObjects, companionObject)
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func processMemberChild(
+        _ childID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena,
+        functions: inout [DeclID],
+        properties: inout [DeclID],
+        nestedClasses: inout [DeclID],
+        nestedObjects: inout [DeclID],
+        companionObject: inout DeclID?
+    ) {
+        let childNode = arena.node(childID)
+        switch childNode.kind {
+        case .funDecl:
+            let funDecl = makeFunDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            functions.append(astArena.appendDecl(.funDecl(funDecl)))
+        case .propertyDecl:
+            let propDecl = makePropertyDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            properties.append(astArena.appendDecl(.propertyDecl(propDecl)))
+        case .classDecl:
+            let classDecl = makeClassDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            nestedClasses.append(astArena.appendDecl(.classDecl(classDecl)))
+        case .interfaceDecl:
+            let interfaceDecl = makeInterfaceDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            nestedClasses.append(astArena.appendDecl(.interfaceDecl(interfaceDecl)))
+        case .objectDecl:
+            let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            let declID = astArena.appendDecl(.objectDecl(objectDecl))
+            if objectDecl.modifiers.contains(.companion) {
+                companionObject = declID
+            } else {
+                nestedObjects.append(declID)
+            }
+        default:
+            break
+        }
     }
 
     /// Walks the class body block and records the declaration-order sequence

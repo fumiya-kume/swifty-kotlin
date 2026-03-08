@@ -134,7 +134,15 @@ public final class MetadataEncoder {
     ) -> [MetadataRecord] {
         let mangler = NameMangler()
         let exported = symbols.allSymbols()
-            .filter { $0.visibility == .public && $0.kind != .package }
+            .filter { symbol in
+                guard symbol.visibility == .public else {
+                    return false
+                }
+                if symbol.kind == .package {
+                    return !symbols.annotations(for: symbol.id).isEmpty
+                }
+                return true
+            }
             .sorted { lhs, rhs in
                 if lhs.fqName.count != rhs.fqName.count {
                     return lhs.fqName.count < rhs.fqName.count

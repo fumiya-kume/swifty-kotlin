@@ -80,10 +80,11 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_compare_any, kk_string_length,
-        // kk_string_trim, kk_string_format, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
+        // kk_string_trim, kk_string_trimIndent, kk_string_trimMargin_default, kk_string_trimMargin,
+        // kk_string_format, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
         // kk_string_startsWith, kk_string_endsWith, kk_string_contains_str,
         // kk_string_replace, kk_string_split, kk_string_toInt, kk_string_toDouble
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 16)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 19)
     }
 
     func testPrintlnFunctionCount() {
@@ -107,8 +108,9 @@ final class ABIMismatchTests: XCTestCase {
 
     func testBoxingFunctionCount() {
         // kk_box_int, kk_box_bool, kk_box_long, kk_box_float, kk_box_double, kk_box_char,
-        // kk_unbox_int, kk_unbox_bool, kk_unbox_long, kk_unbox_float, kk_unbox_double, kk_unbox_char
-        XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 12)
+        // kk_box_string, kk_box_any, kk_unbox_int, kk_unbox_bool, kk_unbox_long, kk_unbox_float,
+        // kk_unbox_double, kk_unbox_char, kk_unbox_string, kk_unbox_any
+        XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 14)
     }
 
     func testArrayFunctionCount() {

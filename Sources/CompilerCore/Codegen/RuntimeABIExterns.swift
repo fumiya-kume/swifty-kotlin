@@ -121,6 +121,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_trimIndent = ExternDecl(
+        name: "kk_string_trimIndent",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_trimMargin_default = ExternDecl(
+        name: "kk_string_trimMargin_default",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_trimMargin = ExternDecl(
+        name: "kk_string_trimMargin",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_format = ExternDecl(
         name: "kk_string_format",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -536,6 +554,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_lateinit_is_initialized = ExternDecl(
+        name: "kk_lateinit_is_initialized",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_lateinit_get_or_throw = ExternDecl(
+        name: "kk_lateinit_get_or_throw",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_unbox_int = ExternDecl(
         name: "kk_unbox_int",
         parameterTypes: ["intptr_t"],
@@ -651,6 +681,12 @@ public enum RuntimeABIExterns {
     public static let kk_type_register_iface = ExternDecl(
         name: "kk_type_register_iface",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_object_register_itable_method = ExternDecl(
+        name: "kk_object_register_itable_method",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -772,6 +808,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_custom_delegate_create = ExternDecl(
+        name: "kk_custom_delegate_create",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_custom_delegate_get_value = ExternDecl(
+        name: "kk_custom_delegate_get_value",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_custom_delegate_set_value = ExternDecl(
+        name: "kk_custom_delegate_set_value",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Bitwise/Shift (P5-103)
 
     public static let kk_bitwise_and = ExternDecl(
@@ -843,6 +897,9 @@ public enum RuntimeABIExterns {
         kk_compare_any,
         kk_string_length,
         kk_string_trim,
+        kk_string_trimIndent,
+        kk_string_trimMargin_default,
+        kk_string_trimMargin,
         kk_string_format,
         kk_string_isNullOrEmpty,
         kk_string_isNullOrBlank,
@@ -919,6 +976,8 @@ public enum RuntimeABIExterns {
         // Boxing
         kk_box_int,
         kk_box_bool,
+        kk_lateinit_is_initialized,
+        kk_lateinit_get_or_throw,
         kk_unbox_int,
         kk_unbox_bool,
         kk_box_long,
@@ -940,6 +999,7 @@ public enum RuntimeABIExterns {
         // TypeCheck Operators
         kk_type_register_super,
         kk_type_register_iface,
+        kk_object_register_itable_method,
         kk_type_token_simple_name,
         kk_type_token_qualified_name,
         kk_op_is,
@@ -962,6 +1022,9 @@ public enum RuntimeABIExterns {
         kk_vetoable_create,
         kk_vetoable_get_value,
         kk_vetoable_set_value,
+        kk_custom_delegate_create,
+        kk_custom_delegate_get_value,
+        kk_custom_delegate_set_value,
         // Bitwise/Shift (P5-103)
         kk_bitwise_and,
         kk_bitwise_or,

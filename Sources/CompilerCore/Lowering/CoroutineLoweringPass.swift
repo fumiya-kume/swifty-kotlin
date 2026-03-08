@@ -16,6 +16,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
+            ctx.interner.intern("withContext"),
             ctx.interner.intern("coroutineScope"),
             ctx.interner.intern("flow"),
             ctx.interner.intern("emit"),
@@ -65,6 +66,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniRunBlockingCallee = ctx.interner.intern("runBlocking")
         let kxMiniLaunchCallee = ctx.interner.intern("launch")
         let kxMiniAsyncCallee = ctx.interner.intern("async")
+        let kxMiniWithContextCallee = ctx.interner.intern("withContext")
         let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
@@ -239,6 +241,8 @@ final class CoroutineLoweringPass: LoweringPass {
             anyType: anyType,
             intType: intType,
             flowCollectCallee: flowCollectCallee,
+            withContextCallee: kxMiniWithContextCallee,
+            runtimeWithContextCallee: ctx.interner.intern("kk_with_context"),
             continuationFactory: continuationFactory,
             launcherArgSetCallee: launcherArgSetCallee,
             runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,

@@ -293,13 +293,13 @@ final class ControlFlowLowerer {
         let boundType = sema.bindings.exprTypes[exprID]
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
         let intType = sema.types.make(.primitive(.int, .nonNull))
-        let exceptionSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        let exceptionSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.nullableAnyType)
         let exceptionTypeSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
-        let zeroValue = arena.appendExpr(.intLiteral(0), type: sema.types.anyType)
+        let nullExceptionValue = arena.appendExpr(.null, type: sema.types.nullableAnyType)
         let zeroTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
-        instructions.append(.constValue(result: zeroValue, value: .intLiteral(0)))
+        instructions.append(.constValue(result: nullExceptionValue, value: .null))
         instructions.append(.constValue(result: zeroTypeToken, value: .intLiteral(0)))
-        instructions.append(.copy(from: zeroValue, to: exceptionSlot))
+        instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
         instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
 
         let tryResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
@@ -311,6 +311,7 @@ final class ControlFlowLowerer {
 
         let catchBindings = catchClauses.map { resolveCatchClauseBinding($0, sema: sema, interner: interner) }
         let catchCheckLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
+        let catchMissLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
         let catchBodyLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
         let unmatchedCatchLabel = driver.ctx.makeLoopLabel()
 
@@ -344,6 +345,83 @@ final class ControlFlowLowerer {
         instructions.append(.label(catchDispatchLabel))
         if catchClauses.isEmpty {
             instructions.append(.jump(finallyLabel))
+        } else if catchClauses.count == 1 {
+            let clause = catchClauses[0]
+            let binding = catchBindings[0]
+            let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+            instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+
+            let noMatchLabel = driver.ctx.makeLoopLabel()
+            if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
+                let matchResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                if isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner) {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_throwable_is_cancellation"),
+                        arguments: [exceptionSlot],
+                        result: matchResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                    instructions.append(.binary(
+                        op: .equal,
+                        lhs: exceptionTypeSlot,
+                        rhs: tokenExpr,
+                        result: matchResult
+                    ))
+                }
+                instructions.append(.jumpIfEqual(lhs: matchResult, rhs: falseValue, target: noMatchLabel))
+            }
+
+            var previousCatchParamValue: KIRExprID?
+            if clause.paramName != nil, binding.parameterSymbol != .invalid {
+                let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: binding.parameterType)
+                instructions.append(.copy(from: exceptionSlot, to: paramID))
+                previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
+                driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
+            }
+
+            var catchBodyInstructions: [KIRInstruction] = []
+            let catchBodyResult = driver.lowerExpr(
+                clause.body,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &catchBodyInstructions
+            )
+            appendThrowAwareInstructions(
+                catchBodyInstructions,
+                exceptionSlot: exceptionSlot,
+                exceptionTypeSlot: exceptionTypeSlot,
+                thrownTarget: finallyLabel,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            )
+
+            if clause.paramName != nil, binding.parameterSymbol != .invalid {
+                if let previousCatchParamValue {
+                    driver.ctx.localValuesBySymbol[binding.parameterSymbol] = previousCatchParamValue
+                } else {
+                    driver.ctx.localValuesBySymbol.removeValue(forKey: binding.parameterSymbol)
+                }
+            }
+
+            let catchTerminated = isTerminatedExpr(catchBodyResult, arena: arena, sema: sema)
+            if !catchTerminated {
+                instructions.append(.copy(from: catchBodyResult, to: tryResult))
+            }
+            instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
+            instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
+            instructions.append(.jump(finallyLabel))
+
+            instructions.append(.label(noMatchLabel))
+            instructions.append(.jump(finallyLabel))
         } else {
             let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
             instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
@@ -354,20 +432,28 @@ final class ControlFlowLowerer {
                 let binding = catchBindings[index]
                 instructions.append(.label(catchCheckLabels[index]))
 
-                if !isCatchAllType(binding.parameterType, sema: sema) {
-                    let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
                     let matchResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: exceptionTypeSlot,
-                        rhs: tokenExpr,
-                        result: matchResult
-                    ))
-                    let nextLabel = index + 1 < catchClauses.count
-                        ? catchCheckLabels[index + 1]
-                        : unmatchedCatchLabel
-                    instructions.append(.jumpIfEqual(lhs: matchResult, rhs: falseValue, target: nextLabel))
+                    if isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner) {
+                        instructions.append(.call(
+                            symbol: nil,
+                            callee: interner.intern("kk_throwable_is_cancellation"),
+                            arguments: [exceptionSlot],
+                            result: matchResult,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                    } else {
+                        let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                        instructions.append(.binary(
+                            op: .equal,
+                            lhs: exceptionTypeSlot,
+                            rhs: tokenExpr,
+                            result: matchResult
+                        ))
+                    }
+                    instructions.append(.jumpIfEqual(lhs: matchResult, rhs: falseValue, target: catchMissLabels[index]))
                 }
                 instructions.append(.jump(catchBodyLabels[index]))
                 instructions.append(.label(catchBodyLabels[index]))
@@ -412,9 +498,16 @@ final class ControlFlowLowerer {
                 if !catchTerminated {
                     instructions.append(.copy(from: catchBodyResult, to: tryResult))
                 }
-                instructions.append(.copy(from: zeroValue, to: exceptionSlot))
+                instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
                 instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jump(finallyLabel))
+
+                instructions.append(.label(catchMissLabels[index]))
+                if index + 1 < catchClauses.count {
+                    instructions.append(.jump(catchCheckLabels[index + 1]))
+                } else {
+                    instructions.append(.jump(unmatchedCatchLabel))
+                }
             }
 
             instructions.append(.label(unmatchedCatchLabel))

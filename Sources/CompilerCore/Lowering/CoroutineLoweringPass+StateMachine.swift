@@ -123,9 +123,9 @@ extension CoroutineLoweringPass {
                 }
 
                 // CORO-002: Check cancellation after resuming from suspension point.
-                // If cancelled, kk_coroutine_check_cancellation writes a CancellationException
-                // into outThrown and returns 1. We use thrownResult: nil so that codegen
-                // auto-generates the early-return propagation on non-zero thrown.
+                // If cancelled, kk_coroutine_check_cancellation writes a
+                // CancellationException into the original call's thrown slot so
+                // surrounding try/catch blocks can observe it.
                 let cancelCheckResult = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: intType
@@ -137,7 +137,7 @@ extension CoroutineLoweringPass {
                         arguments: [continuationExpr],
                         result: cancelCheckResult,
                         canThrow: true,
-                        thrownResult: nil
+                        thrownResult: transition.suspendingInstructionCallInfo?.thrownResult
                     )
                 )
             }
@@ -218,7 +218,7 @@ extension CoroutineLoweringPass {
                                 arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
-                                thrownResult: nil,
+                                thrownResult: suspendCallInfo.thrownResult,
                                 dispatch: dispatch
                             )
                         )
@@ -230,7 +230,7 @@ extension CoroutineLoweringPass {
                                 arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
-                                thrownResult: nil,
+                                thrownResult: suspendCallInfo.thrownResult,
                                 isSuperCall: suspendCallInfo.isSuperCall
                             )
                         )
@@ -326,6 +326,7 @@ extension CoroutineLoweringPass {
     struct SuspendTransition {
         let sourceInstructionIndex: Int
         let callResultExpr: KIRExprID?
+        let suspendingInstructionCallInfo: CallInfo?
     }
 
     struct SpillPlan {

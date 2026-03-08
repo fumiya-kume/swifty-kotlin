@@ -353,6 +353,58 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let callBinding = recoverMemberCallBinding(
+            exprID: exprID,
+            receiverExpr: receiverExpr,
+            calleeName: interner.intern("get"),
+            argumentExprs: indices,
+            sema: sema
+        ) ?? sema.bindings.callBindings[exprID]
+        if let chosenGet = callBinding?.chosenCallee,
+           chosenGet != .invalid,
+           let signature = sema.symbols.functionSignature(for: chosenGet),
+           signature.receiverType != nil
+        {
+            let loweredIndices = indices.map { indexExpr in
+                driver.lowerExpr(
+                    indexExpr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            emitMemberCallInstruction(
+                normalized: driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredIndices,
+                    callBinding: callBinding,
+                    chosenCallee: chosenGet,
+                    spreadFlags: Array(repeating: false, count: loweredIndices.count),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ),
+                callBinding: callBinding,
+                chosenCallee: chosenGet,
+                calleeName: interner.intern("get"),
+                receiverExpr: receiverExpr,
+                loweredReceiverID: receiverID,
+                result: result,
+                isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: [receiverID] + loweredIndices
+            )
+            return result
+        }
         // Built-in array get only supports a single Int index
         assert(!indices.isEmpty, "indices must not be empty for indexed access")
         let indexID = driver.lowerExpr(

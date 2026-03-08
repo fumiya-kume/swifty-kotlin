@@ -152,10 +152,22 @@ extension NativeEmitter {
 
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
-            if case let .copy(_, to) = instruction, copyTargetAllocas[to.rawValue] == nil {
-                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(to.rawValue)") {
+            let spillTargets: [KIRExprID] = {
+                switch instruction {
+                case let .copy(_, to):
+                    return [to]
+                case let .call(_, _, _, _, _, thrownResult, _):
+                    return thrownResult.map { [$0] } ?? []
+                case let .virtualCall(_, _, _, _, _, _, thrownResult, _):
+                    return thrownResult.map { [$0] } ?? []
+                default:
+                    return []
+                }
+            }()
+            for target in spillTargets where copyTargetAllocas[target.rawValue] == nil {
+                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(target.rawValue)") {
                     _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
-                    copyTargetAllocas[to.rawValue] = alloca
+                    copyTargetAllocas[target.rawValue] = alloca
                 }
             }
         }
@@ -187,6 +199,29 @@ extension NativeEmitter {
             let declared = LLVMFunction(value: externalValue, type: externalType)
             externalFunctions[calleeName] = declared
             return declared
+        }
+
+        func resolveUnnamedInternalFunction(
+            named calleeName: String,
+            argumentCount: Int,
+            appendThrownChannel: Bool
+        ) -> (symbol: SymbolID, function: LLVMFunction)? {
+            var match: (symbol: SymbolID, function: LLVMFunction)?
+            let expectedParameterCount = argumentCount + (appendThrownChannel ? 1 : 0)
+            for declaration in module.arena.declarations {
+                guard case let .function(candidate) = declaration,
+                      interner.resolve(candidate.name) == calleeName,
+                      candidate.params.count == expectedParameterCount,
+                      let llvmFunction = internalFunctions[candidate.symbol]
+                else {
+                    continue
+                }
+                if match != nil {
+                    return nil
+                }
+                match = (candidate.symbol, llvmFunction)
+            }
+            return match
         }
 
         func valueForConstant(_ expression: KIRExprKind, expressionRawID: Int32?) -> LLVMCAPIBindings.LLVMValueRef {
@@ -650,6 +685,13 @@ extension NativeEmitter {
                             name: "println_\(instructionIndex)"
                         )
                     }
+                    if usesThrownChannel, let thrownResult {
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, zeroValue)
+                        }
+                    }
                     storeResult(result, zeroValue)
                     continue
                 }
@@ -663,14 +705,31 @@ extension NativeEmitter {
                     continue
                 }
 
+                let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
+                    symbol
+                } else {
+                    Optional<SymbolID>.none
+                }
+                let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
+                    resolveUnnamedInternalFunction(
+                        named: calleeName,
+                        argumentCount: argumentValues.count,
+                        appendThrownChannel: usesThrownChannel
+                    )
+                } else {
+                    nil
+                }
+                let effectiveSymbol = normalizedSymbol ?? fallbackInternal?.symbol
                 let calleeFunction: LLVMFunction?
-                let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
+                let isInternalCall = effectiveSymbol.flatMap { internalFunctions[$0] } != nil
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
-                if let symbol,
-                   let internalFunction = internalFunctions[symbol]
+                if let effectiveSymbol,
+                   let internalFunction = internalFunctions[effectiveSymbol]
                 {
                     calleeFunction = internalFunction
+                } else if let fallbackInternal {
+                    calleeFunction = fallbackInternal.function
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
                 } else {
@@ -792,13 +851,30 @@ extension NativeEmitter {
                 let calleeName = interner.resolve(callee)
                 let argumentValues = [resolveValue(receiver)] + arguments.map(resolveValue)
 
-                let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
+                let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
+                    symbol
+                } else {
+                    Optional<SymbolID>.none
+                }
+                let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
+                    resolveUnnamedInternalFunction(
+                        named: calleeName,
+                        argumentCount: argumentValues.count,
+                        appendThrownChannel: usesThrownChannel
+                    )
+                } else {
+                    nil
+                }
+                let effectiveSymbol = normalizedSymbol ?? fallbackInternal?.symbol
+                let isInternalCall = effectiveSymbol.flatMap { internalFunctions[$0] } != nil
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
-                let calleeFunction: LLVMFunction? = if let symbol,
-                                                       let internalFunction = internalFunctions[symbol]
+                let calleeFunction: LLVMFunction? = if let effectiveSymbol,
+                                                       let internalFunction = internalFunctions[effectiveSymbol]
                 {
                     internalFunction
+                } else if let fallbackInternal {
+                    fallbackInternal.function
                 } else if calleeName.isEmpty {
                     nil
                 } else {
@@ -1089,7 +1165,31 @@ extension NativeEmitter {
                     continue
                 }
                 let resolved = resolveValue(value)
-                if let condition = buildBoolCondition(from: resolved, name: "jnn_cond_\(instructionIndex)"),
+                let nullSentinel = bindings.constInt(
+                    int64Type,
+                    value: UInt64(bitPattern: Int64.min),
+                    signExtend: true
+                ) ?? zeroValue
+                let isNonZero = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: resolved,
+                    rhs: zeroValue,
+                    name: "jnn_nonzero_\(instructionIndex)"
+                )
+                let isNotSentinel = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: resolved,
+                    rhs: nullSentinel,
+                    name: "jnn_nonsentinel_\(instructionIndex)"
+                )
+                if let isNonZero,
+                   let isNotSentinel,
+                   let condition = bindings.buildAnd(
+                       builder,
+                       lhs: isNonZero,
+                       rhs: isNotSentinel,
+                       name: "jnn_cond_\(instructionIndex)"
+                   ),
                    let targetBlock = blockForLabel(target),
                    let fallthroughBlock = bindings.appendBasicBlock(
                        context: context,

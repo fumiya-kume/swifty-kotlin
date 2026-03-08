@@ -59,6 +59,8 @@ extension BuildASTPhase {
             .override
         case .keyword(.fun):
             .funModifier
+        case .keyword(.lateinit):
+            .lateinit
         default:
             nil
         }
