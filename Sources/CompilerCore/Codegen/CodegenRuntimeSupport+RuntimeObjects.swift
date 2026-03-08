@@ -1,25 +1,48 @@
 import Foundation
 
 private final class RuntimeObjectCache: @unchecked Sendable {
-    private let lock = NSLock()
+    private let condition = NSCondition()
     private var cachedPathsByTarget: [String: [String]] = [:]
+    private var loadingKeys: Set<String> = []
 
     func getOrLoad(cacheKey: String, loader: () throws -> [String]) throws -> [String] {
-        lock.lock()
-        if let cachedPaths = cachedPathsByTarget[cacheKey],
-           cachedPaths.allSatisfy({ FileManager.default.fileExists(atPath: $0) })
-        {
-            lock.unlock()
-            return cachedPaths
+        condition.lock()
+        while true {
+            if let cachedPaths = cachedPathsIfValid(for: cacheKey) {
+                condition.unlock()
+                return cachedPaths
+            }
+            if !loadingKeys.contains(cacheKey) {
+                loadingKeys.insert(cacheKey)
+                condition.unlock()
+
+                do {
+                    let loadedPaths = try loader()
+                    condition.lock()
+                    cachedPathsByTarget[cacheKey] = loadedPaths
+                    loadingKeys.remove(cacheKey)
+                    condition.broadcast()
+                    condition.unlock()
+                    return loadedPaths
+                } catch {
+                    condition.lock()
+                    loadingKeys.remove(cacheKey)
+                    condition.broadcast()
+                    condition.unlock()
+                    throw error
+                }
+            }
+            condition.wait()
         }
-        lock.unlock()
+    }
 
-        let loadedPaths = try loader()
-
-        lock.lock()
-        cachedPathsByTarget[cacheKey] = loadedPaths
-        lock.unlock()
-        return loadedPaths
+    private func cachedPathsIfValid(for cacheKey: String) -> [String]? {
+        guard let cachedPaths = cachedPathsByTarget[cacheKey],
+              cachedPaths.allSatisfy({ FileManager.default.fileExists(atPath: $0) })
+        else {
+            return nil
+        }
+        return cachedPaths
     }
 }
 
@@ -156,11 +179,47 @@ extension CodegenRuntimeSupport {
     }
 
     private static func packageRootURL() -> URL {
-        URL(fileURLWithPath: #filePath)
+        if let overridePath = ProcessInfo.processInfo.environment["KSWIFTK_PACKAGE_ROOT"] {
+            let overrideURL = URL(fileURLWithPath: overridePath, isDirectory: true)
+            if let root = firstAncestorContainingPackage(startingAt: overrideURL) {
+                return root
+            }
+        }
+
+        let fileManager = FileManager.default
+        let currentDirectoryURL = URL(fileURLWithPath: fileManager.currentDirectoryPath, isDirectory: true)
+        if let root = firstAncestorContainingPackage(startingAt: currentDirectoryURL) {
+            return root
+        }
+
+        if let executablePath = CommandLine.arguments.first, !executablePath.isEmpty {
+            let executableURL = URL(fileURLWithPath: executablePath)
+            if let root = firstAncestorContainingPackage(startingAt: executableURL.deletingLastPathComponent()) {
+                return root
+            }
+        }
+
+        let sourceRootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
+        return firstAncestorContainingPackage(startingAt: sourceRootURL) ?? sourceRootURL
+    }
+
+    private static func firstAncestorContainingPackage(startingAt url: URL) -> URL? {
+        var current = url.standardizedFileURL
+        let fileManager = FileManager.default
+        while true {
+            if fileManager.fileExists(atPath: current.appendingPathComponent("Package.swift").path) {
+                return current
+            }
+            let parent = current.deletingLastPathComponent()
+            if parent.path == current.path {
+                return nil
+            }
+            current = parent
+        }
     }
 
     private static func runtimeBuildScratchDirectory(target: TargetTriple) -> URL {

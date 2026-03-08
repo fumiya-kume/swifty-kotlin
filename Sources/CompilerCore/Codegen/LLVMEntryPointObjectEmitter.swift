@@ -72,6 +72,9 @@ struct LLVMEntryPointObjectEmitter {
         guard let int64Type = bindings.int64Type(context: context) else {
             throw LLVMEntryPointObjectEmitterError.invalidIR("LLVMInt64TypeInContext returned null")
         }
+        guard let int32Type = bindings.int32Type(context: context) else {
+            throw LLVMEntryPointObjectEmitterError.invalidIR("LLVMInt32TypeInContext returned null")
+        }
         guard let int8Type = bindings.int8Type(context: context) else {
             throw LLVMEntryPointObjectEmitterError.invalidIR("LLVMInt8TypeInContext returned null")
         }
@@ -96,7 +99,7 @@ struct LLVMEntryPointObjectEmitter {
             throw LLVMEntryPointObjectEmitterError.invalidIR("failed to create stderr write function type")
         }
         guard let mainType = bindings.functionType(
-            returnType: int64Type,
+            returnType: int32Type,
             parameters: [],
             isVarArg: false
         ) else {
@@ -135,7 +138,7 @@ struct LLVMEntryPointObjectEmitter {
 
         guard let thrownSlot = bindings.buildAlloca(builder, type: int64Type, name: "thrown.slot"),
               let zero = bindings.constInt(int64Type, value: 0),
-              let one = bindings.constInt(int64Type, value: 1),
+              let one32 = bindings.constInt(int32Type, value: 1),
               let stderrFD = bindings.constInt(int64Type, value: 2),
               let panicMessageLength = bindings.constInt(
                   int64Type,
@@ -199,12 +202,20 @@ struct LLVMEntryPointObjectEmitter {
         ) != nil else {
             throw LLVMEntryPointObjectEmitterError.invalidIR("failed to emit stderr write")
         }
-        guard bindings.buildRet(builder, value: one) != nil else {
+        guard bindings.buildRet(builder, value: one32) != nil else {
             throw LLVMEntryPointObjectEmitterError.invalidIR("failed to emit failure return")
         }
 
         bindings.positionBuilder(builder, at: successBlock)
-        guard bindings.buildRet(builder, value: entryResult) != nil else {
+        guard let exitCode = bindings.buildTrunc(
+            builder,
+            value: entryResult,
+            type: int32Type,
+            name: "exit.code"
+        ) else {
+            throw LLVMEntryPointObjectEmitterError.invalidIR("failed to narrow entry return value to main ABI")
+        }
+        guard bindings.buildRet(builder, value: exitCode) != nil else {
             throw LLVMEntryPointObjectEmitterError.invalidIR("failed to emit success return")
         }
 

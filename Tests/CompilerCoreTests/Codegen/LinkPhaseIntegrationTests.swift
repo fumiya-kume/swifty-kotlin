@@ -294,6 +294,46 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         }
     }
 
+    func testExecutableEmissionWithObjectOutputPathUsesSeparateIntermediateObjectPath() throws {
+        let source = """
+        fun main() {
+            println(42)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("o")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "ObjectSuffixOutput",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            XCTAssertEqual(
+                ctx.generatedObjectPath,
+                URL(fileURLWithPath: outputPath)
+                    .deletingPathExtension()
+                    .appendingPathExtension("executable")
+                    .appendingPathExtension("o")
+                    .path
+            )
+            XCTAssertNotEqual(ctx.generatedObjectPath, outputPath)
+
+            assertLinkSucceeds(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines), "42")
+        }
+    }
+
     func testExecutableStringFormatHandlesBoxedScalarsInRuntimeObjects() throws {
         let source = """
         fun main() {

@@ -105,7 +105,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(result.diagnostics.contains(where: { $0.code == "KSWIFTK-SOURCE-0002" }))
     }
 
-    func testSmokeLLVMObjectEmissionWhenBackendAvailable() throws {
+    func testSmokeLLVMObjectEmissionProducesNativeObjectFile() throws {
         try withTemporaryFile(contents: "fun main() = 0") { path in
             let fileManager = FileManager.default
             let outputBase = fileManager.temporaryDirectory

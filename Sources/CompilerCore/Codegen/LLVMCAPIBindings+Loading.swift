@@ -211,6 +211,7 @@ extension LLVMCAPIBindings {
                 buildNotFn: loadSymbol(handle: handle, name: "LLVMBuildNot", as: LLVMBuildNotFn.self),
                 buildICmpFn: buildICmp,
                 buildZExtFn: loadSymbol(handle: handle, name: "LLVMBuildZExt", as: LLVMBuildZExtFn.self),
+                buildTruncFn: loadSymbol(handle: handle, name: "LLVMBuildTrunc", as: LLVMBuildTruncFn.self),
                 buildAllocaFn: loadSymbol(handle: handle, name: "LLVMBuildAlloca", as: LLVMBuildAllocaFn.self),
                 buildStoreFn: loadSymbol(handle: handle, name: "LLVMBuildStore", as: LLVMBuildStoreFn.self),
                 buildLoad2Fn: loadSymbol(handle: handle, name: "LLVMBuildLoad2", as: LLVMBuildLoad2Fn.self),

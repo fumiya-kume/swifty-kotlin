@@ -55,6 +55,13 @@ extension LLVMCAPIBindings {
         return name.withCString { buildZExtFn(builder, value, type, $0) }
     }
 
+    func buildTrunc(_ builder: LLVMBuilderRef?, value: LLVMValueRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
+        guard let buildTruncFn else {
+            return nil
+        }
+        return name.withCString { buildTruncFn(builder, value, type, $0) }
+    }
+
     func buildAlloca(_ builder: LLVMBuilderRef?, type: LLVMTypeRef?, name: String) -> LLVMValueRef? {
         guard let buildAllocaFn else {
             return nil
