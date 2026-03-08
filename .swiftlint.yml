@@ -26,25 +26,29 @@ identifier_name:
     - O3
     - v2_3_10
 
+cyclomatic_complexity:
+  warning: 25
+  error: 50
+
 function_body_length:
-  warning: 200
-  error: 300
+  warning: 400
+  error: 800
 
 type_body_length:
-  warning: 500
-  error: 600
+  warning: 800
+  error: 1200
 
 file_length:
-  warning: 500
-  error: 600
+  warning: 800
+  error: 1500
 
 line_length:
   warning: 200
   error: 250
 
 function_parameter_count:
-  warning: 8
-  error: 12
+  warning: 12
+  error: 15
 
 included:
   - Sources

@@ -348,8 +348,7 @@ extension CallLowerer {
         return result
     }
 
-    // This shared lowering path still centralizes legacy stdlib/member special cases.
-    // swiftlint:disable:next function_body_length
+    /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,

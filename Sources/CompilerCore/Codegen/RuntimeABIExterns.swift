@@ -1,4 +1,4 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length
 // swiftlint:disable identifier_name
 import Foundation
 
@@ -1042,4 +1042,4 @@ public enum RuntimeABIExterns {
     }
 }
 
-// swiftlint:enable file_length type_body_length
+// swiftlint:enable file_length
