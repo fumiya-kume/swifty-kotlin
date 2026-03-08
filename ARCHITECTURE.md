@@ -55,8 +55,8 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | 5 | **SemaPasses** | AST | `ctx.sema` (SemaModule) | `Sema/Infrastructure/SemaPhase.swift` -> `DataFlow/Phase.swift` + `TypeCheck/TypeCheckSemaPhase.swift` |
 | 6 | **BuildKIR** | AST + Sema | `ctx.kir` (KIRModule) | `KIR/BuildKIRPass.swift`, `KIR/KIRLoweringDriver.swift` |
 | 7 | **Lowering** | KIR | KIR (in-place 変換) | `Lowering/LoweringPhase.swift` + 各 `*LoweringPass.swift` |
-| 8 | **Codegen** | KIR | `.o` / `.ll` / `.kir` / `.kklib` | `Codegen/CodegenPass.swift`, `Codegen/LLVMBackend*.swift`, `Codegen/LLVMCAPIBackend.swift` |
-| 9 | **Link** | `.o` ファイル | 実行ファイル (clang 呼び出し) | `Codegen/LinkPass.swift` |
+| 8 | **Codegen** | KIR | `.o` / `.ll` / `.kir` / `.kklib` | `Codegen/CodegenPhase.swift`, `Codegen/LLVMBackend.swift`, `Codegen/NativeEmitter.swift` |
+| 9 | **Link** | `.o` ファイル | 実行ファイル (clang 呼び出し) | `Codegen/LinkPhase.swift` |
 
 ---
 
@@ -72,7 +72,7 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | `Sema/` | 型チェック / データフロー解析 | `Infrastructure/SemaPhase.swift`, `DataFlow/Phase.swift`, `TypeCheck/TypeCheckSemaPhase.swift`, `Resolution/OverloadResolver.swift`, `Resolution/ConstraintSolver.swift`, `TypeSystem/TypeSystem.swift`, `Models/SemanticsModels.swift`, `TypeSystem/TypeModels.swift` | 型推論修正、オーバーロード解決、smart cast |
 | `KIR/` | 型付き中間表現 | `KIRModels.swift`, `BuildKIRPass.swift`, `KIRLoweringDriver.swift`, `ExprLowerer.swift`, `CallLowerer.swift`, `ControlFlowLowerer.swift`, `MemberLowerer.swift`, `LambdaLowerer.swift` | IR 命令追加、コール生成修正 |
 | `Lowering/` | KIR 脱糖パス群 | `LoweringPhase.swift` (パス登録), 各パス: `ForLoweringPass`, `PropertyLoweringPass`, `OperatorLoweringPass`, `InlineLoweringPass`, `CoroutineLoweringPass` (+分割3ファイル), `ABILoweringPass`, `LambdaClosureConversionPass`, `DataEnumSealedSynthesisPass`, `CollectionLiteralLoweringPass`, `StdlibDelegateLoweringPass`, `NormalizeBlocksPass` | for/when/property のデシュガー修正、新 lowering pass 追加 |
-| `Codegen/` | LLVM IR 生成 + リンク | `CodegenPass.swift`, `LLVMBackend.swift` (+分割4ファイル), `LLVMCAPIBackend.swift`, `LLVMCAPIBindings.swift` (+分割4ファイル), `NativeEmitter.swift` (+分割2ファイル), `LinkPass.swift`, `NameMangler.swift`, `CodegenBackend.swift` | コード生成バグ、ABI修正、リンクエラー |
+| `Codegen/` | LLVM IR 生成 + リンク | `CodegenPhase.swift`, `LLVMBackend.swift`, `LLVMCAPIBindings.swift` (+分割4ファイル), `NativeEmitter.swift` (+分割2ファイル), `LinkPhase.swift`, `NameMangler.swift` | コード生成バグ、ABI修正、リンクエラー |
 | `Driver/` | パイプライン制御 + 横断インフラ | `Driver.swift`, `CompilationContext.swift`, `Diagnostics.swift`, `Phases.swift`, `FrontendPhases.swift`, `SourceManager.swift`, `SourceLocation.swift`, `CommandRunner.swift`, `PhaseTimer.swift`, `IncrementalCompilationCache.swift`, `DependencyGraph.swift`, `FileFingerprint.swift` | 新フェーズ追加、診断メッセージ修正、インクリメンタルビルド |
 
 ### `Sources/KSwiftKCLI/`
@@ -211,14 +211,11 @@ KIRModule (lowered)
 
 ## 9. Codegen バックエンド
 
-2つのバックエンドが存在し、`-Xir backend=...` で選択可能:
+LLVM C API を `dlopen`/`dlsym` で動的ロードし、ネイティブ IR を生成する単一バックエンド:
 
-| バックエンド | クラス | 説明 |
-|---|---|---|
-| **LLVM C API** (デフォルト) | `LLVMCAPIBackend` | LLVM C API を `dlopen`/`dlsym` で動的ロード。ネイティブ IR 生成 |
-| **Synthetic C** (フォールバック) | `LLVMBackend` | C コードを生成し clang でコンパイル。LLVM 未検出時のフォールバック |
-
-選択ロジック: `CodegenPass.selectedBackend()` — LLVM ライブラリが使えれば自動で `llvm-c-api` を選択。
+| クラス | 説明 |
+|---|---|
+| `LLVMBackend` | LLVM C API 動的ロード。`NativeEmitter` が KIR → LLVM IR 変換を実行 |
 
 ---
 
@@ -278,10 +275,10 @@ KIRModule (lowered)
 
 ### コード生成 / リンクエラーを直す
 
-1. `Codegen/LLVMCAPIBackend.swift` — ネイティブ LLVM IR 生成
-2. `Codegen/LLVMBackend.swift` + 分割ファイル — Synthetic C 生成
-3. `Codegen/NativeEmitter.swift` + `NativeEmitter+FunctionEmission.swift` — 関数本体の IR エミッション
-4. `Codegen/LinkPass.swift` — リンクコマンド構築、エントリラッパー生成
+1. `Codegen/LLVMBackend.swift` — LLVM バックエンド初期化・エラーハンドリング
+2. `Codegen/NativeEmitter.swift` + `NativeEmitter+FunctionEmission.swift` — KIR → LLVM IR エミッション
+3. `Codegen/CodegenPhase.swift` — Codegen フェーズ制御、emit モード分岐
+4. `Codegen/LinkPhase.swift` — リンクコマンド構築、エントリラッパー生成
 5. `Codegen/NameMangler.swift` — シンボル名マングリング
 6. `Codegen/RuntimeABIExterns.swift` — ランタイムヘルパーの extern 宣言
 

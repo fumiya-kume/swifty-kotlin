@@ -136,7 +136,6 @@ This allows `lldb` to display local variable names and values in `frame variable
 ### No debug info in output
 
 - Ensure `-g` flag is passed to `kswiftc`
-- Verify LLVM C API backend is selected (check for `backend=llvm-c-api` in IR flags)
 - Check that `libLLVM` is available and the debug info symbols are loaded
 
 ### Breakpoints not resolving

@@ -60,7 +60,7 @@
 - [x] CLASS-008-FOLLOW: クラス委譲の既知の制限を解消する
   - [x] NativeEmitter（LLVM C API バックエンド）で `virtualCall` の itable ディスパッチを実装する（`kk_itable_lookup` を呼び、戻り値を関数ポインタとして indirect call する）
   - [x] 委譲フィールドを KIRGlobal ではなくインスタンスフィールド（receiver + fieldOffset）として保持する
-  - **完了条件**: `-Xir backend=synthetic-c` なしで `logger.print()` が正しく動作し、複数インスタンスで委譲が独立して動作する ✓
+  - **完了条件**: LLVM backend で `logger.print()` が正しく動作し、複数インスタンスで委譲が独立して動作する ✓
 
 ---
 

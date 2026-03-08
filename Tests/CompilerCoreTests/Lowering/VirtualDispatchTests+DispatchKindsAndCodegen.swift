@@ -333,7 +333,7 @@ extension VirtualDispatchTests {
         )
         let ctx = CompilationContext(
             options: CompilerOptions(
-                moduleName: "CBackendVtable",
+                moduleName: "LLVMBackendVtable",
                 inputs: [],
                 outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".o").path,
                 emit: .kirDump,
