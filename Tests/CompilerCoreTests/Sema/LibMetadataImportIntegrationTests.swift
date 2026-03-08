@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class LibraryMetadataImportResolutionIntegrationTests: XCTestCase {
+final class LibMetadataImportIntegrationTests: XCTestCase {
     // MARK: - Manifest Schema Validation Tests
 
     func testManifestMissingFormatVersionEmitsError() throws {

@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-extension LibraryMetadataImportResolutionIntegrationTests {
+extension LibMetadataImportIntegrationTests {
     func testWildcardImportResolvesKklibSymbolInScope() throws {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)

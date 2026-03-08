@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class PrimaryConstructorVisibilityAndStringFormatFallbackTests: XCTestCase {
+final class PrimaryCtorVisibilityTests: XCTestCase {
     func testPrimaryConstructorUsesExplicitVisibilityModifiers() throws {
         let source = """
         package test

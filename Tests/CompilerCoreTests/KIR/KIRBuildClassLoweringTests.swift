@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class KIRBuildPhaseAndClassLoweringCoverageTests: XCTestCase {
+final class KIRBuildClassLoweringTests: XCTestCase {
     func testBuildKIRPhaseThrowsInvalidInputWhenASTOrSemaMissing() {
         let ctx = makeCompilationContext(inputs: [])
 

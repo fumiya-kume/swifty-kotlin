@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-final class LibraryMetadataSerializationRoundTripTests: XCTestCase {
+final class LibMetadataSerializationTests: XCTestCase {
     // MARK: - MetadataSerializer Round-Trip Tests
 
     func testMetadataEncoderDecoderRoundTripForFunctionRecord() {

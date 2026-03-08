@@ -2,7 +2,7 @@
 import Foundation
 import XCTest
 
-extension LibraryMetadataSerializationRoundTripTests {
+extension LibMetadataSerializationTests {
     func testMetadataRoundTripForInterface() {
         let record = MetadataRecord(
             kind: .interface,
