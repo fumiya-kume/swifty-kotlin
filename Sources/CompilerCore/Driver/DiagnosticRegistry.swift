@@ -577,46 +577,16 @@ public enum DiagnosticRegistry {
 
     static let backendDescriptors: [DiagnosticDescriptor] = [
         DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0001",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C code generation failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0002",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C compilation (clang) failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1002",
-            pass: "BACKEND",
-            defaultSeverity: .warning,
-            summary: "LLVM C API backend: non-fatal codegen warning."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1003",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: function codegen failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1004",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: module verification failure."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1006",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: library load failure."
+            summary: "LLVM backend emission failure."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1007",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: symbol resolution failure."
+            summary: "LLVM backend bindings unavailable."
         ),
     ]
 

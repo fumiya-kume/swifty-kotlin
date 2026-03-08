@@ -7,17 +7,7 @@ import XCTest
     import Darwin
 #endif
 
-final class RuntimePrintlnTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimePrintlnTests: IsolatedRuntimeXCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)
@@ -47,5 +37,20 @@ final class RuntimePrintlnTests: XCTestCase {
         let ptr = UnsafeMutableRawPointer(bitPattern: 42)
         let output = capturePrintln { kk_println_any(ptr) }
         XCTAssertEqual(output, "42")
+    }
+
+    func testPrintlnLongPrintsValue() {
+        let output = capturePrintln { kk_println_long(123_456_789) }
+        XCTAssertEqual(output, "123456789")
+    }
+
+    func testPrintlnDoubleDecodesBitPattern() {
+        let output = capturePrintln { kk_println_double(kk_double_to_bits(2.5)) }
+        XCTAssertEqual(output, "2.5")
+    }
+
+    func testPrintlnCharPrintsUnicodeScalar() {
+        let output = capturePrintln { kk_println_char(0x41) }
+        XCTAssertEqual(output, "A")
     }
 }

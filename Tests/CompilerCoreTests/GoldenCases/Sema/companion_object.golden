@@ -34,25 +34,27 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s37 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#36 params=[Int] ret=Class#36 suspend=0 defaults=[0] vararg=[0]
-symbol s38 kind=valueParameter fq=golden.sema.Foo.<init>.$37.x vis=private flags=_
-symbol s39 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s40 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#39 params=[] ret=Class#36 suspend=0 defaults=[] vararg=[]
-symbol s41 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s42 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s43 kind=local fq=__local_6.f vis=private flags=_
-symbol s44 kind=local fq=__local_9.m vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s39 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#38 params=[Int] ret=Class#38 suspend=0 defaults=[0] vararg=[0]
+symbol s40 kind=valueParameter fq=golden.sema.Foo.<init>.$39.x vis=private flags=_
+symbol s41 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s42 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#41 params=[] ret=Class#38 suspend=0 defaults=[] vararg=[]
+symbol s43 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s44 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s45 kind=local fq=__local_6.f vis=private flags=_
+symbol s46 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
-  decl d3 class Foo sym=s36
-  decl d4 fun main suspend=0 inline=0 sym=s42
-expr e0 int(100) type=Int ref=s41
+  decl d3 class Foo sym=s38
+  decl d4 fun main suspend=0 inline=0 sym=s44
+expr e0 int(100) type=Int ref=s43
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#36 call=s37 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#39 ref=s36
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#36 call=s40 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s43
-expr e7 name(Foo) type=Class#39 ref=s36
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s41
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s44
+expr e3 call callee=e1 args=[_:e2] type=Class#38 call=s39 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#41 ref=s38
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#38 call=s42 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s45
+expr e7 name(Foo) type=Class#41 ref=s38
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s43
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s46

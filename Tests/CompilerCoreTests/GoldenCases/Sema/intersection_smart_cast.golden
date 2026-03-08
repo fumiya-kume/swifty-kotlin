@@ -34,35 +34,37 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s37 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#36 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s38 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s39 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#38 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s40 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s41 kind=valueParameter fq=golden.sema.intersect.$40.x vis=private flags=_
-symbol s42 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#44 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s44 kind=typeParameter fq=golden.sema.directValue.$43.T vis=private flags=_
-symbol s45 kind=valueParameter fq=golden.sema.directValue.$43.x vis=private flags=_
-symbol s46 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#47 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s47 kind=typeParameter fq=golden.sema.safeValue.$46.T vis=private flags=_
-symbol s48 kind=valueParameter fq=golden.sema.safeValue.$46.x vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s39 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#38 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s40 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s41 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#40 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s43 kind=valueParameter fq=golden.sema.intersect.$42.x vis=private flags=_
+symbol s44 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s45 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#46 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s46 kind=typeParameter fq=golden.sema.directValue.$45.T vis=private flags=_
+symbol s47 kind=valueParameter fq=golden.sema.directValue.$45.x vis=private flags=_
+symbol s48 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#49 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s49 kind=typeParameter fq=golden.sema.safeValue.$48.T vis=private flags=_
+symbol s50 kind=valueParameter fq=golden.sema.safeValue.$48.x vis=private flags=_
 file f0 package=golden.sema
-  decl d1 interface A sym=s36
-  decl d3 interface B sym=s38
-  decl d4 fun intersect suspend=0 inline=0 sym=s40
-  decl d5 fun idTag suspend=0 inline=0 sym=s42
-  decl d6 fun directValue suspend=0 inline=0 sym=s43
-  decl d7 fun safeValue suspend=0 inline=0 sym=s46
-expr e0 name(x) type=Any ref=s41
+  decl d1 interface A sym=s38
+  decl d3 interface B sym=s40
+  decl d4 fun intersect suspend=0 inline=0 sym=s42
+  decl d5 fun idTag suspend=0 inline=0 sym=s44
+  decl d6 fun directValue suspend=0 inline=0 sym=s45
+  decl d7 fun safeValue suspend=0 inline=0 sym=s48
+expr e0 name(x) type=Any ref=s43
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Class#36 ref=s41
+expr e2 name(x) type=Class#38 ref=s43
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
-expr e5 name(x) type=Class#36 & Class#38 ref=s41
-expr e6 memberCall recv=e5 callee=a args=[] type=String call=s37 map=[] targs=[]
-expr e7 name(x) type=Class#36 & Class#38 ref=s41
-expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s39 map=[] targs=[]
+expr e5 name(x) type=Class#38 & Class#40 ref=s43
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s39 map=[] targs=[]
+expr e7 name(x) type=Class#38 & Class#40 ref=s43
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s41 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=<error>
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
 expr e11 return value=e10 type=Nothing
@@ -71,7 +73,7 @@ expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
 expr e16 int(7) type=Int
-expr e17 name(x) type=T#44 & Any ref=s45
-expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s42 map=[] targs=[]
-expr e19 name(x) type=T#47 & Any ref=s48
-expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s42 map=[] targs=[]
+expr e17 name(x) type=T#46 & Any ref=s47
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s44 map=[] targs=[]
+expr e19 name(x) type=T#49 & Any ref=s50
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s44 map=[] targs=[]

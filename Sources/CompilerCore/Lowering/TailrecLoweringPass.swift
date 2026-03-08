@@ -77,13 +77,17 @@ final class TailrecLoweringPass: LoweringPass {
     ) -> [KIRInstruction] {
         var result: [KIRInstruction] = []
         result.reserveCapacity(body.count + 2)
-
-        // Always insert the loop-head label at the very start of the body
-        // so the pass works regardless of whether NormalizeBlocksPass has
-        // already stripped beginBlock/endBlock instructions.
+        let loopInsertIndex = loopEntryIndex(body: body, params: params)
+        let canonicalParamExprs = canonicalParameterExprs(
+            body: Array(body[..<loopInsertIndex]),
+            params: params
+        )
+        if loopInsertIndex > 0 {
+            result.append(contentsOf: body[..<loopInsertIndex])
+        }
         result.append(.label(loopLabel))
 
-        var instructionIndex = 0
+        var instructionIndex = loopInsertIndex
         var emittedTailJump = false
         while instructionIndex < body.count {
             let instruction = body[instructionIndex]
@@ -103,7 +107,13 @@ final class TailrecLoweringPass: LoweringPass {
                instructionIndex + 1 < body.count,
                isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
             {
-                emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
+                emitParameterReassignment(
+                    arguments: arguments,
+                    params: params,
+                    canonicalParamExprs: canonicalParamExprs,
+                    arena: arena,
+                    result: &result
+                )
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
                 instructionIndex += 2
@@ -116,7 +126,13 @@ final class TailrecLoweringPass: LoweringPass {
                instructionIndex + 1 < body.count,
                isReturnUnitInstruction(body[instructionIndex + 1])
             {
-                emitParameterReassignment(arguments: arguments, params: params, arena: arena, result: &result)
+                emitParameterReassignment(
+                    arguments: arguments,
+                    params: params,
+                    canonicalParamExprs: canonicalParamExprs,
+                    arena: arena,
+                    result: &result
+                )
                 result.append(.jump(loopLabel))
                 emittedTailJump = true
                 instructionIndex += 2
@@ -174,6 +190,7 @@ final class TailrecLoweringPass: LoweringPass {
     private func emitParameterReassignment(
         arguments: [KIRExprID],
         params: [KIRParameter],
+        canonicalParamExprs: [SymbolID: KIRExprID],
         arena: KIRArena,
         result: inout [KIRInstruction]
     ) {
@@ -191,8 +208,44 @@ final class TailrecLoweringPass: LoweringPass {
         // Then, assign temporaries to parameter symbol refs.
         for (index, param) in params.enumerated() {
             guard index < temporaries.count else { break }
-            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            let paramExpr = canonicalParamExprs[param.symbol]
+                ?? arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             result.append(.copy(from: temporaries[index], to: paramExpr))
         }
+    }
+
+    private func canonicalParameterExprs(
+        body: [KIRInstruction],
+        params: [KIRParameter]
+    ) -> [SymbolID: KIRExprID] {
+        let parameterSymbols = Set(params.map(\.symbol))
+        var result: [SymbolID: KIRExprID] = [:]
+        for instruction in body {
+            guard case let .constValue(exprID, .symbolRef(symbol)) = instruction,
+                  parameterSymbols.contains(symbol),
+                  result[symbol] == nil
+            else {
+                continue
+            }
+            result[symbol] = exprID
+        }
+        return result
+    }
+
+    private func loopEntryIndex(body: [KIRInstruction], params: [KIRParameter]) -> Int {
+        let parameterSymbols = Set(params.map(\.symbol))
+        var index = 0
+        if index < body.count, case .beginBlock = body[index] {
+            index += 1
+        }
+        while index < body.count {
+            guard case let .constValue(_, .symbolRef(symbol)) = body[index],
+                  parameterSymbols.contains(symbol)
+            else {
+                break
+            }
+            index += 1
+        }
+        return index
     }
 }

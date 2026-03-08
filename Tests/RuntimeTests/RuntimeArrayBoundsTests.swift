@@ -1,17 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeArrayBoundsTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimeArrayBoundsTests: IsolatedRuntimeXCTestCase {
     func testArrayGetAndSetInBounds() {
         let array = kk_array_new(2)
         XCTAssertNotEqual(array, 0)

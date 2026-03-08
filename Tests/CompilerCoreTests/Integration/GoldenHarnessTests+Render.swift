@@ -120,7 +120,7 @@ extension GoldenHarnessTests {
             let renderedParams = params.map { interner.resolve($0) }.joined(separator: ",")
             let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
             return "lambda params=[\(renderedParams)] body=e\(body.rawValue)\(labelStr)"
-        case let .objectLiteral(superTypes, _):
+        case let .objectLiteral(superTypes, _, _):
             let renderedSuperTypes = superTypes.map { "t\($0.rawValue)" }.joined(separator: ",")
             return "objectLiteral supers=[\(renderedSuperTypes)]"
         case let .callableRef(receiver, member, _):

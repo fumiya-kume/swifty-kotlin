@@ -96,6 +96,9 @@ public struct ClassDecl {
     public let isInner: Bool
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
+    /// Modifiers attached specifically to the primary constructor declaration,
+    /// e.g. `class Foo private constructor()`.
+    public let primaryConstructorModifiers: Modifiers
     /// `true` when the class header contains explicit constructor parentheses,
     /// distinguishing `class Foo()` (has primary ctor) from `class Foo` (no primary ctor).
     public let hasPrimaryConstructorSyntax: Bool
@@ -125,6 +128,7 @@ public struct ClassDecl {
         isInner: Bool = false,
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
+        primaryConstructorModifiers: Modifiers = [],
         hasPrimaryConstructorSyntax: Bool = false,
         superTypeEntries: [SuperTypeEntry] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
@@ -145,6 +149,7 @@ public struct ClassDecl {
         self.isInner = isInner
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
+        self.primaryConstructorModifiers = primaryConstructorModifiers
         self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax
         self.superTypeEntries = superTypeEntries
         self.nestedTypeAliases = nestedTypeAliases

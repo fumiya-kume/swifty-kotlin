@@ -34,13 +34,15 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=property fq=golden.sema.lazyVal vis=public flags=_ type=String
-symbol s37 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=property fq=golden.sema.lazyVal vis=public flags=_ type=String
+symbol s39 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property lazyVal var=0 sym=s36
-  decl d1 fun main suspend=0 inline=0 sym=s37
-expr e0 name(lazy) type=String ref=s36
+  decl d0 property lazyVal var=0 sym=s38
+  decl d1 fun main suspend=0 inline=0 sym=s39
+expr e0 name(lazy) type=String ref=s38
 expr e1 string(hello) type=_
 expr e2 name(println) type=_
-expr e3 name(lazyVal) type=String ref=s36
+expr e3 name(lazyVal) type=String ref=s38
 expr e4 call callee=e2 args=[_:e3] type=Unit

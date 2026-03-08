@@ -34,26 +34,30 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=class fq=golden.sema.Counter vis=public flags=_
-symbol s37 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#36 params=[Int] ret=Class#36 suspend=0 defaults=[0] vararg=[0]
-symbol s38 kind=valueParameter fq=golden.sema.Counter.<init>.$37.initial vis=private flags=_
-symbol s39 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#36 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s40 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#36 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s41 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
-symbol s42 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s43 kind=object fq=golden.sema.Singleton vis=public flags=_
-symbol s44 kind=function fq=golden.sema.Singleton.greet vis=public flags=_ sig=recv=Class#43 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s45 kind=property fq=golden.sema.Singleton.name vis=public flags=_ type=String
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=class fq=golden.sema.Counter vis=public flags=_
+symbol s39 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#38 params=[Int] ret=Class#38 suspend=0 defaults=[0] vararg=[0]
+symbol s40 kind=valueParameter fq=golden.sema.Counter.<init>.$39.initial0 vis=private flags=_
+symbol s41 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#38 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#38 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s43 kind=property fq=golden.sema.Counter.initial vis=public flags=_ type=Int
+symbol s44 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int
+symbol s45 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s46 kind=object fq=golden.sema.Singleton vis=public flags=_
+symbol s47 kind=function fq=golden.sema.Singleton.greet vis=public flags=_ sig=recv=Class#46 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s48 kind=property fq=golden.sema.Singleton.name vis=public flags=_ type=String
 file f0 package=golden.sema
-  decl d4 class Counter sym=s36
-  decl d7 object Singleton sym=s43
-expr e0 name(initial) type=Int ref=s41
-expr e1 string(counter) type=String ref=s42
-expr e2 name(count) type=_
-expr e3 name(count) type=Int ref=s41
-expr e4 int(1) type=Int
-expr e5 binary(add) lhs=e3 rhs=e4 type=String ref=s45
-expr e6 localAssign count value=e5 type=Unit ref=s41
-expr e7 name(count) type=Int ref=s41
-expr e8 string(singleton) type=String
-expr e9 string(hello) type=String
+  decl d5 class Counter sym=s38
+  decl d8 object Singleton sym=s46
+expr e0 name(initial0) type=Int ref=s43
+expr e1 name(initial) type=Int ref=s44
+expr e2 string(counter) type=String ref=s45
+expr e3 name(count) type=_
+expr e4 name(count) type=Int ref=s44
+expr e5 int(1) type=Int
+expr e6 binary(add) lhs=e4 rhs=e5 type=String ref=s48
+expr e7 localAssign count value=e6 type=Unit ref=s44
+expr e8 name(count) type=Int ref=s44
+expr e9 string(singleton) type=String
+expr e10 string(hello) type=String

@@ -355,26 +355,11 @@ extension DataFlowSemaPhase {
     ) {
         switch types.kind(of: typeID) {
         case let .typeParam(tp):
-            if tp.symbol.rawValue <= base {
-                collected.insert(tp.symbol)
-            }
+            if tp.symbol.rawValue <= base { collected.insert(tp.symbol) }
         case let .classType(ct):
-            for arg in ct.args {
-                switch arg {
-                case let .invariant(inner), let .out(inner), let .in(inner):
-                    collectSyntheticTypeParamsRecursive(inner, types: types, base: base, into: &collected)
-                case .star:
-                    break
-                }
-            }
+            collectSyntheticParamsFromClassArgs(ct.args, types: types, base: base, into: &collected)
         case let .functionType(ft):
-            if let receiver = ft.receiver {
-                collectSyntheticTypeParamsRecursive(receiver, types: types, base: base, into: &collected)
-            }
-            for param in ft.params {
-                collectSyntheticTypeParamsRecursive(param, types: types, base: base, into: &collected)
-            }
-            collectSyntheticTypeParamsRecursive(ft.returnType, types: types, base: base, into: &collected)
+            collectSyntheticParamsFromFunctionType(ft, types: types, base: base, into: &collected)
         case let .intersection(parts):
             for part in parts {
                 collectSyntheticTypeParamsRecursive(part, types: types, base: base, into: &collected)
@@ -382,6 +367,37 @@ extension DataFlowSemaPhase {
         case .primitive, .any, .unit, .nothing, .error:
             break
         }
+    }
+
+    private func collectSyntheticParamsFromClassArgs(
+        _ args: [TypeArg],
+        types: TypeSystem,
+        base: Int32,
+        into collected: inout Set<SymbolID>
+    ) {
+        for arg in args {
+            switch arg {
+            case let .invariant(inner), let .out(inner), let .in(inner):
+                collectSyntheticTypeParamsRecursive(inner, types: types, base: base, into: &collected)
+            case .star:
+                break
+            }
+        }
+    }
+
+    private func collectSyntheticParamsFromFunctionType(
+        _ ft: FunctionType,
+        types: TypeSystem,
+        base: Int32,
+        into collected: inout Set<SymbolID>
+    ) {
+        if let receiver = ft.receiver {
+            collectSyntheticTypeParamsRecursive(receiver, types: types, base: base, into: &collected)
+        }
+        for param in ft.params {
+            collectSyntheticTypeParamsRecursive(param, types: types, base: base, into: &collected)
+        }
+        collectSyntheticTypeParamsRecursive(ft.returnType, types: types, base: base, into: &collected)
     }
 
     func renderFQName(_ fqName: [InternedString], interner: StringInterner) -> String {

@@ -125,29 +125,11 @@ extension LoweringPassRegressionTests {
             return
         }
         """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputPath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer { try? FileManager.default.removeItem(atPath: outputPath) }
-
-            let ctx = makeCompilationContext(
-                inputs: [path],
-                moduleName: "FlowExecutable",
-                emit: .executable,
-                outputPath: outputPath
-            )
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-            try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
-
-            let runResult = try CommandRunner.run(executable: outputPath, arguments: [])
-            let normalizedStdout = runResult.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(runResult.exitCode, 0)
-            XCTAssertEqual(normalizedStdout, "2\n4\n")
-        }
+        try assertFlowExecutableOutput(
+            source: source,
+            moduleName: "FlowExecutable",
+            expectedStdout: "2\n4\n"
+        )
     }
 
     func testFlowCollectTwiceReexecutesEmitterForColdSemantics() throws {
@@ -166,29 +148,11 @@ extension LoweringPassRegressionTests {
             return
         }
         """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputPath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer { try? FileManager.default.removeItem(atPath: outputPath) }
-
-            let ctx = makeCompilationContext(
-                inputs: [path],
-                moduleName: "FlowColdExecutable",
-                emit: .executable,
-                outputPath: outputPath
-            )
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-            try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
-
-            let runResult = try CommandRunner.run(executable: outputPath, arguments: [])
-            let normalizedStdout = runResult.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(runResult.exitCode, 0)
-            XCTAssertEqual(normalizedStdout, "2\n4\n2\n4\n")
-        }
+        try assertFlowExecutableOutput(
+            source: source,
+            moduleName: "FlowColdExecutable",
+            expectedStdout: "2\n4\n2\n4\n"
+        )
     }
 
     func testFlowLoweringInsertsFlowHandleReleaseCalls() throws {
@@ -224,6 +188,37 @@ extension LoweringPassRegressionTests {
             }
 
             XCTAssertTrue(allCallees.contains("kk_flow_release"))
+        }
+    }
+
+    private func assertFlowExecutableOutput(
+        source: String,
+        moduleName: String,
+        expectedStdout: String,
+        irFlags: [String] = []
+    ) throws {
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer { try? FileManager.default.removeItem(atPath: outputPath) }
+
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: moduleName,
+                emit: .executable,
+                outputPath: outputPath,
+                irFlags: irFlags
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let runResult = try CommandRunner.run(executable: outputPath, arguments: [])
+            let normalizedStdout = runResult.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(runResult.exitCode, 0)
+            XCTAssertEqual(normalizedStdout, expectedStdout)
         }
     }
 }

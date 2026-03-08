@@ -34,19 +34,21 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=whileNullCheck vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s37 kind=valueParameter fq=whileNullCheck.$36.x vis=private flags=_
-symbol s38 kind=local fq=__local_1.y vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=whileNullCheck vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=whileNullCheck.$38.x vis=private flags=_
+symbol s40 kind=local fq=__local_1.y vis=private flags=_
 file f0 package=_
-  decl d0 fun whileNullCheck suspend=0 inline=0 sym=s36
+  decl d0 fun whileNullCheck suspend=0 inline=0 sym=s38
 expr e0 int(0) type=Int
-expr e1 localDecl y mutable=0 type=t2 init=e0 type=Unit ref=s38
-expr e2 name(x) type=Int? ref=s37
+expr e1 localDecl y mutable=0 type=t2 init=e0 type=Unit ref=s40
+expr e2 name(x) type=Int? ref=s39
 expr e3 name(null) type=Nothing?
 expr e4 binary(notEqual) lhs=e2 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s37
+expr e5 name(x) type=Int ref=s39
 expr e6 return value=e5 type=Nothing
 expr e7 blockExpr stmts=[] trailing=e6 type=Nothing
 expr e8 while cond=e4 body=e7 type=Unit
-expr e9 name(y) type=Int ref=s38
+expr e9 name(y) type=Int ref=s40
 expr e10 return value=e9 type=Nothing

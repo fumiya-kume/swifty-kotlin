@@ -193,35 +193,31 @@ struct ConstantCollector {
 
     /// Handle unary prefix expressions applied to literal operands, e.g. `-100` or `+42`.
     private func literalConstantUnaryExpr(op: UnaryOp, operand: ExprID, ast: ASTModule) -> KIRExprKind? {
-        guard let inner = literalConstantExpr(operand, ast: ast) else {
+        guard let inner = literalConstantExpr(operand, ast: ast) else { return nil }
+        switch op {
+        case .unaryMinus: return negatedConstant(inner)
+        case .unaryPlus: return positiveConstant(inner)
+        case .not:
+            if case let .boolLiteral(v) = inner { return .boolLiteral(!v) }
             return nil
         }
-        switch op {
-        case .unaryMinus:
-            switch inner {
-            case let .intLiteral(v):
-                return .intLiteral(-v)
-            case let .longLiteral(v):
-                return .longLiteral(-v)
-            case let .floatLiteral(v):
-                return .floatLiteral(-v)
-            case let .doubleLiteral(v):
-                return .doubleLiteral(-v)
-            default:
-                return nil
-            }
-        case .unaryPlus:
-            switch inner {
-            case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral:
-                return inner
-            default:
-                return nil
-            }
-        case .not:
-            if case let .boolLiteral(v) = inner {
-                return .boolLiteral(!v)
-            }
-            return nil
+    }
+
+    private func negatedConstant(_ inner: KIRExprKind) -> KIRExprKind? {
+        switch inner {
+        case let .intLiteral(v): .intLiteral(-v)
+        case let .longLiteral(v): .longLiteral(-v)
+        case let .floatLiteral(v): .floatLiteral(-v)
+        case let .doubleLiteral(v): .doubleLiteral(-v)
+        default: nil
+        }
+    }
+
+    private func positiveConstant(_ inner: KIRExprKind) -> KIRExprKind? {
+        switch inner {
+        case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral:
+            inner
+        default: nil
         }
     }
 }

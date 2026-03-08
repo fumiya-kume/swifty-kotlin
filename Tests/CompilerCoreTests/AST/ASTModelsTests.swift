@@ -283,6 +283,7 @@ final class ASTModelsTests: XCTestCase {
             ),
             .objectLiteral(
                 superTypes: [dummyTypeRefID],
+                decl: nil,
                 range: range
             ),
             .callableRef(

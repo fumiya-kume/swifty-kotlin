@@ -25,6 +25,7 @@ func makeCompilationContext(
     emit: EmitMode = .kirDump,
     outputPath: String? = nil,
     searchPaths: [String] = [],
+    irFlags: [String] = [],
     frontendFlags: [String] = []
 ) -> CompilationContext {
     let destination = outputPath ?? FileManager.default.temporaryDirectory
@@ -37,7 +38,8 @@ func makeCompilationContext(
         emit: emit,
         searchPaths: searchPaths,
         target: defaultTargetTriple(),
-        frontendFlags: frontendFlags
+        frontendFlags: frontendFlags,
+        irFlags: irFlags
     )
     return CompilationContext(
         options: options,

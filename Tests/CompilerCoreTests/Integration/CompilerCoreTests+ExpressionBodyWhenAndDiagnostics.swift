@@ -195,7 +195,7 @@ extension CompilerCoreTests {
         let function = try XCTUnwrap(topLevelFunction(named: "build", in: ast, interner: ctx.interner))
         guard case let .expr(exprID, _) = function.body,
               let expr = ast.arena.expr(exprID),
-              case let .objectLiteral(superTypes, _) = expr
+              case let .objectLiteral(superTypes, _, _) = expr
         else {
             XCTFail("Expected object literal expression body.")
             return

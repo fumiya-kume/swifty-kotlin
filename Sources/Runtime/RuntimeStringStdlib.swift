@@ -1,3 +1,4 @@
+// swiftlint:disable file_length cyclomatic_complexity
 import Foundation
 
 // MARK: - STDLIB-006 String Functions
@@ -46,6 +47,9 @@ public func kk_string_endsWith(_ strRaw: Int, _ suffixRaw: Int) -> Int {
 public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
     let other = runtimeStringFromRaw(otherRaw) ?? ""
+    if other.isEmpty {
+        return kk_box_bool(1)
+    }
     return kk_box_bool(source.contains(other) ? 1 : 0)
 }
 
@@ -93,6 +97,103 @@ public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<
     return Int(bitPattern: UInt(truncatingIfNeeded: parsed.bitPattern))
 }
 
+@_cdecl("kk_string_format")
+public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
+    let template = runtimeStringFromRaw(formatRaw) ?? ""
+    let arguments = runtimeArrayBox(from: argsArrayRaw)?.elements ?? []
+    return runtimeMakeStringRaw(runtimeFormatString(template, arguments: arguments))
+}
+
+@_cdecl("kk_compare_any")
+public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
+    if lhsRaw == rhsRaw {
+        return 0
+    }
+    if lhsRaw == runtimeNullSentinelInt {
+        return -1
+    }
+    if rhsRaw == runtimeNullSentinelInt {
+        return 1
+    }
+    if let lhsString = runtimeStringFromRaw(lhsRaw),
+       let rhsString = runtimeStringFromRaw(rhsRaw)
+    {
+        return runtimeCompareStrings(lhsString, rhsString)
+    }
+
+    if let lhsValue = runtimeComparableScalar(from: lhsRaw),
+       let rhsValue = runtimeComparableScalar(from: rhsRaw)
+    {
+        switch (lhsValue, rhsValue) {
+        case let (.floating(lhs), .floating(rhs)):
+            return runtimeCompareFloating(lhs, rhs)
+        case let (.floating(lhs), .integer(rhs)):
+            return runtimeCompareFloating(lhs, Double(rhs))
+        case let (.integer(lhs), .floating(rhs)):
+            return runtimeCompareFloating(Double(lhs), rhs)
+        case let (.integer(lhs), .integer(rhs)):
+            if lhs == rhs {
+                return 0
+            }
+            return lhs < rhs ? -1 : 1
+        }
+    }
+
+    return lhsRaw < rhsRaw ? -1 : 1
+}
+
+private enum RuntimeComparableScalar {
+    case integer(Int)
+    case floating(Double)
+}
+
+private func runtimeCompareFloating(_ lhs: Double, _ rhs: Double) -> Int {
+    if lhs.isNaN {
+        return rhs.isNaN ? 0 : 1
+    }
+    if rhs.isNaN {
+        return -1
+    }
+    if lhs == rhs {
+        return 0
+    }
+    return lhs < rhs ? -1 : 1
+}
+
+private func runtimeComparableScalar(from raw: Int) -> RuntimeComparableScalar? {
+    guard raw != runtimeNullSentinelInt else {
+        return nil
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return .integer(raw)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return .integer(raw)
+    }
+    if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+        return .floating(Double(floatBox.value))
+    }
+    if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+        return .floating(doubleBox.value)
+    }
+    if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+        return .integer(intBox.value)
+    }
+    if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+        return .integer(boolBox.value ? 1 : 0)
+    }
+    if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+        return .integer(longBox.value)
+    }
+    if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+        return .integer(charBox.value)
+    }
+    return nil
+}
+
 private func runtimeSplitString(_ source: String, delimiter: String) -> [String] {
     if source.isEmpty {
         return [""]
@@ -108,6 +209,13 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
         result.append(String(source[cursor ..< match.lowerBound]))
         cursor = match.upperBound
     }
+}
+
+private func runtimeCompareStrings(_ lhs: String, _ rhs: String) -> Int {
+    if lhs == rhs {
+        return 0
+    }
+    return lhs < rhs ? -1 : 1
 }
 
 private func runtimeStringFromRaw(_ raw: Int) -> String? {
@@ -140,4 +248,279 @@ private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
+}
+
+private struct RuntimeFormatSpecifier {
+    let explicitArgumentIndex: Int?
+    let flags: String
+    let width: Int?
+    let precision: Int?
+    let conversion: Character
+
+    var normalizedConversion: Character {
+        Character(String(conversion).lowercased())
+    }
+
+    var cStyleToken: String {
+        let supportedFlags = flags.filter { "-+ #0".contains($0) }
+        var token = "%"
+        token += supportedFlags
+        if let width {
+            token += String(width)
+        }
+        if let precision {
+            token += ".\(precision)"
+        }
+        switch normalizedConversion {
+        case "d", "i", "x", "o":
+            token += "ll"
+        default:
+            break
+        }
+        token.append(conversion)
+        return token
+    }
+}
+
+private enum RuntimeParsedFormatToken {
+    case escapedPercent(next: Int)
+    case newline(next: Int)
+    case specifier(RuntimeFormatSpecifier, next: Int)
+    case invalid
+}
+
+private let runtimeFormatFlagCharacters: Set<Character> = ["-", "+", " ", "0", "#"]
+private let runtimeFormatLengthCharacters: Set<Character> = ["h", "l", "L", "z", "j", "t"]
+private let runtimeSupportedFormatConversions: Set<Character> = [
+    "s", "S", "b", "B", "d", "i", "x", "X", "o", "f", "e", "E", "g", "G", "c", "C",
+]
+
+private func runtimeFormatString(_ template: String, arguments: [Int]) -> String {
+    let characters = Array(template)
+    var cursor = 0
+    var implicitArgumentIndex = 0
+    var result = ""
+
+    while cursor < characters.count {
+        guard characters[cursor] == "%" else {
+            result.append(characters[cursor])
+            cursor += 1
+            continue
+        }
+
+        switch runtimeParseFormatToken(characters, start: cursor) {
+        case let .escapedPercent(next):
+            result.append("%")
+            cursor = next
+        case let .newline(next):
+            result.append("\n")
+            cursor = next
+        case let .specifier(specifier, next):
+            let argumentIndex = specifier.explicitArgumentIndex ?? implicitArgumentIndex
+            if specifier.explicitArgumentIndex == nil {
+                implicitArgumentIndex += 1
+            }
+            let argument = arguments.indices.contains(argumentIndex)
+                ? arguments[argumentIndex]
+                : runtimeNullSentinelInt
+            result += runtimeRenderFormattedArgument(argument, specifier: specifier)
+            cursor = next
+        case .invalid:
+            result.append("%")
+            cursor += 1
+        }
+    }
+
+    return result
+}
+
+private func runtimeParseFormatToken(_ characters: [Character], start: Int) -> RuntimeParsedFormatToken {
+    var cursor = start + 1
+    guard cursor < characters.count else {
+        return .invalid
+    }
+    if characters[cursor] == "%" {
+        return .escapedPercent(next: cursor + 1)
+    }
+    if characters[cursor] == "n" {
+        return .newline(next: cursor + 1)
+    }
+
+    let initialDigitsStart = cursor
+    while cursor < characters.count, characters[cursor].isNumber {
+        cursor += 1
+    }
+    var explicitArgumentIndex: Int?
+    if cursor < characters.count, characters[cursor] == "$", initialDigitsStart < cursor {
+        explicitArgumentIndex = Int(String(characters[initialDigitsStart ..< cursor])).map { $0 - 1 }
+        cursor += 1
+    } else {
+        cursor = initialDigitsStart
+    }
+
+    let flagsStart = cursor
+    while cursor < characters.count, runtimeFormatFlagCharacters.contains(characters[cursor]) {
+        cursor += 1
+    }
+    let flags = String(characters[flagsStart ..< cursor])
+
+    let widthStart = cursor
+    while cursor < characters.count, characters[cursor].isNumber {
+        cursor += 1
+    }
+    let width = widthStart < cursor ? Int(String(characters[widthStart ..< cursor])) : nil
+
+    var precision: Int?
+    if cursor < characters.count, characters[cursor] == "." {
+        cursor += 1
+        let precisionStart = cursor
+        while cursor < characters.count, characters[cursor].isNumber {
+            cursor += 1
+        }
+        let precisionDigits = String(characters[precisionStart ..< cursor])
+        precision = Int(precisionDigits) ?? 0
+    }
+
+    while cursor < characters.count, runtimeFormatLengthCharacters.contains(characters[cursor]) {
+        cursor += 1
+    }
+    guard cursor < characters.count else {
+        return .invalid
+    }
+
+    let conversion = characters[cursor]
+    guard runtimeSupportedFormatConversions.contains(conversion) else {
+        return .invalid
+    }
+
+    return .specifier(
+        RuntimeFormatSpecifier(
+            explicitArgumentIndex: explicitArgumentIndex,
+            flags: flags,
+            width: width,
+            precision: precision,
+            conversion: conversion
+        ),
+        next: cursor + 1
+    )
+}
+
+private func runtimeRenderFormattedArgument(_ argument: Int, specifier: RuntimeFormatSpecifier) -> String {
+    switch specifier.normalizedConversion {
+    case "s":
+        let value = runtimeFormatStringValue(argument, specifier: specifier)
+        return runtimeApplyStringWidth(value, specifier: specifier)
+    case "b":
+        let value = runtimeFormatBooleanValue(argument)
+        let normalized = specifier.conversion.isUppercase ? value.uppercased() : value
+        return runtimeApplyStringWidth(normalized, specifier: specifier)
+    case "d", "i":
+        let value = Int64(runtimeFormatIntegerValue(argument))
+        return String(format: specifier.cStyleToken, value)
+    case "x", "o":
+        let value = UInt64(bitPattern: Int64(runtimeFormatIntegerValue(argument)))
+        return String(format: specifier.cStyleToken, value)
+    case "f", "e", "g":
+        return String(format: specifier.cStyleToken, runtimeFormatDoubleValue(argument))
+    case "c":
+        let value = runtimeFormatCharacterValue(argument)
+        return runtimeApplyStringWidth(value, specifier: specifier)
+    default:
+        return runtimeApplyStringWidth(runtimeFormatStringValue(argument, specifier: specifier), specifier: specifier)
+    }
+}
+
+private func runtimeFormatStringValue(_ argument: Int, specifier: RuntimeFormatSpecifier) -> String {
+    var value = runtimeElementToString(argument)
+    if let precision = specifier.precision, value.count > precision {
+        value = String(value.prefix(precision))
+    }
+    if specifier.conversion.isUppercase {
+        value = value.uppercased()
+    }
+    return value
+}
+
+private func runtimeFormatBooleanValue(_ argument: Int) -> String {
+    if argument == runtimeNullSentinelInt {
+        return "false"
+    }
+    if let pointer = UnsafeMutableRawPointer(bitPattern: argument),
+       runtimeIsObjectPointer(pointer),
+       let boolBox = tryCast(pointer, to: RuntimeBoolBox.self)
+    {
+        return boolBox.value ? "true" : "false"
+    }
+    return switch argument {
+    case 0:
+        "false"
+    case 1:
+        "true"
+    default:
+        "true"
+    }
+}
+
+private func runtimeFormatIntegerValue(_ argument: Int) -> Int {
+    maybeUnbox(argument)
+}
+
+private func runtimeFormatDoubleValue(_ argument: Int) -> Double {
+    if argument == runtimeNullSentinelInt {
+        return 0
+    }
+    if let pointer = UnsafeMutableRawPointer(bitPattern: argument),
+       runtimeIsObjectPointer(pointer)
+    {
+        if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+            return Double(floatBox.value)
+        }
+        if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+            return doubleBox.value
+        }
+        if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+            return Double(intBox.value)
+        }
+        if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+            return boolBox.value ? 1 : 0
+        }
+        if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+            return Double(longBox.value)
+        }
+        if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+            return Double(charBox.value)
+        }
+        if let stringBox = tryCast(pointer, to: RuntimeStringBox.self) {
+            return Double(stringBox.value) ?? 0
+        }
+    }
+    if argument > -0x1_0000_0000, argument < 0x1_0000_0000 {
+        return Double(argument)
+    }
+    return Double(bitPattern: UInt64(bitPattern: Int64(argument)))
+}
+
+private func runtimeFormatCharacterValue(_ argument: Int) -> String {
+    let scalarValue = UInt32(truncatingIfNeeded: runtimeFormatIntegerValue(argument))
+    guard let scalar = UnicodeScalar(scalarValue) else {
+        return "?"
+    }
+    return String(scalar)
+}
+
+private func runtimeApplyStringWidth(_ value: String, specifier: RuntimeFormatSpecifier) -> String {
+    guard let width = specifier.width, value.count < width else {
+        return value
+    }
+    let padding = String(repeating: " ", count: width - value.count)
+    if specifier.flags.contains("-") {
+        return value + padding
+    }
+    return padding + value
+}
+
+private func runtimeIsObjectPointer(_ pointer: UnsafeMutableRawPointer) -> Bool {
+    runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
 }

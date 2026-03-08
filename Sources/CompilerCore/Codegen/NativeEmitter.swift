@@ -58,12 +58,12 @@ struct NativeEmitter {
         }
 
         guard let llvmIR = bindings.printModule(built.module) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMPrintModuleToString returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMPrintModuleToString returned null")
         }
         do {
             try llvmIR.write(to: URL(fileURLWithPath: outputPath), atomically: true, encoding: .utf8)
         } catch {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to write LLVM IR to '\(outputPath)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to write LLVM IR to '\(outputPath)'")
         }
     }
 
@@ -89,16 +89,16 @@ struct NativeEmitter {
         }
 
         guard let targetMachine else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create LLVM target machine")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create LLVM target machine")
         }
         defer { bindings.disposeTargetMachine(targetMachine) }
 
         guard bindings.applyTargetMachine(targetMachine, to: built.module) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to apply target data layout")
+            throw LLVMBackendError.nativeEmissionFailed("failed to apply target data layout")
         }
 
         if let errorMessage = bindings.emitObject(targetMachine: targetMachine, module: built.module, outputPath: outputPath) {
-            throw LLVMCAPIBackendError.nativeEmissionFailed(errorMessage)
+            throw LLVMBackendError.nativeEmissionFailed(errorMessage)
         }
     }
 
@@ -107,11 +107,11 @@ struct NativeEmitter {
         module: LLVMCAPIBindings.LLVMModuleRef
     ) {
         guard let context = bindings.createContext() else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMContextCreate returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMContextCreate returned null")
         }
         guard let llvmModule = bindings.createModule(name: "kswiftk_module", context: context) else {
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMModuleCreateWithNameInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMModuleCreateWithNameInContext returned null")
         }
 
         let triple = targetTripleString()
@@ -120,12 +120,12 @@ struct NativeEmitter {
         guard let int64Type = bindings.int64Type(context: context) else {
             bindings.disposeModule(llvmModule)
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMInt64TypeInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMInt64TypeInContext returned null")
         }
         guard let outThrownPointerType = bindings.pointerType(int64Type, addressSpace: 0) else {
             bindings.disposeModule(llvmModule)
             bindings.disposeContext(context)
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMPointerType returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMPointerType returned null")
         }
 
         do {
@@ -161,7 +161,7 @@ struct NativeEmitter {
             guard case let .function(function) = declaration else {
                 continue
             }
-            let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
             var parameterTypes = Array(repeating: int64Type, count: function.params.count)
             parameterTypes.append(outThrownPointerType)
 
@@ -170,7 +170,7 @@ struct NativeEmitter {
             else {
                 bindings.disposeModule(llvmModule)
                 bindings.disposeContext(context)
-                throw LLVMCAPIBackendError.nativeEmissionFailed("failed to declare function '\(functionName)'")
+                throw LLVMBackendError.nativeEmissionFailed("failed to declare function '\(functionName)'")
             }
             internalFunctions[function.symbol] = LLVMFunction(value: functionValue, type: functionType)
         }
@@ -284,63 +284,15 @@ struct NativeEmitter {
 
         // Build per-file DI metadata so that functions can reference their
         // actual source file.
-        var diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
-        if let sourceManager {
-            for fileID in sourceManager.fileIDs() {
-                let fullPath = sourceManager.path(of: fileID)
-                let url = URL(fileURLWithPath: fullPath)
-                let fname = url.lastPathComponent
-                let dir = url.deletingLastPathComponent().path
-                if let f = bindings.diBuilderCreateFile(diBuilder, filename: fname, directory: dir) {
-                    diFiles[fileID] = f
-                }
-            }
-        }
-
-        // Create a DI basic type for i64 (used for parameter debug info).
+        let diFiles = buildDIFiles(diBuilder: diBuilder, defaultFile: diFile)
         let int64DIType = bindings.diBuilderCreateBasicType(
             diBuilder, name: "Int", sizeInBits: 64, encoding: Self.dwarfATESigned
         )
-
-        var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
-
-        for declaration in module.arena.declarations {
-            guard case let .function(function) = declaration,
-                  let llvmFunction = internalFunctions[function.symbol]
-            else {
-                continue
-            }
-            let functionName = LLVMBackend.cFunctionSymbol(for: function, interner: interner)
-
-            // Determine real line number and file for this function.
-            var lineNo: UInt32 = 0
-            var funcDIFile = diFile
-            if let sourceRange = function.sourceRange, let sourceManager {
-                let lc = sourceManager.lineColumn(of: sourceRange.start)
-                lineNo = UInt32(lc.line)
-                if let perFileDI = diFiles[sourceRange.start.file] {
-                    funcDIFile = perFileDI
-                }
-            }
-
-            guard let subprogram = bindings.diBuilderCreateFunction(
-                diBuilder,
-                scope: funcDIFile,
-                name: interner.resolve(function.name),
-                linkageName: functionName,
-                file: funcDIFile,
-                lineNo: lineNo,
-                type: subroutineType,
-                isLocalToUnit: false,
-                isDefinition: true,
-                scopeLine: lineNo,
-                isOptimized: isOptimized
-            ) else {
-                continue
-            }
-            bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
-            subprograms[function.symbol] = subprogram
-        }
+        let subprograms = buildSubprograms(
+            diBuilder: diBuilder, diFile: diFile, diFiles: diFiles,
+            subroutineType: subroutineType, isOptimized: isOptimized,
+            internalFunctions: internalFunctions
+        )
 
         return DebugInfoContext(
             diBuilder: diBuilder,
@@ -351,6 +303,57 @@ struct NativeEmitter {
             diFiles: diFiles,
             int64DIType: int64DIType
         )
+    }
+
+    private func buildDIFiles(
+        diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef,
+        defaultFile _: LLVMCAPIBindings.LLVMMetadataRef
+    ) -> [FileID: LLVMCAPIBindings.LLVMMetadataRef] {
+        var diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
+        guard let sourceManager else { return diFiles }
+        for fileID in sourceManager.fileIDs() {
+            let fullPath = sourceManager.path(of: fileID)
+            let url = URL(fileURLWithPath: fullPath)
+            let fname = url.lastPathComponent
+            let dir = url.deletingLastPathComponent().path
+            if let f = bindings.diBuilderCreateFile(diBuilder, filename: fname, directory: dir) {
+                diFiles[fileID] = f
+            }
+        }
+        return diFiles
+    }
+
+    private func buildSubprograms(
+        diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef,
+        diFile: LLVMCAPIBindings.LLVMMetadataRef,
+        diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef],
+        subroutineType: LLVMCAPIBindings.LLVMMetadataRef?,
+        isOptimized: Bool,
+        internalFunctions: [SymbolID: LLVMFunction]
+    ) -> [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] {
+        var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
+        for declaration in module.arena.declarations {
+            guard case let .function(function) = declaration,
+                  let llvmFunction = internalFunctions[function.symbol]
+            else { continue }
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+            var lineNo: UInt32 = 0
+            var funcDIFile = diFile
+            if let sourceRange = function.sourceRange, let sourceManager {
+                let lc = sourceManager.lineColumn(of: sourceRange.start)
+                lineNo = UInt32(lc.line)
+                if let perFileDI = diFiles[sourceRange.start.file] { funcDIFile = perFileDI }
+            }
+            guard let subprogram = bindings.diBuilderCreateFunction(
+                diBuilder, scope: funcDIFile,
+                name: interner.resolve(function.name), linkageName: functionName,
+                file: funcDIFile, lineNo: lineNo, type: subroutineType,
+                isLocalToUnit: false, isDefinition: true, scopeLine: lineNo, isOptimized: isOptimized
+            ) else { continue }
+            bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
+            subprograms[function.symbol] = subprogram
+        }
+        return subprograms
     }
 
     /// Finalizes the DIBuilder, adds module flags, and disposes the DIBuilder.
@@ -418,22 +421,22 @@ struct NativeEmitter {
             parameters: parameterTypes,
             isVarArg: false
         ) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create runtime function type for '\(name)'")
         }
         guard let functionValue = bindings.getNamedFunction(module: module, name: name)
             ?? bindings.addFunction(module: module, name: name, functionType: functionType)
         else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to define weak runtime stub '\(name)'")
         }
         bindings.setWeakAnyLinkage(functionValue)
 
         guard let builder = bindings.createBuilder(context: context) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create builder for runtime stub '\(name)'")
         }
         defer { bindings.disposeBuilder(builder) }
 
         guard let entry = bindings.appendBasicBlock(context: context, function: functionValue, name: "entry") else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create runtime stub block for '\(name)'")
         }
         bindings.positionBuilder(builder, at: entry)
         let zero = bindings.constInt(int64Type, value: 0) ?? bindings.getUndef(type: int64Type)

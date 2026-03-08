@@ -413,6 +413,16 @@
           "type": "diff",
           "name": "data_object",
           "template": "Scripts/test_templates/diff/data_object.kt"
+        },
+        {
+          "type": "golden-sema",
+          "name": "anonymous_object_local",
+          "template": "Scripts/test_templates/sema/anonymous_object_local.kt"
+        },
+        {
+          "type": "diff",
+          "name": "anonymous_object_local",
+          "template": "Scripts/test_templates/diff/anonymous_object_local.kt"
         }
       ]
     },
@@ -764,7 +774,7 @@
     {
       "task": "STDLIB-006",
       "category": "stdlib",
-      "description": "String stdlib members (trim/startsWith/replace/split/toInt/toDouble)",
+      "description": "String stdlib members (trim/startsWith/replace/split/toInt/toDouble/format)",
       "cases": [
         {
           "type": "golden-sema",

@@ -1,72 +1,80 @@
 import Foundation
 
 extension BuildASTPhase {
+    func modifier(from token: Token) -> Modifiers.Element? {
+        switch token.kind {
+        case .keyword(.public):
+            .public
+        case .keyword(.private):
+            .private
+        case .keyword(.internal):
+            .internal
+        case .keyword(.protected):
+            .protected
+        case .keyword(.final):
+            .final
+        case .keyword(.open):
+            .open
+        case .keyword(.abstract):
+            .abstract
+        case .keyword(.sealed):
+            .sealed
+        case .keyword(.data):
+            .data
+        case .keyword(.annotation):
+            .annotationClass
+        case .keyword(.inline):
+            .inline
+        case .keyword(.suspend):
+            .suspend
+        case .keyword(.tailrec):
+            .tailrec
+        case .keyword(.operator):
+            .operator
+        case .keyword(.infix):
+            .infix
+        case .keyword(.crossinline):
+            .crossinline
+        case .keyword(.noinline):
+            .noinline
+        case .keyword(.vararg):
+            .vararg
+        case .keyword(.external):
+            .external
+        case .keyword(.expect):
+            .expect
+        case .keyword(.actual):
+            .actual
+        case .keyword(.value):
+            .value
+        case .keyword(.enum):
+            .enumModifier
+        case .keyword(.inner):
+            .inner
+        case .keyword(.companion):
+            .companion
+        case .keyword(.const):
+            .const
+        case .keyword(.override):
+            .override
+        case .keyword(.fun):
+            .funModifier
+        default:
+            nil
+        }
+    }
+
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena)
             {
-                switch token.kind {
-                case .keyword(.public):
-                    modifiers.insert(.public)
-                case .keyword(.private):
-                    modifiers.insert(.private)
-                case .keyword(.internal):
-                    modifiers.insert(.internal)
-                case .keyword(.protected):
-                    modifiers.insert(.protected)
-                case .keyword(.final):
-                    modifiers.insert(.final)
-                case .keyword(.open):
-                    modifiers.insert(.open)
-                case .keyword(.abstract):
-                    modifiers.insert(.abstract)
-                case .keyword(.sealed):
-                    modifiers.insert(.sealed)
-                case .keyword(.data):
-                    modifiers.insert(.data)
-                case .keyword(.annotation):
-                    modifiers.insert(.annotationClass)
-                case .keyword(.inline):
-                    modifiers.insert(.inline)
-                case .keyword(.suspend):
-                    modifiers.insert(.suspend)
-                case .keyword(.tailrec):
-                    modifiers.insert(.tailrec)
-                case .keyword(.operator):
-                    modifiers.insert(.operator)
-                case .keyword(.infix):
-                    modifiers.insert(.infix)
-                case .keyword(.crossinline):
-                    modifiers.insert(.crossinline)
-                case .keyword(.noinline):
-                    modifiers.insert(.noinline)
-                case .keyword(.vararg):
-                    modifiers.insert(.vararg)
-                case .keyword(.external):
-                    modifiers.insert(.external)
-                case .keyword(.expect):
-                    modifiers.insert(.expect)
-                case .keyword(.actual):
-                    modifiers.insert(.actual)
-                case .keyword(.value):
-                    modifiers.insert(.value)
-                case .keyword(.enum):
-                    modifiers.insert(.enumModifier)
-                case .keyword(.inner):
-                    modifiers.insert(.inner)
-                case .keyword(.companion):
-                    modifiers.insert(.companion)
-                case .keyword(.const):
-                    modifiers.insert(.const)
-                case .keyword(.override):
-                    modifiers.insert(.override)
-                case .keyword(.fun):
-                    modifiers.insert(.funModifier)
-                default:
+                if let modifier = modifier(from: token) {
+                    modifiers.insert(modifier)
                     continue
                 }
+                continue
             }
         }
         return modifiers

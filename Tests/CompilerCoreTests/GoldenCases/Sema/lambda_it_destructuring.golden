@@ -34,12 +34,14 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
-symbol s37 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
-symbol s38 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.useIt vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=golden.sema.useDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Class#12<Int> suspend=0 defaults=[] vararg=[]
+symbol s40 kind=local fq=__destructuring_20.num vis=private flags=_ type=Any
 file f0 package=golden.sema
-  decl d0 fun useIt suspend=0 inline=0 sym=s36
-  decl d1 fun useDestructuring suspend=0 inline=0 sym=s37
+  decl d0 fun useIt suspend=0 inline=0 sym=s38
+  decl d1 fun useDestructuring suspend=0 inline=0 sym=s39
 expr e0 name(listOf) type=Class#12<Int>
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
@@ -58,7 +60,7 @@ expr e14 int(2) type=Int
 expr e15 string(b) type=String
 expr e16 memberCall recv=e14 callee=to args=[_:e15] type=Any
 expr e17 call callee=e10 args=[_:e13,_:e16] type=Class#12<Any>
-expr e18 name(num) type=Any ref=s38
+expr e18 name(num) type=Any ref=s40
 expr e19 name(__destructured_0) type=Any ref=s-1005632
 expr e20 destructuringDecl names=[num,_] mutable=0 init=e19 type=Unit
 expr e21 blockExpr stmts=[e20] trailing=e18 type=Any

@@ -1,3 +1,4 @@
+// swiftlint:disable file_length function_body_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -131,6 +132,14 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: classTPCount
                 ),
                 for: memberSymbol
+            )
+            checkAndReportJVMErasedCallableConflict(
+                for: memberSymbol,
+                fqName: memberFQName,
+                range: funDecl.range,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
             )
         }
 
@@ -284,12 +293,17 @@ extension DataFlowSemaPhase {
                 let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
                 let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
                 if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
+                    let nestedPrimaryCtorVisibility = primaryConstructorVisibility(
+                        for: nestedClass,
+                        classKind: nestedClassKind,
+                        declarationVisibility: visibility(from: nestedClass.modifiers)
+                    )
                     let nestedPrimaryCtorSymbol = symbols.define(
                         kind: .constructor,
                         name: nestedClass.name,
                         fqName: nestedCtorFQName,
                         declSite: nestedClass.range,
-                        visibility: visibility(from: nestedClass.modifiers),
+                        visibility: nestedPrimaryCtorVisibility,
                         flags: []
                     )
                     nestedScope.insert(nestedPrimaryCtorSymbol)

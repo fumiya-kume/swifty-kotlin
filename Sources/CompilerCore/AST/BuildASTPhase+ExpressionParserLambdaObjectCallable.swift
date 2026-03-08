@@ -82,6 +82,7 @@ extension BuildASTPhase.ExpressionParser {
         }
         var superTypes: [TypeRefID] = []
         var end = objectToken.range.end
+        var bodyTokens: [Token] = []
 
         if consumeIf(.symbol(.colon)) != nil {
             if index > 0 {
@@ -119,10 +120,14 @@ extension BuildASTPhase.ExpressionParser {
                 switch token.kind {
                 case .symbol(.lBrace):
                     depth += 1
+                    bodyTokens.append(token)
                 case .symbol(.rBrace):
                     depth -= 1
+                    if depth > 0 {
+                        bodyTokens.append(token)
+                    }
                 default:
-                    break
+                    bodyTokens.append(token)
                 }
                 end = token.range.end
                 if depth == 0 {
@@ -132,7 +137,8 @@ extension BuildASTPhase.ExpressionParser {
         }
 
         let range = SourceRange(start: objectToken.range.start, end: end)
-        return astArena.appendExpr(.objectLiteral(superTypes: superTypes, range: range))
+        let declID = parseObjectLiteralDecl(superTypes: superTypes, bodyTokens: bodyTokens, range: range)
+        return astArena.appendExpr(.objectLiteral(superTypes: superTypes, decl: declID, range: range))
     }
 
     func parseCallableReferenceWithoutReceiver() -> ExprID? {

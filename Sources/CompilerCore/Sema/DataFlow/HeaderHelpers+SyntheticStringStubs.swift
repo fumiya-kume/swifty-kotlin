@@ -114,6 +114,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        registerSyntheticStringExtensionFunction(
+            named: "format",
+            externalLinkName: "kk_string_format",
+            receiverType: stringType,
+            parameters: [
+                ("args", types.nullableAnyType, false, true),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

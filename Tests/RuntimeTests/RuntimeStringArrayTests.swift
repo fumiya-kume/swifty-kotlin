@@ -7,17 +7,7 @@ import XCTest
     import Darwin
 #endif
 
-final class RuntimeStringArrayTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
         let savedFD = dup(STDOUT_FILENO)
@@ -114,6 +104,31 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(kk_string_compareTo(nil, nil), 0)
     }
 
+    func testCompareAnyDecodesBoxedDoubleValues() {
+        let lhs = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 1.25.bitPattern)))
+        let rhs = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern)))
+
+        XCTAssertEqual(kk_compare_any(lhs, rhs), -1)
+        XCTAssertEqual(kk_compare_any(rhs, lhs), 1)
+    }
+
+    func testCompareAnyPromotesMixedFloatingAndIntegerValues() {
+        let lhs = kk_box_float(Int(Float(3).bitPattern))
+
+        XCTAssertEqual(kk_compare_any(lhs, 5), -1)
+        XCTAssertEqual(kk_compare_any(5, lhs), 1)
+        XCTAssertEqual(kk_compare_any(lhs, 3), 0)
+    }
+
+    func testCompareAnyOrdersNaNAfterNonNaNValues() {
+        let nan = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: Double.nan.bitPattern)))
+        let finite = kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 4.0.bitPattern)))
+
+        XCTAssertEqual(kk_compare_any(nan, finite), 1)
+        XCTAssertEqual(kk_compare_any(finite, nan), -1)
+        XCTAssertEqual(kk_compare_any(nan, nan), 0)
+    }
+
     // MARK: - STDLIB-006 string runtime ABI
 
     func testStringTrimRemovesLeadingAndTrailingWhitespace() {
@@ -145,6 +160,7 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_string_startsWith(source, rawFromRuntimeString("Hello"))), 1)
         XCTAssertEqual(kk_unbox_bool(kk_string_endsWith(source, rawFromRuntimeString("World"))), 1)
         XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString("World"))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_string_contains_str(source, rawFromRuntimeString(""))), 1)
     }
 
     func testStringToIntSuccessAndFailure() {
@@ -175,6 +191,97 @@ final class RuntimeStringArrayTests: XCTestCase {
         XCTAssertNotEqual(thrown, 0)
         let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
+    }
+
+    func testStringFormatSupportsStringIntAndDoubleSpecifiers() {
+        let args = makeRuntimeArray([
+            rawFromRuntimeString("age"),
+            7,
+            Int(bitPattern: UInt(truncatingIfNeeded: 3.5.bitPattern)),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%s:%d %.2f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "age:7 3.50")
+    }
+
+    func testStringFormatSupportsFloatingSpecifiersForIntegersAndBoxedFloats() {
+        let args = makeRuntimeArray([
+            3,
+            kk_box_float(Int(Float(1.5).bitPattern)),
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern))),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%.1f %.1f %.1f"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "3.0 1.5 2.5")
+    }
+
+    func testStringFormatSupportsPositionalArguments() {
+        let args = makeRuntimeArray([
+            7,
+            rawFromRuntimeString("age"),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%2$s:%1$d"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "age:7")
+    }
+
+    func testStringFormatSupportsBooleanSpecifiers() {
+        let args = makeRuntimeArray([
+            kk_box_bool(1),
+            kk_box_bool(0),
+            runtimeNullSentinelInt,
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%b %B %b"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "true FALSE false")
+    }
+
+    func testStringFormatPreservesSixtyFourBitIntegerWidth() {
+        let signed = Int(Int64.max)
+        let unsigned = Int(bitPattern: UInt(truncatingIfNeeded: UInt64.max))
+        let args = makeRuntimeArray([signed, unsigned])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%d %x"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 ffffffffffffffff")
+    }
+
+    func testStringFormatSupportsBoxedIntegerSpecifiers() {
+        let boxedSigned = kk_box_long(Int(Int64.max))
+        let boxedUnsigned = kk_box_long(Int(bitPattern: UInt(truncatingIfNeeded: UInt64.max)))
+        let args = makeRuntimeArray([boxedSigned, boxedUnsigned])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%d %x"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 ffffffffffffffff")
+    }
+
+    func testStringFormatSupportsBoxedScalarStringSpecifiers() {
+        let args = makeRuntimeArray([
+            kk_box_long(Int(Int64.max)),
+            kk_box_float(Int(Float(1.5).bitPattern)),
+            kk_box_double(Int(bitPattern: UInt(truncatingIfNeeded: 2.5.bitPattern))),
+            kk_box_char(Int(Character("A").unicodeScalars.first?.value ?? 0)),
+            kk_box_bool(1),
+        ])
+
+        let formatted = kk_string_format(rawFromRuntimeString("%s %s %s %s %s"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "9223372036854775807 1.5 2.5 A true")
+    }
+
+    func testStringFormatSupportsEscapedPercentWithoutArguments() {
+        let formatted = kk_string_format(rawFromRuntimeString("progress=100%%"), kk_array_new(0))
+        XCTAssertEqual(runtimeStringValue(formatted), "progress=100%")
+    }
+
+    func testStringFormatTreatsUnsupportedUnsignedConversionAsLiteral() {
+        let args = makeRuntimeArray([7])
+        let formatted = kk_string_format(rawFromRuntimeString("%u"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "%u")
+    }
+
+    func testStringFormatTreatsUnsupportedGroupingFlagsAsLiteral() {
+        let args = makeRuntimeArray([1234])
+        let formatted = kk_string_format(rawFromRuntimeString("%,d"), args)
+        XCTAssertEqual(runtimeStringValue(formatted), "%,d")
     }
 
     // MARK: - kk_throwable_new
@@ -343,7 +450,7 @@ final class RuntimeStringArrayTests: XCTestCase {
 
     private func makeRuntimeString(_ value: String) -> UnsafeMutableRawPointer {
         value.withCString { cstr in
-            cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { ptr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in
                 kk_string_from_utf8(ptr, Int32(value.utf8.count))
             }
         }
@@ -351,6 +458,16 @@ final class RuntimeStringArrayTests: XCTestCase {
 
     private func rawFromRuntimeString(_ value: String) -> Int {
         Int(bitPattern: makeRuntimeString(value))
+    }
+
+    private func makeRuntimeArray(_ values: [Int]) -> Int {
+        let array = kk_array_new(values.count)
+        var thrown = 0
+        for (index, value) in values.enumerated() {
+            kk_array_set(array, index, value, &thrown)
+            XCTAssertEqual(thrown, 0)
+        }
+        return array
     }
 
     private func runtimeStringValue(_ raw: Int) -> String {

@@ -34,111 +34,113 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=typeCheck vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s37 kind=valueParameter fq=typeCheck.$36.v vis=private flags=_
-symbol s38 kind=function fq=negatedTypeCheck vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s39 kind=valueParameter fq=negatedTypeCheck.$38.v vis=private flags=_
-symbol s40 kind=function fq=unsafeCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s41 kind=valueParameter fq=unsafeCast.$40.v vis=private flags=_
-symbol s42 kind=function fq=safeCast vis=public flags=_ sig=recv=_ params=[Any] ret=String? suspend=0 defaults=[0] vararg=[0]
-symbol s43 kind=valueParameter fq=safeCast.$42.v vis=private flags=_
-symbol s44 kind=function fq=elvisOp vis=public flags=_ sig=recv=_ params=[String?] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s45 kind=valueParameter fq=elvisOp.$44.v vis=private flags=_
-symbol s46 kind=function fq=nullAssertOp vis=public flags=_ sig=recv=_ params=[String?] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s47 kind=valueParameter fq=nullAssertOp.$46.v vis=private flags=_
-symbol s48 kind=function fq=compoundAdd vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s49 kind=valueParameter fq=compoundAdd.$48.x vis=private flags=_
-symbol s50 kind=function fq=compoundSub vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s51 kind=valueParameter fq=compoundSub.$50.x vis=private flags=_
-symbol s52 kind=function fq=compoundMul vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s53 kind=valueParameter fq=compoundMul.$52.x vis=private flags=_
-symbol s54 kind=function fq=compoundDiv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s55 kind=valueParameter fq=compoundDiv.$54.x vis=private flags=_
-symbol s56 kind=function fq=compoundMod vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s57 kind=valueParameter fq=compoundMod.$56.x vis=private flags=_
-symbol s58 kind=function fq=safeCallExample vis=public flags=_ sig=recv=_ params=[String?] ret=Int? suspend=0 defaults=[0] vararg=[0]
-symbol s59 kind=valueParameter fq=safeCallExample.$58.s vis=private flags=_
-symbol s60 kind=function fq=arrayAssignExample vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s61 kind=local fq=__local_14.a vis=private flags=mutable
-symbol s62 kind=local fq=__local_21.b vis=private flags=mutable
-symbol s63 kind=local fq=__local_28.c vis=private flags=mutable
-symbol s64 kind=local fq=__local_35.d vis=private flags=mutable
-symbol s65 kind=local fq=__local_42.e vis=private flags=mutable
-symbol s66 kind=local fq=__local_53.arr vis=private flags=mutable
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=typeCheck vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=typeCheck.$38.v vis=private flags=_
+symbol s40 kind=function fq=negatedTypeCheck vis=public flags=_ sig=recv=_ params=[Any] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s41 kind=valueParameter fq=negatedTypeCheck.$40.v vis=private flags=_
+symbol s42 kind=function fq=unsafeCast vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s43 kind=valueParameter fq=unsafeCast.$42.v vis=private flags=_
+symbol s44 kind=function fq=safeCast vis=public flags=_ sig=recv=_ params=[Any] ret=String? suspend=0 defaults=[0] vararg=[0]
+symbol s45 kind=valueParameter fq=safeCast.$44.v vis=private flags=_
+symbol s46 kind=function fq=elvisOp vis=public flags=_ sig=recv=_ params=[String?] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s47 kind=valueParameter fq=elvisOp.$46.v vis=private flags=_
+symbol s48 kind=function fq=nullAssertOp vis=public flags=_ sig=recv=_ params=[String?] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s49 kind=valueParameter fq=nullAssertOp.$48.v vis=private flags=_
+symbol s50 kind=function fq=compoundAdd vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s51 kind=valueParameter fq=compoundAdd.$50.x vis=private flags=_
+symbol s52 kind=function fq=compoundSub vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s53 kind=valueParameter fq=compoundSub.$52.x vis=private flags=_
+symbol s54 kind=function fq=compoundMul vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s55 kind=valueParameter fq=compoundMul.$54.x vis=private flags=_
+symbol s56 kind=function fq=compoundDiv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s57 kind=valueParameter fq=compoundDiv.$56.x vis=private flags=_
+symbol s58 kind=function fq=compoundMod vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s59 kind=valueParameter fq=compoundMod.$58.x vis=private flags=_
+symbol s60 kind=function fq=safeCallExample vis=public flags=_ sig=recv=_ params=[String?] ret=Int? suspend=0 defaults=[0] vararg=[0]
+symbol s61 kind=valueParameter fq=safeCallExample.$60.s vis=private flags=_
+symbol s62 kind=function fq=arrayAssignExample vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s63 kind=local fq=__local_14.a vis=private flags=mutable
+symbol s64 kind=local fq=__local_21.b vis=private flags=mutable
+symbol s65 kind=local fq=__local_28.c vis=private flags=mutable
+symbol s66 kind=local fq=__local_35.d vis=private flags=mutable
+symbol s67 kind=local fq=__local_42.e vis=private flags=mutable
+symbol s68 kind=local fq=__local_53.arr vis=private flags=mutable
 file f0 package=_
-  decl d0 fun typeCheck suspend=0 inline=0 sym=s36
-  decl d1 fun negatedTypeCheck suspend=0 inline=0 sym=s38
-  decl d2 fun unsafeCast suspend=0 inline=0 sym=s40
-  decl d3 fun safeCast suspend=0 inline=0 sym=s42
-  decl d4 fun elvisOp suspend=0 inline=0 sym=s44
-  decl d5 fun nullAssertOp suspend=0 inline=0 sym=s46
-  decl d6 fun compoundAdd suspend=0 inline=0 sym=s48
-  decl d7 fun compoundSub suspend=0 inline=0 sym=s50
-  decl d8 fun compoundMul suspend=0 inline=0 sym=s52
-  decl d9 fun compoundDiv suspend=0 inline=0 sym=s54
-  decl d10 fun compoundMod suspend=0 inline=0 sym=s56
-  decl d11 fun safeCallExample suspend=0 inline=0 sym=s58
-  decl d12 fun arrayAssignExample suspend=0 inline=0 sym=s60
-expr e0 name(v) type=Any ref=s37
+  decl d0 fun typeCheck suspend=0 inline=0 sym=s38
+  decl d1 fun negatedTypeCheck suspend=0 inline=0 sym=s40
+  decl d2 fun unsafeCast suspend=0 inline=0 sym=s42
+  decl d3 fun safeCast suspend=0 inline=0 sym=s44
+  decl d4 fun elvisOp suspend=0 inline=0 sym=s46
+  decl d5 fun nullAssertOp suspend=0 inline=0 sym=s48
+  decl d6 fun compoundAdd suspend=0 inline=0 sym=s50
+  decl d7 fun compoundSub suspend=0 inline=0 sym=s52
+  decl d8 fun compoundMul suspend=0 inline=0 sym=s54
+  decl d9 fun compoundDiv suspend=0 inline=0 sym=s56
+  decl d10 fun compoundMod suspend=0 inline=0 sym=s58
+  decl d11 fun safeCallExample suspend=0 inline=0 sym=s60
+  decl d12 fun arrayAssignExample suspend=0 inline=0 sym=s62
+expr e0 name(v) type=Any ref=s39
 expr e1 isCheck expr=e0 type=t2 type=Boolean
-expr e2 name(v) type=Any ref=s39
+expr e2 name(v) type=Any ref=s41
 expr e3 isCheck! expr=e2 type=t5 type=Boolean
-expr e4 name(v) type=Any ref=s41
+expr e4 name(v) type=Any ref=s43
 expr e5 asCast expr=e4 type=t8 type=String
-expr e6 name(v) type=Any ref=s43
+expr e6 name(v) type=Any ref=s45
 expr e7 asCast? expr=e6 type=t11 type=String?
-expr e8 name(v) type=String? ref=s45
+expr e8 name(v) type=String? ref=s47
 expr e9 string(default) type=String
 expr e10 binary(elvis) lhs=e8 rhs=e9 type=String
-expr e11 name(v) type=String? ref=s47
+expr e11 name(v) type=String? ref=s49
 expr e12 nullAssert expr=e11 type=String
-expr e13 name(x) type=Int ref=s49
-expr e14 localDecl a mutable=1 type=_ init=e13 type=Unit ref=s61
+expr e13 name(x) type=Int ref=s51
+expr e14 localDecl a mutable=1 type=_ init=e13 type=Unit ref=s63
 expr e15 name(a) type=_
 expr e16 int(10) type=Int
-expr e17 compoundAssign(plusAssign) name=a value=e16 type=Unit ref=s61
-expr e18 name(a) type=Int ref=s61
+expr e17 compoundAssign(plusAssign) name=a value=e16 type=Unit ref=s63
+expr e18 name(a) type=Int ref=s63
 expr e19 return value=e18 type=Nothing
-expr e20 name(x) type=Int ref=s51
-expr e21 localDecl b mutable=1 type=_ init=e20 type=Unit ref=s62
+expr e20 name(x) type=Int ref=s53
+expr e21 localDecl b mutable=1 type=_ init=e20 type=Unit ref=s64
 expr e22 name(b) type=_
 expr e23 int(5) type=Int
-expr e24 compoundAssign(minusAssign) name=b value=e23 type=Unit ref=s62
-expr e25 name(b) type=Int ref=s62
+expr e24 compoundAssign(minusAssign) name=b value=e23 type=Unit ref=s64
+expr e25 name(b) type=Int ref=s64
 expr e26 return value=e25 type=Nothing
-expr e27 name(x) type=Int ref=s53
-expr e28 localDecl c mutable=1 type=_ init=e27 type=Unit ref=s63
+expr e27 name(x) type=Int ref=s55
+expr e28 localDecl c mutable=1 type=_ init=e27 type=Unit ref=s65
 expr e29 name(c) type=_
 expr e30 int(2) type=Int
-expr e31 compoundAssign(timesAssign) name=c value=e30 type=Unit ref=s63
-expr e32 name(c) type=Int ref=s63
+expr e31 compoundAssign(timesAssign) name=c value=e30 type=Unit ref=s65
+expr e32 name(c) type=Int ref=s65
 expr e33 return value=e32 type=Nothing
-expr e34 name(x) type=Int ref=s55
-expr e35 localDecl d mutable=1 type=_ init=e34 type=Unit ref=s64
+expr e34 name(x) type=Int ref=s57
+expr e35 localDecl d mutable=1 type=_ init=e34 type=Unit ref=s66
 expr e36 name(d) type=_
 expr e37 int(3) type=Int
-expr e38 compoundAssign(divAssign) name=d value=e37 type=Unit ref=s64
-expr e39 name(d) type=Int ref=s64
+expr e38 compoundAssign(divAssign) name=d value=e37 type=Unit ref=s66
+expr e39 name(d) type=Int ref=s66
 expr e40 return value=e39 type=Nothing
-expr e41 name(x) type=Int ref=s57
-expr e42 localDecl e mutable=1 type=_ init=e41 type=Unit ref=s65
+expr e41 name(x) type=Int ref=s59
+expr e42 localDecl e mutable=1 type=_ init=e41 type=Unit ref=s67
 expr e43 name(e) type=_
 expr e44 int(4) type=Int
-expr e45 compoundAssign(modAssign) name=e value=e44 type=Unit ref=s65
-expr e46 name(e) type=Int ref=s65
+expr e45 compoundAssign(modAssign) name=e value=e44 type=Unit ref=s67
+expr e46 name(e) type=Int ref=s67
 expr e47 return value=e46 type=Nothing
-expr e48 name(s) type=String? ref=s59
+expr e48 name(s) type=String? ref=s61
 expr e49 safeMemberCall recv=e48 callee=hashCode args=[] type=Any?
 expr e50 name(IntArray) type=_
 expr e51 int(3) type=Int
 expr e52 call callee=e50 args=[_:e51] type=Any
-expr e53 localDecl arr mutable=1 type=_ init=e52 type=Unit ref=s66
-expr e54 name(arr) type=Any ref=s66
+expr e53 localDecl arr mutable=1 type=_ init=e52 type=Unit ref=s68
+expr e54 name(arr) type=Any ref=s68
 expr e55 int(0) type=Int
 expr e56 indexedAccess receiver=e54 indices=[e55] type=_
 expr e57 int(42) type=Int
 expr e58 indexedAssign receiver=e54 indices=[e55] value=e57 type=Unit
-expr e59 name(arr) type=Any ref=s66
+expr e59 name(arr) type=Any ref=s68
 expr e60 int(0) type=Int
 expr e61 indexedAccess receiver=e59 indices=[e60] type=Any
 expr e62 return value=e61 type=Nothing

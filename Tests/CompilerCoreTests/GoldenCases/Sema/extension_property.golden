@@ -34,20 +34,22 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
-symbol s37 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s38 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
-symbol s39 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s40 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=property fq=golden.sema.doubled vis=public flags=_ type=Int
+symbol s39 kind=function fq=golden.sema.doubled.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s40 kind=property fq=golden.sema.isPositive vis=public flags=_ type=Boolean
+symbol s41 kind=function fq=golden.sema.isPositive.$get vis=public flags=synthetic sig=recv=Int params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s42 kind=function fq=golden.sema.useExtProp vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property doubled var=0 sym=s36
-  decl d1 property isPositive var=0 sym=s38
-  decl d2 fun useExtProp suspend=0 inline=0 sym=s40
-expr e0 this type=Int ref=s36
-expr e1 int(2) type=Boolean ref=s38
+  decl d0 property doubled var=0 sym=s38
+  decl d1 property isPositive var=0 sym=s40
+  decl d2 fun useExtProp suspend=0 inline=0 sym=s42
+expr e0 this type=Int ref=s38
+expr e1 int(2) type=Boolean ref=s40
 expr e2 binary(multiply) lhs=e0 rhs=e1 type=Int
 expr e3 this type=Int
 expr e4 int(0) type=Int
 expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
 expr e6 int(5) type=Int
-expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s37 map=[] targs=[]
+expr e7 memberCall recv=e6 callee=doubled args=[] type=Int call=s39 map=[] targs=[]

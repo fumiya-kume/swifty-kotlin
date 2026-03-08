@@ -34,15 +34,17 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s37 kind=valueParameter fq=golden.sema.add.$36.other vis=private flags=_
-symbol s38 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s39 kind=valueParameter fq=golden.sema.add.$38.other vis=private flags=_
+symbol s40 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun add suspend=0 inline=0 sym=s36
-  decl d1 fun useInfix suspend=0 inline=0 sym=s38
+  decl d0 fun add suspend=0 inline=0 sym=s38
+  decl d1 fun useInfix suspend=0 inline=0 sym=s40
 expr e0 this type=Int
-expr e1 name(other) type=Int ref=s37
+expr e1 name(other) type=Int ref=s39
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 int(1) type=Int
 expr e4 int(2) type=Int
-expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s36 map=[0->0] targs=[]
+expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s38 map=[0->0] targs=[]

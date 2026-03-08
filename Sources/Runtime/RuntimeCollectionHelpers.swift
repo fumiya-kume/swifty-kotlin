@@ -86,6 +86,12 @@ func maybeUnbox(_ value: Int) -> Int {
     if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
         return boolBox.value ? 1 : 0
     }
+    if let longBox = tryCast(ptr, to: RuntimeLongBox.self) {
+        return longBox.value
+    }
+    if let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
+        return charBox.value
+    }
     return value
 }
 
@@ -110,6 +116,18 @@ func runtimeElementToString(_ elem: Int) -> String {
     }
     if let boolBox = tryCast(ptr, to: RuntimeBoolBox.self) {
         return boolBox.value ? "true" : "false"
+    }
+    if let longBox = tryCast(ptr, to: RuntimeLongBox.self) {
+        return "\(longBox.value)"
+    }
+    if let floatBox = tryCast(ptr, to: RuntimeFloatBox.self) {
+        return String(floatBox.value)
+    }
+    if let doubleBox = tryCast(ptr, to: RuntimeDoubleBox.self) {
+        return String(doubleBox.value)
+    }
+    if let charBox = tryCast(ptr, to: RuntimeCharBox.self) {
+        return UnicodeScalar(charBox.value).map(String.init) ?? "\u{FFFD}"
     }
     if let listBox = tryCast(ptr, to: RuntimeListBox.self) {
         let parts = listBox.elements.map { runtimeElementToString($0) }

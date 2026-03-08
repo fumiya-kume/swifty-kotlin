@@ -327,60 +327,67 @@ extension CallLowerer {
     func resolveVirtualDispatch(callee: SymbolID, receiverTypeID: TypeID?, sema: SemaModule) -> KIRDispatchKind? {
         guard let calleeSymbol = sema.symbols.symbol(callee),
               calleeSymbol.kind == .function
-        else {
-            return nil
-        }
+        else { return nil }
         guard let parentID = sema.symbols.parentSymbol(for: callee),
               let parentSymbol = sema.symbols.symbol(parentID)
-        else {
-            return nil
-        }
-        guard let layout = sema.symbols.nominalLayout(for: parentID) else {
-            return nil
-        }
+        else { return nil }
+        guard let layout = sema.symbols.nominalLayout(for: parentID) else { return nil }
         if parentSymbol.kind == .interface {
-            // The itable slot must be derived from the concrete receiver's layout
-            // (which records where each interface is stored), not the interface's
-            // own layout.  Without a concrete class receiver we cannot form an
-            // itable dispatch.
-            guard let receiverTypeID,
-                  case let .classType(classType) = sema.types.kind(of: receiverTypeID)
-            else {
-                return nil
-            }
-            let receiverClassSymID = classType.classSymbol
-            // If the receiver is a concrete class with no subtypes, use direct
-            // dispatch.  Kotlin classes are final by default, so this is safe and
-            // avoids the itable path which requires runtime typeInfo support.
-            if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
-               receiverClassSym.kind == .class
-            {
-                let subtypes = sema.symbols.directSubtypes(of: receiverClassSymID)
-                if subtypes.isEmpty {
-                    return nil
-                }
-            }
-            guard let receiverLayout = sema.symbols.nominalLayout(for: receiverClassSymID) else {
-                return nil
-            }
-            let interfaceSlot = receiverLayout.itableSlots[parentID] ?? 0
-            if let methodSlot = layout.vtableSlots[callee] {
-                return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
-            }
-            return nil
+            return resolveItableDispatch(
+                callee: callee, parentID: parentID, layout: layout,
+                receiverTypeID: receiverTypeID, sema: sema
+            )
         }
         if parentSymbol.kind == .class {
-            // Only use virtual dispatch if the class actually has subtypes.
-            // In Kotlin, classes are final by default; virtual dispatch is only
-            // needed when the class is open/abstract (has known subtypes).
-            let subtypes = sema.symbols.directSubtypes(of: parentID)
-            guard !subtypes.isEmpty else {
-                return nil
-            }
-            if let vtableSlot = layout.vtableSlots[callee] {
-                return .vtable(slot: vtableSlot)
-            }
-            return nil
+            return resolveVtableDispatch(callee: callee, parentID: parentID, layout: layout, sema: sema)
+        }
+        return nil
+    }
+
+    private func resolveItableDispatch(
+        callee: SymbolID,
+        parentID: SymbolID,
+        layout: NominalLayout,
+        receiverTypeID: TypeID?,
+        sema: SemaModule
+    ) -> KIRDispatchKind? {
+        // The itable slot must be derived from the concrete receiver's layout
+        // (which records where each interface is stored), not the interface's
+        // own layout.  Without a concrete class receiver we cannot form an
+        // itable dispatch.
+        guard let receiverTypeID,
+              case let .classType(classType) = sema.types.kind(of: receiverTypeID)
+        else { return nil }
+        let receiverClassSymID = classType.classSymbol
+        // If the receiver is a concrete class with no subtypes, use direct
+        // dispatch.  Kotlin classes are final by default, so this is safe and
+        // avoids the itable path which requires runtime typeInfo support.
+        if let receiverClassSym = sema.symbols.symbol(receiverClassSymID),
+           receiverClassSym.kind == .class
+        {
+            if sema.symbols.directSubtypes(of: receiverClassSymID).isEmpty { return nil }
+        }
+        guard let receiverLayout = sema.symbols.nominalLayout(for: receiverClassSymID) else { return nil }
+        let interfaceSlot = receiverLayout.itableSlots[parentID] ?? 0
+        if let methodSlot = layout.vtableSlots[callee] {
+            return .itable(interfaceSlot: interfaceSlot, methodSlot: methodSlot)
+        }
+        return nil
+    }
+
+    private func resolveVtableDispatch(
+        callee: SymbolID,
+        parentID: SymbolID,
+        layout: NominalLayout,
+        sema: SemaModule
+    ) -> KIRDispatchKind? {
+        // Only use virtual dispatch if the class actually has subtypes.
+        // In Kotlin, classes are final by default; virtual dispatch is only
+        // needed when the class is open/abstract (has known subtypes).
+        let subtypes = sema.symbols.directSubtypes(of: parentID)
+        guard !subtypes.isEmpty else { return nil }
+        if let vtableSlot = layout.vtableSlots[callee] {
+            return .vtable(slot: vtableSlot)
         }
         return nil
     }

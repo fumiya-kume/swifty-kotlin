@@ -43,6 +43,8 @@ public protocol KKContinuation {
 }
 
 typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKThunkEntryPoint = @convention(c) (UnsafeMutablePointer<Int>?) -> Int
+typealias KKDelegateObserverEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 final class RuntimeStringBox {
     let value: String
@@ -249,8 +251,12 @@ final class RuntimeLazyBox {
         if let cached = cachedValue {
             return cached
         }
-        let fnPtr = unsafeBitCast(initializerFnPtr, to: (@convention(c) () -> Int).self)
-        let value = fnPtr()
+        let fnPtr = unsafeBitCast(initializerFnPtr, to: KKThunkEntryPoint.self)
+        var thrown = 0
+        let value = fnPtr(&thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: lazy initializer threw")
+        }
         cachedValue = value
         return value
     }

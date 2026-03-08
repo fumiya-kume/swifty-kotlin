@@ -175,12 +175,19 @@ extension BuildASTPhase.ExpressionParser {
                 )
                 return parser.parseTypeReference(first.range)
             },
-            resolveDeclarationName: { token, _ in
+            resolveDeclarationName: { token, interner in
+                guard TypeRefParserCore.isTypeLikeNameToken(token.kind) else {
+                    return nil
+                }
                 switch token.kind {
                 case let .identifier(name), let .backtickedIdentifier(name):
-                    name
+                    return name
+                case let .keyword(keyword):
+                    return interner.intern(keyword.rawValue)
+                case let .softKeyword(keyword):
+                    return interner.intern(keyword.rawValue)
                 default:
-                    nil
+                    return nil
                 }
             }
         )

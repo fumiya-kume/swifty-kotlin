@@ -20,6 +20,12 @@ public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))
 }
 
+@_cdecl("kk_abort_unreachable")
+public func kk_abort_unreachable(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = outThrown
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: reached unreachable code")
+}
+
 let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
 
 private enum RuntimeTypeTokenEncoding {
@@ -222,6 +228,11 @@ public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+@_cdecl("kk_object_type_id")
+public func kk_object_type_id(_ objectRaw: Int) -> Int {
+    Int(runtimeObjectTypeID(rawValue: objectRaw) ?? 0)
+}
+
 /// Returns the simple name of the type encoded in the given type token as a
 /// runtime string pointer.  For builtin types the name is derived from the
 /// token base; for nominal types the compiler supplies a `nameHint` string
@@ -293,6 +304,16 @@ public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutab
     guard array.elements.indices.contains(index) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "Array index \(index) out of bounds for length \(array.elements.count).")
         return 0
+    }
+    return array.elements[index]
+}
+
+@_cdecl("kk_array_get_inbounds")
+public func kk_array_get_inbounds(_ arrayRaw: Int, _ index: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          array.elements.indices.contains(index)
+    else {
+        fatalError("kk_array_get_inbounds precondition failed")
     }
     return array.elements[index]
 }

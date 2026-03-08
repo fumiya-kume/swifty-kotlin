@@ -34,22 +34,24 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=interface fq=Expr vis=public flags=sealedType
-symbol s37 kind=class fq=Literal vis=public flags=_
-symbol s38 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#37 params=[] ret=Class#37 suspend=0 defaults=[] vararg=[]
-symbol s39 kind=class fq=Add vis=public flags=_
-symbol s40 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#39 params=[] ret=Class#39 suspend=0 defaults=[] vararg=[]
-symbol s41 kind=class fq=Multiply vis=public flags=_
-symbol s42 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#41 params=[] ret=Class#41 suspend=0 defaults=[] vararg=[]
-symbol s43 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#36] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s44 kind=valueParameter fq=eval.$43.e vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=interface fq=Expr vis=public flags=sealedType
+symbol s39 kind=class fq=Literal vis=public flags=_
+symbol s40 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#39 params=[] ret=Class#39 suspend=0 defaults=[] vararg=[]
+symbol s41 kind=class fq=Add vis=public flags=_
+symbol s42 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#41 params=[] ret=Class#41 suspend=0 defaults=[] vararg=[]
+symbol s43 kind=class fq=Multiply vis=public flags=_
+symbol s44 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#43 params=[] ret=Class#43 suspend=0 defaults=[] vararg=[]
+symbol s45 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#38] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s46 kind=valueParameter fq=eval.$45.e vis=private flags=_
 file f0 package=_
-  decl d0 interface Expr sym=s36
-  decl d1 class Literal sym=s37
-  decl d2 class Add sym=s39
-  decl d3 class Multiply sym=s41
-  decl d4 fun eval suspend=0 inline=0 sym=s43
-expr e0 name(e) type=Class#36 ref=s44
+  decl d0 interface Expr sym=s38
+  decl d1 class Literal sym=s39
+  decl d2 class Add sym=s41
+  decl d3 class Multiply sym=s43
+  decl d4 fun eval suspend=0 inline=0 sym=s45
+expr e0 name(e) type=Class#38 ref=s46
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(literal) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

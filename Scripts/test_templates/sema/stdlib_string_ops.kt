@@ -15,3 +15,5 @@ fun useContains(): Boolean = "Kotlin".contains("otl")
 fun useToInt(): Int = "42".toInt()
 
 fun useToDouble(): Double = "3.14".toDouble()
+
+fun useFormat(): String = "%s:%d".format("age", 7)

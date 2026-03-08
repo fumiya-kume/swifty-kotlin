@@ -34,26 +34,28 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s37 kind=local fq=__local_1.name vis=private flags=_
-symbol s38 kind=local fq=__local_3.x vis=private flags=_
-symbol s39 kind=local fq=__local_6.greeting vis=private flags=_
-symbol s40 kind=local fq=__local_9.result vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s39 kind=local fq=__local_1.name vis=private flags=_
+symbol s40 kind=local fq=__local_3.x vis=private flags=_
+symbol s41 kind=local fq=__local_6.greeting vis=private flags=_
+symbol s42 kind=local fq=__local_9.result vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s36
+  decl d0 fun main suspend=0 inline=0 sym=s38
 expr e0 string(world) type=String
-expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s37
+expr e1 localDecl name mutable=0 type=_ init=e0 type=Unit ref=s39
 expr e2 int(42) type=Int
-expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s38
-expr e4 name(name) type=String ref=s37
+expr e3 localDecl x mutable=0 type=_ init=e2 type=Unit ref=s40
+expr e4 name(name) type=String ref=s39
 expr e5 stringTemplate[lit(Hello ),expr(e4)] type=String
-expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s39
-expr e7 name(x) type=Int ref=s38
+expr e6 localDecl greeting mutable=0 type=_ init=e5 type=Unit ref=s41
+expr e7 name(x) type=Int ref=s40
 expr e8 stringTemplate[lit(value=),expr(e7)] type=String
-expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s40
+expr e9 localDecl result mutable=0 type=_ init=e8 type=Unit ref=s42
 expr e10 name(println) type=_
-expr e11 name(greeting) type=String ref=s39
+expr e11 name(greeting) type=String ref=s41
 expr e12 call callee=e10 args=[_:e11] type=Unit
 expr e13 name(println) type=_
-expr e14 name(result) type=String ref=s40
+expr e14 name(result) type=String ref=s42
 expr e15 call callee=e13 args=[_:e14] type=Unit

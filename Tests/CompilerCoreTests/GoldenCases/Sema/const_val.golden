@@ -34,34 +34,36 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
-symbol s37 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
-symbol s38 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
-symbol s39 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
-symbol s40 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
-symbol s41 kind=object fq=golden.sema.Constants vis=public flags=_
-symbol s42 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
-symbol s43 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
-symbol s44 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s45 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
+symbol s39 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
+symbol s40 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
+symbol s41 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
+symbol s42 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
+symbol s43 kind=object fq=golden.sema.Constants vis=public flags=_
+symbol s44 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
+symbol s45 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
+symbol s46 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s47 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property MAX var=0 sym=s36
-  decl d1 property NAME var=0 sym=s37
-  decl d2 property FLAG var=0 sym=s38
-  decl d3 property RATE var=0 sym=s39
-  decl d4 property NEG var=0 sym=s40
-  decl d7 object Constants sym=s41
-  decl d8 fun useConst suspend=0 inline=0 sym=s44
-  decl d9 fun useNegConst suspend=0 inline=0 sym=s45
-expr e0 int(100) type=Int ref=s36
-expr e1 string(hello) type=String ref=s37
-expr e2 bool(true) type=Boolean ref=s38
-expr e3 double(3.14) type=Double ref=s39
-expr e4 int(42) type=Int ref=s40
-expr e5 unary(unaryMinus) operand=e4 type=Int ref=s42
-expr e6 int(200) type=String ref=s43
+  decl d0 property MAX var=0 sym=s38
+  decl d1 property NAME var=0 sym=s39
+  decl d2 property FLAG var=0 sym=s40
+  decl d3 property RATE var=0 sym=s41
+  decl d4 property NEG var=0 sym=s42
+  decl d7 object Constants sym=s43
+  decl d8 fun useConst suspend=0 inline=0 sym=s46
+  decl d9 fun useNegConst suspend=0 inline=0 sym=s47
+expr e0 int(100) type=Int ref=s38
+expr e1 string(hello) type=String ref=s39
+expr e2 bool(true) type=Boolean ref=s40
+expr e3 double(3.14) type=Double ref=s41
+expr e4 int(42) type=Int ref=s42
+expr e5 unary(unaryMinus) operand=e4 type=Int ref=s44
+expr e6 int(200) type=String ref=s45
 expr e7 string(world) type=String
-expr e8 name(MAX) type=Int ref=s36
+expr e8 name(MAX) type=Int ref=s38
 expr e9 int(50) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(NEG) type=Int ref=s40
+expr e11 name(NEG) type=Int ref=s42

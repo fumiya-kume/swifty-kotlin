@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
@@ -66,7 +67,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J20"
+    public static let specVersion = "J21"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -120,6 +121,14 @@ public enum RuntimeABISpec {
             returnType: .noreturn,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_abort_unreachable",
+            parameters: [
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
@@ -151,6 +160,15 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_compare_any",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_length",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
@@ -162,6 +180,15 @@ public enum RuntimeABISpec {
             name: "kk_string_trim",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_format",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -831,11 +858,28 @@ public enum RuntimeABISpec {
             section: "Array"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_object_type_id",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_get",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_get_inbounds",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
             ],
             returnType: .intptr,
             section: "Array"
@@ -1182,3 +1226,5 @@ public enum RuntimeABISpec {
         return lines.joined(separator: "\n")
     }
 }
+
+// swiftlint:enable file_length type_body_length

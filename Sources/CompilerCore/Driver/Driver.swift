@@ -207,66 +207,59 @@ public final class CompilerDriver {
         guard let sema = ctx.sema, let ast = ctx.ast else {
             return graph
         }
-
         let interner = ctx.interner
-        let symbols = sema.symbols
-
-        // Pre-build a map from FileID -> provided symbol names in one pass
-        // over the symbol table, avoiding O(files * symbols) scanning.
         var symbolsByFile: [FileID: Set<String>] = [:]
-        for sym in symbols.allSymbols() {
-            guard let symFileID = symbols.sourceFileID(for: sym.id) else { continue }
+        for sym in sema.symbols.allSymbols() {
+            guard let symFileID = sema.symbols.sourceFileID(for: sym.id) else { continue }
             symbolsByFile[symFileID, default: []].insert(interner.resolve(sym.name))
         }
-
-        // For each AST file, record which symbols it provides and depends on.
         for file in ast.files {
-            let fileID = file.fileID
-            let filePath = ctx.sourceManager.path(of: fileID)
+            let filePath = ctx.sourceManager.path(of: file.fileID)
             guard !filePath.isEmpty else { continue }
-
-            var provided = Set<String>()
-            var depended = Set<String>()
-
-            // Collect provided symbols: top-level declarations in this file.
-            for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID) else { continue }
-                let declName = extractDeclName(decl, interner: interner)
-                if let name = declName {
-                    provided.insert(name)
-                }
-            }
-
-            // Collect provided symbols from pre-built map.
-            if let fileSymbols = symbolsByFile[fileID] {
-                provided.formUnion(fileSymbols)
-            }
-
-            // Imports: use alias if present, otherwise the last path component
-            // (simple name) to match provided symbol granularity.
-            for imp in file.imports {
-                if let alias = imp.alias {
-                    depended.insert(interner.resolve(alias))
-                } else if let last = imp.path.last {
-                    depended.insert(interner.resolve(last))
-                }
-            }
-
-            // Walk top-level declarations to find referenced names.
-            for declID in file.topLevelDecls {
-                collectDeclDependencies(
-                    declID: declID,
-                    ast: ast,
-                    interner: interner,
-                    depended: &depended
-                )
-            }
-
+            let provided = collectProvidedSymbols(file: file, ast: ast, symbolsByFile: symbolsByFile, interner: interner)
+            let depended = collectDependedSymbols(file: file, ast: ast, interner: interner)
             graph.recordProvided(filePath: filePath, symbols: provided)
             graph.recordDepended(filePath: filePath, symbols: depended)
         }
-
         return graph
+    }
+
+    private func collectProvidedSymbols(
+        file: ASTFile,
+        ast: ASTModule,
+        symbolsByFile: [FileID: Set<String>],
+        interner: StringInterner
+    ) -> Set<String> {
+        var provided = Set<String>()
+        for declID in file.topLevelDecls {
+            guard let decl = ast.arena.decl(declID) else { continue }
+            if let name = extractDeclName(decl, interner: interner) {
+                provided.insert(name)
+            }
+        }
+        if let fileSymbols = symbolsByFile[file.fileID] {
+            provided.formUnion(fileSymbols)
+        }
+        return provided
+    }
+
+    private func collectDependedSymbols(
+        file: ASTFile,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> Set<String> {
+        var depended = Set<String>()
+        for imp in file.imports {
+            if let alias = imp.alias {
+                depended.insert(interner.resolve(alias))
+            } else if let last = imp.path.last {
+                depended.insert(interner.resolve(last))
+            }
+        }
+        for declID in file.topLevelDecls {
+            collectDeclDependencies(declID: declID, ast: ast, interner: interner, depended: &depended)
+        }
+        return depended
     }
 
     /// Extracts the declaration name as a String, if available.
@@ -324,14 +317,7 @@ public final class CompilerDriver {
                 depended: &depended
             )
         case let .funDecl(d):
-            for param in d.valueParams {
-                if let typeRef = param.type {
-                    collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
-                }
-            }
-            if let retType = d.returnType {
-                collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
-            }
+            collectFunDeclDependencies(d, ast: ast, interner: interner, depended: &depended)
         case let .propertyDecl(d):
             if let typeRef = d.type {
                 collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
@@ -362,6 +348,22 @@ public final class CompilerDriver {
                 interner: interner,
                 depended: &depended
             )
+        }
+    }
+
+    private func collectFunDeclDependencies(
+        _ d: FunDecl,
+        ast: ASTModule,
+        interner: StringInterner,
+        depended: inout Set<String>
+    ) {
+        for param in d.valueParams {
+            if let typeRef = param.type {
+                collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
+            }
+        }
+        if let retType = d.returnType {
+            collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
         }
     }
 

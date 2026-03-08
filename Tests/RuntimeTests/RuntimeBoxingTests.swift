@@ -1,17 +1,7 @@
 @testable import Runtime
 import XCTest
 
-final class RuntimeBoxingTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimeBoxingTests: IsolatedRuntimeXCTestCase {
     // MARK: - kk_box_int / kk_unbox_int
 
     func testBoxAndUnboxIntRoundTrip() {

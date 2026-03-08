@@ -2,8 +2,13 @@ import Foundation
 
 // Handles call expression type inference (function calls, member calls, safe member calls).
 // Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
+// File splitting is still in progress for this legacy entry point.
+// swiftlint:disable file_length
 
 extension CallTypeChecker {
+    // This legacy inference path still owns many special cases while the split-out helpers
+    // are being migrated. Keep lint focused on the new behavior touched by this change.
+    // swiftlint:disable function_body_length cyclomatic_complexity
     func inferMemberCallImpl(
         _ id: ExprID,
         receiverID: ExprID,
@@ -197,6 +202,8 @@ extension CallTypeChecker {
             }
             return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
+        let hasLeadingLocaleArgument = interner.resolve(calleeName) == "format"
+            && argTypes.first.map { isJavaUtilLocaleType($0, sema: sema, interner: interner) } == true
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
         // Primitive member function: Int/Long/UInt/ULong.inv() → same type (P5-103, TYPE-005)
         if interner.resolve(calleeName) == "inv",
@@ -471,7 +478,12 @@ extension CallTypeChecker {
         let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) { interner.resolve(name) == "null" } else { false }
 
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
-        let candidates = visible
+        var candidates = visible
+        if hasLeadingLocaleArgument {
+            candidates.removeAll { candidate in
+                isSyntheticStringFormatCandidate(candidate, sema: sema, interner: interner)
+            }
+        }
         if candidates.isEmpty {
             if isClassNameReceiver,
                args.isEmpty,
@@ -588,6 +600,28 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                }
+            }
+            // String stdlib: format(vararg args) (STDLIB-006)
+            if interner.resolve(calleeName) == "format", !hasLeadingLocaleArgument {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    if let boundType = tryBindSyntheticStringFormatFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
                 }
             }
             // For non-empty-arg member calls, try member property/field lookup.
@@ -962,4 +996,92 @@ extension CallTypeChecker {
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
     }
+
+    private func isJavaUtilLocaleType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbolID = driver.helpers.nominalSymbol(
+            of: sema.types.makeNonNullable(type),
+            types: sema.types
+        ),
+            let symbol = sema.symbols.symbol(symbolID)
+        else {
+            return false
+        }
+        return symbol.fqName == [
+            interner.intern("java"),
+            interner.intern("util"),
+            interner.intern("Locale"),
+        ]
+    }
+
+    private func isSyntheticStringFormatCandidate(
+        _ symbolID: SymbolID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbol = sema.symbols.symbol(symbolID),
+              symbol.fqName == [
+                  interner.intern("kotlin"),
+                  interner.intern("text"),
+                  interner.intern("format"),
+              ],
+              let signature = sema.symbols.functionSignature(for: symbolID)
+        else {
+            return false
+        }
+        return signature.receiverType == sema.types.stringType
+    }
+
+    private func tryBindSyntheticStringFormatFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let candidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+            isSyntheticStringFormatCandidate(candidate, sema: sema, interner: interner)
+        }
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverType,
+            ctx: ctx.semaCtx
+        )
+        guard resolved.diagnostic == nil,
+              let chosen = resolved.chosenCallee
+        else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    // swiftlint:enable function_body_length cyclomatic_complexity
 }

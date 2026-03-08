@@ -172,28 +172,41 @@ extension DataFlowSemaPhase {
             // This is a known limitation; the full TypeCheckSemaPhase resolves these correctly later.
             return nil
         case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
-            let nullability: Nullability = nullable ? .nullable : .nonNull
-            var paramTypes: [TypeID] = []
-            for paramRef in paramRefIDs {
-                guard let paramType = resolveTypeRefForInheritance(paramRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
-                    return nil
-                }
-                paramTypes.append(paramType)
-            }
-            guard let returnType = resolveTypeRefForInheritance(returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
-                return nil
-            }
-            return types.make(.functionType(FunctionType(
-                params: paramTypes,
-                returnType: returnType,
-                isSuspend: isSuspend,
-                nullability: nullability
-            )))
+            return resolveFunctionTypeForInheritance(
+                paramRefIDs: paramRefIDs, returnRefID: returnRefID, isSuspend: isSuspend, nullable: nullable,
+                currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+            )
         case let .intersection(partRefs):
             let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
         }
+    }
+
+    private func resolveFunctionTypeForInheritance(
+        paramRefIDs: [TypeRefID],
+        returnRefID: TypeRefID,
+        isSuspend: Bool,
+        nullable: Bool,
+        currentPackage: [InternedString],
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem
+    ) -> TypeID? {
+        let nullability: Nullability = nullable ? .nullable : .nonNull
+        var paramTypes: [TypeID] = []
+        for paramRef in paramRefIDs {
+            guard let paramType = resolveTypeRefForInheritance(
+                paramRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+            ) else { return nil }
+            paramTypes.append(paramType)
+        }
+        guard let returnType = resolveTypeRefForInheritance(
+            returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+        ) else { return nil }
+        return types.make(.functionType(FunctionType(
+            params: paramTypes, returnType: returnType, isSuspend: isSuspend, nullability: nullability
+        )))
     }
 
     func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {
@@ -300,6 +313,22 @@ extension DataFlowSemaPhase {
 
     /// CLASS-008: Create synthetic method symbols for delegated interface methods
     /// that the class does not override. These are used for itable layout and KIR lowering.
+    private struct DelegationDispatchKey: Hashable {
+        let name: InternedString
+        let arity: Int
+        let isSuspend: Bool
+    }
+
+    private func delegationDispatchKey(for methodSymbol: SymbolID, symbols: SymbolTable, interner: StringInterner) -> DelegationDispatchKey {
+        let signature = symbols.functionSignature(for: methodSymbol)
+        let methodInfo = symbols.symbol(methodSymbol)
+        return DelegationDispatchKey(
+            name: methodInfo?.name ?? interner.intern(""),
+            arity: signature?.parameterTypes.count ?? 0,
+            isSuspend: signature?.isSuspend ?? false
+        )
+    }
+
     func synthesizeClassDelegationForwardingMethodSymbols(
         ast: ASTModule,
         symbols: SymbolTable,
@@ -307,21 +336,6 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
-        struct MethodDispatchKey: Hashable {
-            let name: InternedString
-            let arity: Int
-            let isSuspend: Bool
-        }
-        func methodDispatchKey(for methodSymbol: SymbolID, symbols: SymbolTable) -> MethodDispatchKey {
-            let signature = symbols.functionSignature(for: methodSymbol)
-            let methodInfo = symbols.symbol(methodSymbol)
-            return MethodDispatchKey(
-                name: methodInfo?.name ?? interner.intern(""),
-                arity: signature?.parameterTypes.count ?? 0,
-                isSuspend: signature?.isSuspend ?? false
-            )
-        }
-
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
                 guard let decl = ast.arena.decl(declID),
@@ -331,95 +345,117 @@ extension DataFlowSemaPhase {
                 else {
                     continue
                 }
-                let classFQName = classSym.fqName
-
-                // Collect class's own method dispatch keys (from member functions)
-                var classMethodKeys: Set<MethodDispatchKey> = []
-                for funDeclID in classDecl.memberFunctions {
-                    guard let funSymbol = bindings.declSymbols[funDeclID] else { continue }
-                    classMethodKeys.insert(methodDispatchKey(for: funSymbol, symbols: symbols))
-                }
-
-                for interfaceSymbol in symbols.delegatedInterfaces(forClass: classSymbol) {
-                    guard let fieldSymbol = symbols.classDelegationField(
-                        forClass: classSymbol, interface: interfaceSymbol
-                    ),
-                        let interfaceSym = symbols.symbol(interfaceSymbol)
-                    else {
-                        continue
-                    }
-                    let interfaceFQName = interfaceSym.fqName
-
-                    let interfaceMethods = symbols.children(ofFQName: interfaceFQName)
-                        .compactMap { symbols.symbol($0) }
-                        .filter { $0.kind == .function }
-
-                    for methodSym in interfaceMethods {
-                        let key = methodDispatchKey(for: methodSym.id, symbols: symbols)
-                        if classMethodKeys.contains(key) {
-                            continue
-                        }
-                        guard let ifaceSig = symbols.functionSignature(for: methodSym.id) else {
-                            continue
-                        }
-
-                        let methodName = methodSym.name
-                        let forwardingFQName = classFQName + [methodName]
-                        let forwardingSymbol = symbols.define(
-                            kind: .function,
-                            name: methodName,
-                            fqName: forwardingFQName,
-                            declSite: classDecl.range,
-                            visibility: .private,
-                            flags: [.synthetic]
-                        )
-                        symbols.setParentSymbol(classSymbol, for: forwardingSymbol)
-
-                        let classType = types.make(.classType(ClassType(
-                            classSymbol: classSymbol,
-                            args: [],
-                            nullability: .nonNull
-                        )))
-
-                        var paramSymbols: [SymbolID] = []
-                        for (index, paramType) in ifaceSig.parameterTypes.enumerated() {
-                            let paramName = interner.intern("p\(index)")
-                            let paramFQName = forwardingFQName + [paramName]
-                            let paramSymbol = symbols.define(
-                                kind: .valueParameter,
-                                name: paramName,
-                                fqName: paramFQName,
-                                declSite: classDecl.range,
-                                visibility: .private,
-                                flags: []
-                            )
-                            symbols.setParentSymbol(forwardingSymbol, for: paramSymbol)
-                            symbols.setPropertyType(paramType, for: paramSymbol)
-                            paramSymbols.append(paramSymbol)
-                        }
-
-                        let forwardingSig = FunctionSignature(
-                            receiverType: classType,
-                            parameterTypes: ifaceSig.parameterTypes,
-                            returnType: ifaceSig.returnType,
-                            isSuspend: ifaceSig.isSuspend,
-                            valueParameterSymbols: paramSymbols,
-                            valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
-                            valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
-                        )
-                        symbols.setFunctionSignature(forwardingSig, for: forwardingSymbol)
-
-                        symbols.addClassDelegationForwardingMethod(
-                            forwardingSymbol,
-                            forClass: classSymbol,
-                            interface: interfaceSymbol,
-                            interfaceMethod: methodSym.id,
-                            field: fieldSymbol
-                        )
-                    }
-                }
+                synthesizeDelegationForwardingForClass(
+                    classDecl: classDecl, classSymbol: classSymbol, classFQName: classSym.fqName,
+                    symbols: symbols, bindings: bindings, types: types, interner: interner
+                )
             }
         }
+    }
+
+    private func synthesizeDelegationForwardingForClass(
+        classDecl: ClassDecl,
+        classSymbol: SymbolID,
+        classFQName: [InternedString],
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        var classMethodKeys: Set<DelegationDispatchKey> = []
+        for funDeclID in classDecl.memberFunctions {
+            guard let funSymbol = bindings.declSymbols[funDeclID] else { continue }
+            classMethodKeys.insert(delegationDispatchKey(for: funSymbol, symbols: symbols, interner: interner))
+        }
+
+        for interfaceSymbol in symbols.delegatedInterfaces(forClass: classSymbol) {
+            guard let fieldSymbol = symbols.classDelegationField(forClass: classSymbol, interface: interfaceSymbol),
+                  let interfaceSym = symbols.symbol(interfaceSymbol)
+            else {
+                continue
+            }
+            let interfaceMethods = symbols.children(ofFQName: interfaceSym.fqName)
+                .compactMap { symbols.symbol($0) }
+                .filter { $0.kind == .function }
+
+            for methodSym in interfaceMethods {
+                let key = delegationDispatchKey(for: methodSym.id, symbols: symbols, interner: interner)
+                guard !classMethodKeys.contains(key),
+                      let ifaceSig = symbols.functionSignature(for: methodSym.id)
+                else { continue }
+                synthesizeForwardingMethod(
+                    methodSym: methodSym, ifaceSig: ifaceSig,
+                    classDecl: classDecl, classSymbol: classSymbol, classFQName: classFQName,
+                    interfaceSymbol: interfaceSymbol, fieldSymbol: fieldSymbol,
+                    symbols: symbols, types: types, interner: interner
+                )
+            }
+        }
+    }
+
+    private func synthesizeForwardingMethod(
+        methodSym: SemanticSymbol,
+        ifaceSig: FunctionSignature,
+        classDecl: ClassDecl,
+        classSymbol: SymbolID,
+        classFQName: [InternedString],
+        interfaceSymbol: SymbolID,
+        fieldSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let methodName = methodSym.name
+        let forwardingFQName = classFQName + [methodName]
+        let forwardingSymbol = symbols.define(
+            kind: .function,
+            name: methodName,
+            fqName: forwardingFQName,
+            declSite: classDecl.range,
+            visibility: methodSym.visibility,
+            flags: [.synthetic, .overrideMember]
+        )
+        symbols.setParentSymbol(classSymbol, for: forwardingSymbol)
+
+        let classType = types.make(.classType(ClassType(
+            classSymbol: classSymbol, args: [], nullability: .nonNull
+        )))
+
+        var paramSymbols: [SymbolID] = []
+        for (index, paramType) in ifaceSig.parameterTypes.enumerated() {
+            let paramName = interner.intern("p\(index)")
+            let paramFQName = forwardingFQName + [paramName]
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: paramFQName,
+                declSite: classDecl.range,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setParentSymbol(forwardingSymbol, for: paramSymbol)
+            symbols.setPropertyType(paramType, for: paramSymbol)
+            paramSymbols.append(paramSymbol)
+        }
+
+        let forwardingSig = FunctionSignature(
+            receiverType: classType,
+            parameterTypes: ifaceSig.parameterTypes,
+            returnType: ifaceSig.returnType,
+            isSuspend: ifaceSig.isSuspend,
+            valueParameterSymbols: paramSymbols,
+            valueParameterHasDefaultValues: Array(repeating: false, count: paramSymbols.count),
+            valueParameterIsVararg: Array(repeating: false, count: paramSymbols.count)
+        )
+        symbols.setFunctionSignature(forwardingSig, for: forwardingSymbol)
+
+        symbols.addClassDelegationForwardingMethod(
+            forwardingSymbol,
+            forClass: classSymbol,
+            interface: interfaceSymbol,
+            interfaceMethod: methodSym.id,
+            field: fieldSymbol
+        )
     }
 
     private func validateAbstractOverridesForDecl(

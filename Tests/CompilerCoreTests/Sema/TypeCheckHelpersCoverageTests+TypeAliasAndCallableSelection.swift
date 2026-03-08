@@ -113,7 +113,7 @@ extension TypeCheckHelpersCoverageTests {
         XCTAssertEqual(substituted, fixture.types.stringType)
     }
 
-    func testPart2HelpersForNullabilitySmartCastAndCallableSelection() {
+    func testSubstituteAliasArgAndNullabilityHelpers() {
         let fixture = makeHelpersFixture()
         let helpers = TypeCheckHelpers()
         let range = makeRange()
@@ -196,6 +196,12 @@ extension TypeCheckHelpersCoverageTests {
             interner: fixture.interner
         )
         XCTAssertEqual(smartCastFromBool, fixture.types.booleanType)
+    }
+
+    func testSmartCastAndMemberCallableSelection() {
+        let fixture = makeHelpersFixture()
+        let helpers = TypeCheckHelpers()
+        let range = makeRange()
 
         let enumSymbol = fixture.symbols.define(
             kind: .enumClass,

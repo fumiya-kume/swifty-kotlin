@@ -30,7 +30,7 @@ Baseline files are JSON arrays. Each entry contains:
 | `input_mode` | `single(file.kt)` or `multi(N)`                 |
 | `input_files` | File name or count                              |
 | `emit`       | Emit mode: `kir`, `object`, `executable`         |
-| `backend`    | Backend: `synthetic-c`, `llvm-c-api`             |
+| `backend`    | Backend: `llvm-c-api`                            |
 | `run`        | Run number (1-based)                             |
 | `total_ms`   | Total compilation time in milliseconds           |
 | `phases`     | Object mapping phase name to duration in ms      |

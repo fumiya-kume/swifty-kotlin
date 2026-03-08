@@ -276,53 +276,6 @@ public final class DataFlowAnalyzer {
         guard let conditionExpr = ast.arena.expr(conditionID) else {
             return base
         }
-
-        func narrowedStateForConditionSymbol(_ conditionSymbolID: SymbolID) -> DataFlowState {
-            guard let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
-                return base
-            }
-            switch conditionSymbol.kind {
-            case .field:
-                guard let ownerID = enumOwnerSymbolID(for: conditionSymbol, symbols: sema.symbols),
-                      nominalSymbolID(of: subjectType, types: sema.types) == ownerID
-                else {
-                    return base
-                }
-                let narrowed = sema.types.make(.classType(ClassType(
-                    classSymbol: ownerID,
-                    args: [],
-                    nullability: .nonNull
-                )))
-                var vars = base.variables
-                vars[subjectSymbol] = VariableFlowState(
-                    possibleTypes: [narrowed],
-                    nullability: .nonNull,
-                    isStable: true
-                )
-                return DataFlowState(variables: vars)
-            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                guard let subjectNominal = nominalSymbolID(of: subjectType, types: sema.types),
-                      isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols)
-                else {
-                    return base
-                }
-                let narrowed = sema.types.make(.classType(ClassType(
-                    classSymbol: conditionSymbolID,
-                    args: [],
-                    nullability: .nonNull
-                )))
-                var vars = base.variables
-                vars[subjectSymbol] = VariableFlowState(
-                    possibleTypes: [narrowed],
-                    nullability: .nonNull,
-                    isStable: true
-                )
-                return DataFlowState(variables: vars)
-            default:
-                return base
-            }
-        }
-
         switch conditionExpr {
         case let .nameRef(name, _):
             if interner.resolve(name) == "null" {
@@ -337,14 +290,22 @@ public final class DataFlowAnalyzer {
             guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID] else {
                 return base
             }
-            return narrowedStateForConditionSymbol(conditionSymbolID)
+            return narrowedStateForConditionSymbol(
+                conditionSymbolID,
+                subjectSymbol: subjectSymbol, subjectType: subjectType,
+                base: base, sema: sema
+            )
         case let .memberCall(_, _, _, args, _):
             guard args.isEmpty,
                   let conditionSymbolID = sema.bindings.identifierSymbols[conditionID]
             else {
                 return base
             }
-            return narrowedStateForConditionSymbol(conditionSymbolID)
+            return narrowedStateForConditionSymbol(
+                conditionSymbolID,
+                subjectSymbol: subjectSymbol, subjectType: subjectType,
+                base: base, sema: sema
+            )
         case .boolLiteral:
             if case .primitive(.boolean, _) = sema.types.kind(of: subjectType) {
                 let narrowed = sema.types.make(.primitive(.boolean, .nonNull))
@@ -358,36 +319,91 @@ public final class DataFlowAnalyzer {
             }
             return base
         case let .isCheck(exprID, typeRefID, negated, _):
-            // Only narrow when the isCheck's expr refers to the when subject.
-            // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
-            if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
-               checkedSymbol != subjectSymbol
-            {
+            return narrowedStateForIsCheck(
+                exprID: exprID, typeRefID: typeRefID, negated: negated,
+                subjectSymbol: subjectSymbol, conditionID: conditionID,
+                base: base, ast: ast, sema: sema, interner: interner, scope: scope
+            )
+        default:
+            return base
+        }
+    }
+
+    private func narrowedStateForConditionSymbol(
+        _ conditionSymbolID: SymbolID,
+        subjectSymbol: SymbolID,
+        subjectType: TypeID,
+        base: DataFlowState,
+        sema: SemaModule
+    ) -> DataFlowState {
+        guard let conditionSymbol = sema.symbols.symbol(conditionSymbolID) else {
+            return base
+        }
+        switch conditionSymbol.kind {
+        case .field:
+            guard let ownerID = enumOwnerSymbolID(for: conditionSymbol, symbols: sema.symbols),
+                  nominalSymbolID(of: subjectType, types: sema.types) == ownerID
+            else {
                 return base
             }
-            guard !negated else {
-                return base
-            }
-            guard let narrowed = resolveIsCheckTargetType(
-                typeRefID: typeRefID,
-                scope: scope,
-                ast: ast,
-                sema: sema,
-                interner: interner
-            ) else {
-                return base
-            }
-            let narrowedNullability = sema.types.nullability(of: narrowed)
+            let narrowed = sema.types.make(.classType(ClassType(
+                classSymbol: ownerID, args: [], nullability: .nonNull
+            )))
             var vars = base.variables
             vars[subjectSymbol] = VariableFlowState(
-                possibleTypes: [narrowed],
-                nullability: narrowedNullability,
-                isStable: true
+                possibleTypes: [narrowed], nullability: .nonNull, isStable: true
+            )
+            return DataFlowState(variables: vars)
+        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+            guard let subjectNominal = nominalSymbolID(of: subjectType, types: sema.types),
+                  isNominalSubtype(conditionSymbolID, of: subjectNominal, symbols: sema.symbols)
+            else {
+                return base
+            }
+            let narrowed = sema.types.make(.classType(ClassType(
+                classSymbol: conditionSymbolID, args: [], nullability: .nonNull
+            )))
+            var vars = base.variables
+            vars[subjectSymbol] = VariableFlowState(
+                possibleTypes: [narrowed], nullability: .nonNull, isStable: true
             )
             return DataFlowState(variables: vars)
         default:
             return base
         }
+    }
+
+    private func narrowedStateForIsCheck(
+        exprID: ExprID,
+        typeRefID: TypeRefID,
+        negated: Bool,
+        subjectSymbol: SymbolID,
+        conditionID _: ExprID,
+        base: DataFlowState,
+        ast: ASTModule,
+        sema: SemaModule,
+        interner: StringInterner,
+        scope: Scope
+    ) -> DataFlowState {
+        // Only narrow when the isCheck's expr refers to the when subject.
+        // This prevents incorrect narrowing for `when(x) { y is String -> ... }`.
+        if let checkedSymbol = sema.bindings.identifierSymbols[exprID],
+           checkedSymbol != subjectSymbol
+        {
+            return base
+        }
+        guard !negated else { return base }
+        guard let narrowed = resolveIsCheckTargetType(
+            typeRefID: typeRefID, scope: scope, ast: ast, sema: sema, interner: interner
+        ) else {
+            return base
+        }
+        let narrowedNullability = sema.types.nullability(of: narrowed)
+        var vars = base.variables
+        vars[subjectSymbol] = VariableFlowState(
+            possibleTypes: [narrowed], nullability: narrowedNullability, isStable: true
+        )
+        return DataFlowState(variables: vars)
     }
 
     public func whenElseState(
@@ -737,28 +753,7 @@ public final class DataFlowAnalyzer {
             return nullability == .nullable ? sema.types.makeNullable(primitiveType) : primitiveType
         }
 
-        let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
-            guard let sym = sema.symbols.symbol(symbolID) else { return false }
-            switch sym.kind {
-            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                return true
-            default:
-                return false
-            }
-        }.sorted(by: { $0.rawValue < $1.rawValue })
-        let candidates: [SymbolID] = if !fqCandidates.isEmpty {
-            fqCandidates
-        } else {
-            sema.symbols.lookupByShortName(firstName).filter { symbolID in
-                guard let sym = sema.symbols.symbol(symbolID) else { return false }
-                switch sym.kind {
-                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                    return true
-                default:
-                    return false
-                }
-            }.sorted(by: { $0.rawValue < $1.rawValue })
-        }
+        let candidates = resolveNominalCandidates(forName: firstName, sema: sema)
         guard let targetSymbolID = candidates.first else {
             return nil
         }
@@ -831,6 +826,23 @@ public final class DataFlowAnalyzer {
                 return .star
             }
         }
+    }
+
+    private func resolveNominalCandidates(forName name: InternedString, sema: SemaModule) -> [SymbolID] {
+        func isNominalOrAlias(_ symbolID: SymbolID) -> Bool {
+            guard let sym = sema.symbols.symbol(symbolID) else { return false }
+            switch sym.kind {
+            case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias: return true
+            default: return false
+            }
+        }
+        let fqCandidates = sema.symbols.lookupAll(fqName: [name])
+            .filter { isNominalOrAlias($0) }
+            .sorted(by: { $0.rawValue < $1.rawValue })
+        if !fqCandidates.isEmpty { return fqCandidates }
+        return sema.symbols.lookupByShortName(name)
+            .filter { isNominalOrAlias($0) }
+            .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
     private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {

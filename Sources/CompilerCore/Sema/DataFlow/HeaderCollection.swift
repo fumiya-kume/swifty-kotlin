@@ -1,3 +1,4 @@
+// swiftlint:disable file_length function_body_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -193,12 +194,17 @@ extension DataFlowSemaPhase {
             let hasPrimaryCtorSyntax = classDecl.hasPrimaryConstructorSyntax
             let hasSecondaryCtors = !classDecl.secondaryConstructors.isEmpty
             if hasPrimaryCtorSyntax || !hasSecondaryCtors {
+                let primaryCtorVisibility = primaryConstructorVisibility(
+                    for: classDecl,
+                    classKind: declaration.kind,
+                    declarationVisibility: declaration.visibility
+                )
                 let primaryCtorSymbol = symbols.define(
                     kind: .constructor,
                     name: declaration.name,
                     fqName: primaryCtorFQName,
                     declSite: classDecl.range,
-                    visibility: declaration.visibility,
+                    visibility: primaryCtorVisibility,
                     flags: []
                 )
                 scope.insert(primaryCtorSymbol)
@@ -542,6 +548,14 @@ extension DataFlowSemaPhase {
                     typeParameterUpperBoundsList: upperBoundsByTypeParam
                 ),
                 for: symbol
+            )
+            checkAndReportJVMErasedCallableConflict(
+                for: symbol,
+                fqName: fqName,
+                range: funDecl.range,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics
             )
 
         case let .propertyDecl(propertyDecl):

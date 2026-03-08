@@ -34,32 +34,34 @@ symbol s32 kind=function fq=kotlin.text.contains vis=public flags=synthetic sig=
 symbol s33 kind=valueParameter fq=kotlin.text.contains.other vis=private flags=synthetic
 symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=recv=String params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s36 kind=class fq=Point vis=public flags=_
-symbol s37 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#36 params=[Int,Int] ret=Class#36 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s38 kind=valueParameter fq=Point.<init>.$37.x vis=private flags=_
-symbol s39 kind=valueParameter fq=Point.<init>.$37.y vis=private flags=_
-symbol s40 kind=class fq=Named vis=public flags=_
-symbol s41 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#40 params=[String] ret=Class#40 suspend=0 defaults=[0] vararg=[0]
-symbol s42 kind=valueParameter fq=Named.<init>.$41.name vis=private flags=_
-symbol s43 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#40 params=[] ret=Class#40 suspend=0 defaults=[] vararg=[]
-symbol s44 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s45 kind=local fq=__local_5.p vis=private flags=_
-symbol s46 kind=local fq=__local_9.n vis=private flags=_
-symbol s47 kind=local fq=__local_12.d vis=private flags=_
+symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
+symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
+symbol s38 kind=class fq=Point vis=public flags=_
+symbol s39 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#38 params=[Int,Int] ret=Class#38 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s40 kind=valueParameter fq=Point.<init>.$39.x vis=private flags=_
+symbol s41 kind=valueParameter fq=Point.<init>.$39.y vis=private flags=_
+symbol s42 kind=class fq=Named vis=public flags=_
+symbol s43 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#42 params=[String] ret=Class#42 suspend=0 defaults=[0] vararg=[0]
+symbol s44 kind=valueParameter fq=Named.<init>.$43.name vis=private flags=_
+symbol s45 kind=constructor fq=Named.<init> vis=public flags=_ sig=recv=Class#42 params=[] ret=Class#42 suspend=0 defaults=[] vararg=[]
+symbol s46 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s47 kind=local fq=__local_5.p vis=private flags=_
+symbol s48 kind=local fq=__local_9.n vis=private flags=_
+symbol s49 kind=local fq=__local_12.d vis=private flags=_
 file f0 package=_
-  decl d0 class Point sym=s36
-  decl d1 class Named sym=s40
-  decl d2 fun main suspend=0 inline=0 sym=s44
+  decl d0 class Point sym=s38
+  decl d1 class Named sym=s42
+  decl d2 fun main suspend=0 inline=0 sym=s46
 expr e0 string(default) type=String
 expr e1 name(Point) type=_
 expr e2 int(1) type=Int
 expr e3 int(2) type=Int
-expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#36 call=s37 map=[0->0,1->1] targs=[]
-expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s45
+expr e4 call callee=e1 args=[_:e2,_:e3] type=Class#38 call=s39 map=[0->0,1->1] targs=[]
+expr e5 localDecl p mutable=0 type=_ init=e4 type=Unit ref=s47
 expr e6 name(Named) type=_
 expr e7 string(hello) type=String
-expr e8 call callee=e6 args=[_:e7] type=Class#40 call=s41 map=[0->0] targs=[]
-expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s46
+expr e8 call callee=e6 args=[_:e7] type=Class#42 call=s43 map=[0->0] targs=[]
+expr e9 localDecl n mutable=0 type=_ init=e8 type=Unit ref=s48
 expr e10 name(Named) type=_
-expr e11 call callee=e10 args=[] type=Class#40 call=s43 map=[] targs=[]
-expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s47
+expr e11 call callee=e10 args=[] type=Class#42 call=s45 map=[] targs=[]
+expr e12 localDecl d mutable=0 type=_ init=e11 type=Unit ref=s49

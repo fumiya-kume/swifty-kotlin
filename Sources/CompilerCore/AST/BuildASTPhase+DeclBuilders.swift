@@ -29,6 +29,7 @@ extension BuildASTPhase {
             isInner: modifiers.contains(.inner),
             typeParams: typeParams,
             primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            primaryConstructorModifiers: declarationPrimaryConstructorModifiers(from: nodeID, in: arena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
             superTypeEntries: declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
@@ -42,6 +43,58 @@ extension BuildASTPhase {
             nestedObjects: members.nestedObjects,
             companionObject: members.companionObject
         )
+    }
+
+    /// Extracts modifiers attached to the primary constructor declaration in a
+    /// class header, e.g. `class Foo private constructor()`.
+    func declarationPrimaryConstructorModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        var sawClassKeyword = false
+        var sawClassName = false
+        var angleBracketDepth = 0
+        var constructorModifiers: Modifiers = []
+
+        for token in tokens {
+            if !sawClassKeyword {
+                if case .keyword(.class) = token.kind {
+                    sawClassKeyword = true
+                }
+                continue
+            }
+            if !sawClassName {
+                switch token.kind {
+                case .identifier, .backtickedIdentifier:
+                    sawClassName = true
+                default:
+                    break
+                }
+                continue
+            }
+            if token.kind == .symbol(.lessThan) {
+                angleBracketDepth += 1
+                continue
+            }
+            if token.kind == .symbol(.greaterThan) {
+                angleBracketDepth = max(0, angleBracketDepth - 1)
+                continue
+            }
+            if angleBracketDepth > 0 {
+                continue
+            }
+            switch token.kind {
+            case .keyword(.constructor), .softKeyword(.constructor):
+                return constructorModifiers
+            case .symbol(.lParen), .symbol(.colon), .symbol(.lBrace):
+                return []
+            default:
+                break
+            }
+            if let modifier = modifier(from: token) {
+                constructorModifiers.insert(modifier)
+            }
+        }
+
+        return []
     }
 
     /// Detects whether the class header contains explicit constructor parentheses,
@@ -365,7 +418,10 @@ extension BuildASTPhase {
         guard let name = internedIdentifier(from: nameToken, interner: interner) else {
             return
         }
-        if case let .keyword(keyword) = nameToken.kind, isLeadingDeclarationKeyword(keyword) {
+        if case let .keyword(keyword) = nameToken.kind,
+           isLeadingDeclarationKeyword(keyword),
+           keyword != .value
+        {
             return
         }
 

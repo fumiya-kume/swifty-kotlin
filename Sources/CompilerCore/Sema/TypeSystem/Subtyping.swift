@@ -269,28 +269,29 @@ extension TypeSystem {
         case .invariant:
             projection(from: useSite)
         case .out:
-            switch useSite {
-            case let .invariant(type):
-                .out(type)
-            case let .out(type):
-                .out(type)
-            case .star:
-                .star
-            case .in:
-                .invalid
-            }
+            outProjection(useSite: useSite)
         case .in:
-            switch useSite {
-            case let .invariant(type):
-                .in(type)
-            case let .in(type):
-                // in × in = out (double contravariance = covariance)
-                .out(type)
-            case .star:
-                .star
-            case .out:
-                .invalid
-            }
+            inProjection(useSite: useSite)
+        }
+    }
+
+    private func outProjection(useSite: TypeArg) -> Projection {
+        switch useSite {
+        case let .invariant(type): .out(type)
+        case let .out(type): .out(type)
+        case .star: .star
+        case .in: .invalid
+        }
+    }
+
+    private func inProjection(useSite: TypeArg) -> Projection {
+        switch useSite {
+        case let .invariant(type): .in(type)
+        case let .in(type):
+            // in × in = out (double contravariance = covariance)
+            .out(type)
+        case .star: .star
+        case .out: .invalid
         }
     }
 

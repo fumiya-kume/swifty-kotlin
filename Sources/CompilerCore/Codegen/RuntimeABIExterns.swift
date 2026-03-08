@@ -1,3 +1,4 @@
+// swiftlint:disable file_length type_body_length
 // swiftlint:disable identifier_name
 import Foundation
 
@@ -11,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J20"
+    public static let specVersion = "J21"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -76,6 +77,12 @@ public enum RuntimeABIExterns {
         returnType: "_Noreturn void"
     )
 
+    public static let kk_abort_unreachable = ExternDecl(
+        name: "kk_abort_unreachable",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - String
 
     public static let kk_string_from_utf8 = ExternDecl(
@@ -96,6 +103,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_compare_any = ExternDecl(
+        name: "kk_compare_any",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_length = ExternDecl(
         name: "kk_string_length",
         parameterTypes: ["intptr_t"],
@@ -108,6 +121,11 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_format = ExternDecl(
+        name: "kk_string_format",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
     public static let kk_string_isNullOrEmpty = ExternDecl(
         name: "kk_string_isNullOrEmpty",
         parameterTypes: ["intptr_t"],
@@ -592,9 +610,21 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_object_type_id = ExternDecl(
+        name: "kk_object_type_id",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_array_get = ExternDecl(
         name: "kk_array_get",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_array_get_inbounds = ExternDecl(
+        name: "kk_array_get_inbounds",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -805,12 +835,15 @@ public enum RuntimeABIExterns {
         kk_throwable_new,
         kk_throwable_is_cancellation,
         kk_panic,
+        kk_abort_unreachable,
         // String
         kk_string_from_utf8,
         kk_string_concat,
         kk_string_compareTo,
+        kk_compare_any,
         kk_string_length,
         kk_string_trim,
+        kk_string_format,
         kk_string_isNullOrEmpty,
         kk_string_isNullOrBlank,
         kk_string_startsWith,
@@ -899,7 +932,9 @@ public enum RuntimeABIExterns {
         // Array
         kk_array_new,
         kk_object_new,
+        kk_object_type_id,
         kk_array_get,
+        kk_array_get_inbounds,
         kk_array_set,
         kk_vararg_spread_concat,
         // TypeCheck Operators
@@ -943,3 +978,5 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
+
+// swiftlint:enable file_length type_body_length

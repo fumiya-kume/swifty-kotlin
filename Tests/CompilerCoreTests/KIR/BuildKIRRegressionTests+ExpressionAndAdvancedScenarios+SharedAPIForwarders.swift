@@ -410,7 +410,7 @@ extension BuildKIRRegressionTests {
             fixture: fixture
         )
         let objectExpr = appendTypedExpr(
-            .objectLiteral(superTypes: [], range: range),
+            .objectLiteral(superTypes: [], decl: nil, range: range),
             type: fixture.types.anyType,
             fixture: fixture
         )
@@ -434,6 +434,7 @@ extension BuildKIRRegressionTests {
         _ = fixture.driver.objectLiteralLowerer.lowerObjectLiteralExpr(
             objectExpr,
             superTypes: [],
+            declID: nil,
             shared: shared,
             emit: &emit
         )

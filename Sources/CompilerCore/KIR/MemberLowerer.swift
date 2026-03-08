@@ -1,3 +1,4 @@
+// swiftlint:disable cyclomatic_complexity function_body_length
 import Foundation
 
 /// Delegate class for KIR lowering: MemberLowerer.
@@ -60,11 +61,7 @@ final class MemberLowerer {
             }
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
-            if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-            {
-                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
-            }
+            bindFunctionParameterLocals(params: params, body: &body, arena: arena)
             switch function.body {
             case let .block(exprIDs, _):
                 var lastValue: KIRExprID?
@@ -430,5 +427,24 @@ final class MemberLowerer {
             shared: shared,
             allDecls: &allDecls
         )
+    }
+
+    private func bindFunctionParameterLocals(
+        params: [KIRParameter],
+        body: inout [KIRInstruction],
+        arena: KIRArena
+    ) {
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+           let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+        {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverExpr
+        }
+
+        for param in params where param.symbol != driver.ctx.currentImplicitReceiverSymbol {
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+            driver.ctx.localValuesBySymbol[param.symbol] = paramExpr
+        }
     }
 }

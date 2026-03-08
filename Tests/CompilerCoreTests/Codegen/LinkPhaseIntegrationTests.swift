@@ -38,7 +38,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
                 try runToKIR(appCtx)
                 try LoweringPhase().run(appCtx)
                 try CodegenPhase().run(appCtx)
-                try LinkPhase().run(appCtx)
+                assertLinkSucceeds(appCtx)
 
                 XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
                 do {
@@ -85,7 +85,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: out))
         }
@@ -104,7 +104,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
-            try LinkPhase().run(ctx)
+            assertLinkSucceeds(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: out))
 
@@ -190,7 +190,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(appCtx)
             try LoweringPhase().run(appCtx)
             try CodegenPhase().run(appCtx)
-            try LinkPhase().run(appCtx)
+            assertLinkSucceeds(appCtx)
 
             XCTAssertTrue(fm.fileExists(atPath: outputPath))
             do {
@@ -224,7 +224,7 @@ final class LinkPhaseIntegrationTests: XCTestCase {
         XCTAssertThrowsError(try LinkPhase().run(noKirCtx))
     }
 
-    func testLinkPhasePassesDebugFlagToClang() throws {
+    func testLinkPhasePassesDebugFlagToExecutableLink() throws {
         let source = "fun main() = 0"
         try withTemporaryFile(contents: source) { path in
             let outputPath = FileManager.default.temporaryDirectory
@@ -247,9 +247,125 @@ final class LinkPhaseIntegrationTests: XCTestCase {
             try runToKIR(ctx)
             try LoweringPhase().run(ctx)
             try CodegenPhase().run(ctx)
+            assertLinkSucceeds(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+        }
+    }
+
+    func testLinkerDriverArgsDisablePieForLinuxTargets() {
+        let linuxTarget = TargetTriple(arch: "x86_64", vendor: "unknown", os: "linux-gnu", osVersion: nil)
+        let args = LinkPhase().linkerDriverArgs(for: linuxTarget)
+
+        XCTAssertEqual(Array(args.prefix(2)), ["-target", "x86_64-unknown-linux-gnu"])
+        XCTAssertTrue(args.contains("-no-pie"))
+    }
+
+    func testExecutableEmissionWithOutputExtensionUsesSeparateObjectPath() throws {
+        let source = """
+        fun main() {
+            println("%b %B".format(true, false))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("out")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "ExtensionOutput",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            XCTAssertEqual(ctx.generatedObjectPath, outputPath + ".o")
+            XCTAssertNotEqual(ctx.generatedObjectPath, outputPath)
+
+            assertLinkSucceeds(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines), "true FALSE")
+        }
+    }
+
+    func testExecutableEmissionWithObjectOutputPathUsesSeparateIntermediateObjectPath() throws {
+        let source = """
+        fun main() {
+            println(42)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("o")
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "ObjectSuffixOutput",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+
+            XCTAssertEqual(
+                ctx.generatedObjectPath,
+                URL(fileURLWithPath: outputPath)
+                    .deletingPathExtension()
+                    .appendingPathExtension("executable")
+                    .appendingPathExtension("o")
+                    .path
+            )
+            XCTAssertNotEqual(ctx.generatedObjectPath, outputPath)
+
+            assertLinkSucceeds(ctx)
+
+            XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(result.stdout.trimmingCharacters(in: .whitespacesAndNewlines), "42")
+        }
+    }
+
+    func testExecutableStringFormatHandlesBoxedScalarsInRuntimeObjects() throws {
+        let source = """
+        fun main() {
+            val big: Any? = 9223372036854775807L
+            val fp: Any? = 2.5
+            val ch: Any? = 'A'
+            val flag: Any? = true
+            println("%d %x %s %s %s".format(big, big, fp, ch, flag))
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "StringFormatBoxes",
+                emit: .executable,
+                outputPath: outputPath
+            )
+
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
             try LinkPhase().run(ctx)
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath))
+            let result = try CommandRunner.run(executable: outputPath, arguments: [])
+            XCTAssertEqual(
+                result.stdout.trimmingCharacters(in: .whitespacesAndNewlines),
+                "9223372036854775807 7fffffffffffffff 2.5 A true"
+            )
         }
     }
 
@@ -289,5 +405,48 @@ final class LinkPhaseIntegrationTests: XCTestCase {
 
         XCTAssertThrowsError(try LinkPhase().run(badTargetCtx))
         XCTAssertTrue(badTargetCtx.diagnostics.diagnostics.contains { $0.code == "KSWIFTK-LINK-0001" })
+    }
+
+    #if os(macOS)
+        func testRuntimeObjectPathsBuildForAlternateAppleArchitecture() throws {
+            let hostTarget = TargetTriple.hostDefault()
+            let alternateArch = hostTarget.arch == "arm64" ? "x86_64" : "arm64"
+            let alternateTarget = TargetTriple(
+                arch: alternateArch,
+                vendor: hostTarget.vendor,
+                os: hostTarget.os,
+                osVersion: hostTarget.osVersion
+            )
+
+            let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: alternateTarget)
+
+            XCTAssertFalse(runtimeObjects.isEmpty)
+            XCTAssertTrue(runtimeObjects.allSatisfy { FileManager.default.fileExists(atPath: $0) })
+            XCTAssertTrue(runtimeObjects.allSatisfy { $0.contains("\(alternateArch)-apple-macosx") })
+        }
+    #endif
+}
+
+private func assertLinkSucceeds(
+    _ ctx: CompilationContext,
+    file: StaticString = #filePath,
+    line: UInt = #line
+) {
+    do {
+        try LinkPhase().run(ctx)
+    } catch {
+        let diagnostics = ctx.diagnostics.diagnostics
+            .map { "\($0.code): \($0.message)" }
+            .joined(separator: "\n")
+        let diagnosticSummary = diagnostics.isEmpty ? "No diagnostics were recorded." : diagnostics
+        XCTFail(
+            """
+            LinkPhase failed with error: \(error)
+            Diagnostics:
+            \(diagnosticSummary)
+            """,
+            file: file,
+            line: line
+        )
     }
 }

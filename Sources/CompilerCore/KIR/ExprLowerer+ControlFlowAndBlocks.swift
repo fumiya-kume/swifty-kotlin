@@ -203,6 +203,24 @@ extension ExprLowerer {
                     return result
                 }
 
+                if let symbol = sema.bindings.identifierSymbols[exprID],
+                   sema.bindings.isObjectLiteralPropertySymbol(symbol),
+                   let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
+                   let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[symbol]
+                {
+                    let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+                    instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get_inbounds"),
+                        arguments: [receiverExprID, offsetExpr],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+
                 // General fallback: try to find a getter symbol for the property
                 if let symbol = sema.bindings.identifierSymbols[exprID],
                    let localValue = driver.ctx.localValuesBySymbol[symbol]
@@ -838,6 +856,24 @@ extension ExprLowerer {
             )
 
         case let .unaryExpr(op, operandExpr, _):
+            if op != .not,
+               let callBinding = sema.bindings.callBindings[exprID],
+               let signature = sema.symbols.functionSignature(for: callBinding.chosenCallee),
+               signature.receiverType != nil
+            {
+                return driver.callLowerer.lowerMemberCallExpr(
+                    exprID,
+                    receiverExpr: operandExpr,
+                    calleeName: interner.intern(op.kotlinFunctionName),
+                    args: [],
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let operandID = lowerExpr(
                 operandExpr,
                 ast: ast,
@@ -1102,13 +1138,16 @@ extension ExprLowerer {
                 instructions: &instructions
             )
 
-        case let .objectLiteral(superTypes, _):
+        case let .objectLiteral(superTypes, declID, _):
             return driver.objectLiteralLowerer.lowerObjectLiteralExpr(
                 exprID,
                 superTypes: superTypes,
+                declID: declID,
+                ast: ast,
                 sema: sema,
                 arena: arena,
                 interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
 
