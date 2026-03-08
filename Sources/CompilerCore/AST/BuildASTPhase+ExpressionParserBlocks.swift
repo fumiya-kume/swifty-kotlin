@@ -143,18 +143,6 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
-        BuildASTPhase.LocalStatementCore.isLocalDeclarationTokens(tokens)
-    }
-
-    func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-        BuildASTPhase.LocalStatementCore.isLocalAssignmentTokens(tokens)
-    }
-
-    func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
-        parseLocalDeclFromSlice(tokens[...])
-    }
-
     func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
         let interner = interner
         let astArena = astArena
@@ -196,10 +184,6 @@ extension BuildASTPhase.ExpressionParser {
             context: context,
             options: .blockExpression
         )
-    }
-
-    func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
-        parseLocalAssignFromSlice(tokens[...])
     }
 
     func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {

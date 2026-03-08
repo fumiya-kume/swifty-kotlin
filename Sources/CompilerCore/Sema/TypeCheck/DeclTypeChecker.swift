@@ -1,7 +1,6 @@
 import Foundation
 
 /// Handles declaration-level type checking (functions, properties, classes, objects).
-/// Derived from declaration-checking logic in the prior monolithic type-check phase.
 final class DeclTypeChecker {
     unowned let driver: TypeCheckDriver
 
@@ -9,7 +8,7 @@ final class DeclTypeChecker {
         self.driver = driver
     }
 
-    // MARK: - Function Body Type Inference (from +DeclTypeCheck.swift)
+    // MARK: - Function Body Type Inference
 
     func inferFunctionBodyType(
         _ body: FunctionBody,
@@ -58,7 +57,7 @@ final class DeclTypeChecker {
         }
     }
 
-    // MARK: - Property Type Checking (from +DeclTypeCheck.swift)
+    // MARK: - Property Type Checking
 
     func typeCheckPropertyDecl(
         _ property: PropertyDecl,

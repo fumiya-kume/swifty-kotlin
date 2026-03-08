@@ -16,10 +16,10 @@ extension OverloadResolver {
                 symbols: ctx.symbols
             )
             if let cached = cache.cachedCallResolution(for: key) {
-                cache.recordCallResolutionHit()
+                cache.callResolutionHits += 1
                 return cached
             }
-            cache.recordCallResolutionMiss()
+            cache.callResolutionMisses += 1
             let result = resolveCallUncached(
                 candidates: candidates,
                 call: call,

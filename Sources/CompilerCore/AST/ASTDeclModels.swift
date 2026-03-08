@@ -416,7 +416,6 @@ public struct TypeParamDecl {
     public let isReified: Bool
     public let upperBounds: [TypeRefID]
 
-    /// Backward compatibility property - returns the first upper bound if any
     public var upperBound: TypeRefID? {
         upperBounds.first
     }
@@ -433,7 +432,6 @@ public struct TypeParamDecl {
         self.upperBounds = upperBounds
     }
 
-    /// Backward compatibility initializer
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,

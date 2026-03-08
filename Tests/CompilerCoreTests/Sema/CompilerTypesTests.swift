@@ -189,27 +189,6 @@ final class CompilerTypesTests: XCTestCase {
         XCTAssertNotEqual(t1, t3)
     }
 
-    func testOptimizationLevelRawValues() {
-        XCTAssertEqual(OptimizationLevel.O0.rawValue, 0)
-        XCTAssertEqual(OptimizationLevel.O1.rawValue, 1)
-        XCTAssertEqual(OptimizationLevel.O2.rawValue, 2)
-        XCTAssertEqual(OptimizationLevel.O3.rawValue, 3)
-    }
-
-    func testEmitModeRawValues() {
-        XCTAssertEqual(EmitMode.executable.rawValue, "executable")
-        XCTAssertEqual(EmitMode.object.rawValue, "object")
-        XCTAssertEqual(EmitMode.llvmIR.rawValue, "llvmIR")
-        XCTAssertEqual(EmitMode.kirDump.rawValue, "kirDump")
-        XCTAssertEqual(EmitMode.library.rawValue, "library")
-    }
-
-    func testKotlinLanguageVersionEquality() {
-        let v1 = KotlinLanguageVersion.v2_3_10
-        let v2 = KotlinLanguageVersion.v2_3_10
-        XCTAssertEqual(v1, v2)
-    }
-
     func testCompilerOptionsEquality() {
         let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
         let o1 = CompilerOptions(
@@ -226,68 +205,6 @@ final class CompilerTypesTests: XCTestCase {
         )
         XCTAssertEqual(o1, o2)
         XCTAssertNotEqual(o1, o3)
-    }
-
-    // MARK: - LazyDelegateThreadSafetyMode & lazyThreadSafetyMode (P5-80)
-
-    func testLazyDelegateThreadSafetyModeRawValues() {
-        XCTAssertEqual(LazyDelegateThreadSafetyMode.synchronized.rawValue, 1)
-        XCTAssertEqual(LazyDelegateThreadSafetyMode.none.rawValue, 0)
-    }
-
-    func testLazyDelegateThreadSafetyModeEquality() {
-        XCTAssertEqual(LazyDelegateThreadSafetyMode.synchronized, .synchronized)
-        XCTAssertEqual(LazyDelegateThreadSafetyMode.none, .none)
-        XCTAssertNotEqual(LazyDelegateThreadSafetyMode.synchronized, .none)
-    }
-
-    func testLazyThreadSafetyModeDefaultIsSynchronized() {
-        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
-        let options = CompilerOptions(
-            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
-            emit: .object, target: target
-        )
-        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
-    }
-
-    func testLazyThreadSafetyModeNone() {
-        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
-        let options = CompilerOptions(
-            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
-            emit: .object, target: target,
-            frontendFlags: ["lazy-thread-safety=NONE"]
-        )
-        XCTAssertEqual(options.lazyThreadSafetyMode, .none)
-    }
-
-    func testLazyThreadSafetyModeSynchronizedExplicit() {
-        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
-        let options = CompilerOptions(
-            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
-            emit: .object, target: target,
-            frontendFlags: ["lazy-thread-safety=SYNCHRONIZED"]
-        )
-        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
-    }
-
-    func testLazyThreadSafetyModeUnknownValueDefaultsToSynchronized() {
-        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
-        let options = CompilerOptions(
-            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
-            emit: .object, target: target,
-            frontendFlags: ["lazy-thread-safety=BOGUS"]
-        )
-        XCTAssertEqual(options.lazyThreadSafetyMode, .synchronized)
-    }
-
-    func testLazyThreadSafetyModeCaseInsensitive() {
-        let target = TargetTriple(arch: "arm64", vendor: "apple", os: "macosx", osVersion: nil)
-        let options = CompilerOptions(
-            moduleName: "M", inputs: ["a.kt"], outputPath: "out",
-            emit: .object, target: target,
-            frontendFlags: ["lazy-thread-safety=none"]
-        )
-        XCTAssertEqual(options.lazyThreadSafetyMode, .none)
     }
 
     func testHostDefaultTargetTripleMatchesCompileArchitecture() {

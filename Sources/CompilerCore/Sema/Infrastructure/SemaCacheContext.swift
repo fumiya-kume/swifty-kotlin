@@ -34,10 +34,10 @@ public final class SemaCacheContext {
     public func lookupInScope(_ name: InternedString, scope: Scope) -> [SymbolID] {
         let scopeKey = ObjectIdentifier(scope)
         if let nameCache = scopeCache[scopeKey], let cached = nameCache[name] {
-            recordScopeHit()
+            scopeHits += 1
             return cached
         }
-        recordScopeMiss()
+        scopeMisses += 1
         let result = scope.lookup(name)
         scopeRetainer[scopeKey] = scope
         scopeCache[scopeKey, default: [:]][name] = result
@@ -141,32 +141,8 @@ public final class SemaCacheContext {
 
     // MARK: - Statistics (for testing / debugging)
 
-    /// Number of scope lookup cache hits.
     public private(set) var scopeHits: Int = 0
-    /// Number of scope lookup cache misses.
     public private(set) var scopeMisses: Int = 0
-    /// Number of call resolution cache hits.
-    public private(set) var callResolutionHits: Int = 0
-    /// Number of call resolution cache misses.
-    public private(set) var callResolutionMisses: Int = 0
-
-    /// Increments scope hit counter (called internally).
-    func recordScopeHit() {
-        scopeHits += 1
-    }
-
-    /// Increments scope miss counter (called internally).
-    func recordScopeMiss() {
-        scopeMisses += 1
-    }
-
-    /// Increments call resolution hit counter.
-    func recordCallResolutionHit() {
-        callResolutionHits += 1
-    }
-
-    /// Increments call resolution miss counter.
-    func recordCallResolutionMiss() {
-        callResolutionMisses += 1
-    }
+    public internal(set) var callResolutionHits: Int = 0
+    public internal(set) var callResolutionMisses: Int = 0
 }

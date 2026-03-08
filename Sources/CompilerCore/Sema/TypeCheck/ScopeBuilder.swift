@@ -1,7 +1,6 @@
 import Foundation
 
 /// Stateless utility for building file-level scopes during type checking.
-/// Derived from legacy TypeCheckSemaPhase+ScopeBuilder.swift.
 struct TypeCheckScopeBuilder {
     func buildFileScopes(
         ast: ASTModule,
