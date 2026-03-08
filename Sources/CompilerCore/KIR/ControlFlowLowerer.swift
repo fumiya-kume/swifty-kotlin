@@ -582,6 +582,23 @@ final class ControlFlowLowerer {
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
+            case let .call(symbol, callee, arguments, result, canThrow, thrownResult?, isSuperCall):
+                instructions.append(.call(
+                    symbol: symbol,
+                    callee: callee,
+                    arguments: arguments,
+                    result: result,
+                    canThrow: canThrow,
+                    thrownResult: thrownResult,
+                    isSuperCall: isSuperCall
+                ))
+                if thrownResult != exceptionSlot {
+                    instructions.append(.copy(from: thrownResult, to: exceptionSlot))
+                }
+                let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
+                instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
+                instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
             case let .virtualCall(symbol, callee, receiver, arguments, result, _, thrownResult, dispatch)
                 where thrownResult == nil:
                 instructions.append(.virtualCall(
@@ -594,6 +611,24 @@ final class ControlFlowLowerer {
                     thrownResult: exceptionSlot,
                     dispatch: dispatch
                 ))
+                let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
+                instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))
+                instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
+            case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult?, dispatch):
+                instructions.append(.virtualCall(
+                    symbol: symbol,
+                    callee: callee,
+                    receiver: receiver,
+                    arguments: arguments,
+                    result: result,
+                    canThrow: canThrow,
+                    thrownResult: thrownResult,
+                    dispatch: dispatch
+                ))
+                if thrownResult != exceptionSlot {
+                    instructions.append(.copy(from: thrownResult, to: exceptionSlot))
+                }
                 let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                 instructions.append(.copy(from: unknownTypeToken, to: exceptionTypeSlot))

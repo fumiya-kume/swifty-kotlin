@@ -253,18 +253,28 @@ final class CallLowerer {
         // Only expand captures for the first argument (the launcher entry
         // function reference); subsequent arguments are value args for the
         // referenced suspend function and should not be expanded.
-        if chosen == nil,
-           loweredCallable == nil
-        {
+        if loweredCallable == nil {
             let runBlockingID = interner.intern("runBlocking")
             let launchID = interner.intern("launch")
             let asyncID = interner.intern("async")
-            if sourceCalleeName == runBlockingID
-                || sourceCalleeName == launchID
-                || sourceCalleeName == asyncID,
-                let firstArg = finalArgIDs.first,
-                let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
-                !callableInfo.captureArguments.isEmpty
+            let isSyntheticCoroutineLauncher: Bool
+            if let chosen,
+               let chosenInfo = sema.symbols.symbol(chosen)
+            {
+                let fqName = chosenInfo.fqName.map(interner.resolve)
+                isSyntheticCoroutineLauncher = fqName == ["kotlinx", "coroutines", "runBlocking"]
+                    || fqName == ["kotlinx", "coroutines", "launch"]
+                    || fqName == ["kotlinx", "coroutines", "async"]
+            } else {
+                isSyntheticCoroutineLauncher = true
+            }
+            if isSyntheticCoroutineLauncher,
+               (sourceCalleeName == runBlockingID
+                   || sourceCalleeName == launchID
+                   || sourceCalleeName == asyncID),
+               let firstArg = finalArgIDs.first,
+               let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
+               !callableInfo.captureArguments.isEmpty
             {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }

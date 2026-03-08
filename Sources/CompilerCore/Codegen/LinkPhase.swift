@@ -36,11 +36,15 @@ public final class LinkPhase: CompilerPhase {
             let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: ctx.options.target)
             let entryWrapperObjectPath = try LLVMEntryPointObjectEmitter(target: ctx.options.target)
                 .emit(entrySymbol: entrySymbol, outputPath: ctx.options.outputPath)
+            let autolinkStubPath = try emitSwiftAutolinkStubIfNeeded(target: ctx.options.target)
             let linkInputs = buildLinkInputs(
                 objectPath: objectPath, entryWrapperObjectPath: entryWrapperObjectPath,
                 runtimeObjects: runtimeObjects, autoLinkedObjects: autoLinkedObjects
             )
             var args = linkInputs
+            if let autolinkStubPath {
+                args.append(autolinkStubPath)
+            }
             if ctx.options.debugInfo { args.append("-g") }
             args.append(contentsOf: ["-o", ctx.options.outputPath])
             args.append(contentsOf: linkerDriverArgs(for: ctx.options.target))
@@ -58,6 +62,34 @@ public final class LinkPhase: CompilerPhase {
             ctx.diagnostics.error("KSWIFTK-LINK-0001", "Link step failed: \(error)", range: nil)
             throw CompilerPipelineError.outputUnavailable
         }
+    }
+
+    private func emitSwiftAutolinkStubIfNeeded(target: TargetTriple) throws -> String? {
+        guard target.os.hasPrefix("linux") else {
+            return nil
+        }
+
+        let stubDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk-link-stubs", isDirectory: true)
+        try FileManager.default.createDirectory(at: stubDirectory, withIntermediateDirectories: true)
+
+        let stubName = "runtime-autolink-\(CodegenRuntimeSupport.stableFNV1a64Hex(CodegenRuntimeSupport.targetTripleString(target))).swift"
+        let stubURL = stubDirectory.appendingPathComponent(stubName)
+        let stubContents = """
+        import Dispatch
+        import Foundation
+
+        @inline(never)
+        private func _kswiftkRuntimeAutolinkAnchor() {
+            _ = NSLock()
+            _ = DispatchQueue.global(qos: .default)
+            _ = DispatchSemaphore(value: 0)
+        }
+        """
+        if !FileManager.default.fileExists(atPath: stubURL.path) {
+            try stubContents.write(to: stubURL, atomically: true, encoding: .utf8)
+        }
+        return stubURL.path
     }
 
     private func buildLinkInputs(

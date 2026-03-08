@@ -5,6 +5,7 @@ import Foundation
 
 extension CallLowerer {
     private static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
+    private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
 
     private func isCoroutineHandleReceiverType(
         _ receiverType: TypeID,
@@ -23,6 +24,24 @@ extension CallLowerer {
         let fqName = symbol.fqName.map(interner.resolve)
         return fqName == ["kotlinx", "coroutines", "Job"]
             || fqName == ["kotlinx", "coroutines", "Deferred"]
+    }
+
+    private func isChannelReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName != "Channel" {
+            return false
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
     }
 
     private func wrapLateinitReadIfNeeded(
@@ -1105,6 +1124,17 @@ extension CallLowerer {
            Self.unresolvedCoroutineHandleMemberNames.contains(calleeText)
         {
             arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        let isChannelReceiver = isChannelReceiverType(
+            receiverType,
+            sema: sema,
+            interner: interner
+        )
+        if isChannelReceiver,
+           Self.unresolvedChannelMemberNames.contains(calleeText)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
         }
     }
 
@@ -1268,6 +1298,18 @@ extension CallLowerer {
                 return interner.intern("kk_job_join")
             case "cancel":
                 return interner.intern("kk_job_cancel")
+            default:
+                break
+            }
+        }
+        if isChannelReceiverType(receiverType, sema: sema, interner: interner) {
+            switch interner.resolve(fallback) {
+            case "send":
+                return interner.intern("kk_channel_send")
+            case "receive":
+                return interner.intern("kk_channel_receive")
+            case "close":
+                return interner.intern("kk_channel_close")
             default:
                 break
             }

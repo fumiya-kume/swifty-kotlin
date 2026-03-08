@@ -227,14 +227,26 @@ final class CallTypeChecker {
            interner.resolve(calleeName) == "Channel",
            args.isEmpty
         {
-            let channelSymbol = sema.symbols.lookupAll(fqName: [calleeName]).first { candidate in
+            let visibleCandidates = ctx.cachedScopeLookup(calleeName)
+            let channelSymbol = visibleCandidates.first { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function
                 else {
                     return false
                 }
                 return sema.symbols.externalLinkName(for: candidate) == "kk_channel_create"
-            }
+            } ?? visibleCandidates.compactMap { candidate -> SymbolID? in
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .class,
+                      sema.symbols.externalLinkName(for: candidate) == nil
+                else {
+                    return nil
+                }
+                let ctorFQName = symbol.fqName + [interner.intern("<init>")]
+                return sema.symbols.lookupAll(fqName: ctorFQName).first { ctorID in
+                    sema.symbols.externalLinkName(for: ctorID) == "kk_channel_create"
+                }
+            }.first
             if let channelSymbol {
                 sema.bindings.bindCall(
                     id,

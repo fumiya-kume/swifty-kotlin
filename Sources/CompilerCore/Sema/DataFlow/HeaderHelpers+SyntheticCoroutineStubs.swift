@@ -199,7 +199,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticChannelFactoryBridge(
-            kotlinPkg: kotlinPkg,
+            packageFQName: channelsPkg,
             channelSymbol: channelSymbol,
             symbols: symbols,
             types: types,
@@ -541,14 +541,14 @@ extension DataFlowSemaPhase {
     }
 
     private func registerSyntheticChannelFactoryBridge(
-        kotlinPkg: [InternedString],
+        packageFQName: [InternedString],
         channelSymbol: SymbolID,
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner
     ) {
         let functionName = interner.intern("Channel")
-        let functionFQName = kotlinPkg + [functionName]
+        let functionFQName = packageFQName + [functionName]
         guard symbols.lookup(fqName: functionFQName) == nil else {
             return
         }
@@ -561,7 +561,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)
         }
         symbols.setExternalLinkName("kk_channel_create", for: functionSymbol)

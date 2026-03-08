@@ -25,6 +25,24 @@ extension CallTypeChecker {
             || fqName == ["kotlinx", "coroutines", "Deferred"]
     }
 
+    private func isChannelReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName != "Channel" {
+            return false
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
+    }
+
     // This legacy inference path still owns many special cases while the split-out helpers
     // are being migrated. Keep lint focused on the new behavior touched by this change.
     // swiftlint:disable function_body_length cyclomatic_complexity
@@ -518,6 +536,29 @@ extension CallTypeChecker {
             }
         }
         let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) { interner.resolve(name) == "null" } else { false }
+
+        let isChannelReceiver = isChannelReceiverType(
+            lookupReceiverType,
+            sema: sema,
+            interner: interner
+        )
+        if !isClassNameReceiver, isChannelReceiver {
+            let memberName = interner.resolve(calleeName)
+            switch (memberName, args.count) {
+            case ("send", 1), ("close", 0):
+                let resultType = sema.types.unitType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            case ("receive", 0):
+                let resultType = sema.types.nullableAnyType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            default:
+                break
+            }
+        }
 
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         var candidates = visible
