@@ -328,11 +328,11 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     func testArraySetAndGetMultipleIndices() {
         let array = kk_array_new(3)
         var thrown = 0
-        kk_array_set(array, 0, 10, &thrown)
+        _ = kk_array_set(array, 0, 10, &thrown)
         XCTAssertEqual(thrown, 0)
-        kk_array_set(array, 1, 20, &thrown)
+        _ = kk_array_set(array, 1, 20, &thrown)
         XCTAssertEqual(thrown, 0)
-        kk_array_set(array, 2, 30, &thrown)
+        _ = kk_array_set(array, 2, 30, &thrown)
         XCTAssertEqual(thrown, 0)
 
         XCTAssertEqual(kk_array_get(array, 0, &thrown), 10)
@@ -372,10 +372,10 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         // pairs: [0, 10, 0, 20] means two scalar elements (marker=0)
         let pairs = kk_array_new(4)
         var thrown = 0
-        kk_array_set(pairs, 0, 0, &thrown) // marker: scalar
-        kk_array_set(pairs, 1, 10, &thrown) // value: 10
-        kk_array_set(pairs, 2, 0, &thrown) // marker: scalar
-        kk_array_set(pairs, 3, 20, &thrown) // value: 20
+        _ = kk_array_set(pairs, 0, 0, &thrown) // marker: scalar
+        _ = kk_array_set(pairs, 1, 10, &thrown) // value: 10
+        _ = kk_array_set(pairs, 2, 0, &thrown) // marker: scalar
+        _ = kk_array_set(pairs, 3, 20, &thrown) // value: 20
 
         let result = kk_vararg_spread_concat(pairs, 2)
         XCTAssertNotEqual(result, 0)
@@ -388,15 +388,15 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         // Create an inner array [100, 200]
         let inner = kk_array_new(2)
         var thrown = 0
-        kk_array_set(inner, 0, 100, &thrown)
-        kk_array_set(inner, 1, 200, &thrown)
+        _ = kk_array_set(inner, 0, 100, &thrown)
+        _ = kk_array_set(inner, 1, 200, &thrown)
 
         // pairs: [-1, innerRef, 0, 300] means spread + scalar
         let pairs = kk_array_new(4)
-        kk_array_set(pairs, 0, -1, &thrown) // marker: spread
-        kk_array_set(pairs, 1, inner, &thrown) // value: array ref
-        kk_array_set(pairs, 2, 0, &thrown) // marker: scalar
-        kk_array_set(pairs, 3, 300, &thrown) // value: 300
+        _ = kk_array_set(pairs, 0, -1, &thrown) // marker: spread
+        _ = kk_array_set(pairs, 1, inner, &thrown) // value: array ref
+        _ = kk_array_set(pairs, 2, 0, &thrown) // marker: scalar
+        _ = kk_array_set(pairs, 3, 300, &thrown) // value: 300
 
         let result = kk_vararg_spread_concat(pairs, 2)
         XCTAssertEqual(kk_array_get(result, 0, &thrown), 100)
@@ -464,7 +464,7 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         let array = kk_array_new(values.count)
         var thrown = 0
         for (index, value) in values.enumerated() {
-            kk_array_set(array, index, value, &thrown)
+            _ = kk_array_set(array, index, value, &thrown)
             XCTAssertEqual(thrown, 0)
         }
         return array
