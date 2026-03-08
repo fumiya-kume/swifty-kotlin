@@ -143,7 +143,7 @@ public final class LinkPhase: CompilerPhase {
     func linkerDriverArgs(for target: TargetTriple) -> [String] {
         var args = ["-target", linkerTargetTriple(target)]
         if target.os.hasPrefix("linux") {
-            args.append(contentsOf: ["-Xlinker", "-no-pie"])
+            args.append(contentsOf: ["-Xlinker", "-no-pie", "-parse-as-library"])
         }
         return args
     }
