@@ -1096,12 +1096,11 @@ extension CallLowerer {
             return
         }
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-        let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: nonNullReceiverType) {
-            false
-        } else {
-            true
-        }
+        let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
+            receiverType,
+            sema: sema,
+            interner: interner
+        )
         if isCoroutineHandleReceiver,
            Self.unresolvedCoroutineHandleMemberNames.contains(calleeText)
         {
