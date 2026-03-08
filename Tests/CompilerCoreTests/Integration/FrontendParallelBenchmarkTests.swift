@@ -263,26 +263,24 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
             // Verify declaration names match in order.
             let seqNames = seqFile.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = seqAST.arena.decl(declID) else { return nil }
-                switch decl {
-                case let .classDecl(c): return seqCtx.interner.resolve(c.name)
-                case let .interfaceDecl(i): return seqCtx.interner.resolve(i.name)
-                case let .objectDecl(o): return seqCtx.interner.resolve(o.name)
-                case let .funDecl(f): return seqCtx.interner.resolve(f.name)
-                default: return nil
-                }
+                return topLevelDeclName(decl, interner: seqCtx.interner)
             }
             let parNames = parFile.topLevelDecls.compactMap { declID -> String? in
                 guard let decl = parAST.arena.decl(declID) else { return nil }
-                switch decl {
-                case let .classDecl(c): return parCtx.interner.resolve(c.name)
-                case let .interfaceDecl(i): return parCtx.interner.resolve(i.name)
-                case let .objectDecl(o): return parCtx.interner.resolve(o.name)
-                case let .funDecl(f): return parCtx.interner.resolve(f.name)
-                default: return nil
-                }
+                return topLevelDeclName(decl, interner: parCtx.interner)
             }
             XCTAssertEqual(seqNames, parNames,
                            "Declaration names must match between sequential and parallel for file \(seqFile.fileID.rawValue)")
+        }
+    }
+
+    private func topLevelDeclName(_ decl: Decl, interner: StringInterner) -> String? {
+        switch decl {
+        case let .classDecl(c): interner.resolve(c.name)
+        case let .interfaceDecl(i): interner.resolve(i.name)
+        case let .objectDecl(o): interner.resolve(o.name)
+        case let .funDecl(f): interner.resolve(f.name)
+        default: nil
         }
     }
 }

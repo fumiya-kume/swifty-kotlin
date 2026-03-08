@@ -284,63 +284,15 @@ struct NativeEmitter {
 
         // Build per-file DI metadata so that functions can reference their
         // actual source file.
-        var diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
-        if let sourceManager {
-            for fileID in sourceManager.fileIDs() {
-                let fullPath = sourceManager.path(of: fileID)
-                let url = URL(fileURLWithPath: fullPath)
-                let fname = url.lastPathComponent
-                let dir = url.deletingLastPathComponent().path
-                if let f = bindings.diBuilderCreateFile(diBuilder, filename: fname, directory: dir) {
-                    diFiles[fileID] = f
-                }
-            }
-        }
-
-        // Create a DI basic type for i64 (used for parameter debug info).
+        let diFiles = buildDIFiles(diBuilder: diBuilder, defaultFile: diFile)
         let int64DIType = bindings.diBuilderCreateBasicType(
             diBuilder, name: "Int", sizeInBits: 64, encoding: Self.dwarfATESigned
         )
-
-        var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
-
-        for declaration in module.arena.declarations {
-            guard case let .function(function) = declaration,
-                  let llvmFunction = internalFunctions[function.symbol]
-            else {
-                continue
-            }
-            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
-
-            // Determine real line number and file for this function.
-            var lineNo: UInt32 = 0
-            var funcDIFile = diFile
-            if let sourceRange = function.sourceRange, let sourceManager {
-                let lc = sourceManager.lineColumn(of: sourceRange.start)
-                lineNo = UInt32(lc.line)
-                if let perFileDI = diFiles[sourceRange.start.file] {
-                    funcDIFile = perFileDI
-                }
-            }
-
-            guard let subprogram = bindings.diBuilderCreateFunction(
-                diBuilder,
-                scope: funcDIFile,
-                name: interner.resolve(function.name),
-                linkageName: functionName,
-                file: funcDIFile,
-                lineNo: lineNo,
-                type: subroutineType,
-                isLocalToUnit: false,
-                isDefinition: true,
-                scopeLine: lineNo,
-                isOptimized: isOptimized
-            ) else {
-                continue
-            }
-            bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
-            subprograms[function.symbol] = subprogram
-        }
+        let subprograms = buildSubprograms(
+            diBuilder: diBuilder, diFile: diFile, diFiles: diFiles,
+            subroutineType: subroutineType, isOptimized: isOptimized,
+            internalFunctions: internalFunctions
+        )
 
         return DebugInfoContext(
             diBuilder: diBuilder,
@@ -351,6 +303,57 @@ struct NativeEmitter {
             diFiles: diFiles,
             int64DIType: int64DIType
         )
+    }
+
+    private func buildDIFiles(
+        diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef,
+        defaultFile _: LLVMCAPIBindings.LLVMMetadataRef
+    ) -> [FileID: LLVMCAPIBindings.LLVMMetadataRef] {
+        var diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
+        guard let sourceManager else { return diFiles }
+        for fileID in sourceManager.fileIDs() {
+            let fullPath = sourceManager.path(of: fileID)
+            let url = URL(fileURLWithPath: fullPath)
+            let fname = url.lastPathComponent
+            let dir = url.deletingLastPathComponent().path
+            if let f = bindings.diBuilderCreateFile(diBuilder, filename: fname, directory: dir) {
+                diFiles[fileID] = f
+            }
+        }
+        return diFiles
+    }
+
+    private func buildSubprograms(
+        diBuilder: LLVMCAPIBindings.LLVMDIBuilderRef,
+        diFile: LLVMCAPIBindings.LLVMMetadataRef,
+        diFiles: [FileID: LLVMCAPIBindings.LLVMMetadataRef],
+        subroutineType: LLVMCAPIBindings.LLVMMetadataRef?,
+        isOptimized: Bool,
+        internalFunctions: [SymbolID: LLVMFunction]
+    ) -> [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] {
+        var subprograms: [SymbolID: LLVMCAPIBindings.LLVMMetadataRef] = [:]
+        for declaration in module.arena.declarations {
+            guard case let .function(function) = declaration,
+                  let llvmFunction = internalFunctions[function.symbol]
+            else { continue }
+            let functionName = CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+            var lineNo: UInt32 = 0
+            var funcDIFile = diFile
+            if let sourceRange = function.sourceRange, let sourceManager {
+                let lc = sourceManager.lineColumn(of: sourceRange.start)
+                lineNo = UInt32(lc.line)
+                if let perFileDI = diFiles[sourceRange.start.file] { funcDIFile = perFileDI }
+            }
+            guard let subprogram = bindings.diBuilderCreateFunction(
+                diBuilder, scope: funcDIFile,
+                name: interner.resolve(function.name), linkageName: functionName,
+                file: funcDIFile, lineNo: lineNo, type: subroutineType,
+                isLocalToUnit: false, isDefinition: true, scopeLine: lineNo, isOptimized: isOptimized
+            ) else { continue }
+            bindings.setSubprogram(llvmFunction.value, subprogram: subprogram)
+            subprograms[function.symbol] = subprogram
+        }
+        return subprograms
     }
 
     /// Finalizes the DIBuilder, adds module flags, and disposes the DIBuilder.
