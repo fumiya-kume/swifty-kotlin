@@ -308,6 +308,16 @@ public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutab
     return array.elements[index]
 }
 
+@_cdecl("kk_array_get_inbounds")
+public func kk_array_get_inbounds(_ arrayRaw: Int, _ index: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          array.elements.indices.contains(index)
+    else {
+        fatalError("kk_array_get_inbounds precondition failed")
+    }
+    return array.elements[index]
+}
+
 @_cdecl("kk_array_set")
 public func kk_array_set(_ arrayRaw: Int, _ index: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

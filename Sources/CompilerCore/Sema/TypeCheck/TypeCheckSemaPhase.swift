@@ -74,10 +74,11 @@ public final class TypeCheckSemaPhase: CompilerPhase {
 
         driver.typeCheckModule(fileScopes: fileScopes, files: ast.files)
         for declID in lazyBoundDecls where sema.bindings.declSymbols[declID] == nil {
+            let declRange = ast.arena.decl(declID)?.range
             ctx.diagnostics.error(
                 "KSWIFTK-TYPE-0003",
                 "Unbound declaration found during type checking.",
-                range: nil
+                range: declRange
             )
         }
     }

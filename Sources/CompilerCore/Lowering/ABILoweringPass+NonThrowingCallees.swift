@@ -78,6 +78,7 @@ extension ABILoweringPass {
             interner.intern("kk_coroutine_launcher_arg_get"),
             interner.intern("kk_kxmini_run_blocking_with_cont"),
             interner.intern("kk_kxmini_launch_with_cont"),
+            interner.intern("kk_array_get_inbounds"),
             interner.intern("kk_kxmini_async_with_cont"),
             interner.intern("kk_coroutine_scope_run"),
             interner.intern("kk_coroutine_scope_run_with_cont"),

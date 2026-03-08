@@ -648,7 +648,7 @@ extension CallLowerer {
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
         instructions.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_array_get"),
+            callee: interner.intern("kk_array_get_inbounds"),
             arguments: [loweredReceiverID, offsetExpr],
             result: result,
             canThrow: false,

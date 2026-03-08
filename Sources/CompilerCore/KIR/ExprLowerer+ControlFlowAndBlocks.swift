@@ -212,7 +212,7 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_array_get"),
+                        callee: interner.intern("kk_array_get_inbounds"),
                         arguments: [receiverExprID, offsetExpr],
                         result: result,
                         canThrow: false,

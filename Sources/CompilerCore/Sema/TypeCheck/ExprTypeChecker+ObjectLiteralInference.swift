@@ -202,7 +202,12 @@ extension ExprTypeChecker {
             )
         }
 
-        let superClass = directSuperSymbols.first
+        let superClass = directSuperSymbols.first { superSymbol in
+            guard let symbol = sema.symbols.symbol(superSymbol) else {
+                return false
+            }
+            return symbol.kind != .interface
+        }
         let inheritedLayout = superClass.flatMap { sema.symbols.nominalLayout(for: $0) }
         var fieldOffsets = inheritedLayout?.fieldOffsets ?? [:]
         let objectHeaderWords = inheritedLayout?.objectHeaderWords ?? 2

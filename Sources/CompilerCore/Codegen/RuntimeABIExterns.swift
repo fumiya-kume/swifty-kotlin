@@ -621,6 +621,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_array_get_inbounds = ExternDecl(
+        name: "kk_array_get_inbounds",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_array_set = ExternDecl(
         name: "kk_array_set",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -927,6 +933,7 @@ public enum RuntimeABIExterns {
         kk_object_new,
         kk_object_type_id,
         kk_array_get,
+        kk_array_get_inbounds,
         kk_array_set,
         kk_vararg_spread_concat,
         // TypeCheck Operators

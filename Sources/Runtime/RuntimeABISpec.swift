@@ -875,6 +875,15 @@ public enum RuntimeABISpec {
             section: "Array"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_array_get_inbounds",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_set",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),

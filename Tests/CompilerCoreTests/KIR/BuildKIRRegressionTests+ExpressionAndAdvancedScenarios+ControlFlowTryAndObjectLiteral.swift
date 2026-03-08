@@ -360,10 +360,10 @@ extension BuildKIRRegressionTests {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callNames = extractCallees(from: body, interner: ctx.interner)
-            XCTAssertTrue(callNames.contains("kk_array_get"))
+            XCTAssertTrue(callNames.contains("kk_array_get_inbounds"))
 
             let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
-            XCTAssertEqual(throwFlags["kk_array_get"]?.allSatisfy { $0 == false }, true)
+            XCTAssertEqual(throwFlags["kk_array_get_inbounds"]?.allSatisfy { $0 == false }, true)
         }
     }
 
