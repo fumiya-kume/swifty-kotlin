@@ -71,61 +71,59 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=Point vis=public flags=dataType
-symbol s92 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#91 params=[Int,Int] ret=Class#91 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s93 kind=valueParameter fq=Point.<init>.$92.x vis=private flags=_
-symbol s94 kind=valueParameter fq=Point.<init>.$92.y vis=private flags=_
-symbol s95 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s96 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s97 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s98 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s99 kind=local fq=__local_4.p vis=private flags=_
-symbol s100 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
-symbol s101 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
-symbol s102 kind=local fq=__local_17.p vis=private flags=_
-symbol s103 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=Point vis=public flags=dataType
+symbol s90 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#89 params=[Int,Int] ret=Class#89 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s91 kind=valueParameter fq=Point.<init>.$90.x vis=private flags=_
+symbol s92 kind=valueParameter fq=Point.<init>.$90.y vis=private flags=_
+symbol s93 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s94 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s95 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s96 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s97 kind=local fq=__local_4.p vis=private flags=_
+symbol s98 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
+symbol s99 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
+symbol s100 kind=local fq=__local_17.p vis=private flags=_
+symbol s101 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
 file f0 package=_
-  decl d2 class Point sym=s91
-  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s97
-  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s98
+  decl d2 class Point sym=s89
+  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s95
+  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s96
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#91 call=s92 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s99
-expr e5 name(p) type=Class#91 ref=s99
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#89 call=s90 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s97
+expr e5 name(p) type=Class#89 ref=s97
 expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
 expr e7 name(println) type=_
-expr e8 name(a) type=Any ref=s100
+expr e8 name(a) type=Any ref=s98
 expr e9 call callee=e7 args=[_:e8] type=Unit
 expr e10 name(println) type=_
-expr e11 name(b) type=Any ref=s101
+expr e11 name(b) type=Any ref=s99
 expr e12 call callee=e10 args=[_:e11] type=Unit
 expr e13 name(Point) type=_
 expr e14 int(3) type=Int
 expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#91 call=s92 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s102
-expr e18 name(p) type=Class#91 ref=s102
+expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#89 call=s90 map=[0->0,1->1] targs=[]
+expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s100
+expr e18 name(p) type=Class#89 ref=s100
 expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
 expr e20 name(println) type=_
-expr e21 name(second) type=Any ref=s103
+expr e21 name(second) type=Any ref=s101
 expr e22 call callee=e20 args=[_:e21] type=Unit

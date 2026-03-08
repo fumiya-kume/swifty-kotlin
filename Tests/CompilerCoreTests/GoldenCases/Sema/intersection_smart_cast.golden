@@ -71,53 +71,51 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s92 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#91 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s93 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s94 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#93 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s95 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s96 kind=valueParameter fq=golden.sema.intersect.$95.x vis=private flags=_
-symbol s97 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s98 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#99 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s99 kind=typeParameter fq=golden.sema.directValue.$98.T vis=private flags=_
-symbol s100 kind=valueParameter fq=golden.sema.directValue.$98.x vis=private flags=_
-symbol s101 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#102 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s102 kind=typeParameter fq=golden.sema.safeValue.$101.T vis=private flags=_
-symbol s103 kind=valueParameter fq=golden.sema.safeValue.$101.x vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s90 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#89 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s91 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s92 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#91 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s93 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s94 kind=valueParameter fq=golden.sema.intersect.$93.x vis=private flags=_
+symbol s95 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s96 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#97 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s97 kind=typeParameter fq=golden.sema.directValue.$96.T vis=private flags=_
+symbol s98 kind=valueParameter fq=golden.sema.directValue.$96.x vis=private flags=_
+symbol s99 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#100 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s100 kind=typeParameter fq=golden.sema.safeValue.$99.T vis=private flags=_
+symbol s101 kind=valueParameter fq=golden.sema.safeValue.$99.x vis=private flags=_
 file f0 package=golden.sema
-  decl d1 interface A sym=s91
-  decl d3 interface B sym=s93
-  decl d4 fun intersect suspend=0 inline=0 sym=s95
-  decl d5 fun idTag suspend=0 inline=0 sym=s97
-  decl d6 fun directValue suspend=0 inline=0 sym=s98
-  decl d7 fun safeValue suspend=0 inline=0 sym=s101
-expr e0 name(x) type=Any ref=s96
+  decl d1 interface A sym=s89
+  decl d3 interface B sym=s91
+  decl d4 fun intersect suspend=0 inline=0 sym=s93
+  decl d5 fun idTag suspend=0 inline=0 sym=s95
+  decl d6 fun directValue suspend=0 inline=0 sym=s96
+  decl d7 fun safeValue suspend=0 inline=0 sym=s99
+expr e0 name(x) type=Any ref=s94
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Class#91 ref=s96
+expr e2 name(x) type=Class#89 ref=s94
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
-expr e5 name(x) type=Class#91 & Class#93 ref=s96
-expr e6 memberCall recv=e5 callee=a args=[] type=String call=s92 map=[] targs=[]
-expr e7 name(x) type=Class#91 & Class#93 ref=s96
-expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s94 map=[] targs=[]
+expr e5 name(x) type=Class#89 & Class#91 ref=s94
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s90 map=[] targs=[]
+expr e7 name(x) type=Class#89 & Class#91 ref=s94
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s92 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=<error>
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
 expr e11 return value=e10 type=Nothing
@@ -126,7 +124,7 @@ expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
 expr e16 int(7) type=Int
-expr e17 name(x) type=T#99 & Any ref=s100
-expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s97 map=[] targs=[]
-expr e19 name(x) type=T#102 & Any ref=s103
-expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s97 map=[] targs=[]
+expr e17 name(x) type=T#97 & Any ref=s98
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s95 map=[] targs=[]
+expr e19 name(x) type=T#100 & Any ref=s101
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s95 map=[] targs=[]

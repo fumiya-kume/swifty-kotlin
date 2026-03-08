@@ -71,69 +71,67 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s92 kind=valueParameter fq=golden.sema.bitwiseAnd.$91.a vis=private flags=_
-symbol s93 kind=valueParameter fq=golden.sema.bitwiseAnd.$91.b vis=private flags=_
-symbol s94 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s95 kind=valueParameter fq=golden.sema.bitwiseOr.$94.a vis=private flags=_
-symbol s96 kind=valueParameter fq=golden.sema.bitwiseOr.$94.b vis=private flags=_
-symbol s97 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s98 kind=valueParameter fq=golden.sema.bitwiseXor.$97.a vis=private flags=_
-symbol s99 kind=valueParameter fq=golden.sema.bitwiseXor.$97.b vis=private flags=_
-symbol s100 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s101 kind=valueParameter fq=golden.sema.bitwiseInv.$100.a vis=private flags=_
-symbol s102 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s103 kind=valueParameter fq=golden.sema.shiftLeft.$102.a vis=private flags=_
-symbol s104 kind=valueParameter fq=golden.sema.shiftLeft.$102.n vis=private flags=_
-symbol s105 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s106 kind=valueParameter fq=golden.sema.shiftRight.$105.a vis=private flags=_
-symbol s107 kind=valueParameter fq=golden.sema.shiftRight.$105.n vis=private flags=_
-symbol s108 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s109 kind=valueParameter fq=golden.sema.unsignedShiftRight.$108.a vis=private flags=_
-symbol s110 kind=valueParameter fq=golden.sema.unsignedShiftRight.$108.n vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s90 kind=valueParameter fq=golden.sema.bitwiseAnd.$89.a vis=private flags=_
+symbol s91 kind=valueParameter fq=golden.sema.bitwiseAnd.$89.b vis=private flags=_
+symbol s92 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s93 kind=valueParameter fq=golden.sema.bitwiseOr.$92.a vis=private flags=_
+symbol s94 kind=valueParameter fq=golden.sema.bitwiseOr.$92.b vis=private flags=_
+symbol s95 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s96 kind=valueParameter fq=golden.sema.bitwiseXor.$95.a vis=private flags=_
+symbol s97 kind=valueParameter fq=golden.sema.bitwiseXor.$95.b vis=private flags=_
+symbol s98 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s99 kind=valueParameter fq=golden.sema.bitwiseInv.$98.a vis=private flags=_
+symbol s100 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s101 kind=valueParameter fq=golden.sema.shiftLeft.$100.a vis=private flags=_
+symbol s102 kind=valueParameter fq=golden.sema.shiftLeft.$100.n vis=private flags=_
+symbol s103 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s104 kind=valueParameter fq=golden.sema.shiftRight.$103.a vis=private flags=_
+symbol s105 kind=valueParameter fq=golden.sema.shiftRight.$103.n vis=private flags=_
+symbol s106 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s107 kind=valueParameter fq=golden.sema.unsignedShiftRight.$106.a vis=private flags=_
+symbol s108 kind=valueParameter fq=golden.sema.unsignedShiftRight.$106.n vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s91
-  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s94
-  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s97
-  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s100
-  decl d4 fun shiftLeft suspend=0 inline=0 sym=s102
-  decl d5 fun shiftRight suspend=0 inline=0 sym=s105
-  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s108
-expr e0 name(a) type=Int ref=s92
-expr e1 name(b) type=Int ref=s93
+  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s89
+  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s92
+  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s95
+  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s98
+  decl d4 fun shiftLeft suspend=0 inline=0 sym=s100
+  decl d5 fun shiftRight suspend=0 inline=0 sym=s103
+  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s106
+expr e0 name(a) type=Int ref=s90
+expr e1 name(b) type=Int ref=s91
 expr e2 memberCall recv=e0 callee=and args=[_:e1] type=Int
-expr e3 name(a) type=Int ref=s95
-expr e4 name(b) type=Int ref=s96
+expr e3 name(a) type=Int ref=s93
+expr e4 name(b) type=Int ref=s94
 expr e5 memberCall recv=e3 callee=or args=[_:e4] type=Int
-expr e6 name(a) type=Int ref=s98
-expr e7 name(b) type=Int ref=s99
+expr e6 name(a) type=Int ref=s96
+expr e7 name(b) type=Int ref=s97
 expr e8 memberCall recv=e6 callee=xor args=[_:e7] type=Int
-expr e9 name(a) type=Int ref=s101
+expr e9 name(a) type=Int ref=s99
 expr e10 memberCall recv=e9 callee=inv args=[] type=Int
-expr e11 name(a) type=Int ref=s103
-expr e12 name(n) type=Int ref=s104
+expr e11 name(a) type=Int ref=s101
+expr e12 name(n) type=Int ref=s102
 expr e13 memberCall recv=e11 callee=shl args=[_:e12] type=Int
-expr e14 name(a) type=Int ref=s106
-expr e15 name(n) type=Int ref=s107
+expr e14 name(a) type=Int ref=s104
+expr e15 name(n) type=Int ref=s105
 expr e16 memberCall recv=e14 callee=shr args=[_:e15] type=Int
-expr e17 name(a) type=Int ref=s109
-expr e18 name(n) type=Int ref=s110
+expr e17 name(a) type=Int ref=s107
+expr e18 name(n) type=Int ref=s108
 expr e19 memberCall recv=e17 callee=ushr args=[_:e18] type=Int

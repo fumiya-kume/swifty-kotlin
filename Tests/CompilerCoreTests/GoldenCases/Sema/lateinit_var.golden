@@ -71,64 +71,62 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=Config vis=public flags=_
-symbol s92 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#91 params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
-symbol s93 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#91 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s94 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#91 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s95 kind=property fq=Config.name vis=public flags=mutable type=String
-symbol s96 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s97 kind=local fq=__local_7.c vis=private flags=_
-symbol s98 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Any
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=Config vis=public flags=_
+symbol s90 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#89 params=[] ret=Class#89 suspend=0 defaults=[] vararg=[]
+symbol s91 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#89 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s92 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#89 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s93 kind=property fq=Config.name vis=public flags=mutable type=String
+symbol s94 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s95 kind=local fq=__local_7.c vis=private flags=_
+symbol s96 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Any
 file f0 package=_
-  decl d3 class Config sym=s91
-  decl d4 fun main suspend=0 inline=0 sym=s96
-expr e0 callableRef recv=_ member=name type=String ref=s95
+  decl d3 class Config sym=s89
+  decl d4 fun main suspend=0 inline=0 sym=s94
+expr e0 callableRef recv=_ member=name type=String ref=s93
 expr e1 memberCall recv=e0 callee=isInitialized args=[] type=Boolean
 expr e2 name(name) type=_
 expr e3 string(test) type=String
-expr e4 localAssign name value=e3 type=Unit ref=s95
+expr e4 localAssign name value=e3 type=Unit ref=s93
 expr e5 name(Config) type=_
-expr e6 call callee=e5 args=[] type=Class#91 call=s92 map=[] targs=[]
-expr e7 localDecl c mutable=0 type=_ init=e6 type=Unit ref=s97
+expr e6 call callee=e5 args=[] type=Class#89 call=s90 map=[] targs=[]
+expr e7 localDecl c mutable=0 type=_ init=e6 type=Unit ref=s95
 expr e8 name(println) type=_
-expr e9 name(c) type=Class#91 ref=s97
-expr e10 memberCall recv=e9 callee=isReady args=[] type=Boolean call=s93 map=[] targs=[]
+expr e9 name(c) type=Class#89 ref=s95
+expr e10 memberCall recv=e9 callee=isReady args=[] type=Boolean call=s91 map=[] targs=[]
 expr e11 call callee=e8 args=[_:e10] type=Unit
 expr e12 name(println) type=_
-expr e13 name(c) type=Class#91 ref=s97
-expr e14 memberCall recv=e13 callee=name args=[] type=String ref=s95
+expr e13 name(c) type=Class#89 ref=s95
+expr e14 memberCall recv=e13 callee=name args=[] type=String ref=s93
 expr e15 call callee=e12 args=[_:e14] type=Unit
 expr e16 blockExpr stmts=[] trailing=e15 type=Unit
 expr e17 name(println) type=_
 expr e18 string(caught) type=String
 expr e19 call callee=e17 args=[_:e18] type=Unit
-expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s98
+expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s96
 expr e21 try body=e16 catches=[e20] finally=_ type=Unit
-expr e22 name(c) type=Class#91 ref=s97
-expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s94 map=[] targs=[]
+expr e22 name(c) type=Class#89 ref=s95
+expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s92 map=[] targs=[]
 expr e24 name(println) type=_
-expr e25 name(c) type=Class#91 ref=s97
-expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s93 map=[] targs=[]
+expr e25 name(c) type=Class#89 ref=s95
+expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s91 map=[] targs=[]
 expr e27 call callee=e24 args=[_:e26] type=Unit
 expr e28 name(println) type=_
-expr e29 name(c) type=Class#91 ref=s97
-expr e30 memberCall recv=e29 callee=name args=[] type=String ref=s95
+expr e29 name(c) type=Class#89 ref=s95
+expr e30 memberCall recv=e29 callee=name args=[] type=String ref=s93
 expr e31 call callee=e28 args=[_:e30] type=Unit

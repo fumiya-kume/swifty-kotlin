@@ -71,43 +71,41 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s92 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#91 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s93 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
-symbol s94 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#93 params=[] ret=Class#93 suspend=0 defaults=[] vararg=[]
-symbol s95 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#93 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s96 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
-symbol s97 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#96 params=[] ret=Class#96 suspend=0 defaults=[] vararg=[]
-symbol s98 kind=interface fq=golden.sema.Animal vis=public flags=_
-symbol s99 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#98 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s100 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#98 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s101 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s102 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#101 params=[] ret=Class#101 suspend=0 defaults=[] vararg=[]
-symbol s103 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#101 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s90 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#89 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s91 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
+symbol s92 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#91 params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
+symbol s93 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#91 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s94 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
+symbol s95 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#94 params=[] ret=Class#94 suspend=0 defaults=[] vararg=[]
+symbol s96 kind=interface fq=golden.sema.Animal vis=public flags=_
+symbol s97 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#96 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s98 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#96 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s99 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s100 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#99 params=[] ret=Class#99 suspend=0 defaults=[] vararg=[]
+symbol s101 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#99 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s91
-  decl d3 class FormalGreeter sym=s93
-  decl d4 class DefaultGreeter sym=s96
-  decl d7 interface Animal sym=s98
-  decl d9 class Dog sym=s101
+  decl d1 interface Greeter sym=s89
+  decl d3 class FormalGreeter sym=s91
+  decl d4 class DefaultGreeter sym=s94
+  decl d7 interface Animal sym=s96
+  decl d9 class Dog sym=s99
 expr e0 string(Hello) type=String
 expr e1 string(Good day) type=String
 expr e2 string(...) type=String

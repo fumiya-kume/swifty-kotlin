@@ -71,57 +71,55 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=golden.sema.Producer vis=public flags=_
-symbol s92 kind=typeParameter fq=golden.sema.Producer.$class91.T vis=private flags=_
-symbol s93 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#91<T#92> params=[T#92] ret=Class#91<T#92> suspend=0 defaults=[0] vararg=[0]
-symbol s94 kind=valueParameter fq=golden.sema.Producer.<init>.$93.item vis=private flags=_
-symbol s95 kind=property fq=golden.sema.Producer.item vis=public flags=_ type=T#92
-symbol s96 kind=class fq=golden.sema.Consumer vis=public flags=_
-symbol s97 kind=typeParameter fq=golden.sema.Consumer.$class96.T vis=private flags=_
-symbol s98 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#96<T#97> params=[] ret=Class#96<T#97> suspend=0 defaults=[] vararg=[]
-symbol s99 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#96<T#97> params=[T#97] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s100 kind=valueParameter fq=golden.sema.Consumer.accept.$99.item vis=private flags=_
-symbol s101 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s102 kind=class fq=golden.sema.BadProducer vis=public flags=_
-symbol s103 kind=typeParameter fq=golden.sema.BadProducer.$class102.T vis=private flags=_
-symbol s104 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#102<T#103> params=[] ret=Class#102<T#103> suspend=0 defaults=[] vararg=[]
-symbol s105 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#102<T#103> params=[T#103] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s106 kind=valueParameter fq=golden.sema.BadProducer.consume.$105.item vis=private flags=_
-symbol s107 kind=class fq=golden.sema.BadConsumer vis=public flags=_
-symbol s108 kind=typeParameter fq=golden.sema.BadConsumer.$class107.T vis=private flags=_
-symbol s109 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#107<T#108> params=[] ret=Class#107<T#108> suspend=0 defaults=[] vararg=[]
-symbol s110 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#107<T#108> params=[] ret=T#108? suspend=0 defaults=[] vararg=[]
-symbol s111 kind=local fq=__local_3.p vis=private flags=_
-symbol s112 kind=local fq=__local_6.c vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=golden.sema.Producer vis=public flags=_
+symbol s90 kind=typeParameter fq=golden.sema.Producer.$class89.T vis=private flags=_
+symbol s91 kind=constructor fq=golden.sema.Producer.<init> vis=public flags=_ sig=recv=Class#89<T#90> params=[T#90] ret=Class#89<T#90> suspend=0 defaults=[0] vararg=[0]
+symbol s92 kind=valueParameter fq=golden.sema.Producer.<init>.$91.item vis=private flags=_
+symbol s93 kind=property fq=golden.sema.Producer.item vis=public flags=_ type=T#90
+symbol s94 kind=class fq=golden.sema.Consumer vis=public flags=_
+symbol s95 kind=typeParameter fq=golden.sema.Consumer.$class94.T vis=private flags=_
+symbol s96 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#94<T#95> params=[] ret=Class#94<T#95> suspend=0 defaults=[] vararg=[]
+symbol s97 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#94<T#95> params=[T#95] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s98 kind=valueParameter fq=golden.sema.Consumer.accept.$97.item vis=private flags=_
+symbol s99 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s100 kind=class fq=golden.sema.BadProducer vis=public flags=_
+symbol s101 kind=typeParameter fq=golden.sema.BadProducer.$class100.T vis=private flags=_
+symbol s102 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#100<T#101> params=[] ret=Class#100<T#101> suspend=0 defaults=[] vararg=[]
+symbol s103 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#100<T#101> params=[T#101] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s104 kind=valueParameter fq=golden.sema.BadProducer.consume.$103.item vis=private flags=_
+symbol s105 kind=class fq=golden.sema.BadConsumer vis=public flags=_
+symbol s106 kind=typeParameter fq=golden.sema.BadConsumer.$class105.T vis=private flags=_
+symbol s107 kind=constructor fq=golden.sema.BadConsumer.<init> vis=public flags=_ sig=recv=Class#105<T#106> params=[] ret=Class#105<T#106> suspend=0 defaults=[] vararg=[]
+symbol s108 kind=function fq=golden.sema.BadConsumer.produce vis=public flags=_ sig=recv=Class#105<T#106> params=[] ret=T#106? suspend=0 defaults=[] vararg=[]
+symbol s109 kind=local fq=__local_3.p vis=private flags=_
+symbol s110 kind=local fq=__local_6.c vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class Producer sym=s91
-  decl d3 class Consumer sym=s96
-  decl d4 fun validVariance suspend=0 inline=0 sym=s101
-  decl d6 class BadProducer sym=s102
-  decl d8 class BadConsumer sym=s107
+  decl d1 class Producer sym=s89
+  decl d3 class Consumer sym=s94
+  decl d4 fun validVariance suspend=0 inline=0 sym=s99
+  decl d6 class BadProducer sym=s100
+  decl d8 class BadConsumer sym=s105
 expr e0 name(Producer) type=_
 expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=<error>
-expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s111
+expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s109
 expr e4 name(Consumer) type=_
-expr e5 call callee=e4 args=[] type=Class#96<Int> call=s98 map=[] targs=[Int]
-expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s112
+expr e5 call callee=e4 args=[] type=Class#94<Int> call=s96 map=[] targs=[Int]
+expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s110
 expr e7 name(null) type=Nothing?

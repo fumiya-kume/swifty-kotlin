@@ -71,44 +71,42 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s92 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#91 params=[Int] ret=Class#91 suspend=0 defaults=[0] vararg=[0]
-symbol s93 kind=valueParameter fq=golden.sema.Foo.<init>.$92.x vis=private flags=_
-symbol s94 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
-symbol s95 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s96 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#95 params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
-symbol s97 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s98 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s99 kind=local fq=__local_6.f vis=private flags=_
-symbol s100 kind=local fq=__local_9.m vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s90 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#89 params=[Int] ret=Class#89 suspend=0 defaults=[0] vararg=[0]
+symbol s91 kind=valueParameter fq=golden.sema.Foo.<init>.$90.x vis=private flags=_
+symbol s92 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
+symbol s93 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s94 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#93 params=[] ret=Class#89 suspend=0 defaults=[] vararg=[]
+symbol s95 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s96 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s97 kind=local fq=__local_6.f vis=private flags=_
+symbol s98 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
-  decl d4 class Foo sym=s91
-  decl d5 fun main suspend=0 inline=0 sym=s98
-expr e0 int(100) type=Int ref=s97
+  decl d4 class Foo sym=s89
+  decl d5 fun main suspend=0 inline=0 sym=s96
+expr e0 int(100) type=Int ref=s95
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#91 call=s92 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#95 ref=s91
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#91 call=s96 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s99
-expr e7 name(Foo) type=Class#95 ref=s91
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s97
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s100
+expr e3 call callee=e1 args=[_:e2] type=Class#89 call=s90 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#93 ref=s89
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#89 call=s94 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s97
+expr e7 name(Foo) type=Class#93 ref=s89
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s95
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s98

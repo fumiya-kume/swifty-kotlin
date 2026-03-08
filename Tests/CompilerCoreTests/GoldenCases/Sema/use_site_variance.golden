@@ -71,70 +71,68 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=golden.sema.E vis=public flags=_
-symbol s92 kind=constructor fq=golden.sema.E.<init> vis=public flags=_ sig=recv=Class#91 params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
-symbol s93 kind=class fq=golden.sema.Box vis=public flags=_
-symbol s94 kind=typeParameter fq=golden.sema.Box.$class93.T vis=private flags=_
-symbol s95 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#93<T#94> params=[] ret=Class#93<T#94> suspend=0 defaults=[] vararg=[]
-symbol s96 kind=function fq=golden.sema.Box.get vis=public flags=_ sig=recv=Class#93<T#94> params=[] ret=T#94 suspend=0 defaults=[] vararg=[]
-symbol s97 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#93<T#94> params=[T#94] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s98 kind=valueParameter fq=golden.sema.Box.set.$97.v vis=private flags=_
-symbol s99 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#93<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s100 kind=valueParameter fq=golden.sema.readOnly.$99.box vis=private flags=_
-symbol s101 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#93<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s102 kind=valueParameter fq=golden.sema.writeBlocked.$101.box vis=private flags=_
-symbol s103 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ params=[Class#93<in Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s104 kind=valueParameter fq=golden.sema.writeOnly.$103.box vis=private flags=_
-symbol s105 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ params=[Class#93<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s106 kind=valueParameter fq=golden.sema.starRead.$105.box vis=private flags=_
-symbol s107 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#93<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s108 kind=valueParameter fq=golden.sema.starReadInferred.$107.box vis=private flags=_
-symbol s109 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#93<*>] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s110 kind=valueParameter fq=golden.sema.starWrite.$109.box vis=private flags=_
-symbol s111 kind=local fq=__local_15.x vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=golden.sema.E vis=public flags=_
+symbol s90 kind=constructor fq=golden.sema.E.<init> vis=public flags=_ sig=recv=Class#89 params=[] ret=Class#89 suspend=0 defaults=[] vararg=[]
+symbol s91 kind=class fq=golden.sema.Box vis=public flags=_
+symbol s92 kind=typeParameter fq=golden.sema.Box.$class91.T vis=private flags=_
+symbol s93 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#91<T#92> params=[] ret=Class#91<T#92> suspend=0 defaults=[] vararg=[]
+symbol s94 kind=function fq=golden.sema.Box.get vis=public flags=_ sig=recv=Class#91<T#92> params=[] ret=T#92 suspend=0 defaults=[] vararg=[]
+symbol s95 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#91<T#92> params=[T#92] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s96 kind=valueParameter fq=golden.sema.Box.set.$95.v vis=private flags=_
+symbol s97 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#91<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s98 kind=valueParameter fq=golden.sema.readOnly.$97.box vis=private flags=_
+symbol s99 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#91<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s100 kind=valueParameter fq=golden.sema.writeBlocked.$99.box vis=private flags=_
+symbol s101 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ params=[Class#91<in Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s102 kind=valueParameter fq=golden.sema.writeOnly.$101.box vis=private flags=_
+symbol s103 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ params=[Class#91<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s104 kind=valueParameter fq=golden.sema.starRead.$103.box vis=private flags=_
+symbol s105 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#91<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s106 kind=valueParameter fq=golden.sema.starReadInferred.$105.box vis=private flags=_
+symbol s107 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#91<*>] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s108 kind=valueParameter fq=golden.sema.starWrite.$107.box vis=private flags=_
+symbol s109 kind=local fq=__local_15.x vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class E sym=s91
-  decl d3 class Box sym=s93
-  decl d4 fun readOnly suspend=0 inline=0 sym=s99
-  decl d5 fun writeBlocked suspend=0 inline=0 sym=s101
-  decl d6 fun writeOnly suspend=0 inline=0 sym=s103
-  decl d7 fun starRead suspend=0 inline=0 sym=s105
-  decl d8 fun starReadInferred suspend=0 inline=0 sym=s107
-  decl d9 fun starWrite suspend=0 inline=0 sym=s109
+  decl d0 class E sym=s89
+  decl d3 class Box sym=s91
+  decl d4 fun readOnly suspend=0 inline=0 sym=s97
+  decl d5 fun writeBlocked suspend=0 inline=0 sym=s99
+  decl d6 fun writeOnly suspend=0 inline=0 sym=s101
+  decl d7 fun starRead suspend=0 inline=0 sym=s103
+  decl d8 fun starReadInferred suspend=0 inline=0 sym=s105
+  decl d9 fun starWrite suspend=0 inline=0 sym=s107
 expr e0 name(E) type=_
-expr e1 call callee=e0 args=[] type=Class#91 call=s92 map=[] targs=[]
+expr e1 call callee=e0 args=[] type=Class#89 call=s90 map=[] targs=[]
 expr e2 throw value=e1 type=Nothing
-expr e3 name(box) type=Class#93<out Any> ref=s100
-expr e4 memberCall recv=e3 callee=get args=[] type=Any call=s96 map=[] targs=[Any]
-expr e5 name(box) type=Class#93<out Any> ref=s102
+expr e3 name(box) type=Class#91<out Any> ref=s98
+expr e4 memberCall recv=e3 callee=get args=[] type=Any call=s94 map=[] targs=[Any]
+expr e5 name(box) type=Class#91<out Any> ref=s100
 expr e6 int(42) type=Int
 expr e7 memberCall recv=e5 callee=set args=[_:e6] type=<error>
-expr e8 name(box) type=Class#93<in Int> ref=s104
+expr e8 name(box) type=Class#91<in Int> ref=s102
 expr e9 int(42) type=Int
-expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Unit call=s97 map=[0->0] targs=[Any?]
-expr e11 name(box) type=Class#93<*> ref=s106
-expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s96 map=[] targs=[Any?]
-expr e13 name(box) type=Class#93<*> ref=s108
-expr e14 memberCall recv=e13 callee=get args=[] type=Any? call=s96 map=[] targs=[Any?]
-expr e15 localDecl x mutable=0 type=_ init=e14 type=Unit ref=s111
-expr e16 name(box) type=Class#93<*> ref=s110
+expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Unit call=s95 map=[0->0] targs=[Any?]
+expr e11 name(box) type=Class#91<*> ref=s104
+expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s94 map=[] targs=[Any?]
+expr e13 name(box) type=Class#91<*> ref=s106
+expr e14 memberCall recv=e13 callee=get args=[] type=Any? call=s94 map=[] targs=[Any?]
+expr e15 localDecl x mutable=0 type=_ init=e14 type=Unit ref=s109
+expr e16 name(box) type=Class#91<*> ref=s108
 expr e17 int(42) type=Int
 expr e18 memberCall recv=e16 callee=set args=[_:e17] type=<error>

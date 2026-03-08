@@ -71,72 +71,70 @@ symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synt
 symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
 symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
 symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=function fq=kotlin.Channel vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58<T#74> suspend=0 defaults=[] vararg=[]
-symbol s74 kind=typeParameter fq=kotlin.Channel.$synthetic.T vis=private flags=synthetic
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s76 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s77 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s78 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s80 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s82 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s83 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s84 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s85 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s86 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s87 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#86.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
-symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s91 kind=class fq=golden.sema.Adder vis=public flags=_
-symbol s92 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#91 params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
-symbol s93 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#91 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s94 kind=valueParameter fq=golden.sema.Adder.invoke.$93.x vis=private flags=_
-symbol s95 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#91
-symbol s96 kind=object fq=golden.sema.Incrementer vis=public flags=_
-symbol s97 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#96 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s98 kind=valueParameter fq=golden.sema.Incrementer.invoke.$97.x vis=private flags=_
-symbol s99 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#91 suspend=0 defaults=[] vararg=[]
-symbol s100 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s101 kind=local fq=__local_12.adder vis=private flags=_
-symbol s102 kind=local fq=__local_16.localResult vis=private flags=_
-symbol s103 kind=local fq=__local_20.topLevelResult vis=private flags=_
-symbol s104 kind=local fq=__local_24.objectResult vis=private flags=_
-symbol s105 kind=local fq=__local_29.exprResult vis=private flags=_
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=golden.sema.Adder vis=public flags=_
+symbol s90 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#89 params=[] ret=Class#89 suspend=0 defaults=[] vararg=[]
+symbol s91 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#89 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s92 kind=valueParameter fq=golden.sema.Adder.invoke.$91.x vis=private flags=_
+symbol s93 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#89
+symbol s94 kind=object fq=golden.sema.Incrementer vis=public flags=_
+symbol s95 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#94 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s96 kind=valueParameter fq=golden.sema.Incrementer.invoke.$95.x vis=private flags=_
+symbol s97 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#89 suspend=0 defaults=[] vararg=[]
+symbol s98 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s99 kind=local fq=__local_12.adder vis=private flags=_
+symbol s100 kind=local fq=__local_16.localResult vis=private flags=_
+symbol s101 kind=local fq=__local_20.topLevelResult vis=private flags=_
+symbol s102 kind=local fq=__local_24.objectResult vis=private flags=_
+symbol s103 kind=local fq=__local_29.exprResult vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class Adder sym=s91
-  decl d2 property globalAdder var=0 sym=s95
-  decl d4 object Incrementer sym=s96
-  decl d5 fun makeAdder suspend=0 inline=0 sym=s99
-  decl d6 fun main suspend=0 inline=0 sym=s100
-expr e0 name(x) type=Int ref=s94
+  decl d1 class Adder sym=s89
+  decl d2 property globalAdder var=0 sym=s93
+  decl d4 object Incrementer sym=s94
+  decl d5 fun makeAdder suspend=0 inline=0 sym=s97
+  decl d6 fun main suspend=0 inline=0 sym=s98
+expr e0 name(x) type=Int ref=s92
 expr e1 int(1) type=Int
-expr e2 binary(add) lhs=e0 rhs=e1 type=Class#91 ref=s95
+expr e2 binary(add) lhs=e0 rhs=e1 type=Class#89 ref=s93
 expr e3 name(Adder) type=_
-expr e4 call callee=e3 args=[] type=Class#91 call=s92 map=[] targs=[]
-expr e5 name(x) type=Int ref=s98
+expr e4 call callee=e3 args=[] type=Class#89 call=s90 map=[] targs=[]
+expr e5 name(x) type=Int ref=s96
 expr e6 int(2) type=Int
 expr e7 binary(add) lhs=e5 rhs=e6 type=Int
 expr e8 name(Adder) type=_
-expr e9 call callee=e8 args=[] type=Class#91 call=s92 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Class#89 call=s90 map=[] targs=[]
 expr e10 name(Adder) type=_
-expr e11 call callee=e10 args=[] type=Class#91 call=s92 map=[] targs=[]
-expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s101
-expr e13 name(adder) type=Class#91 ref=s101
+expr e11 call callee=e10 args=[] type=Class#89 call=s90 map=[] targs=[]
+expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s99
+expr e13 name(adder) type=Class#89 ref=s99
 expr e14 int(5) type=Int
-expr e15 call callee=e13 args=[_:e14] type=Int call=s93 map=[0->0] targs=[]
-expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s102
-expr e17 name(globalAdder) type=Class#91 ref=s95
+expr e15 call callee=e13 args=[_:e14] type=Int call=s91 map=[0->0] targs=[]
+expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s100
+expr e17 name(globalAdder) type=Class#89 ref=s93
 expr e18 int(6) type=Int
-expr e19 call callee=e17 args=[_:e18] type=Int call=s93 map=[0->0] targs=[]
-expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s103
-expr e21 name(Incrementer) type=Class#96 ref=s96
+expr e19 call callee=e17 args=[_:e18] type=Int call=s91 map=[0->0] targs=[]
+expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s101
+expr e21 name(Incrementer) type=Class#94 ref=s94
 expr e22 int(7) type=Int
-expr e23 call callee=e21 args=[_:e22] type=Int call=s97 map=[0->0] targs=[]
-expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s104
+expr e23 call callee=e21 args=[_:e22] type=Int call=s95 map=[0->0] targs=[]
+expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s102
 expr e25 name(makeAdder) type=_
-expr e26 call callee=e25 args=[] type=Class#91 call=s99 map=[] targs=[]
+expr e26 call callee=e25 args=[] type=Class#89 call=s97 map=[] targs=[]
 expr e27 int(8) type=Int
-expr e28 call callee=e26 args=[_:e27] type=Int call=s93 map=[0->0] targs=[]
-expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s105
+expr e28 call callee=e26 args=[_:e27] type=Int call=s91 map=[0->0] targs=[]
+expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s103
