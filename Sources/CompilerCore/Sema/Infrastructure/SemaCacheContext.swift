@@ -143,6 +143,14 @@ public final class SemaCacheContext {
 
     public private(set) var scopeHits: Int = 0
     public private(set) var scopeMisses: Int = 0
-    public internal(set) var callResolutionHits: Int = 0
-    public internal(set) var callResolutionMisses: Int = 0
+    public private(set) var callResolutionHits: Int = 0
+    public private(set) var callResolutionMisses: Int = 0
+
+    func recordCallResolutionHit() {
+        callResolutionHits += 1
+    }
+
+    func recordCallResolutionMiss() {
+        callResolutionMisses += 1
+    }
 }
