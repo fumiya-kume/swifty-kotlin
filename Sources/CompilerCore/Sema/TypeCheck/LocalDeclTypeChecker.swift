@@ -1,7 +1,6 @@
 import Foundation
 
 /// Handles local declaration and assignment type inference.
-/// Derived from legacy TypeCheckSemaPhase+InferDecls.swift.
 final class LocalDeclTypeChecker {
     unowned let driver: TypeCheckDriver
 

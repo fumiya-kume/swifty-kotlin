@@ -221,10 +221,6 @@ final class ASTArenaAdditionalTests: XCTestCase {
     }
 }
 
-// Note: testASTModuleConvenienceInit and testASTModuleSortedFiles were removed
-// as they duplicate testASTModuleFullAndCompactInitializers and
-// testSortedFilesReturnsByFileID in ASTModelsTests.swift.
-
 // MARK: - DataFlowAnalyzer Struct Init Edge Cases
 
 final class DataFlowStructTests: XCTestCase {
@@ -321,12 +317,6 @@ final class DiagnosticEngineAdditionalTests: XCTestCase {
         XCTAssertTrue(engine.hasError)
     }
 }
-
-// Note: Scope subclass tests (FileScope, BlockScope, ImportScope) were removed
-// as BaseScope behavior is already thoroughly tested in SymbolTableTests.swift.
-// PackageScope and FunctionScope are empty final classes with no unique logic.
-// The 3-level scope chain delegation test was also removed since
-// testBaseScopeLookupDelegatesToParent in SymbolTableTests.swift covers this.
 
 // MARK: - CallableValueCallBinding and CatchClauseBinding Init Tests
 

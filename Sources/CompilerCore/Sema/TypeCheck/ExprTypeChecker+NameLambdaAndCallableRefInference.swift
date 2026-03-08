@@ -129,7 +129,7 @@ extension ExprTypeChecker {
         return sema.types.errorType
     }
 
-    // MARK: - Specific Expression Cases (from +ExprInferCases.swift)
+    // MARK: - Specific Expression Cases
 
     func inferNameRefExpr(
         _ id: ExprID,

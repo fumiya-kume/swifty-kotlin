@@ -175,6 +175,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount, "Declaration count must match")
 
         let speedup = seqTime / max(parTime, 0.000001)
+
         print("[Benchmark 10 files] sequential=\(String(format: "%.4f", seqTime))s parallel(4)=\(String(format: "%.4f", parTime))s speedup=\(String(format: "%.2f", speedup))x")
     }
 
@@ -189,6 +190,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount)
 
         let speedup = seqTime / max(parTime, 0.000001)
+
         print("[Benchmark 50 files] sequential=\(String(format: "%.4f", seqTime))s parallel(4)=\(String(format: "%.4f", parTime))s speedup=\(String(format: "%.2f", speedup))x")
     }
 
@@ -203,6 +205,7 @@ final class FrontendParallelBenchmarkTests: XCTestCase {
         XCTAssertEqual(seqAST.declarationCount, parAST.declarationCount)
 
         let speedup = seqTime / max(parTime, 0.000001)
+
         print("[Benchmark 100 files] sequential=\(String(format: "%.4f", seqTime))s parallel(4)=\(String(format: "%.4f", parTime))s speedup=\(String(format: "%.2f", speedup))x")
     }
 

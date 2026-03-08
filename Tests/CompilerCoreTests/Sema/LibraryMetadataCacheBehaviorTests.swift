@@ -312,48 +312,4 @@ final class LibraryMetadataCacheBehaviorTests: XCTestCase {
             }
         }
     }
-
-    // MARK: - P5-62: Comprehensive correctness tests
-
-    // --- A. LibraryMetadataCache unit tests (isolated, direct) ---
-
-    // A1: Manifest cache hit — same libraryDir, same mtime
-
-    // A2: Manifest cache miss — different libraryDir
-
-    // A3: Manifest cache miss — mtime changed (file modified)
-
-    // A4: Metadata cache hit — same interner, same path+mtime
-
-    // A5: Metadata cache miss — different interner
-
-    // A6: Signature cache hit — same TypeSystem + SymbolTable
-
-    // A7: Signature cache miss — different TypeSystem
-
-    // A8: Signature cache miss — different SymbolTable
-
-    // A9: Signature cache correctly caches nil (failed parse)
-
-    // A10: Signature cache auto-clears on TypeSystem change
-
-    // A11: Metadata cache auto-clears on interner change
-
-    // --- B. Integration tests (loadImportedLibrarySymbols with cache) ---
-
-    // B1: cache=nil produces identical results to without cache (no regression)
-
-    // B2: cache provided → correct symbols on first load + correct cache population
-
-    // B3: Properties and typeAliases also cache correctly (not just functions)
-
-    // B4: Invalid manifest is still cached (avoids re-reading invalid manifest)
-
-    // B5: Multiple libraries → all manifests and metadata cached correctly
-
-    // B6: Cached results produce semantically identical TypeIDs as non-cached
-
-    // B7: Suspend functions work with cache
-
-    // B8: Nullable type signatures cached correctly
 }
