@@ -90,6 +90,6 @@ symbol s88 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFun
 symbol s89 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#86 params=[] ret=Class#87 suspend=0 defaults=[] vararg=[]
 symbol s90 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#87 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s91 kind=property fq=golden.sema.unused vis=public flags=_ type=Int
-file f0 package=golden.sema annotations=[@file:Suppress(""UNUSED""),@file:JvmName(""CustomName"")]
+file f0 package=golden.sema annotations=[@file:Suppress("UNUSED"),@file:JvmName("CustomName")]
   decl d0 property unused var=0 sym=s91
 expr e0 int(42) type=Int ref=s91

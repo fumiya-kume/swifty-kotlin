@@ -358,8 +358,7 @@ extension KIRLoweringDriver {
         } else {
             emitSimpleDelegateInit(
                 delegateObjExpr: delegateObjExpr,
-                symbol: symbol,
-                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                delegateStorageSymbol: delegateStorageSymbol,
                 shared: shared, emit: &initInstructions
             )
         }

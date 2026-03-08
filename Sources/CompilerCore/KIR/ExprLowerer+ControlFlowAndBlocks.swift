@@ -23,13 +23,17 @@ extension ExprLowerer {
             .temporary(Int32(arena.expressions.count)),
             type: arena.exprType(valueExpr) ?? sema.types.anyType
         )
+        let thrownResult = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.nullableAnyType
+        )
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_lateinit_get_or_throw"),
             arguments: [valueExpr, propertyNameExpr],
             result: result,
             canThrow: true,
-            thrownResult: nil
+            thrownResult: thrownResult
         ))
         return result
     }
@@ -264,7 +268,7 @@ extension ExprLowerer {
                 if let symbol = sema.bindings.identifierSymbols[exprID],
                    let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                    let ownerInfo = sema.symbols.symbol(ownerSymbol),
-                   ownerInfo.kind == .class || ownerInfo.kind == .object || ownerInfo.kind == .interface,
+                   ownerInfo.kind == .class || ownerInfo.kind == .interface,
                    let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
                        sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
                    ]
@@ -318,7 +322,7 @@ extension ExprLowerer {
                    let receiverExprID = driver.ctx.currentImplicitReceiverExprID,
                    let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                    let ownerKind = sema.symbols.symbol(ownerSymbol)?.kind,
-                   ownerKind == .class || ownerKind == .interface || ownerKind == .object,
+                   ownerKind == .class || ownerKind == .interface,
                    let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
                        sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
                    ]

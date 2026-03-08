@@ -107,9 +107,7 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testBoxingFunctionCount() {
-        // kk_box_int, kk_box_bool, kk_box_long, kk_box_float, kk_box_double, kk_box_char,
-        // kk_box_string, kk_box_any, kk_unbox_int, kk_unbox_bool, kk_unbox_long, kk_unbox_float,
-        // kk_unbox_double, kk_unbox_char, kk_unbox_string, kk_unbox_any
+        // Primitive boxing/unboxing helpers plus the lateinit initialization helpers.
         XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 14)
     }
 

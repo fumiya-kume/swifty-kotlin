@@ -70,7 +70,7 @@ extension KIRLoweringDriver {
         delegateObjExpr: KIRExprID,
         symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
+        delegateType _: TypeID,
         shared: KIRLoweringSharedContext,
         emit initInstructions: inout KIRLoweringEmitContext
     ) {
@@ -80,9 +80,7 @@ extension KIRLoweringDriver {
         guard let provideDelegateSymbol = sema.symbols.delegateProvideDelegateSymbol(for: symbol) else {
             emitSimpleDelegateInit(
                 delegateObjExpr: delegateObjExpr,
-                symbol: symbol,
                 delegateStorageSymbol: delegateStorageSymbol,
-                delegateType: delegateType,
                 shared: shared,
                 emit: &initInstructions
             )
@@ -127,14 +125,10 @@ extension KIRLoweringDriver {
     /// Emits the simple delegate init: just wrap in kk_custom_delegate_create.
     func emitSimpleDelegateInit(
         delegateObjExpr: KIRExprID,
-        symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
         shared _: KIRLoweringSharedContext,
         emit initInstructions: inout KIRLoweringEmitContext
     ) {
-        _ = symbol
-        _ = delegateType
         initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
     }
 }

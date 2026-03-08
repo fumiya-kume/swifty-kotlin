@@ -82,7 +82,7 @@ final class GoldenHarnessTests: XCTestCase {
                         let arguments = if annotation.arguments.isEmpty {
                             ""
                         } else {
-                            "(\(annotation.arguments.joined(separator: ",")))"
+                            "(\(annotation.arguments.map(renderAnnotationArgument).joined(separator: ",")))"
                         }
                         return "\(targetPrefix)\(annotation.name)\(arguments)"
                     }.joined(separator: ",")
@@ -290,5 +290,21 @@ final class GoldenHarnessTests: XCTestCase {
             return "s\(symbol.rawValue)"
         }
         return "_"
+    }
+
+    private func renderAnnotationArgument(_ argument: String) -> String {
+        guard argument.count >= 2,
+              argument.first == "\"",
+              argument.last == "\""
+        else {
+            return argument
+        }
+        let innerStart = argument.index(after: argument.startIndex)
+        let innerEnd = argument.index(before: argument.endIndex)
+        let inner = String(argument[innerStart ..< innerEnd])
+        if inner.first == "\"", inner.last == "\"" {
+            return inner
+        }
+        return argument
     }
 }

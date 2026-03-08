@@ -8,6 +8,17 @@ final class DeclTypeChecker {
         self.driver = driver
     }
 
+    private func emitLateinitMustBeNonNullDiagnostic(
+        for property: PropertyDecl,
+        diagnostics: DiagnosticEngine
+    ) {
+        diagnostics.error(
+            "KSWIFTK-SEMA-LATEINIT",
+            "'lateinit' property type must be non-null.",
+            range: property.range
+        )
+    }
+
     // MARK: - Function Body Type Inference
 
     func inferFunctionBodyType(
@@ -194,43 +205,23 @@ final class DeclTypeChecker {
             }
         case let .classType(classType):
             if classType.nullability == .nullable {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-LATEINIT",
-                    "'lateinit' property type must be non-null.",
-                    range: property.range
-                )
+                emitLateinitMustBeNonNullDiagnostic(for: property, diagnostics: diagnostics)
             }
         case let .typeParam(typeParam):
             if typeParam.nullability == .nullable {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-LATEINIT",
-                    "'lateinit' property type must be non-null.",
-                    range: property.range
-                )
+                emitLateinitMustBeNonNullDiagnostic(for: property, diagnostics: diagnostics)
             }
         case let .functionType(functionType):
             if functionType.nullability == .nullable {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-LATEINIT",
-                    "'lateinit' property type must be non-null.",
-                    range: property.range
-                )
+                emitLateinitMustBeNonNullDiagnostic(for: property, diagnostics: diagnostics)
             }
         case let .nothing(nullability):
             if nullability == .nullable {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-LATEINIT",
-                    "'lateinit' property type must be non-null.",
-                    range: property.range
-                )
+                emitLateinitMustBeNonNullDiagnostic(for: property, diagnostics: diagnostics)
             }
         case let .any(nullability):
             if nullability == .nullable {
-                diagnostics.error(
-                    "KSWIFTK-SEMA-LATEINIT",
-                    "'lateinit' property type must be non-null.",
-                    range: property.range
-                )
+                emitLateinitMustBeNonNullDiagnostic(for: property, diagnostics: diagnostics)
             }
         case .error, .unit, .intersection:
             break

@@ -147,7 +147,7 @@ extension KIRLoweringDriver {
                 callee: shared.interner.intern("kk_array_set"),
                 arguments: [receiverID, offsetExpr, parameterExpr],
                 result: unusedResult,
-                canThrow: true,
+                canThrow: false,
                 thrownResult: nil,
                 isSuperCall: false
             ))

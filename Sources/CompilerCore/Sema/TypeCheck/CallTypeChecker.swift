@@ -163,7 +163,7 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "repeat",
            args.count == 2,
-           shouldUseRepeatSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
+           shouldUseRepeatSpecialHandling(calleeName: calleeName, locals: locals)
         {
             let intType = sema.types.intType
             let unitType = sema.types.unitType

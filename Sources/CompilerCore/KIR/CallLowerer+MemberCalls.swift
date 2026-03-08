@@ -6,6 +6,25 @@ import Foundation
 extension CallLowerer {
     private static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
 
+    private func isCoroutineHandleReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName == "Job" || shortName == "Deferred" {
+            return true
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "Job"]
+            || fqName == ["kotlinx", "coroutines", "Deferred"]
+    }
+
     private func wrapLateinitReadIfNeeded(
         _ valueExpr: KIRExprID,
         symbol: SymbolID,
@@ -28,13 +47,17 @@ extension CallLowerer {
             .temporary(Int32(arena.expressions.count)),
             type: arena.exprType(valueExpr) ?? sema.types.anyType
         )
+        let thrownResult = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.nullableAnyType
+        )
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_lateinit_get_or_throw"),
             arguments: [valueExpr, propertyNameExpr],
             result: result,
             canThrow: true,
-            thrownResult: nil
+            thrownResult: thrownResult
         ))
         return result
     }
@@ -1238,13 +1261,7 @@ extension CallLowerer {
         }
 
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-        let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: nonNullReceiverType) {
-            false
-        } else {
-            true
-        }
-        if isCoroutineHandleReceiver {
+        if isCoroutineHandleReceiverType(receiverType, sema: sema, interner: interner) {
             switch interner.resolve(fallback) {
             case "await":
                 return interner.intern("kk_kxmini_async_await")

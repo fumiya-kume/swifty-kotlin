@@ -6,6 +6,25 @@ import Foundation
 // swiftlint:disable file_length
 
 extension CallTypeChecker {
+    private func isCoroutineHandleReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName == "Job" || shortName == "Deferred" {
+            return true
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "Job"]
+            || fqName == ["kotlinx", "coroutines", "Deferred"]
+    }
+
     // This legacy inference path still owns many special cases while the split-out helpers
     // are being migrated. Keep lint focused on the new behavior touched by this change.
     // swiftlint:disable function_body_length cyclomatic_complexity
@@ -845,11 +864,11 @@ extension CallTypeChecker {
                     }
                 }
             }
-            let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {
-                false
-            } else {
-                true
-            }
+            let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
+                lookupReceiverType,
+                sema: sema,
+                interner: interner
+            )
             if !isClassNameReceiver, args.isEmpty, isCoroutineHandleReceiver {
                 let memberName = interner.resolve(calleeName)
                 switch memberName {
