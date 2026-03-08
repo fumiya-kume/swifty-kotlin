@@ -201,72 +201,19 @@ public extension TypeSystem {
             return type
 
         case let .classType(classType):
-            let newArgs: [TypeArg] = classType.args.map { arg in
-                switch arg {
-                case let .invariant(inner):
-                    .invariant(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol
-                    ))
-                case let .out(inner):
-                    .out(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol
-                    ))
-                case let .in(inner):
-                    .in(substituteTypeParameters(
-                        in: inner,
-                        substitution: substitution,
-                        typeVarBySymbol: typeVarBySymbol
-                    ))
-                case .star:
-                    .star
-                }
+            let newArgs = classType.args.map {
+                substituteTypeArg($0, substitution: substitution, typeVarBySymbol: typeVarBySymbol)
             }
-            if newArgs == classType.args {
-                return type
-            }
+            if newArgs == classType.args { return type }
             return make(.classType(ClassType(
-                classSymbol: classType.classSymbol,
-                args: newArgs,
-                nullability: classType.nullability
+                classSymbol: classType.classSymbol, args: newArgs, nullability: classType.nullability
             )))
 
         case let .functionType(functionType):
-            let newReceiver = functionType.receiver.map { receiver in
-                substituteTypeParameters(
-                    in: receiver,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol
-                )
-            }
-            let newParams = functionType.params.map { param in
-                substituteTypeParameters(
-                    in: param,
-                    substitution: substitution,
-                    typeVarBySymbol: typeVarBySymbol
-                )
-            }
-            let newReturn = substituteTypeParameters(
-                in: functionType.returnType,
-                substitution: substitution,
-                typeVarBySymbol: typeVarBySymbol
+            return substituteFunctionType(
+                functionType, originalType: type,
+                substitution: substitution, typeVarBySymbol: typeVarBySymbol
             )
-            if newReceiver == functionType.receiver,
-               newParams == functionType.params,
-               newReturn == functionType.returnType
-            {
-                return type
-            }
-            return make(.functionType(FunctionType(
-                receiver: newReceiver,
-                params: newParams,
-                returnType: newReturn,
-                isSuspend: functionType.isSuspend,
-                nullability: functionType.nullability
-            )))
 
         case let .intersection(parts):
             let newParts = parts.map { part in
@@ -284,5 +231,43 @@ public extension TypeSystem {
         default:
             return type
         }
+    }
+
+    private func substituteTypeArg(
+        _ arg: TypeArg,
+        substitution: [TypeVarID: TypeID],
+        typeVarBySymbol: [SymbolID: TypeVarID]
+    ) -> TypeArg {
+        switch arg {
+        case let .invariant(inner):
+            .invariant(substituteTypeParameters(in: inner, substitution: substitution, typeVarBySymbol: typeVarBySymbol))
+        case let .out(inner):
+            .out(substituteTypeParameters(in: inner, substitution: substitution, typeVarBySymbol: typeVarBySymbol))
+        case let .in(inner):
+            .in(substituteTypeParameters(in: inner, substitution: substitution, typeVarBySymbol: typeVarBySymbol))
+        case .star:
+            .star
+        }
+    }
+
+    private func substituteFunctionType(
+        _ functionType: FunctionType,
+        originalType: TypeID,
+        substitution: [TypeVarID: TypeID],
+        typeVarBySymbol: [SymbolID: TypeVarID]
+    ) -> TypeID {
+        let sub = { [self] (t: TypeID) in
+            substituteTypeParameters(in: t, substitution: substitution, typeVarBySymbol: typeVarBySymbol)
+        }
+        let newReceiver = functionType.receiver.map { sub($0) }
+        let newParams = functionType.params.map { sub($0) }
+        let newReturn = sub(functionType.returnType)
+        if newReceiver == functionType.receiver, newParams == functionType.params, newReturn == functionType.returnType {
+            return originalType
+        }
+        return make(.functionType(FunctionType(
+            receiver: newReceiver, params: newParams, returnType: newReturn,
+            isSuspend: functionType.isSuspend, nullability: functionType.nullability
+        )))
     }
 }

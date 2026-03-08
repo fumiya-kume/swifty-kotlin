@@ -317,14 +317,7 @@ public final class CompilerDriver {
                 depended: &depended
             )
         case let .funDecl(d):
-            for param in d.valueParams {
-                if let typeRef = param.type {
-                    collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
-                }
-            }
-            if let retType = d.returnType {
-                collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
-            }
+            collectFunDeclDependencies(d, ast: ast, interner: interner, depended: &depended)
         case let .propertyDecl(d):
             if let typeRef = d.type {
                 collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
@@ -355,6 +348,22 @@ public final class CompilerDriver {
                 interner: interner,
                 depended: &depended
             )
+        }
+    }
+
+    private func collectFunDeclDependencies(
+        _ d: FunDecl,
+        ast: ASTModule,
+        interner: StringInterner,
+        depended: inout Set<String>
+    ) {
+        for param in d.valueParams {
+            if let typeRef = param.type {
+                collectTypeRefDependencies(typeRefID: typeRef, ast: ast, interner: interner, depended: &depended)
+            }
+        }
+        if let retType = d.returnType {
+            collectTypeRefDependencies(typeRefID: retType, ast: ast, interner: interner, depended: &depended)
         }
     }
 

@@ -226,39 +226,7 @@ extension DeclTypeChecker {
         }
 
         for declID in nestedClasses {
-            guard let decl = ast.arena.decl(declID),
-                  let symbol = sema.bindings.declSymbols[declID]
-            else {
-                continue
-            }
-            switch decl {
-            case let .classDecl(classDecl):
-                // Inner classes inherit outer receiver context (can use this@Outer).
-                // Non-inner nested classes are effectively static: clear outer receivers.
-                let nestedCtx: TypeInferenceContext = if classDecl.isInner {
-                    ctx
-                } else {
-                    ctx.copying(outerReceiverTypes: [])
-                }
-                typeCheckClassDecl(
-                    classDecl,
-                    symbol: symbol,
-                    ctx: nestedCtx,
-                    solver: solver,
-                    diagnostics: diagnostics
-                )
-            case let .interfaceDecl(nestedInterface):
-                let nestedCtx = ctx.copying(outerReceiverTypes: [])
-                typeCheckInterfaceDecl(
-                    nestedInterface,
-                    symbol: symbol,
-                    ctx: nestedCtx,
-                    solver: solver,
-                    diagnostics: diagnostics
-                )
-            default:
-                continue
-            }
+            typeCheckNestedClassDecl(declID: declID, ctx: ctx, solver: solver, diagnostics: diagnostics)
         }
 
         for declID in nestedObjects {
@@ -275,6 +243,29 @@ extension DeclTypeChecker {
                 solver: solver,
                 diagnostics: diagnostics
             )
+        }
+    }
+
+    private func typeCheckNestedClassDecl(
+        declID: DeclID,
+        ctx: TypeInferenceContext,
+        solver: ConstraintSolver,
+        diagnostics: DiagnosticEngine
+    ) {
+        guard let decl = ctx.ast.arena.decl(declID),
+              let symbol = ctx.sema.bindings.declSymbols[declID]
+        else { return }
+        switch decl {
+        case let .classDecl(classDecl):
+            // Inner classes inherit outer receiver context (can use this@Outer).
+            // Non-inner nested classes are effectively static: clear outer receivers.
+            let nestedCtx: TypeInferenceContext = classDecl.isInner ? ctx : ctx.copying(outerReceiverTypes: [])
+            typeCheckClassDecl(classDecl, symbol: symbol, ctx: nestedCtx, solver: solver, diagnostics: diagnostics)
+        case let .interfaceDecl(nestedInterface):
+            let nestedCtx = ctx.copying(outerReceiverTypes: [])
+            typeCheckInterfaceDecl(nestedInterface, symbol: symbol, ctx: nestedCtx, solver: solver, diagnostics: diagnostics)
+        default:
+            break
         }
     }
 

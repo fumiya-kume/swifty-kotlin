@@ -6,20 +6,15 @@ public final class LinkPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        if ctx.options.emit != .executable {
-            return
-        }
-
+        guard ctx.options.emit == .executable else { return }
         guard let objectPath = ctx.generatedObjectPath,
               FileManager.default.fileExists(atPath: objectPath)
         else {
             throw CompilerPipelineError.outputUnavailable
         }
-
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available during link.")
         }
-
         guard let entrySymbol = resolveEntrySymbol(kir: kir, interner: ctx.interner) else {
             ctx.diagnostics.error(
                 "KSWIFTK-LINK-0002",
@@ -28,55 +23,62 @@ public final class LinkPhase: CompilerPhase {
             )
             throw CompilerPipelineError.outputUnavailable
         }
+        try performLink(objectPath: objectPath, entrySymbol: entrySymbol, ctx: ctx)
+    }
 
+    private func performLink(objectPath: String, entrySymbol: String, ctx: CompilationContext) throws {
         let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
-
         do {
             let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: ctx.options.target)
             let entryWrapperObjectPath = try LLVMEntryPointObjectEmitter(target: ctx.options.target)
                 .emit(entrySymbol: entrySymbol, outputPath: ctx.options.outputPath)
-            var linkInputs: [String] = [objectPath, entryWrapperObjectPath]
-            for runtimeObject in runtimeObjects where !linkInputs.contains(runtimeObject) {
-                linkInputs.append(runtimeObject)
-            }
-            for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
-                linkInputs.append(extraObject)
-            }
-
-            var args: [String] = linkInputs
-            if ctx.options.debugInfo {
-                args.append("-g")
-            }
-            args.append("-o")
-            args.append(ctx.options.outputPath)
+            let linkInputs = buildLinkInputs(
+                objectPath: objectPath, entryWrapperObjectPath: entryWrapperObjectPath,
+                runtimeObjects: runtimeObjects, autoLinkedObjects: autoLinkedObjects
+            )
+            var args = linkInputs
+            if ctx.options.debugInfo { args.append("-g") }
+            args.append(contentsOf: ["-o", ctx.options.outputPath])
             args.append(contentsOf: linkerDriverArgs(for: ctx.options.target))
-            for path in ctx.options.libraryPaths {
-                args.append("-L\(path)")
-            }
-            for library in ctx.options.linkLibraries {
-                args.append("-l\(library)")
-            }
+            ctx.options.libraryPaths.forEach { args.append("-L\($0)") }
+            ctx.options.linkLibraries.forEach { args.append("-l\($0)") }
             let swiftcPath = CommandRunner.resolveExecutable("swiftc", fallback: "/usr/bin/swiftc")
             _ = try CommandRunner.run(
-                executable: swiftcPath,
-                arguments: args,
-                phaseTimer: ctx.phaseTimer,
-                subPhaseName: "Link/swiftc"
+                executable: swiftcPath, arguments: args,
+                phaseTimer: ctx.phaseTimer, subPhaseName: "Link/swiftc"
             )
         } catch let error as CommandRunnerError {
-            let message: String
-            switch error {
-            case let .launchFailed(reason):
-                message = "Failed to launch linker: \(reason)"
-            case let .nonZeroExit(result):
-                let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                message = stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
-            }
-            ctx.diagnostics.error("KSWIFTK-LINK-0001", message, range: nil)
+            ctx.diagnostics.error("KSWIFTK-LINK-0001", commandRunnerErrorMessage(error), range: nil)
             throw CompilerPipelineError.outputUnavailable
         } catch {
             ctx.diagnostics.error("KSWIFTK-LINK-0001", "Link step failed: \(error)", range: nil)
             throw CompilerPipelineError.outputUnavailable
+        }
+    }
+
+    private func buildLinkInputs(
+        objectPath: String,
+        entryWrapperObjectPath: String,
+        runtimeObjects: [String],
+        autoLinkedObjects: [String]
+    ) -> [String] {
+        var linkInputs: [String] = [objectPath, entryWrapperObjectPath]
+        for obj in runtimeObjects where !linkInputs.contains(obj) {
+            linkInputs.append(obj)
+        }
+        for obj in autoLinkedObjects where !linkInputs.contains(obj) {
+            linkInputs.append(obj)
+        }
+        return linkInputs
+    }
+
+    private func commandRunnerErrorMessage(_ error: CommandRunnerError) -> String {
+        switch error {
+        case let .launchFailed(reason):
+            return "Failed to launch linker: \(reason)"
+        case let .nonZeroExit(result):
+            let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            return stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
         }
     }
 

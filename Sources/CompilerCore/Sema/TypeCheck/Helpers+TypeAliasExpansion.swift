@@ -122,19 +122,7 @@ extension TypeCheckHelpers {
         let types = sema.types
         switch types.kind(of: typeID) {
         case let .typeParam(typeParam):
-            if let replacement = argSubstitution[typeParam.symbol] {
-                let replacementType: TypeID = switch replacement {
-                case let .invariant(inner), let .out(inner), let .in(inner):
-                    inner
-                case .star:
-                    types.nullableAnyType
-                }
-                if typeParam.nullability == .nullable {
-                    return applyNullabilityForTypeCheck(replacementType, types: types)
-                }
-                return replacementType
-            }
-            return typeID
+            return applyAliasToTypeParam(typeParam, typeID: typeID, argSubstitution: argSubstitution, types: types)
         case let .classType(clsType):
             let newArgs = clsType.args.map { arg -> TypeArg in
                 substituteAliasArg(arg, argSubstitution: argSubstitution, sema: sema)
@@ -169,5 +157,22 @@ extension TypeCheckHelpers {
         default:
             return typeID
         }
+    }
+
+    private func applyAliasToTypeParam(
+        _ typeParam: TypeParamType,
+        typeID: TypeID,
+        argSubstitution: [SymbolID: TypeArg],
+        types: TypeSystem
+    ) -> TypeID {
+        guard let replacement = argSubstitution[typeParam.symbol] else { return typeID }
+        let replacementType: TypeID = switch replacement {
+        case let .invariant(inner), let .out(inner), let .in(inner): inner
+        case .star: types.nullableAnyType
+        }
+        if typeParam.nullability == .nullable {
+            return applyNullabilityForTypeCheck(replacementType, types: types)
+        }
+        return replacementType
     }
 }

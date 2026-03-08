@@ -44,18 +44,12 @@ final class CallSupportLowerer {
         case let .classDecl(classDecl):
             // Collect default arguments for primary constructor parameters.
             collectConstructorDefaults(classDecl, ast: ast, sema: sema, mapping: &mapping)
-            for memberDeclID in classDecl.memberFunctions {
-                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
-            }
-            for nestedDeclID in classDecl.nestedClasses + classDecl.nestedObjects {
-                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            for item in classDecl.memberFunctions + classDecl.nestedClasses + classDecl.nestedObjects {
+                collectFunctionDefaults(item, ast: ast, sema: sema, mapping: &mapping)
             }
         case let .objectDecl(objectDecl):
-            for memberDeclID in objectDecl.memberFunctions {
-                collectFunctionDefaults(memberDeclID, ast: ast, sema: sema, mapping: &mapping)
-            }
-            for nestedDeclID in objectDecl.nestedClasses + objectDecl.nestedObjects {
-                collectFunctionDefaults(nestedDeclID, ast: ast, sema: sema, mapping: &mapping)
+            for item in objectDecl.memberFunctions + objectDecl.nestedClasses + objectDecl.nestedObjects {
+                collectFunctionDefaults(item, ast: ast, sema: sema, mapping: &mapping)
             }
         default:
             break
