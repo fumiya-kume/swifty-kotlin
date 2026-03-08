@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import Foundation
 
 /// Delegate class for KIR lowering: CallLowerer.
@@ -9,6 +11,7 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -269,9 +272,9 @@ final class CallLowerer {
                 isSyntheticCoroutineLauncher = true
             }
             if isSyntheticCoroutineLauncher,
-               (sourceCalleeName == runBlockingID
-                   || sourceCalleeName == launchID
-                   || sourceCalleeName == asyncID),
+               sourceCalleeName == runBlockingID
+               || sourceCalleeName == launchID
+               || sourceCalleeName == asyncID,
                let firstArg = finalArgIDs.first,
                let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
                !callableInfo.captureArguments.isEmpty

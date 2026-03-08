@@ -1273,6 +1273,7 @@ extension CallLowerer {
         )
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func loweredMemberCalleeName(
         chosenCallee: SymbolID?,
         fallback: InternedString,
