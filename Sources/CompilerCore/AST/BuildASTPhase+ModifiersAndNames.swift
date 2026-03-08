@@ -74,7 +74,7 @@ extension BuildASTPhase {
                     modifiers.insert(modifier)
                     continue
                 }
-                break
+                continue
             }
         }
         return modifiers

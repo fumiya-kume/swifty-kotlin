@@ -254,6 +254,9 @@ final class RuntimeLazyBox {
         let fnPtr = unsafeBitCast(initializerFnPtr, to: KKThunkEntryPoint.self)
         var thrown = 0
         let value = fnPtr(&thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: lazy initializer threw")
+        }
         cachedValue = value
         return value
     }

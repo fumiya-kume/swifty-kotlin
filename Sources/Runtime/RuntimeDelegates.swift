@@ -170,6 +170,9 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
         let callback = unsafeBitCast(box.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
         var thrown = 0
         _ = callback(0, oldValue, newValue, &thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: observable callback threw")
+        }
     }
     return newValue
 }
@@ -230,6 +233,9 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
         let callback = unsafeBitCast(box.callbackFnPtr, to: KKDelegateObserverEntryPoint.self)
         var thrown = 0
         let accepted = callback(0, oldValue, newValue, &thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: vetoable callback threw")
+        }
         if accepted != 0 {
             box.currentValue = newValue
         }

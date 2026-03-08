@@ -348,12 +348,17 @@ extension VirtualDispatchTests {
 
         try LoweringPhase().run(ctx)
 
-        let backend = try LLVMBackend(
-            target: defaultTargetTriple(),
-            optLevel: .O0,
-            debugInfo: false,
-            diagnostics: DiagnosticEngine()
-        )
+        let backend: LLVMBackend
+        do {
+            backend = try LLVMBackend(
+                target: defaultTargetTriple(),
+                optLevel: .O0,
+                debugInfo: false,
+                diagnostics: DiagnosticEngine()
+            )
+        } catch {
+            throw XCTSkip("LLVM backend is unavailable in this environment: \(error)")
+        }
         let runtime = RuntimeLinkInfo(libraryPaths: [], libraries: [], extraObjects: [])
         let irPath = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".ll").path
         try backend.emitLLVMIR(module: fixture.module, runtime: runtime, outputIRPath: irPath, interner: fixture.interner)

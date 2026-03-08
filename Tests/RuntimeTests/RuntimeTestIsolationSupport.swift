@@ -8,9 +8,19 @@ private let runtimeTestIsolationSemaphore = DispatchSemaphore(value: 1)
 /// Use this base class for runtime tests that mutate global runtime state or
 /// observe file-global callback state.
 class IsolatedRuntimeXCTestCase: XCTestCase {
+    private var hasRuntimeTestIsolationPermit = false
+
     override final func setUp() {
-        runtimeTestIsolationSemaphore.wait()
         super.setUp()
+        hasRuntimeTestIsolationPermit = false
+
+        let waitResult = runtimeTestIsolationSemaphore.wait(timeout: .now() + .seconds(30))
+        guard waitResult == .success else {
+            XCTFail("Runtime test isolation lock timed out while waiting for available token")
+            return
+        }
+        hasRuntimeTestIsolationPermit = true
+
         kk_runtime_force_reset()
         resetIsolatedRuntimeTestState()
     }
@@ -19,7 +29,9 @@ class IsolatedRuntimeXCTestCase: XCTestCase {
         resetIsolatedRuntimeTestState()
         kk_runtime_force_reset()
         super.tearDown()
-        runtimeTestIsolationSemaphore.signal()
+        if hasRuntimeTestIsolationPermit {
+            runtimeTestIsolationSemaphore.signal()
+        }
     }
 
     func resetIsolatedRuntimeTestState() {}

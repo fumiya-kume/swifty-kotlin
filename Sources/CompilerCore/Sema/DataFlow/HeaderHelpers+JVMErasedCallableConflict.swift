@@ -35,7 +35,7 @@ extension DataFlowSemaPhase {
         if hasConflict {
             diagnostics.error(
                 "KSWIFTK-SEMA-0001",
-                "Duplicate declaration in the same package scope.",
+                "Duplicate JVM-erased callable declaration in the same package scope.",
                 range: range
             )
         }
