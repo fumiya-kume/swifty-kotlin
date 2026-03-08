@@ -1,5 +1,11 @@
 import Foundation
 
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
+
 private final class RuntimeObjectCache: @unchecked Sendable {
     private let condition = NSCondition()
     private var cachedPathsByTarget: [String: [String]] = [:]
@@ -66,18 +72,20 @@ extension CodegenRuntimeSupport {
     static func runtimeObjectPaths(target: TargetTriple) throws -> [String] {
         let cacheKey = runtimeBuildCacheKey(target: target)
         return try runtimeObjectCache.getOrLoad(cacheKey: cacheKey) {
-            let discovered = discoverRuntimeObjectPaths(target: target)
-            if !discovered.isEmpty {
-                return discovered
-            }
+            try withRuntimeBuildLock(cacheKey: cacheKey) {
+                let discovered = discoverRuntimeObjectPaths(target: target)
+                if !discovered.isEmpty {
+                    return discovered
+                }
 
-            try buildRuntimeObjects(target: target)
+                try buildRuntimeObjects(target: target)
 
-            let built = discoverRuntimeObjectPaths(target: target)
-            guard !built.isEmpty else {
-                throw CodegenRuntimeSupportError.runtimeObjectsUnavailable(runtimeBuildDirectory(target: target).path)
+                let built = discoverRuntimeObjectPaths(target: target)
+                guard !built.isEmpty else {
+                    throw CodegenRuntimeSupportError.runtimeObjectsUnavailable(runtimeBuildDirectory(target: target).path)
+                }
+                return built
             }
-            return built
         }
     }
 
@@ -178,6 +186,27 @@ extension CodegenRuntimeSupport {
         packageRootURL().appendingPathComponent(".runtime-build", isDirectory: true)
     }
 
+    private static func withRuntimeBuildLock<T>(cacheKey: String, body: () throws -> T) throws -> T {
+        let lockDirectory = runtimeScratchRootDirectory().appendingPathComponent("locks", isDirectory: true)
+        try FileManager.default.createDirectory(at: lockDirectory, withIntermediateDirectories: true)
+
+        let lockURL = lockDirectory.appendingPathComponent("\(cacheKey).lock")
+        let descriptor = lockURL.path.withCString { path in
+            open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)
+        }
+        guard descriptor >= 0 else {
+            throw CodegenRuntimeSupportError.runtimeBuildFailed(systemErrorDescription("open"))
+        }
+        defer { close(descriptor) }
+
+        guard flock(descriptor, LOCK_EX) == 0 else {
+            throw CodegenRuntimeSupportError.runtimeBuildFailed(systemErrorDescription("flock"))
+        }
+        defer { _ = flock(descriptor, LOCK_UN) }
+
+        return try body()
+    }
+
     private static func packageRootURL() -> URL {
         if let overridePath = ProcessInfo.processInfo.environment["KSWIFTK_PACKAGE_ROOT"] {
             let overrideURL = URL(fileURLWithPath: overridePath, isDirectory: true)
@@ -257,5 +286,9 @@ extension CodegenRuntimeSupport {
             payload.append("\u{1}")
         }
         return stableFNV1a64Hex(payload)
+    }
+
+    private static func systemErrorDescription(_ operation: String) -> String {
+        "\(operation) failed: \(String(cString: strerror(errno)))"
     }
 }
