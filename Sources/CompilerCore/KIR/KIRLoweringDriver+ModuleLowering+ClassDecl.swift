@@ -340,12 +340,7 @@ extension KIRLoweringDriver {
                 }
             }
 
-            queue.append(contentsOf: sema.symbols.directSupertypes(for: owner).filter { supertype in
-                guard let symbol = sema.symbols.symbol(supertype) else {
-                    return false
-                }
-                return symbol.kind == .class || symbol.kind == .object || symbol.kind == .enumClass
-            })
+            queue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
         }
 
         if let fallbackMatch {
