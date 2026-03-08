@@ -339,5 +339,4 @@ public final class CodegenPhase: CompilerPhase {
         )
         return encoder.serialize(records)
     }
-
 }
