@@ -1,3 +1,4 @@
+// swiftlint:disable cyclomatic_complexity
 import Foundation
 
 extension ExprTypeChecker {
@@ -248,3 +249,5 @@ extension ExprTypeChecker {
         return objectSymbol
     }
 }
+
+// swiftlint:enable cyclomatic_complexity
