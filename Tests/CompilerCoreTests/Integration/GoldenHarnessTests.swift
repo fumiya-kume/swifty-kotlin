@@ -79,7 +79,7 @@ final class GoldenHarnessTests: XCTestCase {
                 if !file.annotations.isEmpty {
                     let renderedAnnotations = file.annotations.map { annotation in
                         let targetPrefix = annotation.useSiteTarget.map { "@\($0):" } ?? "@"
-                        let arguments: String = if annotation.arguments.isEmpty {
+                        let arguments = if annotation.arguments.isEmpty {
                             ""
                         } else {
                             "(\(annotation.arguments.joined(separator: ",")))"

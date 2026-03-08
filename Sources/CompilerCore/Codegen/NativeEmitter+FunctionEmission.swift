@@ -152,18 +152,16 @@ extension NativeEmitter {
 
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
-            let spillTargets: [KIRExprID] = {
-                switch instruction {
-                case let .copy(_, to):
-                    return [to]
-                case let .call(_, _, _, _, _, thrownResult, _):
-                    return thrownResult.map { [$0] } ?? []
-                case let .virtualCall(_, _, _, _, _, _, thrownResult, _):
-                    return thrownResult.map { [$0] } ?? []
-                default:
-                    return []
-                }
-            }()
+            let spillTargets: [KIRExprID] = switch instruction {
+            case let .copy(_, to):
+                [to]
+            case let .call(_, _, _, _, _, thrownResult, _):
+                thrownResult.map { [$0] } ?? []
+            case let .virtualCall(_, _, _, _, _, _, thrownResult, _):
+                thrownResult.map { [$0] } ?? []
+            default:
+                []
+            }
             for target in spillTargets where copyTargetAllocas[target.rawValue] == nil {
                 if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(target.rawValue)") {
                     _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
@@ -708,7 +706,7 @@ extension NativeEmitter {
                 let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
                     symbol
                 } else {
-                    Optional<SymbolID>.none
+                    SymbolID?.none
                 }
                 let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
                     resolveUnnamedInternalFunction(
@@ -854,7 +852,7 @@ extension NativeEmitter {
                 let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
                     symbol
                 } else {
-                    Optional<SymbolID>.none
+                    SymbolID?.none
                 }
                 let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
                     resolveUnnamedInternalFunction(

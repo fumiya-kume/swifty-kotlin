@@ -301,7 +301,7 @@ extension DeclTypeChecker {
         }
 
         let lambdaBodyExprID: ExprID? = switch lambdaExpr {
-        case let .lambdaLiteral(_, body, _ , _):
+        case let .lambdaLiteral(_, body, _, _):
             body
         default:
             nil
@@ -336,12 +336,14 @@ extension DeclTypeChecker {
         }
 
         let parameterName: InternedString? = if let lhsExpr = ast.arena.expr(lhsExprID),
-                                               case let .nameRef(name, _) = lhsExpr,
-                                               isNullLiteralExpr(rhsExprID, ast: ast, interner: interner) {
+                                                case let .nameRef(name, _) = lhsExpr,
+                                                isNullLiteralExpr(rhsExprID, ast: ast, interner: interner)
+        {
             name
         } else if let rhsExpr = ast.arena.expr(rhsExprID),
                   case let .nameRef(name, _) = rhsExpr,
-                  isNullLiteralExpr(lhsExprID, ast: ast, interner: interner) {
+                  isNullLiteralExpr(lhsExprID, ast: ast, interner: interner)
+        {
             name
         } else {
             nil

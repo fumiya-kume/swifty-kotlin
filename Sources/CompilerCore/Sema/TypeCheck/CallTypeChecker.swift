@@ -314,21 +314,20 @@ final class CallTypeChecker {
         } else {
             coroutineLauncherExpectedLambdaType = nil
         }
-        let withContextExpectedLambdaType: TypeID?
-        if let calleeName,
-           interner.resolve(calleeName) == "withContext",
-           args.count >= 2,
-           let secondArgExpr = ast.arena.expr(args[1].expr),
-           case .lambdaLiteral = secondArgExpr
+        let withContextExpectedLambdaType: TypeID? = if let calleeName,
+                                                        interner.resolve(calleeName) == "withContext",
+                                                        args.count >= 2,
+                                                        let secondArgExpr = ast.arena.expr(args[1].expr),
+                                                        case .lambdaLiteral = secondArgExpr
         {
-            withContextExpectedLambdaType = sema.types.make(.functionType(FunctionType(
+            sema.types.make(.functionType(FunctionType(
                 params: [],
                 returnType: expectedType ?? sema.types.anyType,
                 isSuspend: true,
                 nullability: .nonNull
             )))
         } else {
-            withContextExpectedLambdaType = nil
+            nil
         }
 
         if let calleeName,

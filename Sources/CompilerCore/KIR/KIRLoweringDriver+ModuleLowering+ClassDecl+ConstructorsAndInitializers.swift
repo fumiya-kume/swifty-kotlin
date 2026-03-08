@@ -128,7 +128,7 @@ extension KIRLoweringDriver {
                   index < ctorSignature.valueParameterSymbols.count,
                   let propertySymbol = propertySymbolsByName[param.name],
                   let fieldOffset = sema.symbols.nominalLayout(for: sema.symbols.parentSymbol(for: propertySymbol) ?? .invalid)?
-                    .fieldOffsets[propertySymbol]
+                  .fieldOffsets[propertySymbol]
             else {
                 continue
             }

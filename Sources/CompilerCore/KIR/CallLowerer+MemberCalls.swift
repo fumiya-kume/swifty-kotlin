@@ -242,7 +242,7 @@ extension CallLowerer {
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
-        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        propertyConstantInitializers _: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         guard args.isEmpty,
@@ -697,7 +697,7 @@ extension CallLowerer {
         let chosen: SymbolID? = if let chosenCallee = callBinding?.chosenCallee, chosenCallee != .invalid {
             chosenCallee
         } else {
-            Optional<SymbolID>.none
+            SymbolID?.none
         }
         let normalized = driver.callSupportLowerer.normalizedCallArguments(
             providedArguments: loweredArgIDs,
@@ -876,7 +876,7 @@ extension CallLowerer {
               let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
               let ownerInfo = sema.symbols.symbol(ownerSymbol),
               ownerInfo.kind == .class || ownerInfo.kind == .interface
-                  || ownerInfo.kind == .object,
+              || ownerInfo.kind == .object,
               let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
                   sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
               ]
@@ -1289,7 +1289,7 @@ extension CallLowerer {
            let ownerSymbol = sema.symbols.parentSymbol(for: propertySymbol),
            let ownerInfo = sema.symbols.symbol(ownerSymbol),
            ownerInfo.kind == .class || ownerInfo.kind == .interface
-               || ownerInfo.kind == .object,
+           || ownerInfo.kind == .object,
            let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
                sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
            ]

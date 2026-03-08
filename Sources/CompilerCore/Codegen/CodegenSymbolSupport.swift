@@ -7,9 +7,9 @@ enum CodegenSymbolSupport {
         fileFacadeNamesByFileID: [Int32: String] = [:]
     ) -> String {
         let rawName = interner.resolve(function.name)
-        let facadePrefix: String = if let fileID = function.sourceRange?.start.file.rawValue,
-                                     let facadeName = fileFacadeNamesByFileID[fileID],
-                                     !facadeName.isEmpty
+        let facadePrefix = if let fileID = function.sourceRange?.start.file.rawValue,
+                              let facadeName = fileFacadeNamesByFileID[fileID],
+                              !facadeName.isEmpty
         {
             "\(sanitizeForCSymbol(facadeName))_"
         } else {

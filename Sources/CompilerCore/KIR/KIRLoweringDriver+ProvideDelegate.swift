@@ -130,7 +130,7 @@ extension KIRLoweringDriver {
         symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
-        shared: KIRLoweringSharedContext,
+        shared _: KIRLoweringSharedContext,
         emit initInstructions: inout KIRLoweringEmitContext
     ) {
         _ = symbol
