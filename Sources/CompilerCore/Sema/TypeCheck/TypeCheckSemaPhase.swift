@@ -74,7 +74,26 @@ public final class TypeCheckSemaPhase: CompilerPhase {
 
         driver.typeCheckModule(fileScopes: fileScopes, files: ast.files)
         for declID in lazyBoundDecls where sema.bindings.declSymbols[declID] == nil {
-            let declRange = ast.arena.decl(declID)?.range
+            let declRange: SourceRange? = if let decl = ast.arena.decl(declID) {
+                switch decl {
+                case let .classDecl(classDecl):
+                    classDecl.range
+                case let .interfaceDecl(interfaceDecl):
+                    interfaceDecl.range
+                case let .funDecl(funDecl):
+                    funDecl.range
+                case let .propertyDecl(propertyDecl):
+                    propertyDecl.range
+                case let .typeAliasDecl(typeAliasDecl):
+                    typeAliasDecl.range
+                case let .objectDecl(objectDecl):
+                    objectDecl.range
+                case let .enumEntryDecl(enumEntryDecl):
+                    enumEntryDecl.range
+                }
+            } else {
+                nil
+            }
             ctx.diagnostics.error(
                 "KSWIFTK-TYPE-0003",
                 "Unbound declaration found during type checking.",
