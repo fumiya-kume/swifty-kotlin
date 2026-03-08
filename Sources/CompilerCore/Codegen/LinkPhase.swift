@@ -114,7 +114,9 @@ public final class LinkPhase: CompilerPhase {
             return "Failed to launch linker: \(reason)"
         case let .nonZeroExit(result):
             let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            return stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
+            let stdout = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            let output = "STDOUT: \(stdout)\nSTDERR: \(stderr)"
+            return "Linker failed with exit code \(result.exitCode):\n\(output)"
         }
     }
 
