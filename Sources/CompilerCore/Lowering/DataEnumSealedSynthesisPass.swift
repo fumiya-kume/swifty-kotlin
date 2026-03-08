@@ -35,133 +35,122 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             guard let nominalSymbol = sema.symbols.symbol(nominalSymbolID) else {
                 continue
             }
-
             if nominalSymbol.kind == .enumClass {
-                let entries = enumEntrySymbols(owner: nominalSymbol, symbols: sema.symbols)
-                let valuesCount = Int64(entries.count)
-                let helperName = ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$enumValuesCount")
-                appendSyntheticCountFunctionIfNeeded(
-                    name: helperName,
-                    owner: nominalSymbol,
-                    value: valuesCount,
-                    returnType: intType,
-                    module: module,
-                    sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols
-                )
-
-                let stringType = sema.types.make(.primitive(.string, .nonNull))
-
-                // Synthesize ordinal and name helpers per entry
-                for (ordinal, entry) in entries.enumerated() {
-                    let entryName = ctx.interner.resolve(entry.name)
-
-                    let ordinalHelperName = ctx.interner.intern("\(entryName)$enumOrdinal")
-                    appendSyntheticCountFunctionIfNeeded(
-                        name: ordinalHelperName,
-                        owner: nominalSymbol,
-                        value: Int64(ordinal),
-                        returnType: intType,
-                        module: module,
-                        sema: sema,
-                        existingFunctionSymbols: existingFunctionSymbols
-                    )
-
-                    let nameHelperName = ctx.interner.intern("\(entryName)$enumName")
-                    appendSyntheticStringFunctionIfNeeded(
-                        name: nameHelperName,
-                        owner: nominalSymbol,
-                        value: ctx.interner.intern(entryName),
-                        returnType: stringType,
-                        module: module,
-                        sema: sema,
-                        existingFunctionSymbols: existingFunctionSymbols
-                    )
-                }
-
-                // Synthesize values() – returns count followed by entry ordinals
-                let valuesName = ctx.interner.intern("values")
-                appendSyntheticEnumValuesIfNeeded(
-                    name: valuesName,
-                    owner: nominalSymbol,
-                    entries: entries,
-                    module: module,
-                    sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols
-                )
-
-                // Synthesize valueOf(String)
-                let valueOfName = ctx.interner.intern("valueOf")
-                appendSyntheticEnumValueOfIfNeeded(
-                    name: valueOfName,
-                    owner: nominalSymbol,
-                    entries: entries,
-                    module: module,
-                    sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols,
-                    interner: ctx.interner
+                synthesizeEnumHelpers(
+                    nominalSymbol: nominalSymbol, intType: intType,
+                    module: module, sema: sema,
+                    existingFunctionSymbols: existingFunctionSymbols, ctx: ctx
                 )
             }
-
             if nominalSymbol.flags.contains(.sealedType) {
-                let subtypeCount = Int64(sema.symbols.directSubtypes(of: nominalSymbol.id).count)
-                let helperName = ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$sealedSubtypeCount")
-                appendSyntheticCountFunctionIfNeeded(
-                    name: helperName,
-                    owner: nominalSymbol,
-                    value: subtypeCount,
-                    returnType: intType,
-                    module: module,
-                    sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols
+                synthesizeSealedHelper(
+                    nominalSymbol: nominalSymbol, intType: intType,
+                    module: module, sema: sema,
+                    existingFunctionSymbols: existingFunctionSymbols, ctx: ctx
                 )
             }
-
             if nominalSymbol.flags.contains(.dataType) {
-                let helperName = ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$copy")
-                appendSyntheticDataCopyIfNeeded(
-                    name: helperName,
-                    owner: nominalSymbol,
-                    module: module,
-                    sema: sema,
-                    existingFunctionSymbols: existingFunctionSymbols,
-                    interner: ctx.interner
+                synthesizeDataHelpers(
+                    nominalSymbol: nominalSymbol,
+                    module: module, sema: sema,
+                    existingFunctionSymbols: existingFunctionSymbols, ctx: ctx
                 )
-                if nominalSymbol.kind == .object {
-                    let toStringName = ctx.interner.intern("toString")
-                    let objectNameStr = nominalSymbol.name
-                    let toStringFQName = nominalSymbol.fqName + [toStringName]
-                    let existingToStringSymbol = sema.symbols.lookupAll(fqName: toStringFQName).first { id in
-                        sema.symbols.symbol(id).map { $0.flags.contains(.synthetic) } ?? false
-                    }
-                    appendSyntheticDataObjectToStringIfNeeded(
-                        name: toStringName,
-                        owner: nominalSymbol,
-                        objectName: objectNameStr,
-                        existingSymbol: existingToStringSymbol,
-                        module: module,
-                        sema: sema,
-                        existingFunctionSymbols: existingFunctionSymbols,
-                        interner: ctx.interner
-                    )
-                    let equalsName = ctx.interner.intern("equals")
-                    let equalsFQName = nominalSymbol.fqName + [equalsName]
-                    let existingEqualsSymbol = sema.symbols.lookupAll(fqName: equalsFQName).first { id in
-                        sema.symbols.symbol(id).map { $0.flags.contains(.synthetic) } ?? false
-                    }
-                    appendSyntheticDataObjectEqualsIfNeeded(
-                        owner: nominalSymbol,
-                        existingSymbol: existingEqualsSymbol,
-                        module: module,
-                        sema: sema,
-                        existingFunctionSymbols: existingFunctionSymbols,
-                        interner: ctx.interner
-                    )
-                }
             }
         }
 
         module.recordLowering(Self.name)
+    }
+
+    private func synthesizeEnumHelpers(
+        nominalSymbol: SemanticSymbol,
+        intType: TypeID,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        ctx: KIRContext
+    ) {
+        let entries = enumEntrySymbols(owner: nominalSymbol, symbols: sema.symbols)
+        let helperName = ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$enumValuesCount")
+        appendSyntheticCountFunctionIfNeeded(
+            name: helperName, owner: nominalSymbol, value: Int64(entries.count),
+            returnType: intType, module: module, sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols
+        )
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        for (ordinal, entry) in entries.enumerated() {
+            let entryName = ctx.interner.resolve(entry.name)
+            appendSyntheticCountFunctionIfNeeded(
+                name: ctx.interner.intern("\(entryName)$enumOrdinal"),
+                owner: nominalSymbol, value: Int64(ordinal),
+                returnType: intType, module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols
+            )
+            appendSyntheticStringFunctionIfNeeded(
+                name: ctx.interner.intern("\(entryName)$enumName"),
+                owner: nominalSymbol, value: ctx.interner.intern(entryName),
+                returnType: stringType, module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols
+            )
+        }
+        appendSyntheticEnumValuesIfNeeded(
+            name: ctx.interner.intern("values"), owner: nominalSymbol, entries: entries,
+            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols
+        )
+        appendSyntheticEnumValueOfIfNeeded(
+            name: ctx.interner.intern("valueOf"), owner: nominalSymbol, entries: entries,
+            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
+        )
+    }
+
+    private func synthesizeSealedHelper(
+        nominalSymbol: SemanticSymbol,
+        intType: TypeID,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        ctx: KIRContext
+    ) {
+        let subtypeCount = Int64(sema.symbols.directSubtypes(of: nominalSymbol.id).count)
+        let helperName = ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$sealedSubtypeCount")
+        appendSyntheticCountFunctionIfNeeded(
+            name: helperName, owner: nominalSymbol, value: subtypeCount,
+            returnType: intType, module: module, sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols
+        )
+    }
+
+    private func synthesizeDataHelpers(
+        nominalSymbol: SemanticSymbol,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        ctx: KIRContext
+    ) {
+        appendSyntheticDataCopyIfNeeded(
+            name: ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$copy"),
+            owner: nominalSymbol, module: module, sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+        )
+        guard nominalSymbol.kind == .object else { return }
+        let toStringName = ctx.interner.intern("toString")
+        let existingToStringSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [toStringName]).first {
+            sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
+        }
+        appendSyntheticDataObjectToStringIfNeeded(
+            name: toStringName, owner: nominalSymbol, objectName: nominalSymbol.name,
+            existingSymbol: existingToStringSymbol, module: module, sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+        )
+        let equalsName = ctx.interner.intern("equals")
+        let existingEqualsSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [equalsName]).first {
+            sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
+        }
+        appendSyntheticDataObjectEqualsIfNeeded(
+            owner: nominalSymbol, existingSymbol: existingEqualsSymbol,
+            module: module, sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+        )
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {

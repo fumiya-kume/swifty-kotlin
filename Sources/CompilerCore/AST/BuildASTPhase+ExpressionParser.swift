@@ -345,27 +345,17 @@ extension BuildASTPhase {
         /// Returns true if a token can start an expression (used for infix call lookahead).
         private func canStartExpression(_ token: Token) -> Bool {
             switch token.kind {
-            case .identifier, .backtickedIdentifier:
-                true
-            case .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral:
-                true
-            case .keyword(.true), .keyword(.false), .keyword(.null):
-                true
-            case .keyword(.if), .keyword(.when), .keyword(.try), .keyword(.throw), .keyword(.return):
-                true
-            case .keyword(.for), .keyword(.while), .keyword(.do):
-                true
-            case .keyword(.super), .keyword(.this), .keyword(.object):
-                true
-            case .symbol(.lParen), .symbol(.lBrace), .symbol(.lBracket):
-                true
-            case .symbol(.minus), .symbol(.plus), .symbol(.bang):
-                true
-            case .symbol(.doubleColon):
-                true
-            case .stringQuote, .rawStringQuote:
-                true
-            case .softKeyword:
+            case .identifier, .backtickedIdentifier,
+                 .intLiteral, .longLiteral, .uintLiteral, .ulongLiteral, .floatLiteral, .doubleLiteral, .charLiteral,
+                 .keyword(.true), .keyword(.false), .keyword(.null),
+                 .keyword(.if), .keyword(.when), .keyword(.try), .keyword(.throw), .keyword(.return),
+                 .keyword(.for), .keyword(.while), .keyword(.do),
+                 .keyword(.super), .keyword(.this), .keyword(.object),
+                 .symbol(.lParen), .symbol(.lBrace), .symbol(.lBracket),
+                 .symbol(.minus), .symbol(.plus), .symbol(.bang),
+                 .symbol(.doubleColon),
+                 .stringQuote, .rawStringQuote,
+                 .softKeyword:
                 true
             default:
                 false

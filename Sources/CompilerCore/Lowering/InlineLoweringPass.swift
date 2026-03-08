@@ -35,64 +35,82 @@ final class InlineLoweringPass: LoweringPass {
         }
         let inlineFunctionsByName = Dictionary(grouping: inlineFunctionsBySymbol.values, by: \.name)
 
-        module.arena.transformFunctions { function in
-            var updated = function
-            var loweredBody: [KIRInstruction] = []
-            loweredBody.reserveCapacity(function.body.count)
-            var aliases: [KIRExprID: KIRExprID] = [:]
-
-            for originalInstruction in function.body {
-                let instruction = rewriteInstruction(originalInstruction, aliases: aliases)
-                if let defined = definedResult(in: instruction) {
-                    aliases.removeValue(forKey: defined)
-                }
-
-                guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                let inlineTarget: KIRFunction? = if let symbol, let target = inlineFunctionsBySymbol[symbol] {
-                    target
-                } else if let byName = inlineFunctionsByName[callee], byName.count == 1 {
-                    byName[0]
-                } else {
-                    nil
-                }
-
-                guard let inlineTarget, inlineTarget.symbol != function.symbol else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-                let expansion = expandInlineCall(
-                    inlineTarget: inlineTarget,
-                    arguments: arguments,
-                    module: module,
-                    ctx: ctx
-                )
-                guard let expansion else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                loweredBody.append(contentsOf: expansion.instructions)
-                if let result {
-                    if let returnedExpr = expansion.returnedExpr {
-                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
-                    } else {
-                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
-                        aliases[result] = unitExpr
-                    }
-                }
-            }
-
-            updated.body = loweredBody
-            if updated.body.isEmpty {
-                updated.body = [.returnUnit]
-            }
-            return updated
+        module.arena.transformFunctions { [self] function in
+            inlineTransform(
+                function: function,
+                inlineFunctionsBySymbol: inlineFunctionsBySymbol,
+                inlineFunctionsByName: inlineFunctionsByName,
+                module: module,
+                ctx: ctx,
+                unitType: unitType
+            )
         }
         module.recordLowering(Self.name)
+    }
+
+    private func inlineTransform(
+        function: KIRFunction,
+        inlineFunctionsBySymbol: [SymbolID: KIRFunction],
+        inlineFunctionsByName: [InternedString: [KIRFunction]],
+        module: KIRModule,
+        ctx: KIRContext,
+        unitType: TypeID?
+    ) -> KIRFunction {
+        var updated = function
+        var loweredBody: [KIRInstruction] = []
+        loweredBody.reserveCapacity(function.body.count)
+        var aliases: [KIRExprID: KIRExprID] = [:]
+
+        for originalInstruction in function.body {
+            let instruction = rewriteInstruction(originalInstruction, aliases: aliases)
+            if let defined = definedResult(in: instruction) {
+                aliases.removeValue(forKey: defined)
+            }
+
+            guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
+                loweredBody.append(instruction)
+                continue
+            }
+
+            let inlineTarget: KIRFunction? = if let symbol, let target = inlineFunctionsBySymbol[symbol] {
+                target
+            } else if let byName = inlineFunctionsByName[callee], byName.count == 1 {
+                byName[0]
+            } else {
+                nil
+            }
+
+            guard let inlineTarget, inlineTarget.symbol != function.symbol else {
+                loweredBody.append(instruction)
+                continue
+            }
+            let expansion = expandInlineCall(
+                inlineTarget: inlineTarget,
+                arguments: arguments,
+                module: module,
+                ctx: ctx
+            )
+            guard let expansion else {
+                loweredBody.append(instruction)
+                continue
+            }
+
+            loweredBody.append(contentsOf: expansion.instructions)
+            if let result {
+                if let returnedExpr = expansion.returnedExpr {
+                    aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
+                } else {
+                    let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                    aliases[result] = unitExpr
+                }
+            }
+        }
+
+        updated.body = loweredBody
+        if updated.body.isEmpty {
+            updated.body = [.returnUnit]
+        }
+        return updated
     }
 
     private func expandInlineCall(
