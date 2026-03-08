@@ -133,7 +133,7 @@ extension LibraryMetadataCacheBehaviorTests {
         cache.cacheSignature(intType, for: "I", types: types, symbols: symbols)
 
         let retrieved = cache.cachedSignature("I", types: types, symbols: symbols)
-        XCTAssertNotNil(retrieved, "Outer optional should be non-nil (cache hit)")
+        XCTAssertNotNil(retrieved as Any?, "Outer optional should be non-nil (cache hit)")
         XCTAssertEqual(try XCTUnwrap(retrieved), intType, "Should return the cached TypeID")
     }
 
@@ -148,7 +148,7 @@ extension LibraryMetadataCacheBehaviorTests {
 
         let types2 = TypeSystem()
         let retrieved = cache.cachedSignature("I", types: types2, symbols: symbols)
-        XCTAssertNil(retrieved, "Should miss cache with different TypeSystem")
+        XCTAssertNil(retrieved as Any?, "Should miss cache with different TypeSystem")
     }
 
     /// A8: Signature cache miss — different SymbolTable
@@ -162,7 +162,7 @@ extension LibraryMetadataCacheBehaviorTests {
 
         let symbols2 = SymbolTable()
         let retrieved = cache.cachedSignature("I", types: types, symbols: symbols2)
-        XCTAssertNil(retrieved, "Should miss cache with different SymbolTable")
+        XCTAssertNil(retrieved as Any?, "Should miss cache with different SymbolTable")
     }
 
     /// A9: Signature cache correctly caches nil (failed parse)
@@ -175,7 +175,7 @@ extension LibraryMetadataCacheBehaviorTests {
 
         let retrieved = cache.cachedSignature("INVALID", types: types, symbols: symbols)
         // Outer optional should be non-nil (cache hit), inner should be nil (cached failure)
-        XCTAssertNotNil(retrieved, "Outer optional should be non-nil (cache hit for nil value)")
+        XCTAssertNotNil(retrieved as Any?, "Outer optional should be non-nil (cache hit for nil value)")
         XCTAssertNil(try XCTUnwrap(retrieved), "Inner value should be nil (cached failed parse)")
         XCTAssertEqual(cache.signatureCacheCount, 1)
     }
