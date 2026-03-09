@@ -21,23 +21,23 @@ public extension RuntimeABIExterns {
         kk_list_map,
         kk_list_filter,
         kk_list_mapNotNull,
-        kk_list_filterNotNull,
         kk_list_forEach,
         kk_list_flatMap,
         kk_list_any,
         kk_list_none,
         kk_list_all,
+        kk_list_filterNotNull,
         kk_list_fold,
         kk_list_reduce,
         kk_list_groupBy,
         kk_list_sortedBy,
-        kk_list_associateBy,
-        kk_list_associateWith,
-        kk_list_associate,
         kk_list_count,
         kk_list_first,
         kk_list_last,
         kk_list_find,
+        kk_list_associateBy,
+        kk_list_associateWith,
+        kk_list_associate,
         kk_list_zip,
         kk_list_unzip,
         kk_list_withIndex,
@@ -185,19 +185,19 @@ public extension RuntimeABIExterns {
 
     static let kk_list_associateBy = ExternDecl(
         name: "kk_list_associateBy",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_list_associateWith = ExternDecl(
         name: "kk_list_associateWith",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_list_associate = ExternDecl(
         name: "kk_list_associate",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -408,13 +408,13 @@ public extension RuntimeABIExterns {
 
     static let kk_list_forEachIndexed = ExternDecl(
         name: "kk_list_forEachIndexed",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_list_mapIndexed = ExternDecl(
         name: "kk_list_mapIndexed",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

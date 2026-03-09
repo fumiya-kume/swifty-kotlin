@@ -79,17 +79,13 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_compare_any, kk_string_length,
-        // kk_string_trim, kk_string_trimIndent, kk_string_trimMargin_default, kk_string_trimMargin,
-        // kk_string_format, kk_string_isNullOrEmpty, kk_string_isNullOrBlank,
-        // kk_string_startsWith, kk_string_endsWith, kk_string_contains_str,
-        // kk_string_replace, kk_string_split, kk_string_toInt, kk_string_toDouble
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 19)
+        // Keep this in sync with RuntimeABISpec.stringFunctions entries.
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 36)
     }
 
     func testPrintlnFunctionCount() {
-        // kk_println_any
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 1)
+        // kk_println_any, kk_println_bool
+        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 2)
     }
 
     func testGCFunctionCount() {

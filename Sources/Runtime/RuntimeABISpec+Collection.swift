@@ -443,6 +443,69 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let before = [
+            "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_forEach",
+            "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
+        ]
+        let genericAfter = [
+            "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
+            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
+        ]
+        let filterNotNullSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterNotNull",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateBySpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateBy",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateWithSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateWith",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associate",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let zipSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_zip",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let unzipSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_unzip",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let withIndexSpec = RuntimeABIFunctionSpec(
             name: "kk_list_withIndex",
             parameters: [
@@ -451,17 +514,75 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
-        let before = [
-            "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_filterNotNull", "kk_list_forEach",
-            "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
-        ]
-        let after = [
-            "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
-            "kk_list_associateBy", "kk_list_associateWith", "kk_list_associate",
-            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
-            "kk_list_zip", "kk_list_unzip", "kk_list_forEachIndexed", "kk_list_mapIndexed",
-            "kk_list_take", "kk_list_drop", "kk_list_reversed", "kk_list_sorted", "kk_list_distinct",
-        ]
-        return before.map { hofSpec($0) } + [foldSpec] + after.map { hofSpec($0) } + [withIndexSpec]
+        let forEachIndexedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_forEachIndexed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapIndexedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapIndexed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let takeSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_take",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let dropSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_drop",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let reversedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let sortedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_sorted",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let distinctSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_distinct",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        return before.map { hofSpec($0) }
+            + [filterNotNullSpec, foldSpec]
+            + genericAfter.map { hofSpec($0) }
+            + [
+                associateBySpec, associateWithSpec, associateSpec,
+                zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
+                takeSpec, dropSpec, reversedSpec, sortedSpec, distinctSpec,
+            ]
     }()
 }
