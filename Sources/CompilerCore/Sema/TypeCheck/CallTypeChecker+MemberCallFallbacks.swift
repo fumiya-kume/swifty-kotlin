@@ -63,6 +63,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+            "withIndex", "forEachIndexed", "mapIndexed",
             "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct",
         ]
         return collectionMembers.contains(memberName)
@@ -70,21 +71,22 @@ extension CallTypeChecker {
 
     func isCollectionReturningMember(_ memberName: String) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "mapNotNull", "filterNotNull", "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith", "associate", "zip", "toList", "take", "drop", "reversed", "sorted", "distinct",
+            "asSequence", "map", "filter", "mapNotNull", "filterNotNull", "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith", "associate", "zip", "toList", "take", "drop", "reversed", "sorted", "distinct", "withIndex", "mapIndexed",
         ]
         return collectionReturningMembers.contains(memberName)
     }
 
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct":
+        case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct", "withIndex":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
         case "get", "contains", "containsKey", "indexOf",
              "map", "filter", "mapNotNull", "forEach", "flatMap",
              "any", "none", "all",
-             "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip":
+             "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
+             "forEachIndexed", "mapIndexed":
             argCount == 1
         case "fold":
             argCount == 2
@@ -109,7 +111,7 @@ extension CallTypeChecker {
             return sema.types.make(.primitive(.boolean, .nonNull))
         }
 
-        if memberName == "forEach" {
+        if memberName == "forEach" || memberName == "forEachIndexed" {
             return sema.types.unitType
         }
 
@@ -137,6 +139,17 @@ extension CallTypeChecker {
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],
+                returnType: lambdaReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if (memberName == "forEachIndexed" || memberName == "mapIndexed"), argCount == 1 {
+            let lambdaReturnType = memberName == "forEachIndexed" ? sema.types.unitType : sema.types.anyType
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, receiverElementType],
                 returnType: lambdaReturnType,
                 isSuspend: false,
                 nullability: .nonNull

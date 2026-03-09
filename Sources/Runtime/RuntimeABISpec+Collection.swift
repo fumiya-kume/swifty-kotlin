@@ -443,6 +443,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let withIndexSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_withIndex",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let before = [
             "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_filterNotNull", "kk_list_forEach",
             "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
@@ -451,9 +459,9 @@ public extension RuntimeABISpec {
             "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
             "kk_list_associateBy", "kk_list_associateWith", "kk_list_associate",
             "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
-            "kk_list_zip", "kk_list_unzip",
+            "kk_list_zip", "kk_list_unzip", "kk_list_forEachIndexed", "kk_list_mapIndexed",
             "kk_list_take", "kk_list_drop", "kk_list_reversed", "kk_list_sorted", "kk_list_distinct",
         ]
-        return before.map { hofSpec($0) } + [foldSpec] + after.map { hofSpec($0) }
+        return before.map { hofSpec($0) } + [foldSpec] + after.map { hofSpec($0) } + [withIndexSpec]
     }()
 }

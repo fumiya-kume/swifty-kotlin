@@ -204,12 +204,12 @@ extension BuildASTPhase.ExpressionParser {
         for segment in segments {
             if let token = segment.first(where: { token in
                 switch token.kind {
-                case .identifier, .backtickedIdentifier:
+                case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
                     true
                 default:
                     false
                 }
-            }), let name = identifierFromToken(token) {
+            }), let name = lambdaParameterName(from: token) {
                 params.append(name)
             }
         }
@@ -279,12 +279,13 @@ extension BuildASTPhase.ExpressionParser {
             case .symbol(.comma):
                 idx += 1
                 continue
-            case let .identifier(name):
+            case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
+                guard let name = lambdaParameterName(from: token) else {
+                    idx += 1
+                    continue
+                }
                 let nameStr = interner.resolve(name)
                 names.append(nameStr == "_" ? nil : name)
-                idx += 1
-            case let .backtickedIdentifier(name):
-                names.append(name)
                 idx += 1
             default:
                 idx = skipTypeAnnotationIfPresent(innerTokens, from: idx)
@@ -375,5 +376,18 @@ extension BuildASTPhase.ExpressionParser {
             depth.track(token.kind)
         }
         return true
+    }
+
+    private func lambdaParameterName(from token: Token) -> InternedString? {
+        switch token.kind {
+        case let .identifier(name), let .backtickedIdentifier(name):
+            name
+        case let .keyword(keyword):
+            interner.intern(keyword.rawValue)
+        case let .softKeyword(keyword):
+            interner.intern(keyword.rawValue)
+        default:
+            nil
+        }
     }
 }

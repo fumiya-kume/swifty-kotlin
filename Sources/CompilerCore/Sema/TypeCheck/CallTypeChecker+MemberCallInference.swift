@@ -325,7 +325,7 @@ extension CallTypeChecker {
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
-            "associateBy", "associateWith", "associate",
+            "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {

@@ -93,6 +93,7 @@ extension CallLowerer {
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "withIndex", "forEachIndexed", "mapIndexed",
         "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct", "collect",
         "to", // FUNC-002
     ]

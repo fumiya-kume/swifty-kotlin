@@ -1005,6 +1005,59 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    if callee == lookup.withIndexName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListWithIndexName,
+                                arguments: arguments,
+                                result: hofResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName = callee == lookup.forEachIndexedName
+                                    ? lookup.kkListForEachIndexedName
+                                    : lookup.kkListMapIndexedName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: arguments,
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if callee == lookup.mapIndexedName, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
                     if callee == lookup.unzipName, arguments.count == 1 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {

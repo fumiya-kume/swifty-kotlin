@@ -262,9 +262,10 @@ extension CollectionLiteralLoweringPass {
             loweredBody: &loweredBody
         ) { return true }
 
-        if rewriteZipAndUnzipHOF(
+        if rewriteZipUnzipAndIndexedHOF(
             callee: callee, receiver: receiver, arguments: arguments,
-            result: result, module: module, lookup: lookup,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, loweredBody: &loweredBody
         ) { return true }
 
@@ -423,17 +424,39 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
-    private func rewriteZipAndUnzipHOF(
+    private func rewriteZipUnzipAndIndexedHOF(
         callee: InternedString,
         receiver: KIRExprID,
         arguments: [KIRExprID],
         result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard listExprIDs.contains(receiver.rawValue) else { return false }
+
+        if callee == lookup.withIndexName, arguments.isEmpty {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWithIndexName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
 
         if callee == lookup.zipName, arguments.count == 1 {
             let hofResult = module.arena.appendExpr(
@@ -451,6 +474,27 @@ extension CollectionLiteralLoweringPass {
                 listExprIDs.insert(result.rawValue)
                 listExprIDs.insert(hofResult.rawValue)
                 loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName, arguments.count == 1 {
+            let kkName = callee == lookup.forEachIndexedName
+                ? lookup.kkListForEachIndexedName
+                : lookup.kkListMapIndexedName
+            let hofResult = emitHOFCall(
+                kkName: kkName,
+                receiver: receiver,
+                arguments: arguments,
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if callee == lookup.mapIndexedName, let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
             }
             return true
         }

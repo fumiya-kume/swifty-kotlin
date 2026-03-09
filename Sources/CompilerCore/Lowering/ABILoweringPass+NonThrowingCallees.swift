@@ -189,6 +189,7 @@ extension ABILoweringPass {
             interner.intern("kk_mutable_map_remove"),
             interner.intern("kk_list_zip"),
             interner.intern("kk_list_unzip"),
+            interner.intern("kk_list_withIndex"),
             interner.intern("kk_list_take"),
             interner.intern("kk_list_drop"),
             interner.intern("kk_list_reversed"),

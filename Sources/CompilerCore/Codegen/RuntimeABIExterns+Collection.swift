@@ -40,6 +40,9 @@ public extension RuntimeABIExterns {
         kk_list_find,
         kk_list_zip,
         kk_list_unzip,
+        kk_list_withIndex,
+        kk_list_forEachIndexed,
+        kk_list_mapIndexed,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -394,6 +397,24 @@ public extension RuntimeABIExterns {
     static let kk_list_unzip = ExternDecl(
         name: "kk_list_unzip",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_withIndex = ExternDecl(
+        name: "kk_list_withIndex",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_forEachIndexed = ExternDecl(
+        name: "kk_list_forEachIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_mapIndexed = ExternDecl(
+        name: "kk_list_mapIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t *"],
         returnType: "intptr_t"
     )
 

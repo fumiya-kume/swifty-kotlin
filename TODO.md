@@ -135,10 +135,10 @@
   - [x] diff/golden ケースを追加する
   - **完了条件**: `listOf("a","bb").associateWith { it.length }` → `{a=1, bb=2}` が `kotlinc` と一致する
 
-- [ ] STDLIB-035: `List.withIndex()` / `List.forEachIndexed {}` / `List.mapIndexed {}` を実装する
-  - [ ] Sema に `withIndex` / `forEachIndexed` / `mapIndexed` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-035: `List.withIndex()` / `List.forEachIndexed {}` / `List.mapIndexed {}` を実装する
+  - [x] Sema に `withIndex` / `forEachIndexed` / `mapIndexed` stub を登録する
+  - [x] Runtime に対応ランタイム関数を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `listOf("a","b").forEachIndexed { i, v -> print("$i:$v ") }` → `0:a 1:b ` が `kotlinc` と一致する
 
 - [ ] STDLIB-036: `List.sumOf {}` / `List.maxOrNull()` / `List.minOrNull()` を実装する

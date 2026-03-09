@@ -442,6 +442,35 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListIndexedHelpersUseRuntimeHOFs() throws {
+        let source = """
+        fun main() {
+            val values = listOf("a", "bb")
+            println(values.withIndex())
+            values.forEachIndexed { index, value ->
+                println(index)
+                println(value)
+            }
+            println(values.mapIndexed { index, value -> index + value.length })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListIndexedHelpersRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\n")
+        }
+    }
+
     func testCodegenStringContainsEmptyNeedleReturnsTrue() throws {
         let source = """
         fun main() {
