@@ -1,14 +1,22 @@
 import Foundation
 
+struct MemberDeclarations {
+    let functions: [DeclID]
+    let properties: [DeclID]
+    let nestedClasses: [DeclID]
+    let nestedObjects: [DeclID]
+}
+
+struct OwnerContext {
+    let fqName: [InternedString]
+    let symbol: SymbolID
+    let type: TypeID
+}
+
 extension DataFlowSemaPhase {
     func collectMemberHeaders(
-        memberFunctions: [DeclID],
-        memberProperties: [DeclID],
-        nestedClasses: [DeclID],
-        nestedObjects: [DeclID],
-        ownerFQName: [InternedString],
-        ownerSymbol: SymbolID,
-        ownerType: TypeID,
+        members: MemberDeclarations,
+        owner: OwnerContext,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -19,10 +27,13 @@ extension DataFlowSemaPhase {
         classTypeParameterSymbols: [SymbolID] = [],
         classLocalTypeParameters: [InternedString: SymbolID] = [:]
     ) {
+        let ownerFQName = owner.fqName
+        let ownerSymbol = owner.symbol
+        let ownerType = owner.type
         let anyType = types.anyType
         let unitType = types.unitType
 
-        for declID in memberFunctions {
+        for declID in members.functions {
             guard let decl = ast.arena.decl(declID),
                   case let .funDecl(funDecl) = decl
             else {
@@ -142,7 +153,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        for declID in memberProperties {
+        for declID in members.properties {
             guard let decl = ast.arena.decl(declID),
                   case let .propertyDecl(propertyDecl) = decl
             else {
@@ -242,7 +253,7 @@ extension DataFlowSemaPhase {
             }
         }
 
-        for declID in nestedClasses {
+        for declID in members.nestedClasses {
             collectNestedClassOrInterfaceHeader(
                 declID: declID,
                 ownerFQName: ownerFQName,
@@ -257,7 +268,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        for declID in nestedObjects {
+        for declID in members.nestedObjects {
             collectNestedObjectHeader(
                 declID: declID,
                 ownerFQName: ownerFQName,
@@ -434,13 +445,13 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             collectMemberHeaders(
-                memberFunctions: nestedClass.memberFunctions,
-                memberProperties: nestedClass.memberProperties,
-                nestedClasses: nestedClass.nestedClasses,
-                nestedObjects: nestedClass.nestedObjects,
-                ownerFQName: nestedFQName,
-                ownerSymbol: nestedSymbol,
-                ownerType: nestedType,
+                members: MemberDeclarations(
+                    functions: nestedClass.memberFunctions,
+                    properties: nestedClass.memberProperties,
+                    nestedClasses: nestedClass.nestedClasses,
+                    nestedObjects: nestedClass.nestedObjects
+                ),
+                owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -512,13 +523,13 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             collectMemberHeaders(
-                memberFunctions: nestedInterface.memberFunctions,
-                memberProperties: nestedInterface.memberProperties,
-                nestedClasses: nestedInterface.nestedClasses,
-                nestedObjects: nestedInterface.nestedObjects,
-                ownerFQName: nestedFQName,
-                ownerSymbol: nestedSymbol,
-                ownerType: nestedType,
+                members: MemberDeclarations(
+                    functions: nestedInterface.memberFunctions,
+                    properties: nestedInterface.memberProperties,
+                    nestedClasses: nestedInterface.nestedClasses,
+                    nestedObjects: nestedInterface.nestedObjects
+                ),
+                owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -601,13 +612,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         collectMemberHeaders(
-            memberFunctions: nestedObject.memberFunctions,
-            memberProperties: nestedObject.memberProperties,
-            nestedClasses: nestedObject.nestedClasses,
-            nestedObjects: nestedObject.nestedObjects,
-            ownerFQName: nestedFQName,
-            ownerSymbol: nestedSymbol,
-            ownerType: nestedType,
+            members: MemberDeclarations(
+                functions: nestedObject.memberFunctions,
+                properties: nestedObject.memberProperties,
+                nestedClasses: nestedObject.nestedClasses,
+                nestedObjects: nestedObject.nestedObjects
+            ),
+            owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
             ast: ast,
             symbols: symbols,
             types: types,

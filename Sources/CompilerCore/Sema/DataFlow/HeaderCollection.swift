@@ -364,13 +364,13 @@ extension DataFlowSemaPhase {
                 }
             }
             collectMemberHeaders(
-                memberFunctions: classDecl.memberFunctions,
-                memberProperties: classDecl.memberProperties,
-                nestedClasses: classDecl.nestedClasses,
-                nestedObjects: classDecl.nestedObjects,
-                ownerFQName: fqName,
-                ownerSymbol: symbol,
-                ownerType: classType,
+                members: MemberDeclarations(
+                    functions: classDecl.memberFunctions,
+                    properties: classDecl.memberProperties,
+                    nestedClasses: classDecl.nestedClasses,
+                    nestedObjects: classDecl.nestedObjects
+                ),
+                owner: OwnerContext(fqName: fqName, symbol: symbol, type: classType),
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -434,13 +434,13 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             collectMemberHeaders(
-                memberFunctions: interfaceDecl.memberFunctions,
-                memberProperties: interfaceDecl.memberProperties,
-                nestedClasses: interfaceDecl.nestedClasses,
-                nestedObjects: interfaceDecl.nestedObjects,
-                ownerFQName: fqName,
-                ownerSymbol: symbol,
-                ownerType: interfaceType,
+                members: MemberDeclarations(
+                    functions: interfaceDecl.memberFunctions,
+                    properties: interfaceDecl.memberProperties,
+                    nestedClasses: interfaceDecl.nestedClasses,
+                    nestedObjects: interfaceDecl.nestedObjects
+                ),
+                owner: OwnerContext(fqName: fqName, symbol: symbol, type: interfaceType),
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -485,13 +485,13 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             collectMemberHeaders(
-                memberFunctions: objectDecl.memberFunctions,
-                memberProperties: objectDecl.memberProperties,
-                nestedClasses: objectDecl.nestedClasses,
-                nestedObjects: objectDecl.nestedObjects,
-                ownerFQName: fqName,
-                ownerSymbol: symbol,
-                ownerType: objectType,
+                members: MemberDeclarations(
+                    functions: objectDecl.memberFunctions,
+                    properties: objectDecl.memberProperties,
+                    nestedClasses: objectDecl.nestedClasses,
+                    nestedObjects: objectDecl.nestedObjects
+                ),
+                owner: OwnerContext(fqName: fqName, symbol: symbol, type: objectType),
                 ast: ast,
                 symbols: symbols,
                 types: types,

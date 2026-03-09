@@ -24,12 +24,7 @@ extension ABILoweringPass {
         argType: TypeID,
         paramType: TypeID,
         types: TypeSystem,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString,
+        boxCallees: BoxingCalleeNames,
         symbols: SymbolTable? = nil
     ) -> InternedString? {
         let rawArgKind = types.kind(of: argType)
@@ -64,21 +59,21 @@ extension ABILoweringPass {
             {
                 switch argPrimitive {
                 case .int:
-                    return boxIntCallee
+                    return boxCallees.int
                 case .long:
-                    return boxLongCallee
+                    return boxCallees.long
                 case .boolean:
-                    return boxBoolCallee
+                    return boxCallees.bool
                 case .float:
-                    return boxFloatCallee
+                    return boxCallees.float
                 case .double:
-                    return boxDoubleCallee
+                    return boxCallees.double
                 case .char:
-                    return boxCharCallee
+                    return boxCallees.char
                 case .uint, .ubyte, .ushort:
-                    return boxIntCallee
+                    return boxCallees.int
                 case .ulong:
-                    return boxLongCallee
+                    return boxCallees.long
                 default:
                     return nil
                 }
@@ -88,21 +83,21 @@ extension ABILoweringPass {
 
         switch argKind {
         case .primitive(.int, _):
-            return boxIntCallee
+            return boxCallees.int
         case .primitive(.long, _):
-            return boxLongCallee
+            return boxCallees.long
         case .primitive(.boolean, _):
-            return boxBoolCallee
+            return boxCallees.bool
         case .primitive(.float, _):
-            return boxFloatCallee
+            return boxCallees.float
         case .primitive(.double, _):
-            return boxDoubleCallee
+            return boxCallees.double
         case .primitive(.char, _):
-            return boxCharCallee
+            return boxCallees.char
         case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return boxIntCallee
+            return boxCallees.int
         case .primitive(.ulong, _):
-            return boxLongCallee
+            return boxCallees.long
         default:
             return nil
         }
@@ -111,12 +106,7 @@ extension ABILoweringPass {
     func unboxingCallee(
         sourceKind: TypeKind,
         targetKind: TypeKind,
-        unboxIntCallee: InternedString,
-        unboxBoolCallee: InternedString,
-        unboxLongCallee: InternedString,
-        unboxFloatCallee: InternedString,
-        unboxDoubleCallee: InternedString,
-        unboxCharCallee: InternedString,
+        unboxCallees: UnboxingCalleeNames,
         types: TypeSystem? = nil,
         symbols: SymbolTable? = nil
     ) -> InternedString? {
@@ -131,21 +121,21 @@ extension ABILoweringPass {
 
         switch resolvedTargetKind {
         case .primitive(.int, _):
-            return unboxIntCallee
+            return unboxCallees.int
         case .primitive(.long, _):
-            return unboxLongCallee
+            return unboxCallees.long
         case .primitive(.boolean, _):
-            return unboxBoolCallee
+            return unboxCallees.bool
         case .primitive(.float, _):
-            return unboxFloatCallee
+            return unboxCallees.float
         case .primitive(.double, _):
-            return unboxDoubleCallee
+            return unboxCallees.double
         case .primitive(.char, _):
-            return unboxCharCallee
+            return unboxCallees.char
         case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return unboxIntCallee
+            return unboxCallees.int
         case .primitive(.ulong, _):
-            return unboxLongCallee
+            return unboxCallees.long
         default:
             return nil
         }
@@ -243,30 +233,25 @@ extension ABILoweringPass {
 
     func boxCalleeForPrimitive(
         _ kind: TypeKind,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString
+        boxCallees: BoxingCalleeNames
     ) -> InternedString? {
         switch kind {
         case .primitive(.int, .nonNull):
-            boxIntCallee
+            boxCallees.int
         case .primitive(.long, .nonNull):
-            boxLongCallee
+            boxCallees.long
         case .primitive(.boolean, .nonNull):
-            boxBoolCallee
+            boxCallees.bool
         case .primitive(.float, .nonNull):
-            boxFloatCallee
+            boxCallees.float
         case .primitive(.double, .nonNull):
-            boxDoubleCallee
+            boxCallees.double
         case .primitive(.char, .nonNull):
-            boxCharCallee
+            boxCallees.char
         case .primitive(.uint, .nonNull), .primitive(.ubyte, .nonNull), .primitive(.ushort, .nonNull):
-            boxIntCallee
+            boxCallees.int
         case .primitive(.ulong, .nonNull):
-            boxLongCallee
+            boxCallees.long
         default:
             nil
         }

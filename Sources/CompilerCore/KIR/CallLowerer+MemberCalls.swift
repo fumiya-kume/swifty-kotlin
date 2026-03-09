@@ -3,6 +3,11 @@ import Foundation
 // File splitting is still in progress for this legacy member-call lowering surface.
 // swiftlint:disable file_length
 
+struct MemberCallReceiver {
+    let expr: ExprID
+    let loweredID: KIRExprID
+}
+
 extension CallLowerer {
     private static let unresolvedCoroutineHandleMemberNames: Set<String> = ["await", "join", "cancel"]
     private static let unresolvedChannelMemberNames: Set<String> = ["send", "receive", "close"]
@@ -769,8 +774,7 @@ extension CallLowerer {
             callBinding: callBinding,
             chosenCallee: chosen,
             calleeName: calleeName,
-            receiverExpr: receiverExpr,
-            loweredReceiverID: loweredReceiverID,
+            receiver: MemberCallReceiver(expr: receiverExpr, loweredID: loweredReceiverID),
             result: result,
             isSuperCall: isSuperCall,
             sema: sema,
@@ -1142,8 +1146,7 @@ extension CallLowerer {
         callBinding: CallBinding?,
         chosenCallee: SymbolID?,
         calleeName: InternedString,
-        receiverExpr: ExprID,
-        loweredReceiverID: KIRExprID,
+        receiver: MemberCallReceiver,
         result: KIRExprID,
         isSuperCall: Bool,
         sema: SemaModule,
@@ -1200,7 +1203,7 @@ extension CallLowerer {
         let loweredCallee = loweredMemberCalleeName(
             chosenCallee: chosenCallee,
             fallback: calleeName,
-            receiverExpr: receiverExpr,
+            receiverExpr: receiver.expr,
             sema: sema,
             interner: interner
         )
@@ -1216,7 +1219,7 @@ extension CallLowerer {
         }
         if let inst = tryEmitVirtualDispatch(
             chosenCallee: chosenCallee, calleeName: loweredCallee,
-            receiverExpr: receiverExpr, loweredReceiverID: loweredReceiverID,
+            receiverExpr: receiver.expr, loweredReceiverID: receiver.loweredID,
             isSuperCall: isSuperCall, finalArguments: finalArguments,
             result: result, sema: sema
         ) {

@@ -547,56 +547,24 @@ public final class MetadataDecoder {
                 }
                 let key = String(part[..<separatorIndex])
                 let value = String(part[part.index(after: separatorIndex)...])
-                switch key {
-                case "fq":
-                    fqName = value
-                case "arity":
-                    arity = Int(value) ?? 0
-                case "suspend":
-                    isSuspend = value == "1" || value == "true"
-                case "inline":
-                    isInline = value == "1" || value == "true"
-                case "sig":
-                    typeSignature = value.isEmpty ? nil : value
-                case "link":
-                    externalLinkName = value.isEmpty ? nil : value
-                case "fields":
-                    declaredFieldCount = Int(value)
-                case "layoutWords":
-                    declaredInstanceSizeWords = Int(value)
-                case "vtable":
-                    declaredVtableSize = Int(value)
-                case "itable":
-                    declaredItableSize = Int(value)
-                case "superFq":
-                    superFQName = value.isEmpty ? nil : value
-                case "fieldOffsets":
-                    fieldOffsets = value.isEmpty ? nil : value
-                case "vtableSlots":
-                    vtableSlots = value.isEmpty ? nil : value
-                case "itableSlots":
-                    itableSlots = value.isEmpty ? nil : value
-                case "dataClass":
-                    isDataClass = value == "1" || value == "true"
-                case "sealedClass":
-                    isSealedClass = value == "1" || value == "true"
-                case "valueClass":
-                    isValueClass = value == "1" || value == "true"
-                case "valueUnderlying":
-                    valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
-                case "sealedSubs":
-                    sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
-                case "annotations":
-                    annotations = decodeAnnotations(value)
-                case "expect":
-                    isExpect = value == "1" || value == "true"
-                case "actual":
-                    isActual = value == "1" || value == "true"
-                case "schema":
-                    schemaVersion = value
-                default:
-                    continue
-                }
+                applyKeyValuePart(
+                    key: key, value: value,
+                    fqName: &fqName, arity: &arity, isSuspend: &isSuspend, isInline: &isInline,
+                    typeSignature: &typeSignature, externalLinkName: &externalLinkName,
+                    declaredFieldCount: &declaredFieldCount,
+                    declaredInstanceSizeWords: &declaredInstanceSizeWords,
+                    declaredVtableSize: &declaredVtableSize,
+                    declaredItableSize: &declaredItableSize,
+                    superFQName: &superFQName, fieldOffsets: &fieldOffsets,
+                    vtableSlots: &vtableSlots, itableSlots: &itableSlots,
+                    isDataClass: &isDataClass, isSealedClass: &isSealedClass,
+                    isValueClass: &isValueClass,
+                    valueClassUnderlyingTypeSig: &valueClassUnderlyingTypeSig,
+                    annotations: &annotations,
+                    sealedSubclassFQNames: &sealedSubclassFQNames,
+                    isExpect: &isExpect, isActual: &isActual,
+                    schemaVersion: &schemaVersion
+                )
             }
 
             // Backward-compatible schema gate:
@@ -637,6 +605,76 @@ public final class MetadataDecoder {
             ))
         }
         return records
+    }
+
+    // MARK: - Key-Value Parsing
+
+    // swiftlint:disable:next function_parameter_count
+    private func applyKeyValuePart(
+        key: String, value: String,
+        fqName: inout String, arity: inout Int, isSuspend: inout Bool, isInline: inout Bool,
+        typeSignature: inout String?, externalLinkName: inout String?,
+        declaredFieldCount: inout Int?, declaredInstanceSizeWords: inout Int?,
+        declaredVtableSize: inout Int?, declaredItableSize: inout Int?,
+        superFQName: inout String?, fieldOffsets: inout String?,
+        vtableSlots: inout String?, itableSlots: inout String?,
+        isDataClass: inout Bool, isSealedClass: inout Bool,
+        isValueClass: inout Bool, valueClassUnderlyingTypeSig: inout String?,
+        annotations: inout [MetadataAnnotationRecord],
+        sealedSubclassFQNames: inout [String],
+        isExpect: inout Bool, isActual: inout Bool,
+        schemaVersion: inout String?
+    ) {
+        switch key {
+        case "fq":
+            fqName = value
+        case "arity":
+            arity = Int(value) ?? 0
+        case "suspend":
+            isSuspend = value == "1" || value == "true"
+        case "inline":
+            isInline = value == "1" || value == "true"
+        case "sig":
+            typeSignature = value.isEmpty ? nil : value
+        case "link":
+            externalLinkName = value.isEmpty ? nil : value
+        case "fields":
+            declaredFieldCount = Int(value)
+        case "layoutWords":
+            declaredInstanceSizeWords = Int(value)
+        case "vtable":
+            declaredVtableSize = Int(value)
+        case "itable":
+            declaredItableSize = Int(value)
+        case "superFq":
+            superFQName = value.isEmpty ? nil : value
+        case "fieldOffsets":
+            fieldOffsets = value.isEmpty ? nil : value
+        case "vtableSlots":
+            vtableSlots = value.isEmpty ? nil : value
+        case "itableSlots":
+            itableSlots = value.isEmpty ? nil : value
+        case "dataClass":
+            isDataClass = value == "1" || value == "true"
+        case "sealedClass":
+            isSealedClass = value == "1" || value == "true"
+        case "valueClass":
+            isValueClass = value == "1" || value == "true"
+        case "valueUnderlying":
+            valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
+        case "sealedSubs":
+            sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
+        case "annotations":
+            annotations = decodeAnnotations(value)
+        case "expect":
+            isExpect = value == "1" || value == "true"
+        case "actual":
+            isActual = value == "1" || value == "true"
+        case "schema":
+            schemaVersion = value
+        default:
+            break
+        }
     }
 
     // MARK: - Annotation Decoding

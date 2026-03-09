@@ -147,179 +147,199 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
+        if rewriteCommonListHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, loweredBody: &loweredBody
+        ) { return true }
+
+        if rewriteGroupSortFindHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
+        if rewriteCountFirstLastFoldReduceHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: listExprIDs, loweredBody: &loweredBody
+        ) { return true }
+
+        return false
+    }
+
+    private func emitHOFCall(
+        kkName: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        loweredBody: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let hofResult = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: nil
+        )
+        loweredBody.append(.call(
+            symbol: nil,
+            callee: kkName,
+            arguments: [receiver] + arguments,
+            result: hofResult,
+            canThrow: origCanThrow,
+            thrownResult: origThrownResult
+        ))
+        if let result {
+            loweredBody.append(.copy(from: hofResult, to: result))
+        }
+        return hofResult
+    }
+
+    private func rewriteCommonListHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
             || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
-        {
-            if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
-                let kkName: InternedString = switch callee {
-                case lookup.mapName: lookup.kkListMapName
-                case lookup.filterName: lookup.kkListFilterName
-                case lookup.forEachName: lookup.kkListForEachName
-                case lookup.flatMapName: lookup.kkListFlatMapName
-                case lookup.anyName: lookup.kkListAnyName
-                case lookup.noneName: lookup.kkListNoneName
-                case lookup.allName: lookup.kkListAllName
-                default: callee
-                }
-                let needsListTag = callee == lookup.mapName
-                    || callee == lookup.flatMapName || callee == lookup.filterName
-                let hofResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: kkName,
-                    arguments: [receiver] + arguments,
-                    result: hofResult,
-                    canThrow: origCanThrow,
-                    thrownResult: origThrownResult
-                ))
-                if needsListTag, let result {
-                    listExprIDs.insert(result.rawValue)
-                    listExprIDs.insert(hofResult.rawValue)
-                }
-                if let result {
-                    loweredBody.append(.copy(from: hofResult, to: result))
-                }
-                return true
-            }
-        }
+        else { return false }
+        guard arguments.count == 1, listExprIDs.contains(receiver.rawValue) else { return false }
 
-        if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName {
-            if arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
-                let kkName: InternedString = switch callee {
-                case lookup.groupByName: lookup.kkListGroupByName
-                case lookup.sortedByName: lookup.kkListSortedByName
-                case lookup.findName: lookup.kkListFindName
-                default: callee
-                }
-                let hofResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: kkName,
-                    arguments: [receiver] + arguments,
-                    result: hofResult,
-                    canThrow: origCanThrow,
-                    thrownResult: origThrownResult
-                ))
-                if callee == lookup.sortedByName, let result {
-                    listExprIDs.insert(result.rawValue)
-                    listExprIDs.insert(hofResult.rawValue)
-                }
-                if callee == lookup.groupByName, let result {
-                    mapExprIDs.insert(result.rawValue)
-                    mapExprIDs.insert(hofResult.rawValue)
-                }
-                if let result {
-                    loweredBody.append(.copy(from: hofResult, to: result))
-                }
-                return true
-            }
+        let kkName: InternedString = switch callee {
+        case lookup.mapName: lookup.kkListMapName
+        case lookup.filterName: lookup.kkListFilterName
+        case lookup.forEachName: lookup.kkListForEachName
+        case lookup.flatMapName: lookup.kkListFlatMapName
+        case lookup.anyName: lookup.kkListAnyName
+        case lookup.noneName: lookup.kkListNoneName
+        case lookup.allName: lookup.kkListAllName
+        default: callee
         }
+        let needsListTag = callee == lookup.mapName
+            || callee == lookup.flatMapName || callee == lookup.filterName
+        let hofResult = emitHOFCall(
+            kkName: kkName, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module,
+            loweredBody: &loweredBody
+        )
+        if needsListTag, let result {
+            listExprIDs.insert(result.rawValue)
+            listExprIDs.insert(hofResult.rawValue)
+        }
+        return true
+    }
 
-        if callee == lookup.countName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
-            let hofResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: nil
+    private func rewriteGroupSortFindHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName else {
+            return false
+        }
+        guard arguments.count == 1, listExprIDs.contains(receiver.rawValue) else { return false }
+
+        let kkName: InternedString = switch callee {
+        case lookup.groupByName: lookup.kkListGroupByName
+        case lookup.sortedByName: lookup.kkListSortedByName
+        case lookup.findName: lookup.kkListFindName
+        default: callee
+        }
+        let hofResult = emitHOFCall(
+            kkName: kkName, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module,
+            loweredBody: &loweredBody
+        )
+        if callee == lookup.sortedByName, let result {
+            listExprIDs.insert(result.rawValue)
+            listExprIDs.insert(hofResult.rawValue)
+        }
+        if callee == lookup.groupByName, let result {
+            mapExprIDs.insert(result.rawValue)
+            mapExprIDs.insert(hofResult.rawValue)
+        }
+        return true
+    }
+
+    private func rewriteCountFirstLastFoldReduceHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard listExprIDs.contains(receiver.rawValue) else { return false }
+
+        if callee == lookup.countName, arguments.count == 1 {
+            _ = emitHOFCall(
+                kkName: lookup.kkListCountName, receiver: receiver, arguments: arguments,
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
             )
-            loweredBody.append(.call(
-                symbol: nil,
-                callee: lookup.kkListCountName,
-                arguments: [receiver] + arguments,
-                result: hofResult,
-                canThrow: origCanThrow,
-                thrownResult: origThrownResult
-            ))
-            if let result {
-                loweredBody.append(.copy(from: hofResult, to: result))
-            }
             return true
         }
 
         if callee == lookup.firstName || callee == lookup.lastName {
-            if listExprIDs.contains(receiver.rawValue) {
-                let kkName: InternedString = callee == lookup.firstName
-                    ? lookup.kkListFirstName
-                    : lookup.kkListLastName
-                if arguments.isEmpty {
-                    // Zero-arg first()/last(): call kk_list_first/kk_list_last with receiver only
-                    let hofResult = module.arena.appendExpr(
-                        .temporary(Int32(module.arena.expressions.count)), type: nil
-                    )
-                    loweredBody.append(.call(
-                        symbol: nil,
-                        callee: kkName,
-                        arguments: [receiver],
-                        result: hofResult,
-                        canThrow: origCanThrow,
-                        thrownResult: origThrownResult
-                    ))
-                    if let result {
-                        loweredBody.append(.copy(from: hofResult, to: result))
-                    }
-                    return true
-                } else if arguments.count == 1 {
-                    // Predicate form first { ... }/last { ... }
-                    let hofResult = module.arena.appendExpr(
-                        .temporary(Int32(module.arena.expressions.count)), type: nil
-                    )
-                    loweredBody.append(.call(
-                        symbol: nil,
-                        callee: kkName,
-                        arguments: [receiver] + arguments,
-                        result: hofResult,
-                        canThrow: origCanThrow,
-                        thrownResult: origThrownResult
-                    ))
-                    if let result {
-                        loweredBody.append(.copy(from: hofResult, to: result))
-                    }
-                    return true
-                }
+            let kkName: InternedString = callee == lookup.firstName
+                ? lookup.kkListFirstName
+                : lookup.kkListLastName
+            if arguments.isEmpty || arguments.count == 1 {
+                _ = emitHOFCall(
+                    kkName: kkName, receiver: receiver, arguments: arguments,
+                    result: result, origCanThrow: origCanThrow,
+                    origThrownResult: origThrownResult, module: module,
+                    loweredBody: &loweredBody
+                )
+                return true
             }
         }
 
         if callee == lookup.foldName, arguments.count == 2 {
-            if listExprIDs.contains(receiver.rawValue) {
-                let hofResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkListFoldName,
-                    arguments: [receiver] + arguments,
-                    result: hofResult,
-                    canThrow: origCanThrow,
-                    thrownResult: origThrownResult
-                ))
-                if let result {
-                    loweredBody.append(.copy(from: hofResult, to: result))
-                }
-                return true
-            }
+            _ = emitHOFCall(
+                kkName: lookup.kkListFoldName, receiver: receiver, arguments: arguments,
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
         }
 
         if callee == lookup.reduceName, arguments.count == 1 {
-            if listExprIDs.contains(receiver.rawValue) {
-                let hofResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)), type: nil
-                )
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkListReduceName,
-                    arguments: [receiver] + arguments,
-                    result: hofResult,
-                    canThrow: origCanThrow,
-                    thrownResult: origThrownResult
-                ))
-                if let result {
-                    loweredBody.append(.copy(from: hofResult, to: result))
-                }
-                return true
-            }
+            _ = emitHOFCall(
+                kkName: lookup.kkListReduceName, receiver: receiver, arguments: arguments,
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
         }
 
         return false

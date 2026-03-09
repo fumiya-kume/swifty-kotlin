@@ -8,12 +8,7 @@ extension ABILoweringPass {
         module: KIRModule,
         types: TypeSystem,
         symbols: SymbolTable?,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString,
+        boxCallees: BoxingCalleeNames,
         newBody: inout [KIRInstruction]
     ) -> [KIRExprID] {
         var boxedArguments = arguments
@@ -36,12 +31,7 @@ extension ABILoweringPass {
                 argType: argType,
                 paramType: paramType,
                 types: types,
-                boxIntCallee: boxIntCallee,
-                boxBoolCallee: boxBoolCallee,
-                boxLongCallee: boxLongCallee,
-                boxFloatCallee: boxFloatCallee,
-                boxDoubleCallee: boxDoubleCallee,
-                boxCharCallee: boxCharCallee,
+                boxCallees: boxCallees,
                 symbols: symbols
             ) {
                 let boxedResult = module.arena.appendExpr(
@@ -70,12 +60,7 @@ extension ABILoweringPass {
         module: KIRModule,
         types: TypeSystem?,
         symbols: SymbolTable?,
-        unboxIntCallee: InternedString,
-        unboxBoolCallee: InternedString,
-        unboxLongCallee: InternedString,
-        unboxFloatCallee: InternedString,
-        unboxDoubleCallee: InternedString,
-        unboxCharCallee: InternedString
+        unboxCallees: UnboxingCalleeNames
     ) -> (InternedString, TypeID)? {
         guard let types, let result else { return nil }
         var returnType: TypeID?
@@ -96,12 +81,7 @@ extension ABILoweringPass {
         guard let unboxCallee = unboxingCallee(
             sourceKind: returnKind,
             targetKind: resultKind,
-            unboxIntCallee: unboxIntCallee,
-            unboxBoolCallee: unboxBoolCallee,
-            unboxLongCallee: unboxLongCallee,
-            unboxFloatCallee: unboxFloatCallee,
-            unboxDoubleCallee: unboxDoubleCallee,
-            unboxCharCallee: unboxCharCallee,
+            unboxCallees: unboxCallees,
             types: types,
             symbols: symbols
         ) else {

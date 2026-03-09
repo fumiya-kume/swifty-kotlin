@@ -59,13 +59,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         collectMemberHeaders(
-            memberFunctions: companionObject.memberFunctions,
-            memberProperties: companionObject.memberProperties,
-            nestedClasses: companionObject.nestedClasses,
-            nestedObjects: companionObject.nestedObjects,
-            ownerFQName: companionFQName,
-            ownerSymbol: companionSymbol,
-            ownerType: companionType,
+            members: MemberDeclarations(
+                functions: companionObject.memberFunctions,
+                properties: companionObject.memberProperties,
+                nestedClasses: companionObject.nestedClasses,
+                nestedObjects: companionObject.nestedObjects
+            ),
+            owner: OwnerContext(fqName: companionFQName, symbol: companionSymbol, type: companionType),
             ast: ast,
             symbols: symbols,
             types: types,

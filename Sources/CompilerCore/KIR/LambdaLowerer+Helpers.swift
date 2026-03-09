@@ -266,11 +266,7 @@ extension LambdaLowerer {
         case let .ifExpr(cond, thenExpr, elseExpr, _):
             return check(cond) || check(thenExpr) || elseExpr.map(check) ?? false
         case let .whenExpr(subject, branches, elseBody, _):
-            return subject.map(check) ?? false
-                || branches.contains { branch in
-                    branch.conditions.contains(where: check) || check(branch.body)
-                }
-                || elseBody.map(check) ?? false
+            return checkWhenExprChildren(subject: subject, branches: branches, elseBody: elseBody, check: check)
         case let .returnExpr(value, _, _):
             return value.map(check) ?? false
         case let .unaryExpr(_, operand, _),
@@ -287,35 +283,18 @@ extension LambdaLowerer {
         case let .indexedAccess(receiver, indices, _):
             return check(receiver) || indices.contains(where: check)
         case let .stringTemplate(parts, _):
-            return parts.contains { part in
-                if case let .expression(exprID) = part {
-                    return check(exprID)
-                }
-                return false
-            }
+            return checkStringTemplateParts(parts, check: check)
         case let .localDecl(_, _, _, initializer, _):
             return initializer.map(check) ?? false
-        case let .localAssign(_, valueExpr, _):
-            return check(valueExpr)
-        case let .compoundAssign(_, _, valueExpr, _):
-            return check(valueExpr)
-        case let .memberAssign(receiver, _, value, _):
-            return check(receiver) || check(value)
-        case let .indexedAssign(receiver, indices, value, _):
-            return check(receiver) || indices.contains(where: check) || check(value)
-        case let .indexedCompoundAssign(_, receiver, indices, value, _):
-            return check(receiver) || indices.contains(where: check) || check(value)
+        case .localAssign, .compoundAssign, .memberAssign, .indexedAssign, .indexedCompoundAssign:
+            return checkAssignmentChildren(expr, check: check)
         case let .inExpr(lhs, rhs, _),
              let .notInExpr(lhs, rhs, _):
             return check(lhs) || check(rhs)
         case let .callableRef(receiver, _, _):
             return receiver.map(check) ?? false
         case let .localFunDecl(_, _, _, body, _):
-            switch body {
-            case let .block(stmts, _): return stmts.contains(where: check)
-            case let .expr(bodyExpr, _): return check(bodyExpr)
-            case .unit: return false
-            }
+            return checkFunctionBody(body, check: check)
         case let .forExpr(_, iterable, body, _, _):
             return check(iterable) || check(body)
         case let .whileExpr(condition, body, _, _):
@@ -325,6 +304,62 @@ extension LambdaLowerer {
         default:
             return false
         }
+    }
+
+    private func checkFunctionBody(
+        _ body: FunctionBody,
+        check: (ExprID) -> Bool
+    ) -> Bool {
+        switch body {
+        case let .block(stmts, _): stmts.contains(where: check)
+        case let .expr(bodyExpr, _): check(bodyExpr)
+        case .unit: false
+        }
+    }
+
+    private func checkStringTemplateParts(
+        _ parts: [StringTemplatePart],
+        check: (ExprID) -> Bool
+    ) -> Bool {
+        parts.contains { part in
+            if case let .expression(exprID) = part {
+                return check(exprID)
+            }
+            return false
+        }
+    }
+
+    private func checkAssignmentChildren(
+        _ expr: Expr,
+        check: (ExprID) -> Bool
+    ) -> Bool {
+        switch expr {
+        case let .localAssign(_, valueExpr, _):
+            check(valueExpr)
+        case let .compoundAssign(_, _, valueExpr, _):
+            check(valueExpr)
+        case let .memberAssign(receiver, _, value, _):
+            check(receiver) || check(value)
+        case let .indexedAssign(receiver, indices, value, _):
+            check(receiver) || indices.contains(where: check) || check(value)
+        case let .indexedCompoundAssign(_, receiver, indices, value, _):
+            check(receiver) || indices.contains(where: check) || check(value)
+        default:
+            false
+        }
+    }
+
+    private func checkWhenExprChildren(
+        subject: ExprID?,
+        branches: [WhenBranch],
+        elseBody: ExprID?,
+        check: (ExprID) -> Bool
+    ) -> Bool {
+        subject.map(check) ?? false
+            || branches.contains { branch in
+                branch.conditions.contains(where: check) || check(branch.body)
+            }
+            || elseBody.map(check) ?? false
     }
 
     func captureValueExpr(

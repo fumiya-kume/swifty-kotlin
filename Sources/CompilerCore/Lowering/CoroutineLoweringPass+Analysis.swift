@@ -137,6 +137,61 @@ extension CoroutineLoweringPass {
             }
         }
 
+        let leaders = computeLeaders(
+            instructions: instructions,
+            labelToInstructionIndex: labelToInstructionIndex
+        )
+
+        let sortedLeaders = leaders.sorted()
+        var ranges: [(start: Int, end: Int)] = []
+        ranges.reserveCapacity(sortedLeaders.count)
+        for (index, start) in sortedLeaders.enumerated() {
+            let end = index + 1 < sortedLeaders.count ? sortedLeaders[index + 1] : instructions.count
+            if start < end {
+                ranges.append((start: start, end: end))
+            }
+        }
+        guard !ranges.isEmpty else {
+            return []
+        }
+
+        var instructionToBlock: [Int: Int] = [:]
+        for (blockID, range) in ranges.enumerated() {
+            for instructionIndex in range.start ..< range.end {
+                instructionToBlock[instructionIndex] = blockID
+            }
+        }
+
+        var blocks: [CFGBlock] = []
+        blocks.reserveCapacity(ranges.count)
+
+        for (blockID, range) in ranges.enumerated() {
+            let blockInstructions = (range.start ..< range.end).map { index in
+                IndexedInstruction(sourceIndex: index, instruction: instructions[index])
+            }
+            let successors = computeBlockSuccessors(
+                terminator: blockInstructions.last?.instruction,
+                blockID: blockID,
+                totalBlocks: ranges.count,
+                labelToInstructionIndex: labelToInstructionIndex,
+                instructionToBlock: instructionToBlock
+            )
+            blocks.append(
+                CFGBlock(
+                    id: blockID,
+                    instructions: blockInstructions,
+                    successors: successors
+                )
+            )
+        }
+
+        return blocks
+    }
+
+    private func computeLeaders(
+        instructions: [KIRInstruction],
+        labelToInstructionIndex: [Int32: Int]
+    ) -> Set<Int> {
         var leaders: Set = [0]
         for (index, instruction) in instructions.enumerated() {
             switch instruction {
@@ -171,89 +226,60 @@ extension CoroutineLoweringPass {
                 continue
             }
         }
+        return leaders
+    }
 
-        let sortedLeaders = leaders.sorted()
-        var ranges: [(start: Int, end: Int)] = []
-        ranges.reserveCapacity(sortedLeaders.count)
-        for (index, start) in sortedLeaders.enumerated() {
-            let end = index + 1 < sortedLeaders.count ? sortedLeaders[index + 1] : instructions.count
-            if start < end {
-                ranges.append((start: start, end: end))
+    private func computeBlockSuccessors(
+        terminator: KIRInstruction?,
+        blockID: Int,
+        totalBlocks: Int,
+        labelToInstructionIndex: [Int32: Int],
+        instructionToBlock: [Int: Int]
+    ) -> [Int] {
+        var successors: [Int] = []
+        switch terminator {
+        case let .some(.jump(target)):
+            if let targetInstruction = labelToInstructionIndex[target],
+               let targetBlock = instructionToBlock[targetInstruction]
+            {
+                successors.append(targetBlock)
+            }
+
+        case let .some(.jumpIfEqual(_, _, target)):
+            if let targetInstruction = labelToInstructionIndex[target],
+               let targetBlock = instructionToBlock[targetInstruction]
+            {
+                successors.append(targetBlock)
+            }
+            if blockID + 1 < totalBlocks {
+                successors.append(blockID + 1)
+            }
+
+        case let .some(.jumpIfNotNull(_, target)):
+            if let targetInstruction = labelToInstructionIndex[target],
+               let targetBlock = instructionToBlock[targetInstruction]
+            {
+                successors.append(targetBlock)
+            }
+            if blockID + 1 < totalBlocks {
+                successors.append(blockID + 1)
+            }
+
+        case .some(.returnUnit), .some(.returnValue), .some(.returnIfEqual), .some(.rethrow):
+            break
+
+        default:
+            if blockID + 1 < totalBlocks {
+                successors.append(blockID + 1)
             }
         }
-        guard !ranges.isEmpty else {
-            return []
+
+        var dedupedSuccessors: [Int] = []
+        dedupedSuccessors.reserveCapacity(successors.count)
+        for successor in successors where !dedupedSuccessors.contains(successor) {
+            dedupedSuccessors.append(successor)
         }
-
-        var instructionToBlock: [Int: Int] = [:]
-        for (blockID, range) in ranges.enumerated() {
-            for instructionIndex in range.start ..< range.end {
-                instructionToBlock[instructionIndex] = blockID
-            }
-        }
-
-        var blocks: [CFGBlock] = []
-        blocks.reserveCapacity(ranges.count)
-
-        for (blockID, range) in ranges.enumerated() {
-            let blockInstructions = (range.start ..< range.end).map { index in
-                IndexedInstruction(sourceIndex: index, instruction: instructions[index])
-            }
-            let terminator = blockInstructions.last?.instruction
-
-            var successors: [Int] = []
-            switch terminator {
-            case let .some(.jump(target)):
-                if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction]
-                {
-                    successors.append(targetBlock)
-                }
-
-            case let .some(.jumpIfEqual(_, _, target)):
-                if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction]
-                {
-                    successors.append(targetBlock)
-                }
-                if blockID + 1 < ranges.count {
-                    successors.append(blockID + 1)
-                }
-
-            case let .some(.jumpIfNotNull(_, target)):
-                if let targetInstruction = labelToInstructionIndex[target],
-                   let targetBlock = instructionToBlock[targetInstruction]
-                {
-                    successors.append(targetBlock)
-                }
-                if blockID + 1 < ranges.count {
-                    successors.append(blockID + 1)
-                }
-
-            case .some(.returnUnit), .some(.returnValue), .some(.returnIfEqual), .some(.rethrow):
-                break
-
-            default:
-                if blockID + 1 < ranges.count {
-                    successors.append(blockID + 1)
-                }
-            }
-
-            var dedupedSuccessors: [Int] = []
-            dedupedSuccessors.reserveCapacity(successors.count)
-            for successor in successors where !dedupedSuccessors.contains(successor) {
-                dedupedSuccessors.append(successor)
-            }
-            blocks.append(
-                CFGBlock(
-                    id: blockID,
-                    instructions: blockInstructions,
-                    successors: dedupedSuccessors
-                )
-            )
-        }
-
-        return blocks
+        return dedupedSuccessors
     }
 
     func buildSpillPlan(

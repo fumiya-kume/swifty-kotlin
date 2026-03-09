@@ -66,57 +66,105 @@ extension CollectionLiteralLoweringPass {
         for instruction in function.body {
             switch instruction {
             case let .call(_, callee, arguments, result, _, _, _):
-                if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName {
-                    if let result { listExprIDs.insert(result.rawValue) }
-                } else if callee == lookup.kkStringSplitName {
-                    if let result { listExprIDs.insert(result.rawValue) }
-                } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
-                    if let result { mapExprIDs.insert(result.rawValue) }
-                } else if lookup.arrayOfFactoryNames.contains(callee) {
-                    if let result { arrayExprIDs.insert(result.rawValue) }
-                }
-
-                if callee == lookup.asSequenceName, arguments.count == 1 {
-                    if let result { sequenceExprIDs.insert(result.rawValue) }
-                } else if callee == lookup.toListName, arguments.count == 1 {
-                    if sequenceExprIDs.contains(arguments[0].rawValue) {
-                        if let result { listExprIDs.insert(result.rawValue) }
-                    }
-                } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
-                    if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
-                    }
-                }
+                handleCallInstruction(
+                    callee: callee, arguments: arguments, result: result,
+                    lookup: lookup, listExprIDs: &listExprIDs,
+                    mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
+                    sequenceExprIDs: &sequenceExprIDs
+                )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
-                if callee == lookup.asSequenceName {
-                    if let result { sequenceExprIDs.insert(result.rawValue) }
-                } else if callee == lookup.kkStringSplitName {
-                    if let result { listExprIDs.insert(result.rawValue) }
-                } else if callee == lookup.toListName {
-                    if sequenceExprIDs.contains(receiver.rawValue) {
-                        if let result { listExprIDs.insert(result.rawValue) }
-                    }
-                } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
-                    if sequenceExprIDs.contains(receiver.rawValue) {
-                        if let result { sequenceExprIDs.insert(result.rawValue) }
-                    }
-                }
+                handleVirtualCallInstruction(
+                    callee: callee, receiver: receiver, result: result,
+                    lookup: lookup, listExprIDs: &listExprIDs,
+                    sequenceExprIDs: &sequenceExprIDs
+                )
             case let .copy(from, to):
-                if listExprIDs.contains(from.rawValue) {
-                    listExprIDs.insert(to.rawValue)
-                }
-                if mapExprIDs.contains(from.rawValue) {
-                    mapExprIDs.insert(to.rawValue)
-                }
-                if arrayExprIDs.contains(from.rawValue) {
-                    arrayExprIDs.insert(to.rawValue)
-                }
-                if sequenceExprIDs.contains(from.rawValue) {
-                    sequenceExprIDs.insert(to.rawValue)
-                }
+                handleCopyInstruction(
+                    from: from, to: to,
+                    listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+                    arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs
+                )
             default:
                 break
             }
+        }
+    }
+
+    private func handleCallInstruction(
+        callee: InternedString,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName {
+            if let result { listExprIDs.insert(result.rawValue) }
+        } else if callee == lookup.kkStringSplitName {
+            if let result { listExprIDs.insert(result.rawValue) }
+        } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
+            if let result { mapExprIDs.insert(result.rawValue) }
+        } else if lookup.arrayOfFactoryNames.contains(callee) {
+            if let result { arrayExprIDs.insert(result.rawValue) }
+        }
+
+        if callee == lookup.asSequenceName, arguments.count == 1 {
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+        } else if callee == lookup.toListName, arguments.count == 1 {
+            if sequenceExprIDs.contains(arguments[0].rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
+            if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
+                if let result { sequenceExprIDs.insert(result.rawValue) }
+            }
+        }
+    }
+
+    private func handleVirtualCallInstruction(
+        callee: InternedString,
+        receiver: KIRExprID,
+        result: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        if callee == lookup.asSequenceName {
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+        } else if callee == lookup.kkStringSplitName {
+            if let result { listExprIDs.insert(result.rawValue) }
+        } else if callee == lookup.toListName {
+            if sequenceExprIDs.contains(receiver.rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
+            if sequenceExprIDs.contains(receiver.rawValue) {
+                if let result { sequenceExprIDs.insert(result.rawValue) }
+            }
+        }
+    }
+
+    private func handleCopyInstruction(
+        from: KIRExprID,
+        to: KIRExprID,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        if listExprIDs.contains(from.rawValue) {
+            listExprIDs.insert(to.rawValue)
+        }
+        if mapExprIDs.contains(from.rawValue) {
+            mapExprIDs.insert(to.rawValue)
+        }
+        if arrayExprIDs.contains(from.rawValue) {
+            arrayExprIDs.insert(to.rawValue)
+        }
+        if sequenceExprIDs.contains(from.rawValue) {
+            sequenceExprIDs.insert(to.rawValue)
         }
     }
 }
