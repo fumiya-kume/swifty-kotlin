@@ -1152,11 +1152,6 @@ extension CallTypeChecker {
                 }
             }
 
-            if safeCall {
-                let resultType = sema.types.nullableAnyType
-                sema.bindings.bindExprType(id, type: resultType)
-                return resultType
-            }
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }

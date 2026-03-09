@@ -60,9 +60,7 @@ extension CompilerCoreTests {
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
-    func testUnresolvedSafeMemberCallFallsBackToAnyNullable() throws {
-        // Safe member calls with unknown methods fall back to Any? (not errorType)
-        // because the compiler may not enumerate all built-in methods (e.g. hashCode).
+    func testUnresolvedSafeMemberCallEmitsDiagnostic() throws {
         let source = """
         class Foo
         fun test(f: Foo?) = f?.missing()
@@ -70,7 +68,7 @@ extension CompilerCoreTests {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
     func testUnresolvedBinaryOperatorEmitsDiagnostic() throws {

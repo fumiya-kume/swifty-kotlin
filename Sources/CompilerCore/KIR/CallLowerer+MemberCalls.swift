@@ -775,7 +775,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
-                        canThrow: false,
+                        canThrow: calleeStr == "repeat",
                         thrownResult: nil
                     ))
                     return result

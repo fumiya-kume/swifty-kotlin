@@ -264,6 +264,17 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
     }
 
+    func testStringRepeatThrowsOnNegativeCount() {
+        var thrown = 0
+        let repeated = kk_string_repeat(rawFromRuntimeString("a"), -1, &thrown)
+
+        XCTAssertEqual(repeated, 0)
+        XCTAssertNotEqual(thrown, 0)
+
+        let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertTrue(thrownOutput.contains("IllegalArgumentException"))
+    }
+
     func testStringFormatSupportsStringIntAndDoubleSpecifiers() {
         let args = makeRuntimeArray([
             rawFromRuntimeString("age"),

@@ -245,7 +245,7 @@ expr e45 compoundAssign(modAssign) name=e value=e44 type=Unit ref=s182
 expr e46 name(e) type=Int ref=s182
 expr e47 return value=e46 type=Nothing
 expr e48 name(s) type=String? ref=s176
-expr e49 safeMemberCall recv=e48 callee=hashCode args=[] type=Any?
+expr e49 safeMemberCall recv=e48 callee=hashCode args=[] type=<error>
 expr e50 name(IntArray) type=_
 expr e51 int(3) type=Int
 expr e52 call callee=e50 args=[_:e51] type=Any

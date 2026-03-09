@@ -111,8 +111,13 @@ public func kk_string_padEnd(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: Int)
 }
 
 @_cdecl("kk_string_repeat")
-public func kk_string_repeat(_ strRaw: Int, _ countRaw: Int) -> Int {
+public func kk_string_repeat(_ strRaw: Int, _ countRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
+    outThrown?.pointee = 0
+    if countRaw < 0 {
+        runtimeSetThrown(outThrown, message: "IllegalArgumentException: Count 'n' must be non-negative, but was \(countRaw).")
+        return 0
+    }
     guard countRaw > 0 else {
         return runtimeMakeStringRaw("")
     }
