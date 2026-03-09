@@ -6,6 +6,9 @@ KSWIFTC="${KSWIFTC:-$ROOT_DIR/.build/debug/kswiftc}"
 KOTLINC="${KOTLINC:-kotlinc}"
 KOTLINC_CLASSPATH="${KOTLINC_CLASSPATH:-${KOTLINC_CP:-}}"
 JAVA_BIN="${JAVA_BIN:-java}"
+KOTLINC_COROUTINES_VERSION="${KOTLINC_COROUTINES_VERSION:-${KOTLINX_COROUTINES_VERSION:-1.10.2}}"
+KOTLINC_DEP_DIR="${KOTLINC_DEP_DIR:-$ROOT_DIR/.runtime-build/deps}"
+KOTLINC_COROUTINES_JAR="${KOTLINC_COROUTINES_JAR:-$KOTLINC_DEP_DIR/kotlinx-coroutines-core-jvm-$KOTLINC_COROUTINES_VERSION.jar}"
 KEEP_TEMP=0
 REPORT_PATH=""
 DIFF_PARALLEL="${DIFF_PARALLEL:-1}"
@@ -142,10 +145,67 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+requires_kotlinx_coroutines() {
+  local target="$1"
+  if [[ -f "$target" ]]; then
+    rg -q 'import[[:space:]]+kotlinx\.coroutines' "$target"
+    return $?
+  fi
+  if [[ -d "$target" ]]; then
+    rg -q 'import[[:space:]]+kotlinx\.coroutines' --glob '*.kt' "$target"
+    return $?
+  fi
+  return 1
+}
+
+ensure_kotlinc_classpath() {
+  if [[ -n "$KOTLINC_CLASSPATH" ]]; then
+    return 0
+  fi
+
+  if ! requires_kotlinx_coroutines "$TARGET"; then
+    return 0
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    echo "curl is required to download kotlinx-coroutines dependency" >&2
+    return 1
+  fi
+
+  mkdir -p "$KOTLINC_DEP_DIR"
+  if [[ ! -s "$KOTLINC_COROUTINES_JAR" ]]; then
+    local download_url
+    download_url="https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/${KOTLINC_COROUTINES_VERSION}/kotlinx-coroutines-core-jvm-${KOTLINC_COROUTINES_VERSION}.jar"
+    echo "Downloading kotlinx-coroutines-core-jvm ${KOTLINC_COROUTINES_VERSION}..."
+    curl -fSL -o "$KOTLINC_COROUTINES_JAR" "$download_url"
+    
+    local expected_sha256="5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+    local actual_sha256
+    if command -v shasum >/dev/null 2>&1; then
+      actual_sha256="$(shasum -a 256 "$KOTLINC_COROUTINES_JAR" | awk '{print $1}')"
+    elif command -v sha256sum >/dev/null 2>&1; then
+      actual_sha256="$(sha256sum "$KOTLINC_COROUTINES_JAR" | awk '{print $1}')"
+    else
+      echo "Warning: shasum or sha256sum not found, skipping checksum verification" >&2
+      actual_sha256="$expected_sha256"
+    fi
+    if [[ "$actual_sha256" != "$expected_sha256" ]]; then
+      echo "Error: checksum mismatch for kotlinx-coroutines-core-jvm-${KOTLINC_COROUTINES_VERSION}.jar" >&2
+      echo "Expected: $expected_sha256" >&2
+      echo "Actual:   $actual_sha256" >&2
+      rm -f "$KOTLINC_COROUTINES_JAR"
+      return 1
+    fi
+  fi
+  KOTLINC_CLASSPATH="$KOTLINC_COROUTINES_JAR"
+}
+
 if [[ -z "$TARGET" ]]; then
   usage
   exit 1
 fi
+
+ensure_kotlinc_classpath
 
 if ! [[ "$DIFF_PARALLEL" =~ ^[01]$ ]]; then
   echo "DIFF_PARALLEL must be 0 or 1: $DIFF_PARALLEL" >&2

@@ -451,7 +451,8 @@ extension DataFlowSemaPhase {
 
         func registerMember(
             name: String,
-            parameterTypes: [TypeID]
+            parameterTypes: [TypeID],
+            externalLinkName: String
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -465,7 +466,7 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
-            symbols.setExternalLinkName("kk_list_\(name)", for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -478,11 +479,11 @@ extension DataFlowSemaPhase {
             )
         }
 
-        registerMember(name: "take", parameterTypes: [types.intType])
-        registerMember(name: "drop", parameterTypes: [types.intType])
-        registerMember(name: "reversed", parameterTypes: [])
-        registerMember(name: "sorted", parameterTypes: [])
-        registerMember(name: "distinct", parameterTypes: [])
+        registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
+        registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop")
+        registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
+        registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
+        registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
     }
 
     private func registerListConversionMembers(
@@ -656,7 +657,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_add", for: memberSymbol)

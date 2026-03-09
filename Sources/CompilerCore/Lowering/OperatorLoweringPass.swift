@@ -121,7 +121,7 @@ final class OperatorLoweringPass: LoweringPass {
                         let argType = module.arena.exprType(arguments[0])
                         if let argType {
                             switch types.kind(of: argType) {
-                            case .primitive(.long, _):
+                            case .primitive(.long, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
                                     symbol: symbol,
@@ -133,7 +133,7 @@ final class OperatorLoweringPass: LoweringPass {
                                     isSuperCall: isSuperCall
                                 )
                                 continue
-                            case .primitive(.float, _):
+                            case .primitive(.float, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
                                     symbol: symbol,
@@ -145,7 +145,7 @@ final class OperatorLoweringPass: LoweringPass {
                                     isSuperCall: isSuperCall
                                 )
                                 continue
-                            case .primitive(.double, _):
+                            case .primitive(.double, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
                                     symbol: symbol,
@@ -157,11 +157,23 @@ final class OperatorLoweringPass: LoweringPass {
                                     isSuperCall: isSuperCall
                                 )
                                 continue
-                            case .primitive(.char, _):
+                            case .primitive(.char, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
                                     symbol: symbol,
                                     callee: ctx.interner.intern("kk_println_char"),
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                )
+                                continue
+                            case .primitive(.boolean, .nonNull):
+                                appendPrimitivePrintlnCall(
+                                    to: &newBody,
+                                    symbol: symbol,
+                                    callee: ctx.interner.intern("kk_println_bool"),
                                     arguments: arguments,
                                     result: result,
                                     canThrow: canThrow,

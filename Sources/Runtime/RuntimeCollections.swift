@@ -225,7 +225,7 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
-// MARK: - Set Functions (STDLIB-022)
+// MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")
 public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
@@ -542,14 +542,10 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
 /// - Returns: Opaque handle (Int) to a `RuntimeArrayBox` containing 2 elements.
 @_cdecl("kk_pair_new")
 public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
-    let box = RuntimeArrayBox(length: 2)
-    box.elements[0] = first
-    box.elements[1] = second
+    let box = RuntimePairBox(first: first, second: second)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
-        let key = UInt(bitPattern: opaque)
-        state.objectPointers.insert(key)
-        state.pairPointers.insert(key)
+        state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
 }
@@ -559,9 +555,9 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 /// - Returns: The first element.
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return runtimeNullSentinelInt }
-    return array.elements[0]
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+    return pairBox.first
 }
 
 /// Returns the second element of a Pair.
@@ -569,9 +565,9 @@ public func kk_pair_first(_ pairRaw: Int) -> Int {
 /// - Returns: The second element.
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return runtimeNullSentinelInt }
-    return array.elements[1]
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+    return pairBox.second
 }
 
 /// Converts a Pair to its string representation (e.g. "(1, one)").
@@ -579,8 +575,8 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
 /// - Returns: Opaque handle to a RuntimeStringBox containing the string.
 @_cdecl("kk_pair_to_string")
 public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
         let str = "(null, null)"
         let utf8 = Array(str.utf8)
@@ -588,8 +584,8 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
             kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
         }
     }
-    let firstStr = runtimeElementToString(array.elements[0])
-    let secondStr = runtimeElementToString(array.elements[1])
+    let firstStr = runtimeElementToString(pairBox.first)
+    let secondStr = runtimeElementToString(pairBox.second)
     let str = "(\(firstStr), \(secondStr))"
     let utf8 = Array(str.utf8)
     return utf8.withUnsafeBufferPointer { buf in

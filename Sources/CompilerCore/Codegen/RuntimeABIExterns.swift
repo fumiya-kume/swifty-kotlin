@@ -165,7 +165,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_string_repeat = ExternDecl(
         name: "kk_string_repeat",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
