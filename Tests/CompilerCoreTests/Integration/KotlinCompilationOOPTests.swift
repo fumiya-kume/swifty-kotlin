@@ -5,7 +5,6 @@ import XCTest
 /// Tests for Kotlin OOP features: classes, data classes, enum classes, sealed classes,
 /// objects, companion objects, interfaces, generics, nullable types, and type casting.
 final class KotlinCompilationOOPTests: XCTestCase {
-
     /// Verify basic class with primary constructor compiles.
     func testCompile_class_basic() throws {
         try assertKotlinCompilesToKIR("""

@@ -5,7 +5,6 @@ import XCTest
 /// Tests for basic Kotlin language features: functions, variables, strings,
 /// control flow, numeric types, and boolean logic.
 final class KotlinCompilationBasicTests: XCTestCase {
-
     /// Verify expression-body function compiles.
     func testCompile_function_expressionBody() throws {
         try assertKotlinCompilesToKIR("""

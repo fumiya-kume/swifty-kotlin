@@ -6,7 +6,6 @@ import XCTest
 /// delegation, destructuring, try/catch, scope functions, collections,
 /// ranges, and complex programs. Also includes object emission tests.
 final class KotlinCompilationAdvancedTests: XCTestCase {
-
     /// Verify extension function on Int compiles.
     func testCompile_extension_function() throws {
         try assertKotlinCompilesToKIR("""

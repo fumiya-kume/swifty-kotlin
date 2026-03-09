@@ -5,7 +5,6 @@ import XCTest
 /// Tests that verify Kotlin programs compile through the LLVM backend
 /// and produce valid native object files (.o).
 final class KotlinCompilationObjectEmissionTests: XCTestCase {
-
     /// Verify minimal main compiles to object file.
     func testCompileToObject_minimalMain() throws {
         try assertKotlinCompilesToObject("""

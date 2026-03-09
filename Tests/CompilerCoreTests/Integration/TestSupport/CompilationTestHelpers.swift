@@ -49,14 +49,14 @@ func assertKotlinCompilesToKIR(
         let result = makeTestDriver().runForTesting(options: options)
 
         XCTAssertEqual(result.exitCode, 0,
-            "KIR compilation failed. Diagnostics: \(result.diagnostics.map { "\($0.code): \($0.message)" })",
-            file: file, line: line)
+                       "KIR compilation failed. Diagnostics: \(result.diagnostics.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
         XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }),
-            "Unexpected errors: \(result.diagnostics.filter { $0.severity == .error }.map { "\($0.code): \($0.message)" })",
-            file: file, line: line)
+                       "Unexpected errors: \(result.diagnostics.filter { $0.severity == .error }.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
         XCTAssertTrue(fm.fileExists(atPath: kirPath),
-            "KIR file not produced at \(kirPath)",
-            file: file, line: line)
+                      "KIR file not produced at \(kirPath)",
+                      file: file, line: line)
     }
 }
 
@@ -83,17 +83,17 @@ func assertKotlinCompilesToObject(
         let result = makeTestDriver().runForTesting(options: options)
 
         XCTAssertEqual(result.exitCode, 0,
-            "Object compilation failed. Diagnostics: \(result.diagnostics.map { "\($0.code): \($0.message)" })",
-            file: file, line: line)
+                       "Object compilation failed. Diagnostics: \(result.diagnostics.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
         XCTAssertFalse(result.diagnostics.contains(where: { $0.severity == .error }),
-            "Unexpected errors: \(result.diagnostics.filter { $0.severity == .error }.map { "\($0.code): \($0.message)" })",
-            file: file, line: line)
+                       "Unexpected errors: \(result.diagnostics.filter { $0.severity == .error }.map { "\($0.code): \($0.message)" })",
+                       file: file, line: line)
         XCTAssertTrue(fm.fileExists(atPath: objectPath),
-            "Object file not produced at \(objectPath)",
-            file: file, line: line)
+                      "Object file not produced at \(objectPath)",
+                      file: file, line: line)
         let data = try Data(contentsOf: URL(fileURLWithPath: objectPath))
         XCTAssertGreaterThan(data.count, 0,
-            "Object file is empty",
-            file: file, line: line)
+                             "Object file is empty",
+                             file: file, line: line)
     }
 }
