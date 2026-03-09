@@ -110,6 +110,30 @@ extension CallTypeChecker {
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
 
+        if args.isEmpty,
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+           let ownerSymbol = ctx.cachedScopeLookup(receiverName).first(where: { candidate in
+               guard let symbol = sema.symbols.symbol(candidate) else {
+                   return false
+               }
+               switch symbol.kind {
+               case .class, .interface, .enumClass:
+                   return true
+               default:
+                   return false
+               }
+           }),
+           let staticMember = resolveClassNameMemberValue(
+               ownerNominalSymbol: ownerSymbol,
+               memberName: calleeName,
+               sema: sema
+           )
+        {
+            sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
+            sema.bindings.bindExprType(id, type: staticMember.type)
+            return staticMember.type
+        }
+
         // --- Scope functions: let, run, apply, also (STDLIB-004) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct expected type (it vs. receiver this).
@@ -331,9 +355,9 @@ extension CallTypeChecker {
             return finalType
         }
 
-        // Primitive member function: Int/Long.toString(radix: Int) → String (EXPR-003)
+        // Primitive member function: Int/Long.toString() / toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
-           args.count == 1
+           args.count <= 1
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
@@ -341,12 +365,12 @@ extension CallTypeChecker {
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
-            if receiverForCheck == intType || receiverForCheck == longType,
-               argTypes[0] == intType
-            {
-                let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
+            if receiverForCheck == intType || receiverForCheck == longType {
+                if args.isEmpty || argTypes[0] == intType {
+                    let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
         }
 
@@ -393,26 +417,197 @@ extension CallTypeChecker {
             }
         }
 
-        let memberLookupType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? lookupReceiverType
+        let memberLookupType = lookupReceiverType
 
         // Detect class-name receiver: when the receiver is a name reference to
         // a class/interface/enumClass symbol, only companion members should be
         // accessible (not instance methods).  This prevents `Foo.instanceMethod()`
         // from resolving when there is no companion with that name.
         let classNameReceiverNominalSymbol: SymbolID? = {
-            guard let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverID),
-                  let receiverSymbol = sema.symbols.symbol(receiverSymbolID)
-            else {
-                return nil
+            if let receiverSymbolID = sema.bindings.identifierSymbol(for: receiverID),
+               let receiverSymbol = sema.symbols.symbol(receiverSymbolID)
+            {
+                switch receiverSymbol.kind {
+                case .class, .interface, .enumClass:
+                    return receiverSymbolID
+                default:
+                    break
+                }
             }
-            switch receiverSymbol.kind {
-            case .class, .interface, .enumClass:
-                return receiverSymbolID
-            default:
-                return nil
+            if case let .nameRef(receiverName, _) = ast.arena.expr(receiverID) {
+                return ctx.cachedScopeLookup(receiverName).first { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate) else {
+                        return false
+                    }
+                    switch symbol.kind {
+                    case .class, .interface, .enumClass:
+                        return true
+                    default:
+                        return false
+                    }
+                }
             }
+            return nil
         }()
         let isClassNameReceiver = classNameReceiverNominalSymbol != nil
+
+        if isClassNameReceiver,
+           args.isEmpty,
+           let ownerSymbol = classNameReceiverNominalSymbol,
+           let staticMember = resolveClassNameMemberValue(
+               ownerNominalSymbol: ownerSymbol,
+               memberName: calleeName,
+               sema: sema
+           )
+        {
+            if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
+               !ctx.visibilityChecker.isAccessible(
+                   memberSymbol,
+                   fromFile: ctx.currentFileID,
+                   enclosingClass: ctx.enclosingClassSymbol
+               )
+            {
+                driver.helpers.emitVisibilityError(for: memberSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
+            sema.bindings.bindExprType(id, type: staticMember.type)
+            return staticMember.type
+        }
+
+        if isClassNameReceiver,
+           let ownerSymbol = classNameReceiverNominalSymbol,
+           let owner = sema.symbols.symbol(ownerSymbol)
+        {
+            let nestedOwnerFQName = owner.fqName + [calleeName]
+            var nestedOwnerSymbols = sema.symbols.lookupAll(fqName: nestedOwnerFQName).filter { candidate in
+                guard let symbol = sema.symbols.symbol(candidate) else {
+                    return false
+                }
+                guard sema.symbols.parentSymbol(for: candidate) == ownerSymbol else {
+                    return false
+                }
+                switch symbol.kind {
+                case .class, .enumClass, .object:
+                    return true
+                default:
+                    return false
+                }
+            }
+            if nestedOwnerSymbols.isEmpty {
+                let shortNameNestedOwners = sema.symbols.lookupByShortName(calleeName).filter { candidate in
+                    guard let symbol = sema.symbols.symbol(candidate) else {
+                        return false
+                    }
+                    switch symbol.kind {
+                    case .class, .enumClass, .object:
+                        return true
+                    default:
+                        return false
+                    }
+                }
+                if shortNameNestedOwners.count == 1 {
+                    nestedOwnerSymbols = shortNameNestedOwners
+                }
+            }
+            let nestedCtorFQName = owner.fqName + [calleeName, interner.intern("<init>")]
+            var nestedCtorCandidates = sema.symbols.lookupAll(fqName: nestedCtorFQName).filter { candidate in
+                guard let symbol = sema.symbols.symbol(candidate) else {
+                    return false
+                }
+                return symbol.kind == .constructor
+            }
+            if nestedCtorCandidates.isEmpty {
+                if !nestedOwnerSymbols.isEmpty {
+                    nestedCtorCandidates = sema.symbols.lookupByShortName(calleeName).filter { candidate in
+                        guard let symbol = sema.symbols.symbol(candidate),
+                              symbol.kind == .constructor
+                        else {
+                            return false
+                        }
+                        guard let parent = sema.symbols.parentSymbol(for: candidate) else {
+                            return false
+                        }
+                        return nestedOwnerSymbols.contains(parent)
+                    }
+                }
+            }
+            if !nestedCtorCandidates.isEmpty {
+                let (visibleNested, invisibleNested) = ctx.filterByVisibility(nestedCtorCandidates)
+                if let firstInvisible = invisibleNested.first {
+                    driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                if !visibleNested.isEmpty {
+                    if args.isEmpty {
+                        let zeroArgNested = visibleNested.first { candidate in
+                            guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                                return false
+                            }
+                            return signature.parameterTypes.isEmpty
+                        }
+                        if let zeroArgNested,
+                           let signature = sema.symbols.functionSignature(for: zeroArgNested)
+                        {
+                            sema.bindings.bindCall(
+                                id,
+                                binding: CallBinding(
+                                    chosenCallee: zeroArgNested,
+                                    substitutedTypeArguments: [],
+                                    parameterMapping: [:]
+                                )
+                            )
+                            let resultType = signature.returnType
+                            sema.bindings.bindExprType(id, type: resultType)
+                            return resultType
+                        }
+                    }
+                    let callArgs = zip(args, argTypes).map { arg, type in
+                        CallArg(label: arg.label, isSpread: arg.isSpread, type: type)
+                    }
+                    let call = CallExpr(range: range, calleeName: calleeName, args: callArgs, explicitTypeArgs: explicitTypeArgs)
+                    let resolved = ctx.resolver.resolveCall(
+                        candidates: visibleNested,
+                        call: call,
+                        expectedType: expectedType,
+                        ctx: sema
+                    )
+                    if let diagnostic = resolved.diagnostic {
+                        ctx.semaCtx.diagnostics.emit(diagnostic)
+                        return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                    }
+                    if let chosen = resolved.chosenCallee,
+                       let signature = sema.symbols.functionSignature(for: chosen)
+                    {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: resolved.substitutedTypeArguments
+                                    .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                    .map(\.value),
+                                parameterMapping: resolved.parameterMapping
+                            )
+                        )
+                        let resultType = signature.returnType
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
+                }
+            }
+            if args.isEmpty,
+               let nestedOwner = nestedOwnerSymbols.first
+            {
+                let nestedType = sema.types.make(.classType(ClassType(
+                    classSymbol: nestedOwner,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                sema.bindings.bindIdentifier(id, symbol: nestedOwner)
+                sema.bindings.bindExprType(id, type: nestedType)
+                return nestedType
+            }
+        }
 
         // Track the companion type so we can pass it (not the owner class type)
         // as the implicit receiver when resolving the call.
@@ -598,6 +793,19 @@ extension CallTypeChecker {
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let resultType = sema.types.intType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            if args.isEmpty,
+               interner.resolve(calleeName) == "code"
+            {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if receiverTypeForCheck == sema.types.charType {
                     let resultType = sema.types.intType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
@@ -968,6 +1176,19 @@ extension CallTypeChecker {
             ctx: ctx.semaCtx
         )
         if let diagnostic = resolved.diagnostic {
+            if isClassNameReceiver,
+               args.isEmpty,
+               let classNameReceiverNominalSymbol,
+               let staticMember = resolveClassNameMemberValue(
+                   ownerNominalSymbol: classNameReceiverNominalSymbol,
+                   memberName: calleeName,
+                   sema: sema
+               )
+            {
+                sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
+                sema.bindings.bindExprType(id, type: staticMember.type)
+                return staticMember.type
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -995,6 +1216,19 @@ extension CallTypeChecker {
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
         guard let chosen = resolved.chosenCallee else {
+            if isClassNameReceiver,
+               args.isEmpty,
+               let classNameReceiverNominalSymbol,
+               let staticMember = resolveClassNameMemberValue(
+                   ownerNominalSymbol: classNameReceiverNominalSymbol,
+                   memberName: calleeName,
+                   sema: sema
+               )
+            {
+                sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
+                sema.bindings.bindExprType(id, type: staticMember.type)
+                return staticMember.type
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,

@@ -100,7 +100,28 @@ extension BuildASTPhase {
             let isDotContinuation = filtered.first.map {
                 $0.kind == .symbol(.dot) || $0.kind == .symbol(.questionDot)
             } ?? false
-            if isDotContinuation, !rawGroups.isEmpty {
+            let shouldMergeWithPrevious: Bool
+            if !rawGroups.isEmpty {
+                let previousFiltered = filteredGroups[filteredGroups.count - 1]
+                let previousEndsWithContinuation = previousFiltered.last.map {
+                    isBinaryOperatorToken($0.kind)
+                        || $0.kind == .symbol(.lParen)
+                        || $0.kind == .symbol(.comma)
+                } ?? false
+                let currentStartsWithContinuation = filtered.first.map {
+                    isBinaryOperatorToken($0.kind)
+                        || $0.kind == .symbol(.comma)
+                        || $0.kind == .symbol(.rParen)
+                        || $0.kind == .symbol(.rBracket)
+                } ?? false
+                shouldMergeWithPrevious = isDotContinuation
+                    || previousEndsWithContinuation
+                    || currentStartsWithContinuation
+                    || hasUnclosedStatementDelimiter(previousFiltered)
+            } else {
+                shouldMergeWithPrevious = false
+            }
+            if shouldMergeWithPrevious {
                 rawGroups[rawGroups.count - 1].append(contentsOf: rawTokens)
                 filteredGroups[filteredGroups.count - 1].append(contentsOf: filtered)
                 continue
@@ -109,6 +130,24 @@ extension BuildASTPhase {
             rawGroups.append(rawTokens)
             filteredGroups.append(filtered)
         }
+    }
+
+    private func hasUnclosedStatementDelimiter(_ tokens: [Token]) -> Bool {
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+        for token in tokens {
+            switch token.kind {
+            case .symbol(.lParen): parenDepth += 1
+            case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket): bracketDepth += 1
+            case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
+            default: break
+            }
+        }
+        return parenDepth > 0 || bracketDepth > 0 || braceDepth > 0
     }
 
     /// Parse a single (possibly merged) statement token group, trying local

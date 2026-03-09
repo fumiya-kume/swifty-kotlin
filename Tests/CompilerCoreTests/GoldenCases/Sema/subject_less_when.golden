@@ -50,53 +50,67 @@ symbol s48 kind=class fq=kotlin.UninitializedPropertyAccessException vis=public 
 symbol s49 kind=class fq=kotlin.NullPointerException vis=public flags=synthetic type=Class#49
 symbol s50 kind=class fq=kotlin.NumberFormatException vis=public flags=synthetic type=Class#50
 symbol s51 kind=class fq=kotlin.CancellationException vis=public flags=synthetic type=Class#51
-symbol s52 kind=package fq=kotlinx vis=public flags=synthetic
-symbol s53 kind=package fq=kotlinx.coroutines vis=public flags=synthetic
-symbol s54 kind=package fq=kotlinx.coroutines.channels vis=public flags=synthetic
-symbol s55 kind=class fq=kotlinx.coroutines.Job vis=public flags=synthetic type=Class#55
-symbol s56 kind=class fq=kotlinx.coroutines.Deferred vis=public flags=synthetic type=Class#56
-symbol s57 kind=object fq=kotlinx.coroutines.Dispatchers vis=public flags=synthetic type=Class#57
-symbol s58 kind=class fq=kotlinx.coroutines.channels.Channel vis=public flags=synthetic type=Class#58
-symbol s59 kind=class fq=kotlinx.coroutines.CancellationException vis=public flags=synthetic type=Class#59
-symbol s60 kind=class fq=CancellationException vis=public flags=synthetic type=Class#60
-symbol s61 kind=function fq=kotlinx.coroutines.runBlocking vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s62 kind=valueParameter fq=kotlinx.coroutines.runBlocking.block vis=private flags=synthetic
-symbol s63 kind=function fq=kotlinx.coroutines.launch vis=public flags=synthetic sig=recv=_ params=[suspend () -> Unit] ret=Class#55 suspend=0 defaults=[0] vararg=[0]
-symbol s64 kind=valueParameter fq=kotlinx.coroutines.launch.block vis=private flags=synthetic
-symbol s65 kind=function fq=kotlinx.coroutines.async vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Class#56 suspend=0 defaults=[0] vararg=[0]
-symbol s66 kind=valueParameter fq=kotlinx.coroutines.async.block vis=private flags=synthetic
-symbol s67 kind=function fq=kotlinx.coroutines.delay vis=public flags=synthetic sig=recv=_ params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s68 kind=valueParameter fq=kotlinx.coroutines.delay.timeMillis vis=private flags=synthetic
-symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synthetic sig=recv=_ params=[Any,suspend () -> Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
-symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
-symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
-symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
-symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
-symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
-symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
-symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
-symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
-symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
-symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
-symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s89 kind=function fq=guardChain vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s90 kind=valueParameter fq=guardChain.$89.x vis=private flags=_
-symbol s91 kind=valueParameter fq=guardChain.$89.y vis=private flags=_
+symbol s52 kind=constructor fq=kotlin.Exception.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#46 suspend=0 defaults=[] vararg=[]
+symbol s53 kind=constructor fq=kotlin.RuntimeException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#47 suspend=0 defaults=[] vararg=[]
+symbol s54 kind=constructor fq=kotlin.RuntimeException.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#47 suspend=0 defaults=[0] vararg=[0]
+symbol s55 kind=valueParameter fq=kotlin.RuntimeException.<init>.message vis=private flags=synthetic
+symbol s56 kind=constructor fq=kotlin.UninitializedPropertyAccessException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#48 suspend=0 defaults=[] vararg=[]
+symbol s57 kind=constructor fq=kotlin.UninitializedPropertyAccessException.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#48 suspend=0 defaults=[0] vararg=[0]
+symbol s58 kind=valueParameter fq=kotlin.UninitializedPropertyAccessException.<init>.message vis=private flags=synthetic
+symbol s59 kind=constructor fq=kotlin.NullPointerException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#49 suspend=0 defaults=[] vararg=[]
+symbol s60 kind=constructor fq=kotlin.NumberFormatException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#50 suspend=0 defaults=[] vararg=[]
+symbol s61 kind=constructor fq=kotlin.NumberFormatException.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#50 suspend=0 defaults=[0] vararg=[0]
+symbol s62 kind=valueParameter fq=kotlin.NumberFormatException.<init>.message vis=private flags=synthetic
+symbol s63 kind=constructor fq=kotlin.CancellationException.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#51 suspend=0 defaults=[] vararg=[]
+symbol s64 kind=constructor fq=kotlin.CancellationException.<init> vis=public flags=synthetic sig=recv=_ params=[String] ret=Class#51 suspend=0 defaults=[0] vararg=[0]
+symbol s65 kind=valueParameter fq=kotlin.CancellationException.<init>.message vis=private flags=synthetic
+symbol s66 kind=package fq=kotlinx vis=public flags=synthetic
+symbol s67 kind=package fq=kotlinx.coroutines vis=public flags=synthetic
+symbol s68 kind=package fq=kotlinx.coroutines.channels vis=public flags=synthetic
+symbol s69 kind=class fq=kotlinx.coroutines.Job vis=public flags=synthetic type=Class#69
+symbol s70 kind=class fq=kotlinx.coroutines.Deferred vis=public flags=synthetic type=Class#70
+symbol s71 kind=object fq=kotlinx.coroutines.Dispatchers vis=public flags=synthetic type=Class#71
+symbol s72 kind=class fq=kotlinx.coroutines.channels.Channel vis=public flags=synthetic type=Class#72
+symbol s73 kind=class fq=kotlinx.coroutines.CancellationException vis=public flags=synthetic type=Class#73
+symbol s74 kind=class fq=CancellationException vis=public flags=synthetic type=Class#74
+symbol s75 kind=function fq=kotlinx.coroutines.runBlocking vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s76 kind=valueParameter fq=kotlinx.coroutines.runBlocking.block vis=private flags=synthetic
+symbol s77 kind=function fq=kotlinx.coroutines.launch vis=public flags=synthetic sig=recv=_ params=[suspend () -> Unit] ret=Class#69 suspend=0 defaults=[0] vararg=[0]
+symbol s78 kind=valueParameter fq=kotlinx.coroutines.launch.block vis=private flags=synthetic
+symbol s79 kind=function fq=kotlinx.coroutines.async vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Class#70 suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.async.block vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.delay vis=public flags=synthetic sig=recv=_ params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s82 kind=valueParameter fq=kotlinx.coroutines.delay.timeMillis vis=private flags=synthetic
+symbol s83 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synthetic sig=recv=_ params=[Any,suspend () -> Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s84 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
+symbol s85 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
+symbol s86 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#72 suspend=0 defaults=[] vararg=[]
+symbol s87 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s88 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s89 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s90 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#69 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s91 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#69 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s92 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#70 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s93 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#72 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s94 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s95 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#72 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s96 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#72 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s97 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s98 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s99 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s100 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#98.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s101 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#98 params=[] ret=Class#99 suspend=0 defaults=[] vararg=[]
+symbol s102 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#99 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s103 kind=function fq=guardChain vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s104 kind=valueParameter fq=guardChain.$103.x vis=private flags=_
+symbol s105 kind=valueParameter fq=guardChain.$103.y vis=private flags=_
 file f0 package=_
-  decl d0 fun guardChain suspend=0 inline=0 sym=s89
-expr e0 name(x) type=Int ref=s90
+  decl d0 fun guardChain suspend=0 inline=0 sym=s103
+expr e0 name(x) type=Int ref=s104
 expr e1 int(0) type=Int
 expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean
 expr e3 int(1) type=Int
-expr e4 name(y) type=Int ref=s91
+expr e4 name(y) type=Int ref=s105
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 int(2) type=Int

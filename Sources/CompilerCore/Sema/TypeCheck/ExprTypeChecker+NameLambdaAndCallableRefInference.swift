@@ -170,6 +170,18 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }
+        if let receiverType = ctx.implicitReceiverType,
+           let result = driver.helpers.lookupMemberProperty(
+               named: name,
+               receiverType: sema.types.makeNonNullable(receiverType),
+               sema: sema
+           )
+        {
+            sema.bindings.markImplicitReceiverMember(id, name: name)
+            sema.bindings.bindIdentifier(id, symbol: result.symbol)
+            sema.bindings.bindExprType(id, type: result.type)
+            return result.type
+        }
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
@@ -253,18 +265,26 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        if let first = candidates.first {
-            sema.bindings.bindIdentifier(id, symbol: first.id)
+        let preferredCandidate = candidates.first(where: { symbol in
+            switch symbol.kind {
+            case .property, .field, .backingField, .object, .class, .interface, .enumClass:
+                return true
+            default:
+                return false
+            }
+        }) ?? candidates.first
+        if let preferredCandidate {
+            sema.bindings.bindIdentifier(id, symbol: preferredCandidate.id)
             // ANNO-001: Check for @Deprecated annotation on the resolved symbol.
             driver.helpers.checkDeprecation(
-                for: first.id,
+                for: preferredCandidate.id,
                 sema: sema,
                 interner: interner,
                 range: nameRange,
                 diagnostics: ctx.semaCtx.diagnostics
             )
         }
-        let resolvedType = candidates.first.flatMap { symbol in
+        let resolvedType = preferredCandidate.flatMap { symbol in
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
@@ -292,8 +312,8 @@ extension ExprTypeChecker {
         } ?? sema.types.anyType
         // Propagate compile-time constant value for `const val` references
         // so downstream passes can fold without re-querying the symbol table.
-        if let first = candidates.first, first.flags.contains(.constValue),
-           let constKind = sema.symbols.constValueExprKind(for: first.id)
+        if let preferredCandidate, preferredCandidate.flags.contains(.constValue),
+           let constKind = sema.symbols.constValueExprKind(for: preferredCandidate.id)
         {
             sema.bindings.bindConstExprValue(id, value: constKind)
         }

@@ -377,6 +377,10 @@ extension KotlinParser {
             }
             return
         }
+        let next = stream.peek()
+        if hasLeadingNewline(next), isDeclarationStart(next.kind) {
+            return
+        }
         parseTail(inBlock: false, into: &children, range: &range)
     }
 }

@@ -73,7 +73,7 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
 
-            let sema = try XCTUnwrap(ctx.sema)
+            _ = try XCTUnwrap(ctx.sema)
             let interner = ctx.interner
 
             // FQ names do not include module prefix; class Foo has fqName ["Foo"].

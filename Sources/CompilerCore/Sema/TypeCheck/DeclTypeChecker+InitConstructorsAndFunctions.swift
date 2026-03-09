@@ -3,6 +3,35 @@ import Foundation
 // Init block, secondary constructor, and function declaration type checking.
 
 extension DeclTypeChecker {
+    private func localTypeForParameter(
+        at index: Int,
+        signature: FunctionSignature,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let parameterType = index < signature.parameterTypes.count
+            ? signature.parameterTypes[index]
+            : sema.types.anyType
+        guard index < signature.valueParameterIsVararg.count,
+              signature.valueParameterIsVararg[index]
+        else {
+            return parameterType
+        }
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = sema.symbols.lookup(fqName: listFQName) else {
+            return parameterType
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.invariant(parameterType)],
+            nullability: .nonNull
+        )))
+    }
+
     // MARK: - Init Block & Secondary Constructor Type Checking
 
     func typeCheckInitBlocks(
@@ -11,7 +40,9 @@ extension DeclTypeChecker {
     ) {
         for block in blocks {
             var locals: LocalBindings = [:]
-            _ = inferFunctionBodyType(block, ctx: ctx, locals: &locals, expectedType: nil)
+            var initCtx = ctx
+            initCtx.allowsValPropertyInitialization = true
+            _ = inferFunctionBodyType(block, ctx: initCtx, locals: &locals, expectedType: nil)
         }
     }
 
@@ -37,15 +68,24 @@ extension DeclTypeChecker {
                     }
                     for (index, paramSymbol) in signature.valueParameterSymbols.enumerated() {
                         guard let param = sema.symbols.symbol(paramSymbol) else { continue }
-                        let type = index < signature.parameterTypes.count
-                            ? signature.parameterTypes[index]
-                            : sema.types.anyType
+                        let type = localTypeForParameter(
+                            at: index,
+                            signature: signature,
+                            sema: sema,
+                            interner: ctx.interner
+                        )
                         locals[param.name] = (type, paramSymbol, false, true)
+                        if index < signature.valueParameterIsVararg.count,
+                           signature.valueParameterIsVararg[index]
+                        {
+                            sema.bindings.markCollectionSymbol(paramSymbol)
+                        }
                     }
                     constructorCtx = ctx.copying(scope: constructorScope)
                 }
             }
 
+            constructorCtx.allowsValPropertyInitialization = true
             if ctor.delegationCall == nil, hasPrimaryConstructor {
                 sema.diagnostics.error(
                     "KSWIFTK-SEMA-0054",
@@ -178,10 +218,18 @@ extension DeclTypeChecker {
             guard let param = sema.symbols.symbol(paramSymbol) else {
                 continue
             }
-            let type = index < signature.parameterTypes.count
-                ? signature.parameterTypes[index]
-                : sema.types.anyType
+            let type = localTypeForParameter(
+                at: index,
+                signature: signature,
+                sema: sema,
+                interner: ctx.interner
+            )
             locals[param.name] = (type, paramSymbol, false, true)
+            if index < signature.valueParameterIsVararg.count,
+               signature.valueParameterIsVararg[index]
+            {
+                sema.bindings.markCollectionSymbol(paramSymbol)
+            }
         }
         let effectiveReceiverType = signature.receiverType ?? ctx.implicitReceiverType
         if let receiverType = effectiveReceiverType {

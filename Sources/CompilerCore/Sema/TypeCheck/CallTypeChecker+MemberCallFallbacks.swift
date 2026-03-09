@@ -55,7 +55,7 @@ extension CallTypeChecker {
 
     func isSupportedCollectionFallbackMember(_ memberName: String) -> Bool {
         let collectionMembers: Set = [
-            "size", "get", "contains", "containsKey",
+            "size", "get", "contains", "containsKey", "add",
             "isEmpty", "first", "last", "indexOf",
             "count", "iterator",
             "map", "filter", "forEach", "flatMap",
@@ -77,7 +77,7 @@ extension CallTypeChecker {
         switch memberName {
         case "size", "isEmpty", "iterator", "asSequence", "toList":
             argCount == 0
-        case "get", "contains", "containsKey", "indexOf",
+        case "get", "contains", "containsKey", "indexOf", "add",
              "map", "filter", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "reduce", "take":
@@ -98,7 +98,7 @@ extension CallTypeChecker {
         }
 
         let boolReturningMembers: Set = [
-            "isEmpty", "contains", "containsKey",
+            "isEmpty", "contains", "containsKey", "add",
             "any", "none", "all",
         ]
         if boolReturningMembers.contains(memberName) {

@@ -329,6 +329,35 @@ final class CallTypeChecker {
         } else {
             coroutineLauncherExpectedLambdaType = nil
         }
+        let provisionalExpectedArgTypes: [Int: TypeID] = {
+            guard let calleeName else { return [:] }
+            let candidateIDs = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                guard let symbol = ctx.cachedSymbol(candidate) else { return false }
+                return symbol.kind == .function || symbol.kind == .constructor
+            }
+            guard candidateIDs.count == 1,
+                  let signature = sema.symbols.functionSignature(for: candidateIDs[0])
+            else {
+                return [:]
+            }
+            let provisionalArgs = args.map { argument in
+                CallArg(label: argument.label, isSpread: argument.isSpread, type: sema.types.anyType)
+            }
+            guard let parameterMapping = ctx.resolver.buildParameterMapping(
+                signature: signature,
+                callArgs: provisionalArgs,
+                symbols: sema.symbols
+            ) else {
+                return [:]
+            }
+            var result: [Int: TypeID] = [:]
+            for (argIndex, paramIndex) in parameterMapping
+                where paramIndex >= 0 && paramIndex < signature.parameterTypes.count
+            {
+                result[argIndex] = signature.parameterTypes[paramIndex]
+            }
+            return result
+        }()
         let withContextExpectedLambdaType: TypeID? = if let calleeName,
                                                         interner.resolve(calleeName) == "withContext",
                                                         args.count >= 2,
@@ -378,9 +407,14 @@ final class CallTypeChecker {
                     expectedType: withContextExpectedLambdaType
                 )
             }
-            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+            let provisionalExpectedType = provisionalExpectedArgTypes[index]
+            return driver.inferExpr(
+                argument.expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: provisionalExpectedType
+            )
         }
-
         var candidates: [SymbolID]
         var callInvisible: [SemanticSymbol] = []
         if let calleeName {
@@ -427,6 +461,63 @@ final class CallTypeChecker {
             candidates = []
         }
         if !candidates.isEmpty {
+            let recoveredConstructorMatch: (symbol: SymbolID, returnType: TypeID, parameterMapping: [Int: Int])? = {
+                guard candidates.allSatisfy({ candidate in
+                    ctx.cachedSymbol(candidate)?.kind == .constructor
+                }) else {
+                    return nil
+                }
+                let receiverType = ctx.implicitReceiverType.map(sema.types.makeNonNullable)
+                for candidate in candidates {
+                    guard let signature = sema.symbols.functionSignature(for: candidate),
+                          signature.parameterTypes.count == args.count
+                    else {
+                        continue
+                    }
+                    var recoveredMapping: [Int: Int] = [:]
+                    var recoveredMatches = true
+                    for (index, argument) in args.enumerated() {
+                        let parameterType = signature.parameterTypes[index]
+                        var effectiveType = argTypes[index]
+                        if !sema.types.isSubtype(effectiveType, parameterType),
+                           let receiverType,
+                           case let .nameRef(argName, _) = ast.arena.expr(argument.expr),
+                           let property = driver.helpers.lookupMemberProperty(
+                               named: argName,
+                               receiverType: receiverType,
+                               sema: sema
+                           ),
+                           sema.types.isSubtype(property.type, parameterType)
+                        {
+                            sema.bindings.markImplicitReceiverMember(argument.expr, name: argName)
+                            sema.bindings.bindIdentifier(argument.expr, symbol: property.symbol)
+                            sema.bindings.bindExprType(argument.expr, type: property.type)
+                            effectiveType = property.type
+                        }
+                        guard sema.types.isSubtype(effectiveType, parameterType) else {
+                            recoveredMatches = false
+                            break
+                        }
+                        recoveredMapping[index] = index
+                    }
+                    if recoveredMatches {
+                        return (candidate, signature.returnType, recoveredMapping)
+                    }
+                }
+                return nil
+            }()
+            if let recoveredConstructorMatch {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: recoveredConstructorMatch.symbol,
+                        substitutedTypeArguments: [],
+                        parameterMapping: recoveredConstructorMatch.parameterMapping
+                    )
+                )
+                sema.bindings.bindExprType(id, type: recoveredConstructorMatch.returnType)
+                return recoveredConstructorMatch.returnType
+            }
             let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in
                 CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
             }
@@ -439,10 +530,79 @@ final class CallTypeChecker {
                     explicitTypeArgs: explicitTypeArgs
                 ),
                 expectedType: expectedType,
-                implicitReceiverType: ctx.implicitReceiverType,
+                implicitReceiverType: candidates.allSatisfy { candidate in
+                    ctx.cachedSymbol(candidate)?.kind == .constructor
+                } ? nil : ctx.implicitReceiverType,
                 ctx: ctx.semaCtx
             )
             if let diagnostic = resolved.diagnostic {
+                let recoveredConstructorType: TypeID? = {
+                    let constructorCandidates = candidates.filter { candidate in
+                        ctx.cachedSymbol(candidate)?.kind == .constructor
+                    }
+                    guard !constructorCandidates.isEmpty,
+                          let implicitReceiverType = ctx.implicitReceiverType
+                    else {
+                        return nil
+                    }
+                    let receiverType = sema.types.makeNonNullable(implicitReceiverType)
+                    for candidate in constructorCandidates {
+                        guard let signature = sema.symbols.functionSignature(for: candidate),
+                              signature.parameterTypes.count == args.count
+                        else {
+                            continue
+                        }
+                        let recoveredCallArgs = zip(args, argTypes).enumerated().map { index, pair -> CallArg in
+                            let (argument, originalType) = pair
+                            let parameterType = signature.parameterTypes[index]
+                            var effectiveType = originalType
+                            if !sema.types.isSubtype(effectiveType, parameterType),
+                               case let .nameRef(argName, _) = ast.arena.expr(argument.expr),
+                               let property = driver.helpers.lookupMemberProperty(
+                                   named: argName,
+                                   receiverType: receiverType,
+                                   sema: sema
+                               ),
+                               sema.types.isSubtype(property.type, parameterType)
+                            {
+                                sema.bindings.markImplicitReceiverMember(argument.expr, name: argName)
+                                sema.bindings.bindIdentifier(argument.expr, symbol: property.symbol)
+                                sema.bindings.bindExprType(argument.expr, type: property.type)
+                                effectiveType = property.type
+                            }
+                            return CallArg(label: argument.label, isSpread: argument.isSpread, type: effectiveType)
+                        }
+                        guard recoveredCallArgs.count == signature.parameterTypes.count else {
+                            continue
+                        }
+                        let recoveredTypesMatch = zip(recoveredCallArgs, signature.parameterTypes).allSatisfy { callArg, parameterType in
+                            sema.types.isSubtype(callArg.type, parameterType)
+                        }
+                        guard recoveredTypesMatch,
+                              let parameterMapping = ctx.resolver.buildParameterMapping(
+                                  signature: signature,
+                                  callArgs: recoveredCallArgs,
+                                  symbols: sema.symbols
+                              )
+                        else {
+                            continue
+                        }
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: candidate,
+                                substitutedTypeArguments: [],
+                                parameterMapping: parameterMapping
+                            )
+                        )
+                        return signature.returnType
+                    }
+                    return nil
+                }()
+                if let recoveredConstructorType {
+                    sema.bindings.bindExprType(id, type: recoveredConstructorType)
+                    return recoveredConstructorType
+                }
                 ctx.semaCtx.diagnostics.emit(diagnostic)
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
@@ -662,6 +822,25 @@ final class CallTypeChecker {
                    !expectedClassType.args.isEmpty
                 {
                     collectionType = expectedType
+                } else if !explicitTypeArgs.isEmpty,
+                          name == "mutableListOf"
+                {
+                    let mutableListFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("MutableList"),
+                    ]
+                    if let mutableListSymbol = sema.symbols.lookup(fqName: mutableListFQName),
+                       let elementType = explicitTypeArgs.first
+                    {
+                        collectionType = sema.types.make(.classType(ClassType(
+                            classSymbol: mutableListSymbol,
+                            args: [.invariant(elementType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        collectionType = sema.types.anyType
+                    }
                 } else if !argTypes.isEmpty,
                           name == "listOf" || name == "listOfNotNull" || name == "emptyList"
                 {

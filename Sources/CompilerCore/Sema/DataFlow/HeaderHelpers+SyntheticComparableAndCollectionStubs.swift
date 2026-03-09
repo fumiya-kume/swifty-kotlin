@@ -174,6 +174,8 @@ extension DataFlowSemaPhase {
         let listTypeParamType = types.make(.typeParam(TypeParamType(
             symbol: listTypeParamSymbol, nullability: .nonNull
         )))
+        types.setNominalTypeParameterSymbols([listTypeParamSymbol], for: listInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: listInterfaceSymbol)
 
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
@@ -250,6 +252,7 @@ extension DataFlowSemaPhase {
         }
         // MutableList extends List
         symbols.setDirectSupertypes([listInterfaceSymbol], for: mutableListInterfaceSymbol)
+        types.setNominalDirectSupertypes([listInterfaceSymbol], for: mutableListInterfaceSymbol)
 
         // Define type parameter E for MutableList<E>
         let mlTypeParamFQName = mutableListFQName + [listTypeParamName]
@@ -264,6 +267,10 @@ extension DataFlowSemaPhase {
         let mlTypeParamType = types.make(.typeParam(TypeParamType(
             symbol: mlTypeParamSymbol, nullability: .nonNull
         )))
+        types.setNominalTypeParameterSymbols([mlTypeParamSymbol], for: mutableListInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: mutableListInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
 
         registerMutableListSetOperator(
             symbols: symbols, types: types, interner: interner,

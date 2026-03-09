@@ -33,12 +33,28 @@ extension BuildASTPhase.ExpressionParser {
     ) -> ExprID? {
         let bodyTokens = Array(bodySlice)
         let ranges = splitBlockTokensIntoStatementRanges(bodyTokens)
-        guard ranges.count > 1 else {
+        guard !ranges.isEmpty else {
             return nil
         }
 
         var statements = parseLambdaBodyStatements(ranges: ranges, tokens: bodyTokens)
         guard !statements.isEmpty else {
+            return nil
+        }
+
+        let hasStatementOnlyBody = statements.contains { statementID in
+            guard let statement = astArena.expr(statementID) else {
+                return false
+            }
+            switch statement {
+            case .localDecl, .localAssign, .memberAssign, .indexedAssign,
+                 .compoundAssign, .indexedCompoundAssign, .localFunDecl:
+                return true
+            default:
+                return false
+            }
+        }
+        if ranges.count == 1, !hasStatementOnlyBody {
             return nil
         }
 

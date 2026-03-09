@@ -139,7 +139,14 @@ extension LocalDeclTypeChecker {
         var paramSymbols: [SymbolID] = []
         for param in valueParams {
             let paramType: TypeID = if let typeRefID = param.type {
-                driver.helpers.resolveTypeRef(typeRefID, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+                driver.helpers.resolveTypeRef(
+                    typeRefID,
+                    ast: ast,
+                    sema: sema,
+                    interner: interner,
+                    scope: ctx.scope,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
             } else {
                 sema.types.anyType
             }
@@ -160,7 +167,14 @@ extension LocalDeclTypeChecker {
         }
 
         let resolvedReturnType: TypeID = if let returnTypeRef {
-            driver.helpers.resolveTypeRef(returnTypeRef, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            driver.helpers.resolveTypeRef(
+                returnTypeRef,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
         } else {
             sema.types.unitType
         }

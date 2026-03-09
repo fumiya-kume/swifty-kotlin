@@ -24,7 +24,14 @@ final class LocalDeclTypeChecker {
 
         var declaredType: TypeID?
         if let typeAnnotation {
-            declaredType = driver.helpers.resolveTypeRef(typeAnnotation, ast: ast, sema: sema, interner: interner, diagnostics: ctx.semaCtx.diagnostics)
+            declaredType = driver.helpers.resolveTypeRef(
+                typeAnnotation,
+                ast: ast,
+                sema: sema,
+                interner: interner,
+                scope: ctx.scope,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
         }
 
         var initializerType: TypeID?
@@ -36,11 +43,24 @@ final class LocalDeclTypeChecker {
         if let declaredType {
             localType = declaredType
             if let initializerType {
-                driver.emitSubtypeConstraint(
-                    left: initializerType, right: declaredType,
-                    range: range, solver: ConstraintSolver(),
-                    sema: sema, diagnostics: ctx.semaCtx.diagnostics
-                )
+                if let initializer,
+                   BuildASTPhase.LocalStatementCore.isLocalDelegateFactoryExpr(
+                       initializer,
+                       ast: ast,
+                       interner: interner
+                   )
+                {
+                    // Local delegated properties are currently modeled as local
+                    // declarations whose initializer is the delegate factory call.
+                    // Preserve the declared property type and skip constraining
+                    // the delegate object itself to that property type.
+                } else {
+                    driver.emitSubtypeConstraint(
+                        left: initializerType, right: declaredType,
+                        range: range, solver: ConstraintSolver(),
+                        sema: sema, diagnostics: ctx.semaCtx.diagnostics
+                    )
+                }
             }
         } else if let initializerType {
             localType = initializerType
@@ -115,6 +135,38 @@ final class LocalDeclTypeChecker {
             return ctx.sema.types.unitType
         }
 
+        if let implicitReceiverType = ctx.implicitReceiverType,
+           let member = driver.helpers.lookupMemberProperty(
+               named: name,
+               receiverType: ctx.sema.types.makeNonNullable(implicitReceiverType),
+               sema: ctx.sema
+           )
+        {
+            ctx.sema.bindings.bindIdentifier(id, symbol: member.symbol)
+            let propSymbol = ctx.sema.symbols.symbol(member.symbol)
+            if let propSymbol,
+               !propSymbol.flags.contains(.mutable),
+               !ctx.allowsValPropertyInitialization
+            {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0014",
+                    "Val cannot be reassigned.",
+                    range: range
+                )
+            } else {
+                driver.emitSubtypeConstraint(
+                    left: valueType,
+                    right: member.type,
+                    range: range,
+                    solver: ConstraintSolver(),
+                    sema: ctx.sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+            }
+            ctx.sema.bindings.bindExprType(id, type: ctx.sema.types.unitType)
+            return ctx.sema.types.unitType
+        }
+
         // Fall back to scope-visible property lookup for assignments like
         // `counter = counter + 1` where `counter` is a top-level var or a
         // member property accessed via implicit receiver (inside a
@@ -131,7 +183,7 @@ final class LocalDeclTypeChecker {
         }) {
             ctx.sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
             let propType = ctx.sema.symbols.propertyType(for: propSymbol.id) ?? ctx.sema.types.anyType
-            if !propSymbol.flags.contains(.mutable) {
+            if !propSymbol.flags.contains(.mutable), !ctx.allowsValPropertyInitialization {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
                     "Val cannot be reassigned.",

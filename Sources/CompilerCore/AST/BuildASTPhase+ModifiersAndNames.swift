@@ -25,6 +25,14 @@ extension BuildASTPhase {
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena)
             {
+                if case let .keyword(keyword) = token.kind {
+                    switch keyword {
+                    case .class, .object, .interface, .fun, .val, .var, .typealias:
+                        return modifiers
+                    default:
+                        break
+                    }
+                }
                 if let modifier = modifier(from: token) {
                     modifiers.insert(modifier)
                     continue

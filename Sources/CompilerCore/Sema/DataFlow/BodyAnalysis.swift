@@ -194,6 +194,8 @@ extension DataFlowSemaPhase {
 
     private func resolveBuiltinTypeName(_ name: String, nullability: Nullability, types: TypeSystem) -> TypeID? {
         switch name {
+        case "Byte": types.make(.primitive(.int, nullability))
+        case "Short": types.make(.primitive(.int, nullability))
         case "Int": types.make(.primitive(.int, nullability))
         case "Long": types.make(.primitive(.long, nullability))
         case "Float": types.make(.primitive(.float, nullability))

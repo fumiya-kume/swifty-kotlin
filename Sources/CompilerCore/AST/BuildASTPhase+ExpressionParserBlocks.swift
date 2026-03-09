@@ -98,6 +98,8 @@ extension BuildASTPhase.ExpressionParser {
                 if hasNewline, lastTokenIndex >= groupStart {
                     let lastKind = tokens[lastTokenIndex].kind
                     let lastIsContinuation = isBinaryOperatorTokenKind(lastKind)
+                        || lastKind == .symbol(.lParen)
+                        || lastKind == .symbol(.comma)
                     let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
                     if !lastIsContinuation, !nextIsContinuation {
                         ranges.append((groupStart, lastTokenIndex + 1))

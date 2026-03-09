@@ -78,20 +78,18 @@ extension KotlinParser {
                 if depth == 1 {
                     sawProjection = true
                     projectionExpected = false
-                } else { return false }
+                }
             case .symbol(.star):
                 if depth == 1 {
                     sawProjection = true
                     projectionExpected = false
-                } else { return false }
+                }
             case .keyword(.in), .softKeyword(.out):
                 if depth == 1, projectionExpected {
                     break
                 }
                 if depth == 1 {
                     projectionExpected = true
-                } else if depth < 1 {
-                    return false
                 }
             case .symbol(.dot), .symbol(.question), .symbol(.questionDot),
                  .symbol(.doubleColon), .symbol(.colon):

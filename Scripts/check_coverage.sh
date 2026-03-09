@@ -66,9 +66,16 @@ if [[ ! -e "$tests_binary" ]]; then
   exit 1
 fi
 
-if ! command -v "$llvm_cov_bin" >/dev/null 2>&1; then
-  echo "llvm-cov binary not found: ${llvm_cov_bin}" >&2
-  exit 1
+if [[ "$(uname)" == "Linux" ]]; then
+  if ! command -v "$llvm_cov_bin" >/dev/null 2>&1; then
+    echo "llvm-cov binary not found: ${llvm_cov_bin}" >&2
+    exit 1
+  fi
+else
+  if ! xcrun --find llvm-cov >/dev/null 2>&1; then
+    echo "llvm-cov binary not found via xcrun" >&2
+    exit 1
+  fi
 fi
 
 mkdir -p "$(dirname "$json_output")"

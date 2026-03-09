@@ -306,8 +306,20 @@ extension ControlFlowTypeChecker {
             )
             let isExhaustive = ctx.dataFlow.isWhenExhaustive(subjectType: subjectType, branches: summary, sema: sema)
             if !isExhaustive {
+                let hasQualifiedObjectCondition = branches.contains { branch in
+                    branch.conditions.contains { conditionID in
+                        guard let conditionExpr = ast.arena.expr(conditionID) else {
+                            return false
+                        }
+                        if case .memberCall = conditionExpr {
+                            return true
+                        }
+                        return false
+                    }
+                }
                 // P5-78: enhanced diagnostic for sealed types listing missing branches
-                if let missingBranches = ctx.dataFlow.missingSealedBranches(
+                if !hasQualifiedObjectCondition,
+                   let missingBranches = ctx.dataFlow.missingSealedBranches(
                     subjectType: subjectType, branches: summary, sema: sema
                 ) {
                     let missingNames = missingBranches.map { interner.resolve($0) }.sorted()

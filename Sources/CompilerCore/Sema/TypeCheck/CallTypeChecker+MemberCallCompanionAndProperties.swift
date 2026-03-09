@@ -10,7 +10,14 @@ extension CallTypeChecker {
             return nil
         }
         let memberFQName = owner.fqName + [memberName]
-        let candidates = sema.symbols.lookupAll(fqName: memberFQName).sorted(by: { $0.rawValue < $1.rawValue })
+        var candidates = sema.symbols.lookupAll(fqName: memberFQName).sorted(by: { $0.rawValue < $1.rawValue })
+        if candidates.isEmpty {
+            candidates = sema.symbols.lookupByShortName(memberName)
+                .filter { candidate in
+                    sema.symbols.parentSymbol(for: candidate) == ownerNominalSymbol
+                }
+                .sorted(by: { $0.rawValue < $1.rawValue })
+        }
         for candidate in candidates {
             guard let candidateSymbol = sema.symbols.symbol(candidate) else {
                 continue

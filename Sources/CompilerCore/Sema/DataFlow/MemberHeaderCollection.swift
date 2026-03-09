@@ -435,6 +435,20 @@ extension DataFlowSemaPhase {
                     symbols.setPropertyType(nestedType, for: entrySymbol)
                 }
             }
+            if nestedClass.modifiers.contains(.data) {
+                collectSyntheticDataClassCopy(
+                    classDecl: nestedClass,
+                    ast: ast,
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner,
+                    diagnostics: diagnostics
+                )
+            }
             collectNestedTypeAliases(
                 nestedClass.nestedTypeAliases,
                 ownerFQName: nestedFQName,
