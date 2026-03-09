@@ -1109,55 +1109,56 @@ extension CallTypeChecker {
                         return finalType
                     }
                 }
-                let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
-                    lookupReceiverType,
-                    sema: sema,
-                    interner: interner
-                )
-                if !isClassNameReceiver, args.isEmpty, isCoroutineHandleReceiver {
-                    let memberName = interner.resolve(calleeName)
-                    switch memberName {
-                    case "cancel":
-                        let resultType = sema.types.unitType
-                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                        sema.bindings.bindExprType(id, type: finalType)
-                        return finalType
-                    case "join":
-                        let resultType = sema.types.unitType
-                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                        sema.bindings.bindExprType(id, type: finalType)
-                        return finalType
-                    case "await":
-                        let resultType = sema.types.nullableAnyType
-                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
-                        sema.bindings.bindExprType(id, type: finalType)
-                        return finalType
-                    default:
-                        break
-                    }
-                }
-                // Builder DSL member functions (STDLIB-002).
-                if ctx.isBuilderLambdaScope, let activeBuilderKind = ctx.builderKind {
-                    let name = interner.resolve(calleeName)
-                    let isBuilderMember: Bool = switch activeBuilderKind {
-                    case .buildString: name == "append" && args.count == 1
-                    case .buildList: name == "add" && args.count == 1
-                    case .buildMap: name == "put" && args.count == 2
-                    }
-                    if isBuilderMember {
-                        sema.bindings.bindExprType(id, type: sema.types.unitType)
-                        return sema.types.unitType
-                    }
-                }
-
-                if safeCall {
-                    let resultType = sema.types.nullableAnyType
-                    sema.bindings.bindExprType(id, type: resultType)
-                    return resultType
-                }
-                ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
-                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
+
+            let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
+                lookupReceiverType,
+                sema: sema,
+                interner: interner
+            )
+            if !isClassNameReceiver, args.isEmpty, isCoroutineHandleReceiver {
+                let memberName = interner.resolve(calleeName)
+                switch memberName {
+                case "cancel":
+                    let resultType = sema.types.unitType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                case "join":
+                    let resultType = sema.types.unitType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                case "await":
+                    let resultType = sema.types.nullableAnyType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                default:
+                    break
+                }
+            }
+            // Builder DSL member functions (STDLIB-002).
+            if ctx.isBuilderLambdaScope, let activeBuilderKind = ctx.builderKind {
+                let name = interner.resolve(calleeName)
+                let isBuilderMember: Bool = switch activeBuilderKind {
+                case .buildString: name == "append" && args.count == 1
+                case .buildList: name == "add" && args.count == 1
+                case .buildMap: name == "put" && args.count == 2
+                }
+                if isBuilderMember {
+                    sema.bindings.bindExprType(id, type: sema.types.unitType)
+                    return sema.types.unitType
+                }
+            }
+
+            if safeCall {
+                let resultType = sema.types.nullableAnyType
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+            ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
         // Use the companion type as implicit receiver when the candidates were

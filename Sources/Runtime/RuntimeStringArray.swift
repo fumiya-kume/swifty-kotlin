@@ -471,12 +471,15 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("{\(rendered)}")
         return
     }
-    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self),
-       arrayBox.elements.count == 2
-    {
-        let first = runtimeRenderAnyForPrint(arrayBox.elements[0])
-        let second = runtimeRenderAnyForPrint(arrayBox.elements[1])
+    if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
+        let first = runtimeRenderAnyForPrint(pairBox.first)
+        let second = runtimeRenderAnyForPrint(pairBox.second)
         Swift.print("(\(first), \(second))")
+        return
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
+        let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
         return
     }
     Swift.print("<object \(raw)>")
@@ -534,10 +537,13 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         }.joined(separator: ", ")
         return "{\(rendered)}"
     }
-    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self),
-       arrayBox.elements.count == 2
-    {
-        return "(\(runtimeRenderAnyForPrint(arrayBox.elements[0])), \(runtimeRenderAnyForPrint(arrayBox.elements[1])))"
+    if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
+        let first = runtimeRenderAnyForPrint(pairBox.first)
+        let second = runtimeRenderAnyForPrint(pairBox.second)
+        return "(\(first), \(second))"
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
+        return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
     return "<object \(raw)>"
 }

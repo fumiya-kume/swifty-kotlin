@@ -160,7 +160,7 @@ file f0 package=golden.sema
 expr e0 name(buildString) type=String
 expr e1 this type=Class#155
 expr e2 string(a) type=String
-expr e3 memberCall recv=e1 callee=append args=[_:e2] type=<error>
+expr e3 memberCall recv=e1 callee=append args=[_:e2] type=Unit
 expr e4 name(append) type=_
 expr e5 string(b) type=String
 expr e6 call callee=e4 args=[_:e5] type=Unit

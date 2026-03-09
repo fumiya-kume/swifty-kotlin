@@ -218,7 +218,12 @@ func runtimeElementToString(_ elem: Int) -> String {
         }
         return "{" + parts.joined(separator: ", ") + "}"
     }
-    if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self) {
+    if let pairBox = tryCast(ptr, to: RuntimePairBox.self) {
+        let first = runtimeElementToString(pairBox.first)
+        let second = runtimeElementToString(pairBox.second)
+        return "(\(first), \(second))"
+    }
+    if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"
     }

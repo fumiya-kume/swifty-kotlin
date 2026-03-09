@@ -169,7 +169,7 @@ final class OperatorLoweringPass: LoweringPass {
                                     isSuperCall: isSuperCall
                                 )
                                 continue
-                            case .primitive(.boolean, _):
+                            case .primitive(.boolean, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
                                     symbol: symbol,

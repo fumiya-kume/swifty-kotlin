@@ -90,6 +90,16 @@ final class RuntimeObjectBox: RuntimeArrayBox {
     }
 }
 
+final class RuntimePairBox {
+    let first: Int
+    let second: Int
+
+    init(first: Int, second: Int) {
+        self.first = first
+        self.second = second
+    }
+}
+
 final class RuntimeIntBox {
     let value: Int
 
