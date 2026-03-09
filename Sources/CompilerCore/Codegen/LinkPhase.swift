@@ -15,7 +15,11 @@ public final class LinkPhase: CompilerPhase {
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available during link.")
         }
-        guard let entrySymbol = resolveEntrySymbol(kir: kir, interner: ctx.interner) else {
+        guard let entrySymbol = resolveEntrySymbol(
+            kir: kir,
+            interner: ctx.interner,
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
+        ) else {
             ctx.diagnostics.error(
                 "KSWIFTK-LINK-0002",
                 "No entry point 'main' function found for executable emission.",
@@ -32,11 +36,15 @@ public final class LinkPhase: CompilerPhase {
             let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: ctx.options.target)
             let entryWrapperObjectPath = try LLVMEntryPointObjectEmitter(target: ctx.options.target)
                 .emit(entrySymbol: entrySymbol, outputPath: ctx.options.outputPath)
+            let autolinkStubPath = try emitSwiftAutolinkStubIfNeeded(target: ctx.options.target)
             let linkInputs = buildLinkInputs(
                 objectPath: objectPath, entryWrapperObjectPath: entryWrapperObjectPath,
                 runtimeObjects: runtimeObjects, autoLinkedObjects: autoLinkedObjects
             )
             var args = linkInputs
+            if let autolinkStubPath {
+                args.append(autolinkStubPath)
+            }
             if ctx.options.debugInfo { args.append("-g") }
             args.append(contentsOf: ["-o", ctx.options.outputPath])
             args.append(contentsOf: linkerDriverArgs(for: ctx.options.target))
@@ -54,6 +62,34 @@ public final class LinkPhase: CompilerPhase {
             ctx.diagnostics.error("KSWIFTK-LINK-0001", "Link step failed: \(error)", range: nil)
             throw CompilerPipelineError.outputUnavailable
         }
+    }
+
+    private func emitSwiftAutolinkStubIfNeeded(target: TargetTriple) throws -> String? {
+        guard target.os.hasPrefix("linux") else {
+            return nil
+        }
+
+        let stubDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk-link-stubs", isDirectory: true)
+        try FileManager.default.createDirectory(at: stubDirectory, withIntermediateDirectories: true)
+
+        let stubName = "runtime-autolink-\(CodegenRuntimeSupport.stableFNV1a64Hex(CodegenRuntimeSupport.targetTripleString(target))).swift"
+        let stubURL = stubDirectory.appendingPathComponent(stubName)
+        let stubContents = """
+        import Dispatch
+        import Foundation
+
+        @inline(never)
+        private func _kswiftkRuntimeAutolinkAnchor() {
+            _ = NSLock()
+            _ = DispatchQueue.global(qos: .default)
+            _ = DispatchSemaphore(value: 0)
+        }
+        """
+        if !FileManager.default.fileExists(atPath: stubURL.path) {
+            try stubContents.write(to: stubURL, atomically: true, encoding: .utf8)
+        }
+        return stubURL.path
     }
 
     private func buildLinkInputs(
@@ -78,17 +114,27 @@ public final class LinkPhase: CompilerPhase {
             return "Failed to launch linker: \(reason)"
         case let .nonZeroExit(result):
             let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            return stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
+            let stdout = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            let output = "STDOUT: \(stdout)\nSTDERR: \(stderr)"
+            return "Linker failed with exit code \(result.exitCode):\n\(output)"
         }
     }
 
-    private func resolveEntrySymbol(kir: KIRModule, interner: StringInterner) -> String? {
+    private func resolveEntrySymbol(
+        kir: KIRModule,
+        interner: StringInterner,
+        fileFacadeNamesByFileID: [Int32: String]
+    ) -> String? {
         for decl in kir.arena.declarations {
             guard case let .function(function) = decl else {
                 continue
             }
             if interner.resolve(function.name) == "main" {
-                return CodegenSymbolSupport.cFunctionSymbol(for: function, interner: interner)
+                return CodegenSymbolSupport.cFunctionSymbol(
+                    for: function,
+                    interner: interner,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
             }
         }
         return nil
@@ -97,7 +143,7 @@ public final class LinkPhase: CompilerPhase {
     func linkerDriverArgs(for target: TargetTriple) -> [String] {
         var args = ["-target", linkerTargetTriple(target)]
         if target.os.hasPrefix("linux") {
-            args.append(contentsOf: ["-Xlinker", "-no-pie"])
+            args.append(contentsOf: ["-Xlinker", "-no-pie", "-parse-as-library"])
         }
         return args
     }

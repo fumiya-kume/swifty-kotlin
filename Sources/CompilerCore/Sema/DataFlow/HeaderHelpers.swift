@@ -100,6 +100,7 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.final) { value.insert(.finalMember) }
         if modifiers.contains(.expect) { value.insert(.expectDeclaration) }
         if modifiers.contains(.actual) { value.insert(.actualDeclaration) }
+        if modifiers.contains(.lateinit) { value.insert(.lateinitProperty) }
     }
 
     func hasDeclarationConflict(newKind: SymbolKind, existing: [SemanticSymbol]) -> Bool {
@@ -422,6 +423,117 @@ extension DataFlowSemaPhase {
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
+    }
+
+    func registerSyntheticContractStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let contractsFQName = ensurePackage(
+            path: ["kotlin", "contracts"],
+            symbols: symbols,
+            interner: interner
+        )
+        let contractsPkg = symbols.lookup(fqName: contractsFQName) ?? SymbolID.invalid
+        let builderSymbol = ensureClassSymbol(
+            named: "ContractBuilder",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        let effectSymbol = ensureClassSymbol(
+            named: "ContractEffect",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
+        )
+        if contractsPkg != .invalid {
+            symbols.setParentSymbol(contractsPkg, for: builderSymbol)
+            symbols.setParentSymbol(contractsPkg, for: effectSymbol)
+        }
+        let builderType = types.make(.classType(ClassType(classSymbol: builderSymbol, args: [], nullability: .nonNull)))
+        let effectType = types.make(.classType(ClassType(classSymbol: effectSymbol, args: [], nullability: .nonNull)))
+
+        let contractName = interner.intern("contract")
+        let contractFQName = contractsFQName + [contractName]
+        if symbols.lookup(fqName: contractFQName) == nil {
+            let symbol = symbols.define(
+                kind: .function,
+                name: contractName,
+                fqName: contractFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            let blockType = types.make(.functionType(FunctionType(
+                receiver: builderType,
+                params: [],
+                returnType: types.unitType
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(parameterTypes: [blockType], returnType: types.unitType),
+                for: symbol
+            )
+            if contractsPkg != .invalid {
+                symbols.setParentSymbol(contractsPkg, for: symbol)
+            }
+        }
+
+        func ensureMember(
+            owner: SymbolID,
+            ownerFQName: [InternedString],
+            name: String,
+            receiverType: TypeID,
+            params: [TypeID],
+            returnType: TypeID
+        ) {
+            let interned = interner.intern(name)
+            let fqName = ownerFQName + [interned]
+            guard symbols.lookup(fqName: fqName) == nil else { return }
+            let symbol = symbols.define(
+                kind: .function,
+                name: interned,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setFunctionSignature(
+                FunctionSignature(receiverType: receiverType, parameterTypes: params, returnType: returnType),
+                for: symbol
+            )
+            symbols.setParentSymbol(owner, for: symbol)
+        }
+
+        ensureMember(
+            owner: builderSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
+            name: "returns",
+            receiverType: builderType,
+            params: [],
+            returnType: effectType
+        )
+        ensureMember(
+            owner: builderSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
+            name: "returns",
+            receiverType: builderType,
+            params: [types.booleanType],
+            returnType: effectType
+        )
+        ensureMember(
+            owner: effectSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractEffect")],
+            name: "implies",
+            receiverType: effectType,
+            params: [types.booleanType],
+            returnType: types.unitType
+        )
     }
 
     /// Look up or define a synthetic interface symbol in the given package.
@@ -439,6 +551,27 @@ extension DataFlowSemaPhase {
         return symbols.define(
             kind: .interface, name: internedName, fqName: fqName,
             declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+    }
+
+    func ensureClassSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .class,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
         )
     }
 
@@ -462,5 +595,28 @@ extension DataFlowSemaPhase {
             )
         }
         return kotlinPropertiesPkg
+    }
+
+    private func ensurePackage(
+        path: [String],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        var fqName: [InternedString] = []
+        for component in path {
+            let interned = interner.intern(component)
+            fqName.append(interned)
+            if symbols.lookup(fqName: fqName) == nil {
+                _ = symbols.define(
+                    kind: .package,
+                    name: interned,
+                    fqName: fqName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+        }
+        return fqName
     }
 }

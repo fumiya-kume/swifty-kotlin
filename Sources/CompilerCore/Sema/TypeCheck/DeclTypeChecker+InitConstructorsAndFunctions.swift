@@ -231,6 +231,14 @@ extension DeclTypeChecker {
             signature: signature,
             sema: sema
         )
+        recordContractEffects(
+            function: function,
+            symbol: symbol,
+            signature: signature,
+            ast: ctx.ast,
+            interner: ctx.interner,
+            sema: sema
+        )
     }
 
     /// Updates the function signature with the inferred return type when no
@@ -269,5 +277,101 @@ extension DeclTypeChecker {
                 for: symbol
             )
         }
+    }
+
+    private func recordContractEffects(
+        function: FunDecl,
+        symbol: SymbolID,
+        signature: FunctionSignature,
+        ast: ASTModule,
+        interner: StringInterner,
+        sema: SemaModule
+    ) {
+        guard case let .block(expressions, _) = function.body,
+              let firstExprID = expressions.first,
+              let firstExpr = ast.arena.expr(firstExprID),
+              case let .call(calleeExprID, _, args, _) = firstExpr,
+              args.count == 1,
+              let calleeExpr = ast.arena.expr(calleeExprID),
+              case let .nameRef(calleeName, _) = calleeExpr,
+              interner.resolve(calleeName) == "contract",
+              let lambdaExpr = ast.arena.expr(args[0].expr)
+        else {
+            return
+        }
+
+        let lambdaBodyExprID: ExprID? = switch lambdaExpr {
+        case let .lambdaLiteral(_, body, _, _):
+            body
+        default:
+            nil
+        }
+        guard let lambdaBodyExprID,
+              let lambdaBodyExpr = ast.arena.expr(lambdaBodyExprID)
+        else {
+            return
+        }
+
+        let contractExprID: ExprID? = switch lambdaBodyExpr {
+        case let .blockExpr(statements, trailingExpr, _):
+            statements.first ?? trailingExpr
+        default:
+            lambdaBodyExprID
+        }
+        guard let contractExprID,
+              let contractExpr = ast.arena.expr(contractExprID),
+              case let .memberCall(receiverExprID, impliesName, _, impliesArgs, _) = contractExpr,
+              interner.resolve(impliesName) == "implies",
+              impliesArgs.count == 1,
+              let receiverExpr = ast.arena.expr(receiverExprID),
+              case let .call(returnsCalleeExprID, _, returnsArgs, _) = receiverExpr,
+              let returnsCalleeExpr = ast.arena.expr(returnsCalleeExprID),
+              case let .nameRef(returnsName, _) = returnsCalleeExpr,
+              interner.resolve(returnsName) == "returns",
+              returnsArgs.isEmpty,
+              let conditionExpr = ast.arena.expr(impliesArgs[0].expr),
+              case let .binary(.notEqual, lhsExprID, rhsExprID, _) = conditionExpr
+        else {
+            return
+        }
+
+        let parameterName: InternedString? = if let lhsExpr = ast.arena.expr(lhsExprID),
+                                                case let .nameRef(name, _) = lhsExpr,
+                                                isNullLiteralExpr(rhsExprID, ast: ast, interner: interner)
+        {
+            name
+        } else if let rhsExpr = ast.arena.expr(rhsExprID),
+                  case let .nameRef(name, _) = rhsExpr,
+                  isNullLiteralExpr(lhsExprID, ast: ast, interner: interner)
+        {
+            name
+        } else {
+            nil
+        }
+        guard let parameterName,
+              let parameterIndex = function.valueParams.firstIndex(where: { $0.name == parameterName }),
+              parameterIndex < signature.valueParameterSymbols.count
+        else {
+            return
+        }
+        sema.symbols.setContractNonNullEffect(
+            ContractNonNullEffect(
+                parameterSymbol: signature.valueParameterSymbols[parameterIndex],
+                appliesOnAnyReturn: true
+            ),
+            for: symbol
+        )
+    }
+
+    private func isNullLiteralExpr(
+        _ exprID: ExprID,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let expr = ast.arena.expr(exprID) else { return false }
+        if case let .nameRef(name, _) = expr {
+            return interner.resolve(name) == "null"
+        }
+        return false
     }
 }

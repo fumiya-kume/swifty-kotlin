@@ -70,13 +70,22 @@ extension KIRLoweringDriver {
         delegateObjExpr: KIRExprID,
         symbol: SymbolID,
         delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
+        delegateType _: TypeID,
         shared: KIRLoweringSharedContext,
         emit initInstructions: inout KIRLoweringEmitContext
     ) {
         let arena = shared.arena
         let sema = shared.sema
         let interner = shared.interner
+        guard let provideDelegateSymbol = sema.symbols.delegateProvideDelegateSymbol(for: symbol) else {
+            emitSimpleDelegateInit(
+                delegateObjExpr: delegateObjExpr,
+                delegateStorageSymbol: delegateStorageSymbol,
+                shared: shared,
+                emit: &initInstructions
+            )
+            return
+        }
 
         // Store the raw delegate so we can call provideDelegate on it.
         initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
@@ -101,46 +110,26 @@ extension KIRLoweringDriver {
         )
         initInstructions.append(
             .call(
-                symbol: delegateStorageSymbol,
+                symbol: provideDelegateSymbol,
                 callee: provideDelegateName,
-                arguments: [thisRefExprID, kPropertyExprID],
+                arguments: [delegateObjExpr, thisRefExprID, kPropertyExprID],
                 result: provideDelegateResult,
                 canThrow: false,
                 thrownResult: nil
             )
         )
 
-        // Wrap the provideDelegate result in kk_custom_delegate_create.
-        let wrappedResult = arena.appendExpr(
-            .temporary(Int32(arena.expressions.count)), type: delegateType
-        )
-        initInstructions.append(.call(
-            symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [provideDelegateResult],
-            result: wrappedResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: wrappedResult, symbol: delegateStorageSymbol))
+        initInstructions.append(.storeGlobal(value: provideDelegateResult, symbol: delegateStorageSymbol))
     }
 
     /// Emits the simple delegate init: just wrap in kk_custom_delegate_create.
     func emitSimpleDelegateInit(
         delegateObjExpr: KIRExprID,
         delegateStorageSymbol: SymbolID,
-        delegateType: TypeID,
-        shared: KIRLoweringSharedContext,
+        shared _: KIRLoweringSharedContext,
         emit initInstructions: inout KIRLoweringEmitContext
     ) {
-        let arena = shared.arena
-        let interner = shared.interner
-        let createResult = arena.appendExpr(
-            .temporary(Int32(arena.expressions.count)), type: delegateType
-        )
-        initInstructions.append(.call(
-            symbol: nil, callee: interner.intern("kk_custom_delegate_create"),
-            arguments: [delegateObjExpr],
-            result: createResult, canThrow: false, thrownResult: nil
-        ))
-        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
+        initInstructions.append(.storeGlobal(value: delegateObjExpr, symbol: delegateStorageSymbol))
     }
 }
 

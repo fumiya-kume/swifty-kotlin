@@ -28,6 +28,7 @@ extension MemberLowerer {
         propertySymbol: SymbolID,
         propertyType: TypeID,
         delegateStorageSymbol: SymbolID,
+        delegateKind: StdlibDelegateKind,
         accessorKind: PropertyAccessorKind,
         shared: KIRLoweringSharedContext,
         allDecls: inout [KIRDeclID]
@@ -57,8 +58,28 @@ extension MemberLowerer {
 
         let returnType: TypeID
         let accessorName: InternedString
-        let getValueName = interner.intern("getValue")
-        let setValueName = interner.intern("setValue")
+        let customGetValueSymbol = sema.symbols.delegateGetValueSymbol(for: propertySymbol)
+        let customSetValueSymbol = sema.symbols.delegateSetValueSymbol(for: propertySymbol)
+        let getValueName: InternedString = switch delegateKind {
+        case .lazy:
+            interner.intern("kk_lazy_get_value")
+        case .observable:
+            interner.intern("kk_observable_get_value")
+        case .vetoable:
+            interner.intern("kk_vetoable_get_value")
+        case .custom:
+            interner.intern("getValue")
+        }
+        let setValueName: InternedString = switch delegateKind {
+        case .lazy:
+            interner.intern("setValue")
+        case .observable:
+            interner.intern("kk_observable_set_value")
+        case .vetoable:
+            interner.intern("kk_vetoable_set_value")
+        case .custom:
+            interner.intern("setValue")
+        }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
@@ -67,45 +88,16 @@ extension MemberLowerer {
             body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
         }
 
-        // Build the thisRef argument (receiver or null for top-level).
-        let thisRefExprID: KIRExprID
-        if let receiver = driver.ctx.currentImplicitReceiverExprID {
-            thisRefExprID = receiver
-        } else {
-            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
-            body.append(.constValue(result: thisRefExprID, value: .null))
-        }
-
-        // Build a KProperty metadata argument (name + return type signature).
-        let propertyName = sema.symbols.symbol(propertySymbol)?.name ?? interner.intern("")
-        let propertyNameExprID = arena.appendExpr(
-            .stringLiteral(propertyName),
-            type: sema.types.make(.primitive(.string, .nonNull))
-        )
-        body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
-        let returnTypeSig = interner.intern(sema.types.renderType(propertyType))
-        let returnTypeExprID = arena.appendExpr(
-            .stringLiteral(returnTypeSig),
-            type: sema.types.make(.primitive(.string, .nonNull))
-        )
-        body.append(.constValue(result: returnTypeExprID, value: .stringLiteral(returnTypeSig)))
-        let kPropertyExprID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
-        body.append(
-            .call(
-                symbol: nil,
-                callee: interner.intern("kk_kproperty_stub_create"),
-                arguments: [propertyNameExprID, returnTypeExprID],
-                result: kPropertyExprID,
-                canThrow: false,
-                thrownResult: nil
-            )
-        )
-
         switch accessorKind {
         case .getter:
             returnType = propertyType
             accessorName = interner.intern("get")
 
+            let delegateHandleExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            body.append(.loadGlobal(result: delegateHandleExprID, symbol: delegateStorageSymbol))
             // call: $delegate_x.getValue(thisRef, kProperty) -> PropertyType
             let resultExprID = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
@@ -113,9 +105,15 @@ extension MemberLowerer {
             )
             body.append(
                 .call(
-                    symbol: delegateStorageSymbol,
+                    symbol: delegateKind == .custom ? customGetValueSymbol : delegateStorageSymbol,
                     callee: getValueName,
-                    arguments: [thisRefExprID, kPropertyExprID],
+                    arguments: delegateKind == .custom ? [delegateHandleExprID] + buildCustomDelegateGetterArgs(
+                        propertySymbol: propertySymbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        body: &body
+                    ) : [],
                     result: resultExprID,
                     canThrow: false,
                     thrownResult: nil
@@ -133,15 +131,27 @@ extension MemberLowerer {
             // call: $delegate_x.setValue(thisRef, kProperty, value)
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
             body.append(.constValue(result: valueExprID, value: .symbolRef(valueParamSymbol)))
+            let delegateHandleExprID = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.anyType
+            )
+            body.append(.loadGlobal(result: delegateHandleExprID, symbol: delegateStorageSymbol))
             let resultExprID = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
                 type: sema.types.unitType
             )
             body.append(
                 .call(
-                    symbol: delegateStorageSymbol,
+                    symbol: delegateKind == .custom ? customSetValueSymbol : delegateStorageSymbol,
                     callee: setValueName,
-                    arguments: [thisRefExprID, kPropertyExprID, valueExprID],
+                    arguments: delegateKind == .custom ? [delegateHandleExprID] + buildCustomDelegateSetterArgs(
+                        propertySymbol: propertySymbol,
+                        valueExprID: valueExprID,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        body: &body
+                    ) : [valueExprID],
                     result: resultExprID,
                     canThrow: false,
                     thrownResult: nil
@@ -173,6 +183,81 @@ extension MemberLowerer {
         allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
         driver.ctx.currentImplicitReceiverExprID = nil
         driver.ctx.currentImplicitReceiverSymbol = nil
+    }
+
+    private func buildCustomDelegateGetterArgs(
+        propertySymbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> [KIRExprID] {
+        let thisRefExprID: KIRExprID
+        if let receiver = driver.ctx.currentImplicitReceiverExprID {
+            thisRefExprID = receiver
+        } else {
+            thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            body.append(.constValue(result: thisRefExprID, value: .null))
+        }
+        let kPropertyExprID = buildKPropertyStub(
+            propertySymbol: propertySymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            body: &body
+        )
+        return [thisRefExprID, kPropertyExprID]
+    }
+
+    private func buildCustomDelegateSetterArgs(
+        propertySymbol: SymbolID,
+        valueExprID: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> [KIRExprID] {
+        buildCustomDelegateGetterArgs(
+            propertySymbol: propertySymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            body: &body
+        ) + [valueExprID]
+    }
+
+    private func buildKPropertyStub(
+        propertySymbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> KIRExprID {
+        let propertyName = sema.symbols.symbol(propertySymbol)?.name ?? interner.intern("")
+        let propertyNameExprID = arena.appendExpr(
+            .stringLiteral(propertyName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: propertyNameExprID, value: .stringLiteral(propertyName)))
+        let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
+        let returnTypeSig = interner.intern(sema.types.renderType(propertyType))
+        let returnTypeExprID = arena.appendExpr(
+            .stringLiteral(returnTypeSig),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: returnTypeExprID, value: .stringLiteral(returnTypeSig)))
+        let kPropertyExprID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        body.append(
+            .call(
+                symbol: nil,
+                callee: interner.intern("kk_kproperty_stub_create"),
+                arguments: [propertyNameExprID, returnTypeExprID],
+                result: kPropertyExprID,
+                canThrow: false,
+                thrownResult: nil
+            )
+        )
+        return kPropertyExprID
     }
 
     /// Lower a property getter or setter body as a synthetic KIR function.

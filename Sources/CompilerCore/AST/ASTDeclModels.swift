@@ -20,6 +20,26 @@ public struct ASTFile {
     public let imports: [ImportDecl]
     public let topLevelDecls: [DeclID]
     public let scriptBody: [ExprID]
+    public let annotations: [AnnotationNode]
+    public let range: SourceRange?
+
+    public init(
+        fileID: FileID,
+        packageFQName: [InternedString],
+        imports: [ImportDecl],
+        topLevelDecls: [DeclID],
+        scriptBody: [ExprID],
+        annotations: [AnnotationNode] = [],
+        range: SourceRange? = nil
+    ) {
+        self.fileID = fileID
+        self.packageFQName = packageFQName
+        self.imports = imports
+        self.topLevelDecls = topLevelDecls
+        self.scriptBody = scriptBody
+        self.annotations = annotations
+        self.range = range
+    }
 }
 
 public enum ConstructorDelegationKind: Equatable {
@@ -347,6 +367,9 @@ public struct PropertyDecl {
     /// The receiver type reference for extension properties (e.g. `val Int.double`).
     /// `nil` for regular (non-extension) properties.
     public let receiverType: TypeRefID?
+    /// `true` for synthetic member properties materialized from primary
+    /// constructor `val` / `var` parameters.
+    public let isSynthesizedPrimaryConstructorProperty: Bool
 
     public init(
         range: SourceRange,
@@ -360,7 +383,8 @@ public struct PropertyDecl {
         setter: PropertyAccessorDecl? = nil,
         delegateExpression: ExprID? = nil,
         delegateBody: FunctionBody? = nil,
-        receiverType: TypeRefID? = nil
+        receiverType: TypeRefID? = nil,
+        isSynthesizedPrimaryConstructorProperty: Bool = false
     ) {
         self.range = range
         self.name = name
@@ -374,6 +398,7 @@ public struct PropertyDecl {
         self.delegateExpression = delegateExpression
         self.delegateBody = delegateBody
         self.receiverType = receiverType
+        self.isSynthesizedPrimaryConstructorProperty = isSynthesizedPrimaryConstructorProperty
     }
 }
 
@@ -448,6 +473,11 @@ public struct TypeParamDecl {
 public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
+    /// `true` when the primary constructor parameter is declared as a property
+    /// via `val` or `var`.
+    public let isProperty: Bool
+    /// `true` only for `var` primary constructor properties.
+    public let isMutableProperty: Bool
     public let hasDefaultValue: Bool
     public let isVararg: Bool
     public let defaultValue: ExprID?
@@ -455,12 +485,16 @@ public struct ValueParamDecl: Equatable {
     public init(
         name: InternedString,
         type: TypeRefID?,
+        isProperty: Bool = false,
+        isMutableProperty: Bool = false,
         hasDefaultValue: Bool = false,
         isVararg: Bool = false,
         defaultValue: ExprID? = nil
     ) {
         self.name = name
         self.type = type
+        self.isProperty = isProperty
+        self.isMutableProperty = isMutableProperty
         self.hasDefaultValue = hasDefaultValue
         self.isVararg = isVararg
         self.defaultValue = defaultValue

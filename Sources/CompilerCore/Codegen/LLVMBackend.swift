@@ -34,7 +34,8 @@ public final class LLVMBackend {
         runtime: RuntimeLinkInfo,
         outputObjectPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager: SourceManager? = nil,
+        fileFacadeNamesByFileID: [Int32: String] = [:]
     ) throws {
         _ = runtime
         try emitNative(
@@ -47,7 +48,8 @@ public final class LLVMBackend {
                     bindings: bindings,
                     module: module,
                     interner: interner,
-                    sourceManager: sourceManager
+                    sourceManager: sourceManager,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
                 try emitter.emitObject(outputPath: outputObjectPath)
             }
@@ -59,7 +61,8 @@ public final class LLVMBackend {
         runtime: RuntimeLinkInfo,
         outputIRPath: String,
         interner: StringInterner,
-        sourceManager: SourceManager? = nil
+        sourceManager: SourceManager? = nil,
+        fileFacadeNamesByFileID: [Int32: String] = [:]
     ) throws {
         _ = runtime
         try emitNative(
@@ -72,7 +75,8 @@ public final class LLVMBackend {
                     bindings: bindings,
                     module: module,
                     interner: interner,
-                    sourceManager: sourceManager
+                    sourceManager: sourceManager,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
                 try emitter.emitLLVMIR(outputPath: outputIRPath)
             }

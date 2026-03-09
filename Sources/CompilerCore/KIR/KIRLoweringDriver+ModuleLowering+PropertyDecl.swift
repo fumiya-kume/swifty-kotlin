@@ -120,14 +120,24 @@ extension KIRLoweringDriver {
         allTopLevelInitInstructions: inout KIRLoweringEmitContext,
         declIDs: inout [KIRDeclID]
     ) {
-        guard let initializer = propertyDecl.initializer,
-              propertyDecl.delegateExpression == nil,
+        guard propertyDecl.delegateExpression == nil,
               !isExtensionProperty
         else { return }
 
         let sema = shared.sema
         let arena = shared.arena
         let propertyConstantInitializers = shared.propertyConstantInitializers
+
+        if propertyDecl.initializer == nil, propertyDecl.modifiers.contains(.lateinit) {
+            let nullExpr = arena.appendExpr(.null, type: propType)
+            allTopLevelInitInstructions.append(.constValue(result: nullExpr, value: .null))
+            let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
+            allTopLevelInitInstructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
+            allTopLevelInitInstructions.append(.copy(from: nullExpr, to: globalRef))
+            return
+        }
+
+        guard let initializer = propertyDecl.initializer else { return }
 
         let needsInit = propertyConstantInitializers[symbol] == nil
             || (sema.symbols.symbol(symbol)?.flags.contains(.mutable) == true)
@@ -218,12 +228,14 @@ extension KIRLoweringDriver {
         memberLowerer.lowerDelegateAccessor(
             propertySymbol: symbol, propertyType: propType,
             delegateStorageSymbol: delegateStorageSymbol,
+            delegateKind: delegateKind,
             accessorKind: .getter, shared: shared, allDecls: &declIDs
         )
         if propertyDecl.isVar {
             memberLowerer.lowerDelegateAccessor(
                 propertySymbol: symbol, propertyType: propType,
                 delegateStorageSymbol: delegateStorageSymbol,
+                delegateKind: delegateKind,
                 accessorKind: .setter, shared: shared, allDecls: &declIDs
             )
         }
@@ -346,7 +358,7 @@ extension KIRLoweringDriver {
         } else {
             emitSimpleDelegateInit(
                 delegateObjExpr: delegateObjExpr,
-                delegateStorageSymbol: delegateStorageSymbol, delegateType: delegateType,
+                delegateStorageSymbol: delegateStorageSymbol,
                 shared: shared, emit: &initInstructions
             )
         }

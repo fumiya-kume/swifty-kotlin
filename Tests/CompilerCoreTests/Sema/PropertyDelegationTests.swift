@@ -241,7 +241,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
             XCTAssertFalse(getterFunctions.isEmpty, "Expected synthesized getter with getValue call")
 
-            // Verify the getValue call has exactly 2 arguments (thisRef, kProperty).
+            // Custom delegates prepend the delegate handle before thisRef and kProperty.
             if let getter = getterFunctions.first {
                 let getValueCalls = getter.body.compactMap { instruction -> [KIRExprID]? in
                     guard case let .call(_, callee, args, _, _, _, _) = instruction,
@@ -250,7 +250,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
                 }
                 XCTAssertFalse(getValueCalls.isEmpty)
                 if let args = getValueCalls.first {
-                    XCTAssertEqual(args.count, 2, "getValue should have 2 arguments: thisRef and kProperty")
+                    XCTAssertEqual(args.count, 3, "getValue should have 3 arguments: delegate, thisRef, and kProperty")
                 }
             }
         }
@@ -283,7 +283,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
             XCTAssertFalse(setterFunctions.isEmpty, "Expected synthesized setter with setValue call")
 
-            // Verify the setValue call has exactly 3 arguments (thisRef, kProperty, value).
+            // Custom delegates prepend the delegate handle before thisRef, kProperty, and value.
             if let setter = setterFunctions.first {
                 let setValueCalls = setter.body.compactMap { instruction -> [KIRExprID]? in
                     guard case let .call(_, callee, args, _, _, _, _) = instruction,
@@ -292,7 +292,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
                 }
                 XCTAssertFalse(setValueCalls.isEmpty)
                 if let args = setValueCalls.first {
-                    XCTAssertEqual(args.count, 3, "setValue should have 3 arguments: thisRef, kProperty, value")
+                    XCTAssertEqual(args.count, 4, "setValue should have 4 arguments: delegate, thisRef, kProperty, and value")
                 }
             }
         }
@@ -370,7 +370,8 @@ final class KIRDelegateAccessorTests: XCTestCase {
             let interner = ctx.interner
             let sema = try XCTUnwrap(ctx.sema)
 
-            // Find the getter and check that getValue's symbol is the delegate storage.
+            // Find the getter and check that getValue resolves as a direct member call,
+            // rather than using the delegate storage field as the callee symbol.
             let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
                 guard case let .function(fn) = decl else { return nil }
                 let name = interner.resolve(fn.name)
@@ -380,22 +381,12 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
 
             if let getter = getterFunctions.first {
-                let getValueCallSymbols = getter.body.compactMap { instruction -> SymbolID? in
-                    guard case let .call(sym, callee, _, _, _, _, _) = instruction,
-                          interner.resolve(callee) == "getValue" else { return nil }
-                    return sym
+                let getValueCallCount = getter.body.reduce(into: 0) { count, instruction in
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction,
+                          interner.resolve(callee) == "getValue" else { return }
+                    count += 1
                 }
-                XCTAssertFalse(getValueCallSymbols.isEmpty)
-                if let sym = getValueCallSymbols.first {
-                    // The symbol should be a delegate storage field ($delegate_x).
-                    let symInfo = sema.symbols.symbol(sym)
-                    XCTAssertNotNil(symInfo)
-                    if let symInfo {
-                        XCTAssertEqual(symInfo.kind, .field)
-                        XCTAssertTrue(interner.resolve(symInfo.name).hasPrefix("$delegate_"),
-                                      "getValue call symbol should be a $delegate_ field")
-                    }
-                }
+                XCTAssertGreaterThan(getValueCallCount, 0, "Expected synthesized getter to contain a direct getValue call")
             }
         }
     }

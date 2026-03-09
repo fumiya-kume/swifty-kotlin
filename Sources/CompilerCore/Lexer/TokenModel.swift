@@ -117,6 +117,7 @@ public enum SoftKeyword: String, Sendable {
     case setparam
     case delegate
     case file
+    case context
     case `where`
     case `init`
     case constructor

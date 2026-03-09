@@ -294,6 +294,30 @@ public func kk_type_register_iface(_ childTypeId: Int, _ ifaceTypeId: Int) -> In
     return 0
 }
 
+@_cdecl("kk_object_register_itable_method")
+public func kk_object_register_itable_method(
+    _ objectRaw: Int,
+    _ ifaceSlot: Int,
+    _ methodSlot: Int,
+    _ functionRaw: Int
+) -> Int {
+    guard ifaceSlot >= 0,
+          methodSlot >= 0,
+          functionRaw != 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    let dispatchKey = (UInt64(UInt32(ifaceSlot)) << 32) | UInt64(UInt32(methodSlot))
+    runtimeStorage.withLock { state in
+        var methods = state.objectItableMethods[objectKey] ?? [:]
+        methods[dispatchKey] = functionRaw
+        state.objectItableMethods[objectKey] = methods
+    }
+    return 0
+}
+
 @_cdecl("kk_array_get")
 public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

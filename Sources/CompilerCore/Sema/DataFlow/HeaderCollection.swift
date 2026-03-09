@@ -2,6 +2,43 @@
 import Foundation
 
 extension DataFlowSemaPhase {
+    func registerFileAnnotations(
+        file: ASTFile,
+        symbols: SymbolTable,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard !file.annotations.isEmpty else {
+            return
+        }
+
+        let packageSymbol = symbols.lookup(fqName: file.packageFQName.isEmpty ? [interner.intern("_root_")] : file.packageFQName)
+        let records = file.annotations.map { annotation in
+            MetadataAnnotationRecord(
+                annotationFQName: annotation.name,
+                arguments: annotation.arguments,
+                useSiteTarget: annotation.useSiteTarget
+            )
+        }
+        if let packageSymbol {
+            var merged = symbols.annotations(for: packageSymbol)
+            for record in records where !merged.contains(record) {
+                merged.append(record)
+            }
+            symbols.setAnnotations(merged, for: packageSymbol)
+        }
+
+        for annotation in file.annotations where annotation.name == "Suppress" || annotation.name == "kotlin.Suppress" {
+            guard let fileRange = file.range else {
+                continue
+            }
+            for argument in annotation.arguments {
+                let code = argument.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
+                diagnostics.addSuppression(code: code, range: fileRange)
+            }
+        }
+    }
+
     func collectHeader(
         declID: DeclID,
         file: ASTFile,

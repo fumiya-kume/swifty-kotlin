@@ -19,6 +19,7 @@ extension KIRLoweringDriver {
         }
         ctx.resetScopeForFunction()
         ctx.beginCallableLoweringScope()
+        ctx.currentFunctionSymbol = ctorSymbol
 
         let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
         var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
@@ -36,11 +37,13 @@ extension KIRLoweringDriver {
             shared: shared, compilationCtx: compilationCtx
         )
 
-        return finalizeConstructorDecl(
+        let decls = finalizeConstructorDecl(
             ctorSymbol: ctorSymbol, classDecl: classDecl,
             params: params, returnType: signature.returnType,
             body: body, signature: signature, shared: shared
         )
+        ctx.currentFunctionSymbol = nil
+        return decls
     }
 
     /// Builds the constructor body instructions for a primary or secondary constructor.
@@ -61,6 +64,12 @@ extension KIRLoweringDriver {
         }
         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
         if !isSecondary {
+            emitPrimaryConstructorPropertyInitializers(
+                classDecl: classDecl,
+                shared: shared,
+                compilationCtx: compilationCtx,
+                body: &body
+            )
             emitClassDelegationInitializers(
                 classDecl: classDecl, ownerSymbol: ownerSymbol,
                 receiverID: ctx.currentImplicitReceiverExprID!,
@@ -85,6 +94,64 @@ extension KIRLoweringDriver {
         }
         body.append(.endBlock)
         return body
+    }
+
+    private func emitPrimaryConstructorPropertyInitializers(
+        classDecl: ClassDecl,
+        shared: KIRLoweringSharedContext,
+        compilationCtx _: CompilationContext,
+        body: inout KIRLoweringEmitContext
+    ) {
+        let sema = shared.sema
+        let arena = shared.arena
+
+        let propertySymbolsByName: [InternedString: SymbolID] = Dictionary(
+            uniqueKeysWithValues: classDecl.memberProperties.compactMap { declID in
+                guard let symbol = sema.bindings.declSymbols[declID],
+                      let decl = shared.ast.arena.decl(declID),
+                      case let .propertyDecl(propertyDecl) = decl
+                else {
+                    return nil
+                }
+                return (propertyDecl.name, symbol)
+            }
+        )
+
+        guard let receiverID = ctx.currentImplicitReceiverExprID,
+              let ctorSignature = sema.symbols.functionSignature(for: ctx.currentFunctionSymbol ?? .invalid)
+        else {
+            return
+        }
+
+        for (index, param) in classDecl.primaryConstructorParams.enumerated() {
+            guard param.isProperty,
+                  index < ctorSignature.valueParameterSymbols.count,
+                  let propertySymbol = propertySymbolsByName[param.name],
+                  let fieldOffset = sema.symbols.nominalLayout(for: sema.symbols.parentSymbol(for: propertySymbol) ?? .invalid)?
+                  .fieldOffsets[propertySymbol]
+            else {
+                continue
+            }
+
+            let parameterSymbol = ctorSignature.valueParameterSymbols[index]
+            let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
+            let parameterExpr = arena.appendExpr(.symbolRef(parameterSymbol), type: propertyType)
+            body.append(.constValue(result: parameterExpr, value: .symbolRef(parameterSymbol)))
+
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+
+            let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            body.append(.call(
+                symbol: nil,
+                callee: shared.interner.intern("kk_array_set"),
+                arguments: [receiverID, offsetExpr, parameterExpr],
+                result: unusedResult,
+                canThrow: false,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+        }
     }
 
     /// Creates the KIR function declaration and default-argument stub for a constructor.
@@ -258,6 +325,32 @@ extension KIRLoweringDriver {
         }
 
         guard let initExpr = prop.initializer else {
+            if prop.modifiers.contains(.lateinit) {
+                let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+                let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                let nullExpr = arena.appendExpr(.null, type: propType)
+                body.append(.constValue(result: nullExpr, value: .null))
+                if let receiverID = ctx.currentImplicitReceiverExprID,
+                   let ownerSymbol = sema.symbols.parentSymbol(for: propSymbol),
+                   let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[targetSymbol]
+                {
+                    let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+                    body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                    body.append(.call(
+                        symbol: nil,
+                        callee: compilationCtx.interner.intern("kk_array_set"),
+                        arguments: [receiverID, offsetExpr, nullExpr],
+                        result: unusedResult,
+                        canThrow: false,
+                        thrownResult: nil,
+                        isSuperCall: false
+                    ))
+                } else {
+                    let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: propType)
+                    body.append(.copy(from: nullExpr, to: fieldRef))
+                }
+            }
             return
         }
         let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol

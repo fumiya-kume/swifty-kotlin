@@ -103,6 +103,31 @@ extension ControlFlowLowerer {
         type == sema.types.anyType || type == sema.types.nullableAnyType
     }
 
+    func isCatchAllType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        if isCatchAllType(type, sema: sema) {
+            return true
+        }
+        if type == sema.types.anyType || type == sema.types.nullableAnyType {
+            return true
+        }
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let name = interner.resolve(symbol.name)
+        return name == "Throwable" || name == "Exception"
+    }
+
+    func isCancellationExceptionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return interner.resolve(symbol.name) == "CancellationException"
+    }
+
     func lowerForDestructuringExpr(
         _ exprID: ExprID,
         names: [InternedString?],

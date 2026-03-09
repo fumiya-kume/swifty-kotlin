@@ -6,6 +6,43 @@ import Foundation
 // swiftlint:disable file_length
 
 extension CallTypeChecker {
+    private func isCoroutineHandleReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName == "Job" || shortName == "Deferred" {
+            return true
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "Job"]
+            || fqName == ["kotlinx", "coroutines", "Deferred"]
+    }
+
+    private func isChannelReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        if shortName != "Channel" {
+            return false
+        }
+        let fqName = symbol.fqName.map(interner.resolve)
+        return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
+    }
+
     // This legacy inference path still owns many special cases while the split-out helpers
     // are being migrated. Keep lint focused on the new behavior touched by this change.
     // swiftlint:disable function_body_length cyclomatic_complexity
@@ -24,6 +61,29 @@ extension CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
+
+        if args.isEmpty,
+           case .callableRef = ast.arena.expr(receiverID),
+           interner.resolve(calleeName) == "isInitialized"
+        {
+            _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+            if let propertySymbol = sema.bindings.identifierSymbol(for: receiverID),
+               let propertyInfo = sema.symbols.symbol(propertySymbol),
+               propertyInfo.kind == .property,
+               propertyInfo.flags.contains(.lateinitProperty)
+            {
+                let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                sema.bindings.bindExprType(id, type: boolType)
+                return boolType
+            }
+
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-LATEINIT",
+                "'isInitialized' is only available on lateinit property references.",
+                range: range
+            )
+            return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+        }
 
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         // Detect member access on a class-reference expression (callableRef
@@ -477,6 +537,29 @@ extension CallTypeChecker {
         }
         let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) { interner.resolve(name) == "null" } else { false }
 
+        let isChannelReceiver = isChannelReceiverType(
+            lookupReceiverType,
+            sema: sema,
+            interner: interner
+        )
+        if !isClassNameReceiver, isChannelReceiver {
+            let memberName = interner.resolve(calleeName)
+            switch (memberName, args.count) {
+            case ("send", 1), ("close", 0):
+                let resultType = sema.types.unitType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            case ("receive", 0):
+                let resultType = sema.types.nullableAnyType
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            default:
+                break
+            }
+        }
+
         let (visible, invisible) = ctx.filterByVisibility(allCandidates)
         var candidates = visible
         if hasLeadingLocaleArgument {
@@ -822,11 +905,11 @@ extension CallTypeChecker {
                     }
                 }
             }
-            let isCoroutineHandleReceiver = if case .primitive = sema.types.kind(of: lookupReceiverType) {
-                false
-            } else {
-                true
-            }
+            let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
+                lookupReceiverType,
+                sema: sema,
+                interner: interner
+            )
             if !isClassNameReceiver, args.isEmpty, isCoroutineHandleReceiver {
                 let memberName = interner.resolve(calleeName)
                 switch memberName {
@@ -835,7 +918,12 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
-                case "join", "await":
+                case "join":
+                    let resultType = sema.types.unitType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                case "await":
                     let resultType = sema.types.nullableAnyType
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)

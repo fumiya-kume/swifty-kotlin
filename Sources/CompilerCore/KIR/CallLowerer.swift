@@ -1,3 +1,5 @@
+// swiftlint:disable file_length
+
 import Foundation
 
 /// Delegate class for KIR lowering: CallLowerer.
@@ -9,6 +11,7 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -36,6 +39,19 @@ final class CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+        }
+
+        if let loweredRepeat = lowerRepeatCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredRepeat
         }
 
         // --- Scope function: with(receiver, block) (STDLIB-004) ---
@@ -154,7 +170,8 @@ final class CallLowerer {
         if let loweredCallable {
             finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
         } else if let chosen,
-                  sema.symbols.symbol(chosen)?.kind == .constructor
+                  sema.symbols.symbol(chosen)?.kind == .constructor,
+                  sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
         {
             // Constructor calls need an allocated object as the implicit receiver (p0).
             // Allocate via kk_array_new(slotCount) and prepend it to the argument list.
@@ -239,21 +256,39 @@ final class CallLowerer {
         // Only expand captures for the first argument (the launcher entry
         // function reference); subsequent arguments are value args for the
         // referenced suspend function and should not be expanded.
-        if chosen == nil,
-           loweredCallable == nil
-        {
+        if loweredCallable == nil {
             let runBlockingID = interner.intern("runBlocking")
             let launchID = interner.intern("launch")
             let asyncID = interner.intern("async")
-            if sourceCalleeName == runBlockingID
-                || sourceCalleeName == launchID
-                || sourceCalleeName == asyncID,
-                let firstArg = finalArgIDs.first,
-                let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
-                !callableInfo.captureArguments.isEmpty
+            let isSyntheticCoroutineLauncher: Bool
+            if let chosen,
+               let chosenInfo = sema.symbols.symbol(chosen)
+            {
+                let fqName = chosenInfo.fqName.map(interner.resolve)
+                isSyntheticCoroutineLauncher = fqName == ["kotlinx", "coroutines", "runBlocking"]
+                    || fqName == ["kotlinx", "coroutines", "launch"]
+                    || fqName == ["kotlinx", "coroutines", "async"]
+            } else {
+                isSyntheticCoroutineLauncher = true
+            }
+            if isSyntheticCoroutineLauncher,
+               sourceCalleeName == runBlockingID
+               || sourceCalleeName == launchID
+               || sourceCalleeName == asyncID,
+               let firstArg = finalArgIDs.first,
+               let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
+               !callableInfo.captureArguments.isEmpty
             {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
+        }
+        let withContextID = interner.intern("withContext")
+        if sourceCalleeName == withContextID,
+           finalArgIDs.count >= 2,
+           let callableInfo = driver.ctx.callableValueInfoByExprID[finalArgIDs[1]],
+           !callableInfo.captureArguments.isEmpty
+        {
+            finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 2)
         }
         if callNormalized.defaultMask != 0,
            let chosen,
@@ -310,6 +345,14 @@ final class CallLowerer {
                 ) ?? sourceCalleeName
             } else {
                 sourceCalleeName
+            }
+            if loweredCalleeName == interner.intern("kk_channel_create"), finalArgIDs.isEmpty {
+                let capacityExpr = arena.appendExpr(
+                    .intLiteral(0),
+                    type: sema.types.intType
+                )
+                instructions.append(.constValue(result: capacityExpr, value: .intLiteral(0)))
+                finalArgIDs.append(capacityExpr)
             }
             instructions.append(.call(
                 symbol: chosen ?? loweredCallable?.symbol,
@@ -403,5 +446,101 @@ final class CallLowerer {
             return providedArguments
         }
         return reordered
+    }
+
+    func recoverMemberCallBinding(
+        exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        argumentExprs: [ExprID],
+        sema: SemaModule
+    ) -> CallBinding? {
+        if let existing = sema.bindings.callBindings[exprID],
+           existing.chosenCallee != .invalid,
+           sema.symbols.symbol(existing.chosenCallee) != nil
+        {
+            return existing
+        }
+        if case let .symbol(symbol)? = sema.bindings.callableTarget(for: exprID),
+           symbol != .invalid,
+           let signature = sema.symbols.functionSignature(for: symbol),
+           signature.receiverType != nil
+        {
+            var parameterMapping: [Int: Int] = [:]
+            for index in argumentExprs.indices {
+                parameterMapping[index] = index
+            }
+            return CallBinding(
+                chosenCallee: symbol,
+                substitutedTypeArguments: [],
+                parameterMapping: parameterMapping
+            )
+        }
+
+        guard let receiverType = sema.bindings.exprTypes[receiverExpr] else {
+            return nil
+        }
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType) else {
+            return nil
+        }
+        var ownerQueue: [SymbolID] = [classType.classSymbol]
+        var visitedOwners: Set<SymbolID> = []
+        var candidates: [SymbolID] = []
+        while let owner = ownerQueue.first {
+            ownerQueue.removeFirst()
+            guard visitedOwners.insert(owner).inserted,
+                  let ownerSymbol = sema.symbols.symbol(owner)
+            else {
+                continue
+            }
+            let memberFQName = ownerSymbol.fqName + [calleeName]
+            for candidate in sema.symbols.lookupAll(fqName: memberFQName) {
+                guard let symbol = sema.symbols.symbol(candidate),
+                      symbol.kind == .function,
+                      sema.symbols.parentSymbol(for: candidate) == owner
+                else {
+                    continue
+                }
+                candidates.append(candidate)
+            }
+            ownerQueue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
+        }
+        candidates.sort(by: { $0.rawValue < $1.rawValue })
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        let argumentTypes = argumentExprs.map { exprID in
+            sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+        }
+
+        let matched = candidates.first { candidate in
+            guard let signature = sema.symbols.functionSignature(for: candidate),
+                  signature.parameterTypes.count == argumentTypes.count
+            else {
+                return false
+            }
+            for (argumentType, parameterType) in zip(argumentTypes, signature.parameterTypes) {
+                if !sema.types.isSubtype(argumentType, parameterType) {
+                    return false
+                }
+            }
+            return true
+        } ?? candidates.first
+
+        guard let chosen = matched else {
+            return nil
+        }
+
+        var parameterMapping: [Int: Int] = [:]
+        for index in argumentExprs.indices {
+            parameterMapping[index] = index
+        }
+        return CallBinding(
+            chosenCallee: chosen,
+            substitutedTypeArguments: [],
+            parameterMapping: parameterMapping
+        )
     }
 }

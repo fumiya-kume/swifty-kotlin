@@ -20,10 +20,12 @@ extension DeclTypeChecker {
             solver: solver,
             diagnostics: diagnostics
         )
-        let expr = ExprID(rawValue: declID.rawValue)
-        sema.bindings.bindIdentifier(expr, symbol: symbol)
-        let propertyType = sema.symbols.propertyType(for: symbol) ?? sema.types.nullableAnyType
-        sema.bindings.bindExprType(expr, type: propertyType)
+        if !property.isSynthesizedPrimaryConstructorProperty {
+            let expr = ExprID(rawValue: declID.rawValue)
+            sema.bindings.bindIdentifier(expr, symbol: symbol)
+            let propertyType = sema.symbols.propertyType(for: symbol) ?? sema.types.nullableAnyType
+            sema.bindings.bindExprType(expr, type: propertyType)
+        }
     }
 
     func typeCheckClassDecl(

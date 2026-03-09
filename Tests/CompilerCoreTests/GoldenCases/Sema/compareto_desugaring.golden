@@ -36,64 +36,116 @@ symbol s34 kind=function fq=kotlin.text.toInt vis=public flags=synthetic sig=rec
 symbol s35 kind=function fq=kotlin.text.toDouble vis=public flags=synthetic sig=recv=String params=[] ret=Double suspend=0 defaults=[] vararg=[]
 symbol s36 kind=function fq=kotlin.text.format vis=public flags=synthetic sig=recv=String params=[Any?] ret=String suspend=0 defaults=[0] vararg=[1]
 symbol s37 kind=valueParameter fq=kotlin.text.format.args vis=private flags=synthetic
-symbol s38 kind=class fq=Temperature vis=public flags=_
-symbol s39 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#38 params=[Int] ret=Class#38 suspend=0 defaults=[0] vararg=[0]
-symbol s40 kind=valueParameter fq=Temperature.<init>.$39.degrees vis=private flags=_
-symbol s41 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#38 params=[Class#38] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s42 kind=valueParameter fq=Temperature.compareTo.$41.other vis=private flags=_
-symbol s43 kind=function fq=stringCompareLt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s44 kind=valueParameter fq=stringCompareLt.$43.a vis=private flags=_
-symbol s45 kind=valueParameter fq=stringCompareLt.$43.b vis=private flags=_
-symbol s46 kind=function fq=stringCompareGe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s47 kind=valueParameter fq=stringCompareGe.$46.a vis=private flags=_
-symbol s48 kind=valueParameter fq=stringCompareGe.$46.b vis=private flags=_
-symbol s49 kind=function fq=stringCompareLe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s50 kind=valueParameter fq=stringCompareLe.$49.a vis=private flags=_
-symbol s51 kind=valueParameter fq=stringCompareLe.$49.b vis=private flags=_
-symbol s52 kind=function fq=stringCompareGt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s53 kind=valueParameter fq=stringCompareGt.$52.a vis=private flags=_
-symbol s54 kind=valueParameter fq=stringCompareGt.$52.b vis=private flags=_
-symbol s55 kind=function fq=customCompareLt vis=public flags=_ sig=recv=_ params=[Class#38,Class#38] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s56 kind=valueParameter fq=customCompareLt.$55.a vis=private flags=_
-symbol s57 kind=valueParameter fq=customCompareLt.$55.b vis=private flags=_
-symbol s58 kind=function fq=customCompareGe vis=public flags=_ sig=recv=_ params=[Class#38,Class#38] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s59 kind=valueParameter fq=customCompareGe.$58.a vis=private flags=_
-symbol s60 kind=valueParameter fq=customCompareGe.$58.b vis=private flags=_
-symbol s61 kind=function fq=primitiveCompare vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s62 kind=valueParameter fq=primitiveCompare.$61.a vis=private flags=_
-symbol s63 kind=valueParameter fq=primitiveCompare.$61.b vis=private flags=_
+symbol s38 kind=function fq=kotlin.text.trimIndent vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s39 kind=function fq=kotlin.text.trimMargin vis=public flags=synthetic sig=recv=String params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s40 kind=function fq=kotlin.text.trimMargin vis=public flags=synthetic sig=recv=String params=[String] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s41 kind=valueParameter fq=kotlin.text.trimMargin.marginPrefix vis=private flags=synthetic
+symbol s42 kind=function fq=kotlin.repeat vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Int,(Int) -> Unit] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s43 kind=valueParameter fq=kotlin.repeat.times vis=private flags=synthetic
+symbol s44 kind=valueParameter fq=kotlin.repeat.action vis=private flags=synthetic
+symbol s45 kind=class fq=kotlin.Throwable vis=public flags=synthetic type=Class#45
+symbol s46 kind=class fq=kotlin.Exception vis=public flags=synthetic type=Class#46
+symbol s47 kind=class fq=kotlin.RuntimeException vis=public flags=synthetic type=Class#47
+symbol s48 kind=class fq=kotlin.UninitializedPropertyAccessException vis=public flags=synthetic type=Class#48
+symbol s49 kind=class fq=kotlin.NullPointerException vis=public flags=synthetic type=Class#49
+symbol s50 kind=class fq=kotlin.NumberFormatException vis=public flags=synthetic type=Class#50
+symbol s51 kind=class fq=kotlin.CancellationException vis=public flags=synthetic type=Class#51
+symbol s52 kind=package fq=kotlinx vis=public flags=synthetic
+symbol s53 kind=package fq=kotlinx.coroutines vis=public flags=synthetic
+symbol s54 kind=package fq=kotlinx.coroutines.channels vis=public flags=synthetic
+symbol s55 kind=class fq=kotlinx.coroutines.Job vis=public flags=synthetic type=Class#55
+symbol s56 kind=class fq=kotlinx.coroutines.Deferred vis=public flags=synthetic type=Class#56
+symbol s57 kind=object fq=kotlinx.coroutines.Dispatchers vis=public flags=synthetic type=Class#57
+symbol s58 kind=class fq=kotlinx.coroutines.channels.Channel vis=public flags=synthetic type=Class#58
+symbol s59 kind=class fq=kotlinx.coroutines.CancellationException vis=public flags=synthetic type=Class#59
+symbol s60 kind=class fq=CancellationException vis=public flags=synthetic type=Class#60
+symbol s61 kind=function fq=kotlinx.coroutines.runBlocking vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s62 kind=valueParameter fq=kotlinx.coroutines.runBlocking.block vis=private flags=synthetic
+symbol s63 kind=function fq=kotlinx.coroutines.launch vis=public flags=synthetic sig=recv=_ params=[suspend () -> Unit] ret=Class#55 suspend=0 defaults=[0] vararg=[0]
+symbol s64 kind=valueParameter fq=kotlinx.coroutines.launch.block vis=private flags=synthetic
+symbol s65 kind=function fq=kotlinx.coroutines.async vis=public flags=synthetic sig=recv=_ params=[suspend () -> Any] ret=Class#56 suspend=0 defaults=[0] vararg=[0]
+symbol s66 kind=valueParameter fq=kotlinx.coroutines.async.block vis=private flags=synthetic
+symbol s67 kind=function fq=kotlinx.coroutines.delay vis=public flags=synthetic sig=recv=_ params=[Long] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s68 kind=valueParameter fq=kotlinx.coroutines.delay.timeMillis vis=private flags=synthetic
+symbol s69 kind=function fq=kotlinx.coroutines.withContext vis=public flags=synthetic sig=recv=_ params=[Any,suspend () -> Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s70 kind=valueParameter fq=kotlinx.coroutines.withContext.context vis=private flags=synthetic
+symbol s71 kind=valueParameter fq=kotlinx.coroutines.withContext.block vis=private flags=synthetic
+symbol s72 kind=constructor fq=kotlinx.coroutines.channels.Channel.<init> vis=public flags=synthetic sig=recv=_ params=[] ret=Class#58 suspend=0 defaults=[] vararg=[]
+symbol s73 kind=property fq=kotlinx.coroutines.Dispatchers.Default vis=public flags=synthetic type=Any
+symbol s74 kind=property fq=kotlinx.coroutines.Dispatchers.IO vis=public flags=synthetic type=Any
+symbol s75 kind=property fq=kotlinx.coroutines.Dispatchers.Main vis=public flags=synthetic type=Any
+symbol s76 kind=function fq=kotlinx.coroutines.Job.cancel vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s77 kind=function fq=kotlinx.coroutines.Job.join vis=public flags=synthetic sig=recv=Class#55 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s78 kind=function fq=kotlinx.coroutines.Deferred.await vis=public flags=synthetic sig=recv=Class#56 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s79 kind=function fq=kotlinx.coroutines.channels.Channel.send vis=public flags=synthetic sig=recv=Class#58 params=[Any] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s80 kind=valueParameter fq=kotlinx.coroutines.channels.Channel.send.value vis=private flags=synthetic
+symbol s81 kind=function fq=kotlinx.coroutines.channels.Channel.receive vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s82 kind=function fq=kotlinx.coroutines.channels.Channel.close vis=public flags=synthetic sig=recv=Class#58 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s83 kind=package fq=kotlin.contracts vis=public flags=synthetic
+symbol s84 kind=class fq=kotlin.contracts.ContractBuilder vis=public flags=synthetic
+symbol s85 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synthetic
+symbol s86 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#84.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s87 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#84 params=[] ret=Class#85 suspend=0 defaults=[] vararg=[]
+symbol s88 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#85 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s89 kind=class fq=Temperature vis=public flags=_
+symbol s90 kind=constructor fq=Temperature.<init> vis=public flags=_ sig=recv=Class#89 params=[Int] ret=Class#89 suspend=0 defaults=[0] vararg=[0]
+symbol s91 kind=valueParameter fq=Temperature.<init>.$90.degrees vis=private flags=_
+symbol s92 kind=function fq=Temperature.compareTo vis=public flags=overrideMember sig=recv=Class#89 params=[Class#89] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s93 kind=valueParameter fq=Temperature.compareTo.$92.other vis=private flags=_
+symbol s94 kind=property fq=Temperature.degrees vis=public flags=_ type=Int
+symbol s95 kind=function fq=stringCompareLt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s96 kind=valueParameter fq=stringCompareLt.$95.a vis=private flags=_
+symbol s97 kind=valueParameter fq=stringCompareLt.$95.b vis=private flags=_
+symbol s98 kind=function fq=stringCompareGe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s99 kind=valueParameter fq=stringCompareGe.$98.a vis=private flags=_
+symbol s100 kind=valueParameter fq=stringCompareGe.$98.b vis=private flags=_
+symbol s101 kind=function fq=stringCompareLe vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s102 kind=valueParameter fq=stringCompareLe.$101.a vis=private flags=_
+symbol s103 kind=valueParameter fq=stringCompareLe.$101.b vis=private flags=_
+symbol s104 kind=function fq=stringCompareGt vis=public flags=_ sig=recv=_ params=[String,String] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s105 kind=valueParameter fq=stringCompareGt.$104.a vis=private flags=_
+symbol s106 kind=valueParameter fq=stringCompareGt.$104.b vis=private flags=_
+symbol s107 kind=function fq=customCompareLt vis=public flags=_ sig=recv=_ params=[Class#89,Class#89] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s108 kind=valueParameter fq=customCompareLt.$107.a vis=private flags=_
+symbol s109 kind=valueParameter fq=customCompareLt.$107.b vis=private flags=_
+symbol s110 kind=function fq=customCompareGe vis=public flags=_ sig=recv=_ params=[Class#89,Class#89] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s111 kind=valueParameter fq=customCompareGe.$110.a vis=private flags=_
+symbol s112 kind=valueParameter fq=customCompareGe.$110.b vis=private flags=_
+symbol s113 kind=function fq=primitiveCompare vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s114 kind=valueParameter fq=primitiveCompare.$113.a vis=private flags=_
+symbol s115 kind=valueParameter fq=primitiveCompare.$113.b vis=private flags=_
 file f0 package=_
-  decl d1 class Temperature sym=s38
-  decl d2 fun stringCompareLt suspend=0 inline=0 sym=s43
-  decl d3 fun stringCompareGe suspend=0 inline=0 sym=s46
-  decl d4 fun stringCompareLe suspend=0 inline=0 sym=s49
-  decl d5 fun stringCompareGt suspend=0 inline=0 sym=s52
-  decl d6 fun customCompareLt suspend=0 inline=0 sym=s55
-  decl d7 fun customCompareGe suspend=0 inline=0 sym=s58
-  decl d8 fun primitiveCompare suspend=0 inline=0 sym=s61
-expr e0 this type=Class#38
-expr e1 memberCall recv=e0 callee=degrees args=[] type=<error>
-expr e2 name(other) type=Class#38 ref=s42
-expr e3 memberCall recv=e2 callee=degrees args=[] type=<error>
+  decl d2 class Temperature sym=s89
+  decl d3 fun stringCompareLt suspend=0 inline=0 sym=s95
+  decl d4 fun stringCompareGe suspend=0 inline=0 sym=s98
+  decl d5 fun stringCompareLe suspend=0 inline=0 sym=s101
+  decl d6 fun stringCompareGt suspend=0 inline=0 sym=s104
+  decl d7 fun customCompareLt suspend=0 inline=0 sym=s107
+  decl d8 fun customCompareGe suspend=0 inline=0 sym=s110
+  decl d9 fun primitiveCompare suspend=0 inline=0 sym=s113
+expr e0 this type=Class#89
+expr e1 memberCall recv=e0 callee=degrees args=[] type=Int ref=s94
+expr e2 name(other) type=Class#89 ref=s93
+expr e3 memberCall recv=e2 callee=degrees args=[] type=Int ref=s94
 expr e4 binary(subtract) lhs=e1 rhs=e3 type=Int
-expr e5 name(a) type=String ref=s44
-expr e6 name(b) type=String ref=s45
+expr e5 name(a) type=String ref=s96
+expr e6 name(b) type=String ref=s97
 expr e7 binary(lessThan) lhs=e5 rhs=e6 type=Boolean
-expr e8 name(a) type=String ref=s47
-expr e9 name(b) type=String ref=s48
+expr e8 name(a) type=String ref=s99
+expr e9 name(b) type=String ref=s100
 expr e10 binary(greaterOrEqual) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(a) type=String ref=s50
-expr e12 name(b) type=String ref=s51
+expr e11 name(a) type=String ref=s102
+expr e12 name(b) type=String ref=s103
 expr e13 binary(lessOrEqual) lhs=e11 rhs=e12 type=Boolean
-expr e14 name(a) type=String ref=s53
-expr e15 name(b) type=String ref=s54
+expr e14 name(a) type=String ref=s105
+expr e15 name(b) type=String ref=s106
 expr e16 binary(greaterThan) lhs=e14 rhs=e15 type=Boolean
-expr e17 name(a) type=Class#38 ref=s56
-expr e18 name(b) type=Class#38 ref=s57
+expr e17 name(a) type=Class#89 ref=s108
+expr e18 name(b) type=Class#89 ref=s109
 expr e19 binary(lessThan) lhs=e17 rhs=e18 type=<error>
-expr e20 name(a) type=Class#38 ref=s59
-expr e21 name(b) type=Class#38 ref=s60
+expr e20 name(a) type=Class#89 ref=s111
+expr e21 name(b) type=Class#89 ref=s112
 expr e22 binary(greaterOrEqual) lhs=e20 rhs=e21 type=<error>
-expr e23 name(a) type=Int ref=s62
-expr e24 name(b) type=Int ref=s63
+expr e23 name(a) type=Int ref=s114
+expr e24 name(b) type=Int ref=s115
 expr e25 binary(lessThan) lhs=e23 rhs=e24 type=Boolean

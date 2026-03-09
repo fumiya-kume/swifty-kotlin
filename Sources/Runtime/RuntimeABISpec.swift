@@ -185,6 +185,31 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_trimIndent",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trimMargin_default",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trimMargin",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "marginPrefixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_format",
             parameters: [
                 RuntimeABIParameter(name: "formatRaw", type: .intptr),
@@ -758,6 +783,24 @@ public enum RuntimeABISpec {
             section: "Boxing"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_lateinit_is_initialized",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_lateinit_get_or_throw",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "propertyName", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_unbox_int",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .intptr),
@@ -921,6 +964,17 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "childTypeId", type: .intptr),
                 RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_object_register_itable_method",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+                RuntimeABIParameter(name: "ifaceSlot", type: .intptr),
+                RuntimeABIParameter(name: "methodSlot", type: .intptr),
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"
@@ -1099,6 +1153,37 @@ public enum RuntimeABISpec {
             name: "kk_vetoable_set_value",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_create",
+            parameters: [
+                RuntimeABIParameter(name: "delegateHandle", type: .intptr),
+                RuntimeABIParameter(name: "getValueFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "setValueFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
                 RuntimeABIParameter(name: "newValue", type: .intptr),
             ],
             returnType: .intptr,

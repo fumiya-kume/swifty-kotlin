@@ -56,6 +56,11 @@ public final class KotlinParser {
                 if arena.node(node).kind != .propertyDecl {
                     sawNonPropertyDecl = true
                 }
+            case .softKeyword(.context):
+                node = parseDeclaration()
+                if arena.node(node).kind != .propertyDecl {
+                    sawNonPropertyDecl = true
+                }
             default:
                 let before = stream.index
                 node = parseStatement(inBlock: false)

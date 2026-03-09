@@ -70,6 +70,7 @@ public struct Modifiers: OptionSet, Sendable {
     public static let const = Modifiers(rawValue: Int32(1) << 25)
     public static let override = Modifiers(rawValue: Int32(1) << 26)
     public static let funModifier = Modifiers(rawValue: Int32(1) << 27)
+    public static let lateinit = Modifiers(rawValue: Int32(1) << 28)
 }
 
 public enum Decl {

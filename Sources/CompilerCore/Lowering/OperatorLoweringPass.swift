@@ -172,6 +172,24 @@ final class OperatorLoweringPass: LoweringPass {
                             default:
                                 break
                             }
+                            if let dataClassString = rewriteDataClassPrintlnArgument(
+                                argument: arguments[0],
+                                arena: module.arena,
+                                sema: ctx.sema,
+                                interner: ctx.interner,
+                                body: &newBody
+                            ) {
+                                newBody.append(.call(
+                                    symbol: symbol,
+                                    callee: callee,
+                                    arguments: [dataClassString],
+                                    result: result,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult,
+                                    isSuperCall: isSuperCall
+                                ))
+                                continue
+                            }
                         }
                     }
                     newBody.append(instruction)
@@ -239,5 +257,115 @@ final class OperatorLoweringPass: LoweringPass {
         if let result {
             body.append(.constValue(result: result, value: .unit))
         }
+    }
+
+    private func rewriteDataClassPrintlnArgument(
+        argument: KIRExprID,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
+        body: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let sema,
+              let argumentType = arena.exprType(argument),
+              case let .classType(classType) = sema.types.kind(of: argumentType),
+              let classSymbol = sema.symbols.symbol(classType.classSymbol),
+              classSymbol.kind == .class,
+              classSymbol.flags.contains(.dataType),
+              let layout = sema.symbols.nominalLayout(for: classSymbol.id)
+        else {
+            return nil
+        }
+
+        let stringType = sema.types.stringType
+        let intType = sema.types.intType
+        let properties = sema.symbols.children(ofFQName: classSymbol.fqName)
+            .compactMap { symbolID -> (SymbolID, SemanticSymbol)? in
+                guard let symbol = sema.symbols.symbol(symbolID),
+                      symbol.kind == .property
+                else {
+                    return nil
+                }
+                return (symbolID, symbol)
+            }
+            .sorted { $0.0.rawValue < $1.0.rawValue }
+
+        func appendStringLiteral(_ value: String) -> KIRExprID {
+            let interned = interner.intern(value)
+            let expr = arena.appendExpr(.stringLiteral(interned), type: stringType)
+            body.append(.constValue(result: expr, value: .stringLiteral(interned)))
+            return expr
+        }
+
+        func appendConcat(_ lhs: KIRExprID, _ rhs: KIRExprID) -> KIRExprID {
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_concat"),
+                arguments: [lhs, rhs],
+                result: result,
+                canThrow: false,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+            return result
+        }
+
+        func appendStringConversion(_ valueExpr: KIRExprID, type: TypeID) -> KIRExprID {
+            if sema.types.isSubtype(type, stringType) {
+                return valueExpr
+            }
+            let tag: Int64 = switch sema.types.kind(of: type) {
+            case .primitive(.boolean, _):
+                2
+            case .primitive(.string, _):
+                3
+            default:
+                1
+            }
+            let tagExpr = arena.appendExpr(.intLiteral(tag), type: intType)
+            body.append(.constValue(result: tagExpr, value: .intLiteral(tag)))
+            let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_to_string"),
+                arguments: [valueExpr, tagExpr],
+                result: converted,
+                canThrow: false,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+            return converted
+        }
+
+        var rendered = appendStringLiteral("\(interner.resolve(classSymbol.name))(")
+        for (index, property) in properties.enumerated() {
+            let separator = index == 0 ? "" : ", "
+            rendered = appendConcat(
+                rendered,
+                appendStringLiteral("\(separator)\(interner.resolve(property.1.name))=")
+            )
+
+            let storageSymbol = sema.symbols.backingFieldSymbol(for: property.0) ?? property.0
+            guard let fieldOffset = layout.fieldOffsets[storageSymbol] else {
+                return nil
+            }
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: intType)
+            body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+
+            let propertyType = sema.symbols.propertyType(for: property.0) ?? sema.types.anyType
+            let loaded = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propertyType)
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_get_inbounds"),
+                arguments: [argument, offsetExpr],
+                result: loaded,
+                canThrow: false,
+                thrownResult: nil,
+                isSuperCall: false
+            ))
+            rendered = appendConcat(rendered, appendStringConversion(loaded, type: propertyType))
+        }
+        return appendConcat(rendered, appendStringLiteral(")"))
     }
 }

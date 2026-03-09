@@ -299,9 +299,17 @@ extension LoweringPassRegressionTests {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
+        let symbols = SymbolTable()
 
-        let propertySym = SymbolID(rawValue: 50)
         let callerSym = SymbolID(rawValue: 51)
+        let propertyName = interner.intern("value")
+        let propertySym = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: [propertyName],
+            declSite: nil,
+            visibility: .public
+        )
 
         let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
         let result = arena.appendExpr(.temporary(1), type: types.anyType)
@@ -340,6 +348,7 @@ extension LoweringPassRegressionTests {
             interner: interner
         )
         ctx.kir = module
+        ctx.sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         try LoweringPhase().run(ctx)
 
         guard case let .function(lowered)? = module.arena.decl(fnID) else {
@@ -367,9 +376,17 @@ extension LoweringPassRegressionTests {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
+        let symbols = SymbolTable()
 
-        let propertySym = SymbolID(rawValue: 60)
         let callerSym = SymbolID(rawValue: 61)
+        let propertyName = interner.intern("value")
+        let propertySym = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: [propertyName],
+            declSite: nil,
+            visibility: .public
+        )
 
         let receiver = arena.appendExpr(.temporary(0), type: types.anyType)
         let value = arena.appendExpr(.temporary(1), type: types.anyType)
@@ -409,6 +426,7 @@ extension LoweringPassRegressionTests {
             interner: interner
         )
         ctx.kir = module
+        ctx.sema = SemaModule(symbols: symbols, types: types, bindings: BindingTable(), diagnostics: DiagnosticEngine())
         try LoweringPhase().run(ctx)
 
         guard case let .function(lowered)? = module.arena.decl(fnID) else {

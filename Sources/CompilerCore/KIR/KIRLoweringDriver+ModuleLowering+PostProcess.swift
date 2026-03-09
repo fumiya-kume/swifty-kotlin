@@ -3,6 +3,8 @@ import Foundation
 // MARK: - Pre-interned runtime names for delegate rewriting
 
 private struct DelegateRuntimeNames {
+    let getValueName: InternedString
+    let setValueName: InternedString
     let lazyGetValue: InternedString
     let observableGetValue: InternedString
     let vetoableGetValue: InternedString
@@ -12,6 +14,8 @@ private struct DelegateRuntimeNames {
     let customSetValue: InternedString
 
     init(interner: StringInterner) {
+        getValueName = interner.intern("getValue")
+        setValueName = interner.intern("setValue")
         lazyGetValue = interner.intern("kk_lazy_get_value")
         observableGetValue = interner.intern("kk_observable_get_value")
         vetoableGetValue = interner.intern("kk_vetoable_get_value")
@@ -52,7 +56,7 @@ extension KIRLoweringDriver {
                 updated.body = rewriteDelegateAccesses(
                     body: updated.body, arena: arena, sema: sema,
                     storageMap: delegateStorageSymbolByPropertySymbol,
-                    kindMap: delegateKindByPropertySymbol, names: names
+                    kindMap: delegateKindByPropertySymbol, names: names, interner: interner
                 )
             }
 
@@ -84,15 +88,57 @@ extension KIRLoweringDriver {
         ast: ASTModule, sema: SemaModule, interner: StringInterner
     ) -> [SymbolID: StdlibDelegateKind] {
         var map: [SymbolID: StdlibDelegateKind] = [:]
+
+        func collect(from declID: DeclID) {
+            guard let decl = ast.arena.decl(declID) else { return }
+            switch decl {
+            case let .propertyDecl(prop):
+                guard let sym = sema.bindings.declSymbols[declID],
+                      prop.delegateExpression != nil
+                else { return }
+                map[sym] = detectDelegateKind(
+                    delegateExpr: prop.delegateExpression,
+                    ast: ast,
+                    interner: interner
+                )
+            case let .classDecl(classDecl):
+                for memberProperty in classDecl.memberProperties {
+                    collect(from: memberProperty)
+                }
+                for nestedClass in classDecl.nestedClasses {
+                    collect(from: nestedClass)
+                }
+                for nestedObject in classDecl.nestedObjects {
+                    collect(from: nestedObject)
+                }
+            case let .objectDecl(objectDecl):
+                for memberProperty in objectDecl.memberProperties {
+                    collect(from: memberProperty)
+                }
+                for nestedClass in objectDecl.nestedClasses {
+                    collect(from: nestedClass)
+                }
+                for nestedObject in objectDecl.nestedObjects {
+                    collect(from: nestedObject)
+                }
+            case let .interfaceDecl(interfaceDecl):
+                for memberProperty in interfaceDecl.memberProperties {
+                    collect(from: memberProperty)
+                }
+                for nestedClass in interfaceDecl.nestedClasses {
+                    collect(from: nestedClass)
+                }
+                for nestedObject in interfaceDecl.nestedObjects {
+                    collect(from: nestedObject)
+                }
+            default:
+                return
+            }
+        }
+
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                guard let decl = ast.arena.decl(declID),
-                      case let .propertyDecl(prop) = decl,
-                      let sym = sema.bindings.declSymbols[declID],
-                      prop.delegateExpression != nil else { continue }
-                map[sym] = detectDelegateKind(
-                    delegateExpr: prop.delegateExpression, ast: ast, interner: interner
-                )
+                collect(from: declID)
             }
         }
         return map
@@ -106,8 +152,19 @@ extension KIRLoweringDriver {
         sema: SemaModule,
         storageMap: [SymbolID: SymbolID],
         kindMap: [SymbolID: StdlibDelegateKind],
-        names: DelegateRuntimeNames
+        names: DelegateRuntimeNames,
+        interner: StringInterner
     ) -> [KIRInstruction] {
+        var fullStorageMap = storageMap
+        for symbol in sema.symbols.allSymbols() where symbol.kind == .property {
+            if let storageSymbol = sema.symbols.delegateStorageSymbol(for: symbol.id) {
+                fullStorageMap[symbol.id] = storageSymbol
+            }
+        }
+        var propertyByStorageSymbol: [SymbolID: SymbolID] = [:]
+        for (propertySymbol, storageSymbol) in fullStorageMap {
+            propertyByStorageSymbol[storageSymbol] = propertySymbol
+        }
         // Pass 1: collect copy targets to distinguish getter vs setter paths.
         var copyTargetExprs: Set<KIRExprID> = []
         for instruction in body {
@@ -120,12 +177,67 @@ extension KIRLoweringDriver {
         result.reserveCapacity(body.count)
 
         for instruction in body {
-            if case let .loadGlobal(res, sym) = instruction,
-               let storageSym = storageMap[sym]
+            if case let .call(symbol, callee, arguments, callResult, canThrow, thrownResult, _) = instruction,
+               let storageSymbol = symbol,
+               let propertySymbol = propertyByStorageSymbol[storageSymbol],
+               callee == names.getValueName || callee == names.setValueName
             {
+                if kindMap[propertySymbol] == .custom {
+                    result.append(instruction)
+                    continue
+                }
+                if callee == names.getValueName {
+                    emitGetValue(
+                        result: callResult ?? arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType),
+                        storageSym: storageSymbol,
+                        propSym: propertySymbol,
+                        originalArguments: arguments,
+                        kindMap: kindMap,
+                        names: names,
+                        interner: interner,
+                        arena: arena,
+                        sema: sema,
+                        body: &result
+                    )
+                } else {
+                    let valueExpr = arguments.last ?? arena.appendExpr(.unit, type: sema.types.anyType)
+                    emitSetValue(
+                        fromExpr: valueExpr,
+                        storageSym: storageSymbol,
+                        propSym: propertySymbol,
+                        originalArguments: arguments,
+                        kind: kindMap[propertySymbol],
+                        names: names,
+                        interner: interner,
+                        arena: arena,
+                        sema: sema,
+                        body: &result
+                    )
+                }
+                continue
+            }
+
+            if case let .loadGlobal(res, sym) = instruction,
+               let storageSym = fullStorageMap[sym]
+            {
+                if kindMap[sym] == .custom {
+                    result.append(
+                        .call(
+                            symbol: SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym),
+                            callee: interner.intern("get"),
+                            arguments: [],
+                            result: res,
+                            canThrow: false,
+                            thrownResult: nil
+                        )
+                    )
+                    continue
+                }
                 emitGetValue(
                     result: res, storageSym: storageSym, propSym: sym,
+                    originalArguments: [],
                     kindMap: kindMap, names: names,
+                    interner: interner,
                     arena: arena, sema: sema, body: &result
                 )
                 continue
@@ -133,15 +245,35 @@ extension KIRLoweringDriver {
 
             if case let .constValue(res, value) = instruction,
                case let .symbolRef(sym) = value,
-               let storageSym = storageMap[sym]
+               let storageSym = fullStorageMap[sym]
             {
+                if kindMap[sym] == .custom {
+                    if copyTargetExprs.contains(res) {
+                        targets[res] = sym
+                        result.append(instruction)
+                    } else {
+                        result.append(
+                            .call(
+                                symbol: SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym),
+                                callee: interner.intern("get"),
+                                arguments: [],
+                                result: res,
+                                canThrow: false,
+                                thrownResult: nil
+                            )
+                        )
+                    }
+                    continue
+                }
                 if copyTargetExprs.contains(res) {
                     targets[res] = sym
                     result.append(instruction)
                 } else {
                     emitGetValue(
                         result: res, storageSym: storageSym, propSym: sym,
+                        originalArguments: [],
                         kindMap: kindMap, names: names,
+                        interner: interner,
                         arena: arena, sema: sema, body: &result
                     )
                 }
@@ -150,15 +282,29 @@ extension KIRLoweringDriver {
 
             if case let .copy(fromExpr, toExpr) = instruction,
                let propSym = targets.removeValue(forKey: toExpr),
-               let storageSym = storageMap[propSym]
+               let storageSym = fullStorageMap[propSym]
             {
+                if kindMap[propSym] == .custom {
+                    result.append(
+                        .call(
+                            symbol: SyntheticSymbolScheme.propertySetterAccessorSymbol(for: propSym),
+                            callee: interner.intern("set"),
+                            arguments: [fromExpr],
+                            result: nil,
+                            canThrow: false,
+                            thrownResult: nil
+                        )
+                    )
+                    continue
+                }
                 if kindMap[propSym] == .lazy {
                     result.append(instruction)
                     continue
                 }
                 emitSetValue(
-                    fromExpr: fromExpr, storageSym: storageSym, kind: kindMap[propSym],
-                    names: names, arena: arena, sema: sema, body: &result
+                    fromExpr: fromExpr, storageSym: storageSym, propSym: propSym, originalArguments: [],
+                    kind: kindMap[propSym],
+                    names: names, interner: interner, arena: arena, sema: sema, body: &result
                 )
                 continue
             }
@@ -170,7 +316,9 @@ extension KIRLoweringDriver {
 
     private func emitGetValue(
         result: KIRExprID, storageSym: SymbolID, propSym: SymbolID,
+        originalArguments: [KIRExprID],
         kindMap: [SymbolID: StdlibDelegateKind], names: DelegateRuntimeNames,
+        interner: StringInterner,
         arena: KIRArena, sema: SemaModule, body: inout KIRLoweringEmitContext
     ) {
         let handle = arena.appendExpr(
@@ -183,15 +331,31 @@ extension KIRLoweringDriver {
         case .vetoable: names.vetoableGetValue
         case .custom, nil: names.customGetValue
         }
+        let arguments: [KIRExprID] = if kindMap[propSym] == .custom || kindMap[propSym] == nil {
+            customDelegateGetterArguments(
+                handle: handle,
+                propSym: propSym,
+                originalArguments: originalArguments,
+                arena: arena,
+                sema: sema,
+                interner: interner,
+                body: &body
+            )
+        } else {
+            [handle]
+        }
         body.append(.call(
-            symbol: nil, callee: name, arguments: [handle],
+            symbol: nil,
+            callee: name,
+            arguments: arguments,
             result: result, canThrow: false, thrownResult: nil
         ))
     }
 
     private func emitSetValue(
-        fromExpr: KIRExprID, storageSym: SymbolID, kind: StdlibDelegateKind?,
+        fromExpr: KIRExprID, storageSym: SymbolID, propSym: SymbolID, originalArguments: [KIRExprID], kind: StdlibDelegateKind?,
         names: DelegateRuntimeNames,
+        interner: StringInterner,
         arena: KIRArena, sema: SemaModule, body: inout KIRLoweringEmitContext
     ) {
         let handle = arena.appendExpr(
@@ -207,10 +371,106 @@ extension KIRLoweringDriver {
         let setResult = arena.appendExpr(
             .temporary(Int32(arena.expressions.count)), type: sema.types.anyType
         )
+        let arguments: [KIRExprID] = if kind == .custom || kind == nil {
+            customDelegateSetterArguments(
+                handle: handle,
+                propSym: propSym,
+                originalArguments: originalArguments,
+                valueExpr: fromExpr,
+                arena: arena,
+                sema: sema,
+                interner: interner,
+                body: &body
+            )
+        } else {
+            [handle, fromExpr]
+        }
         body.append(.call(
-            symbol: nil, callee: name, arguments: [handle, fromExpr],
+            symbol: nil,
+            callee: name,
+            arguments: arguments,
             result: setResult, canThrow: false, thrownResult: nil
         ))
+    }
+
+    private func customDelegateGetterArguments(
+        handle: KIRExprID,
+        propSym: SymbolID,
+        originalArguments: [KIRExprID],
+        arena: KIRArena,
+        sema: SemaModule,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> [KIRExprID] {
+        if originalArguments.count >= 2 {
+            return [handle, originalArguments[0], originalArguments[1]]
+        }
+        let thisRef = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+        body.append(.constValue(result: thisRef, value: .null))
+        let propertyStub = buildKPropertyStub(
+            propSym: propSym,
+            arena: arena,
+            sema: sema,
+            interner: interner,
+            body: &body
+        )
+        return [handle, thisRef, propertyStub]
+    }
+
+    private func customDelegateSetterArguments(
+        handle: KIRExprID,
+        propSym: SymbolID,
+        originalArguments: [KIRExprID],
+        valueExpr: KIRExprID,
+        arena: KIRArena,
+        sema: SemaModule,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> [KIRExprID] {
+        if originalArguments.count >= 3 {
+            return [handle, originalArguments[0], originalArguments[1], originalArguments[2]]
+        }
+        return customDelegateGetterArguments(
+            handle: handle,
+            propSym: propSym,
+            originalArguments: originalArguments,
+            arena: arena,
+            sema: sema,
+            interner: interner,
+            body: &body
+        ) + [valueExpr]
+    }
+
+    private func buildKPropertyStub(
+        propSym: SymbolID,
+        arena: KIRArena,
+        sema: SemaModule,
+        interner: StringInterner,
+        body: inout KIRLoweringEmitContext
+    ) -> KIRExprID {
+        let propertyName = sema.symbols.symbol(propSym)?.name ?? interner.intern("")
+        let propertyNameExpr = arena.appendExpr(
+            .stringLiteral(propertyName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: propertyNameExpr, value: .stringLiteral(propertyName)))
+        let propertyType = sema.symbols.propertyType(for: propSym) ?? sema.types.anyType
+        let typeName = interner.intern(sema.types.renderType(propertyType))
+        let typeExpr = arena.appendExpr(
+            .stringLiteral(typeName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        body.append(.constValue(result: typeExpr, value: .stringLiteral(typeName)))
+        let stubExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_kproperty_stub_create"),
+            arguments: [propertyNameExpr, typeExpr],
+            result: stubExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return stubExpr
     }
 }
 

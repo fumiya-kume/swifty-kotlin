@@ -2,6 +2,32 @@ import Foundation
 
 /// Stateless utility functions for type checking. No back-reference to the driver needed.
 struct TypeCheckHelpers {
+    private func syntheticCoroutineNominalType(
+        packageName: [InternedString],
+        shortName: String,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let shortNameID = interner.intern(shortName)
+        let candidates = sema.symbols.lookupAll(fqName: packageName + [shortNameID])
+            .filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else {
+                    return false
+                }
+                switch symbol.kind {
+                case .class, .interface, .object:
+                    return true
+                default:
+                    return false
+                }
+            }
+            .sorted { $0.rawValue < $1.rawValue }
+        guard let symbolID = candidates.first else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(classSymbol: symbolID, args: [], nullability: .nonNull)))
+    }
+
     func emitVisibilityError(
         for symbol: SemanticSymbol,
         name: String,
@@ -91,13 +117,23 @@ struct TypeCheckHelpers {
             return sema.types.anyType
         case "launch":
             guard argumentCount >= 1 else { return nil }
-            return sema.types.unitType
+            return syntheticCoroutineNominalType(
+                packageName: [interner.intern("kotlinx"), interner.intern("coroutines")],
+                shortName: "Job",
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         case "async":
             guard argumentCount >= 1 else { return nil }
-            return sema.types.nullableAnyType
+            return syntheticCoroutineNominalType(
+                packageName: [interner.intern("kotlinx"), interner.intern("coroutines")],
+                shortName: "Deferred",
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         case "delay":
             guard argumentCount == 1 else { return nil }
-            return sema.types.nullableAnyType
+            return sema.types.unitType
         case "kk_array_new", "IntArray":
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType

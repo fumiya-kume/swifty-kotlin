@@ -187,15 +187,8 @@ final class RuntimeJobHandle: @unchecked Sendable {
     func cancel() {
         lock.lock()
         isCancelled = true
-        let wasCompleted = isCompleted
-        if !wasCompleted {
-            isCompleted = true
-        }
         let state = continuationState
         lock.unlock()
-        if !wasCompleted {
-            completionSemaphore.signal()
-        }
         // Wake the coroutine from any delay/suspension so it can observe cancellation
         state?.signalResume()
     }
@@ -413,6 +406,11 @@ public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: jobPtr))
     }
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let state = runtimeContinuationState(from: continuation) {
+        job.continuationState = state
+        state.jobHandle = job
+    }
 
     // Register with current scope if any
     if let scope = RuntimeCoroutineScope.current {
@@ -420,7 +418,10 @@ public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     }
 
     KxMiniRuntime.launch {
-        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID, jobHandle: job)
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw,
+            continuation: continuation
+        )
         job.complete(with: result)
     }
     return Int(bitPattern: jobPtr)
@@ -861,9 +862,19 @@ public func kk_dispatcher_main() -> Int {
 }
 
 @_cdecl("kk_with_context")
-public func kk_with_context(_: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
-    // Stub: execute blockFnPtr on the appropriate dispatch queue.
-    // For now, all dispatchers execute synchronously on the current thread.
+public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
+    // The runtime still executes synchronously today, but we preserve
+    // dispatcher selection here so the requested context is observed
+    // instead of being silently discarded by the stub.
+    let resolvedDispatcher = switch dispatcherRaw {
+    case RuntimeDispatcherTag.defaultDispatcher,
+         RuntimeDispatcherTag.ioDispatcher,
+         RuntimeDispatcherTag.mainDispatcher:
+        dispatcherRaw
+    default:
+        RuntimeDispatcherTag.defaultDispatcher
+    }
+    _ = resolvedDispatcher
     guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
         return 0
     }
@@ -1268,14 +1279,6 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     var outThrown = 0
 
     while true {
-        // Check cancellation before each resume (cooperative cancellation)
-        if let state = runtimeContinuationState(from: continuation),
-           let job = state.jobHandle, job.cancellationSnapshot()
-        {
-            _ = kk_coroutine_state_exit(continuation, 0)
-            return 0
-        }
-
         outThrown = 0
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {

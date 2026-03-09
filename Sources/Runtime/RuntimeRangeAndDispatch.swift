@@ -113,6 +113,16 @@ public func kk_vtable_lookup(_ receiver: Int, _ slot: Int) -> Int {
 
 @_cdecl("kk_itable_lookup")
 public func kk_itable_lookup(_ receiver: Int, _ ifaceSlot: Int, _ methodSlot: Int) -> Int {
+    if let pointer = UnsafeMutableRawPointer(bitPattern: receiver) {
+        let objectKey = UInt(bitPattern: pointer)
+        let dispatchKey = (UInt64(UInt32(ifaceSlot)) << 32) | UInt64(UInt32(methodSlot))
+        let registered = runtimeStorage.withLock { state in
+            state.objectItableMethods[objectKey]?[dispatchKey]
+        }
+        if let registered {
+            return registered
+        }
+    }
     guard ifaceSlot >= 0,
           methodSlot >= 0,
           let descriptor = runtimeTypeInfo(from: receiver)?.pointee,

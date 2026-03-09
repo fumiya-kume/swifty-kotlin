@@ -1,6 +1,31 @@
 import Foundation
 
 extension BuildASTPhase {
+    func declarationPropertyName(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner
+    ) -> InternedString {
+        let tokens = propertyHeadTokens(from: nodeID, in: arena)
+        var sawValOrVar = false
+        for token in tokens {
+            switch token.kind {
+            case .keyword(.val), .keyword(.var):
+                sawValOrVar = true
+                continue
+            default:
+                break
+            }
+            guard sawValOrVar,
+                  let name = internedIdentifier(from: token, interner: interner)
+            else {
+                continue
+            }
+            return name
+        }
+        return declarationName(from: nodeID, in: arena, interner: interner)
+    }
+
     func declarationIsVar(from nodeID: NodeID, in arena: SyntaxArena) -> Bool {
         for child in arena.children(of: nodeID) {
             if case let .token(tokenID) = child,
@@ -71,58 +96,14 @@ extension BuildASTPhase {
             return childID
         }).first {
             for child in arena.children(of: accessorBlockID) {
-                guard case let .node(statementID) = child,
-                      isStatementLikeKind(arena.node(statementID).kind)
-                else {
-                    continue
-                }
-
-                let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
-                    token.kind != .symbol(.semicolon)
-                }
-                guard let firstToken = headerTokens.first else {
-                    continue
-                }
-
-                let kind: PropertyAccessorKind
-                switch firstToken.kind {
-                case .softKeyword(.get):
-                    kind = .getter
-                case .softKeyword(.set):
-                    kind = .setter
-                default:
-                    continue
-                }
-
-                let parameterName: InternedString? = if kind == .setter {
-                    setterParameterName(from: headerTokens, interner: interner)
-                } else {
-                    nil
-                }
-
-                let body = accessorBody(
-                    statementID: statementID,
-                    headerTokens: headerTokens,
+                processAccessorChild(
+                    child,
                     in: arena,
                     interner: interner,
-                    astArena: astArena
+                    astArena: astArena,
+                    getter: &getter,
+                    setter: &setter
                 )
-                let accessor = PropertyAccessorDecl(
-                    range: arena.node(statementID).range,
-                    kind: kind,
-                    parameterName: parameterName,
-                    body: body
-                )
-                switch kind {
-                case .getter:
-                    if getter == nil {
-                        getter = accessor
-                    }
-                case .setter:
-                    if setter == nil {
-                        setter = accessor
-                    }
-                }
             }
             return (getter, setter)
         }
@@ -275,6 +256,57 @@ extension BuildASTPhase {
         }
 
         return (getter, setter)
+    }
+
+    private func processAccessorChild(
+        _ child: SyntaxChild,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena,
+        getter: inout PropertyAccessorDecl?,
+        setter: inout PropertyAccessorDecl?
+    ) {
+        guard case let .node(statementID) = child,
+              isStatementLikeKind(arena.node(statementID).kind)
+        else {
+            return
+        }
+
+        let headerTokens = collectDirectTokens(from: statementID, in: arena).filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard let firstToken = headerTokens.first else {
+            return
+        }
+
+        let kind: PropertyAccessorKind
+        switch firstToken.kind {
+        case .softKeyword(.get): kind = .getter
+        case .softKeyword(.set): kind = .setter
+        default: return
+        }
+
+        let parameterName: InternedString? = kind == .setter
+            ? setterParameterName(from: headerTokens, interner: interner)
+            : nil
+
+        let body = accessorBody(
+            statementID: statementID,
+            headerTokens: headerTokens,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
+        let accessor = PropertyAccessorDecl(
+            range: arena.node(statementID).range,
+            kind: kind,
+            parameterName: parameterName,
+            body: body
+        )
+        switch kind {
+        case .getter: if getter == nil { getter = accessor }
+        case .setter: if setter == nil { setter = accessor }
+        }
     }
 
     func setterParameterName(

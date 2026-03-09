@@ -1,6 +1,8 @@
 // swiftlint:disable file_length cyclomatic_complexity
 import Foundation
 
+private let runtimeDefaultTrimMarginPrefixRaw = runtimeMakeStringRaw("|")
+
 // MARK: - STDLIB-006 String Functions
 
 @_cdecl("kk_string_trim")
@@ -102,6 +104,24 @@ public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let template = runtimeStringFromRaw(formatRaw) ?? ""
     let arguments = runtimeArrayBox(from: argsArrayRaw)?.elements ?? []
     return runtimeMakeStringRaw(runtimeFormatString(template, arguments: arguments))
+}
+
+@_cdecl("kk_string_trimIndent")
+public func kk_string_trimIndent(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringRaw(runtimeTrimIndent(source))
+}
+
+@_cdecl("kk_string_trimMargin_default")
+public func kk_string_trimMargin_default(_ strRaw: Int) -> Int {
+    kk_string_trimMargin(strRaw, runtimeDefaultTrimMarginPrefixRaw)
+}
+
+@_cdecl("kk_string_trimMargin")
+public func kk_string_trimMargin(_ strRaw: Int, _ marginPrefixRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
+    return runtimeMakeStringRaw(runtimeTrimMargin(source, marginPrefix: marginPrefix))
 }
 
 @_cdecl("kk_compare_any")
@@ -216,6 +236,61 @@ private func runtimeCompareStrings(_ lhs: String, _ rhs: String) -> Int {
         return 0
     }
     return lhs < rhs ? -1 : 1
+}
+
+private func runtimeNormalizedMultilineString(_ source: String) -> [String] {
+    source
+        .replacingOccurrences(of: "\r\n", with: "\n")
+        .replacingOccurrences(of: "\r", with: "\n")
+        .split(separator: "\n", omittingEmptySubsequences: false)
+        .map(String.init)
+}
+
+private func runtimeTrimBlankEdges(_ lines: [String]) -> ArraySlice<String> {
+    var start = lines.startIndex
+    var end = lines.endIndex
+    while start < end, lines[start].trimmingCharacters(in: .whitespaces).isEmpty {
+        start += 1
+    }
+    while end > start, lines[end - 1].trimmingCharacters(in: .whitespaces).isEmpty {
+        end -= 1
+    }
+    return lines[start ..< end]
+}
+
+private func runtimeLeadingIndentCount(_ line: String) -> Int {
+    line.prefix { $0 == " " || $0 == "\t" }.count
+}
+
+private func runtimeTrimIndent(_ source: String) -> String {
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    let minimumIndent = lines
+        .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        .map(runtimeLeadingIndentCount)
+        .min() ?? 0
+    return lines.map { line in
+        guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return ""
+        }
+        return String(line.dropFirst(minimumIndent))
+    }.joined(separator: "\n")
+}
+
+private func runtimeTrimMargin(_ source: String, marginPrefix: String) -> String {
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    return lines.map { line in
+        let trimmedLeading = line.drop { $0 == " " || $0 == "\t" }
+        guard trimmedLeading.hasPrefix(marginPrefix) else {
+            return line
+        }
+        return String(trimmedLeading.dropFirst(marginPrefix.count))
+    }.joined(separator: "\n")
 }
 
 private func runtimeStringFromRaw(_ raw: Int) -> String? {

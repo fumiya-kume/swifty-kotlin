@@ -43,6 +43,11 @@ public enum ScopeFunctionKind: Equatable {
     case scopeAlso
 }
 
+/// Identifies special stdlib calls that need dedicated lowering.
+public enum StdlibSpecialCallKind: Equatable {
+    case repeatLoop
+}
+
 public struct CatchClauseBinding: Equatable {
     public let parameterSymbol: SymbolID
     public let parameterType: TypeID

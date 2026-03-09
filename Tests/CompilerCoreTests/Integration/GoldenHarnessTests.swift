@@ -75,9 +75,20 @@ final class GoldenHarnessTests: XCTestCase {
             }
 
             for file in ast.sortedFiles {
-                lines.append(
-                    "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
-                )
+                var fileLine = "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
+                if !file.annotations.isEmpty {
+                    let renderedAnnotations = file.annotations.map { annotation in
+                        let targetPrefix = annotation.useSiteTarget.map { "@\($0):" } ?? "@"
+                        let arguments = if annotation.arguments.isEmpty {
+                            ""
+                        } else {
+                            "(\(annotation.arguments.map(renderAnnotationArgument).joined(separator: ",")))"
+                        }
+                        return "\(targetPrefix)\(annotation.name)\(arguments)"
+                    }.joined(separator: ",")
+                    fileLine += " annotations=[\(renderedAnnotations)]"
+                }
+                lines.append(fileLine)
                 for declID in file.topLevelDecls {
                     guard let decl = ast.arena.decl(declID) else {
                         continue
@@ -279,5 +290,21 @@ final class GoldenHarnessTests: XCTestCase {
             return "s\(symbol.rawValue)"
         }
         return "_"
+    }
+
+    private func renderAnnotationArgument(_ argument: String) -> String {
+        guard argument.count >= 2,
+              argument.first == "\"",
+              argument.last == "\""
+        else {
+            return argument
+        }
+        let innerStart = argument.index(after: argument.startIndex)
+        let innerEnd = argument.index(before: argument.endIndex)
+        let inner = String(argument[innerStart ..< innerEnd])
+        if inner.first == "\"", inner.last == "\"" {
+            return inner
+        }
+        return argument
     }
 }

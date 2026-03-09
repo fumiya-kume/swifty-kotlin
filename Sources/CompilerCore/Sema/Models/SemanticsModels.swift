@@ -53,6 +53,7 @@ public struct SymbolFlags: OptionSet, Sendable {
     public static let funInterface = SymbolFlags(rawValue: 1 << 16)
     public static let expectDeclaration = SymbolFlags(rawValue: 1 << 17)
     public static let actualDeclaration = SymbolFlags(rawValue: 1 << 18)
+    public static let lateinitProperty = SymbolFlags(rawValue: 1 << 19)
 }
 
 public struct SemanticSymbol: Sendable {
@@ -116,6 +117,16 @@ public struct FunctionSignature: Hashable, Sendable {
         self.typeParameterUpperBoundsList = normalizedUpperBoundsList
         self.typeParameterUpperBounds = normalizedUpperBoundsList.map(\.first)
         self.classTypeParameterCount = classTypeParameterCount
+    }
+}
+
+public struct ContractNonNullEffect: Equatable, Sendable {
+    public let parameterSymbol: SymbolID
+    public let appliesOnAnyReturn: Bool
+
+    public init(parameterSymbol: SymbolID, appliesOnAnyReturn: Bool) {
+        self.parameterSymbol = parameterSymbol
+        self.appliesOnAnyReturn = appliesOnAnyReturn
     }
 }
 
@@ -267,6 +278,9 @@ public final class SymbolTable {
     private var parentSymbols: [SymbolID: SymbolID] = [:]
     private var backingFieldSymbols: [SymbolID: SymbolID] = [:]
     private var delegateStorageSymbols: [SymbolID: SymbolID] = [:]
+    private var delegateGetValueSymbols: [SymbolID: SymbolID] = [:]
+    private var delegateSetValueSymbols: [SymbolID: SymbolID] = [:]
+    private var delegateProvideDelegateSymbols: [SymbolID: SymbolID] = [:]
     private var accessorOwnerProperties: [SymbolID: SymbolID] = [:]
     private var extensionPropertyReceiverTypes: [SymbolID: TypeID] = [:]
     private var extensionPropertyGetterAccessors: [SymbolID: SymbolID] = [:]
@@ -280,6 +294,7 @@ public final class SymbolTable {
     private var constValueExprKinds: [SymbolID: KIRExprKind] = [:]
     private var delegateHasProvideDelegate: Set<SymbolID> = []
     private var expectActualLinks: [SymbolID: SymbolID] = [:]
+    private var contractNonNullEffects: [SymbolID: ContractNonNullEffect] = [:]
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
@@ -602,6 +617,30 @@ public final class SymbolTable {
         delegateStorageSymbols[property]
     }
 
+    public func setDelegateGetValueSymbol(_ accessor: SymbolID, for property: SymbolID) {
+        delegateGetValueSymbols[property] = accessor
+    }
+
+    public func delegateGetValueSymbol(for property: SymbolID) -> SymbolID? {
+        delegateGetValueSymbols[property]
+    }
+
+    public func setDelegateSetValueSymbol(_ accessor: SymbolID, for property: SymbolID) {
+        delegateSetValueSymbols[property] = accessor
+    }
+
+    public func delegateSetValueSymbol(for property: SymbolID) -> SymbolID? {
+        delegateSetValueSymbols[property]
+    }
+
+    public func setDelegateProvideDelegateSymbol(_ accessor: SymbolID, for property: SymbolID) {
+        delegateProvideDelegateSymbols[property] = accessor
+    }
+
+    public func delegateProvideDelegateSymbol(for property: SymbolID) -> SymbolID? {
+        delegateProvideDelegateSymbols[property]
+    }
+
     public func setExtensionPropertyReceiverType(_ type: TypeID, for property: SymbolID) {
         extensionPropertyReceiverTypes[property] = type
     }
@@ -727,6 +766,14 @@ public final class SymbolTable {
         expectActualLinks[expect]
     }
 
+    public func setContractNonNullEffect(_ effect: ContractNonNullEffect, for function: SymbolID) {
+        contractNonNullEffects[function] = effect
+    }
+
+    public func contractNonNullEffect(for function: SymbolID) -> ContractNonNullEffect? {
+        contractNonNullEffects[function]
+    }
+
     // MARK: - Indexed queries
 
     /// Returns all symbol IDs of a given kind.
@@ -785,6 +832,10 @@ public final class BindingTable {
     public private(set) var scopeFunctionExprIDs: Set<ExprID> = []
     /// Maps scope function call expression IDs to their kind.
     public private(set) var scopeFunctionKinds: [ExprID: ScopeFunctionKind] = [:]
+    /// Tracks stdlib calls that require dedicated lowering.
+    public private(set) var stdlibSpecialCallExprIDs: Set<ExprID> = []
+    /// Maps stdlib special call expressions to their lowering kind.
+    public private(set) var stdlibSpecialCallKinds: [ExprID: StdlibSpecialCallKind] = [:]
     /// Maps nameRef expression IDs to their member name when they were resolved
     /// as implicit receiver member accesses (STDLIB-004).
     public private(set) var implicitReceiverMemberNames: [ExprID: InternedString] = [:]
@@ -1003,6 +1054,22 @@ public final class BindingTable {
     /// Retrieve the scope function kind for a scope function call expression.
     public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
         scopeFunctionKinds[expr]
+    }
+
+    /// Mark a call expression as a stdlib special call requiring custom lowering.
+    public func markStdlibSpecialCallExpr(_ expr: ExprID, kind: StdlibSpecialCallKind) {
+        stdlibSpecialCallExprIDs.insert(expr)
+        stdlibSpecialCallKinds[expr] = kind
+    }
+
+    /// Whether the given expression is a stdlib special call.
+    public func isStdlibSpecialCallExpr(_ expr: ExprID) -> Bool {
+        stdlibSpecialCallExprIDs.contains(expr)
+    }
+
+    /// Retrieve the stdlib special call kind for a marked call expression.
+    public func stdlibSpecialCallKind(for expr: ExprID) -> StdlibSpecialCallKind? {
+        stdlibSpecialCallKinds[expr]
     }
 
     /// Mark a nameRef expression as an implicit receiver member access (STDLIB-004).
