@@ -146,7 +146,7 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if (memberName == "forEachIndexed" || memberName == "mapIndexed"), argCount == 1 {
+        if memberName == "forEachIndexed" || memberName == "mapIndexed", argCount == 1 {
             let lambdaReturnType = memberName == "forEachIndexed" ? sema.types.unitType : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType, receiverElementType],

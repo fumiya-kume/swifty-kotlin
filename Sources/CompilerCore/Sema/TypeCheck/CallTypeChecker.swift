@@ -752,7 +752,7 @@ final class CallTypeChecker {
                 } else if let expectedType, expectedType != sema.types.errorType,
                           case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                           expectedClassType.args.count == 2,
-                          (name == "mapOf" || name == "mutableMapOf" || name == "emptyMap")
+                          name == "mapOf" || name == "mutableMapOf" || name == "emptyMap"
                 {
                     collectionType = expectedType
                 } else if explicitTypeArgs.count == 2,
@@ -780,7 +780,7 @@ final class CallTypeChecker {
                     ctx: ctx,
                     locals: &locals
                 ),
-                          name == "mapOf" || name == "mutableMapOf"
+                    name == "mapOf" || name == "mutableMapOf"
                 {
                     collectionType = if name == "mutableMapOf" {
                         makeSyntheticMutableMapType(

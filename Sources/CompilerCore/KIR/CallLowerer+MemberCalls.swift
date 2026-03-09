@@ -788,8 +788,8 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let calleeStr = interner.resolve(calleeName)
-            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) &&
-               (calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd")
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd"
             {
                 let hasEndExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
                 instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(1)))

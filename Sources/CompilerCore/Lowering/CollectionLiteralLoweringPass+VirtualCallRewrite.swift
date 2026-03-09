@@ -415,7 +415,7 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
         }
-        if (callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName),
+        if callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName,
            let result
         {
             mapExprIDs.insert(result.rawValue)
