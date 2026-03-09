@@ -115,69 +115,75 @@ public func kk_string_repeat(_ strRaw: Int, _ countRaw: Int) -> Int {
 @_cdecl("kk_string_reversed")
 public func kk_string_reversed(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    return runtimeMakeStringRaw(String(decoding: source.utf8.reversed(), as: UTF8.self))
+    let reversed = String(source.unicodeScalars.reversed().map(Character.init))
+    return runtimeMakeStringRaw(reversed)
 }
 
 @_cdecl("kk_string_toList")
 public func kk_string_toList(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let charRaws = Array(source.utf8).map { kk_box_char(Int($0)) }
+    let charRaws = source.unicodeScalars.map { kk_box_char(Int($0.value)) }
     return runtimeMakeListRaw(charRaws)
 }
 
 @_cdecl("kk_string_toCharArray")
 public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let charRaws = Array(source.utf8).map { kk_box_char(Int($0)) }
+    let charRaws = source.unicodeScalars.map { kk_box_char(Int($0.value)) }
     return runtimeMakeListRaw(charRaws)
 }
 
 @_cdecl("kk_string_take")
 public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let bytes = Array(source.utf8)
+    let scalars = Array(source.unicodeScalars)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw("")
     }
-    guard nRaw < bytes.count else {
+    guard nRaw < scalars.count else {
         return runtimeMakeStringRaw(source)
     }
-    return runtimeMakeStringRaw(String(decoding: bytes[0 ..< nRaw], as: UTF8.self))
+    let prefixScalars = scalars[0 ..< nRaw]
+    let result = String(prefixScalars.map(Character.init))
+    return runtimeMakeStringRaw(result)
 }
 
 @_cdecl("kk_string_takeLast")
 public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let bytes = Array(source.utf8)
+    let scalars = Array(source.unicodeScalars)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw("")
     }
-    let start = max(0, bytes.count - nRaw)
-    return runtimeMakeStringRaw(String(decoding: bytes[start ..< bytes.count], as: UTF8.self))
+    let start = max(0, scalars.count - nRaw)
+    let suffixScalars = scalars[start ..< scalars.count]
+    return runtimeMakeStringRaw(String(suffixScalars.map(Character.init)))
 }
 
 @_cdecl("kk_string_drop")
 public func kk_string_drop(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let bytes = Array(source.utf8)
+    let scalars = Array(source.unicodeScalars)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
     }
-    if nRaw >= bytes.count {
+    if nRaw >= scalars.count {
         return runtimeMakeStringRaw("")
     }
-    return runtimeMakeStringRaw(String(decoding: bytes[nRaw ..< bytes.count], as: UTF8.self))
+    let suffixScalars = scalars[nRaw ..< scalars.count]
+    return runtimeMakeStringRaw(String(suffixScalars.map(Character.init)))
 }
 
 @_cdecl("kk_string_dropLast")
 public func kk_string_dropLast(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let bytes = Array(source.utf8)
+    let scalars = Array(source.unicodeScalars)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
     }
-    let end = max(0, bytes.count - nRaw)
-    return runtimeMakeStringRaw(String(decoding: bytes[0 ..< end], as: UTF8.self))
+    let end = max(0, scalars.count - nRaw)
+    let prefixScalars = scalars[0 ..< end]
+    return runtimeMakeStringRaw(String(prefixScalars.map(Character.init)))
 }
 
 @_cdecl("kk_string_startsWith")

@@ -470,17 +470,24 @@ extension CallLowerer {
         )
         if let callBinding = sema.bindings.callBindings[exprID] {
             let chosenSet = callBinding.chosenCallee
-            let loweredArgs = indices.map {
-                driver.lowerExpr(
-                    $0,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } + [valueID]
+            var loweredIndices: [KIRExprID] = []
+            for (i, indexExpr) in indices.enumerated() {
+                if i == 0 {
+                    loweredIndices.append(indexID)
+                } else {
+                    let loweredIndex = driver.lowerExpr(
+                        indexExpr,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    loweredIndices.append(loweredIndex)
+                }
+            }
+            let loweredArgs = loweredIndices + [valueID]
             let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
             emitMemberCallInstruction(
                 normalized: driver.callSupportLowerer.normalizedCallArguments(

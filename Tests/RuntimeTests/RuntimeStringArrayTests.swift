@@ -163,6 +163,19 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
     }
 
+    func testStringFunctionsWithNonASCII() {
+        let text = "aé🐻"
+        XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString(text))), "🐻éa")
+        
+        let listRaw = kk_string_toList(rawFromRuntimeString(text))
+        let list = runtimeListBox(from: listRaw)
+        let expectedScalars: [Int] = [97, 233, 128059] // 'a', 'é', '🐻'
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expectedScalars)
+        
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2)), "aé")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1)), "é🐻")
+    }
+
     func testStringTakeDropFunctions() {
         XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 0)), "")
         XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 2)), "ab")
