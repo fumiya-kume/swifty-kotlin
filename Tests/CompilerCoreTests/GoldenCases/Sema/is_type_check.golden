@@ -25,7 +25,7 @@ symbol s23 kind=function fq=kotlin.collections.List.distinct vis=public flags=sy
 symbol s24 kind=interface fq=kotlin.collections.MutableList vis=public flags=synthetic
 symbol s25 kind=typeParameter fq=kotlin.collections.MutableList.E vis=private flags=_
 symbol s26 kind=function fq=kotlin.collections.MutableList.set vis=public flags=synthetic|operatorFunction sig=recv=Class#24<T#25> params=[Int,T#25] ret=T#25 suspend=0 defaults=[] vararg=[]
-symbol s27 kind=function fq=kotlin.collections.MutableList.add vis=public flags=synthetic sig=recv=Class#24<T#25> params=[T#25] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s27 kind=function fq=kotlin.collections.MutableList.add vis=public flags=synthetic|operatorFunction sig=recv=Class#24<T#25> params=[T#25] ret=Boolean suspend=0 defaults=[] vararg=[]
 symbol s28 kind=function fq=kotlin.collections.MutableList.removeAt vis=public flags=synthetic sig=recv=Class#24<T#25> params=[Int] ret=T#25 suspend=0 defaults=[] vararg=[]
 symbol s29 kind=function fq=kotlin.collections.MutableList.clear vis=public flags=synthetic sig=recv=Class#24<T#25> params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s30 kind=interface fq=kotlin.collections.Set vis=public flags=synthetic
