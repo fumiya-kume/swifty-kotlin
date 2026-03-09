@@ -1,4 +1,3 @@
-// swiftlint:disable file_length cyclomatic_complexity
 import Foundation
 
 private let runtimeDefaultTrimMarginPrefixRaw = runtimeMakeStringRaw("|")

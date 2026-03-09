@@ -158,9 +158,11 @@ final class CoroutineLoweringPass: LoweringPass {
                 runtimeDelayCallee: runtimeDelayCallee,
                 suspendPlan: suspendLoweringPlan,
                 spillSlotByExpr: continuationNominal?.spillSlotByExpr ?? [:],
-                continuationType: continuationType,
-                intType: intType,
-                unitType: unitType
+                smTypes: StateMachineTypeContext(
+                    continuationType: continuationType,
+                    intType: intType,
+                    unitType: unitType
+                )
             )
             if let continuationNominal {
                 _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: continuationNominal.typeSymbol)))

@@ -1,15 +1,22 @@
-// swiftlint:disable file_length function_body_length
 import Foundation
+
+struct MemberDeclarations {
+    let functions: [DeclID]
+    let properties: [DeclID]
+    let nestedClasses: [DeclID]
+    let nestedObjects: [DeclID]
+}
+
+struct OwnerContext {
+    let fqName: [InternedString]
+    let symbol: SymbolID
+    let type: TypeID
+}
 
 extension DataFlowSemaPhase {
     func collectMemberHeaders(
-        memberFunctions: [DeclID],
-        memberProperties: [DeclID],
-        nestedClasses: [DeclID],
-        nestedObjects: [DeclID],
-        ownerFQName: [InternedString],
-        ownerSymbol: SymbolID,
-        ownerType: TypeID,
+        members: MemberDeclarations,
+        owner: OwnerContext,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -20,10 +27,13 @@ extension DataFlowSemaPhase {
         classTypeParameterSymbols: [SymbolID] = [],
         classLocalTypeParameters: [InternedString: SymbolID] = [:]
     ) {
+        let ownerFQName = owner.fqName
+        let ownerSymbol = owner.symbol
+        let ownerType = owner.type
         let anyType = types.anyType
         let unitType = types.unitType
 
-        for declID in memberFunctions {
+        for declID in members.functions {
             guard let decl = ast.arena.decl(declID),
                   case let .funDecl(funDecl) = decl
             else {
@@ -143,7 +153,7 @@ extension DataFlowSemaPhase {
             )
         }
 
-        for declID in memberProperties {
+        for declID in members.properties {
             guard let decl = ast.arena.decl(declID),
                   case let .propertyDecl(propertyDecl) = decl
             else {
@@ -243,110 +253,116 @@ extension DataFlowSemaPhase {
             }
         }
 
-        for declID in nestedClasses {
-            guard let decl = ast.arena.decl(declID) else {
-                continue
-            }
-            switch decl {
-            case let .classDecl(nestedClass):
-                let nestedFQName = ownerFQName + [nestedClass.name]
-                let nestedClassKind = classSymbolKind(for: nestedClass)
-                checkAndReportDuplicateDeclaration(
-                    newKind: nestedClassKind,
-                    fqName: nestedFQName,
-                    range: nestedClass.range,
-                    symbols: symbols,
-                    diagnostics: diagnostics,
-                    newFlags: flags(from: nestedClass.modifiers)
-                )
-                let nestedSymbol = symbols.define(
-                    kind: nestedClassKind,
-                    name: nestedClass.name,
-                    fqName: nestedFQName,
-                    declSite: nestedClass.range,
-                    visibility: visibility(from: nestedClass.modifiers),
-                    flags: flags(from: nestedClass.modifiers)
-                )
-                bindings.bindDecl(declID, symbol: nestedSymbol)
-                symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-                scope.insert(nestedSymbol)
+        for declID in members.nestedClasses {
+            collectNestedClassOrInterfaceHeader(
+                declID: declID,
+                ownerFQName: ownerFQName,
+                ownerSymbol: ownerSymbol,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+        }
 
-                let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
-                let nestedScope = ClassMemberScope(
-                    parent: scope,
-                    symbols: symbols,
-                    ownerSymbol: nestedSymbol,
-                    thisType: nestedType
+        for declID in members.nestedObjects {
+            collectNestedObjectHeader(
+                declID: declID,
+                ownerFQName: ownerFQName,
+                ownerSymbol: ownerSymbol,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: scope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+        }
+    }
+
+    private func collectNestedClassOrInterfaceHeader(
+        declID: DeclID,
+        ownerFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        bindings: BindingTable,
+        scope: Scope,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let decl = ast.arena.decl(declID) else {
+            return
+        }
+        let anyType = types.anyType
+        switch decl {
+        case let .classDecl(nestedClass):
+            let nestedFQName = ownerFQName + [nestedClass.name]
+            let nestedClassKind = classSymbolKind(for: nestedClass)
+            checkAndReportDuplicateDeclaration(
+                newKind: nestedClassKind,
+                fqName: nestedFQName,
+                range: nestedClass.range,
+                symbols: symbols,
+                diagnostics: diagnostics,
+                newFlags: flags(from: nestedClass.modifiers)
+            )
+            let nestedSymbol = symbols.define(
+                kind: nestedClassKind,
+                name: nestedClass.name,
+                fqName: nestedFQName,
+                declSite: nestedClass.range,
+                visibility: visibility(from: nestedClass.modifiers),
+                flags: flags(from: nestedClass.modifiers)
+            )
+            bindings.bindDecl(declID, symbol: nestedSymbol)
+            symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+            scope.insert(nestedSymbol)
+
+            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+            let nestedScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: nestedSymbol,
+                thisType: nestedType
+            )
+            if !nestedClass.typeParams.isEmpty {
+                types.setNominalTypeParameterVariances(
+                    nestedClass.typeParams.map(\.variance),
+                    for: nestedSymbol
                 )
-                if !nestedClass.typeParams.isEmpty {
-                    types.setNominalTypeParameterVariances(
-                        nestedClass.typeParams.map(\.variance),
-                        for: nestedSymbol
-                    )
-                }
-                // Create constructor symbols for nested class (primary + secondary).
-                // Kotlin rule: only define a primary constructor symbol when either
-                // (a) the class header has explicit constructor parentheses, or
-                // (b) there are no secondary constructors (implicit default ctor).
-                let ctorName = interner.intern("<init>")
-                let nestedCtorFQName = nestedFQName + [ctorName]
-                let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
-                let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
-                if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
-                    let nestedPrimaryCtorVisibility = primaryConstructorVisibility(
-                        for: nestedClass,
-                        classKind: nestedClassKind,
-                        declarationVisibility: visibility(from: nestedClass.modifiers)
-                    )
-                    let nestedPrimaryCtorSymbol = symbols.define(
-                        kind: .constructor,
-                        name: nestedClass.name,
-                        fqName: nestedCtorFQName,
-                        declSite: nestedClass.range,
-                        visibility: nestedPrimaryCtorVisibility,
-                        flags: []
-                    )
-                    nestedScope.insert(nestedPrimaryCtorSymbol)
-                    symbols.setParentSymbol(nestedSymbol, for: nestedPrimaryCtorSymbol)
-                    do {
-                        let localNamespaceFQName = nestedCtorFQName + [interner.intern("$\(nestedPrimaryCtorSymbol.rawValue)")]
-                        let params = collectValueParameters(
-                            nestedClass.primaryConstructorParams,
-                            localNamespaceFQName: localNamespaceFQName,
-                            declSite: nestedClass.range,
-                            ast: ast, symbols: symbols, types: types,
-                            interner: interner, diagnostics: diagnostics,
-                            fallbackType: anyType
-                        )
-                        symbols.setFunctionSignature(
-                            FunctionSignature(
-                                receiverType: nestedType,
-                                parameterTypes: params.paramTypes,
-                                returnType: nestedType,
-                                valueParameterSymbols: params.paramSymbols,
-                                valueParameterHasDefaultValues: params.paramHasDefaultValues,
-                                valueParameterIsVararg: params.paramIsVararg
-                            ),
-                            for: nestedPrimaryCtorSymbol
-                        )
-                    }
-                }
-                for (ctorIndex, secondaryCtor) in nestedClass.secondaryConstructors.enumerated() {
-                    let secCtorSymbol = symbols.define(
-                        kind: .constructor,
-                        name: nestedClass.name,
-                        fqName: nestedCtorFQName,
-                        declSite: secondaryCtor.range,
-                        visibility: visibility(from: secondaryCtor.modifiers),
-                        flags: []
-                    )
-                    nestedScope.insert(secCtorSymbol)
-                    symbols.setParentSymbol(nestedSymbol, for: secCtorSymbol)
-                    let localNamespaceFQName = nestedCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
+            }
+            let ctorName = interner.intern("<init>")
+            let nestedCtorFQName = nestedFQName + [ctorName]
+            let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
+            let nestedHasSecondaryCtors = !nestedClass.secondaryConstructors.isEmpty
+            if nestedHasPrimaryCtorSyntax || !nestedHasSecondaryCtors {
+                let nestedPrimaryCtorVisibility = primaryConstructorVisibility(
+                    for: nestedClass,
+                    classKind: nestedClassKind,
+                    declarationVisibility: visibility(from: nestedClass.modifiers)
+                )
+                let nestedPrimaryCtorSymbol = symbols.define(
+                    kind: .constructor,
+                    name: nestedClass.name,
+                    fqName: nestedCtorFQName,
+                    declSite: nestedClass.range,
+                    visibility: nestedPrimaryCtorVisibility,
+                    flags: []
+                )
+                nestedScope.insert(nestedPrimaryCtorSymbol)
+                symbols.setParentSymbol(nestedSymbol, for: nestedPrimaryCtorSymbol)
+                do {
+                    let localNamespaceFQName = nestedCtorFQName + [interner.intern("$\(nestedPrimaryCtorSymbol.rawValue)")]
                     let params = collectValueParameters(
-                        secondaryCtor.valueParams,
+                        nestedClass.primaryConstructorParams,
                         localNamespaceFQName: localNamespaceFQName,
-                        declSite: secondaryCtor.range,
+                        declSite: nestedClass.range,
                         ast: ast, symbols: symbols, types: types,
                         interner: interner, diagnostics: diagnostics,
                         fallbackType: anyType
@@ -360,49 +376,95 @@ extension DataFlowSemaPhase {
                             valueParameterHasDefaultValues: params.paramHasDefaultValues,
                             valueParameterIsVararg: params.paramIsVararg
                         ),
-                        for: secCtorSymbol
+                        for: nestedPrimaryCtorSymbol
                     )
                 }
-
-                if classSymbolKind(for: nestedClass) == .enumClass {
-                    for entry in nestedClass.enumEntries {
-                        let entryFQName = nestedFQName + [entry.name]
-                        checkAndReportDuplicateDeclaration(
-                            newKind: .field,
-                            fqName: entryFQName,
-                            range: entry.range,
-                            symbols: symbols,
-                            diagnostics: diagnostics
-                        )
-                        let entrySymbol = symbols.define(
-                            kind: .field,
-                            name: entry.name,
-                            fqName: entryFQName,
-                            declSite: entry.range,
-                            visibility: .public,
-                            flags: []
-                        )
-                        symbols.setParentSymbol(nestedSymbol, for: entrySymbol)
-                        symbols.setPropertyType(nestedType, for: entrySymbol)
-                    }
-                }
-                collectNestedTypeAliases(
-                    nestedClass.nestedTypeAliases,
-                    ownerFQName: nestedFQName,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner
+            }
+            for (ctorIndex, secondaryCtor) in nestedClass.secondaryConstructors.enumerated() {
+                let secCtorSymbol = symbols.define(
+                    kind: .constructor,
+                    name: nestedClass.name,
+                    fqName: nestedCtorFQName,
+                    declSite: secondaryCtor.range,
+                    visibility: visibility(from: secondaryCtor.modifiers),
+                    flags: []
                 )
-                collectMemberHeaders(
-                    memberFunctions: nestedClass.memberFunctions,
-                    memberProperties: nestedClass.memberProperties,
+                nestedScope.insert(secCtorSymbol)
+                symbols.setParentSymbol(nestedSymbol, for: secCtorSymbol)
+                let localNamespaceFQName = nestedCtorFQName + [interner.intern("$sec\(ctorIndex)_\(secCtorSymbol.rawValue)")]
+                let params = collectValueParameters(
+                    secondaryCtor.valueParams,
+                    localNamespaceFQName: localNamespaceFQName,
+                    declSite: secondaryCtor.range,
+                    ast: ast, symbols: symbols, types: types,
+                    interner: interner, diagnostics: diagnostics,
+                    fallbackType: anyType
+                )
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: nestedType,
+                        parameterTypes: params.paramTypes,
+                        returnType: nestedType,
+                        valueParameterSymbols: params.paramSymbols,
+                        valueParameterHasDefaultValues: params.paramHasDefaultValues,
+                        valueParameterIsVararg: params.paramIsVararg
+                    ),
+                    for: secCtorSymbol
+                )
+            }
+
+            if classSymbolKind(for: nestedClass) == .enumClass {
+                for entry in nestedClass.enumEntries {
+                    let entryFQName = nestedFQName + [entry.name]
+                    checkAndReportDuplicateDeclaration(
+                        newKind: .field,
+                        fqName: entryFQName,
+                        range: entry.range,
+                        symbols: symbols,
+                        diagnostics: diagnostics
+                    )
+                    let entrySymbol = symbols.define(
+                        kind: .field,
+                        name: entry.name,
+                        fqName: entryFQName,
+                        declSite: entry.range,
+                        visibility: .public,
+                        flags: []
+                    )
+                    symbols.setParentSymbol(nestedSymbol, for: entrySymbol)
+                    symbols.setPropertyType(nestedType, for: entrySymbol)
+                }
+            }
+            collectNestedTypeAliases(
+                nestedClass.nestedTypeAliases,
+                ownerFQName: nestedFQName,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+            collectMemberHeaders(
+                members: MemberDeclarations(
+                    functions: nestedClass.memberFunctions,
+                    properties: nestedClass.memberProperties,
                     nestedClasses: nestedClass.nestedClasses,
-                    nestedObjects: nestedClass.nestedObjects,
+                    nestedObjects: nestedClass.nestedObjects
+                ),
+                owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                bindings: bindings,
+                scope: nestedScope,
+                diagnostics: diagnostics,
+                interner: interner
+            )
+            if let companionDeclID = nestedClass.companionObject {
+                collectCompanionObjectHeader(
+                    companionDeclID: companionDeclID,
                     ownerFQName: nestedFQName,
                     ownerSymbol: nestedSymbol,
-                    ownerType: nestedType,
                     ast: ast,
                     symbols: symbols,
                     types: types,
@@ -411,125 +473,28 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics,
                     interner: interner
                 )
-                if let companionDeclID = nestedClass.companionObject {
-                    collectCompanionObjectHeader(
-                        companionDeclID: companionDeclID,
-                        ownerFQName: nestedFQName,
-                        ownerSymbol: nestedSymbol,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        bindings: bindings,
-                        scope: nestedScope,
-                        diagnostics: diagnostics,
-                        interner: interner
-                    )
-                }
-            case let .interfaceDecl(nestedInterface):
-                let nestedFQName = ownerFQName + [nestedInterface.name]
-                checkAndReportDuplicateDeclaration(
-                    newKind: .interface,
-                    fqName: nestedFQName,
-                    range: nestedInterface.range,
-                    symbols: symbols,
-                    diagnostics: diagnostics,
-                    newFlags: flags(from: nestedInterface.modifiers)
-                )
-                var nestedFlags = flags(from: nestedInterface.modifiers)
-                if nestedInterface.isFunInterface {
-                    nestedFlags.insert(.funInterface)
-                }
-                let nestedSymbol = symbols.define(
-                    kind: .interface,
-                    name: nestedInterface.name,
-                    fqName: nestedFQName,
-                    declSite: nestedInterface.range,
-                    visibility: visibility(from: nestedInterface.modifiers),
-                    flags: nestedFlags
-                )
-                bindings.bindDecl(declID, symbol: nestedSymbol)
-                symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
-                scope.insert(nestedSymbol)
-
-                let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
-                let nestedScope = ClassMemberScope(
-                    parent: scope,
-                    symbols: symbols,
-                    ownerSymbol: nestedSymbol,
-                    thisType: nestedType
-                )
-                if !nestedInterface.typeParams.isEmpty {
-                    types.setNominalTypeParameterVariances(
-                        nestedInterface.typeParams.map(\.variance),
-                        for: nestedSymbol
-                    )
-                }
-                collectNestedTypeAliases(
-                    nestedInterface.nestedTypeAliases,
-                    ownerFQName: nestedFQName,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner
-                )
-                collectMemberHeaders(
-                    memberFunctions: nestedInterface.memberFunctions,
-                    memberProperties: nestedInterface.memberProperties,
-                    nestedClasses: nestedInterface.nestedClasses,
-                    nestedObjects: nestedInterface.nestedObjects,
-                    ownerFQName: nestedFQName,
-                    ownerSymbol: nestedSymbol,
-                    ownerType: nestedType,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    bindings: bindings,
-                    scope: nestedScope,
-                    diagnostics: diagnostics,
-                    interner: interner
-                )
-                if let companionDeclID = nestedInterface.companionObject {
-                    collectCompanionObjectHeader(
-                        companionDeclID: companionDeclID,
-                        ownerFQName: nestedFQName,
-                        ownerSymbol: nestedSymbol,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types,
-                        bindings: bindings,
-                        scope: nestedScope,
-                        diagnostics: diagnostics,
-                        interner: interner
-                    )
-                }
-            default:
-                continue
             }
-        }
-
-        for declID in nestedObjects {
-            guard let decl = ast.arena.decl(declID),
-                  case let .objectDecl(nestedObject) = decl
-            else {
-                continue
-            }
-            let nestedFQName = ownerFQName + [nestedObject.name]
+        case let .interfaceDecl(nestedInterface):
+            let nestedFQName = ownerFQName + [nestedInterface.name]
             checkAndReportDuplicateDeclaration(
-                newKind: .object,
+                newKind: .interface,
                 fqName: nestedFQName,
-                range: nestedObject.range,
+                range: nestedInterface.range,
                 symbols: symbols,
                 diagnostics: diagnostics,
-                newFlags: flags(from: nestedObject.modifiers)
+                newFlags: flags(from: nestedInterface.modifiers)
             )
+            var nestedFlags = flags(from: nestedInterface.modifiers)
+            if nestedInterface.isFunInterface {
+                nestedFlags.insert(.funInterface)
+            }
             let nestedSymbol = symbols.define(
-                kind: .object,
-                name: nestedObject.name,
+                kind: .interface,
+                name: nestedInterface.name,
                 fqName: nestedFQName,
-                declSite: nestedObject.range,
-                visibility: visibility(from: nestedObject.modifiers),
-                flags: flags(from: nestedObject.modifiers)
+                declSite: nestedInterface.range,
+                visibility: visibility(from: nestedInterface.modifiers),
+                flags: nestedFlags
             )
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
@@ -542,8 +507,14 @@ extension DataFlowSemaPhase {
                 ownerSymbol: nestedSymbol,
                 thisType: nestedType
             )
+            if !nestedInterface.typeParams.isEmpty {
+                types.setNominalTypeParameterVariances(
+                    nestedInterface.typeParams.map(\.variance),
+                    for: nestedSymbol
+                )
+            }
             collectNestedTypeAliases(
-                nestedObject.nestedTypeAliases,
+                nestedInterface.nestedTypeAliases,
                 ownerFQName: nestedFQName,
                 ast: ast,
                 symbols: symbols,
@@ -552,13 +523,13 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
             collectMemberHeaders(
-                memberFunctions: nestedObject.memberFunctions,
-                memberProperties: nestedObject.memberProperties,
-                nestedClasses: nestedObject.nestedClasses,
-                nestedObjects: nestedObject.nestedObjects,
-                ownerFQName: nestedFQName,
-                ownerSymbol: nestedSymbol,
-                ownerType: nestedType,
+                members: MemberDeclarations(
+                    functions: nestedInterface.memberFunctions,
+                    properties: nestedInterface.memberProperties,
+                    nestedClasses: nestedInterface.nestedClasses,
+                    nestedObjects: nestedInterface.nestedObjects
+                ),
+                owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -567,26 +538,114 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
-            if nestedObject.modifiers.contains(.data) {
-                collectSyntheticDataObjectToString(
-                    ownerSymbol: nestedSymbol,
+            if let companionDeclID = nestedInterface.companionObject {
+                collectCompanionObjectHeader(
+                    companionDeclID: companionDeclID,
                     ownerFQName: nestedFQName,
-                    objectType: nestedType,
+                    ownerSymbol: nestedSymbol,
+                    ast: ast,
                     symbols: symbols,
                     types: types,
+                    bindings: bindings,
                     scope: nestedScope,
-                    interner: interner
-                )
-                collectSyntheticDataObjectEquals(
-                    ownerSymbol: nestedSymbol,
-                    ownerFQName: nestedFQName,
-                    objectType: nestedType,
-                    symbols: symbols,
-                    types: types,
-                    scope: nestedScope,
+                    diagnostics: diagnostics,
                     interner: interner
                 )
             }
+        default:
+            break
+        }
+    }
+
+    private func collectNestedObjectHeader(
+        declID: DeclID,
+        ownerFQName: [InternedString],
+        ownerSymbol: SymbolID,
+        ast: ASTModule,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        bindings: BindingTable,
+        scope: Scope,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        guard let decl = ast.arena.decl(declID),
+              case let .objectDecl(nestedObject) = decl
+        else {
+            return
+        }
+        let nestedFQName = ownerFQName + [nestedObject.name]
+        checkAndReportDuplicateDeclaration(
+            newKind: .object,
+            fqName: nestedFQName,
+            range: nestedObject.range,
+            symbols: symbols,
+            diagnostics: diagnostics,
+            newFlags: flags(from: nestedObject.modifiers)
+        )
+        let nestedSymbol = symbols.define(
+            kind: .object,
+            name: nestedObject.name,
+            fqName: nestedFQName,
+            declSite: nestedObject.range,
+            visibility: visibility(from: nestedObject.modifiers),
+            flags: flags(from: nestedObject.modifiers)
+        )
+        bindings.bindDecl(declID, symbol: nestedSymbol)
+        symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
+        scope.insert(nestedSymbol)
+
+        let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
+        let nestedScope = ClassMemberScope(
+            parent: scope,
+            symbols: symbols,
+            ownerSymbol: nestedSymbol,
+            thisType: nestedType
+        )
+        collectNestedTypeAliases(
+            nestedObject.nestedTypeAliases,
+            ownerFQName: nestedFQName,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        collectMemberHeaders(
+            members: MemberDeclarations(
+                functions: nestedObject.memberFunctions,
+                properties: nestedObject.memberProperties,
+                nestedClasses: nestedObject.nestedClasses,
+                nestedObjects: nestedObject.nestedObjects
+            ),
+            owner: OwnerContext(fqName: nestedFQName, symbol: nestedSymbol, type: nestedType),
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            scope: nestedScope,
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        if nestedObject.modifiers.contains(.data) {
+            collectSyntheticDataObjectToString(
+                ownerSymbol: nestedSymbol,
+                ownerFQName: nestedFQName,
+                objectType: nestedType,
+                symbols: symbols,
+                types: types,
+                scope: nestedScope,
+                interner: interner
+            )
+            collectSyntheticDataObjectEquals(
+                ownerSymbol: nestedSymbol,
+                ownerFQName: nestedFQName,
+                objectType: nestedType,
+                symbols: symbols,
+                types: types,
+                scope: nestedScope,
+                interner: interner
+            )
         }
     }
 

@@ -1,5 +1,3 @@
-// swiftlint:disable file_length
-
 import Foundation
 
 /// Delegate class for KIR lowering: CallLowerer.
@@ -11,7 +9,6 @@ final class CallLowerer {
         self.driver = driver
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -521,12 +518,9 @@ final class CallLowerer {
             else {
                 return false
             }
-            for (argumentType, parameterType) in zip(argumentTypes, signature.parameterTypes) {
-                if !sema.types.isSubtype(argumentType, parameterType) {
-                    return false
-                }
+            return zip(argumentTypes, signature.parameterTypes).allSatisfy { argumentType, parameterType in
+                sema.types.isSubtype(argumentType, parameterType)
             }
-            return true
         } ?? candidates.first
 
         guard let chosen = matched else {

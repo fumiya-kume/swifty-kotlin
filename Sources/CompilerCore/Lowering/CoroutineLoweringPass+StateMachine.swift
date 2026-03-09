@@ -1,5 +1,11 @@
 import Foundation
 
+struct StateMachineTypeContext {
+    let continuationType: TypeID
+    let intType: TypeID?
+    let unitType: TypeID?
+}
+
 extension CoroutineLoweringPass {
     func lowerSuspendBodyToStateMachineSkeleton(
         originalBody: [KIRInstruction],
@@ -13,10 +19,11 @@ extension CoroutineLoweringPass {
         runtimeDelayCallee: InternedString,
         suspendPlan: SuspendLoweringPlan,
         spillSlotByExpr: [KIRExprID: Int64],
-        continuationType: TypeID,
-        intType: TypeID?,
-        unitType: TypeID?
+        smTypes: StateMachineTypeContext
     ) -> [KIRInstruction] {
+        let continuationType = smTypes.continuationType
+        let intType = smTypes.intType
+        let unitType = smTypes.unitType
         let enterCallee = interner.intern("kk_coroutine_state_enter")
         let setLabelCallee = interner.intern("kk_coroutine_state_set_label")
         let exitCallee = interner.intern("kk_coroutine_state_exit")

@@ -58,7 +58,6 @@ extension KIRLoweringDriver {
         return declIDs
     }
 
-    // swiftlint:disable cyclomatic_complexity
     /// CLASS-008: Synthesize forwarding method bodies for delegated interface methods.
     private func synthesizeClassDelegationForwardingMethods(
         classSymbol: SymbolID,

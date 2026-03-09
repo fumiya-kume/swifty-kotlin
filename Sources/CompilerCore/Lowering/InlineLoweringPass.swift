@@ -125,20 +125,11 @@ final class InlineLoweringPass: LoweringPass {
 
         let parameterValues = Dictionary(uniqueKeysWithValues: zip(inlineTarget.params.map(\.symbol), arguments))
 
-        var typeParamTokenValues: [SymbolID: KIRExprID] = [:]
-        if let sema = ctx.sema,
-           let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
-           !sig.reifiedTypeParameterIndices.isEmpty
-        {
-            for index in sig.reifiedTypeParameterIndices.sorted() {
-                guard index < sig.typeParameterSymbols.count else { continue }
-                let typeParamSymbol = sig.typeParameterSymbols[index]
-                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
-                if let tokenArg = parameterValues[tokenSymbol] {
-                    typeParamTokenValues[typeParamSymbol] = tokenArg
-                }
-            }
-        }
+        let typeParamTokenValues = buildTypeParamTokenValues(
+            inlineTarget: inlineTarget,
+            parameterValues: parameterValues,
+            ctx: ctx
+        )
 
         var localExprMap: [KIRExprID: KIRExprID] = [:]
         var lowered: [KIRInstruction] = []
@@ -175,12 +166,10 @@ final class InlineLoweringPass: LoweringPass {
                 returnedExpr = resolveAlias(of: value, aliases: localExprMap)
 
             case let .constValue(result, value):
-                if case let .symbolRef(symbol) = value, let argument = parameterValues[symbol] {
-                    localExprMap[result] = argument
-                    continue
-                }
-                if case let .symbolRef(symbol) = value, let tokenArg = typeParamTokenValues[symbol] {
-                    localExprMap[result] = tokenArg
+                if case let .symbolRef(symbol) = value,
+                   let mapped = parameterValues[symbol] ?? typeParamTokenValues[symbol]
+                {
+                    localExprMap[result] = mapped
                     continue
                 }
                 let loweredResult = cloneExpr(result, in: module.arena)
@@ -312,6 +301,29 @@ final class InlineLoweringPass: LoweringPass {
         }
 
         return InlineExpansion(instructions: lowered, returnedExpr: returnedExpr)
+    }
+
+    private func buildTypeParamTokenValues(
+        inlineTarget: KIRFunction,
+        parameterValues: [SymbolID: KIRExprID],
+        ctx: KIRContext
+    ) -> [SymbolID: KIRExprID] {
+        guard let sema = ctx.sema,
+              let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
+              !sig.reifiedTypeParameterIndices.isEmpty
+        else {
+            return [:]
+        }
+        var result: [SymbolID: KIRExprID] = [:]
+        for index in sig.reifiedTypeParameterIndices.sorted() {
+            guard index < sig.typeParameterSymbols.count else { continue }
+            let typeParamSymbol = sig.typeParameterSymbols[index]
+            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
+            if let tokenArg = parameterValues[tokenSymbol] {
+                result[typeParamSymbol] = tokenArg
+            }
+        }
+        return result
     }
 
     private func rewriteInstruction(_ instruction: KIRInstruction, aliases: [KIRExprID: KIRExprID]) -> KIRInstruction {
