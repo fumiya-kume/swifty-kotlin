@@ -174,6 +174,303 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMutableListBasicMutationsUseRuntimeListBox() throws {
+        let source = """
+        fun main() {
+            val list = mutableListOf(1, 2)
+            list.add(3)
+            println(list)
+            val removed = list.removeAt(1)
+            println(removed)
+            println(list)
+            list.clear()
+            println(list)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MutableListBasicRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n2\n[1, 3]\n[]\n")
+        }
+    }
+
+    func testCodegenSetFactoriesAndMutableSetMutationsUseRuntimeSetBox() throws {
+        let source = """
+        fun main() {
+            val set = setOf(1, 2, 2, 3)
+            println(set)
+            println(set.size)
+            println(set.contains(2))
+            println(set.isEmpty())
+
+            val mutable = mutableSetOf(1, 2)
+            println(mutable.add(2))
+            println(mutable.add(3))
+            println(mutable.remove(1))
+            println(mutable)
+            println(emptySet<Int>().isEmpty())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SetRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 3]\n3\ntrue\nfalse\nfalse\ntrue\ntrue\n[2, 3]\ntrue\n")
+        }
+    }
+
+    func testCodegenMutableMapBasicMutationsUseRuntimeMapBox() throws {
+        let source = """
+        fun main() {
+            val map = mutableMapOf("a" to 1)
+            map["b"] = 2
+            println(map)
+            println(map.containsKey("a"))
+            println(map.put("a", 3))
+            println(map)
+            println(map.remove("b"))
+            println(map)
+            println(emptyMap<String, Int>().isEmpty())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MutableMapBasicRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\ntrue\n1\n{a=3, b=2}\n2\n{a=3}\ntrue\n")
+        }
+    }
+
+    func testCodegenCollectionCopiesProduceIndependentMutableAndSetViews() throws {
+        let source = """
+        fun main() {
+            val sourceList = listOf(1, 2, 2)
+            val copiedList = sourceList.toMutableList()
+            copiedList.add(3)
+            println(sourceList)
+            println(copiedList)
+
+            val copiedSet = sourceList.toSet()
+            println(copiedSet)
+            println(copiedSet.contains(2))
+
+            val sourceMap = mapOf("a" to 1)
+            val copiedMap = sourceMap.toMutableMap()
+            copiedMap["b"] = 2
+            println(sourceMap)
+            println(copiedMap)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "CollectionCopiesRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 2, 2]\n[1, 2, 2, 3]\n[1, 2]\ntrue\n{a=1}\n{a=1, b=2}\n")
+        }
+    }
+
+    func testCodegenListJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            println(list.joinToString())
+            println(list.joinToString(" | "))
+            println(list.joinToString(prefix = "<", postfix = ">"))
+            println(list.joinToString(separator = ":", prefix = "[", postfix = "]"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListJoinToStringRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1, 2, 3\n1 | 2 | 3\n<1, 2, 3>\n[1:2:3]\n")
+        }
+    }
+
+    func testCodegenListMapNotNullAndFilterNotNullUseRuntimeHOFs() throws {
+        let source = """
+        fun main() {
+            val values = listOf(1, 0, 2)
+            val numbers = values.mapNotNull { it }
+            println(numbers)
+
+            val nullable = listOf("a", null, "b", null)
+            println(nullable.filterNotNull())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListMapNotNullAndFilterNotNullRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[1, 0, 2]\n[a, b]\n")
+        }
+    }
+
+    func testCodegenListZipAndUnzipUseRuntimeHOFs() throws {
+        let source = """
+        fun main() {
+            val left = listOf(1, 2, 3)
+            val right = listOf("a", "b")
+            val zipped = left.zip(right)
+            println(zipped)
+            println(zipped.unzip())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListZipAndUnzipRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[(1, a), (2, b)]\n([1, 2], [a, b])\n")
+        }
+    }
+
+    func testCodegenListTransformsUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val list = listOf(3, 1, 2, 1)
+            println(list.take(3))
+            println(list.drop(2))
+            println(list.reversed())
+            println(list.sorted())
+            println(list.distinct())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListTransformsRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[3, 1, 2]\n[2, 1]\n[1, 2, 1, 3]\n[1, 1, 2, 3]\n[3, 1, 2]\n")
+        }
+    }
+
+    func testCodegenListAssociateHelpersUseRuntimeMapBuilders() throws {
+        let source = """
+        fun main() {
+            val values = listOf(1, 2, 3)
+            println(values.associateBy { it % 2 })
+            println(values.associateWith { it * 10 })
+            println(values.associate { (it % 2) to (it * 10) })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListAssociateRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{1=3, 0=2}\n{1=10, 2=20, 3=30}\n{1=30, 0=20}\n")
+        }
+    }
+
+    func testCodegenListIndexedHelpersUseRuntimeHOFs() throws {
+        let source = """
+        fun main() {
+            val values = listOf("a", "bb")
+            println(values.withIndex())
+            values.forEachIndexed { index, value ->
+                println(index)
+                println(value)
+            }
+            println(values.mapIndexed { index, value -> index + value.length })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListIndexedHelpersRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\n")
+        }
+    }
+
     func testCodegenStringContainsEmptyNeedleReturnsTrue() throws {
         let source = """
         fun main() {

@@ -104,4 +104,41 @@ extension CompilerCoreTests {
             return
         }
     }
+
+    func testMemberTrailingLambdaWithTwoParametersParsesBothParameters() throws {
+        let source = """
+        fun main() {
+            val values = listOf(1, 2, 3)
+            val total = values.fold(0) { acc, value -> acc + value }
+            println(total)
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runFrontend(ctx)
+
+        let ast = try XCTUnwrap(ctx.ast)
+        let function = try XCTUnwrap(topLevelFunction(named: "main", in: ast, interner: ctx.interner))
+        guard case let .block(statements, _) = function.body,
+              statements.count >= 2,
+              let localDeclExpr = ast.arena.expr(statements[1]),
+              case let .localDecl(_, _, _, initializer, _) = localDeclExpr,
+              let callExprID = initializer,
+              let callExpr = ast.arena.expr(callExprID),
+              case let .memberCall(_, calleeName, _, args, _) = callExpr,
+              ctx.interner.resolve(calleeName) == "fold",
+              args.count == 2,
+              let lambdaExpr = ast.arena.expr(args[1].expr),
+              case let .lambdaLiteral(params, bodyExprID, _, _) = lambdaExpr,
+              let bodyExpr = ast.arena.expr(bodyExprID)
+        else {
+            XCTFail("Expected fold call with trailing lambda argument.")
+            return
+        }
+
+        XCTAssertEqual(params.map(ctx.interner.resolve), ["acc", "value"])
+        guard case .binary = bodyExpr else {
+            XCTFail("Expected lambda body to parse as a binary expression.")
+            return
+        }
+    }
 }

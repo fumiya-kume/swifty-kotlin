@@ -428,7 +428,7 @@ extension CallLowerer {
     }
 
     func lowerIndexedAssignExpr(
-        _: ExprID,
+        _ exprID: ExprID,
         receiverExpr: ExprID,
         indices: [ExprID],
         valueExpr: ExprID,
@@ -450,15 +450,17 @@ extension CallLowerer {
         )
         // Built-in array set only supports a single Int index
         assert(!indices.isEmpty, "indices must not be empty for indexed assign")
-        let indexID = driver.lowerExpr(
-            indices[0],
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        )
+        let loweredIndexIDs = indices.map {
+            driver.lowerExpr(
+                $0,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
         let valueID = driver.lowerExpr(
             valueExpr,
             ast: ast,
@@ -468,10 +470,43 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        if let callBinding = sema.bindings.callBindings[exprID] {
+            let chosenSet = callBinding.chosenCallee
+            let loweredArgs = loweredIndexIDs + [valueID]
+            let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+            emitMemberCallInstruction(
+                normalized: driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredArgs,
+                    callBinding: callBinding,
+                    chosenCallee: chosenSet,
+                    spreadFlags: Array(repeating: false, count: loweredArgs.count),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ),
+                callBinding: callBinding,
+                chosenCallee: chosenSet,
+                calleeName: interner.intern("set"),
+                receiver: MemberCallReceiver(expr: receiverExpr, loweredID: receiverID),
+                result: callResult,
+                isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: [receiverID] + loweredArgs
+            )
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
-            arguments: [receiverID, indexID, valueID],
+            arguments: [receiverID, loweredIndexIDs[0], valueID],
             result: nil,
             canThrow: false,
             thrownResult: nil

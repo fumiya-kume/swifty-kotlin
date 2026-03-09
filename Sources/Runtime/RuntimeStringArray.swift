@@ -434,6 +434,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
+    if let rendered = runtimeKnownObjectString(raw) {
+        Swift.print(rendered)
+        return
+    }
     Swift.print("<object \(raw)>")
 }
 

@@ -183,8 +183,8 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("setOf"), "setOf should be rewritten")
-        XCTAssertTrue(callees.contains("kk_list_of"),
-                      "setOf should be rewritten to kk_list_of, got: \(callees)")
+        XCTAssertTrue(callees.contains("kk_set_of"),
+                      "setOf should be rewritten to kk_set_of, got: \(callees)")
     }
 
     func testStringSplitResultIsTreatedAsListForPrintlnRewrite() throws {

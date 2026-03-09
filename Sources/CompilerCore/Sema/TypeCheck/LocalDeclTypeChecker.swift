@@ -71,6 +71,10 @@ final class LocalDeclTypeChecker {
         if let initializer, sema.bindings.isFlowExpr(initializer) {
             sema.bindings.markFlowExpr(id)
             sema.bindings.markFlowSymbol(localSymbol)
+            if let flowElementType = sema.bindings.flowElementType(forExpr: initializer) {
+                sema.bindings.bindFlowElementType(flowElementType, forExpr: id)
+                sema.bindings.bindFlowElementType(flowElementType, forSymbol: localSymbol)
+            }
         }
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType
@@ -107,6 +111,9 @@ final class LocalDeclTypeChecker {
                 locals[name] = (local.type, local.symbol, local.isMutable, true)
                 if ctx.sema.bindings.isFlowExpr(value) {
                     ctx.sema.bindings.markFlowSymbol(local.symbol)
+                    if let flowElementType = ctx.sema.bindings.flowElementType(forExpr: value) {
+                        ctx.sema.bindings.bindFlowElementType(flowElementType, forSymbol: local.symbol)
+                    }
                 } else {
                     ctx.sema.bindings.unmarkFlowSymbol(local.symbol)
                 }
