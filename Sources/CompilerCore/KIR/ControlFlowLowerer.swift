@@ -385,6 +385,8 @@ final class ControlFlowLowerer {
                 previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
                 driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
             }
+            instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
+            instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
 
             var catchBodyInstructions: [KIRInstruction] = []
             let catchBodyResult = driver.lowerExpr(
@@ -467,6 +469,8 @@ final class ControlFlowLowerer {
                     previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
                     driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
                 }
+                instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
+                instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
 
                 var catchBodyInstructions: [KIRInstruction] = []
                 let catchBodyResult = driver.lowerExpr(

@@ -59,6 +59,7 @@ extension CollectionLiteralLoweringPass {
         function: KIRFunction,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>
@@ -69,6 +70,7 @@ extension CollectionLiteralLoweringPass {
                 handleCallInstruction(
                     callee: callee, arguments: arguments, result: result,
                     lookup: lookup, listExprIDs: &listExprIDs,
+                    setExprIDs: &setExprIDs,
                     mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
                     sequenceExprIDs: &sequenceExprIDs
                 )
@@ -76,12 +78,14 @@ extension CollectionLiteralLoweringPass {
                 handleVirtualCallInstruction(
                     callee: callee, receiver: receiver, result: result,
                     lookup: lookup, listExprIDs: &listExprIDs,
+                    mapExprIDs: &mapExprIDs,
                     sequenceExprIDs: &sequenceExprIDs
                 )
             case let .copy(from, to):
                 handleCopyInstruction(
                     from: from, to: to,
                     listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+                    setExprIDs: &setExprIDs,
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs
                 )
             default:
@@ -96,12 +100,15 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>
     ) {
         if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName {
             if let result { listExprIDs.insert(result.rawValue) }
+        } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
+            if let result { setExprIDs.insert(result.rawValue) }
         } else if callee == lookup.kkStringSplitName {
             if let result { listExprIDs.insert(result.rawValue) }
         } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
@@ -120,6 +127,24 @@ extension CollectionLiteralLoweringPass {
             if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
                 if let result { sequenceExprIDs.insert(result.rawValue) }
             }
+        } else if callee == lookup.groupByName || callee == lookup.associateByName
+            || callee == lookup.associateWithName || callee == lookup.associateName
+        {
+            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
+                if let result { mapExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.withIndexName {
+            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.takeName || callee == lookup.dropName {
+            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName {
+            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
         }
     }
 
@@ -129,6 +154,7 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>
     ) {
         if callee == lookup.asSequenceName {
@@ -143,6 +169,22 @@ extension CollectionLiteralLoweringPass {
             if sequenceExprIDs.contains(receiver.rawValue) {
                 if let result { sequenceExprIDs.insert(result.rawValue) }
             }
+        } else if callee == lookup.groupByName || callee == lookup.associateByName
+            || callee == lookup.associateWithName || callee == lookup.associateName
+        {
+            if listExprIDs.contains(receiver.rawValue) {
+                if let result { mapExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.withIndexName {
+            if listExprIDs.contains(receiver.rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.takeName || callee == lookup.dropName
+            || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
+        {
+            if listExprIDs.contains(receiver.rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
         }
     }
 
@@ -151,11 +193,15 @@ extension CollectionLiteralLoweringPass {
         to: KIRExprID,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
             listExprIDs.insert(to.rawValue)
+        }
+        if setExprIDs.contains(from.rawValue) {
+            setExprIDs.insert(to.rawValue)
         }
         if mapExprIDs.contains(from.rawValue) {
             mapExprIDs.insert(to.rawValue)

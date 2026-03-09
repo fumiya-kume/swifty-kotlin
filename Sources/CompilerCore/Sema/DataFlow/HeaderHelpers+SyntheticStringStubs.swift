@@ -1,6 +1,6 @@
 import Foundation
 
-// String stdlib extension stubs (STDLIB-006) for kotlin.text.
+// String stdlib extension stubs (STDLIB-006, STDLIB-009) for kotlin.text.
 // Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
 
 extension DataFlowSemaPhase {
@@ -13,12 +13,43 @@ extension DataFlowSemaPhase {
         let stringType = types.stringType
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let intType = types.intType
+        let charType = types.make(.primitive(.char, .nonNull))
+        let nullableIntType = types.make(.primitive(.int, .nullable))
+        let nullableDoubleType = types.make(.primitive(.double, .nullable))
         let doubleType = types.doubleType
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
+        let listCharType = makeListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: charType
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "trim",
             externalLinkName: "kk_string_trim",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lowercase",
+            externalLinkName: "kk_string_lowercase",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "uppercase",
+            externalLinkName: "kk_string_uppercase",
             receiverType: stringType,
             parameters: [],
             returnType: stringType,
@@ -105,11 +136,60 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "toIntOrNull",
+            externalLinkName: "kk_string_toIntOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "toDouble",
             externalLinkName: "kk_string_toDouble",
             receiverType: stringType,
             parameters: [],
             returnType: doubleType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toDoubleOrNull",
+            externalLinkName: "kk_string_toDoubleOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableDoubleType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "substring",
+            externalLinkName: "kk_string_substring",
+            receiverType: stringType,
+            parameters: [
+                ("startIndex", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "substring",
+            externalLinkName: "kk_string_substring",
+            receiverType: stringType,
+            parameters: [
+                ("startIndex", intType, false, false),
+                ("endIndex", intType, false, false),
+            ],
+            returnType: stringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -162,6 +242,158 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        registerSyntheticStringExtensionFunction(
+            named: "indexOf",
+            externalLinkName: "kk_string_indexOf",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastIndexOf",
+            externalLinkName: "kk_string_lastIndexOf",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "repeat",
+            externalLinkName: "kk_string_repeat",
+            receiverType: stringType,
+            parameters: [
+                ("count", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "reversed",
+            externalLinkName: "kk_string_reversed",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toList",
+            externalLinkName: "kk_string_toList",
+            receiverType: stringType,
+            parameters: [],
+            returnType: listCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toCharArray",
+            externalLinkName: "kk_string_toCharArray",
+            receiverType: stringType,
+            parameters: [],
+            returnType: listCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "padStart",
+            externalLinkName: "kk_string_padStart",
+            receiverType: stringType,
+            parameters: [
+                ("length", intType, false, false),
+                ("padChar", charType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "padEnd",
+            externalLinkName: "kk_string_padEnd",
+            receiverType: stringType,
+            parameters: [
+                ("length", intType, false, false),
+                ("padChar", charType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "drop",
+            externalLinkName: "kk_string_drop",
+            receiverType: stringType,
+            parameters: [
+                ("n", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "take",
+            externalLinkName: "kk_string_take",
+            receiverType: stringType,
+            parameters: [
+                ("n", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "dropLast",
+            externalLinkName: "kk_string_dropLast",
+            receiverType: stringType,
+            parameters: [
+                ("n", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "takeLast",
+            externalLinkName: "kk_string_takeLast",
+            receiverType: stringType,
+            parameters: [
+                ("n", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(
@@ -182,10 +414,11 @@ extension DataFlowSemaPhase {
         return kotlinTextPkg
     }
 
-    private func makeListOfStringType(
+    private func makeListType(
         symbols: SymbolTable,
         types: TypeSystem,
-        interner: StringInterner
+        interner: StringInterner,
+        elementType: TypeID
     ) -> TypeID {
         let listFQName: [InternedString] = [
             interner.intern("kotlin"),
@@ -197,9 +430,17 @@ extension DataFlowSemaPhase {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
-            args: [.out(types.stringType)],
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    private func makeListOfStringType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        makeListType(symbols: symbols, types: types, interner: interner, elementType: types.stringType)
     }
 
     private func registerSyntheticStringExtensionFunction(

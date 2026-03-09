@@ -212,7 +212,13 @@ extension ABILoweringPass {
             }
             return false
         }
-        if case let .primitive(sourcePrimitive, .nullable) = sourceKind,
+        if case .typeParam = sourceKind,
+           case .primitive(_, .nonNull) = targetKind
+        {
+            return true
+        }
+
+        if case let .primitive(sourcePrimitive, _) = sourceKind,
            case let .primitive(targetPrimitive, .nonNull) = targetKind,
            sourcePrimitive == targetPrimitive
         {

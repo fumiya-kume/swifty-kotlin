@@ -90,6 +90,16 @@ final class RuntimeObjectBox: RuntimeArrayBox {
     }
 }
 
+final class RuntimePairBox {
+    let first: Int
+    let second: Int
+
+    init(first: Int, second: Int) {
+        self.first = first
+        self.second = second
+    }
+}
+
 final class RuntimeIntBox {
     let value: Int
 
@@ -143,7 +153,17 @@ final class RuntimeCharBox {
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.
 /// Stores elements as an array of `Int` (opaque intptr_t values).
 final class RuntimeListBox {
-    let elements: [Int]
+    var elements: [Int]
+
+    init(elements: [Int]) {
+        self.elements = elements
+    }
+}
+
+/// Runtime box for `setOf(...)` / `mutableSetOf(...)`.
+/// Stores unique elements in insertion order as an array of `Int`.
+final class RuntimeSetBox {
+    var elements: [Int]
 
     init(elements: [Int]) {
         self.elements = elements
@@ -153,8 +173,8 @@ final class RuntimeListBox {
 /// Runtime box for `mapOf(...)` / `mutableMapOf(...)`.
 /// Stores keys and values as parallel arrays of `Int` (opaque intptr_t values).
 final class RuntimeMapBox {
-    let keys: [Int]
-    let values: [Int]
+    var keys: [Int]
+    var values: [Int]
 
     init(keys: [Int], values: [Int]) {
         self.keys = keys

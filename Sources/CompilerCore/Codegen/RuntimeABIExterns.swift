@@ -121,6 +121,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_lowercase = ExternDecl(
+        name: "kk_string_lowercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_uppercase = ExternDecl(
+        name: "kk_string_uppercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_trimIndent = ExternDecl(
         name: "kk_string_trimIndent",
         parameterTypes: ["intptr_t"],
@@ -135,6 +147,66 @@ public enum RuntimeABIExterns {
 
     public static let kk_string_trimMargin = ExternDecl(
         name: "kk_string_trimMargin",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_padStart = ExternDecl(
+        name: "kk_string_padStart",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_padEnd = ExternDecl(
+        name: "kk_string_padEnd",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_repeat = ExternDecl(
+        name: "kk_string_repeat",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_reversed = ExternDecl(
+        name: "kk_string_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toList = ExternDecl(
+        name: "kk_string_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toCharArray = ExternDecl(
+        name: "kk_string_toCharArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_take = ExternDecl(
+        name: "kk_string_take",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_drop = ExternDecl(
+        name: "kk_string_drop",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_takeLast = ExternDecl(
+        name: "kk_string_takeLast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_dropLast = ExternDecl(
+        name: "kk_string_dropLast",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -168,6 +240,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_substring = ExternDecl(
+        name: "kk_string_substring",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_startsWith = ExternDecl(
         name: "kk_string_startsWith",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -192,9 +270,33 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_toIntOrNull = ExternDecl(
+        name: "kk_string_toIntOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_toDouble = ExternDecl(
         name: "kk_string_toDouble",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toDoubleOrNull = ExternDecl(
+        name: "kk_string_toDoubleOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_indexOf = ExternDecl(
+        name: "kk_string_indexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_lastIndexOf = ExternDecl(
+        name: "kk_string_lastIndexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -203,6 +305,12 @@ public enum RuntimeABIExterns {
     public static let kk_println_any = ExternDecl(
         name: "kk_println_any",
         parameterTypes: ["void * _Nullable"],
+        returnType: "void"
+    )
+
+    public static let kk_println_bool = ExternDecl(
+        name: "kk_println_bool",
+        parameterTypes: ["intptr_t"],
         returnType: "void"
     )
 
@@ -897,6 +1005,8 @@ public enum RuntimeABIExterns {
         kk_compare_any,
         kk_string_length,
         kk_string_trim,
+        kk_string_lowercase,
+        kk_string_uppercase,
         kk_string_trimIndent,
         kk_string_trimMargin_default,
         kk_string_trimMargin,
@@ -907,11 +1017,27 @@ public enum RuntimeABIExterns {
         kk_string_endsWith,
         kk_string_contains_str,
         kk_string_replace,
+        kk_string_substring,
         kk_string_split,
         kk_string_toInt,
+        kk_string_toIntOrNull,
         kk_string_toDouble,
+        kk_string_toDoubleOrNull,
+        kk_string_indexOf,
+        kk_string_lastIndexOf,
+        kk_string_padStart,
+        kk_string_padEnd,
+        kk_string_repeat,
+        kk_string_reversed,
+        kk_string_toList,
+        kk_string_toCharArray,
+        kk_string_take,
+        kk_string_drop,
+        kk_string_takeLast,
+        kk_string_dropLast,
         // Println
         kk_println_any,
+        kk_println_bool,
         // GC
         kk_register_global_root,
         kk_unregister_global_root,

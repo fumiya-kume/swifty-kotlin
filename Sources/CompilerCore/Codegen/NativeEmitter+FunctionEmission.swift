@@ -150,20 +150,50 @@ extension NativeEmitter {
         var generatedStringLiteralCount: Int32 = 0
         let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue)
 
+        func assignmentTargets(for instruction: KIRInstruction) -> [KIRExprID] {
+            switch instruction {
+            case let .constValue(result, _):
+                return [result]
+            case let .binary(_, _, _, result):
+                return [result]
+            case let .unary(_, _, result):
+                return [result]
+            case let .nullAssert(_, result):
+                return [result]
+            case let .call(_, _, _, result, _, thrownResult, _):
+                let directTargets = result.map { [$0] } ?? []
+                let thrownTargets = thrownResult.map { [$0] } ?? []
+                return directTargets + thrownTargets
+            case let .virtualCall(_, _, _, _, result, _, thrownResult, _):
+                let directTargets = result.map { [$0] } ?? []
+                let thrownTargets = thrownResult.map { [$0] } ?? []
+                return directTargets + thrownTargets
+            case let .copy(_, to):
+                return [to]
+            case let .loadGlobal(result, _):
+                return [result]
+            case .jump, .label, .jumpIfEqual, .jumpIfNotNull,
+                 .storeGlobal, .rethrow, .returnIfEqual, .returnUnit, .returnValue,
+                 .beginBlock, .endBlock, .nop:
+                return []
+            }
+        }
+
+        var assignmentTargetCounts: [Int32: Int] = [:]
+        for instruction in function.body {
+            for target in assignmentTargets(for: instruction) {
+                assignmentTargetCounts[target.rawValue, default: 0] += 1
+            }
+        }
+
+        let shouldSpillID = Set(assignmentTargetCounts.filter { $0.value > 1 }.map(\.key))
+
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
-            let spillTargets: [KIRExprID] = switch instruction {
-            case let .copy(_, to):
-                [to]
-            case let .call(_, _, _, _, _, thrownResult, _):
-                thrownResult.map { [$0] } ?? []
-            case let .virtualCall(_, _, _, _, _, _, thrownResult, _):
-                thrownResult.map { [$0] } ?? []
-            default:
-                []
-            }
-            for target in spillTargets where copyTargetAllocas[target.rawValue] == nil {
-                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(target.rawValue)") {
+            for target in assignmentTargets(for: instruction) where shouldSpillID.contains(target.rawValue) {
+                if copyTargetAllocas[target.rawValue] == nil,
+                   let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(target.rawValue)")
+                {
                     _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
                     copyTargetAllocas[target.rawValue] = alloca
                 }
@@ -256,7 +286,17 @@ extension NativeEmitter {
             guard let result else {
                 return
             }
-            values[result.rawValue] = value ?? zeroValue
+            let storedValue = value ?? zeroValue
+            if let resultExpr = module.arena.expr(result),
+               case let .symbolRef(targetSymbol) = resultExpr,
+               let globalPointer = globalVariables[targetSymbol]
+            {
+                _ = bindings.buildStore(builder, value: storedValue, pointer: globalPointer)
+            }
+            if let alloca = copyTargetAllocas[result.rawValue] {
+                _ = bindings.buildStore(builder, value: storedValue, pointer: alloca)
+            }
+            values[result.rawValue] = storedValue
         }
 
         func blockForLabel(_ label: Int32) -> LLVMCAPIBindings.LLVMBasicBlockRef? {

@@ -146,6 +146,77 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(list?.elements.map(runtimeStringValue), ["1", "2", "3"])
     }
 
+    func testStringReversedProducesReversedString() {
+        XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString("abc"))), "cba")
+    }
+
+    func testStringToListAndToCharArrayReturnCharElements() {
+        let listRaw = kk_string_toList(rawFromRuntimeString("abc"))
+        let charArrayRaw = kk_string_toCharArray(rawFromRuntimeString("abc"))
+
+        let list = runtimeListBox(from: listRaw)
+        let charArray = runtimeListBox(from: charArrayRaw)
+        XCTAssertNotNil(list)
+        XCTAssertNotNil(charArray)
+        let expected = [97, 98, 99]
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expected)
+        XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
+    }
+
+    func testStringFunctionsWithNonASCII() {
+        let text = "aé🐻"
+        XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString(text))), "🐻éa")
+
+        let listRaw = kk_string_toList(rawFromRuntimeString(text))
+        let list = runtimeListBox(from: listRaw)
+        let expectedScalars: [Int] = [97, 233, 128_059] // 'a', 'é', '🐻'
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expectedScalars)
+
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString(text), 2)), "aé")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString(text), 1)), "é🐻")
+    }
+
+    func testStringScalarIndexedOperationsWithNonASCII() {
+        let textRaw = rawFromRuntimeString("aé🐻")
+
+        XCTAssertEqual(runtimeStringValue(kk_string_substring(textRaw, 1, 3, 1, nil)), "é🐻")
+        XCTAssertEqual(runtimeStringValue(kk_string_padStart(textRaw, 5, kk_box_char(48))), "00aé🐻")
+        XCTAssertEqual(runtimeStringValue(kk_string_padEnd(textRaw, 5, kk_box_char(48))), "aé🐻00")
+        XCTAssertEqual(kk_string_indexOf(textRaw, rawFromRuntimeString("é🐻")), 1)
+        XCTAssertEqual(kk_string_lastIndexOf(textRaw, rawFromRuntimeString("é")), 1)
+    }
+
+    func testPairAndArrayRenderingStayDistinct() {
+        let pairRaw = kk_pair_new(1, 2)
+        XCTAssertEqual(runtimeElementToString(pairRaw), "(1, 2)")
+        XCTAssertEqual(capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: pairRaw)) }, "(1, 2)")
+
+        var thrown = 0
+        let arrayRaw = kk_array_new(2)
+        _ = kk_array_set(arrayRaw, 0, 1, &thrown)
+        _ = kk_array_set(arrayRaw, 1, 2, &thrown)
+        XCTAssertEqual(runtimeElementToString(arrayRaw), "[1, 2]")
+        XCTAssertEqual(capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: arrayRaw)) }, "[1, 2]")
+    }
+
+    func testStringTakeDropFunctions() {
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 0)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 2)), "ab")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 10)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 0)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 2)), "cde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 10)), "")
+    }
+
+    func testStringTakeLastDropLastFunctions() {
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 0)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 2)), "de")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 10)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 0)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 2)), "abc")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 10)), "")
+    }
+
     func testStringReplaceSupportsLiteralReplacement() {
         let replaced = kk_string_replace(
             rawFromRuntimeString("aba"),
@@ -191,6 +262,17 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertNotEqual(thrown, 0)
         let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
+    }
+
+    func testStringRepeatThrowsOnNegativeCount() {
+        var thrown = 0
+        let repeated = kk_string_repeat(rawFromRuntimeString("a"), -1, &thrown)
+
+        XCTAssertEqual(repeated, 0)
+        XCTAssertNotEqual(thrown, 0)
+
+        let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertTrue(thrownOutput.contains("IllegalArgumentException"))
     }
 
     func testStringFormatSupportsStringIntAndDoubleSpecifiers() {

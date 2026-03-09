@@ -90,10 +90,11 @@ extension CallLowerer {
         "size", "get", "contains", "containsKey",
         "isEmpty", "first", "last", "indexOf",
         "count", "iterator",
-        "map", "filter", "forEach", "flatMap",
+        "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "reduce", "groupBy", "sortedBy", "find",
-        "asSequence", "toList", "take", "collect",
+        "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "withIndex", "forEachIndexed", "mapIndexed",
+        "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct", "collect",
         "to", // FUNC-002
     ]
 
@@ -621,6 +622,28 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "lowercase" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_lowercase"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "uppercase" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_uppercase"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "toInt" {
                     instructions.append(.call(
                         symbol: nil,
@@ -628,6 +651,17 @@ extension CallLowerer {
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "toIntOrNull" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toIntOrNull"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
                         thrownResult: nil
                     ))
                     return result
@@ -643,6 +677,50 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "toDoubleOrNull" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toDoubleOrNull"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "reversed" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_reversed"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "toList" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toList"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "toCharArray" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toCharArray"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
@@ -652,6 +730,21 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
                 let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "substring" {
+                    let hasEndExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(0)))
+                    let endExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: endExpr, value: .intLiteral(0)))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_substring"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0], endExpr, hasEndExpr],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
                 case "startsWith":
                     ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0]])
@@ -659,6 +752,20 @@ extension CallLowerer {
                     ("kk_string_endsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "contains":
                     ("kk_string_contains_str", [loweredReceiverID, loweredArgIDs[0]])
+                case "indexOf":
+                    ("kk_string_indexOf", [loweredReceiverID, loweredArgIDs[0]])
+                case "lastIndexOf":
+                    ("kk_string_lastIndexOf", [loweredReceiverID, loweredArgIDs[0]])
+                case "repeat":
+                    ("kk_string_repeat", [loweredReceiverID, loweredArgIDs[0]])
+                case "take":
+                    ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
+                case "drop":
+                    ("kk_string_drop", [loweredReceiverID, loweredArgIDs[0]])
+                case "takeLast":
+                    ("kk_string_takeLast", [loweredReceiverID, loweredArgIDs[0]])
+                case "dropLast":
+                    ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -668,11 +775,55 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
+                        canThrow: calleeStr == "repeat",
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // String stdlib: 2-arg substring overload (STDLIB-009)
+        if args.count == 2 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let calleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd"
+            {
+                if calleeStr == "padStart" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_padStart"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                        result: result,
                         canThrow: false,
                         thrownResult: nil
                     ))
                     return result
                 }
+                if calleeStr == "padEnd" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_padEnd"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                let hasEndExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(1)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_substring"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], hasEndExpr],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
             }
         }
 
@@ -1158,6 +1309,19 @@ extension CallLowerer {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
            let chosenCallee,
+           sema.symbols.externalLinkName(for: chosenCallee) == "kk_list_joinToString"
+        {
+            materializeJoinToStringDefaultArguments(
+                normalized.defaultMask,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: &finalArguments
+            )
+        }
+        if normalized.defaultMask != 0,
+           let chosenCallee,
            sema.symbols.externalLinkName(for: chosenCallee)?.isEmpty ?? true
         {
             appendReifiedTypeTokens(
@@ -1235,6 +1399,28 @@ extension CallLowerer {
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
+    }
+
+    private func materializeJoinToStringDefaultArguments(
+        _ defaultMask: Int64,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction],
+        arguments: inout [KIRExprID]
+    ) {
+        let defaults = [", ", "", ""]
+        let stringType = sema.types.stringType
+        for (paramIndex, defaultValue) in defaults.enumerated() {
+            let maskBit = Int64(1) << paramIndex
+            guard (defaultMask & maskBit) != 0 else { continue }
+            let argumentIndex = paramIndex + 1
+            guard argumentIndex < arguments.count else { continue }
+            let interned = interner.intern(defaultValue)
+            let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
+            instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
+            arguments[argumentIndex] = exprID
+        }
     }
 
     /// Callees with an externalLinkName (C runtime functions such as

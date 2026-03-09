@@ -98,6 +98,106 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
+        if callee == lookup.takeName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListTakeName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.dropName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListDropName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.reversedName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListReversedName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.sortedName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListSortedName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.distinctName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListDistinctName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
         if callee == lookup.toListName, arguments.isEmpty {
             if sequenceExprIDs.contains(receiver.rawValue) {
                 if let result {
@@ -162,6 +262,13 @@ extension CollectionLiteralLoweringPass {
             loweredBody: &loweredBody
         ) { return true }
 
+        if rewriteZipUnzipAndIndexedHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, loweredBody: &loweredBody
+        ) { return true }
+
         if rewriteCountFirstLastFoldReduceHOF(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
@@ -211,7 +318,28 @@ extension CollectionLiteralLoweringPass {
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
+        if callee == lookup.filterNotNullName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListFilterNotNullName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName
+            || callee == lookup.forEachName
             || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
         else { return false }
@@ -220,6 +348,7 @@ extension CollectionLiteralLoweringPass {
         let kkName: InternedString = switch callee {
         case lookup.mapName: lookup.kkListMapName
         case lookup.filterName: lookup.kkListFilterName
+        case lookup.mapNotNullName: lookup.kkListMapNotNullName
         case lookup.forEachName: lookup.kkListForEachName
         case lookup.flatMapName: lookup.kkListFlatMapName
         case lookup.anyName: lookup.kkListAnyName
@@ -228,6 +357,7 @@ extension CollectionLiteralLoweringPass {
         default: callee
         }
         let needsListTag = callee == lookup.mapName
+            || callee == lookup.mapNotNullName
             || callee == lookup.flatMapName || callee == lookup.filterName
         let hofResult = emitHOFCall(
             kkName: kkName, receiver: receiver, arguments: arguments,
@@ -255,7 +385,9 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName else {
+        guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
+            || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
+        else {
             return false
         }
         guard arguments.count == 1, listExprIDs.contains(receiver.rawValue) else { return false }
@@ -264,6 +396,9 @@ extension CollectionLiteralLoweringPass {
         case lookup.groupByName: lookup.kkListGroupByName
         case lookup.sortedByName: lookup.kkListSortedByName
         case lookup.findName: lookup.kkListFindName
+        case lookup.associateByName: lookup.kkListAssociateByName
+        case lookup.associateWithName: lookup.kkListAssociateWithName
+        case lookup.associateName: lookup.kkListAssociateName
         default: callee
         }
         let hofResult = emitHOFCall(
@@ -280,7 +415,109 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
         }
+        if callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName,
+           let result
+        {
+            mapExprIDs.insert(result.rawValue)
+            mapExprIDs.insert(hofResult.rawValue)
+        }
         return true
+    }
+
+    private func rewriteZipUnzipAndIndexedHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard listExprIDs.contains(receiver.rawValue) else { return false }
+
+        if callee == lookup.withIndexName, arguments.isEmpty {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWithIndexName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.zipName, arguments.count == 1 {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListZipName,
+                arguments: [receiver] + arguments,
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName, arguments.count == 1 {
+            let kkName = callee == lookup.forEachIndexedName
+                ? lookup.kkListForEachIndexedName
+                : lookup.kkListMapIndexedName
+            let hofResult = emitHOFCall(
+                kkName: kkName,
+                receiver: receiver,
+                arguments: arguments,
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if callee == lookup.mapIndexedName, let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        if callee == lookup.unzipName, arguments.isEmpty {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListUnzipName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        return false
     }
 
     private func rewriteCountFirstLastFoldReduceHOF(

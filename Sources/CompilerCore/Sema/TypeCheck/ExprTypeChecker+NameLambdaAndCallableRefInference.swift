@@ -166,6 +166,9 @@ extension ExprTypeChecker {
             }
             if sema.bindings.isFlowSymbol(local.symbol) {
                 sema.bindings.markFlowExpr(id)
+                if let flowElementType = sema.bindings.flowElementType(forSymbol: local.symbol) {
+                    sema.bindings.bindFlowElementType(flowElementType, forExpr: id)
+                }
             }
             sema.bindings.bindExprType(id, type: local.type)
             return local.type

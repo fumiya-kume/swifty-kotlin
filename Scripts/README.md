@@ -79,6 +79,16 @@ Run all tracked regression cases:
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
 
+For coroutine/Flow cases, `diff_kotlinc.sh` can automatically download
+`kotlinx-coroutines-core-jvm` when needed (if no `--kotlinc-classpath` is
+set).  
+You can control the cached path and version with:
+
+```bash
+export KOTLINC_COROUTINES_VERSION=1.10.2
+export KOTLINC_DEP_DIR=/path/to/.runtime-build/deps
+```
+
 Emit a machine-readable report (TSV) for CI tooling:
 
 ```bash
