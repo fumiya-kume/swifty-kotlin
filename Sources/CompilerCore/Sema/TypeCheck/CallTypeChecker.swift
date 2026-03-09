@@ -372,26 +372,6 @@ final class CallTypeChecker {
             return samCallType
         }
 
-        let argTypes = args.enumerated().map { index, argument in
-            if index == 0, let coroutineLauncherExpectedLambdaType {
-                return driver.inferExpr(
-                    argument.expr,
-                    ctx: ctx,
-                    locals: &locals,
-                    expectedType: coroutineLauncherExpectedLambdaType
-                )
-            }
-            if index == 1, let withContextExpectedLambdaType {
-                return driver.inferExpr(
-                    argument.expr,
-                    ctx: ctx,
-                    locals: &locals,
-                    expectedType: withContextExpectedLambdaType
-                )
-            }
-            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
-        }
-
         var candidates: [SymbolID]
         var callInvisible: [SemanticSymbol] = []
         if let calleeName {
@@ -436,6 +416,47 @@ final class CallTypeChecker {
             }
         } else {
             candidates = []
+        }
+        let contextualArgExpectedTypes: [TypeID?] = if candidates.count == 1,
+                                                      let signature = sema.symbols.functionSignature(for: candidates[0])
+        {
+            args.enumerated().map { index, argument in
+                if index == 0, let coroutineLauncherExpectedLambdaType {
+                    return coroutineLauncherExpectedLambdaType
+                }
+                if index == 1, let withContextExpectedLambdaType {
+                    return withContextExpectedLambdaType
+                }
+                guard index < signature.parameterTypes.count else {
+                    return nil
+                }
+                let parameterType = signature.parameterTypes[index]
+                if case .lambdaLiteral = ast.arena.expr(argument.expr) {
+                    return parameterType
+                }
+                return nil
+            }
+        } else {
+            args.enumerated().map { index, _ in
+                if index == 0, let coroutineLauncherExpectedLambdaType {
+                    return coroutineLauncherExpectedLambdaType
+                }
+                if index == 1, let withContextExpectedLambdaType {
+                    return withContextExpectedLambdaType
+                }
+                return nil
+            }
+        }
+        let argTypes = args.enumerated().map { index, argument in
+            if let contextualExpectedType = contextualArgExpectedTypes[index] {
+                return driver.inferExpr(
+                    argument.expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: contextualExpectedType
+                )
+            }
+            return driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
         }
         if !candidates.isEmpty {
             let resolvedArgs: [CallArg] = zip(args, argTypes).map { argument, type in

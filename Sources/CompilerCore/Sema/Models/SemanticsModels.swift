@@ -400,7 +400,7 @@ public final class SymbolTable {
     private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
         func isCallableLike(_ kind: SymbolKind) -> Bool {
             switch kind {
-            case .function, .constructor, .property:
+            case .function, .constructor:
                 return true
             default:
                 return false
@@ -412,6 +412,10 @@ public final class SymbolTable {
         let existingNonPackageKinds = existingKinds.filter { $0 != .package }
         if existingNonPackageKinds.isEmpty {
             return true
+        }
+        if kind == .property {
+            return existingNonPackageKinds.allSatisfy { isCallableLike($0) }
+                && !existingNonPackageKinds.contains(.property)
         }
         if isCallableLike(kind) {
             return existingNonPackageKinds.allSatisfy(isCallableLike)

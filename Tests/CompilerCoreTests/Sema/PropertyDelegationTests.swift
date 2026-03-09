@@ -73,7 +73,7 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
             let ctx = makeCompilationContext(inputs: [path])
             try runSema(ctx)
 
-            _ = try XCTUnwrap(ctx.sema)
+            let sema = try XCTUnwrap(ctx.sema)
             let interner = ctx.interner
 
             // FQ names do not include module prefix; class Foo has fqName ["Foo"].
@@ -368,7 +368,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
             let interner = ctx.interner
-            let sema = try XCTUnwrap(ctx.sema)
+            _ = try XCTUnwrap(ctx.sema)
 
             // Find the getter and check that getValue resolves as a direct member call,
             // rather than using the delegate storage field as the callee symbol.

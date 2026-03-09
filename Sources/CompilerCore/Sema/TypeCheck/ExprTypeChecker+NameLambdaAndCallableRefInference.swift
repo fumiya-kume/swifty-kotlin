@@ -173,23 +173,22 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: local.type)
             return local.type
         }
-        if let receiverType = ctx.implicitReceiverType,
-           let result = driver.helpers.lookupMemberProperty(
-               named: name,
-               receiverType: sema.types.makeNonNullable(receiverType),
-               sema: sema
-           )
-        {
-            sema.bindings.markImplicitReceiverMember(id, name: name)
-            sema.bindings.bindIdentifier(id, symbol: result.symbol)
-            sema.bindings.bindExprType(id, type: result.type)
-            return result.type
-        }
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if candidates.isEmpty {
-            if let firstInvisible = invisibleSyms.first {
+            if let receiverType = ctx.implicitReceiverType,
+               let result = driver.helpers.lookupMemberProperty(
+                   named: name,
+                   receiverType: sema.types.makeNonNullable(receiverType),
+                   sema: sema
+               )
+            {
+                sema.bindings.markImplicitReceiverMember(id, name: name)
+                sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                sema.bindings.bindExprType(id, type: result.type)
+                return result.type
+            } else if let firstInvisible = invisibleSyms.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
             } else if interner.resolve(name) == "field" {
                 // Kotlin's `field` identifier is only valid inside property
