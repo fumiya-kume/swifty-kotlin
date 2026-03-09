@@ -297,10 +297,10 @@ public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
         return -1
     }
 
-    for offset in 0 ... (source.count - other.count) {
-        if source[offset ..< (offset + other.count)].elementsEqual(other) {
-            return offset
-        }
+    for offset in 0 ... (source.count - other.count)
+        where source[offset ..< (offset + other.count)].elementsEqual(other)
+    {
+        return offset
     }
     return -1
 }
@@ -318,10 +318,10 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     }
 
     var lastIndex = -1
-    for offset in 0 ... (source.count - other.count) {
-        if source[offset ..< (offset + other.count)].elementsEqual(other) {
-            lastIndex = offset
-        }
+    for offset in 0 ... (source.count - other.count)
+        where source[offset ..< (offset + other.count)].elementsEqual(other)
+    {
+        lastIndex = offset
     }
     return lastIndex
 }
