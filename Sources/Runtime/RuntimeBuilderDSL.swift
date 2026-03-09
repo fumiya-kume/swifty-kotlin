@@ -156,8 +156,8 @@ public func kk_build_string(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>
     return runtimeMakeStringRaw(frame.value)
 }
 
-@_cdecl("kk_mutable_list_add")
-public func kk_mutable_list_add(_ elem: Int) -> Int {
+@_cdecl("kk_builder_list_add")
+public func kk_builder_list_add(_ elem: Int) -> Int {
     runtimeBuilderState.appendListElement(elem)
     return 0
 }
@@ -181,8 +181,8 @@ public func kk_build_list(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?)
     return registerRuntimeObject(RuntimeListBox(elements: frame.elements))
 }
 
-@_cdecl("kk_mutable_map_put")
-public func kk_mutable_map_put(_ key: Int, _ value: Int) -> Int {
+@_cdecl("kk_builder_map_put")
+public func kk_builder_map_put(_ key: Int, _ value: Int) -> Int {
     runtimeBuilderState.putMapEntry(key: key, value: value)
     return 0
 }

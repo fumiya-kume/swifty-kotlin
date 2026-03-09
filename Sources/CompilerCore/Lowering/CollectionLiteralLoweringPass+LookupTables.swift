@@ -26,11 +26,18 @@ struct CollectionLiteralLookupTables {
     let kkListIteratorHasNextName: InternedString
     let kkListIteratorNextName: InternedString
     let kkListToStringName: InternedString
+    let kkSetOfName: InternedString
+    let kkSetSizeName: InternedString
+    let kkSetContainsName: InternedString
+    let kkSetIsEmptyName: InternedString
+    let kkSetToStringName: InternedString
     let kkStringSplitName: InternedString
 
     // Higher-order collection function ABI names (FUNC-003)
     let kkListMapName: InternedString
     let kkListFilterName: InternedString
+    let kkListMapNotNullName: InternedString
+    let kkListFilterNotNullName: InternedString
     let kkListForEachName: InternedString
     let kkListFlatMapName: InternedString
     let kkListAnyName: InternedString
@@ -42,10 +49,20 @@ struct CollectionLiteralLookupTables {
     let kkListReduceName: InternedString
     let kkListGroupByName: InternedString
     let kkListSortedByName: InternedString
+    let kkListAssociateByName: InternedString
+    let kkListAssociateWithName: InternedString
+    let kkListAssociateName: InternedString
     let kkListCountName: InternedString
     let kkListFirstName: InternedString
     let kkListLastName: InternedString
     let kkListFindName: InternedString
+    let kkListZipName: InternedString
+    let kkListUnzipName: InternedString
+    let kkListTakeName: InternedString
+    let kkListDropName: InternedString
+    let kkListReversedName: InternedString
+    let kkListSortedName: InternedString
+    let kkListDistinctName: InternedString
 
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
@@ -82,10 +99,14 @@ struct CollectionLiteralLookupTables {
     let containsKeyName: InternedString
     let isEmptyName: InternedString
     let countName: InternedString
+    let addName: InternedString
+    let removeName: InternedString
 
     // Higher-order collection member names (FUNC-003)
     let mapName: InternedString
     let filterName: InternedString
+    let mapNotNullName: InternedString
+    let filterNotNullName: InternedString
     let forEachName: InternedString
     let flatMapName: InternedString
     let anyName: InternedString
@@ -98,6 +119,15 @@ struct CollectionLiteralLookupTables {
     let groupByName: InternedString
     let sortedByName: InternedString
     let findName: InternedString
+    let associateByName: InternedString
+    let associateWithName: InternedString
+    let associateName: InternedString
+    let zipName: InternedString
+    let unzipName: InternedString
+    let dropName: InternedString
+    let reversedName: InternedString
+    let sortedName: InternedString
+    let distinctName: InternedString
     let firstName: InternedString
     let lastName: InternedString
 
@@ -116,6 +146,8 @@ struct CollectionLiteralLookupTables {
     // Pair / `to` infix (FUNC-002)
     let toName: InternedString
     let kkPairNewName: InternedString
+    let kkPairFirstName: InternedString
+    let kkPairSecondName: InternedString
 
     // Builder DSL names (STDLIB-002)
     let buildStringName: InternedString
@@ -127,14 +159,17 @@ struct CollectionLiteralLookupTables {
 
     // Builder member function names (STDLIB-002)
     let appendName: InternedString
-    let addName: InternedString
     let putName: InternedString
     let kkStringBuilderAppendName: InternedString
-    let kkMutableListAddName: InternedString
+    let kkBuilderListAddName: InternedString
+    let kkBuilderMapPutName: InternedString
+    let kkMutableSetAddName: InternedString
+    let kkMutableSetRemoveName: InternedString
     let kkMutableMapPutName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
+    let setFactoryNames: Set<InternedString>
     let mapFactoryNames: Set<InternedString>
     let arrayOfFactoryNames: Set<InternedString>
     let builderDSLNames: Set<InternedString>
@@ -163,10 +198,17 @@ struct CollectionLiteralLookupTables {
         kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")
         kkListIteratorNextName = interner.intern("kk_list_iterator_next")
         kkListToStringName = interner.intern("kk_list_to_string")
+        kkSetOfName = interner.intern("kk_set_of")
+        kkSetSizeName = interner.intern("kk_set_size")
+        kkSetContainsName = interner.intern("kk_set_contains")
+        kkSetIsEmptyName = interner.intern("kk_set_is_empty")
+        kkSetToStringName = interner.intern("kk_set_to_string")
         kkStringSplitName = interner.intern("kk_string_split")
 
         kkListMapName = interner.intern("kk_list_map")
         kkListFilterName = interner.intern("kk_list_filter")
+        kkListMapNotNullName = interner.intern("kk_list_mapNotNull")
+        kkListFilterNotNullName = interner.intern("kk_list_filterNotNull")
         kkListForEachName = interner.intern("kk_list_forEach")
         kkListFlatMapName = interner.intern("kk_list_flatMap")
         kkListAnyName = interner.intern("kk_list_any")
@@ -177,10 +219,20 @@ struct CollectionLiteralLookupTables {
         kkListReduceName = interner.intern("kk_list_reduce")
         kkListGroupByName = interner.intern("kk_list_groupBy")
         kkListSortedByName = interner.intern("kk_list_sortedBy")
+        kkListAssociateByName = interner.intern("kk_list_associateBy")
+        kkListAssociateWithName = interner.intern("kk_list_associateWith")
+        kkListAssociateName = interner.intern("kk_list_associate")
         kkListCountName = interner.intern("kk_list_count")
         kkListFirstName = interner.intern("kk_list_first")
         kkListLastName = interner.intern("kk_list_last")
         kkListFindName = interner.intern("kk_list_find")
+        kkListZipName = interner.intern("kk_list_zip")
+        kkListUnzipName = interner.intern("kk_list_unzip")
+        kkListTakeName = interner.intern("kk_list_take")
+        kkListDropName = interner.intern("kk_list_drop")
+        kkListReversedName = interner.intern("kk_list_reversed")
+        kkListSortedName = interner.intern("kk_list_sorted")
+        kkListDistinctName = interner.intern("kk_list_distinct")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")
@@ -214,9 +266,13 @@ struct CollectionLiteralLookupTables {
         containsKeyName = interner.intern("containsKey")
         isEmptyName = interner.intern("isEmpty")
         countName = interner.intern("count")
+        addName = interner.intern("add")
+        removeName = interner.intern("remove")
 
         mapName = interner.intern("map")
         filterName = interner.intern("filter")
+        mapNotNullName = interner.intern("mapNotNull")
+        filterNotNullName = interner.intern("filterNotNull")
         forEachName = interner.intern("forEach")
         flatMapName = interner.intern("flatMap")
         anyName = interner.intern("any")
@@ -228,6 +284,15 @@ struct CollectionLiteralLookupTables {
         groupByName = interner.intern("groupBy")
         sortedByName = interner.intern("sortedBy")
         findName = interner.intern("find")
+        associateByName = interner.intern("associateBy")
+        associateWithName = interner.intern("associateWith")
+        associateName = interner.intern("associate")
+        zipName = interner.intern("zip")
+        unzipName = interner.intern("unzip")
+        dropName = interner.intern("drop")
+        reversedName = interner.intern("reversed")
+        sortedName = interner.intern("sorted")
+        distinctName = interner.intern("distinct")
         firstName = interner.intern("first")
         lastName = interner.intern("last")
 
@@ -243,6 +308,8 @@ struct CollectionLiteralLookupTables {
 
         toName = interner.intern("to")
         kkPairNewName = interner.intern("kk_pair_new")
+        kkPairFirstName = interner.intern("kk_pair_first")
+        kkPairSecondName = interner.intern("kk_pair_second")
 
         buildStringName = interner.intern("buildString")
         buildListName = interner.intern("buildList")
@@ -252,16 +319,16 @@ struct CollectionLiteralLookupTables {
         kkBuildMapName = interner.intern("kk_build_map")
 
         appendName = interner.intern("append")
-        addName = interner.intern("add")
         putName = interner.intern("put")
         kkStringBuilderAppendName = interner.intern("kk_string_builder_append")
-        kkMutableListAddName = interner.intern("kk_mutable_list_add")
+        kkBuilderListAddName = interner.intern("kk_builder_list_add")
+        kkBuilderMapPutName = interner.intern("kk_builder_map_put")
+        kkMutableSetAddName = interner.intern("kk_mutable_set_add")
+        kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
         kkMutableMapPutName = interner.intern("kk_mutable_map_put")
 
-        listFactoryNames = [
-            listOfName, mutableListOfName, emptyListName, listOfNotNullName,
-            setOfName, mutableSetOfName, emptySetName,
-        ]
+        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
+        setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildMapName]

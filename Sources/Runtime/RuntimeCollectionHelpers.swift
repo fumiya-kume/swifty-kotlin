@@ -24,6 +24,19 @@ func runtimeMapBox(from rawValue: Int) -> RuntimeMapBox? {
     return tryCast(ptr, to: RuntimeMapBox.self)
 }
 
+func runtimeSetBox(from rawValue: Int) -> RuntimeSetBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeSetBox.self)
+}
+
 func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -95,6 +108,61 @@ func maybeUnbox(_ value: Int) -> Int {
     return value
 }
 
+func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
+    if lhs == rhs {
+        return true
+    }
+    if lhs == runtimeNullSentinelInt || rhs == runtimeNullSentinelInt {
+        return lhs == rhs
+    }
+    guard let lhsPtr = UnsafeMutableRawPointer(bitPattern: lhs),
+          let rhsPtr = UnsafeMutableRawPointer(bitPattern: rhs)
+    else {
+        return lhs == rhs
+    }
+    let lhsIsObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: lhsPtr))
+    }
+    let rhsIsObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+    }
+    if lhsIsObjectPointer != rhsIsObjectPointer {
+        return maybeUnbox(lhs) == maybeUnbox(rhs)
+    }
+    if !lhsIsObjectPointer {
+        return lhs == rhs
+    }
+    if let lhsString = tryCast(lhsPtr, to: RuntimeStringBox.self),
+       let rhsString = tryCast(rhsPtr, to: RuntimeStringBox.self) {
+        return lhsString.value == rhsString.value
+    }
+    if let lhsInt = tryCast(lhsPtr, to: RuntimeIntBox.self),
+       let rhsInt = tryCast(rhsPtr, to: RuntimeIntBox.self) {
+        return lhsInt.value == rhsInt.value
+    }
+    if let lhsBool = tryCast(lhsPtr, to: RuntimeBoolBox.self),
+       let rhsBool = tryCast(rhsPtr, to: RuntimeBoolBox.self) {
+        return lhsBool.value == rhsBool.value
+    }
+    if let lhsLong = tryCast(lhsPtr, to: RuntimeLongBox.self),
+       let rhsLong = tryCast(rhsPtr, to: RuntimeLongBox.self) {
+        return lhsLong.value == rhsLong.value
+    }
+    if let lhsFloat = tryCast(lhsPtr, to: RuntimeFloatBox.self),
+       let rhsFloat = tryCast(rhsPtr, to: RuntimeFloatBox.self) {
+        return lhsFloat.value == rhsFloat.value
+    }
+    if let lhsDouble = tryCast(lhsPtr, to: RuntimeDoubleBox.self),
+       let rhsDouble = tryCast(rhsPtr, to: RuntimeDoubleBox.self) {
+        return lhsDouble.value == rhsDouble.value
+    }
+    if let lhsChar = tryCast(lhsPtr, to: RuntimeCharBox.self),
+       let rhsChar = tryCast(rhsPtr, to: RuntimeCharBox.self) {
+        return lhsChar.value == rhsChar.value
+    }
+    return lhs == rhs
+}
+
 func runtimeElementToString(_ elem: Int) -> String {
     if elem == runtimeNullSentinelInt {
         return "null"
@@ -133,11 +201,121 @@ func runtimeElementToString(_ elem: Int) -> String {
         let parts = listBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"
     }
+    if let setBox = tryCast(ptr, to: RuntimeSetBox.self) {
+        let parts = setBox.elements.map { runtimeElementToString($0) }
+        return "[" + parts.joined(separator: ", ") + "]"
+    }
     if let mapBox = tryCast(ptr, to: RuntimeMapBox.self) {
         let parts = zip(mapBox.keys, mapBox.values).map { key, value in
             "\(runtimeElementToString(key))=\(runtimeElementToString(value))"
         }
         return "{" + parts.joined(separator: ", ") + "}"
     }
+    if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self),
+       arrayBox.elements.count == 2
+    {
+        let first = runtimeElementToString(arrayBox.elements[0])
+        let second = runtimeElementToString(arrayBox.elements[1])
+        return "(\(first), \(second))"
+    }
     return "\(elem)"
+}
+
+func runtimeCompareValues(_ lhs: Int, _ rhs: Int) -> Int {
+    if lhs == rhs {
+        return 0
+    }
+    if let lhsString = runtimeStringFromRawValue(lhs),
+       let rhsString = runtimeStringFromRawValue(rhs)
+    {
+        if lhsString == rhsString {
+            return 0
+        }
+        return lhsString < rhsString ? -1 : 1
+    }
+    if let lhsScalar = runtimeComparableScalarValue(from: lhs),
+       let rhsScalar = runtimeComparableScalarValue(from: rhs)
+    {
+        switch (lhsScalar, rhsScalar) {
+        case let (.floating(lhsValue), .floating(rhsValue)):
+            return runtimeCompareFloatingValues(lhsValue, rhsValue)
+        case let (.floating(lhsValue), .integer(rhsValue)):
+            return runtimeCompareFloatingValues(lhsValue, Double(rhsValue))
+        case let (.integer(lhsValue), .floating(rhsValue)):
+            return runtimeCompareFloatingValues(Double(lhsValue), rhsValue)
+        case let (.integer(lhsValue), .integer(rhsValue)):
+            if lhsValue == rhsValue {
+                return 0
+            }
+            return lhsValue < rhsValue ? -1 : 1
+        }
+    }
+    let lhsRendered = runtimeElementToString(lhs)
+    let rhsRendered = runtimeElementToString(rhs)
+    if lhsRendered == rhsRendered {
+        return 0
+    }
+    return lhsRendered < rhsRendered ? -1 : 1
+}
+
+private enum RuntimeComparableScalarValue {
+    case integer(Int)
+    case floating(Double)
+}
+
+private func runtimeCompareFloatingValues(_ lhs: Double, _ rhs: Double) -> Int {
+    if lhs.isNaN {
+        return rhs.isNaN ? 0 : 1
+    }
+    if rhs.isNaN {
+        return -1
+    }
+    if lhs == rhs {
+        return 0
+    }
+    return lhs < rhs ? -1 : 1
+}
+
+private func runtimeComparableScalarValue(from raw: Int) -> RuntimeComparableScalarValue? {
+    guard raw != runtimeNullSentinelInt else {
+        return nil
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return .integer(raw)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return .integer(raw)
+    }
+    if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+        return .floating(Double(floatBox.value))
+    }
+    if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+        return .floating(doubleBox.value)
+    }
+    if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+        return .integer(intBox.value)
+    }
+    if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+        return .integer(boolBox.value ? 1 : 0)
+    }
+    if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+        return .integer(longBox.value)
+    }
+    if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+        return .integer(charBox.value)
+    }
+    return nil
+}
+
+private func runtimeStringFromRawValue(_ raw: Int) -> String? {
+    if raw == runtimeNullSentinelInt {
+        return nil
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else {
+        return nil
+    }
+    return extractString(from: pointer)
 }
