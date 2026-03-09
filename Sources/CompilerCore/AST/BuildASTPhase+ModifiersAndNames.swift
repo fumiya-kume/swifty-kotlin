@@ -1,69 +1,22 @@
 import Foundation
 
 extension BuildASTPhase {
+    private static let keywordModifierMap: [Keyword: Modifiers.Element] = [
+        .public: .public, .private: .private, .internal: .internal, .protected: .protected,
+        .final: .final, .open: .open, .abstract: .abstract, .sealed: .sealed,
+        .data: .data, .annotation: .annotationClass, .inline: .inline, .suspend: .suspend,
+        .tailrec: .tailrec, .operator: .operator, .infix: .infix,
+        .crossinline: .crossinline, .noinline: .noinline, .vararg: .vararg,
+        .external: .external, .expect: .expect, .actual: .actual, .value: .value,
+        .enum: .enumModifier, .inner: .inner, .companion: .companion,
+        .const: .const, .override: .override, .fun: .funModifier, .lateinit: .lateinit,
+    ]
+
     func modifier(from token: Token) -> Modifiers.Element? {
-        switch token.kind {
-        case .keyword(.public):
-            .public
-        case .keyword(.private):
-            .private
-        case .keyword(.internal):
-            .internal
-        case .keyword(.protected):
-            .protected
-        case .keyword(.final):
-            .final
-        case .keyword(.open):
-            .open
-        case .keyword(.abstract):
-            .abstract
-        case .keyword(.sealed):
-            .sealed
-        case .keyword(.data):
-            .data
-        case .keyword(.annotation):
-            .annotationClass
-        case .keyword(.inline):
-            .inline
-        case .keyword(.suspend):
-            .suspend
-        case .keyword(.tailrec):
-            .tailrec
-        case .keyword(.operator):
-            .operator
-        case .keyword(.infix):
-            .infix
-        case .keyword(.crossinline):
-            .crossinline
-        case .keyword(.noinline):
-            .noinline
-        case .keyword(.vararg):
-            .vararg
-        case .keyword(.external):
-            .external
-        case .keyword(.expect):
-            .expect
-        case .keyword(.actual):
-            .actual
-        case .keyword(.value):
-            .value
-        case .keyword(.enum):
-            .enumModifier
-        case .keyword(.inner):
-            .inner
-        case .keyword(.companion):
-            .companion
-        case .keyword(.const):
-            .const
-        case .keyword(.override):
-            .override
-        case .keyword(.fun):
-            .funModifier
-        case .keyword(.lateinit):
-            .lateinit
-        default:
-            nil
+        guard case let .keyword(keyword) = token.kind else {
+            return nil
         }
+        return Self.keywordModifierMap[keyword]
     }
 
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {

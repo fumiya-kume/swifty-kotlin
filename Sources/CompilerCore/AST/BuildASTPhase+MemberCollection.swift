@@ -280,7 +280,6 @@ extension BuildASTPhase {
         return (functions, properties, nestedClasses, nestedObjects, companionObject)
     }
 
-    // swiftlint:disable:next function_parameter_count
     private func processMemberChild(
         _ childID: NodeID,
         in arena: SyntaxArena,

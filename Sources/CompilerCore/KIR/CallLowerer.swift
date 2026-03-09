@@ -1,5 +1,3 @@
-// swiftlint:disable file_length
-
 import Foundation
 
 /// Delegate class for KIR lowering: CallLowerer.
@@ -11,7 +9,6 @@ final class CallLowerer {
         self.driver = driver
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,

@@ -92,37 +92,8 @@ extension DataFlowSemaPhase {
                 return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
             }
 
-            switch interner.resolve(shortName) {
-            case "Int":
-                return types.make(.primitive(.int, nullability))
-            case "Long":
-                return types.make(.primitive(.long, nullability))
-            case "Float":
-                return types.make(.primitive(.float, nullability))
-            case "Double":
-                return types.make(.primitive(.double, nullability))
-            case "Char":
-                return types.make(.primitive(.char, nullability))
-            case "Boolean":
-                return types.make(.primitive(.boolean, nullability))
-            case "String":
-                return types.make(.primitive(.string, nullability))
-            case "UInt":
-                return types.make(.primitive(.uint, nullability))
-            case "ULong":
-                return types.make(.primitive(.ulong, nullability))
-            case "UByte":
-                return types.make(.primitive(.ubyte, nullability))
-            case "UShort":
-                return types.make(.primitive(.ushort, nullability))
-            case "Any":
-                return types.withNullability(nullability, for: types.anyType)
-            case "Unit":
-                return nullability == .nullable ? types.nullableAnyType : types.unitType
-            case "Nothing":
-                return types.withNullability(nullability, for: types.nothingType)
-            default:
-                break
+            if let builtinType = resolveBuiltinTypeName(interner.resolve(shortName), nullability: nullability, types: types) {
+                return builtinType
             }
 
             let candidates: [SemanticSymbol]
@@ -218,6 +189,26 @@ extension DataFlowSemaPhase {
             }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
+        }
+    }
+
+    private func resolveBuiltinTypeName(_ name: String, nullability: Nullability, types: TypeSystem) -> TypeID? {
+        switch name {
+        case "Int": types.make(.primitive(.int, nullability))
+        case "Long": types.make(.primitive(.long, nullability))
+        case "Float": types.make(.primitive(.float, nullability))
+        case "Double": types.make(.primitive(.double, nullability))
+        case "Char": types.make(.primitive(.char, nullability))
+        case "Boolean": types.make(.primitive(.boolean, nullability))
+        case "String": types.make(.primitive(.string, nullability))
+        case "UInt": types.make(.primitive(.uint, nullability))
+        case "ULong": types.make(.primitive(.ulong, nullability))
+        case "UByte": types.make(.primitive(.ubyte, nullability))
+        case "UShort": types.make(.primitive(.ushort, nullability))
+        case "Any": types.withNullability(nullability, for: types.anyType)
+        case "Unit": nullability == .nullable ? types.nullableAnyType : types.unitType
+        case "Nothing": types.withNullability(nullability, for: types.nothingType)
+        default: nil
         }
     }
 

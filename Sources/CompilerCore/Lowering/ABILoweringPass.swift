@@ -134,104 +134,45 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle returnValue: box primitive if function returns Any/Any?
-                if case let .returnValue(value) = instruction, let types {
-                    if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols) {
-                        let valueType = intrinsicArgType(value, arena: module.arena, types: types)
-                        if let valueType {
-                            let resolvedValueKind = resolveValueClassKind(
-                                types.kind(of: valueType), types: types, symbols: symbols
-                            )
-                            if let boxCallee = boxCalleeForPrimitive(
-                                resolvedValueKind,
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
-                            ) {
-                                let boxedResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)),
-                                    type: function.returnType
-                                )
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: boxCallee,
-                                    arguments: [value],
-                                    result: boxedResult,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                newBody.append(.returnValue(boxedResult))
-                                idx += 1
-                                continue
-                            }
-                        }
-                    }
+                if case let .returnValue(value) = instruction, let types,
+                   let rewritten = rewriteReturnValueBoxing(
+                       value: value,
+                       functionReturnKind: functionReturnKind,
+                       returnType: function.returnType,
+                       module: module, types: types, symbols: symbols,
+                       boxIntCallee: boxIntCallee, boxBoolCallee: boxBoolCallee,
+                       boxLongCallee: boxLongCallee, boxFloatCallee: boxFloatCallee,
+                       boxDoubleCallee: boxDoubleCallee, boxCharCallee: boxCharCallee
+                   )
+                {
+                    newBody.append(contentsOf: rewritten)
+                    idx += 1
+                    continue
+                }
+                if case .returnValue = instruction {
                     newBody.append(instruction)
                     idx += 1
                     continue
                 }
 
                 // Handle copy: insert boxing/unboxing at type boundaries
-                if case let .copy(from, to) = instruction, let types {
-                    let fromType = intrinsicArgType(from, arena: module.arena, types: types)
-                    let toType = module.arena.exprType(to)
-                    if let fromType, let toType {
-                        let rawFromKind = types.kind(of: fromType)
-                        let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
-                        let rawToKind = types.kind(of: toType)
-                        let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
-                        // Box: primitive → Any/Any?, nonNull primitive → nullable primitive, or primitive → non-value-class reference
-                        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) || isNonValueClassReference(rawToKind, symbols: symbols) {
-                            if let boxCallee = boxCalleeForPrimitive(
-                                fromKind,
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
-                            ) {
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: boxCallee,
-                                    arguments: [from],
-                                    result: to,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                idx += 1
-                                continue
-                            }
-                        }
-                        // Unbox: Any/Any?, non-value-class reference, or nullable primitive → nonNull primitive
-                        if needsUnboxing(sourceKind: fromKind, targetKind: toKind, symbols: symbols) {
-                            if let unboxCallee = unboxingCallee(
-                                sourceKind: fromKind,
-                                targetKind: toKind,
-                                unboxIntCallee: unboxIntCallee,
-                                unboxBoolCallee: unboxBoolCallee,
-                                unboxLongCallee: unboxLongCallee,
-                                unboxFloatCallee: unboxFloatCallee,
-                                unboxDoubleCallee: unboxDoubleCallee,
-                                unboxCharCallee: unboxCharCallee,
-                                types: types,
-                                symbols: symbols
-                            ) {
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: unboxCallee,
-                                    arguments: [from],
-                                    result: to,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                idx += 1
-                                continue
-                            }
-                        }
-                    }
+                if case let .copy(from, to) = instruction, let types,
+                   let rewritten = rewriteCopyBoxingOrUnboxing(
+                       from: from, to: to,
+                       module: module, types: types, symbols: symbols,
+                       boxIntCallee: boxIntCallee, boxBoolCallee: boxBoolCallee,
+                       boxLongCallee: boxLongCallee, boxFloatCallee: boxFloatCallee,
+                       boxDoubleCallee: boxDoubleCallee, boxCharCallee: boxCharCallee,
+                       unboxIntCallee: unboxIntCallee, unboxBoolCallee: unboxBoolCallee,
+                       unboxLongCallee: unboxLongCallee, unboxFloatCallee: unboxFloatCallee,
+                       unboxDoubleCallee: unboxDoubleCallee, unboxCharCallee: unboxCharCallee
+                   )
+                {
+                    newBody.append(rewritten)
+                    idx += 1
+                    continue
+                }
+                if case .copy = instruction {
                     newBody.append(instruction)
                     idx += 1
                     continue
@@ -345,5 +286,92 @@ final class ABILoweringPass: LoweringPass {
             return updated
         }
         module.recordLowering(Self.name)
+    }
+
+    private func rewriteReturnValueBoxing(
+        value: KIRExprID,
+        functionReturnKind: TypeKind?,
+        returnType: TypeID,
+        module: KIRModule,
+        types: TypeSystem,
+        symbols: SymbolTable?,
+        boxIntCallee: InternedString, boxBoolCallee: InternedString,
+        boxLongCallee: InternedString, boxFloatCallee: InternedString,
+        boxDoubleCallee: InternedString, boxCharCallee: InternedString
+    ) -> [KIRInstruction]? {
+        guard let functionReturnKind,
+              isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols),
+              let valueType = intrinsicArgType(value, arena: module.arena, types: types)
+        else {
+            return nil
+        }
+        let resolvedValueKind = resolveValueClassKind(
+            types.kind(of: valueType), types: types, symbols: symbols
+        )
+        guard let boxCallee = boxCalleeForPrimitive(
+            resolvedValueKind,
+            boxIntCallee: boxIntCallee, boxBoolCallee: boxBoolCallee,
+            boxLongCallee: boxLongCallee, boxFloatCallee: boxFloatCallee,
+            boxDoubleCallee: boxDoubleCallee, boxCharCallee: boxCharCallee
+        ) else {
+            return nil
+        }
+        let boxedResult = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: returnType
+        )
+        return [
+            .call(symbol: nil, callee: boxCallee, arguments: [value],
+                  result: boxedResult, canThrow: false, thrownResult: nil),
+            .returnValue(boxedResult),
+        ]
+    }
+
+    private func rewriteCopyBoxingOrUnboxing(
+        from: KIRExprID, to: KIRExprID,
+        module: KIRModule,
+        types: TypeSystem,
+        symbols: SymbolTable?,
+        boxIntCallee: InternedString, boxBoolCallee: InternedString,
+        boxLongCallee: InternedString, boxFloatCallee: InternedString,
+        boxDoubleCallee: InternedString, boxCharCallee: InternedString,
+        unboxIntCallee: InternedString, unboxBoolCallee: InternedString,
+        unboxLongCallee: InternedString, unboxFloatCallee: InternedString,
+        unboxDoubleCallee: InternedString, unboxCharCallee: InternedString
+    ) -> KIRInstruction? {
+        guard let fromType = intrinsicArgType(from, arena: module.arena, types: types),
+              let toType = module.arena.exprType(to)
+        else {
+            return nil
+        }
+        let rawFromKind = types.kind(of: fromType)
+        let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
+        let rawToKind = types.kind(of: toType)
+        let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
+        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind)
+            || isNonValueClassReference(rawToKind, symbols: symbols),
+            let boxCallee = boxCalleeForPrimitive(
+                fromKind,
+                boxIntCallee: boxIntCallee, boxBoolCallee: boxBoolCallee,
+                boxLongCallee: boxLongCallee, boxFloatCallee: boxFloatCallee,
+                boxDoubleCallee: boxDoubleCallee, boxCharCallee: boxCharCallee
+            )
+        {
+            return .call(symbol: nil, callee: boxCallee, arguments: [from],
+                         result: to, canThrow: false, thrownResult: nil)
+        }
+        if needsUnboxing(sourceKind: fromKind, targetKind: toKind, symbols: symbols),
+           let unboxCallee = unboxingCallee(
+               sourceKind: fromKind, targetKind: toKind,
+               unboxIntCallee: unboxIntCallee, unboxBoolCallee: unboxBoolCallee,
+               unboxLongCallee: unboxLongCallee, unboxFloatCallee: unboxFloatCallee,
+               unboxDoubleCallee: unboxDoubleCallee, unboxCharCallee: unboxCharCallee,
+               types: types, symbols: symbols
+           )
+        {
+            return .call(symbol: nil, callee: unboxCallee, arguments: [from],
+                         result: to, canThrow: false, thrownResult: nil)
+        }
+        return nil
     }
 }

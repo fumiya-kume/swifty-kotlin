@@ -83,28 +83,10 @@ extension BuildASTPhase.ExpressionParser {
                 continue
             }
 
-            if matches(.symbol(.lBracket)) {
-                guard let open = consume() else { break }
-                var indices: [ExprID] = []
-                if !matches(.symbol(.rBracket)) {
-                    while true {
-                        guard let indexExpr = parseExpression(minPrecedence: 0) else { break }
-                        indices.append(indexExpr)
-                        if matches(.symbol(.comma)) {
-                            _ = consume()
-                            continue
-                        }
-                        break
-                    }
-                }
-                let close = consumeIf(.symbol(.rBracket))
-                guard !indices.isEmpty else {
-                    break
-                }
-                let fallbackEnd = close?.range.end ?? open.range.end
-                let fallbackRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
-                let range = mergeRanges(astArena.exprRange(expr), close?.range ?? fallbackRange, fallback: open.range)
-                expr = astArena.appendExpr(.indexedAccess(receiver: expr, indices: indices, range: range))
+            if matches(.symbol(.lBracket)),
+               let indexedExpr = tryParseIndexedAccess(receiver: expr)
+            {
+                expr = indexedExpr
                 continue
             }
 
@@ -184,6 +166,28 @@ extension BuildASTPhase.ExpressionParser {
             }
         }
         return expr
+    }
+
+    private func tryParseIndexedAccess(receiver: ExprID) -> ExprID? {
+        guard let open = consume() else { return nil }
+        var indices: [ExprID] = []
+        if !matches(.symbol(.rBracket)) {
+            while true {
+                guard let indexExpr = parseExpression(minPrecedence: 0) else { break }
+                indices.append(indexExpr)
+                if matches(.symbol(.comma)) {
+                    _ = consume()
+                    continue
+                }
+                break
+            }
+        }
+        let close = consumeIf(.symbol(.rBracket))
+        guard !indices.isEmpty else { return nil }
+        let fallbackEnd = close?.range.end ?? open.range.end
+        let fallbackRange = SourceRange(start: fallbackEnd, end: fallbackEnd)
+        let range = mergeRanges(astArena.exprRange(receiver), close?.range ?? fallbackRange, fallback: open.range)
+        return astArena.appendExpr(.indexedAccess(receiver: receiver, indices: indices, range: range))
     }
 
     func parseCallArguments() -> [CallArgument] {
