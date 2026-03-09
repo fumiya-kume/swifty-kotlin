@@ -450,15 +450,17 @@ extension CallLowerer {
         )
         // Built-in array set only supports a single Int index
         assert(!indices.isEmpty, "indices must not be empty for indexed assign")
-        let indexID = driver.lowerExpr(
-            indices[0],
-            ast: ast,
-            sema: sema,
-            arena: arena,
-            interner: interner,
-            propertyConstantInitializers: propertyConstantInitializers,
-            instructions: &instructions
-        )
+        let loweredIndexIDs = indices.map {
+            driver.lowerExpr(
+                $0,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
         let valueID = driver.lowerExpr(
             valueExpr,
             ast: ast,
@@ -470,17 +472,7 @@ extension CallLowerer {
         )
         if let callBinding = sema.bindings.callBindings[exprID] {
             let chosenSet = callBinding.chosenCallee
-            let loweredArgs = indices.map {
-                driver.lowerExpr(
-                    $0,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
-            } + [valueID]
+            let loweredArgs = loweredIndexIDs + [valueID]
             let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
             emitMemberCallInstruction(
                 normalized: driver.callSupportLowerer.normalizedCallArguments(
@@ -514,7 +506,7 @@ extension CallLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),
-            arguments: [receiverID, indexID, valueID],
+            arguments: [receiverID, loweredIndexIDs[0], valueID],
             result: nil,
             canThrow: false,
             thrownResult: nil

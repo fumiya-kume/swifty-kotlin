@@ -791,8 +791,6 @@ extension CallLowerer {
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd"
             {
-                let hasEndExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
-                instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(1)))
                 if calleeStr == "padStart" {
                     instructions.append(.call(
                         symbol: nil,
@@ -815,6 +813,8 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                let hasEndExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(1)))
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_substring"),

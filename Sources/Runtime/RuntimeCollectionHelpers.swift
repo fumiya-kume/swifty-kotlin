@@ -120,11 +120,11 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     else {
         return lhs == rhs
     }
-    let lhsIsObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: lhsPtr))
-    }
-    let rhsIsObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+    let (lhsIsObjectPointer, rhsIsObjectPointer) = runtimeStorage.withLock { state in
+        (
+            state.objectPointers.contains(UInt(bitPattern: lhsPtr)),
+            state.objectPointers.contains(UInt(bitPattern: rhsPtr))
+        )
     }
     if lhsIsObjectPointer != rhsIsObjectPointer {
         return maybeUnbox(lhs) == maybeUnbox(rhs)
@@ -170,19 +170,13 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     return lhs == rhs
 }
 
-func runtimeElementToString(_ elem: Int) -> String {
-    if elem == runtimeNullSentinelInt {
-        return "null"
+func runtimeIsPairPointer(_ ptr: UnsafeMutableRawPointer) -> Bool {
+    runtimeStorage.withLock { state in
+        state.pairPointers.contains(UInt(bitPattern: ptr))
     }
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: elem) else {
-        return "\(elem)"
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return "\(elem)"
-    }
+}
+
+func runtimeKnownObjectString(_ ptr: UnsafeMutableRawPointer) -> String? {
     if let stringBox = tryCast(ptr, to: RuntimeStringBox.self) {
         return stringBox.value
     }
@@ -218,12 +212,32 @@ func runtimeElementToString(_ elem: Int) -> String {
         }
         return "{" + parts.joined(separator: ", ") + "}"
     }
-    if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self),
+    if runtimeIsPairPointer(ptr),
+       let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self),
        arrayBox.elements.count == 2
     {
         let first = runtimeElementToString(arrayBox.elements[0])
         let second = runtimeElementToString(arrayBox.elements[1])
         return "(\(first), \(second))"
+    }
+    return nil
+}
+
+func runtimeElementToString(_ elem: Int) -> String {
+    if elem == runtimeNullSentinelInt {
+        return "null"
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: elem) else {
+        return "\(elem)"
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return "\(elem)"
+    }
+    if let rendered = runtimeKnownObjectString(ptr) {
+        return rendered
     }
     return "\(elem)"
 }

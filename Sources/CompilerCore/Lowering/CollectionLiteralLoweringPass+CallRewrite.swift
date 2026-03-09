@@ -1286,6 +1286,9 @@ extension CollectionLiteralLoweringPass {
                     if listExprIDs.contains(from.rawValue) {
                         listExprIDs.insert(to.rawValue)
                     }
+                    if setExprIDs.contains(from.rawValue) {
+                        setExprIDs.insert(to.rawValue)
+                    }
                     if mapExprIDs.contains(from.rawValue) {
                         mapExprIDs.insert(to.rawValue)
                     }

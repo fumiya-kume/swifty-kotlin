@@ -225,7 +225,7 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
-// MARK: - Set Functions (STDLIB-001)
+// MARK: - Set Functions (STDLIB-022)
 
 @_cdecl("kk_set_of")
 public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
@@ -547,7 +547,9 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
     box.elements[1] = second
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
+        let key = UInt(bitPattern: opaque)
+        state.objectPointers.insert(key)
+        state.pairPointers.insert(key)
     }
     return Int(bitPattern: opaque)
 }
