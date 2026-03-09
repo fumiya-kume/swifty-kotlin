@@ -369,26 +369,40 @@ public func kk_list_zip(_ listRaw: Int, _ otherRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: pairs))
 }
 
+@_cdecl("kk_list_unzip")
+public func kk_list_unzip(_ listRaw: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    var firstValues: [Int] = []
+    var secondValues: [Int] = []
+    firstValues.reserveCapacity(elements.count)
+    secondValues.reserveCapacity(elements.count)
+    for pairRaw in elements {
+        firstValues.append(kk_pair_first(pairRaw))
+        secondValues.append(kk_pair_second(pairRaw))
+    }
+    let firstList = registerRuntimeObject(RuntimeListBox(elements: firstValues))
+    let secondList = registerRuntimeObject(RuntimeListBox(elements: secondValues))
+    return kk_pair_new(firstList, secondList)
+}
+
 @_cdecl("kk_list_withIndex")
 public func kk_list_withIndex(_ listRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    var indexed: [Int] = []
+    indexed.reserveCapacity(elements.count)
+    for (index, element) in elements.enumerated() {
+        indexed.append(kk_pair_new(index, element))
     }
-    var pairs: [Int] = []
-    pairs.reserveCapacity(list.elements.count)
-    for (index, element) in list.elements.enumerated() {
-        pairs.append(kk_pair_new(index, element))
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+    return registerRuntimeObject(RuntimeListBox(elements: indexed))
 }
 
 @_cdecl("kk_list_forEachIndexed")
 public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return 0 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    for (index, element) in list.elements.enumerated() {
+    for (index, elem) in list.elements.enumerated() {
         var thrown = 0
-        _ = lambda(index, element, &thrown)
+        _ = lambda(index, elem, &thrown)
         if thrown != 0 {
             outThrown?.pointee = thrown
             return 0
@@ -405,9 +419,9 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsafe
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     mapped.reserveCapacity(list.elements.count)
-    for (index, element) in list.elements.enumerated() {
+    for (index, elem) in list.elements.enumerated() {
         var thrown = 0
-        let result = lambda(index, element, &thrown)
+        let result = lambda(index, elem, &thrown)
         if thrown != 0 {
             outThrown?.pointee = thrown
             return registerRuntimeObject(RuntimeListBox(elements: []))
@@ -415,22 +429,6 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsafe
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
-}
-
-@_cdecl("kk_list_unzip")
-public func kk_list_unzip(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
-    var firstValues: [Int] = []
-    var secondValues: [Int] = []
-    firstValues.reserveCapacity(elements.count)
-    secondValues.reserveCapacity(elements.count)
-    for pairRaw in elements {
-        firstValues.append(kk_pair_first(pairRaw))
-        secondValues.append(kk_pair_second(pairRaw))
-    }
-    let firstList = registerRuntimeObject(RuntimeListBox(elements: firstValues))
-    let secondList = registerRuntimeObject(RuntimeListBox(elements: secondValues))
-    return kk_pair_new(firstList, secondList)
 }
 
 @_cdecl("kk_list_take")

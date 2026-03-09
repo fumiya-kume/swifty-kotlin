@@ -133,6 +133,10 @@ extension CollectionLiteralLoweringPass {
             if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
                 if let result { mapExprIDs.insert(result.rawValue) }
             }
+        } else if callee == lookup.withIndexName {
+            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
         } else if callee == lookup.takeName || callee == lookup.dropName {
             if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
                 if let result { listExprIDs.insert(result.rawValue) }
@@ -170,6 +174,10 @@ extension CollectionLiteralLoweringPass {
         {
             if listExprIDs.contains(receiver.rawValue) {
                 if let result { mapExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.withIndexName {
+            if listExprIDs.contains(receiver.rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
             }
         } else if callee == lookup.takeName || callee == lookup.dropName
             || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName

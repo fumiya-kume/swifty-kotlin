@@ -430,15 +430,116 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(stringBox.value)
         return
     }
+    if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
+        Swift.print(doubleBox.value)
+        return
+    }
+    if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
+        Swift.print(floatBox.value)
+        return
+    }
+    if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
+        Swift.print(longBox.value)
+        return
+    }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
-    if let rendered = runtimeKnownObjectString(raw) {
-        Swift.print(rendered)
+    if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
+        if let scalar = UnicodeScalar(charBox.value) {
+            Swift.print(Character(scalar))
+        } else {
+            Swift.print("�")
+        }
+        return
+    }
+    if let listBox = tryCast(raw, to: RuntimeListBox.self) {
+        let rendered = listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
+    if let setBox = tryCast(raw, to: RuntimeSetBox.self) {
+        let rendered = setBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
+    if let mapBox = tryCast(raw, to: RuntimeMapBox.self) {
+        let rendered = zip(mapBox.keys, mapBox.values).map { key, value in
+            "\(runtimeRenderAnyForPrint(key))=\(runtimeRenderAnyForPrint(value))"
+        }.joined(separator: ", ")
+        Swift.print("{\(rendered)}")
+        return
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self),
+       arrayBox.elements.count == 2
+    {
+        let first = runtimeRenderAnyForPrint(arrayBox.elements[0])
+        let second = runtimeRenderAnyForPrint(arrayBox.elements[1])
+        Swift.print("(\(first), \(second))")
         return
     }
     Swift.print("<object \(raw)>")
+}
+
+private func runtimeRenderAnyForPrint(_ value: Int) -> String {
+    if value == runtimeNullSentinelInt {
+        return "null"
+    }
+    guard let raw = UnsafeMutableRawPointer(bitPattern: value) else {
+        return String(value)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: raw))
+    }
+    guard isObjectPointer else {
+        return String(value)
+    }
+    if let boolBox = tryCast(raw, to: RuntimeBoolBox.self) {
+        return boolBox.value ? "true" : "false"
+    }
+    if let intBox = tryCast(raw, to: RuntimeIntBox.self) {
+        return String(intBox.value)
+    }
+    if let stringBox = tryCast(raw, to: RuntimeStringBox.self) {
+        return stringBox.value
+    }
+    if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
+        return String(doubleBox.value)
+    }
+    if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
+        return String(floatBox.value)
+    }
+    if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
+        return String(longBox.value)
+    }
+    if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
+        if let scalar = UnicodeScalar(charBox.value) {
+            return String(Character(scalar))
+        }
+        return "�"
+    }
+    if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
+        return "Throwable(\(throwable.message))"
+    }
+    if let listBox = tryCast(raw, to: RuntimeListBox.self) {
+        return "[\(listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    if let setBox = tryCast(raw, to: RuntimeSetBox.self) {
+        return "[\(setBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    if let mapBox = tryCast(raw, to: RuntimeMapBox.self) {
+        let rendered = zip(mapBox.keys, mapBox.values).map { key, value in
+            "\(runtimeRenderAnyForPrint(key))=\(runtimeRenderAnyForPrint(value))"
+        }.joined(separator: ", ")
+        return "{\(rendered)}"
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self),
+       arrayBox.elements.count == 2
+    {
+        return "(\(runtimeRenderAnyForPrint(arrayBox.elements[0])), \(runtimeRenderAnyForPrint(arrayBox.elements[1])))"
+    }
+    return "<object \(raw)>"
 }
 
 // MARK: - String nullable receiver helpers

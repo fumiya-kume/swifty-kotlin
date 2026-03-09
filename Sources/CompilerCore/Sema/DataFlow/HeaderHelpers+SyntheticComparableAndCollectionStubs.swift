@@ -465,7 +465,6 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
-            symbols.setExternalLinkName("kk_list_\(name)", for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
@@ -495,12 +494,12 @@ extension DataFlowSemaPhase {
         guard let listTypeParamSymbol = symbols.lookup(
             fqName: kotlinCollectionsPkg + [interner.intern("List"), interner.intern("E")]
         ),
-            let mutableListSymbol = symbols.lookup(
-                fqName: kotlinCollectionsPkg + [interner.intern("MutableList")]
-            ),
-            let setInterfaceSymbol = symbols.lookup(
-                fqName: kotlinCollectionsPkg + [interner.intern("Set")]
-            )
+        let mutableListSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("MutableList")]
+        ),
+        let setInterfaceSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Set")]
+        )
         else {
             return
         }
@@ -656,7 +655,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_add", for: memberSymbol)
@@ -1121,8 +1120,8 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
         mapInterfaceSymbol: SymbolID,
-        keyTypeParamSymbol _: SymbolID,
-        valueTypeParamSymbol _: SymbolID
+        keyTypeParamSymbol: SymbolID,
+        valueTypeParamSymbol: SymbolID
     ) {
         let mutableMapName = interner.intern("MutableMap")
         let mutableMapFQName = kotlinCollectionsPkg + [mutableMapName]
@@ -1198,4 +1197,5 @@ extension DataFlowSemaPhase {
             )
         }
     }
+
 }

@@ -146,6 +146,41 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(list?.elements.map(runtimeStringValue), ["1", "2", "3"])
     }
 
+    func testStringReversedProducesReversedString() {
+        XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString("abc"))), "cba")
+    }
+
+    func testStringToListAndToCharArrayReturnCharElements() {
+        let listRaw = kk_string_toList(rawFromRuntimeString("abc"))
+        let charArrayRaw = kk_string_toCharArray(rawFromRuntimeString("abc"))
+
+        let list = runtimeListBox(from: listRaw)
+        let charArray = runtimeListBox(from: charArrayRaw)
+        XCTAssertNotNil(list)
+        XCTAssertNotNil(charArray)
+        let expected = [97, 98, 99]
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expected)
+        XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
+    }
+
+    func testStringTakeDropFunctions() {
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 0)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 2)), "ab")
+        XCTAssertEqual(runtimeStringValue(kk_string_take(rawFromRuntimeString("abcde"), 10)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 0)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 2)), "cde")
+        XCTAssertEqual(runtimeStringValue(kk_string_drop(rawFromRuntimeString("abcde"), 10)), "")
+    }
+
+    func testStringTakeLastDropLastFunctions() {
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 0)), "")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 2)), "de")
+        XCTAssertEqual(runtimeStringValue(kk_string_takeLast(rawFromRuntimeString("abcde"), 10)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 0)), "abcde")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 2)), "abc")
+        XCTAssertEqual(runtimeStringValue(kk_string_dropLast(rawFromRuntimeString("abcde"), 10)), "")
+    }
+
     func testStringReplaceSupportsLiteralReplacement() {
         let replaced = kk_string_replace(
             rawFromRuntimeString("aba"),

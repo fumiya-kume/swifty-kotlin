@@ -73,6 +73,12 @@ public func kk_println_char(_ value: Int) {
     }
 }
 
+@_cdecl("kk_println_bool")
+public func kk_println_bool(_ value: Int) {
+    let unboxedValue = kk_unbox_bool(value)
+    Swift.print(unboxedValue != 0 ? "true" : "false")
+}
+
 @_cdecl("kk_bitwise_and")
 public func kk_bitwise_and(_ lhs: Int, _ rhs: Int) -> Int {
     lhs & rhs

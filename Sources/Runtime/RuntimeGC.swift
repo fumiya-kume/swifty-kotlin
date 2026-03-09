@@ -18,7 +18,6 @@ struct FrameMapDescriptorC {
 struct RuntimeStorageState {
     var heapObjects: [UInt: HeapObjectRecord] = [:]
     var objectPointers: Set<UInt> = []
-    var pairPointers: Set<UInt> = []
     var flowHandles: [UInt: AnyObject] = [:]
     var flowRetainCounts: [UInt: Int] = [:]
     var customDelegateBoxes: [UInt: RuntimeCustomDelegateBox] = [:]
@@ -270,7 +269,6 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     }
     state.heapObjects.removeAll(keepingCapacity: false)
     state.objectPointers.removeAll(keepingCapacity: false)
-    state.pairPointers.removeAll(keepingCapacity: false)
     state.flowHandles.removeAll(keepingCapacity: false)
     state.flowRetainCounts.removeAll(keepingCapacity: false)
     state.objectTypeByPointer.removeAll(keepingCapacity: false)

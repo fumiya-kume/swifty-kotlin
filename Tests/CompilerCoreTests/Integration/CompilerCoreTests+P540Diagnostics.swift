@@ -57,10 +57,7 @@ extension CompilerCoreTests {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        XCTAssertTrue(
-            ctx.diagnostics.diagnostics.contains(where: { ["KSWIFTK-SEMA-0002", "KSWIFTK-SEMA-0024"].contains($0.code) }),
-            "Expected unresolved member diagnostic, got: \(ctx.diagnostics.diagnostics.map(\.code))"
-        )
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
     func testUnresolvedSafeMemberCallFallsBackToAnyNullable() throws {
