@@ -133,31 +133,38 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
         return lhs == rhs
     }
     if let lhsString = tryCast(lhsPtr, to: RuntimeStringBox.self),
-       let rhsString = tryCast(rhsPtr, to: RuntimeStringBox.self) {
+       let rhsString = tryCast(rhsPtr, to: RuntimeStringBox.self)
+    {
         return lhsString.value == rhsString.value
     }
     if let lhsInt = tryCast(lhsPtr, to: RuntimeIntBox.self),
-       let rhsInt = tryCast(rhsPtr, to: RuntimeIntBox.self) {
+       let rhsInt = tryCast(rhsPtr, to: RuntimeIntBox.self)
+    {
         return lhsInt.value == rhsInt.value
     }
     if let lhsBool = tryCast(lhsPtr, to: RuntimeBoolBox.self),
-       let rhsBool = tryCast(rhsPtr, to: RuntimeBoolBox.self) {
+       let rhsBool = tryCast(rhsPtr, to: RuntimeBoolBox.self)
+    {
         return lhsBool.value == rhsBool.value
     }
     if let lhsLong = tryCast(lhsPtr, to: RuntimeLongBox.self),
-       let rhsLong = tryCast(rhsPtr, to: RuntimeLongBox.self) {
+       let rhsLong = tryCast(rhsPtr, to: RuntimeLongBox.self)
+    {
         return lhsLong.value == rhsLong.value
     }
     if let lhsFloat = tryCast(lhsPtr, to: RuntimeFloatBox.self),
-       let rhsFloat = tryCast(rhsPtr, to: RuntimeFloatBox.self) {
+       let rhsFloat = tryCast(rhsPtr, to: RuntimeFloatBox.self)
+    {
         return lhsFloat.value == rhsFloat.value
     }
     if let lhsDouble = tryCast(lhsPtr, to: RuntimeDoubleBox.self),
-       let rhsDouble = tryCast(rhsPtr, to: RuntimeDoubleBox.self) {
+       let rhsDouble = tryCast(rhsPtr, to: RuntimeDoubleBox.self)
+    {
         return lhsDouble.value == rhsDouble.value
     }
     if let lhsChar = tryCast(lhsPtr, to: RuntimeCharBox.self),
-       let rhsChar = tryCast(rhsPtr, to: RuntimeCharBox.self) {
+       let rhsChar = tryCast(rhsPtr, to: RuntimeCharBox.self)
+    {
         return lhsChar.value == rhsChar.value
     }
     return lhs == rhs

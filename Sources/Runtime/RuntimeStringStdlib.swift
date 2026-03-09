@@ -62,7 +62,7 @@ public func kk_string_substring(
         runtimeSetThrown(
             outThrown,
             message:
-                "StringIndexOutOfBoundsException: start=\(start), end=\(hasEnd ? end : length), length=\(length)"
+            "StringIndexOutOfBoundsException: start=\(start), end=\(hasEnd ? end : length), length=\(length)"
         )
         return 0
     }
@@ -265,16 +265,15 @@ public func kk_string_toDoubleOrNull(_ strRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
 
-    let value: Double?
-    switch trimmed {
+    let value: Double? = switch trimmed {
     case "NaN":
-        value = .nan
+        .nan
     case "Infinity", "+Infinity":
-        value = .infinity
+        .infinity
     case "-Infinity":
-        value = -.infinity
+        -.infinity
     default:
-        value = Double(trimmed)
+        Double(trimmed)
     }
     guard let parsed = value else {
         return runtimeNullSentinelInt
@@ -294,8 +293,9 @@ public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
         return -1
     }
 
-    for offset in 0...(source.count - other.count)
-    where Array(source[offset ..< (offset + other.count)]) == other {
+    for offset in 0 ... (source.count - other.count)
+        where Array(source[offset ..< (offset + other.count)]) == other
+    {
         return offset
     }
     return -1
@@ -314,8 +314,9 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     }
 
     var lastIndex = -1
-    for offset in 0...(source.count - other.count)
-    where Array(source[offset ..< (offset + other.count)]) == other {
+    for offset in 0 ... (source.count - other.count)
+        where Array(source[offset ..< (offset + other.count)]) == other
+    {
         lastIndex = offset
     }
     return lastIndex
@@ -560,7 +561,7 @@ private func runtimeMakeListRaw(_ values: [Int]) -> Int {
 }
 
 private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
-    return runtimeMakeListRaw(values.map(runtimeMakeStringRaw))
+    runtimeMakeListRaw(values.map(runtimeMakeStringRaw))
 }
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {

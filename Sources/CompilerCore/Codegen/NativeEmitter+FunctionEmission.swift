@@ -186,7 +186,7 @@ extension NativeEmitter {
             }
         }
 
-        let shouldSpillID = Set(assignmentTargetCounts.filter { $0.value > 1 }.map { $0.key })
+        let shouldSpillID = Set(assignmentTargetCounts.filter { $0.value > 1 }.map(\.key))
 
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {

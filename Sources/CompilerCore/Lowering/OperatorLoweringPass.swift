@@ -119,8 +119,8 @@ final class OperatorLoweringPass: LoweringPass {
                        let types
                     {
                         let argType = module.arena.exprType(arguments[0])
-                    if let argType {
-                        switch types.kind(of: argType) {
+                        if let argType {
+                            switch types.kind(of: argType) {
                             case .primitive(.long, .nonNull):
                                 appendPrimitivePrintlnCall(
                                     to: &newBody,
