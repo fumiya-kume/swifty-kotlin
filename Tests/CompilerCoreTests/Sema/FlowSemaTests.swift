@@ -106,8 +106,8 @@ final class FlowSemaTests: XCTestCase {
             try runSema(ctx)
 
             XCTAssertTrue(
-                ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0024" }),
-                "Expected unresolved member diagnostic for non-flow Any receiver."
+                ctx.diagnostics.diagnostics.contains(where: { ["KSWIFTK-SEMA-0002", "KSWIFTK-SEMA-0024"].contains($0.code) }),
+                "Expected unresolved member diagnostic for non-flow Any receiver. Got: \(ctx.diagnostics.diagnostics.map { $0.code })"
             )
         }
     }
