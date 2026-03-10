@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 public struct VariableFlowState: Equatable {
     public var possibleTypes: Set<TypeID>
     public var nullability: Nullability

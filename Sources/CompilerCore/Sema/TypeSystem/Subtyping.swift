@@ -1,5 +1,4 @@
 extension TypeSystem {
-    // swiftlint:disable:next cyclomatic_complexity
     public func isSubtype(_ subtype: TypeID, _ supertype: TypeID) -> Bool {
         if subtype == supertype {
             return true

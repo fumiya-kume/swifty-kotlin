@@ -1,5 +1,3 @@
-// swiftlint:disable function_body_length
-// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -40,7 +38,6 @@ extension DataFlowSemaPhase {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func collectHeader(
         declID: DeclID,
         file: ASTFile,

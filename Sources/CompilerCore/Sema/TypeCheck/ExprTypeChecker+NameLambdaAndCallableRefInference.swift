@@ -131,7 +131,6 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases
 
-    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,

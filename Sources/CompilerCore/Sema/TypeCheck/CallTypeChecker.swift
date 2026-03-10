@@ -1,5 +1,3 @@
-// swiftlint:disable file_length type_body_length
-
 import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).
@@ -10,7 +8,6 @@ final class CallTypeChecker {
         self.driver = driver
     }
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,

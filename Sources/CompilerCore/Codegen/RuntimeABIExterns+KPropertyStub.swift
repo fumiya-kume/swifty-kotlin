@@ -1,4 +1,3 @@
-// swiftlint:disable identifier_name
 // KProperty stub extern declarations (PROP-007)
 
 public extension RuntimeABIExterns {

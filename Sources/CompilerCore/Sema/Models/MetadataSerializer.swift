@@ -609,7 +609,6 @@ public final class MetadataDecoder {
 
     // MARK: - Key-Value Parsing
 
-    // swiftlint:disable:next function_parameter_count
     private func applyKeyValuePart(
         key: String, value: String,
         fqName: inout String, arity: inout Int, isSuspend: inout Bool, isInline: inout Bool,

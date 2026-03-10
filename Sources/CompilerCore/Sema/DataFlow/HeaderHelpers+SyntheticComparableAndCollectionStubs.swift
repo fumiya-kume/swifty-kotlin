@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 // Collection type stubs (List<E>, MutableList<E>) for kotlin.collections,

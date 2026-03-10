@@ -1,7 +1,6 @@
 import Foundation
 
 // File splitting is still in progress for this legacy member-call lowering surface.
-// swiftlint:disable file_length
 
 struct MemberCallReceiver {
     let expr: ExprID
@@ -1714,10 +1713,18 @@ extension CallLowerer {
                 type: boundType
             )
             if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                let callArgs: [KIRExprID]
+                if info.hasClosureParam {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    callArgs = info.captureArguments + [zeroExpr, loweredReceiverID]
+                } else {
+                    callArgs = info.captureArguments + [loweredReceiverID]
+                }
                 instructions.append(.call(
                     symbol: info.symbol,
                     callee: info.callee,
-                    arguments: info.captureArguments + [loweredReceiverID],
+                    arguments: callArgs,
                     result: result,
                     canThrow: false,
                     thrownResult: nil
