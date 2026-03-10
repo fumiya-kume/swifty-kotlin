@@ -202,7 +202,7 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
 
             let localInitializers = bodyExprs.compactMap { exprID -> (String, ExprID)? in
                 guard let expr = ast.arena.expr(exprID),
-                      case let .localDecl(name, _, _, initializer, _) = expr,
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
                       let initializer
                 else {
                     return nil
@@ -234,6 +234,112 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
                 XCTFail("Expected `ref` local initializer to be `.callableRef`.")
                 return
             }
+        }
+    }
+
+    // MARK: - Multi-line expression merging (BuildASTPhase+BodyParsing fix)
+
+    func testMultiLineFunctionCallMergesIntoSingleStatement() throws {
+        // Arguments spread across multiple lines should be parsed as one call.
+        let source = """
+        fun add(a: Int, b: Int, c: Int): Int = a + b + c
+        fun main(): Int {
+            val result = add(
+                1,
+                2,
+                3)
+            return result
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no errors for multi-line call, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMultiLineBinaryExpressionMergesIntoSingleStatement() throws {
+        // A binary expression split across lines should merge when the previous
+        // line ends with the operator.
+        let source = """
+        fun main(): Int {
+            val x = 1 +
+                2 +
+                3
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no errors for multi-line binary expr, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testMultiLineStringConcatMergesCorrectly() throws {
+        let source = """
+        fun main(): String {
+            val s = "Hello" +
+                ", " +
+                "World"
+            return s
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no errors for multi-line string concat, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testChainedMemberCallsAcrossLinesMerge() throws {
+        // Method chains split across lines (dot at start of next line) should parse correctly.
+        let source = """
+        fun main(): String {
+            val s = "  hello  "
+                .trim()
+                .uppercase()
+            return s
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no errors for chained member calls, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
+    func testClosingParenOnSeparateLineMergesWithCall() throws {
+        // Closing paren on its own line should still be merged with the call.
+        let source = """
+        fun pair(a: Int, b: Int): Int = a + b
+        fun main(): Int {
+            val x = pair(
+                10,
+                20
+            )
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.contains(where: { $0.severity == .error }),
+                "Expected no errors for closing paren on separate line, got: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
         }
     }
 }

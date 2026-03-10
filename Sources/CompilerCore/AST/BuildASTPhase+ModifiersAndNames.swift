@@ -21,16 +21,50 @@ extension BuildASTPhase {
 
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
-        for child in arena.children(of: nodeID) {
+        let children = arena.children(of: nodeID)
+        var index = children.startIndex
+        while index < children.endIndex {
+            let child = children[index]
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena)
             {
+                if case let .keyword(keyword) = token.kind {
+                    switch keyword {
+                    case .fun:
+                        let nextKeyword: Keyword? = if children.index(after: index) < children.endIndex {
+                            children[children.index(after: index)...].compactMap { child -> Keyword? in
+                                guard case let .token(nextTokenID) = child,
+                                      let nextToken = resolveToken(nextTokenID, in: arena),
+                                      case let .keyword(nextKeyword) = nextToken.kind
+                                else {
+                                    return nil
+                                }
+                                return nextKeyword
+                            }.first
+                        } else {
+                            nil
+                        }
+                        if nextKeyword == .interface {
+                            modifiers.insert(.funModifier)
+                            index = children.index(after: index)
+                            continue
+                        }
+                        return modifiers
+                    case .class, .object, .interface, .val, .var, .typealias:
+                        return modifiers
+                    default:
+                        break
+                    }
+                }
                 if let modifier = modifier(from: token) {
                     modifiers.insert(modifier)
+                    index = children.index(after: index)
                     continue
                 }
+                index = children.index(after: index)
                 continue
             }
+            index = children.index(after: index)
         }
         return modifiers
     }

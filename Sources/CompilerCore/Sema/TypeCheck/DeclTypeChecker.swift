@@ -50,11 +50,11 @@ final class DeclTypeChecker {
                     continue
                 }
                 // Pass expectedType to return expressions (so the return value is
-                // checked against the function return type) and to the last expression
-                // (which determines the block's result type for expression-body inference).
-                let exprExpectedType: TypeID? = if let expr = ctx.ast.arena.expr(exprID), case .returnExpr = expr {
-                    expectedType
-                } else if exprID == exprIDs.last {
+                // checked against the function return type), but NOT to the last
+                // expression of a block body (where it's just a statement).
+                let exprExpectedType: TypeID? = if let expr = ctx.ast.arena.expr(exprID),
+                                                   case .returnExpr = expr
+                {
                     expectedType
                 } else {
                     nil
@@ -64,7 +64,10 @@ final class DeclTypeChecker {
                     reachedNothing = true
                 }
             }
-            return reachedNothing ? ctx.sema.types.nothingType : last
+            if reachedNothing {
+                return ctx.sema.types.nothingType
+            }
+            return ctx.sema.types.unitType
         }
     }
 

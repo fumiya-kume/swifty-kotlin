@@ -324,19 +324,36 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
             scope.insert(nestedSymbol)
 
-            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: [], nullability: .nonNull)))
-            let nestedScope = ClassMemberScope(
-                parent: scope,
-                symbols: symbols,
-                ownerSymbol: nestedSymbol,
-                thisType: nestedType
-            )
             if !nestedClass.typeParams.isEmpty {
                 types.setNominalTypeParameterVariances(
                     nestedClass.typeParams.map(\.variance),
                     for: nestedSymbol
                 )
             }
+            let nestedTypeParamResult = registerNominalTypeParameters(
+                nestedClass.typeParams,
+                ownerSymbol: nestedSymbol,
+                fqName: nestedFQName,
+                namespacePrefix: "$class",
+                declSite: nestedClass.range,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                diagnostics: diagnostics
+            )
+            let nestedTypeParamSymbols = nestedTypeParamResult.symbols
+            let nestedLocalTypeParameters = nestedTypeParamResult.localMap
+            let nestedTypeArgs: [TypeArg] = nestedTypeParamSymbols.map { tpSymbol in
+                TypeArg.invariant(types.make(.typeParam(TypeParamType(symbol: tpSymbol))))
+            }
+            let nestedType = types.make(.classType(ClassType(classSymbol: nestedSymbol, args: nestedTypeArgs, nullability: .nonNull)))
+            let nestedScope = ClassMemberScope(
+                parent: scope,
+                symbols: symbols,
+                ownerSymbol: nestedSymbol,
+                thisType: nestedType
+            )
             let ctorName = interner.intern("<init>")
             let nestedCtorFQName = nestedFQName + [ctorName]
             let nestedHasPrimaryCtorSyntax = nestedClass.hasPrimaryConstructorSyntax
@@ -434,6 +451,21 @@ extension DataFlowSemaPhase {
                     symbols.setParentSymbol(nestedSymbol, for: entrySymbol)
                     symbols.setPropertyType(nestedType, for: entrySymbol)
                 }
+            }
+            if nestedClass.modifiers.contains(.data) {
+                collectSyntheticDataClassCopy(
+                    classDecl: nestedClass,
+                    ast: ast,
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: nestedLocalTypeParameters
+                )
             }
             collectNestedTypeAliases(
                 nestedClass.nestedTypeAliases,

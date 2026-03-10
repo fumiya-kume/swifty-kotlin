@@ -131,6 +131,7 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -177,7 +178,25 @@ extension ExprTypeChecker {
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if candidates.isEmpty {
-            if let firstInvisible = invisibleSyms.first {
+            if let receiverType = ctx.implicitReceiverType,
+               let result = driver.helpers.lookupMemberProperty(
+                   named: name,
+                   receiverType: sema.types.makeNonNullable(receiverType),
+                   sema: sema
+               )
+            {
+                sema.bindings.markImplicitReceiverMember(id, name: name)
+                sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                driver.helpers.checkDeprecation(
+                    for: result.symbol,
+                    sema: sema,
+                    interner: interner,
+                    range: nameRange,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                sema.bindings.bindExprType(id, type: result.type)
+                return result.type
+            } else if let firstInvisible = invisibleSyms.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
             } else if interner.resolve(name) == "field" {
                 // Kotlin's `field` identifier is only valid inside property
@@ -230,6 +249,13 @@ extension ExprTypeChecker {
                 {
                     sema.bindings.markImplicitReceiverMember(id, name: name)
                     sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                    driver.helpers.checkDeprecation(
+                        for: result.symbol,
+                        sema: sema,
+                        interner: interner,
+                        range: nameRange,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
                     sema.bindings.bindExprType(id, type: result.type)
                     return result.type
                 }
@@ -256,18 +282,26 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.errorType)
             return sema.types.errorType
         }
-        if let first = candidates.first {
-            sema.bindings.bindIdentifier(id, symbol: first.id)
+        let preferredCandidate = candidates.first(where: { symbol in
+            switch symbol.kind {
+            case .property, .field, .backingField, .object, .class, .interface, .enumClass:
+                true
+            default:
+                false
+            }
+        }) ?? candidates.first
+        if let preferredCandidate {
+            sema.bindings.bindIdentifier(id, symbol: preferredCandidate.id)
             // ANNO-001: Check for @Deprecated annotation on the resolved symbol.
             driver.helpers.checkDeprecation(
-                for: first.id,
+                for: preferredCandidate.id,
                 sema: sema,
                 interner: interner,
                 range: nameRange,
                 diagnostics: ctx.semaCtx.diagnostics
             )
         }
-        let resolvedType = candidates.first.flatMap { symbol in
+        let resolvedType = preferredCandidate.flatMap { symbol in
             if let signature = sema.symbols.functionSignature(for: symbol.id) {
                 return signature.returnType
             }
@@ -295,8 +329,8 @@ extension ExprTypeChecker {
         } ?? sema.types.anyType
         // Propagate compile-time constant value for `const val` references
         // so downstream passes can fold without re-querying the symbol table.
-        if let first = candidates.first, first.flags.contains(.constValue),
-           let constKind = sema.symbols.constValueExprKind(for: first.id)
+        if let preferredCandidate, preferredCandidate.flags.contains(.constValue),
+           let constKind = sema.symbols.constValueExprKind(for: preferredCandidate.id)
         {
             sema.bindings.bindConstExprValue(id, value: constKind)
         }

@@ -163,6 +163,8 @@ struct TypeCheckHelpers {
 
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
         switch name {
+        case "Byte": types.withNullability(nullability, for: types.intType)
+        case "Short": types.withNullability(nullability, for: types.intType)
         case "Int": types.withNullability(nullability, for: types.intType)
         case "Long": types.withNullability(nullability, for: types.longType)
         case "Float": types.withNullability(nullability, for: types.floatType)
@@ -194,22 +196,22 @@ struct TypeCheckHelpers {
         }
         switch typeRef {
         case let .named(path, argRefs, nullable):
-            guard let firstName = path.first else {
+            guard let shortName = path.last else {
                 return sema.types.errorType
             }
-            let name = interner.resolve(firstName)
+            let name = interner.resolve(shortName)
             let nullability: Nullability = nullable ? .nullable : .nonNull
             if let builtin = resolveBuiltinTypeName(name, nullability: nullability, types: sema.types) {
                 return builtin
             }
             if path.count == 1,
                let scope,
-               let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema)
+               let typeParameterSymbol = resolveTypeParameterSymbol(shortName, scope: scope, sema: sema)
             {
                 return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
             }
             do {
-                let fqCandidates = sema.symbols.lookupAll(fqName: [firstName]).filter { symbolID in
+                let fqCandidates = sema.symbols.lookupAll(fqName: path).filter { symbolID in
                     guard let sym = sema.symbols.symbol(symbolID) else { return false }
                     switch sym.kind {
                     case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
@@ -224,7 +226,7 @@ struct TypeCheckHelpers {
                 let candidates: [SymbolID] = if !fqCandidates.isEmpty {
                     fqCandidates
                 } else {
-                    sema.symbols.lookupByShortName(firstName).filter { symbolID in
+                    sema.symbols.lookupByShortName(shortName).filter { symbolID in
                         guard let sym = sema.symbols.symbol(symbolID) else { return false }
                         switch sym.kind {
                         case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:

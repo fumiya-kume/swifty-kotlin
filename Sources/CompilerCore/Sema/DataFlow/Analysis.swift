@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct VariableFlowState: Equatable {
     public var possibleTypes: Set<TypeID>
     public var nullability: Nullability
@@ -735,25 +736,40 @@ public final class DataFlowAnalyzer {
     ) -> TypeID? {
         guard let typeRef = ast.arena.typeRef(typeRefID),
               case let .named(path, argRefs, nullable) = typeRef,
-              let firstName = path.first
+              let shortName = path.last
         else {
             return nil
         }
 
         let nullability: Nullability = nullable ? .nullable : .nonNull
-        if let typeParameterSymbol = resolveTypeParameterSymbol(firstName, scope: scope, sema: sema),
+        if path.count == 1,
+           let typeParameterSymbol = resolveTypeParameterSymbol(shortName, scope: scope, sema: sema),
            let typeParameter = sema.symbols.symbol(typeParameterSymbol),
            typeParameter.flags.contains(.reifiedTypeParameter)
         {
             return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
         }
 
-        let targetName = interner.resolve(firstName)
+        let targetName = interner.resolve(shortName)
         if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
             return nullability == .nullable ? sema.types.makeNullable(primitiveType) : primitiveType
         }
 
-        let candidates = resolveNominalCandidates(forName: firstName, sema: sema)
+        let candidates: [SymbolID] = {
+            let fqCandidates = sema.symbols.lookupAll(fqName: path).filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                switch sym.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            if !fqCandidates.isEmpty {
+                return fqCandidates
+            }
+            return resolveNominalCandidates(forName: shortName, sema: sema)
+        }()
         guard let targetSymbolID = candidates.first else {
             return nil
         }
@@ -847,6 +863,8 @@ public final class DataFlowAnalyzer {
 
     private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {
         switch name {
+        case "Byte": types.intType
+        case "Short": types.intType
         case "Int": types.intType
         case "Long": types.longType
         case "Float": types.floatType

@@ -26,7 +26,7 @@ final class AnonymousObjectLocalTypingTests: XCTestCase {
 
             let localDeclExprID = try XCTUnwrap(statements.first)
             guard let localDeclExpr = ast.arena.expr(localDeclExprID),
-                  case let .localDecl(_, _, _, initializer, _) = localDeclExpr,
+                  case let .localDecl(_, _, _, initializer, _, _) = localDeclExpr,
                   let initializer
             else {
                 XCTFail("Expected local declaration with object literal initializer.")
@@ -233,7 +233,7 @@ final class AnonymousObjectLocalTypingTests: XCTestCase {
             return nil
         }
         switch expr {
-        case let .localDecl(_, _, _, initializer, _):
+        case let .localDecl(_, _, _, initializer, _, _):
             guard let initializer,
                   let objectExpr = ast.arena.expr(initializer),
                   case let .objectLiteral(_, declID, _) = objectExpr,

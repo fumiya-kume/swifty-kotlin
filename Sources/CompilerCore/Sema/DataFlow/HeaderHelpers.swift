@@ -107,6 +107,20 @@ extension DataFlowSemaPhase {
         guard !existing.isEmpty else {
             return false
         }
+        func isCallableLike(_ kind: SymbolKind) -> Bool {
+            switch kind {
+            case .function, .constructor:
+                true
+            default:
+                false
+            }
+        }
+        if newKind == .property {
+            return existing.contains { !isCallableLike($0.kind) }
+        }
+        if isCallableLike(newKind) {
+            return existing.contains { !isCallableLike($0.kind) && $0.kind != .property }
+        }
         if isOverloadableSymbol(newKind) {
             return existing.contains(where: { !isOverloadableSymbol($0.kind) })
         }
@@ -126,9 +140,17 @@ extension DataFlowSemaPhase {
         range: SourceRange?,
         symbols: SymbolTable,
         diagnostics: DiagnosticEngine,
-        newFlags: SymbolFlags = []
+        newFlags: SymbolFlags = [],
+        additionalExisting: [SemanticSymbol] = []
     ) {
-        let existing = symbols.lookupAll(fqName: fqName).compactMap { symbols.symbol($0) }
+        var existingByID: [SymbolID: SemanticSymbol] = [:]
+        for symbol in symbols.lookupAll(fqName: fqName).compactMap({ symbols.symbol($0) }) {
+            existingByID[symbol.id] = symbol
+        }
+        for symbol in additionalExisting where symbol.fqName == fqName {
+            existingByID[symbol.id] = symbol
+        }
+        let existing = Array(existingByID.values)
         // Allow expect/actual pair: an expect and an actual with the same FQ name coexist,
         // but only when exactly one opposite-flag symbol of the same kind exists and no
         // same-flag duplicate is already present.
@@ -266,6 +288,63 @@ extension DataFlowSemaPhase {
             for: funcSymbol
         )
         scope.insert(funcSymbol)
+    }
+
+    func collectSyntheticDataClassCopy(
+        classDecl: ClassDecl,
+        ast: ASTModule,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine,
+        localTypeParameters: [InternedString: SymbolID] = [:]
+    ) {
+        let copyName = interner.intern("copy")
+        let copyFQName = ownerFQName + [copyName]
+        guard symbols.lookupAll(fqName: copyFQName).isEmpty else {
+            return
+        }
+
+        let copySymbol = symbols.define(
+            kind: .function,
+            name: copyName,
+            fqName: copyFQName,
+            declSite: classDecl.range,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: copySymbol)
+
+        let localNamespaceFQName = copyFQName + [interner.intern("$\(copySymbol.rawValue)")]
+        let copyParams = collectValueParameters(
+            classDecl.primaryConstructorParams,
+            localNamespaceFQName: localNamespaceFQName,
+            declSite: classDecl.range,
+            ast: ast,
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            localTypeParameters: localTypeParameters,
+            diagnostics: diagnostics,
+            fallbackType: types.anyType
+        )
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: copyParams.paramTypes,
+                returnType: ownerType,
+                valueParameterSymbols: copyParams.paramSymbols,
+                valueParameterHasDefaultValues: Array(repeating: true, count: copyParams.paramSymbols.count),
+                valueParameterIsVararg: copyParams.paramIsVararg
+            ),
+            for: copySymbol
+        )
+        scope.insert(copySymbol)
     }
 
     /// Collects value parameters into parallel arrays of types, symbols, default-value flags,

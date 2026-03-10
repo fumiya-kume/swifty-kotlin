@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
@@ -398,12 +399,27 @@ public final class SymbolTable {
     }
 
     private func canCoexistAsOverload(kind: SymbolKind, existingKinds: [SymbolKind]) -> Bool {
+        func isCallableLike(_ kind: SymbolKind) -> Bool {
+            switch kind {
+            case .function, .constructor:
+                true
+            default:
+                false
+            }
+        }
         if kind == .package {
             return true
         }
         let existingNonPackageKinds = existingKinds.filter { $0 != .package }
         if existingNonPackageKinds.isEmpty {
             return true
+        }
+        if kind == .property {
+            return existingNonPackageKinds.allSatisfy { isCallableLike($0) }
+                && !existingNonPackageKinds.contains(.property)
+        }
+        if isCallableLike(kind) {
+            return existingNonPackageKinds.allSatisfy(isCallableLike)
         }
         guard isOverloadable(kind) else {
             return false

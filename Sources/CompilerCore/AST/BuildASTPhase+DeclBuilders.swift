@@ -346,19 +346,67 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> [ValueParamDecl] {
+        let node = arena.node(nodeID)
         let tokens = collectTokens(from: nodeID, in: arena)
-        // Only look for the opening `(` that occurs before any `{` (class body).
-        // This prevents picking up `(` from member function declarations like
-        // `class F { operator fun invoke(x: Int) }` as constructor parameters.
-        guard let startIndex = tokens.firstIndex(where: { token in
-            if case .symbol(.lParen) = token.kind {
-                return true
+        let startIndex: Int?
+        switch node.kind {
+        case .classDecl:
+            var pastClassKeyword = false
+            var pastDeclarationName = false
+            var angleBracketDepth = 0
+            var foundIndex: Int?
+            for (index, token) in tokens.enumerated() {
+                if !pastClassKeyword {
+                    if case .keyword(.class) = token.kind {
+                        pastClassKeyword = true
+                    }
+                    continue
+                }
+                if !pastDeclarationName {
+                    if internedIdentifier(from: token, interner: interner) != nil {
+                        pastDeclarationName = true
+                    } else {
+                        continue
+                    }
+                    continue
+                }
+                if token.kind == .symbol(.lessThan) {
+                    angleBracketDepth += 1
+                    continue
+                }
+                if token.kind == .symbol(.greaterThan) {
+                    angleBracketDepth = max(0, angleBracketDepth - 1)
+                    continue
+                }
+                if angleBracketDepth > 0 {
+                    continue
+                }
+                if token.kind == .symbol(.lParen) {
+                    foundIndex = index
+                    break
+                }
+                if token.kind == .symbol(.colon) || token.kind == .symbol(.lBrace) {
+                    break
+                }
             }
-            if case .symbol(.lBrace) = token.kind {
-                return true
-            }
-            return false
-        }), case .symbol(.lParen) = tokens[startIndex].kind else {
+            startIndex = foundIndex
+        default:
+            // Only look for the opening `(` that occurs before any `{` (class body).
+            // This prevents picking up `(` from member function declarations like
+            // `class F { operator fun invoke(x: Int) }` as constructor parameters.
+            startIndex = tokens.firstIndex(where: { token in
+                if case .symbol(.lParen) = token.kind {
+                    return true
+                }
+                if case .symbol(.lBrace) = token.kind {
+                    return true
+                }
+                return false
+            })
+        }
+        guard let startIndex,
+              case .symbol(.lParen) = tokens[startIndex].kind
+        else {
             return []
         }
 
@@ -438,7 +486,8 @@ extension BuildASTPhase {
         }
         if case let .keyword(keyword) = nameToken.kind,
            isLeadingDeclarationKeyword(keyword),
-           keyword != .value
+           keyword != .value,
+           keyword != .data
         {
             return
         }

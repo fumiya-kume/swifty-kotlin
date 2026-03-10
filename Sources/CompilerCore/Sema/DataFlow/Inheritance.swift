@@ -9,43 +9,79 @@ extension DataFlowSemaPhase {
     ) {
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
-                guard let symbol = bindings.declSymbols[declID],
-                      let decl = ast.arena.decl(declID)
-                else {
-                    continue
-                }
-                let superTypeRefs: [TypeRefID]
-                switch decl {
-                case let .classDecl(classDecl):
-                    superTypeRefs = classDecl.superTypeEntries.map(\.typeRef)
-                case let .interfaceDecl(interfaceDecl):
-                    superTypeRefs = interfaceDecl.superTypes
-                case let .objectDecl(objectDecl):
-                    superTypeRefs = objectDecl.superTypes
-                default:
-                    continue
-                }
-
-                var superSymbols: [SymbolID] = []
-                for superTypeRef in superTypeRefs {
-                    if let resolved = resolveNominalSymbolAndTypeArgs(
-                        superTypeRef,
-                        currentPackage: file.packageFQName,
-                        ast: ast,
-                        symbols: symbols,
-                        types: types
-                    ) {
-                        superSymbols.append(resolved.symbol)
-                        if !resolved.typeArgs.isEmpty {
-                            symbols.setSupertypeTypeArgs(resolved.typeArgs, for: symbol, supertype: resolved.symbol)
-                            types.setNominalSupertypeTypeArgs(resolved.typeArgs, for: symbol, supertype: resolved.symbol)
-                        }
-                    }
-                }
-                let uniqueSuperSymbols = Array(Set(superSymbols)).sorted(by: { $0.rawValue < $1.rawValue })
-                symbols.setDirectSupertypes(uniqueSuperSymbols, for: symbol)
-                types.setNominalDirectSupertypes(uniqueSuperSymbols, for: symbol)
+                bindInheritanceEdges(
+                    declID: declID,
+                    currentPackage: file.packageFQName,
+                    ast: ast,
+                    symbols: symbols,
+                    bindings: bindings,
+                    types: types
+                )
             }
+        }
+    }
+
+    private func bindInheritanceEdges(
+        declID: DeclID,
+        currentPackage: [InternedString],
+        ast: ASTModule,
+        symbols: SymbolTable,
+        bindings: BindingTable,
+        types: TypeSystem
+    ) {
+        guard let symbol = bindings.declSymbols[declID],
+              let decl = ast.arena.decl(declID)
+        else {
+            return
+        }
+
+        let superTypeRefs: [TypeRefID]
+        let nestedDecls: [DeclID]
+        switch decl {
+        case let .classDecl(classDecl):
+            superTypeRefs = classDecl.superTypeEntries.map(\.typeRef)
+            nestedDecls = classDecl.nestedClasses + classDecl.nestedObjects
+                + (classDecl.companionObject.map { [$0] } ?? [])
+        case let .interfaceDecl(interfaceDecl):
+            superTypeRefs = interfaceDecl.superTypes
+            nestedDecls = interfaceDecl.nestedClasses + interfaceDecl.nestedObjects
+                + (interfaceDecl.companionObject.map { [$0] } ?? [])
+        case let .objectDecl(objectDecl):
+            superTypeRefs = objectDecl.superTypes
+            nestedDecls = objectDecl.nestedClasses + objectDecl.nestedObjects
+        default:
+            return
+        }
+
+        var superSymbols: [SymbolID] = []
+        for superTypeRef in superTypeRefs {
+            if let resolved = resolveNominalSymbolAndTypeArgs(
+                superTypeRef,
+                currentPackage: currentPackage,
+                ast: ast,
+                symbols: symbols,
+                types: types
+            ) {
+                superSymbols.append(resolved.symbol)
+                if !resolved.typeArgs.isEmpty {
+                    symbols.setSupertypeTypeArgs(resolved.typeArgs, for: symbol, supertype: resolved.symbol)
+                    types.setNominalSupertypeTypeArgs(resolved.typeArgs, for: symbol, supertype: resolved.symbol)
+                }
+            }
+        }
+        let uniqueSuperSymbols = Array(Set(superSymbols)).sorted(by: { $0.rawValue < $1.rawValue })
+        symbols.setDirectSupertypes(uniqueSuperSymbols, for: symbol)
+        types.setNominalDirectSupertypes(uniqueSuperSymbols, for: symbol)
+
+        for nestedDeclID in nestedDecls {
+            bindInheritanceEdges(
+                declID: nestedDeclID,
+                currentPackage: currentPackage,
+                ast: ast,
+                symbols: symbols,
+                bindings: bindings,
+                types: types
+            )
         }
     }
 

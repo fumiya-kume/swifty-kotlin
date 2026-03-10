@@ -177,7 +177,7 @@ extension KIRLoweringDriver {
         result.reserveCapacity(body.count)
 
         for instruction in body {
-            if case let .call(symbol, callee, arguments, callResult, canThrow, thrownResult, _) = instruction,
+            if case let .call(symbol, callee, arguments, callResult, _, _, _) = instruction,
                let storageSymbol = symbol,
                let propertySymbol = propertyByStorageSymbol[storageSymbol],
                callee == names.getValueName || callee == names.setValueName

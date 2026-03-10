@@ -35,6 +35,10 @@ struct TypeInferenceContext {
     /// When true, the current scope is a `flow { ... }` builder lambda body.
     /// Used to resolve unqualified `emit(...)` fallback.
     var isFlowBuilderLambdaScope: Bool = false
+    /// When true, assigning to an immutable member property is treated as
+    /// initialization rather than reassignment. Used for `init {}` and
+    /// constructor bodies.
+    var allowsValPropertyInitialization: Bool = false
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
 

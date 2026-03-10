@@ -1,4 +1,5 @@
 // swiftlint:disable function_body_length
+// swiftlint:disable file_length
 import Foundation
 
 extension DataFlowSemaPhase {
@@ -39,6 +40,7 @@ extension DataFlowSemaPhase {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func collectHeader(
         declID: DeclID,
         file: ASTFile,
@@ -129,13 +131,22 @@ extension DataFlowSemaPhase {
 
         guard let declaration else { return }
         let fqName = package + [declaration.name]
+        let scopeExisting = scope.lookup(declaration.name).compactMap { symbolID -> SemanticSymbol? in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.fqName == fqName
+            else {
+                return nil
+            }
+            return symbol
+        }
         checkAndReportDuplicateDeclaration(
             newKind: declaration.kind,
             fqName: fqName,
             range: declaration.range,
             symbols: symbols,
             diagnostics: diagnostics,
-            newFlags: declaration.flags
+            newFlags: declaration.flags,
+            additionalExisting: scopeExisting
         )
         let symbol = symbols.define(
             kind: declaration.kind,
@@ -359,9 +370,25 @@ extension DataFlowSemaPhase {
                         visibility: .public,
                         flags: []
                     )
+                    symbols.setParentSymbol(symbol, for: entrySymbol)
                     symbols.setPropertyType(classType, for: entrySymbol)
                     scope.insert(entrySymbol)
                 }
+            }
+            if declaration.flags.contains(.dataType) {
+                collectSyntheticDataClassCopy(
+                    classDecl: classDecl,
+                    ast: ast,
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    ownerType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: classLocalTypeParameters
+                )
             }
             collectMemberHeaders(
                 members: MemberDeclarations(
@@ -562,9 +589,9 @@ extension DataFlowSemaPhase {
                 explicit
             } else {
                 switch funDecl.body {
-                case .unit:
+                case .unit, .block:
                     unitType
-                case .block, .expr:
+                case .expr:
                     anyType
                 }
             }
@@ -726,7 +753,7 @@ extension DataFlowSemaPhase {
 
     /// Registers type parameters for a nominal type (class or interface) as symbols,
     /// sets their variances and upper bounds, and returns the symbol list and local map.
-    private func registerNominalTypeParameters(
+    func registerNominalTypeParameters(
         _ typeParams: [TypeParamDecl],
         ownerSymbol: SymbolID,
         fqName: [InternedString],

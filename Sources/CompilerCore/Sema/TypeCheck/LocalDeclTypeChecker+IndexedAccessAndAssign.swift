@@ -91,6 +91,10 @@ extension LocalDeclTypeChecker {
             sema: sema,
             diagnostics: ctx.semaCtx.diagnostics
         )
+        if sema.types.isSubtype(receiverType, sema.types.stringType) {
+            sema.bindings.bindExprType(id, type: sema.types.charType)
+            return sema.types.charType
+        }
         let elementType = driver.helpers.arrayElementType(
             for: receiverType, sema: sema, interner: interner
         ) ?? sema.types.anyType

@@ -6,39 +6,18 @@ extension BuildASTPhase {
         in arena: SyntaxArena,
         interner: StringInterner
     ) -> [EnumEntryDecl] {
-        var entries: [EnumEntryDecl] = []
-        var stack: [NodeID] = [nodeID]
-        while let current = stack.popLast() {
-            for child in arena.children(of: current) {
-                guard case let .node(childID) = child else {
-                    continue
-                }
-                let childNode = arena.node(childID)
-                if childNode.kind == .enumEntry {
-                    let expanded = declarationEnumEntries(
-                        fromEnumEntryNode: childID,
-                        in: arena,
-                        interner: interner
-                    )
-                    if expanded.isEmpty {
-                        entries.append(makeEnumEntryDecl(from: childID, in: arena, interner: interner))
-                    } else {
-                        entries.append(contentsOf: expanded)
-                    }
-                } else {
-                    stack.append(childID)
-                }
+        guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
+                return nil
             }
+            return childID
+        }).first else {
+            return []
         }
-        return entries
-    }
 
-    private func declarationEnumEntries(
-        fromEnumEntryNode nodeID: NodeID,
-        in arena: SyntaxArena,
-        interner: StringInterner
-    ) -> [EnumEntryDecl] {
-        let tokens = collectTokens(from: nodeID, in: arena)
+        let tokens = collectTokens(from: bodyBlockID, in: arena)
         guard !tokens.isEmpty else {
             return []
         }
@@ -46,10 +25,38 @@ extension BuildASTPhase {
         var segments: [[Token]] = []
         var current: [Token] = []
         var depth = BracketDepth()
+        var seenOpeningBrace = false
 
         for token in tokens {
+            if !seenOpeningBrace {
+                if token.kind == .symbol(.lBrace) {
+                    seenOpeningBrace = true
+                }
+                continue
+            }
+
             if depth.isAtTopLevel,
-               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon)
+               token.kind == .symbol(.rBrace)
+            {
+                if !current.isEmpty {
+                    segments.append(current)
+                    current.removeAll(keepingCapacity: true)
+                }
+                break
+            }
+
+            if depth.isAtTopLevel,
+               token.kind == .symbol(.semicolon)
+            {
+                if !current.isEmpty {
+                    segments.append(current)
+                    current.removeAll(keepingCapacity: true)
+                }
+                break
+            }
+
+            if depth.isAtTopLevel,
+               token.kind == .symbol(.comma)
             {
                 if !current.isEmpty {
                     segments.append(current)
@@ -57,6 +64,7 @@ extension BuildASTPhase {
                 }
                 continue
             }
+
             depth.track(token.kind)
             current.append(token)
         }

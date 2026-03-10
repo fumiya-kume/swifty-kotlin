@@ -783,7 +783,7 @@ extension ExprLowerer {
             instructions.append(.constValue(result: unit, value: .unit))
             return unit
 
-        case let .localDecl(_, _, _, initializer, _):
+        case let .localDecl(_, _, _, initializer, _, _):
             if let initializer {
                 let initializerID = lowerExpr(
                     initializer,

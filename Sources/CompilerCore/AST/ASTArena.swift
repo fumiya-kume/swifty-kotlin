@@ -99,7 +99,7 @@ public final class ASTArena: @unchecked Sendable {
              let .doWhileExpr(_, _, _, range),
              let .breakExpr(_, range),
              let .continueExpr(_, range),
-             let .localDecl(_, _, _, _, range),
+             let .localDecl(_, _, _, _, _, range),
              let .localAssign(_, _, range),
              let .memberAssign(_, _, _, range),
              let .indexedAssign(_, _, _, range),

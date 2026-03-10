@@ -57,7 +57,7 @@ struct CaptureAnalyzer {
                 visit(body)
                 visit(condition)
 
-            case let .localDecl(_, _, _, initializer, _):
+            case let .localDecl(_, _, _, initializer, _, _):
                 if let initializer {
                     visit(initializer)
                 }

@@ -649,9 +649,10 @@ extension KotlinParser {
     func parseTail(inBlock: Bool, into children: inout [SyntaxChild], range: inout RangeAccumulator) {
         var progress = false
         var sawTryKeyword = false
+        var groupingDepth = 0
         while !stream.atEOF() {
             let token = stream.peek()
-            if shouldStopStatementBefore(token, inBlock: inBlock) {
+            if groupingDepth == 0, shouldStopStatementBefore(token, inBlock: inBlock) {
                 break
             }
             if case .symbol(.lBrace) = token.kind, inBlock {
@@ -679,10 +680,21 @@ extension KotlinParser {
             }
             _ = consumeToken(into: &children, range: &range)
             progress = true
+            switch token.kind {
+            case .symbol(.lParen), .symbol(.lBracket):
+                groupingDepth += 1
+            case .symbol(.rParen), .symbol(.rBracket):
+                groupingDepth = max(0, groupingDepth - 1)
+            default:
+                break
+            }
             if case .symbol(.semicolon) = token.kind {
                 break
             }
             if !inBlock, hasLeadingNewline(stream.peek()) {
+                if groupingDepth > 0 {
+                    continue
+                }
                 // After `=`, continue consuming across newlines so that
                 // expression bodies like `= \n try { ... } catch { ... }` are
                 // captured in the same declaration node.
