@@ -87,6 +87,9 @@ struct CollectionLiteralLookupTables {
     let kkMapForEachName: InternedString
     let kkMapMapName: InternedString
     let kkMapFilterName: InternedString
+    let kkMapMapValuesName: InternedString
+    let kkMapMapKeysName: InternedString
+    let kkMapToListName: InternedString
     let kkMapToStringName: InternedString
     let kkMapIteratorName: InternedString
     let kkMapIteratorHasNextName: InternedString
@@ -131,6 +134,8 @@ struct CollectionLiteralLookupTables {
     let associateByName: InternedString
     let associateWithName: InternedString
     let associateName: InternedString
+    let mapValuesName: InternedString
+    let mapKeysName: InternedString
     let zipName: InternedString
     let unzipName: InternedString
     let withIndexName: InternedString
@@ -271,6 +276,9 @@ struct CollectionLiteralLookupTables {
         kkMapForEachName = interner.intern("kk_map_forEach")
         kkMapMapName = interner.intern("kk_map_map")
         kkMapFilterName = interner.intern("kk_map_filter")
+        kkMapMapValuesName = interner.intern("kk_map_mapValues")
+        kkMapMapKeysName = interner.intern("kk_map_mapKeys")
+        kkMapToListName = interner.intern("kk_map_toList")
         kkMapToStringName = interner.intern("kk_map_to_string")
         kkMapIteratorName = interner.intern("kk_map_iterator")
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
@@ -311,6 +319,8 @@ struct CollectionLiteralLookupTables {
         associateByName = interner.intern("associateBy")
         associateWithName = interner.intern("associateWith")
         associateName = interner.intern("associate")
+        mapValuesName = interner.intern("mapValues")
+        mapKeysName = interner.intern("mapKeys")
         zipName = interner.intern("zip")
         unzipName = interner.intern("unzip")
         withIndexName = interner.intern("withIndex")

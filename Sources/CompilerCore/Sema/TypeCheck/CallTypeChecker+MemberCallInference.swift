@@ -367,6 +367,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
+            "mapValues", "mapKeys",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
@@ -403,7 +404,8 @@ extension CallTypeChecker {
             let resultType: TypeID
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-                 "count", "first", "last", "find", "associateBy", "associateWith", "associate":
+                 "count", "first", "last", "find", "associateBy", "associateWith", "associate",
+                 "mapValues", "mapKeys":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -458,6 +460,50 @@ extension CallTypeChecker {
                         resultType = sema.types.make(.classType(ClassType(
                             classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
                             args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                            nullability: .nonNull
+                        )))
+                    case "mapValues":
+                        let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            fnType.returnType
+                        } else {
+                            sema.types.anyType
+                        }
+                        let keyType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                                                classType.args.count >= 2 {
+                            switch classType.args[0] {
+                            case let .invariant(id), let .out(id), let .in(id): id
+                            case .star: sema.types.anyType
+                            }
+                        } else {
+                            sema.types.anyType
+                        }
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            args: [.invariant(keyType), .invariant(bodyType)],
+                            nullability: .nonNull
+                        )))
+                    case "mapKeys":
+                        let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            fnType.returnType
+                        } else {
+                            sema.types.anyType
+                        }
+                        let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                                                  classType.args.count >= 2 {
+                            switch classType.args[1] {
+                            case let .invariant(id), let .out(id), let .in(id): id
+                            case .star: sema.types.anyType
+                            }
+                        } else {
+                            sema.types.anyType
+                        }
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            args: [.invariant(bodyType), .invariant(valueType)],
                             nullability: .nonNull
                         )))
                     case "mapNotNull":
@@ -1918,6 +1964,19 @@ extension CallTypeChecker {
             let valueType = switch classType.args[1] {
             case let .invariant(id), let .out(id), let .in(id): id
             case .star: sema.types.anyType
+            }
+            let entryFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Map"),
+                interner.intern("Entry"),
+            ]
+            if let entrySymbol = sema.symbols.lookup(fqName: entryFQName) ?? sema.symbols.lookupByShortName(interner.intern("Entry")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: entrySymbol,
+                    args: [.out(keyType), .out(valueType)],
+                    nullability: .nonNull
+                )))
             }
             return makeSyntheticPairType(
                 symbols: sema.symbols,

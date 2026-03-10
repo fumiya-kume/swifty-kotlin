@@ -168,6 +168,10 @@ extension CollectionLiteralLoweringPass {
             listExprIDs.insert(result.rawValue)
         } else if callee == lookup.filterName, mapExprIDs.contains(src) {
             mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.mapValuesName || callee == lookup.mapKeysName, mapExprIDs.contains(src) {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.toListName, mapExprIDs.contains(src) {
+            listExprIDs.insert(result.rawValue)
         } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
             || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName,
             listExprIDs.contains(src)
@@ -210,6 +214,14 @@ extension CollectionLiteralLoweringPass {
         } else if callee == lookup.filterName {
             if mapExprIDs.contains(receiver.rawValue) {
                 if let result { mapExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.mapValuesName || callee == lookup.mapKeysName {
+            if mapExprIDs.contains(receiver.rawValue) {
+                if let result { mapExprIDs.insert(result.rawValue) }
+            }
+        } else if callee == lookup.toListName {
+            if mapExprIDs.contains(receiver.rawValue) {
+                if let result { listExprIDs.insert(result.rawValue) }
             }
         } else if callee == lookup.withIndexName {
             if listExprIDs.contains(receiver.rawValue) {

@@ -18,7 +18,7 @@ extension CollectionLiteralLoweringPass {
         if rewriteSequenceVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, module: module, lookup: lookup,
-            listExprIDs: &listExprIDs, sequenceExprIDs: &sequenceExprIDs,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -50,6 +50,7 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -227,6 +228,34 @@ extension CollectionLiteralLoweringPass {
                 }
                 return true
             }
+            if mapExprIDs.contains(receiver.rawValue) {
+                if let result {
+                    let toListResult = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)), type: nil
+                    )
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: lookup.kkMapToListName,
+                        arguments: [receiver],
+                        result: toListResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    listExprIDs.insert(result.rawValue)
+                    listExprIDs.insert(toListResult.rawValue)
+                    loweredBody.append(.copy(from: toListResult, to: result))
+                } else {
+                    loweredBody.append(.call(
+                        symbol: nil,
+                        callee: lookup.kkMapToListName,
+                        arguments: [receiver],
+                        result: nil,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+                return true
+            }
         }
 
         return false
@@ -300,15 +329,41 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName else {
+        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
+            || callee == lookup.mapValuesName || callee == lookup.mapKeysName || callee == lookup.toListName else {
             return false
         }
-        guard arguments.count == 1, mapExprIDs.contains(receiver.rawValue) else { return false }
+        guard mapExprIDs.contains(receiver.rawValue) else { return false }
+
+        if callee == lookup.toListName {
+            guard arguments.isEmpty else { return false }
+            let toListResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkMapToListName,
+                arguments: [receiver],
+                result: toListResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(toListResult.rawValue)
+                loweredBody.append(.copy(from: toListResult, to: result))
+            }
+            return true
+        }
+
+        guard arguments.count == 1 else { return false }
 
         let kkName: InternedString = switch callee {
         case lookup.mapName: lookup.kkMapMapName
         case lookup.filterName: lookup.kkMapFilterName
         case lookup.forEachName: lookup.kkMapForEachName
+        case lookup.mapValuesName: lookup.kkMapMapValuesName
+        case lookup.mapKeysName: lookup.kkMapMapKeysName
         default: callee
         }
         let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
@@ -326,6 +381,10 @@ extension CollectionLiteralLoweringPass {
         if callee == lookup.mapName, let result {
             listExprIDs.insert(result.rawValue)
             listExprIDs.insert(hofResult.rawValue)
+        }
+        if callee == lookup.mapValuesName || callee == lookup.mapKeysName, let result {
+            mapExprIDs.insert(result.rawValue)
+            mapExprIDs.insert(hofResult.rawValue)
         }
         if callee == lookup.filterName, let result {
             mapExprIDs.insert(result.rawValue)

@@ -153,6 +153,61 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
 }
 
+@_cdecl("kk_map_mapValues")
+public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedValues: [Int] = []
+    mappedValues.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        mappedValues.append(maybeUnbox(result))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: map.keys, values: mappedValues)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_map_mapKeys")
+public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedKeys: [Int] = []
+    mappedKeys.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        mappedKeys.append(maybeUnbox(result))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: mappedKeys, values: map.values)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_map_toList")
+public func kk_map_toList(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var pairs: [Int] = []
+    pairs.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        pairs.append(kk_pair_new(key, value))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+}
+
 @_cdecl("kk_list_flatMap")
 public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

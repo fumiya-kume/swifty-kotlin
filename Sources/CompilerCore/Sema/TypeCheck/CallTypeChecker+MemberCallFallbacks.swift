@@ -68,6 +68,7 @@ extension CallTypeChecker {
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
             "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
+            "mapValues", "mapKeys",
             "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct",
         ]
         return collectionMembers.contains(memberName)
@@ -78,7 +79,7 @@ extension CallTypeChecker {
             "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
             "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
             "associate", "zip", "toList", "take", "drop", "reversed",
-            "sorted", "distinct", "withIndex", "mapIndexed",
+            "sorted", "distinct", "withIndex", "mapIndexed", "mapValues", "mapKeys",
         ]
         return collectionReturningMembers.contains(memberName)
     }
@@ -93,7 +94,7 @@ extension CallTypeChecker {
              "map", "filter", "mapNotNull", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
-             "forEachIndexed", "mapIndexed", "sumOf":
+             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys":
             argCount == 1
         case "fold":
             argCount == 2
@@ -143,6 +144,7 @@ extension CallTypeChecker {
         let oneParamMembers: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
+            "mapValues", "mapKeys",
         ]
         if oneParamMembers.contains(memberName), argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
@@ -213,14 +215,18 @@ extension CallTypeChecker {
             case .star:
                 sema.types.anyType
             }
-            let pairSymbol = sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
-                ?? sema.symbols.lookupByShortName(interner.intern("Pair")).first
-            guard let pairSymbol else {
+            let entrySymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Map"),
+                interner.intern("Entry"),
+            ])
+            guard let entrySymbol else {
                 return sema.types.anyType
             }
             return sema.types.make(.classType(ClassType(
-                classSymbol: pairSymbol,
-                args: [.invariant(keyType), .invariant(valueType)],
+                classSymbol: entrySymbol,
+                args: [.out(keyType), .out(valueType)],
                 nullability: .nonNull
             )))
         }

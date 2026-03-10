@@ -138,6 +138,14 @@ private let accumulateEntryScore: @convention(c) (Int, Int, UnsafeMutablePointer
     return 0
 }
 
+private let mapEntryValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_second(pairRaw) * 10
+}
+
+private let mapEntryKeyPlusHundred: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_first(pairRaw) + 100
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -249,6 +257,26 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(filtered), [1, 3])
         XCTAssertEqual(kk_map_get(filtered, 1), 10)
         XCTAssertEqual(kk_map_get(filtered, 3), 32)
+    }
+
+    func testMapValuesMapKeysAndToListUsePairEntries() {
+        let keys = makeArray([1, 2, 1])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        let mappedValues = kk_map_mapValues(map, unsafeBitCast(mapEntryValueTimesTen, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(mappedValues), [1, 2])
+        XCTAssertEqual(kk_map_get(mappedValues, 1), 320)
+        XCTAssertEqual(kk_map_get(mappedValues, 2), 210)
+
+        let mappedKeys = kk_map_mapKeys(map, unsafeBitCast(mapEntryKeyPlusHundred, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(mappedKeys), [101, 102])
+        XCTAssertEqual(kk_map_get(mappedKeys, 101), 32)
+        XCTAssertEqual(kk_map_get(mappedKeys, 102), 21)
+
+        let list = kk_map_toList(map)
+        XCTAssertEqual(listElements(list).map { kk_pair_first($0) }, [1, 2])
+        XCTAssertEqual(listElements(list).map { kk_pair_second($0) }, [32, 21])
     }
 
     func testBoolAbiForCollectionHelpersReturnsRaw() {

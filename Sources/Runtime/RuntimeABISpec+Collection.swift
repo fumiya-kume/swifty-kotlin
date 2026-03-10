@@ -226,6 +226,28 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_map_mapValues",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_map_mapKeys",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_map_keys",
             parameters: [
                 RuntimeABIParameter(name: "mapRaw", type: .intptr),
@@ -247,6 +269,14 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "mapRaw", type: .intptr),
             ],
             returnType: .opaquePointer,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_map_toList",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(

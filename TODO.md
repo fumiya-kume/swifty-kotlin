@@ -35,10 +35,10 @@
 
 ### 📦 Stdlib — Map 高階関数
 
-- [ ] STDLIB-041: `Map.mapValues {}` / `Map.mapKeys {}` / `Map.toList()` を実装する
-  - [ ] Sema に各 stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-041: `Map.mapValues {}` / `Map.mapKeys {}` / `Map.toList()` を実装する
+  - [x] Sema に各 stub を登録する
+  - [x] Runtime に対応ランタイム関数を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mapOf("a" to 1).mapValues { it.value * 2 }` → `{a=2}` が `kotlinc` と一致する
 
 - [ ] STDLIB-042: `Map.keys` / `Map.values` / `Map.entries` プロパティアクセスを実装する
