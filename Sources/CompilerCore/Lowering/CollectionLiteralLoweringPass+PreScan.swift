@@ -105,46 +105,70 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>
     ) {
-        if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName {
-            if let result { listExprIDs.insert(result.rawValue) }
-        } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
-            if let result { setExprIDs.insert(result.rawValue) }
-        } else if callee == lookup.kkStringSplitName {
-            if let result { listExprIDs.insert(result.rawValue) }
-        } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
-            if let result { mapExprIDs.insert(result.rawValue) }
-        } else if lookup.arrayOfFactoryNames.contains(callee) {
-            if let result { arrayExprIDs.insert(result.rawValue) }
-        }
+        classifyFactoryCall(
+            callee: callee, result: result, lookup: lookup,
+            listExprIDs: &listExprIDs, setExprIDs: &setExprIDs,
+            mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs
+        )
+        propagateCollectionOperation(
+            callee: callee, arguments: arguments, result: result, lookup: lookup,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            sequenceExprIDs: &sequenceExprIDs
+        )
+    }
 
-        if callee == lookup.asSequenceName, arguments.count == 1 {
-            if let result { sequenceExprIDs.insert(result.rawValue) }
-        } else if callee == lookup.toListName, arguments.count == 1 {
-            if sequenceExprIDs.contains(arguments[0].rawValue) {
-                if let result { listExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
-            if !arguments.isEmpty, sequenceExprIDs.contains(arguments[0].rawValue) {
-                if let result { sequenceExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.groupByName || callee == lookup.associateByName
-            || callee == lookup.associateWithName || callee == lookup.associateName
+    private func classifyFactoryCall(
+        callee: InternedString,
+        result: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>
+    ) {
+        guard let result else { return }
+        if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName
+            || callee == lookup.kkStringSplitName
         {
-            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
-                if let result { mapExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.withIndexName {
-            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
-                if let result { listExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.takeName || callee == lookup.dropName {
-            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
-                if let result { listExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName {
-            if !arguments.isEmpty, listExprIDs.contains(arguments[0].rawValue) {
-                if let result { listExprIDs.insert(result.rawValue) }
-            }
+            listExprIDs.insert(result.rawValue)
+        } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
+            setExprIDs.insert(result.rawValue)
+        } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
+            mapExprIDs.insert(result.rawValue)
+        } else if lookup.arrayOfFactoryNames.contains(callee) {
+            arrayExprIDs.insert(result.rawValue)
+        }
+    }
+
+    private func propagateCollectionOperation(
+        callee: InternedString,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        guard let result, !arguments.isEmpty else { return }
+        let src = arguments[0].rawValue
+        if callee == lookup.asSequenceName {
+            sequenceExprIDs.insert(result.rawValue)
+        } else if callee == lookup.toListName, sequenceExprIDs.contains(src) {
+            listExprIDs.insert(result.rawValue)
+        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName,
+                  sequenceExprIDs.contains(src)
+        {
+            sequenceExprIDs.insert(result.rawValue)
+        } else if callee == lookup.groupByName || callee == lookup.associateByName
+            || callee == lookup.associateWithName || callee == lookup.associateName,
+            listExprIDs.contains(src)
+        {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
+            || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName,
+            listExprIDs.contains(src)
+        {
+            listExprIDs.insert(result.rawValue)
         }
     }
 

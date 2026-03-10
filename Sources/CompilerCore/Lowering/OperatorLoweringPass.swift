@@ -25,7 +25,6 @@ final class OperatorLoweringPass: LoweringPass {
     }
 
     func run(module: KIRModule, ctx: KIRContext) throws {
-        let types = ctx.sema?.types
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
 
@@ -36,79 +35,16 @@ final class OperatorLoweringPass: LoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .binary(op, lhs, rhs, result):
-                    let lhsRank = self.primitiveRank(for: lhs, arena: module.arena, types: types)
-                    let rhsRank = self.primitiveRank(for: rhs, arena: module.arena, types: types)
-                    let rank = max(lhsRank, rhsRank)
-                    let isUnsigned = self.isUnsignedOperand(lhs, arena: module.arena, types: types)
-                        || self.isUnsignedOperand(rhs, arena: module.arena, types: types)
-                    let prefix = switch rank {
-                    case 2: "d"
-                    case 1: "f"
-                    default: ""
-                    }
-                    var effectiveLhs = lhs
-                    var effectiveRhs = rhs
-                    if rank > 0 {
-                        if lhsRank < rank {
-                            let convCallee = self.conversionCallee(fromRank: lhsRank, toRank: rank, interner: ctx.interner)
-                            let converted = module.arena.appendExpr(
-                                .temporary(Int32(module.arena.expressions.count)),
-                                type: module.arena.exprType(result)
-                            )
-                            newBody.append(.call(symbol: nil, callee: convCallee, arguments: [lhs], result: converted, canThrow: false, thrownResult: nil))
-                            effectiveLhs = converted
-                        }
-                        if rhsRank < rank {
-                            let convCallee = self.conversionCallee(fromRank: rhsRank, toRank: rank, interner: ctx.interner)
-                            let converted = module.arena.appendExpr(
-                                .temporary(Int32(module.arena.expressions.count)),
-                                type: module.arena.exprType(result)
-                            )
-                            newBody.append(.call(symbol: nil, callee: convCallee, arguments: [rhs], result: converted, canThrow: false, thrownResult: nil))
-                            effectiveRhs = converted
-                        }
-                    }
-                    // For unsigned int/long: add/sub/mul/eq/ne use same callees; div/rem/lt/le/gt/ge use u-prefix
-                    let useUnsignedRank0 = isUnsigned && rank == 0
-                    let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
-                    let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
-                    let callee: InternedString = switch op {
-                    case .add:
-                        ctx.interner.intern("kk_op_\(prefix)add")
-                    case .subtract:
-                        ctx.interner.intern("kk_op_\(prefix)sub")
-                    case .multiply:
-                        ctx.interner.intern("kk_op_\(prefix)mul")
-                    case .divide:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)div")
-                    case .modulo:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)\(divModOp)")
-                    case .equal:
-                        ctx.interner.intern("kk_op_\(prefix)eq")
-                    case .notEqual:
-                        ctx.interner.intern("kk_op_\(prefix)ne")
-                    case .lessThan:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)lt")
-                    case .lessOrEqual:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)le")
-                    case .greaterThan:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)gt")
-                    case .greaterOrEqual:
-                        ctx.interner.intern("kk_op_\(divModCmpPrefix)ge")
-                    case .logicalAnd:
-                        ctx.interner.intern("kk_op_and")
-                    case .logicalOr:
-                        ctx.interner.intern("kk_op_or")
-                    }
-                    newBody.append(.call(symbol: nil, callee: callee, arguments: [effectiveLhs, effectiveRhs], result: result, canThrow: false, thrownResult: nil))
+                    lowerBinaryInstruction(
+                        op: op, lhs: lhs, rhs: rhs, result: result,
+                        arena: module.arena, interner: ctx.interner,
+                        types: ctx.sema?.types, newBody: &newBody
+                    )
                 case let .unary(op, operand, result):
                     let callee: InternedString = switch op {
-                    case .not:
-                        ctx.interner.intern("kk_op_not")
-                    case .unaryPlus:
-                        ctx.interner.intern("kk_op_uplus")
-                    case .unaryMinus:
-                        ctx.interner.intern("kk_op_uminus")
+                    case .not: ctx.interner.intern("kk_op_not")
+                    case .unaryPlus: ctx.interner.intern("kk_op_uplus")
+                    case .unaryMinus: ctx.interner.intern("kk_op_uminus")
                     }
                     newBody.append(.call(symbol: nil, callee: callee, arguments: [operand], result: result, canThrow: false, thrownResult: nil))
                 case let .nullAssert(operand, result):
@@ -116,93 +52,14 @@ final class OperatorLoweringPass: LoweringPass {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, isSuperCall):
                     if callee == printlnCallee || callee == kkPrintlnAnyCallee,
                        arguments.count == 1,
-                       let types
+                       tryLowerPrintlnCall(
+                           symbol: symbol, callee: callee, arguments: arguments,
+                           result: result, canThrow: canThrow, thrownResult: thrownResult,
+                           isSuperCall: isSuperCall, arena: module.arena,
+                           ctx: ctx, newBody: &newBody
+                       )
                     {
-                        let argType = module.arena.exprType(arguments[0])
-                        if let argType {
-                            switch types.kind(of: argType) {
-                            case .primitive(.long, .nonNull):
-                                appendPrimitivePrintlnCall(
-                                    to: &newBody,
-                                    symbol: symbol,
-                                    callee: ctx.interner.intern("kk_println_long"),
-                                    arguments: arguments,
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                )
-                                continue
-                            case .primitive(.float, .nonNull):
-                                appendPrimitivePrintlnCall(
-                                    to: &newBody,
-                                    symbol: symbol,
-                                    callee: ctx.interner.intern("kk_println_float"),
-                                    arguments: arguments,
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                )
-                                continue
-                            case .primitive(.double, .nonNull):
-                                appendPrimitivePrintlnCall(
-                                    to: &newBody,
-                                    symbol: symbol,
-                                    callee: ctx.interner.intern("kk_println_double"),
-                                    arguments: arguments,
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                )
-                                continue
-                            case .primitive(.char, .nonNull):
-                                appendPrimitivePrintlnCall(
-                                    to: &newBody,
-                                    symbol: symbol,
-                                    callee: ctx.interner.intern("kk_println_char"),
-                                    arguments: arguments,
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                )
-                                continue
-                            case .primitive(.boolean, .nonNull):
-                                appendPrimitivePrintlnCall(
-                                    to: &newBody,
-                                    symbol: symbol,
-                                    callee: ctx.interner.intern("kk_println_bool"),
-                                    arguments: arguments,
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                )
-                                continue
-                            default:
-                                break
-                            }
-                            if let dataClassString = rewriteDataClassPrintlnArgument(
-                                argument: arguments[0],
-                                arena: module.arena,
-                                sema: ctx.sema,
-                                interner: ctx.interner,
-                                body: &newBody
-                            ) {
-                                newBody.append(.call(
-                                    symbol: symbol,
-                                    callee: callee,
-                                    arguments: [dataClassString],
-                                    result: result,
-                                    canThrow: canThrow,
-                                    thrownResult: thrownResult,
-                                    isSuperCall: isSuperCall
-                                ))
-                                continue
-                            }
-                        }
+                        continue
                     }
                     newBody.append(instruction)
                 default:
@@ -213,6 +70,110 @@ final class OperatorLoweringPass: LoweringPass {
             return updated
         }
         module.recordLowering(Self.name)
+    }
+
+    private func lowerBinaryInstruction(
+        op: KIRBinaryOp,
+        lhs: KIRExprID,
+        rhs: KIRExprID,
+        result: KIRExprID,
+        arena: KIRArena,
+        interner: StringInterner,
+        types: TypeSystem?,
+        newBody: inout [KIRInstruction]
+    ) {
+        let lhsRank = primitiveRank(for: lhs, arena: arena, types: types)
+        let rhsRank = primitiveRank(for: rhs, arena: arena, types: types)
+        let rank = max(lhsRank, rhsRank)
+        let isUnsigned = isUnsignedOperand(lhs, arena: arena, types: types)
+            || isUnsignedOperand(rhs, arena: arena, types: types)
+        let prefix = switch rank {
+        case 2: "d"
+        case 1: "f"
+        default: ""
+        }
+        var effectiveLhs = lhs
+        var effectiveRhs = rhs
+        if rank > 0 {
+            if lhsRank < rank {
+                let convCallee = conversionCallee(fromRank: lhsRank, toRank: rank, interner: interner)
+                let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: arena.exprType(result))
+                newBody.append(.call(symbol: nil, callee: convCallee, arguments: [lhs], result: converted, canThrow: false, thrownResult: nil))
+                effectiveLhs = converted
+            }
+            if rhsRank < rank {
+                let convCallee = conversionCallee(fromRank: rhsRank, toRank: rank, interner: interner)
+                let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: arena.exprType(result))
+                newBody.append(.call(symbol: nil, callee: convCallee, arguments: [rhs], result: converted, canThrow: false, thrownResult: nil))
+                effectiveRhs = converted
+            }
+        }
+        // For unsigned int/long: add/sub/mul/eq/ne use same callees; div/rem/lt/le/gt/ge use u-prefix
+        let useUnsignedRank0 = isUnsigned && rank == 0
+        let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
+        let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
+        let callee: InternedString = switch op {
+        case .add: interner.intern("kk_op_\(prefix)add")
+        case .subtract: interner.intern("kk_op_\(prefix)sub")
+        case .multiply: interner.intern("kk_op_\(prefix)mul")
+        case .divide: interner.intern("kk_op_\(divModCmpPrefix)div")
+        case .modulo: interner.intern("kk_op_\(divModCmpPrefix)\(divModOp)")
+        case .equal: interner.intern("kk_op_\(prefix)eq")
+        case .notEqual: interner.intern("kk_op_\(prefix)ne")
+        case .lessThan: interner.intern("kk_op_\(divModCmpPrefix)lt")
+        case .lessOrEqual: interner.intern("kk_op_\(divModCmpPrefix)le")
+        case .greaterThan: interner.intern("kk_op_\(divModCmpPrefix)gt")
+        case .greaterOrEqual: interner.intern("kk_op_\(divModCmpPrefix)ge")
+        case .logicalAnd: interner.intern("kk_op_and")
+        case .logicalOr: interner.intern("kk_op_or")
+        }
+        newBody.append(.call(symbol: nil, callee: callee, arguments: [effectiveLhs, effectiveRhs], result: result, canThrow: false, thrownResult: nil))
+    }
+
+    /// Returns true if the println call was lowered to a primitive-specific variant.
+    private func tryLowerPrintlnCall(
+        symbol: SymbolID?,
+        callee: InternedString,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        canThrow: Bool,
+        thrownResult: KIRExprID?,
+        isSuperCall: Bool,
+        arena: KIRArena,
+        ctx: KIRContext,
+        newBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard let types = ctx.sema?.types,
+              let argType = arena.exprType(arguments[0])
+        else { return false }
+
+        let primitiveCallee: String? = switch types.kind(of: argType) {
+        case .primitive(.long, .nonNull): "kk_println_long"
+        case .primitive(.float, .nonNull): "kk_println_float"
+        case .primitive(.double, .nonNull): "kk_println_double"
+        case .primitive(.char, .nonNull): "kk_println_char"
+        case .primitive(.boolean, .nonNull): "kk_println_bool"
+        default: nil
+        }
+        if let name = primitiveCallee {
+            appendPrimitivePrintlnCall(
+                to: &newBody, symbol: symbol, callee: ctx.interner.intern(name),
+                arguments: arguments, result: result, canThrow: canThrow,
+                thrownResult: thrownResult, isSuperCall: isSuperCall
+            )
+            return true
+        }
+        if let dataClassString = rewriteDataClassPrintlnArgument(
+            argument: arguments[0], arena: arena, sema: ctx.sema,
+            interner: ctx.interner, body: &newBody
+        ) {
+            newBody.append(.call(
+                symbol: symbol, callee: callee, arguments: [dataClassString],
+                result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall
+            ))
+            return true
+        }
+        return false
     }
 
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {

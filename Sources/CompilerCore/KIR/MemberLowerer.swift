@@ -24,136 +24,11 @@ final class MemberLowerer {
         var allDecls: [KIRDeclID] = []
 
         for declID in memberFunctions {
-            guard let decl = ast.arena.decl(declID),
-                  case let .funDecl(function) = decl,
-                  let symbol = sema.bindings.declSymbols[declID]
-            else {
-                continue
-            }
-            driver.ctx.resetScopeForFunction()
-            driver.ctx.beginCallableLoweringScope()
-            driver.ctx.currentFunctionSymbol = symbol
-
-            let signature = sema.symbols.functionSignature(for: symbol)
-            var params: [KIRParameter] = []
-            if let signature {
-                if let receiverType = signature.receiverType {
-                    let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: symbol)
-                    params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-                    driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-                    driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
-                }
-                params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
-                    KIRParameter(symbol: pair.0, type: pair.1)
-                })
-            }
-            if function.isInline, let signature,
-               !signature.reifiedTypeParameterIndices.isEmpty
-            {
-                let intType = sema.types.make(.primitive(.int, .nonNull))
-                for index in signature.reifiedTypeParameterIndices.sorted() {
-                    guard index < signature.typeParameterSymbols.count else { continue }
-                    let typeParamSymbol = signature.typeParameterSymbols[index]
-                    let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
-                    params.append(KIRParameter(symbol: tokenSymbol, type: intType))
-                }
-            }
-            let returnType = signature?.returnType ?? sema.types.unitType
-            var body: [KIRInstruction] = [.beginBlock]
-            bindFunctionParameterLocals(params: params, body: &body, arena: arena)
-            switch function.body {
-            case let .block(exprIDs, _):
-                var lastValue: KIRExprID?
-                var terminatedByReturn = false
-                for exprID in exprIDs {
-                    if let expr = ast.arena.expr(exprID),
-                       case let .returnExpr(value, _, _) = expr
-                    {
-                        if let value {
-                            let lowered = driver.lowerExpr(
-                                value,
-                                ast: ast,
-                                sema: sema,
-                                arena: arena,
-                                interner: interner,
-                                propertyConstantInitializers: propertyConstantInitializers,
-                                instructions: &body
-                            )
-                            body.append(.returnValue(lowered))
-                        } else {
-                            body.append(.returnUnit)
-                        }
-                        terminatedByReturn = true
-                        break
-                    }
-                    lastValue = driver.lowerExpr(
-                        exprID,
-                        ast: ast,
-                        sema: sema,
-                        arena: arena,
-                        interner: interner,
-                        propertyConstantInitializers: propertyConstantInitializers,
-                        instructions: &body
-                    )
-                }
-                if !terminatedByReturn {
-                    if let lastValue {
-                        body.append(.returnValue(lastValue))
-                    } else {
-                        body.append(.returnUnit)
-                    }
-                }
-            case let .expr(exprID, _):
-                let value = driver.lowerExpr(
-                    exprID,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &body
-                )
-                body.append(.returnValue(value))
-            case .unit:
-                body.append(.returnUnit)
-            }
-            body.append(.endBlock)
-            let kirID = arena.appendDecl(
-                .function(
-                    KIRFunction(
-                        symbol: symbol,
-                        name: function.name,
-                        params: params,
-                        returnType: returnType,
-                        body: body,
-                        isSuspend: function.isSuspend,
-                        isInline: function.isInline,
-                        isTailrec: function.isTailrec
-                    )
-                )
+            lowerSingleMemberFunction(
+                declID: declID, ast: ast, sema: sema, arena: arena,
+                interner: interner, propertyConstantInitializers: propertyConstantInitializers,
+                directMembers: &directMembers, allDecls: &allDecls
             )
-            directMembers.append(kirID)
-            allDecls.append(kirID)
-            if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol],
-               let sig = signature
-            {
-                let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
-                    originalSymbol: symbol,
-                    originalName: function.name,
-                    signature: sig,
-                    defaultExpressions: defaults,
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers
-                )
-                allDecls.append(stubID)
-            }
-            allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
-            driver.ctx.currentImplicitReceiverExprID = nil
-            driver.ctx.currentImplicitReceiverSymbol = nil
-            driver.ctx.currentFunctionSymbol = nil
         }
 
         for declID in memberProperties {
@@ -362,6 +237,96 @@ final class MemberLowerer {
         }
 
         return (directMembers, allDecls)
+    }
+
+    private func lowerSingleMemberFunction(
+        declID: DeclID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        directMembers: inout [KIRDeclID],
+        allDecls: inout [KIRDeclID]
+    ) {
+        guard let decl = ast.arena.decl(declID),
+              case let .funDecl(function) = decl,
+              let symbol = sema.bindings.declSymbols[declID]
+        else { return }
+        driver.ctx.resetScopeForFunction()
+        driver.ctx.beginCallableLoweringScope()
+        driver.ctx.currentFunctionSymbol = symbol
+
+        let signature = sema.symbols.functionSignature(for: symbol)
+        var params: [KIRParameter] = []
+        if let signature {
+            if let receiverType = signature.receiverType {
+                let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: symbol)
+                params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
+                driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+                driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            }
+            params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
+                KIRParameter(symbol: pair.0, type: pair.1)
+            })
+        }
+        if function.isInline, let signature, !signature.reifiedTypeParameterIndices.isEmpty {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            for index in signature.reifiedTypeParameterIndices.sorted() {
+                guard index < signature.typeParameterSymbols.count else { continue }
+                let typeParamSymbol = signature.typeParameterSymbols[index]
+                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
+                params.append(KIRParameter(symbol: tokenSymbol, type: intType))
+            }
+        }
+        let returnType = signature?.returnType ?? sema.types.unitType
+        var body: [KIRInstruction] = [.beginBlock]
+        bindFunctionParameterLocals(params: params, body: &body, arena: arena)
+        switch function.body {
+        case let .block(exprIDs, _):
+            var lastValue: KIRExprID?
+            var terminatedByReturn = false
+            for exprID in exprIDs {
+                if let expr = ast.arena.expr(exprID), case let .returnExpr(value, _, _) = expr {
+                    if let value {
+                        let lowered = driver.lowerExpr(value, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)
+                        body.append(.returnValue(lowered))
+                    } else {
+                        body.append(.returnUnit)
+                    }
+                    terminatedByReturn = true
+                    break
+                }
+                lastValue = driver.lowerExpr(exprID, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)
+            }
+            if !terminatedByReturn {
+                if let lastValue { body.append(.returnValue(lastValue)) } else { body.append(.returnUnit) }
+            }
+        case let .expr(exprID, _):
+            let value = driver.lowerExpr(exprID, ast: ast, sema: sema, arena: arena, interner: interner, propertyConstantInitializers: propertyConstantInitializers, instructions: &body)
+            body.append(.returnValue(value))
+        case .unit:
+            body.append(.returnUnit)
+        }
+        body.append(.endBlock)
+        let kirID = arena.appendDecl(.function(KIRFunction(
+            symbol: symbol, name: function.name, params: params, returnType: returnType,
+            body: body, isSuspend: function.isSuspend, isInline: function.isInline, isTailrec: function.isTailrec
+        )))
+        directMembers.append(kirID)
+        allDecls.append(kirID)
+        if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol], let sig = signature {
+            let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
+                originalSymbol: symbol, originalName: function.name, signature: sig,
+                defaultExpressions: defaults, ast: ast, sema: sema, arena: arena,
+                interner: interner, propertyConstantInitializers: propertyConstantInitializers
+            )
+            allDecls.append(stubID)
+        }
+        allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
+        driver.ctx.currentImplicitReceiverExprID = nil
+        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.currentFunctionSymbol = nil
     }
 
     /// Synthesise a getter or setter function for a delegated property.
