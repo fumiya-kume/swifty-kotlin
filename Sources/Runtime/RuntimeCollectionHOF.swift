@@ -465,6 +465,47 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+@_cdecl("kk_list_sumOf")
+public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var total = 0
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        total += maybeUnbox(result)
+    }
+    return total
+}
+
+@_cdecl("kk_list_maxOrNull")
+public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in list.elements.dropFirst() where runtimeCompareValues(elem, best) > 0 {
+        best = elem
+    }
+    return best
+}
+
+@_cdecl("kk_list_minOrNull")
+public func kk_list_minOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in list.elements.dropFirst() where runtimeCompareValues(elem, best) < 0 {
+        best = elem
+    }
+    return best
+}
+
 @_cdecl("kk_list_take")
 public func kk_list_take(_ listRaw: Int, _ count: Int) -> Int {
     let elements = runtimeListBox(from: listRaw)?.elements ?? []

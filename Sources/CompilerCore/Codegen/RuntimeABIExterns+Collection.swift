@@ -42,6 +42,9 @@ public extension RuntimeABIExterns {
         kk_list_withIndex,
         kk_list_forEachIndexed,
         kk_list_mapIndexed,
+        kk_list_sumOf,
+        kk_list_maxOrNull,
+        kk_list_minOrNull,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -415,6 +418,24 @@ public extension RuntimeABIExterns {
     static let kk_list_mapIndexed = ExternDecl(
         name: "kk_list_mapIndexed",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sumOf = ExternDecl(
+        name: "kk_list_sumOf",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOrNull = ExternDecl(
+        name: "kk_list_maxOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOrNull = ExternDecl(
+        name: "kk_list_minOrNull",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

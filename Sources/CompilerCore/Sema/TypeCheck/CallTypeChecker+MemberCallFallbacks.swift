@@ -67,7 +67,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
-            "withIndex", "forEachIndexed", "mapIndexed",
+            "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
             "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct",
         ]
         return collectionMembers.contains(memberName)
@@ -85,7 +85,7 @@ extension CallTypeChecker {
 
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct", "withIndex":
+        case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct", "withIndex", "maxOrNull", "minOrNull":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
@@ -93,7 +93,7 @@ extension CallTypeChecker {
              "map", "filter", "mapNotNull", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
-             "forEachIndexed", "mapIndexed":
+             "forEachIndexed", "mapIndexed", "sumOf":
             argCount == 1
         case "fold":
             argCount == 2
@@ -105,7 +105,7 @@ extension CallTypeChecker {
     }
 
     func collectionFallbackResultType(memberName: String, sema: SemaModule) -> TypeID {
-        let intReturningMembers: Set = ["size", "indexOf", "count"]
+        let intReturningMembers: Set = ["size", "indexOf", "count", "sumOf"]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))
         }
@@ -126,6 +126,10 @@ extension CallTypeChecker {
             return sema.types.nullableAnyType
         }
 
+        if memberName == "maxOrNull" || memberName == "minOrNull" {
+            return sema.types.nullableAnyType
+        }
+
         return sema.types.anyType
     }
 
@@ -138,11 +142,13 @@ extension CallTypeChecker {
         let boolOneParamMembers: Set = ["filter", "any", "none", "all", "count", "first", "last", "find"]
         let oneParamMembers: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate",
+            "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
         ]
         if oneParamMembers.contains(memberName), argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
                 ? sema.types.make(.primitive(.boolean, .nonNull))
+                : memberName == "sumOf"
+                    ? sema.types.intType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],

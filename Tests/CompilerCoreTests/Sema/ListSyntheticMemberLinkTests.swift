@@ -44,6 +44,39 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListAggregateMembersUseRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedExternalLinks = [
+                "sumOf": "kk_list_sumOf",
+                "maxOrNull": "kk_list_maxOrNull",
+                "minOrNull": "kk_list_minOrNull",
+            ]
+
+            for (memberName, externalLinkName) in expectedExternalLinks {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("collections"),
+                            ctx.interner.intern("List"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic List member \(memberName) to be registered"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: symbolID),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {

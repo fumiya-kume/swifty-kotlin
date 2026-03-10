@@ -61,6 +61,9 @@ struct CollectionLiteralLookupTables {
     let kkListWithIndexName: InternedString
     let kkListForEachIndexedName: InternedString
     let kkListMapIndexedName: InternedString
+    let kkListSumOfName: InternedString
+    let kkListMaxOrNullName: InternedString
+    let kkListMinOrNullName: InternedString
     let kkListTakeName: InternedString
     let kkListDropName: InternedString
     let kkListReversedName: InternedString
@@ -130,6 +133,9 @@ struct CollectionLiteralLookupTables {
     let withIndexName: InternedString
     let forEachIndexedName: InternedString
     let mapIndexedName: InternedString
+    let sumOfName: InternedString
+    let maxOrNullName: InternedString
+    let minOrNullName: InternedString
     let dropName: InternedString
     let reversedName: InternedString
     let sortedName: InternedString
@@ -237,6 +243,9 @@ struct CollectionLiteralLookupTables {
         kkListWithIndexName = interner.intern("kk_list_withIndex")
         kkListForEachIndexedName = interner.intern("kk_list_forEachIndexed")
         kkListMapIndexedName = interner.intern("kk_list_mapIndexed")
+        kkListSumOfName = interner.intern("kk_list_sumOf")
+        kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
+        kkListMinOrNullName = interner.intern("kk_list_minOrNull")
         kkListTakeName = interner.intern("kk_list_take")
         kkListDropName = interner.intern("kk_list_drop")
         kkListReversedName = interner.intern("kk_list_reversed")
@@ -301,6 +310,9 @@ struct CollectionLiteralLookupTables {
         withIndexName = interner.intern("withIndex")
         forEachIndexedName = interner.intern("forEachIndexed")
         mapIndexedName = interner.intern("mapIndexed")
+        sumOfName = interner.intern("sumOf")
+        maxOrNullName = interner.intern("maxOrNull")
+        minOrNullName = interner.intern("minOrNull")
         dropName = interner.intern("drop")
         reversedName = interner.intern("reversed")
         sortedName = interner.intern("sorted")

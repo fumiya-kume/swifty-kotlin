@@ -263,6 +263,13 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListAggregateMembers(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         return listInterfaceSymbol
     }
 
@@ -515,6 +522,87 @@ extension DataFlowSemaPhase {
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
+    }
+
+    private func registerListAggregateMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        func registerSimpleMember(
+            name: String,
+            returnType: TypeID,
+            externalLinkName: String
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = listFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let nullableElementType = types.makeNullable(listTypeParamType)
+        registerSimpleMember(name: "maxOrNull", returnType: nullableElementType, externalLinkName: "kk_list_maxOrNull")
+        registerSimpleMember(name: "minOrNull", returnType: nullableElementType, externalLinkName: "kk_list_minOrNull")
+
+        let sumOfName = interner.intern("sumOf")
+        let sumOfFQName = listFQName + [sumOfName]
+        if symbols.lookup(fqName: sumOfFQName) == nil {
+            let transformType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sumOfName,
+                fqName: sumOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_sumOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [transformType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerListConversionMembers(

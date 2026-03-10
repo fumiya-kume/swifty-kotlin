@@ -179,22 +179,20 @@ symbol s177 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s178 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[(Int, T#13) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s179 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s180 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[(Int, T#13) -> T#179] ret=Class#12<out T#179> suspend=0 defaults=[] vararg=[]
-symbol s181 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s182 kind=local fq=__local_1.s vis=private flags=_
-symbol s183 kind=local fq=__local_7.multi vis=private flags=_
+symbol s181 kind=function fq=aggregate vis=public flags=_ sig=recv=_ params=[Class#12<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s182 kind=valueParameter fq=aggregate.$181.values vis=private flags=_
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s181
-expr e0 string(hello world) type=String
-expr e1 localDecl s mutable=0 type=_ init=e0 type=Unit ref=s182
-expr e2 name(println) type=_
-expr e3 name(s) type=String ref=s182
-expr e4 call callee=e2 args=[_:e3] type=Unit
-expr e5 string(
-        line1
-        line2
-    ) type=String
-expr e6 memberCall recv=e5 callee=trimIndent args=[] type=String call=s83 map=[] targs=[]
-expr e7 localDecl multi mutable=0 type=_ init=e6 type=Unit ref=s183
-expr e8 name(println) type=_
-expr e9 name(multi) type=String ref=s183
-expr e10 call callee=e8 args=[_:e9] type=Unit
+  decl d0 fun aggregate suspend=0 inline=0 sym=s181
+expr e0 name(values) type=Class#12<Int> ref=s182
+expr e1 name(it) type=_
+expr e2 int(2) type=_
+expr e3 binary(multiply) lhs=e1 rhs=e2 type=_
+expr e4 name(it) type=Int ref=s-1001792
+expr e5 int(2) type=Int
+expr e6 binary(multiply) lhs=e4 rhs=e5 type=Int
+expr e7 lambda params=[] body=e6 type=(Int) -> Int
+expr e8 memberCall recv=e0 callee=sumOf args=[_:e7] type=Int
+expr e9 name(values) type=Class#12<Int> ref=s182
+expr e10 memberCall recv=e9 callee=maxOrNull args=[] type=Int call=s24 map=[] targs=[Int]
+expr e11 name(values) type=Class#12<Int> ref=s182
+expr e12 memberCall recv=e11 callee=minOrNull args=[] type=Int call=s25 map=[] targs=[Int]

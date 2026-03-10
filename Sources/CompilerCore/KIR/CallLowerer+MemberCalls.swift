@@ -960,7 +960,7 @@ extension CallLowerer {
             "any", "none", "all", "fold", "reduce", "groupBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed",
+            "forEachIndexed", "mapIndexed", "sumOf",
         ].contains(interner.resolve(calleeName))
     }
 

@@ -1137,6 +1137,64 @@ extension CollectionLiteralLoweringPass {
                             }
                         }
                     }
+
+                    if callee == lookup.sumOfName {
+                        if arguments.count == 2 || arguments.count == 3 {
+                            let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkListSumOfName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    if callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = callee == lookup.maxOrNullName
+                                    ? lookup.kkListMaxOrNullName
+                                    : lookup.kkListMinOrNullName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID],
+                                    result: hofResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
                     // count/first/last with predicate: [receiver, lambda, closureRaw?]
                     if callee == lookup.countName || callee == lookup.firstName || callee == lookup.lastName {
                         if arguments.count == 2 || arguments.count == 3 {
