@@ -199,6 +199,7 @@ extension CallTypeChecker {
 
         if args.isEmpty,
            case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+           locals[receiverName] == nil,
            let ownerSymbol = ctx.cachedScopeLookup(receiverName).first(where: { candidate in
                guard let symbol = sema.symbols.symbol(candidate) else {
                    return false
@@ -533,7 +534,7 @@ extension CallTypeChecker {
             }
         }
 
-        let memberLookupType = lookupReceiverType
+        let memberLookupType = (isSuperCall ? ctx.implicitReceiverType : nil) ?? lookupReceiverType
 
         // Detect class-name receiver: when the receiver is a name reference to
         // a class/interface/enumClass symbol, only companion members should be

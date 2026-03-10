@@ -7,7 +7,7 @@ readonly skip_test_run="${COVERAGE_SKIP_TEST_RUN:-0}"
 readonly profile_override="${COVERAGE_PROFILE_PATH:-}"
 readonly tests_binary_override="${COVERAGE_TESTS_BINARY:-}"
 readonly json_output_override="${COVERAGE_JSON_OUTPUT:-}"
-readonly llvm_cov_bin="${LLVM_COV_BIN:-llvm-cov}"
+readonly llvm_cov_override="${LLVM_COV_BIN:-}"
 
 readonly targets=(
   "Sources/CompilerCore/Lexer/TokenStream.swift"
@@ -66,25 +66,24 @@ if [[ ! -e "$tests_binary" ]]; then
   exit 1
 fi
 
-if [[ "$(uname)" == "Linux" ]]; then
-  if ! command -v "$llvm_cov_bin" >/dev/null 2>&1; then
-    echo "llvm-cov binary not found: ${llvm_cov_bin}" >&2
-    exit 1
-  fi
+if [[ -n "$llvm_cov_override" ]]; then
+  readonly llvm_cov_bin="$llvm_cov_override"
+elif [[ "$(uname)" == "Linux" ]]; then
+  llvm_cov_candidate="$(command -v llvm-cov 2>/dev/null || true)"
+  readonly llvm_cov_bin="${llvm_cov_candidate:-}"
 else
-  if ! xcrun --find llvm-cov >/dev/null 2>&1; then
-    echo "llvm-cov binary not found via xcrun" >&2
-    exit 1
-  fi
+  llvm_cov_candidate="$(xcrun --find llvm-cov 2>/dev/null || true)"
+  readonly llvm_cov_bin="${llvm_cov_candidate:-}"
+fi
+
+if [[ -z "$llvm_cov_bin" || ! -x "$llvm_cov_bin" ]]; then
+  echo "llvm-cov binary not found: ${llvm_cov_bin:-<empty>}" >&2
+  exit 1
 fi
 
 mkdir -p "$(dirname "$json_output")"
 
-if [[ "$(uname)" == "Linux" ]]; then
-  "$llvm_cov_bin" export "$tests_binary" -instr-profile "$profile" > "$json_output"
-else
-  xcrun llvm-cov export "$tests_binary" -instr-profile "$profile" > "$json_output"
-fi
+"$llvm_cov_bin" export "$tests_binary" -instr-profile "$profile" > "$json_output"
 
 echo "Coverage threshold: ${threshold}%"
 

@@ -186,6 +186,13 @@ extension ExprTypeChecker {
             {
                 sema.bindings.markImplicitReceiverMember(id, name: name)
                 sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                driver.helpers.checkDeprecation(
+                    for: result.symbol,
+                    sema: sema,
+                    interner: interner,
+                    range: nameRange,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
                 sema.bindings.bindExprType(id, type: result.type)
                 return result.type
             } else if let firstInvisible = invisibleSyms.first {
@@ -241,6 +248,13 @@ extension ExprTypeChecker {
                 {
                     sema.bindings.markImplicitReceiverMember(id, name: name)
                     sema.bindings.bindIdentifier(id, symbol: result.symbol)
+                    driver.helpers.checkDeprecation(
+                        for: result.symbol,
+                        sema: sema,
+                        interner: interner,
+                        range: nameRange,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
                     sema.bindings.bindExprType(id, type: result.type)
                     return result.type
                 }

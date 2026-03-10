@@ -363,7 +363,7 @@ extension BuildASTPhase {
                     continue
                 }
                 if !pastDeclarationName {
-                    if case .identifier = token.kind {
+                    if internedIdentifier(from: token, interner: interner) != nil {
                         pastDeclarationName = true
                     } else {
                         continue
