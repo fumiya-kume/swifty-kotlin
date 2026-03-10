@@ -130,9 +130,9 @@ extension CallTypeChecker {
         return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
     }
 
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// This legacy inference path still owns many special cases while the split-out helpers
     /// are being migrated.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferMemberCallImpl(
         _ id: ExprID,
         receiverID: ExprID,
@@ -148,6 +148,7 @@ extension CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
+        // swiftlint:enable cyclomatic_complexity function_body_length
 
         if args.isEmpty,
            case .callableRef = ast.arena.expr(receiverID),

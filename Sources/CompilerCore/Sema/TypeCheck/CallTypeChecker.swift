@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 /// Handles call expression type inference (function calls, member calls, safe member calls).

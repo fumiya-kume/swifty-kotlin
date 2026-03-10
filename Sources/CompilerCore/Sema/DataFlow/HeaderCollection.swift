@@ -38,6 +38,7 @@ extension DataFlowSemaPhase {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func collectHeader(
         declID: DeclID,
         file: ASTFile,

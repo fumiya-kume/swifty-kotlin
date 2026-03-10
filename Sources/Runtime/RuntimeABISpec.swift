@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
