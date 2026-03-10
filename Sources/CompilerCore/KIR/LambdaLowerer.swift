@@ -113,9 +113,10 @@ final class LambdaLowerer {
             ))
         }
 
-        // For single-param lambdas passed to C HOFs (filter, map, etc.), Runtime expects
-        // (closureRaw, elem, outThrown). Add closure param as first param.
+        // For lambdas passed to C HOFs (filter, map, mapIndexed, forEachIndexed, fold, etc.),
+        // Runtime expects (closureRaw, ...valueParams, outThrown). Add closure param as first param.
         let lambdaParameters: [KIRParameter]
+        let needsClosureParam: Bool
         if effectiveParamCount == 1 {
             let closureParam = KIRParameter(
                 symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
@@ -126,6 +127,23 @@ final class LambdaLowerer {
                 type: lambdaParameterTypes[0]
             )
             lambdaParameters = [closureParam, elemParam]
+            needsClosureParam = true
+        } else if effectiveParamCount == 2 {
+            // mapIndexed/forEachIndexed/fold/reduce: (closureRaw, param0, param1, outThrown)
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
+            )
+            let param0 = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
+                type: lambdaParameterTypes[0]
+            )
+            let param1 = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1),
+                type: lambdaParameterTypes[1]
+            )
+            lambdaParameters = [closureParam, param0, param1]
+            needsClosureParam = true
         } else {
             lambdaParameters = (0 ..< effectiveParamCount).map { index in
                 KIRParameter(
@@ -133,6 +151,7 @@ final class LambdaLowerer {
                     type: lambdaParameterTypes[index]
                 )
             }
+            needsClosureParam = false
         }
 
         let scopeSnapshot = driver.ctx.saveScope()
@@ -154,6 +173,16 @@ final class LambdaLowerer {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(lambdaParam.symbol)))
             driver.ctx.localValuesBySymbol[lambdaParam.symbol] = paramExpr
+        }
+        // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
+        let effectiveParamNames: [InternedString] = if params.isEmpty, let functionType, !functionType.params.isEmpty {
+            [interner.intern("it")]
+        } else {
+            params
+        }
+        let valueParamStart = needsClosureParam ? 1 : 0
+        for (i, paramName) in effectiveParamNames.enumerated() where valueParamStart + i < lambdaParameters.count {
+            driver.ctx.lambdaParamNameToSymbol[paramName] = lambdaParameters[valueParamStart + i].symbol
         }
 
         let loweredBody = driver.lowerExpr(
@@ -224,7 +253,7 @@ final class LambdaLowerer {
             symbol: lambdaSymbol,
             callee: lambdaName,
             captureArguments: captureBindings.map(\.valueExpr),
-            hasClosureParam: effectiveParamCount == 1
+            hasClosureParam: needsClosureParam
         )
         return lambdaValueExpr
     }
