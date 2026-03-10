@@ -13,6 +13,7 @@ identifier_name:
   max_length:
     warning: 60
     error: 80
+  allowed_symbols: ["_"]
   excluded:
     - super_
     - init_

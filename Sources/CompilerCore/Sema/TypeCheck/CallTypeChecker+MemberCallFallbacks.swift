@@ -71,7 +71,10 @@ extension CallTypeChecker {
 
     func isCollectionReturningMember(_ memberName: String) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "mapNotNull", "filterNotNull", "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith", "associate", "zip", "toList", "take", "drop", "reversed", "sorted", "distinct", "withIndex", "mapIndexed",
+            "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
+            "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
+            "associate", "zip", "toList", "take", "drop", "reversed",
+            "sorted", "distinct", "withIndex", "mapIndexed",
         ]
         return collectionReturningMembers.contains(memberName)
     }
