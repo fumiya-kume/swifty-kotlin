@@ -413,6 +413,18 @@ extension CallLowerer {
                 instructions: &instructions
             )
         }
+        let normalizedArgIDs: [KIRExprID] = {
+            guard isCollectionHOFCallee(calleeName, interner: interner) else {
+                return loweredArgIDs
+            }
+            return addCollectionHOFClosureArguments(
+                loweredArgIDs: loweredArgIDs,
+                argExprIDs: args.map(\.expr),
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            )
+        }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
         if let storedObjectProperty = tryLowerObjectLiteralStoredPropertyRead(
@@ -896,7 +908,7 @@ extension CallLowerer {
             SymbolID?.none
         }
         let normalized = driver.callSupportLowerer.normalizedCallArguments(
-            providedArguments: loweredArgIDs,
+            providedArguments: normalizedArgIDs,
             callBinding: callBinding,
             chosenCallee: chosen,
             spreadFlags: args.map(\.isSpread),
@@ -934,6 +946,51 @@ extension CallLowerer {
             arguments: finalArguments
         )
         return result
+    }
+
+    private func isCollectionHOFCallee(
+        _ calleeName: InternedString,
+        interner: StringInterner
+    ) -> Bool {
+        [
+            "map", "filter", "mapNotNull", "forEach", "flatMap",
+            "any", "none", "all", "fold", "reduce", "groupBy",
+            "sortedBy", "count", "first", "last", "find",
+            "associateBy", "associateWith", "associate",
+            "forEachIndexed", "mapIndexed",
+        ].contains(interner.resolve(calleeName))
+    }
+
+    private func addCollectionHOFClosureArguments(
+        loweredArgIDs: [KIRExprID],
+        argExprIDs: [ExprID],
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        guard loweredArgIDs.count == argExprIDs.count else {
+            return loweredArgIDs
+        }
+        var finalArgs: [KIRExprID] = []
+        finalArgs.reserveCapacity(loweredArgIDs.count + 1)
+
+        for (loweredArgID, argExprID) in zip(loweredArgIDs, argExprIDs) {
+            finalArgs.append(loweredArgID)
+            guard sema.bindings.isCollectionHOFLambdaExpr(argExprID),
+                  let callableInfo = driver.ctx.callableValueInfoByExprID[loweredArgID]
+            else {
+                continue
+            }
+            if let closureRaw = callableInfo.captureArguments.first {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+        }
+
+        return finalArgs
     }
 
     private func tryLowerObjectMemberPropertyRead(

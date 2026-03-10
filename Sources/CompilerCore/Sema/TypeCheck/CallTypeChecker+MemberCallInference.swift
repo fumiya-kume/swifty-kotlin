@@ -399,7 +399,8 @@ extension CallTypeChecker {
 
             let resultType: TypeID
             switch calleeStr {
-            case "map", "filter", "mapNotNull", "forEach", "any", "none", "all", "count", "first", "last", "find":
+            case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
+                 "count", "first", "last", "find", "associateBy", "associateWith", "associate":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -441,9 +442,21 @@ extension CallTypeChecker {
                         )))
                     case "filter": resultType = receiverType
                     case "forEach": resultType = sema.types.unitType
+                    case "flatMap":
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                            args: [.invariant(sema.types.anyType)],
+                            nullability: .nonNull
+                        )))
                     case "any", "none", "all": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
                     case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
+                    case "associateBy", "associateWith", "associate":
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                            nullability: .nonNull
+                        )))
                     case "mapNotNull":
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
@@ -530,6 +543,30 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = receiverType
 
+            case "forEachIndexed", "mapIndexed":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaReturnType = calleeStr == "forEachIndexed" ? sema.types.unitType : sema.types.anyType
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, collectionElementType],
+                    returnType: lambdaReturnType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if calleeStr == "forEachIndexed" {
+                    resultType = sema.types.unitType
+                } else {
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        args: [.invariant(sema.types.anyType)],
+                        nullability: .nonNull
+                    )))
+                }
+
             default:
                 resultType = sema.types.anyType
             }
@@ -545,6 +582,22 @@ extension CallTypeChecker {
            case .lambdaLiteral = lambdaExpr
         {
             sema.bindings.markCollectionHOFLambdaExpr(lambdaArg)
+        }
+
+        if isFlowReceiver,
+           let builtinFlowType = tryBuiltinFlowMemberCall(
+               id,
+               calleeName: calleeName,
+               receiverElementType: flowElementType,
+               args: args,
+               safeCall: safeCall,
+               ast: ast,
+               sema: sema,
+               ctx: ctx,
+               locals: &locals
+           )
+        {
+            return builtinFlowType
         }
 
         // Infer argument types for the normal resolution path (scope functions and
@@ -669,22 +722,6 @@ extension CallTypeChecker {
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }
-        }
-
-        if isFlowReceiver,
-           let builtinFlowType = tryBuiltinFlowMemberCall(
-               id,
-               calleeName: calleeName,
-               receiverElementType: flowElementType,
-               args: args,
-               safeCall: safeCall,
-               ast: ast,
-               sema: sema,
-               ctx: ctx,
-               locals: &locals
-           )
-        {
-            return builtinFlowType
         }
 
         var isSuperCall = false

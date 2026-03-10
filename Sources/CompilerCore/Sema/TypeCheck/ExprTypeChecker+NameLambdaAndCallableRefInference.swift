@@ -176,6 +176,24 @@ extension ExprTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        if let receiverType = ctx.implicitReceiverType {
+            let memberType = resolveImplicitReceiverMember(
+                id: id,
+                name: name,
+                receiverType: receiverType,
+                ctx: ctx,
+                sema: sema,
+                interner: interner,
+                nameRange: nameRange,
+                emitDiagnosticOnFailure: candidates.isEmpty && invisibleSyms.isEmpty
+            )
+            if let memberType, memberType != sema.types.errorType {
+                return memberType
+            }
+            if candidates.isEmpty, memberType == sema.types.errorType {
+                return sema.types.errorType
+            }
+        }
         if candidates.isEmpty {
             if let receiverType = ctx.implicitReceiverType,
                let result = driver.helpers.lookupMemberProperty(
@@ -207,13 +225,6 @@ extension ExprTypeChecker {
                     "'field' can only be used inside a property getter or setter body.",
                     range: nameRange
                 )
-            } else if let receiverType = ctx.implicitReceiverType,
-                      let memberType = resolveImplicitReceiverMember(
-                          id: id, name: name, receiverType: receiverType,
-                          ctx: ctx, sema: sema, interner: interner, nameRange: nameRange
-                      )
-            {
-                return memberType
             } else {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0022",
@@ -266,7 +277,8 @@ extension ExprTypeChecker {
         ctx: TypeInferenceContext,
         sema: SemaModule,
         interner: StringInterner,
-        nameRange: SourceRange?
+        nameRange: SourceRange?,
+        emitDiagnosticOnFailure: Bool = true
     ) -> TypeID? {
         // STDLIB-004: Inside receiver lambdas (run/apply/with), bare name
         // references resolve as properties on the implicit receiver (this).
@@ -306,13 +318,16 @@ extension ExprTypeChecker {
             sema.bindings.bindExprType(id, type: memberType)
             return memberType
         }
-        ctx.semaCtx.diagnostics.error(
-            "KSWIFTK-SEMA-0022",
-            "Unresolved reference '\(resolvedName)'.",
-            range: nameRange
-        )
-        sema.bindings.bindExprType(id, type: sema.types.errorType)
-        return sema.types.errorType
+        if emitDiagnosticOnFailure {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0022",
+                "Unresolved reference '\(resolvedName)'.",
+                range: nameRange
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        return nil
     }
 
     private func resolveTypeForCandidate(_ symbol: SemanticSymbol, sema: SemaModule) -> TypeID? {

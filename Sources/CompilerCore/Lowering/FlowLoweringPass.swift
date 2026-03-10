@@ -210,7 +210,7 @@ final class FlowLoweringPass: LoweringPass {
                     }
 
                     if callee == mapName || callee == filterName || callee == takeName,
-                       arguments.count == 2,
+                       (arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         let tagValue: Int64 = switch callee {
@@ -222,10 +222,11 @@ final class FlowLoweringPass: LoweringPass {
                             RuntimeFlowTag.take.rawValue
                         }
                         let tag = appendIntConstant(tagValue)
+                        let payload = arguments[1]
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: kkFlowEmitName,
-                            arguments: [arguments[0], arguments[1], tag],
+                            arguments: [arguments[0], payload, tag],
                             result: result,
                             canThrow: false,
                             thrownResult: nil

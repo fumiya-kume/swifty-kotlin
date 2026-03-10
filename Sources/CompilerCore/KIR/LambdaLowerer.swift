@@ -150,6 +150,8 @@ final class LambdaLowerer {
                 )
             }
         }
+        let usesClosureRawCapture = needsClosureParam && captureBindings.count == 1
+        let functionCaptureBindings = usesClosureRawCapture ? [] : captureBindings
 
         let scopeSnapshot = driver.ctx.saveScope()
         let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
@@ -157,7 +159,7 @@ final class LambdaLowerer {
         driver.ctx.resetScopeForFunction()
 
         var lambdaBody: [KIRInstruction] = [.beginBlock]
-        for capture in captureBindings {
+        for capture in functionCaptureBindings {
             let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
             lambdaBody.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
             driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
@@ -170,6 +172,17 @@ final class LambdaLowerer {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(lambdaParam.symbol)))
             driver.ctx.localValuesBySymbol[lambdaParam.symbol] = paramExpr
+        }
+        if usesClosureRawCapture,
+           let closureCapture = captureBindings.first,
+           let closureParam = lambdaParameters.first,
+           let closureExpr = driver.ctx.localValuesBySymbol[closureParam.symbol]
+        {
+            driver.ctx.localValuesBySymbol[closureCapture.capturedSymbol] = closureExpr
+            if closureCapture.capturedSymbol == savedReceiverSymbol {
+                driver.ctx.currentImplicitReceiverExprID = closureExpr
+                driver.ctx.currentImplicitReceiverSymbol = closureParam.symbol
+            }
         }
         // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
         let effectiveParamNames: [InternedString] = if params.isEmpty, let functionType, !functionType.params.isEmpty {
@@ -199,7 +212,7 @@ final class LambdaLowerer {
                 KIRFunction(
                     symbol: lambdaSymbol,
                     name: lambdaName,
-                    params: captureBindings.map(\.param) + lambdaParameters,
+                    params: functionCaptureBindings.map(\.param) + lambdaParameters,
                     returnType: lambdaReturnType,
                     body: lambdaBody,
                     isSuspend: functionType?.isSuspend ?? false,
@@ -249,7 +262,7 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: captureBindings.map(\.valueExpr),
+            captureArguments: usesClosureRawCapture ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
             hasClosureParam: needsClosureParam
         )
         return lambdaValueExpr
