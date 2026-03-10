@@ -37,8 +37,12 @@ extension CallTypeChecker {
         ),
             args.indices.contains(expectation.argumentIndex)
         {
+            let lambdaArgExpr = args[expectation.argumentIndex].expr
+            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
+            }
             _ = driver.inferExpr(
-                args[expectation.argumentIndex].expr,
+                lambdaArgExpr,
                 ctx: ctx,
                 locals: &locals,
                 expectedType: expectation.expectedType
@@ -71,7 +75,10 @@ extension CallTypeChecker {
 
     func isCollectionReturningMember(_ memberName: String) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "mapNotNull", "filterNotNull", "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith", "associate", "zip", "toList", "take", "drop", "reversed", "sorted", "distinct", "withIndex", "mapIndexed",
+            "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
+            "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
+            "associate", "zip", "toList", "take", "drop", "reversed",
+            "sorted", "distinct", "withIndex", "mapIndexed",
         ]
         return collectionReturningMembers.contains(memberName)
     }

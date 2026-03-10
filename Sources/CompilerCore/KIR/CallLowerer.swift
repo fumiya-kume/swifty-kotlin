@@ -166,6 +166,11 @@ final class CallLowerer {
         var finalArgIDs = callNormalized.arguments
         if let loweredCallable {
             finalArgIDs.insert(contentsOf: loweredCallable.captureArguments, at: 0)
+            if loweredCallable.hasClosureParam {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgIDs.insert(zeroExpr, at: loweredCallable.captureArguments.count)
+            }
         } else if let chosen,
                   sema.symbols.symbol(chosen)?.kind == .constructor,
                   sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true

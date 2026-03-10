@@ -131,7 +131,6 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases
 
-    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -177,6 +176,24 @@ extension ExprTypeChecker {
         let allCandidateIDs = ctx.cachedScopeLookup(name)
         let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
+        if let receiverType = ctx.implicitReceiverType {
+            let memberType = resolveImplicitReceiverMember(
+                id: id,
+                name: name,
+                receiverType: receiverType,
+                ctx: ctx,
+                sema: sema,
+                interner: interner,
+                nameRange: nameRange,
+                emitDiagnosticOnFailure: candidates.isEmpty && invisibleSyms.isEmpty
+            )
+            if let memberType, memberType != sema.types.errorType {
+                return memberType
+            }
+            if candidates.isEmpty, memberType == sema.types.errorType {
+                return sema.types.errorType
+            }
+        }
         if candidates.isEmpty {
             if let receiverType = ctx.implicitReceiverType,
                let result = driver.helpers.lookupMemberProperty(
@@ -208,70 +225,6 @@ extension ExprTypeChecker {
                     "'field' can only be used inside a property getter or setter body.",
                     range: nameRange
                 )
-            } else if let receiverType = ctx.implicitReceiverType {
-                // STDLIB-004: Inside receiver lambdas (run/apply/with), bare name
-                // references resolve as properties on the implicit receiver (this).
-                let resolvedName = interner.resolve(name)
-                let nonNullReceiver = sema.types.makeNonNullable(receiverType)
-                var implicitMemberType: TypeID?
-
-                // Check known String properties
-                if sema.types.isSubtype(nonNullReceiver, sema.types.stringType) {
-                    if resolvedName == "length" {
-                        implicitMemberType = sema.types.intType
-                    }
-                }
-
-                // Check known collection properties
-                if implicitMemberType == nil {
-                    if resolvedName == "size" || resolvedName == "isEmpty" {
-                        if case let .classType(classInfo) = sema.types.kind(of: nonNullReceiver) {
-                            let className = sema.symbols.symbol(classInfo.classSymbol)
-                                .map { interner.resolve($0.name) } ?? ""
-                            if className.contains("List") || className.contains("Set") || className.contains("Map")
-                                || className.contains("Collection") || className.contains("Array")
-                            {
-                                implicitMemberType = resolvedName == "size"
-                                    ? sema.types.intType
-                                    : sema.types.make(.primitive(.boolean, .nonNull))
-                            }
-                        }
-                    }
-                }
-
-                // Try symbol-table member property lookup as general fallback
-                if implicitMemberType == nil,
-                   let result = driver.helpers.lookupMemberProperty(
-                       named: name,
-                       receiverType: nonNullReceiver,
-                       sema: sema
-                   )
-                {
-                    sema.bindings.markImplicitReceiverMember(id, name: name)
-                    sema.bindings.bindIdentifier(id, symbol: result.symbol)
-                    driver.helpers.checkDeprecation(
-                        for: result.symbol,
-                        sema: sema,
-                        interner: interner,
-                        range: nameRange,
-                        diagnostics: ctx.semaCtx.diagnostics
-                    )
-                    sema.bindings.bindExprType(id, type: result.type)
-                    return result.type
-                }
-
-                if let memberType = implicitMemberType {
-                    sema.bindings.markImplicitReceiverMember(id, name: name)
-                    sema.bindings.bindExprType(id, type: memberType)
-                    return memberType
-                }
-
-                // Unresolved even with implicit receiver
-                ctx.semaCtx.diagnostics.error(
-                    "KSWIFTK-SEMA-0022",
-                    "Unresolved reference '\(resolvedName)'.",
-                    range: nameRange
-                )
             } else {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0022",
@@ -301,31 +254,8 @@ extension ExprTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
         }
-        let resolvedType = preferredCandidate.flatMap { symbol in
-            if let signature = sema.symbols.functionSignature(for: symbol.id) {
-                return signature.returnType
-            }
-            if symbol.kind == .property || symbol.kind == .field {
-                return sema.symbols.propertyType(for: symbol.id)
-            }
-            // Objects are singletons – always resolve to their nominal type so
-            // that `ObjectName.member()` works.
-            if symbol.kind == .object {
-                if let objectType = sema.symbols.propertyType(for: symbol.id) {
-                    return objectType
-                }
-                return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
-            }
-            // For class/interface/enum symbols, only resolve to nominal type when
-            // they have a companion object so that `ClassName.companionMember()`
-            // can resolve.  Without a companion, keep the previous anyType
-            // fallback so that `ClassName.instanceMethod()` correctly errors.
-            if symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass,
-               sema.symbols.companionObjectSymbol(for: symbol.id) != nil
-            {
-                return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
-            }
-            return nil
+        let resolvedType = preferredCandidate.flatMap {
+            resolveTypeForCandidate($0, sema: sema)
         } ?? sema.types.anyType
         // Propagate compile-time constant value for `const val` references
         // so downstream passes can fold without re-querying the symbol table.
@@ -336,6 +266,95 @@ extension ExprTypeChecker {
         }
         sema.bindings.bindExprType(id, type: resolvedType)
         return resolvedType
+    }
+
+    /// Attempts to resolve `name` as a property on `receiverType` inside a receiver lambda.
+    /// Returns the resolved TypeID and binds the expression, or returns nil if unresolved.
+    private func resolveImplicitReceiverMember(
+        id: ExprID,
+        name: InternedString,
+        receiverType: TypeID,
+        ctx: TypeInferenceContext,
+        sema: SemaModule,
+        interner: StringInterner,
+        nameRange: SourceRange?,
+        emitDiagnosticOnFailure: Bool = true
+    ) -> TypeID? {
+        // STDLIB-004: Inside receiver lambdas (run/apply/with), bare name
+        // references resolve as properties on the implicit receiver (this).
+        let resolvedName = interner.resolve(name)
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        var implicitMemberType: TypeID?
+
+        if sema.types.isSubtype(nonNullReceiver, sema.types.stringType), resolvedName == "length" {
+            implicitMemberType = sema.types.intType
+        }
+        if implicitMemberType == nil, resolvedName == "size" || resolvedName == "isEmpty",
+           case let .classType(classInfo) = sema.types.kind(of: nonNullReceiver)
+        {
+            let className = sema.symbols.symbol(classInfo.classSymbol).map { interner.resolve($0.name) } ?? ""
+            if className.contains("List") || className.contains("Set") || className.contains("Map")
+                || className.contains("Collection") || className.contains("Array")
+            {
+                implicitMemberType = resolvedName == "size"
+                    ? sema.types.intType
+                    : sema.types.make(.primitive(.boolean, .nonNull))
+            }
+        }
+        if implicitMemberType == nil,
+           let result = driver.helpers.lookupMemberProperty(named: name, receiverType: nonNullReceiver, sema: sema)
+        {
+            sema.bindings.markImplicitReceiverMember(id, name: name)
+            sema.bindings.bindIdentifier(id, symbol: result.symbol)
+            driver.helpers.checkDeprecation(
+                for: result.symbol, sema: sema, interner: interner,
+                range: nameRange, diagnostics: ctx.semaCtx.diagnostics
+            )
+            sema.bindings.bindExprType(id, type: result.type)
+            return result.type
+        }
+        if let memberType = implicitMemberType {
+            sema.bindings.markImplicitReceiverMember(id, name: name)
+            sema.bindings.bindExprType(id, type: memberType)
+            return memberType
+        }
+        if emitDiagnosticOnFailure {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0022",
+                "Unresolved reference '\(resolvedName)'.",
+                range: nameRange
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        return nil
+    }
+
+    private func resolveTypeForCandidate(_ symbol: SemanticSymbol, sema: SemaModule) -> TypeID? {
+        if let signature = sema.symbols.functionSignature(for: symbol.id) {
+            return signature.returnType
+        }
+        if symbol.kind == .property || symbol.kind == .field {
+            return sema.symbols.propertyType(for: symbol.id)
+        }
+        // Objects are singletons – always resolve to their nominal type so
+        // that `ObjectName.member()` works.
+        if symbol.kind == .object {
+            if let objectType = sema.symbols.propertyType(for: symbol.id) {
+                return objectType
+            }
+            return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
+        }
+        // For class/interface/enum symbols, only resolve to nominal type when
+        // they have a companion object so that `ClassName.companionMember()`
+        // can resolve.  Without a companion, keep the previous anyType
+        // fallback so that `ClassName.instanceMethod()` correctly errors.
+        if symbol.kind == .class || symbol.kind == .interface || symbol.kind == .enumClass,
+           sema.symbols.companionObjectSymbol(for: symbol.id) != nil
+        {
+            return sema.types.make(.classType(ClassType(classSymbol: symbol.id, args: [], nullability: .nonNull)))
+        }
+        return nil
     }
 
     func inferLambdaLiteralExpr(

@@ -98,6 +98,22 @@ extension DeclTypeChecker {
         for delegation in delegatedEntries {
             guard let expr = delegation.delegateExpression else { continue }
             var locals: LocalBindings = [:]
+            if let ctorSymbol = ctorSymbols.first,
+               let signature = sema.symbols.functionSignature(for: ctorSymbol.id)
+            {
+                for (index, paramSym) in signature.valueParameterSymbols.enumerated() {
+                    guard let paramInfo = sema.symbols.symbol(paramSym) else { continue }
+                    let paramType = index < signature.parameterTypes.count
+                        ? signature.parameterTypes[index]
+                        : sema.types.anyType
+                    locals[paramInfo.name] = (
+                        type: paramType,
+                        symbol: paramSym,
+                        isMutable: false,
+                        isInitialized: true
+                    )
+                }
+            }
             _ = driver.inferExpr(
                 expr,
                 ctx: delegationCtx,

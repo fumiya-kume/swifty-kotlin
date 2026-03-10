@@ -1,5 +1,3 @@
-// swiftlint:disable file_length
-// swiftlint:disable identifier_name
 import Foundation
 
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
@@ -1167,5 +1165,3 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
-
-// swiftlint:enable file_length

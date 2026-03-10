@@ -26,6 +26,17 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "length",
+            externalLinkName: "kk_string_length",
+            receiverType: stringType,
+            parameters: [],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "trim",
             externalLinkName: "kk_string_trim",
             receiverType: stringType,

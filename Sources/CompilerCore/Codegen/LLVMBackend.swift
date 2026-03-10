@@ -1,10 +1,10 @@
 import Foundation
 
 public final class LLVMBackend {
-    private let target: TargetTriple
+    let target: TargetTriple
     private let optLevel: OptimizationLevel
     private let debugInfo: Bool
-    private let diagnostics: DiagnosticEngine
+    let diagnostics: DiagnosticEngine
     private let bindings: LLVMCAPIBindings
 
     public init(
@@ -111,6 +111,26 @@ public final class LLVMBackend {
         }
         return String(describing: error)
     }
+
+    static let builtinOps: [String: String] = [
+        "kk_op_add": "+", "kk_op_sub": "-", "kk_op_mul": "*", "kk_op_div": "/", "kk_op_mod": "%",
+        "kk_op_eq": "==", "kk_op_ne": "!=", "kk_op_lt": "<", "kk_op_le": "<=", "kk_op_gt": ">", "kk_op_ge": ">=",
+        "kk_op_and": "&&", "kk_op_or": "||",
+    ]
+    static let unsignedBuiltinOps: Set<String> = [
+        "kk_op_uadd", "kk_op_usub", "kk_op_umul", "kk_op_udiv", "kk_op_umod",
+    ]
+    static let unaryBuiltinOps: [String: String] = [
+        "kk_op_not": "!", "kk_op_inv": "~", "kk_op_pos": "+", "kk_op_neg": "-",
+    ]
+    static let floatBuiltinOps: Set<String> = [
+        "kk_op_fadd", "kk_op_fsub", "kk_op_fmul", "kk_op_fdiv", "kk_op_fmod",
+        "kk_op_feq", "kk_op_fne", "kk_op_flt", "kk_op_fle", "kk_op_fgt", "kk_op_fge",
+    ]
+    static let doubleBuiltinOps: Set<String> = [
+        "kk_op_dadd", "kk_op_dsub", "kk_op_dmul", "kk_op_ddiv", "kk_op_dmod",
+        "kk_op_deq", "kk_op_dne", "kk_op_dlt", "kk_op_dle", "kk_op_dgt", "kk_op_dge",
+    ]
 }
 
 enum LLVMBackendError: Error {

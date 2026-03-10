@@ -1,4 +1,3 @@
-// swiftlint:disable identifier_name
 // MARK: - Sequence Extern Declarations (STDLIB-003)
 
 public extension RuntimeABIExterns {

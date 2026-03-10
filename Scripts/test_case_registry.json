@@ -772,6 +772,18 @@
       ]
     },
     {
+      "task": "STDLIB-005",
+      "category": "stdlib",
+      "description": "Collection higher-order functions, closure ABI, short-circuit and stable ordering parity",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "stdlib_collection_hof",
+          "template": "Scripts/test_templates/diff/stdlib_collection_hof.kt"
+        }
+      ]
+    },
+    {
       "task": "STDLIB-006",
       "category": "stdlib",
       "description": "String stdlib members (trim/startsWith/replace/split/toInt/toDouble/format)",

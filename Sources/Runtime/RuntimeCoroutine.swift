@@ -664,13 +664,13 @@ private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int]
             }
             let transform = unsafeBitCast(
                 op.argument,
-                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+                to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
             )
             var mapped: [Int] = []
             mapped.reserveCapacity(values.count)
             for value in values {
                 var thrown = 0
-                let transformed = transform(value, &thrown)
+                let transformed = transform(0, value, &thrown)
                 if thrown != 0 {
                     return mapped
                 }
@@ -685,13 +685,13 @@ private func runtimeFlowApplyOps(_ source: [Int], ops: [RuntimeFlowOp]) -> [Int]
             }
             let predicate = unsafeBitCast(
                 op.argument,
-                to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+                to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
             )
             var filtered: [Int] = []
             filtered.reserveCapacity(values.count)
             for value in values {
                 var thrown = 0
-                let decision = predicate(value, &thrown)
+                let decision = predicate(0, value, &thrown)
                 if thrown != 0 {
                     return filtered
                 }
@@ -717,11 +717,11 @@ private func runtimeFlowCollectNonSuspend(_ values: [Int], collectorFnPtr: Int) 
     }
     let collector = unsafeBitCast(
         collectorFnPtr,
-        to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self
+        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
     for value in values {
         var thrown = 0
-        _ = collector(value, &thrown)
+        _ = collector(0, value, &thrown)
         if thrown != 0 {
             return 0
         }
@@ -734,15 +734,16 @@ private func runtimeFlowCollectSuspend(_ values: [Int], collectorFnPtr: Int, fun
         return 0
     }
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
+    // Suspend collector ABI matches LambdaLowerer: (closureRaw, value, continuation, outThrown)
     let collector = unsafeBitCast(
         collectorFnPtr,
-        to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
+        to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self
     )
     for value in values {
         let continuation = kk_coroutine_continuation_new(functionID)
         while true {
             var outThrown = 0
-            let result = collector(value, continuation, &outThrown)
+            let result = collector(0, value, continuation, &outThrown)
             if outThrown != 0 {
                 _ = kk_coroutine_state_exit(continuation, 0)
                 return 0

@@ -16,6 +16,12 @@ extension LambdaLowerer {
         )
     }
 
+    /// Closure param for single-param lambdas passed to C HOFs (filter, map, etc.).
+    /// Runtime expects (closureRaw, elem, outThrown); this receives closureRaw.
+    func syntheticLambdaClosureParamSymbol(lambdaExprID: ExprID) -> SymbolID {
+        syntheticLambdaParamSymbol(lambdaExprID: lambdaExprID, paramIndex: -1)
+    }
+
     func syntheticLambdaCaptureParamSymbol(lambdaExprID: ExprID, captureIndex: Int) -> SymbolID {
         boundedNegativeSyntheticSymbol(
             Int64(-2_000_000)

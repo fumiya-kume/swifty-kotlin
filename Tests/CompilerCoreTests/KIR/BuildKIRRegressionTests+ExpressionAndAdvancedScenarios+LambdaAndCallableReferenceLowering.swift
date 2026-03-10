@@ -65,7 +65,7 @@ extension BuildKIRRegressionTests {
             }
             XCTAssertNotNil(callSymbol)
             XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_lambda_"))
-            XCTAssertEqual(arguments.count, 2)
+            XCTAssertEqual(arguments.count, 2, "Direct callable-value calls should only prepend captures.")
             guard case .intLiteral(40)? = module.arena.expr(arguments[0]) else {
                 XCTFail("Expected first lambda call argument to be captured 'base'.")
                 return
@@ -87,8 +87,35 @@ extension BuildKIRRegressionTests {
             if let generatedSymbol = callSymbol,
                let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol })
             {
-                XCTAssertEqual(generatedFunction.params.count, 2)
+                XCTAssertEqual(generatedFunction.params.count, 2, "capture + elem")
             }
+        }
+    }
+
+    func testBuildKIRCollectionHOFLambdaStillReceivesClosureParameter() throws {
+        let source = """
+        fun main(): Int {
+            val values = listOf(1, 2, 3)
+            return values.map { it + 1 }.first()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let generatedLambdaFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(function) = decl,
+                      ctx.interner.resolve(function.name).hasPrefix("kk_lambda_")
+                else {
+                    return nil
+                }
+                return function
+            }
+            let generatedFunction = try XCTUnwrap(generatedLambdaFunctions.first)
+            XCTAssertEqual(generatedFunction.params.count, 2, "closure + elem")
+            XCTAssertEqual(generatedFunction.params.first?.type, ctx.sema?.types.intType)
         }
     }
 

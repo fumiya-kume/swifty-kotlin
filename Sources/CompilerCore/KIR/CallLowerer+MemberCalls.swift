@@ -1,7 +1,6 @@
 import Foundation
 
 // File splitting is still in progress for this legacy member-call lowering surface.
-// swiftlint:disable file_length
 
 struct MemberCallReceiver {
     let expr: ExprID
@@ -414,6 +413,18 @@ extension CallLowerer {
                 instructions: &instructions
             )
         }
+        let normalizedArgIDs: [KIRExprID] = {
+            guard isCollectionHOFCallee(calleeName, interner: interner) else {
+                return loweredArgIDs
+            }
+            return addCollectionHOFClosureArguments(
+                loweredArgIDs: loweredArgIDs,
+                argExprIDs: args.map(\.expr),
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            )
+        }()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
 
         if let storedObjectProperty = tryLowerObjectLiteralStoredPropertyRead(
@@ -897,7 +908,7 @@ extension CallLowerer {
             SymbolID?.none
         }
         let normalized = driver.callSupportLowerer.normalizedCallArguments(
-            providedArguments: loweredArgIDs,
+            providedArguments: normalizedArgIDs,
             callBinding: callBinding,
             chosenCallee: chosen,
             spreadFlags: args.map(\.isSpread),
@@ -935,6 +946,51 @@ extension CallLowerer {
             arguments: finalArguments
         )
         return result
+    }
+
+    private func isCollectionHOFCallee(
+        _ calleeName: InternedString,
+        interner: StringInterner
+    ) -> Bool {
+        [
+            "map", "filter", "mapNotNull", "forEach", "flatMap",
+            "any", "none", "all", "fold", "reduce", "groupBy",
+            "sortedBy", "count", "first", "last", "find",
+            "associateBy", "associateWith", "associate",
+            "forEachIndexed", "mapIndexed",
+        ].contains(interner.resolve(calleeName))
+    }
+
+    private func addCollectionHOFClosureArguments(
+        loweredArgIDs: [KIRExprID],
+        argExprIDs: [ExprID],
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        guard loweredArgIDs.count == argExprIDs.count else {
+            return loweredArgIDs
+        }
+        var finalArgs: [KIRExprID] = []
+        finalArgs.reserveCapacity(loweredArgIDs.count + 1)
+
+        for (loweredArgID, argExprID) in zip(loweredArgIDs, argExprIDs) {
+            finalArgs.append(loweredArgID)
+            guard sema.bindings.isCollectionHOFLambdaExpr(argExprID),
+                  let callableInfo = driver.ctx.callableValueInfoByExprID[loweredArgID]
+            else {
+                continue
+            }
+            if let closureRaw = callableInfo.captureArguments.first {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+        }
+
+        return finalArgs
     }
 
     private func tryLowerObjectMemberPropertyRead(
@@ -1263,12 +1319,20 @@ extension CallLowerer {
         else {
             return
         }
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let calleeText = interner.resolve(calleeName)
         if Self.unresolvedCollectionMemberNames.contains(calleeText) {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
-        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        // String.length: extension needs receiver even when chosenCallee is nil
+        // (e.g. mapIndexed { _, v -> v.length } where type inference may not bind).
+        // Always prepend receiver for "length" — codegen maps to kk_string_length when
+        // receiver is String; other types would be a type error at use site.
+        if calleeText == "length" {
+            arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
         let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
             receiverType,
             sema: sema,
@@ -1474,6 +1538,12 @@ extension CallLowerer {
             {
                 return interner.intern(externalLinkName)
             }
+            if interner.resolve(fallback) == "length" {
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                if sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType) {
+                    return interner.intern("kk_string_length")
+                }
+            }
             return fallback
         }
 
@@ -1501,6 +1571,11 @@ extension CallLowerer {
             default:
                 break
             }
+        }
+        // String.length: use kk_string_length when chosenCallee is nil (unresolved call).
+        // Type check may not bind in lambda bodies (e.g. mapIndexed { _, v -> v.length }).
+        if interner.resolve(fallback) == "length" {
+            return interner.intern("kk_string_length")
         }
         return fallback
     }
@@ -1714,10 +1789,18 @@ extension CallLowerer {
                 type: boundType
             )
             if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+                let callArgs: [KIRExprID]
+                if info.hasClosureParam {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    callArgs = info.captureArguments + [zeroExpr, loweredReceiverID]
+                } else {
+                    callArgs = info.captureArguments + [loweredReceiverID]
+                }
                 instructions.append(.call(
                     symbol: info.symbol,
                     callee: info.callee,
-                    arguments: info.captureArguments + [loweredReceiverID],
+                    arguments: callArgs,
                     result: result,
                     canThrow: false,
                     thrownResult: nil

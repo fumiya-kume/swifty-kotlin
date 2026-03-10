@@ -517,29 +517,7 @@ public final class MetadataDecoder {
             }
             let mangledName = parts.count > 1 ? parts[1] : ""
 
-            var fqName = ""
-            var arity = 0
-            var isSuspend = false
-            var isInline = false
-            var typeSignature: String?
-            var externalLinkName: String?
-            var declaredFieldCount: Int?
-            var declaredInstanceSizeWords: Int?
-            var declaredVtableSize: Int?
-            var declaredItableSize: Int?
-            var superFQName: String?
-            var fieldOffsets: String?
-            var vtableSlots: String?
-            var itableSlots: String?
-            var isDataClass = false
-            var isSealedClass = false
-            var isValueClass = false
-            var valueClassUnderlyingTypeSig: String?
-            var annotations: [MetadataAnnotationRecord] = []
-            var sealedSubclassFQNames: [String] = []
-            var isExpect = false
-            var isActual = false
-            var schemaVersion: String?
+            var rec = MutableMetadataRecord()
 
             for part in parts.dropFirst() {
                 guard let separatorIndex = part.firstIndex(of: "=") else {
@@ -547,61 +525,44 @@ public final class MetadataDecoder {
                 }
                 let key = String(part[..<separatorIndex])
                 let value = String(part[part.index(after: separatorIndex)...])
-                applyKeyValuePart(
-                    key: key, value: value,
-                    fqName: &fqName, arity: &arity, isSuspend: &isSuspend, isInline: &isInline,
-                    typeSignature: &typeSignature, externalLinkName: &externalLinkName,
-                    declaredFieldCount: &declaredFieldCount,
-                    declaredInstanceSizeWords: &declaredInstanceSizeWords,
-                    declaredVtableSize: &declaredVtableSize,
-                    declaredItableSize: &declaredItableSize,
-                    superFQName: &superFQName, fieldOffsets: &fieldOffsets,
-                    vtableSlots: &vtableSlots, itableSlots: &itableSlots,
-                    isDataClass: &isDataClass, isSealedClass: &isSealedClass,
-                    isValueClass: &isValueClass,
-                    valueClassUnderlyingTypeSig: &valueClassUnderlyingTypeSig,
-                    annotations: &annotations,
-                    sealedSubclassFQNames: &sealedSubclassFQNames,
-                    isExpect: &isExpect, isActual: &isActual,
-                    schemaVersion: &schemaVersion
-                )
+                applyKeyValuePart(key: key, value: value, into: &rec)
             }
 
             // Backward-compatible schema gate:
             // - records without schema are treated as legacy v1
             // - only explicitly non-v1 schema versions are rejected
-            guard !fqName.isEmpty else {
+            guard !rec.fqName.isEmpty else {
                 continue
             }
-            if let schemaVersion, schemaVersion != "v1" {
+            if let schemaVersion = rec.schemaVersion, schemaVersion != "v1" {
                 continue
             }
 
             records.append(MetadataRecord(
                 kind: kind,
                 mangledName: mangledName,
-                fqName: fqName,
-                arity: arity,
-                isSuspend: isSuspend,
-                isInline: isInline,
-                typeSignature: typeSignature,
-                externalLinkName: externalLinkName,
-                declaredFieldCount: declaredFieldCount,
-                declaredInstanceSizeWords: declaredInstanceSizeWords,
-                declaredVtableSize: declaredVtableSize,
-                declaredItableSize: declaredItableSize,
-                superFQName: superFQName,
-                fieldOffsets: fieldOffsets,
-                vtableSlots: vtableSlots,
-                itableSlots: itableSlots,
-                isDataClass: isDataClass,
-                isSealedClass: isSealedClass,
-                annotations: annotations,
-                isValueClass: isValueClass,
-                valueClassUnderlyingTypeSig: valueClassUnderlyingTypeSig,
-                sealedSubclassFQNames: sealedSubclassFQNames,
-                isExpect: isExpect,
-                isActual: isActual
+                fqName: rec.fqName,
+                arity: rec.arity,
+                isSuspend: rec.isSuspend,
+                isInline: rec.isInline,
+                typeSignature: rec.typeSignature,
+                externalLinkName: rec.externalLinkName,
+                declaredFieldCount: rec.declaredFieldCount,
+                declaredInstanceSizeWords: rec.declaredInstanceSizeWords,
+                declaredVtableSize: rec.declaredVtableSize,
+                declaredItableSize: rec.declaredItableSize,
+                superFQName: rec.superFQName,
+                fieldOffsets: rec.fieldOffsets,
+                vtableSlots: rec.vtableSlots,
+                itableSlots: rec.itableSlots,
+                isDataClass: rec.isDataClass,
+                isSealedClass: rec.isSealedClass,
+                annotations: rec.annotations,
+                isValueClass: rec.isValueClass,
+                valueClassUnderlyingTypeSig: rec.valueClassUnderlyingTypeSig,
+                sealedSubclassFQNames: rec.sealedSubclassFQNames,
+                isExpect: rec.isExpect,
+                isActual: rec.isActual
             ))
         }
         return records
@@ -609,69 +570,81 @@ public final class MetadataDecoder {
 
     // MARK: - Key-Value Parsing
 
-    // swiftlint:disable:next function_parameter_count
-    private func applyKeyValuePart(
-        key: String, value: String,
-        fqName: inout String, arity: inout Int, isSuspend: inout Bool, isInline: inout Bool,
-        typeSignature: inout String?, externalLinkName: inout String?,
-        declaredFieldCount: inout Int?, declaredInstanceSizeWords: inout Int?,
-        declaredVtableSize: inout Int?, declaredItableSize: inout Int?,
-        superFQName: inout String?, fieldOffsets: inout String?,
-        vtableSlots: inout String?, itableSlots: inout String?,
-        isDataClass: inout Bool, isSealedClass: inout Bool,
-        isValueClass: inout Bool, valueClassUnderlyingTypeSig: inout String?,
-        annotations: inout [MetadataAnnotationRecord],
-        sealedSubclassFQNames: inout [String],
-        isExpect: inout Bool, isActual: inout Bool,
-        schemaVersion: inout String?
-    ) {
+    /// Mutable accumulator used while parsing a single metadata line.
+    private struct MutableMetadataRecord {
+        var fqName: String = ""
+        var arity: Int = 0
+        var isSuspend: Bool = false
+        var isInline: Bool = false
+        var typeSignature: String?
+        var externalLinkName: String?
+        var declaredFieldCount: Int?
+        var declaredInstanceSizeWords: Int?
+        var declaredVtableSize: Int?
+        var declaredItableSize: Int?
+        var superFQName: String?
+        var fieldOffsets: String?
+        var vtableSlots: String?
+        var itableSlots: String?
+        var isDataClass: Bool = false
+        var isSealedClass: Bool = false
+        var isValueClass: Bool = false
+        var valueClassUnderlyingTypeSig: String?
+        var annotations: [MetadataAnnotationRecord] = []
+        var sealedSubclassFQNames: [String] = []
+        var isExpect: Bool = false
+        var isActual: Bool = false
+        var schemaVersion: String?
+    }
+
+    private func applyKeyValuePart(key: String, value: String, into record: inout MutableMetadataRecord) {
         switch key {
         case "fq":
-            fqName = value
+            record.fqName = value
         case "arity":
-            arity = Int(value) ?? 0
+            record.arity = Int(value) ?? 0
         case "suspend":
-            isSuspend = value == "1" || value == "true"
+            record.isSuspend = value == "1" || value == "true"
         case "inline":
-            isInline = value == "1" || value == "true"
+            record.isInline = value == "1" || value == "true"
         case "sig":
-            typeSignature = value.isEmpty ? nil : value
+            record.typeSignature = value.isEmpty ? nil : value
         case "link":
-            externalLinkName = value.isEmpty ? nil : value
+            record.externalLinkName = value.isEmpty ? nil : value
         case "fields":
-            declaredFieldCount = Int(value)
+            record.declaredFieldCount = Int(value)
         case "layoutWords":
-            declaredInstanceSizeWords = Int(value)
+            record.declaredInstanceSizeWords = Int(value)
         case "vtable":
-            declaredVtableSize = Int(value)
+            record.declaredVtableSize = Int(value)
         case "itable":
-            declaredItableSize = Int(value)
+            record.declaredItableSize = Int(value)
         case "superFq":
-            superFQName = value.isEmpty ? nil : value
+            record.superFQName = value.isEmpty ? nil : value
         case "fieldOffsets":
-            fieldOffsets = value.isEmpty ? nil : value
+            record.fieldOffsets = value.isEmpty ? nil : value
         case "vtableSlots":
-            vtableSlots = value.isEmpty ? nil : value
+            record.vtableSlots = value.isEmpty ? nil : value
         case "itableSlots":
-            itableSlots = value.isEmpty ? nil : value
+            record.itableSlots = value.isEmpty ? nil : value
         case "dataClass":
-            isDataClass = value == "1" || value == "true"
+            record.isDataClass = value == "1" || value == "true"
         case "sealedClass":
-            isSealedClass = value == "1" || value == "true"
+            record.isSealedClass = value == "1" || value == "true"
         case "valueClass":
-            isValueClass = value == "1" || value == "true"
+            record.isValueClass = value == "1" || value == "true"
         case "valueUnderlying":
-            valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
+            record.valueClassUnderlyingTypeSig = value.isEmpty ? nil : value
         case "sealedSubs":
-            sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
+            record.sealedSubclassFQNames = value.split(separator: ",").map(String.init).filter { !$0.isEmpty }
         case "annotations":
-            annotations = decodeAnnotations(value)
+            record.annotations = decodeAnnotations(value)
         case "expect":
-            isExpect = value == "1" || value == "true"
+            record.isExpect = value == "1" || value == "true"
         case "actual":
-            isActual = value == "1" || value == "true"
+            record.isActual = value == "1" || value == "true"
         case "schema":
-            schemaVersion = value
+            record.schemaVersion = value
         default:
             break
         }

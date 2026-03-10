@@ -116,7 +116,7 @@ extension CoroutineLoweringPass {
                             continue
                         }
                         if callee == mapName || callee == filterName || callee == takeName,
-                           arguments.count == 2,
+                           arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
                            let flowHandleArg = arguments.first,
                            flowExprIDs.contains(flowHandleArg.rawValue)
                         {
@@ -213,7 +213,7 @@ extension CoroutineLoweringPass {
                 switch instruction {
                 case let .call(_, callee, arguments, _, _, _, _):
                     if callee == mapName || callee == filterName || callee == takeName,
-                       arguments.count == 2
+                       arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)
                     {
                         markConsume(arguments[0])
                         continue

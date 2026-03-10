@@ -4,6 +4,8 @@ struct KIRCallableValueInfo {
     let symbol: SymbolID
     let callee: InternedString
     let captureArguments: [KIRExprID]
+    /// True when lambda has closure param for C HOF ABI (filter, map, etc.).
+    let hasClosureParam: Bool
 }
 
 /// Delegate class for KIR lowering: LambdaLowerer.
@@ -111,12 +113,45 @@ final class LambdaLowerer {
             ))
         }
 
-        let lambdaParameters: [KIRParameter] = (0 ..< effectiveParamCount).map { index in
-            KIRParameter(
-                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
-                type: lambdaParameterTypes[index]
+        // For lambdas passed to C HOFs (filter, map, mapIndexed, forEachIndexed, fold, etc.),
+        // Runtime expects (closureRaw, ...valueParams, outThrown). Add closure param as first param.
+        let lambdaParameters: [KIRParameter]
+        let needsClosureParam = sema.bindings.isCollectionHOFLambdaExpr(exprID) && !isSamConversion
+        if needsClosureParam, effectiveParamCount == 1 {
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
             )
+            let elemParam = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
+                type: lambdaParameterTypes[0]
+            )
+            lambdaParameters = [closureParam, elemParam]
+        } else if needsClosureParam, effectiveParamCount == 2 {
+            // mapIndexed/forEachIndexed/fold/reduce: (closureRaw, param0, param1, outThrown)
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
+            )
+            let param0 = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
+                type: lambdaParameterTypes[0]
+            )
+            let param1 = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1),
+                type: lambdaParameterTypes[1]
+            )
+            lambdaParameters = [closureParam, param0, param1]
+        } else {
+            lambdaParameters = (0 ..< effectiveParamCount).map { index in
+                KIRParameter(
+                    symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                    type: lambdaParameterTypes[index]
+                )
+            }
         }
+        let usesClosureRawCapture = needsClosureParam && captureBindings.count == 1
+        let functionCaptureBindings = usesClosureRawCapture ? [] : captureBindings
 
         let scopeSnapshot = driver.ctx.saveScope()
         let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
@@ -124,7 +159,7 @@ final class LambdaLowerer {
         driver.ctx.resetScopeForFunction()
 
         var lambdaBody: [KIRInstruction] = [.beginBlock]
-        for capture in captureBindings {
+        for capture in functionCaptureBindings {
             let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
             lambdaBody.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
             driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
@@ -137,6 +172,27 @@ final class LambdaLowerer {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(lambdaParam.symbol)))
             driver.ctx.localValuesBySymbol[lambdaParam.symbol] = paramExpr
+        }
+        if usesClosureRawCapture,
+           let closureCapture = captureBindings.first,
+           let closureParam = lambdaParameters.first,
+           let closureExpr = driver.ctx.localValuesBySymbol[closureParam.symbol]
+        {
+            driver.ctx.localValuesBySymbol[closureCapture.capturedSymbol] = closureExpr
+            if closureCapture.capturedSymbol == savedReceiverSymbol {
+                driver.ctx.currentImplicitReceiverExprID = closureExpr
+                driver.ctx.currentImplicitReceiverSymbol = closureParam.symbol
+            }
+        }
+        // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
+        let effectiveParamNames: [InternedString] = if params.isEmpty, let functionType, !functionType.params.isEmpty {
+            [interner.intern("it")]
+        } else {
+            params
+        }
+        let valueParamStart = needsClosureParam ? 1 : 0
+        for (i, paramName) in effectiveParamNames.enumerated() where valueParamStart + i < lambdaParameters.count {
+            driver.ctx.lambdaParamNameToSymbol[paramName] = lambdaParameters[valueParamStart + i].symbol
         }
 
         let loweredBody = driver.lowerExpr(
@@ -156,7 +212,7 @@ final class LambdaLowerer {
                 KIRFunction(
                     symbol: lambdaSymbol,
                     name: lambdaName,
-                    params: captureBindings.map(\.param) + lambdaParameters,
+                    params: functionCaptureBindings.map(\.param) + lambdaParameters,
                     returnType: lambdaReturnType,
                     body: lambdaBody,
                     isSuspend: functionType?.isSuspend ?? false,
@@ -206,7 +262,8 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: captureBindings.map(\.valueExpr)
+            captureArguments: usesClosureRawCapture ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
+            hasClosureParam: needsClosureParam
         )
         return lambdaValueExpr
     }

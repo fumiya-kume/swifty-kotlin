@@ -4,7 +4,6 @@ import Foundation
 // Derived from TypeCheckSemaPhase+InferControlFlow.swift.
 
 extension ControlFlowTypeChecker {
-    // swiftlint:disable:next cyclomatic_complexity
     func inferWhenExpr(
         _ id: ExprID,
         subjectID: ExprID?,
