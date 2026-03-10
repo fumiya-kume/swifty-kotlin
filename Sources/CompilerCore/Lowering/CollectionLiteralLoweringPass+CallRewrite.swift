@@ -1086,17 +1086,20 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = callee == lookup.forEachIndexedName
                                     ? lookup.kkListForEachIndexedName
                                     : lookup.kkListMapIndexedName
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: kkName,
-                                    arguments: arguments,
+                                    arguments: [receiverID, lambdaID, zeroExpr],
                                     result: hofResult,
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
@@ -1113,9 +1116,11 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // count/first/last with predicate: args = [receiver, lambda] (2 args)
+                    // Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
                     if callee == lookup.countName || callee == lookup.firstName || callee == lookup.lastName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
                                 let kkName: InternedString = switch callee {
                                 case lookup.countName: lookup.kkListCountName
@@ -1123,13 +1128,15 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.lastName: lookup.kkListLastName
                                 default: callee
                                 }
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: kkName,
-                                    arguments: arguments,
+                                    arguments: [receiverID, lambdaID, zeroExpr],
                                     result: hofResult,
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
@@ -1142,16 +1149,21 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // fold: args = [receiver, initial, lambda] (3 args)
+                    // Runtime expects (listRaw, initial, fnPtr, closureRaw, outThrown)
                     if callee == lookup.foldName, arguments.count == 3 {
                         let receiverID = arguments[0]
+                        let initialID = arguments[1]
+                        let lambdaID = arguments[2]
                         if listExprIDs.contains(receiverID.rawValue) {
+                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListFoldName,
-                                arguments: arguments,
+                                arguments: [receiverID, initialID, lambdaID, zeroExpr],
                                 result: hofResult,
                                 canThrow: canThrow,
                                 thrownResult: thrownResult
@@ -1163,16 +1175,20 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduce: args = [receiver, lambda] (2 args)
+                    // Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
                     if callee == lookup.reduceName, arguments.count == 2 {
                         let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
+                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkListReduceName,
-                                arguments: arguments,
+                                arguments: [receiverID, lambdaID, zeroExpr],
                                 result: hofResult,
                                 canThrow: canThrow,
                                 thrownResult: thrownResult

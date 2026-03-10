@@ -486,10 +486,12 @@ extension CollectionLiteralLoweringPass {
             let kkName = callee == lookup.forEachIndexedName
                 ? lookup.kkListForEachIndexedName
                 : lookup.kkListMapIndexedName
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
                 kkName: kkName,
                 receiver: receiver,
-                arguments: arguments,
+                arguments: arguments + [zeroExpr],
                 result: result,
                 origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult,
@@ -539,8 +541,10 @@ extension CollectionLiteralLoweringPass {
         guard listExprIDs.contains(receiver.rawValue) else { return false }
 
         if callee == lookup.countName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkListCountName, receiver: receiver, arguments: arguments,
+                kkName: lookup.kkListCountName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
@@ -552,9 +556,25 @@ extension CollectionLiteralLoweringPass {
             let kkName: InternedString = callee == lookup.firstName
                 ? lookup.kkListFirstName
                 : lookup.kkListLastName
-            if arguments.isEmpty || arguments.count == 1 {
+            if arguments.isEmpty {
+                // No-arg first()/last(): Runtime expects (listRaw, fnPtr=0, closureRaw=0, outThrown)
+                let zeroExpr1 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr1, value: .intLiteral(0)))
+                let zeroExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr2, value: .intLiteral(0)))
                 _ = emitHOFCall(
-                    kkName: kkName, receiver: receiver, arguments: arguments,
+                    kkName: kkName, receiver: receiver, arguments: [zeroExpr1, zeroExpr2],
+                    result: result, origCanThrow: origCanThrow,
+                    origThrownResult: origThrownResult, module: module,
+                    loweredBody: &loweredBody
+                )
+                return true
+            }
+            if arguments.count == 1 {
+                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                _ = emitHOFCall(
+                    kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
                     result: result, origCanThrow: origCanThrow,
                     origThrownResult: origThrownResult, module: module,
                     loweredBody: &loweredBody
@@ -564,8 +584,10 @@ extension CollectionLiteralLoweringPass {
         }
 
         if callee == lookup.foldName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkListFoldName, receiver: receiver, arguments: arguments,
+                kkName: lookup.kkListFoldName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
@@ -574,8 +596,10 @@ extension CollectionLiteralLoweringPass {
         }
 
         if callee == lookup.reduceName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
-                kkName: lookup.kkListReduceName, receiver: receiver, arguments: arguments,
+                kkName: lookup.kkListReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
