@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // Handles call expression type inference (function calls, member calls, safe member calls).
@@ -131,6 +132,7 @@ extension CallTypeChecker {
 
     /// This legacy inference path still owns many special cases while the split-out helpers
     /// are being migrated.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferMemberCallImpl(
         _ id: ExprID,
         receiverID: ExprID,

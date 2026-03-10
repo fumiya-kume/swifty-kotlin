@@ -8,6 +8,7 @@ final class CallTypeChecker {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func inferCallExpr(
         _ id: ExprID,
         calleeID: ExprID,

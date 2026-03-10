@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // File splitting is still in progress for this legacy member-call lowering surface.
@@ -354,6 +355,7 @@ extension CallLowerer {
     }
 
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
+    // swiftlint:disable:next cyclomatic_complexity
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,

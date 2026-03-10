@@ -38,6 +38,7 @@ extension ExprLowerer {
         return result
     }
 
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func lowerExpr(
         _ exprID: ExprID,
         ast: ASTModule,
