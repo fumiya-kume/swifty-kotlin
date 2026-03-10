@@ -210,7 +210,7 @@ final class FlowLoweringPass: LoweringPass {
                     }
 
                     if callee == mapName || callee == filterName || callee == takeName,
-                       (arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3)),
+                       arguments.count == 2 || ((callee == mapName || callee == filterName) && arguments.count == 3),
                        flowExprIDs.contains(arguments[0].rawValue)
                     {
                         let tagValue: Int64 = switch callee {

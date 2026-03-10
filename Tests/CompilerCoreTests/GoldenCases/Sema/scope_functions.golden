@@ -190,7 +190,7 @@ expr e5 lambda params=[] body=e4 type=(String) -> Int
 expr e6 memberCall recv=e0 callee=let args=[_:e5] type=Int
 expr e7 string(hello) type=String
 expr e8 name(length) type=_
-expr e9 name(length) type=Int ref=s55
+expr e9 name(length) type=Int
 expr e10 lambda params=[] body=e9 type=String.() -> Int
 expr e11 memberCall recv=e7 callee=run args=[_:e10] type=Int
 expr e12 string(hello) type=String
@@ -223,7 +223,7 @@ expr e38 memberCall recv=e30 callee=also args=[_:e37] type=String
 expr e39 name(with) type=_
 expr e40 string(hello) type=String
 expr e41 name(length) type=_
-expr e42 name(length) type=Int ref=s55
+expr e42 name(length) type=Int
 expr e43 lambda params=[] body=e42 type=String.() -> Int
 expr e44 call callee=e39 args=[_:e40,_:e43] type=Int
 expr e45 name(with) type=_
