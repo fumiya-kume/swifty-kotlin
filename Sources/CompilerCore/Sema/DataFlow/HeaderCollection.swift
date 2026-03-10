@@ -587,9 +587,9 @@ extension DataFlowSemaPhase {
                 explicit
             } else {
                 switch funDecl.body {
-                case .unit:
+                case .unit, .block:
                     unitType
-                case .block, .expr:
+                case .expr:
                     anyType
                 }
             }

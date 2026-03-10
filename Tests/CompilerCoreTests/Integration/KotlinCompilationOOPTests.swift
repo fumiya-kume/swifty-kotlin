@@ -353,12 +353,13 @@ final class KotlinCompilationOOPTests: XCTestCase {
 
     /// Verify safe cast compiles.
     func testCompile_typeCast_safeAs() throws {
-        try assertKotlinCompilesToKIR("""
+        let code = """
         fun tryCast(x: Any): String? {
             return x as? String
         }
         fun main() { tryCast(42) }
-        """)
+        """
+        try assertKotlinCompilesToKIR(code)
     }
 
     /// Verify smart cast after is check compiles.

@@ -165,7 +165,7 @@ symbol s163 kind=class fq=kotlin.contracts.ContractEffect vis=public flags=synth
 symbol s164 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFunction|synthetic sig=recv=_ params=[Class#162.() -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s165 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#162 params=[] ret=Class#163 suspend=0 defaults=[] vararg=[]
 symbol s166 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#163 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s167 kind=interface fq=golden.sema.Action vis=public flags=_
+symbol s167 kind=interface fq=golden.sema.Action vis=public flags=funInterface
 symbol s168 kind=function fq=golden.sema.Action.run vis=public flags=abstractType sig=recv=Class#167 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s169 kind=function fq=golden.sema.execute vis=public flags=_ sig=recv=_ params=[Class#167] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s170 kind=valueParameter fq=golden.sema.execute.$169.action vis=private flags=_
@@ -183,5 +183,5 @@ expr e5 call callee=e3 args=[_:e4] type=_
 expr e6 name(println) type=_
 expr e7 string(hello) type=String
 expr e8 call callee=e6 args=[_:e7] type=Unit
-expr e9 lambda params=[] body=e8 type=() -> Unit
-expr e10 call callee=e2 args=[_:e9] type=<error>
+expr e9 lambda params=[] body=e8 type=Class#167
+expr e10 call callee=e2 args=[_:e9] type=Unit call=s169 map=[0->0] targs=[]

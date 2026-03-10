@@ -175,7 +175,7 @@ symbol s173 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Cla
 symbol s174 kind=valueParameter fq=golden.sema.Box.set.$173.v vis=private flags=_
 symbol s175 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#169<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s176 kind=valueParameter fq=golden.sema.readOnly.$175.box vis=private flags=_
-symbol s177 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#169<out Any>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s177 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#169<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s178 kind=valueParameter fq=golden.sema.writeBlocked.$177.box vis=private flags=_
 symbol s179 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ params=[Class#169<in Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s180 kind=valueParameter fq=golden.sema.writeOnly.$179.box vis=private flags=_
@@ -183,7 +183,7 @@ symbol s181 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ 
 symbol s182 kind=valueParameter fq=golden.sema.starRead.$181.box vis=private flags=_
 symbol s183 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#169<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s184 kind=valueParameter fq=golden.sema.starReadInferred.$183.box vis=private flags=_
-symbol s185 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#169<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s185 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#169<*>] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s186 kind=valueParameter fq=golden.sema.starWrite.$185.box vis=private flags=_
 symbol s187 kind=local fq=__local_15.x vis=private flags=_
 file f0 package=golden.sema

@@ -309,7 +309,7 @@ extension DeclTypeChecker {
             false
         }
 
-        if function.returnType == nil, !skipUpdate {
+        if function.returnType == nil, case .expr = function.body, !skipUpdate {
             sema.symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: signature.receiverType,

@@ -91,9 +91,11 @@ func assertKotlinCompilesToObject(
         XCTAssertTrue(fm.fileExists(atPath: objectPath),
                       "Object file not produced at \(objectPath)",
                       file: file, line: line)
-        let data = try Data(contentsOf: URL(fileURLWithPath: objectPath))
-        XCTAssertGreaterThan(data.count, 0,
-                             "Object file is empty",
-                             file: file, line: line)
+        if fm.fileExists(atPath: objectPath) {
+            let data = try Data(contentsOf: URL(fileURLWithPath: objectPath))
+            XCTAssertGreaterThan(data.count, 0,
+                                 "Object file is empty",
+                                 file: file, line: line)
+        }
     }
 }

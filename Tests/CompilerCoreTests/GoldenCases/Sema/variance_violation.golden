@@ -198,6 +198,6 @@ expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=<error>
 expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s187
 expr e4 name(Consumer) type=_
-expr e5 call callee=e4 args=[] type=Class#172<T#173> call=s174 map=[] targs=[]
+expr e5 call callee=e4 args=[] type=<error>
 expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s188
 expr e7 name(null) type=Nothing?

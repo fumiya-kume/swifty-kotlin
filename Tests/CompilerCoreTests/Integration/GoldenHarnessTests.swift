@@ -24,6 +24,21 @@ final class GoldenHarnessTests: XCTestCase {
         }
     }
 
+    func testInvokeOperatorIsolated() throws {
+        let sourcePath = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Integration/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .appendingPathComponent("GoldenCases", isDirectory: true)
+            .appendingPathComponent("Sema", isDirectory: true)
+            .appendingPathComponent("invoke_operator.kt")
+            .path
+        
+        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenSema", emit: .kirDump)
+        try runFrontend(ctx)
+        try SemaPhase().run(ctx)
+        print("RAN ISOLATED TEST SUCCESSFULLY")
+    }
+
     func testParserGolden() throws {
         try runGoldenSuite(.parser) { sourcePath in
             let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenParser", emit: .kirDump)

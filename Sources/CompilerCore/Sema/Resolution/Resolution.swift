@@ -98,6 +98,7 @@ extension OverloadResolver {
         let funcOwnTypeParamCount = signature.typeParameterSymbols.count - signature.classTypeParameterCount
         if !call.explicitTypeArgs.isEmpty {
             guard call.explicitTypeArgs.count == funcOwnTypeParamCount else {
+                print("REJECTED: explicit type arg count mismatch")
                 return .rejected
             }
         }
@@ -116,6 +117,7 @@ extension OverloadResolver {
                 range: call.range,
                 typeSystem: ctx.types
             ) else {
+                print("REJECTED: receiver constraints")
                 return .rejected
             }
             constraints = receiverConstraints
@@ -126,6 +128,7 @@ extension OverloadResolver {
             callArgs: call.args,
             symbols: ctx.symbols
         ) else {
+            print("REJECTED: buildParameterMapping")
             return .rejected
         }
 
@@ -137,6 +140,7 @@ extension OverloadResolver {
             typeVarBySymbol: typeVarBySymbol,
             typeSystem: ctx.types
         ) else {
+            print("REJECTED: appendArgumentConstraints")
             return .rejected
         }
 

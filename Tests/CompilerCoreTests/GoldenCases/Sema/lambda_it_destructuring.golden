@@ -175,14 +175,14 @@ expr e0 name(listOf) type=Class#12<Int>
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
-expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#12<Int>
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#12<out Int>
 expr e5 name(it) type=_
 expr e6 int(2) type=_
 expr e7 binary(multiply) lhs=e5 rhs=e6 type=_
-expr e8 name(it) type=Any ref=s-1002816
+expr e8 name(it) type=Int ref=s-1002816
 expr e9 int(2) type=Int
 expr e10 binary(multiply) lhs=e8 rhs=e9 type=Int
-expr e11 lambda params=[] body=e10 type=(Any) -> Any
+expr e11 lambda params=[] body=e10 type=(Int) -> Any
 expr e12 memberCall recv=e4 callee=map args=[_:e11] type=Any
 expr e13 name(listOf) type=_
 expr e14 int(1) type=Int
@@ -191,7 +191,7 @@ expr e16 memberCall recv=e14 callee=to args=[_:e15] type=Any
 expr e17 int(2) type=Int
 expr e18 string(b) type=String
 expr e19 memberCall recv=e17 callee=to args=[_:e18] type=Any
-expr e20 call callee=e13 args=[_:e16,_:e19] type=Class#12<Any>
+expr e20 call callee=e13 args=[_:e16,_:e19] type=Class#12<out Any>
 expr e21 name(num) type=_
 expr e22 name(num) type=Any ref=s169
 expr e23 name(__destructured_0) type=Any ref=s-1006656

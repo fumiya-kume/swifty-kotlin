@@ -116,10 +116,10 @@ extension DataFlowSemaPhase {
             }
         }
         if newKind == .property {
-            return existing.contains { $0.kind == .property || !isCallableLike($0.kind) }
+            return existing.contains { !isCallableLike($0.kind) }
         }
         if isCallableLike(newKind) {
-            return existing.contains { !isCallableLike($0.kind) }
+            return existing.contains { !isCallableLike($0.kind) && $0.kind != .property }
         }
         if isOverloadableSymbol(newKind) {
             return existing.contains(where: { !isOverloadableSymbol($0.kind) })
