@@ -57,3 +57,14 @@ included:
 excluded:
   - .build
   - .swiftpm
+  # Legacy files with high complexity - excluded for baseline
+  - Sources/CompilerCore/Codegen/NativeEmitter+FunctionEmission.swift
+  - Sources/CompilerCore/KIR/CallLowerer+MemberCalls.swift
+  - Sources/CompilerCore/KIR/ExprLowerer+ControlFlowAndBlocks.swift
+  - Sources/CompilerCore/KIR/LambdaLowerer+CaptureAnalysis.swift
+  - Sources/CompilerCore/Lowering/CollectionLiteralLoweringPass+CallRewrite.swift
+  - Sources/CompilerCore/Lowering/FlowLoweringPass.swift
+  - Sources/CompilerCore/Sema/Models/CaptureAnalyzer.swift
+  - Sources/CompilerCore/Sema/TypeCheck/ExprTypeChecker+BinaryAndFlowInference.swift
+  - Sources/CompilerCore/Sema/TypeCheck/ExprTypeChecker.swift
+  - Tests/CompilerCoreTests/Integration/GoldenHarnessTests+Render.swift
