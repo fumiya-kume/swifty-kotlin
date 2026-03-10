@@ -573,6 +573,7 @@ extension DataFlowSemaPhase {
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
+        registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

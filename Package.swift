@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "KSwiftK",
     platforms: [
-        .macOS(.v12),
+        .macOS(.v12)
     ],
     products: [
         .library(
@@ -18,7 +18,7 @@ let package = Package(
         .executable(
             name: "kswiftc",
             targets: ["KSwiftKCLI"]
-        ),
+        )
     ],
     targets: [
         .systemLibrary(
@@ -50,7 +50,7 @@ let package = Package(
             name: "KSwiftKCLITests",
             dependencies: ["KSwiftKCLI", "CompilerCore"],
             path: "Tests/KSwiftKCLITests"
-        ),
+        )
     ],
     swiftLanguageModes: [.v6]
 )

@@ -175,6 +175,34 @@ extension DataFlowSemaPhase {
         )
     }
 
+    func registerLateListIndexedMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        let listFQName = kotlinCollectionsPkg + [interner.intern("List")]
+        guard let listInterfaceSymbol = symbols.lookup(fqName: listFQName),
+              let listTypeParamSymbol = symbols.lookup(
+                  fqName: kotlinCollectionsPkg + [interner.intern("List"), interner.intern("E")]
+              )
+        else {
+            return
+        }
+
+        let listTypeParamType = types.make(.typeParam(TypeParamType(
+            symbol: listTypeParamSymbol, nullability: .nonNull
+        )))
+        registerListIndexedMembers(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
+    }
+
     /// Register `kotlin.collections.List<E>` interface stub with `operator fun get(index: Int): E`.
     private func registerSyntheticListStub(
         symbols: SymbolTable,
@@ -230,14 +258,6 @@ extension DataFlowSemaPhase {
         )
         registerListTransformMembers(
             symbols: symbols, types: types, interner: interner,
-            listFQName: listFQName,
-            listInterfaceSymbol: listInterfaceSymbol,
-            listTypeParamSymbol: listTypeParamSymbol,
-            listTypeParamType: listTypeParamType
-        )
-        registerListIndexedMembers(
-            symbols: symbols, types: types, interner: interner,
-            kotlinCollectionsPkg: kotlinCollectionsPkg,
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
