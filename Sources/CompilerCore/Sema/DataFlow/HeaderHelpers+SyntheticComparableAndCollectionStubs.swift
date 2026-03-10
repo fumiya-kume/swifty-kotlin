@@ -1239,7 +1239,7 @@ extension DataFlowSemaPhase {
         )
         let indexedValueType = types.make(.classType(ClassType(
             classSymbol: indexedValueSymbol,
-            args: [.invariant(listTypeParamType)],
+            args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
         let listSymbol = listInterfaceSymbol
@@ -1391,12 +1391,12 @@ extension DataFlowSemaPhase {
         )
         let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
         types.setNominalTypeParameterSymbols([tSymbol], for: symbol)
-        types.setNominalTypeParameterVariances([.invariant], for: symbol)
+        types.setNominalTypeParameterVariances([.out], for: symbol)
 
         // Add index: Int and value: T properties (component1, component2 for destructuring)
         let receiverType = types.make(.classType(ClassType(
             classSymbol: symbol,
-            args: [.invariant(tType)],
+            args: [.out(tType)],
             nullability: .nonNull
         )))
 
