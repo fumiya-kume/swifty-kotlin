@@ -3,7 +3,10 @@ import Foundation
 import XCTest
 
 private typealias RuntimeFlowEmitterEntry = @convention(c) (UnsafeMutablePointer<Int>?) -> Int
-private typealias RuntimeFlowUnaryEntry = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+/// Non-suspend collector ABI: (closureRaw, value, outThrown)
+private typealias RuntimeFlowCollectorEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+/// Map/filter ABI: (closureRaw, elem, outThrown)
+private typealias RuntimeFlowUnaryEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 private enum RuntimeFlowTag: Int {
     case emit = 0
@@ -70,7 +73,7 @@ func runtime_test_flow_emitter_values_1_2_3_4(_ outThrown: UnsafeMutablePointer<
 }
 
 @_cdecl("runtime_test_flow_map_throw_on_two")
-func runtime_test_flow_map_throw_on_two(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func runtime_test_flow_map_throw_on_two(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordMapCall()
     if value == 2 {
         outThrown?.pointee = 1
@@ -81,28 +84,28 @@ func runtime_test_flow_map_throw_on_two(_ value: Int, _ outThrown: UnsafeMutable
 }
 
 @_cdecl("runtime_test_flow_filter_even")
-func runtime_test_flow_filter_even(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func runtime_test_flow_filter_even(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordFilterCall()
     outThrown?.pointee = 0
     return value % 2 == 0 ? 1 : 0
 }
 
 @_cdecl("runtime_test_flow_map_double")
-func runtime_test_flow_map_double(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func runtime_test_flow_map_double(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     runtimeFlowTestState.recordMapCall()
     outThrown?.pointee = 0
     return value * 2
 }
 
 @_cdecl("runtime_test_flow_collect_store")
-func runtime_test_flow_collect_store(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func runtime_test_flow_collect_store(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     _ = runtimeFlowTestState.recordCollectorValue(value)
     outThrown?.pointee = 0
     return 0
 }
 
 @_cdecl("runtime_test_flow_collect_throw_on_first")
-func runtime_test_flow_collect_throw_on_first(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+func runtime_test_flow_collect_throw_on_first(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     let callIndex = runtimeFlowTestState.recordCollectorValue(value)
     if callIndex == 1 {
         outThrown?.pointee = 1
@@ -119,7 +122,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
     func testChainedTakeAppliesAllTakeStepsAndResetsPerCollect() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
-        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
         let firstTake = kk_flow_emit(flowHandle, 3, RuntimeFlowTag.take.rawValue)
@@ -136,7 +139,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
     func testMapThrowTerminatesFlowAndSkipsSubsequentEmits() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
         let mapPtr = unsafeBitCast(runtime_test_flow_map_throw_on_two as RuntimeFlowUnaryEntry, to: Int.self)
-        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
         let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
@@ -152,7 +155,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
         let filterPtr = unsafeBitCast(runtime_test_flow_filter_even as RuntimeFlowUnaryEntry, to: Int.self)
         let mapPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
-        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
         let filtered = kk_flow_emit(flowHandle, filterPtr, RuntimeFlowTag.filter.rawValue)
@@ -170,7 +173,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
     func testCollectorThrowTerminatesFlowAfterFirstCollectedValue() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
-        let throwingCollectorPtr = unsafeBitCast(runtime_test_flow_collect_throw_on_first as RuntimeFlowUnaryEntry, to: Int.self)
+        let throwingCollectorPtr = unsafeBitCast(runtime_test_flow_collect_throw_on_first as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
         _ = kk_flow_collect(flowHandle, throwingCollectorPtr, 0)
@@ -182,7 +185,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
     func testFlowRetainReleaseKeepsHandleAliveUntilLastRelease() {
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
-        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
         let retained = kk_flow_retain(flowHandle)
