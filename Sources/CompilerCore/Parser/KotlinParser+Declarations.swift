@@ -73,7 +73,7 @@ extension KotlinParser {
         default:
             if !modifierChildren.isEmpty {
                 let nextKind = stream.peek().kind
-                if nextKind != .keyword(.package) && nextKind != .keyword(.import) {
+                if nextKind != .keyword(.package), nextKind != .keyword(.import) {
                     parseTail(inBlock: false, into: &modifierChildren, range: &modifierRange)
                 }
                 return arena.appendNode(kind: .statement, range: modifierRange.value ?? invalidRange, modifierChildren)

@@ -56,11 +56,11 @@ final class JvmStaticLoweringPass: LoweringPass {
                 functionSymbol: function.symbol,
                 symbols: symbols
             ),
-            let ownerSymbol = symbols.parentSymbol(for: companionSymbol),
-            let ownerInfo = symbols.symbol(ownerSymbol),
-            let functionInfo = symbols.symbol(function.symbol),
-            let signature = symbols.functionSignature(for: function.symbol),
-            signature.receiverType != nil
+                let ownerSymbol = symbols.parentSymbol(for: companionSymbol),
+                let ownerInfo = symbols.symbol(ownerSymbol),
+                let functionInfo = symbols.symbol(function.symbol),
+                let signature = symbols.functionSignature(for: function.symbol),
+                signature.receiverType != nil
             else {
                 continue
             }

@@ -203,7 +203,7 @@ extension KotlinParser {
     }
 
     static func isDeclarationModifierKeyword(_ keyword: Keyword) -> Bool {
-        return switch keyword {
+        switch keyword {
         case .public, .private, .internal, .protected, .open, .abstract, .sealed, .data, .annotation,
              .inner, .expect, .actual, .const, .lateinit, .override, .final, .crossinline, .noinline, .tailrec,
              .inline, .suspend, .operator, .infix, .external, .value:
@@ -239,7 +239,7 @@ extension KotlinParser {
     }
 
     func isIdentifierLike(_ kind: TokenKind) -> Bool {
-        return switch kind {
+        switch kind {
         case .identifier, .backtickedIdentifier, .keyword, .softKeyword:
             true
         default:
@@ -248,7 +248,7 @@ extension KotlinParser {
     }
 
     func isLoopStart(_ kind: TokenKind) -> Bool {
-        return switch kind {
+        switch kind {
         case .keyword(.for), .keyword(.while), .keyword(.do):
             true
         default:

@@ -453,13 +453,13 @@ extension BuildASTPhase {
     func declarationParameterOpenParenIndex(in tokens: [Token], nodeKind: SyntaxKind) -> Int? {
         switch nodeKind {
         case .funDecl:
-            return functionParameterOpenParenIndex(in: tokens)
+            functionParameterOpenParenIndex(in: tokens)
         case .classDecl:
-            return classPrimaryConstructorOpenParenIndex(in: tokens)
+            classPrimaryConstructorOpenParenIndex(in: tokens)
         case .constructorDecl:
-            return constructorParameterOpenParenIndex(in: tokens)
+            constructorParameterOpenParenIndex(in: tokens)
         default:
-            return tokens.firstIndex(where: { token in
+            tokens.firstIndex(where: { token in
                 token.kind == .symbol(.lParen)
             })
         }

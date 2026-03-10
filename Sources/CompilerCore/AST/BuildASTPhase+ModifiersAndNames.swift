@@ -78,7 +78,7 @@ extension BuildASTPhase {
         var names: [InternedString] = []
         let children = arena.children(of: nodeID)
         let targetKeyword: TokenKind = isPackageHeader ? .keyword(.package) : .keyword(.import)
-        
+
         var startIndex = 0
         if let idx = children.firstIndex(where: { child in
             guard case let .token(tokenID) = child, let token = resolveToken(tokenID, in: arena) else { return false }
