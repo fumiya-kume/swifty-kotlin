@@ -149,6 +149,11 @@ extension CallTypeChecker {
         let sema = ctx.sema
         let interner = ctx.interner
 
+        // Infer argument types upfront
+        let argTypes = args.map { arg in
+            driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        }
+
         if args.isEmpty,
            case .callableRef = ast.arena.expr(receiverID),
            interner.resolve(calleeName) == "isInitialized"
@@ -388,20 +393,127 @@ extension CallTypeChecker {
         } else {
             sema.types.anyType
         }
-        let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
+        let _ = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
-        let argTypes = args.map { arg -> TypeID in
-            if isCollectionHOF || isFlowHOF,
-               let argExpr = ast.arena.expr(arg.expr),
-               case .lambdaLiteral = argExpr
-            {
-                return sema.types.anyType // placeholder; re-inferred later with expected type
+
+        // --- Collection higher-order functions (STDLIB-005) ---
+        if isCollectionHOF {
+            let calleeStr = interner.resolve(calleeName)
+            let collectionElementType = getCollectionElementType(receiverType, sema: sema, interner: interner)
+
+            let resultType: TypeID
+            switch calleeStr {
+            case "map", "filter", "mapNotNull", "forEach", "any", "none", "all", "count", "first", "last", "find":
+                let lambdaReturnType: TypeID = switch calleeStr {
+                case "filter", "any", "none", "all": sema.types.booleanType
+                case "forEach": sema.types.unitType
+                case "count": sema.types.booleanType
+                case "mapNotNull": sema.types.nullableAnyType
+                default: sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: lambdaReturnType
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+
+                switch calleeStr {
+                case "map":
+                    let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                        sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                    } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                        fnType.returnType
+                    } else {
+                        sema.types.anyType
+                    }
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        args: [.invariant(bodyType)],
+                        nullability: .nonNull
+                    )))
+                case "filter": resultType = receiverType
+                case "forEach": resultType = sema.types.unitType
+                case "any", "none", "all": resultType = sema.types.booleanType
+                case "count": resultType = sema.types.intType
+                case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
+                case "mapNotNull":
+                    let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                        sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                    } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                        sema.types.makeNonNullable(fnType.returnType)
+                    } else {
+                        sema.types.anyType
+                    }
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        args: [.invariant(bodyType)],
+                        nullability: .nonNull
+                    )))
+                default: resultType = sema.types.anyType
+                }
+
+            case "fold":
+                guard args.count == 2 else { return sema.types.anyType }
+                let initialType = argTypes[0]
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [initialType, collectionElementType],
+                    returnType: initialType
+                )))
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = initialType
+
+            case "reduce":
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = collectionElementType
+
+            case "groupBy":
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let keyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                    sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                    fnType.returnType
+                } else {
+                    sema.types.anyType
+                }
+                let listType = sema.types.make(.classType(ClassType(
+                    classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                    args: [.invariant(collectionElementType)],
+                    nullability: .nonNull
+                )))
+                resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                    args: [.invariant(keyType), .invariant(listType)],
+                    nullability: .nonNull
+                )))
+
+            case "sortedBy":
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = receiverType
+
+            default:
+                resultType = sema.types.anyType
             }
-            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+
+            let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
         }
+
         let hasLeadingLocaleArgument = interner.resolve(calleeName) == "format"
             && argTypes.first.map { isJavaUtilLocaleType($0, sema: sema, interner: interner) } == true
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
@@ -460,12 +572,18 @@ extension CallTypeChecker {
             }
         }
 
-        // Stdlib infix function: Any.to(Any) → Pair (represented as Any) (FUNC-002)
+        // Stdlib infix function: Any.to(Any) → Pair<LHS, RHS> (FUNC-002)
         if interner.resolve(calleeName) == "to",
            args.count == 1
         {
-            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
-            let resultType = sema.types.anyType
+            let rhsType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+            let resultType = makeSyntheticPairType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                firstType: receiverType,
+                secondType: rhsType
+            )
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
@@ -1677,5 +1795,59 @@ extension CallTypeChecker {
         return finalType
     }
 
-    // swiftlint:enable function_body_length cyclomatic_complexity
+    private func getCollectionElementType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType) else {
+            return sema.types.anyType
+        }
+
+        let name = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
+        if name == "Map" || name.contains("Map"), classType.args.count == 2 {
+            let keyType = switch classType.args[0] {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+            let valueType = switch classType.args[1] {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+            return makeSyntheticPairType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                firstType: keyType,
+                secondType: valueType
+            )
+        }
+
+        if let firstArg = classType.args.first {
+            return switch firstArg {
+            case let .invariant(id), let .out(id), let .in(id): id
+            case .star: sema.types.anyType
+            }
+        }
+        return sema.types.anyType
+    }
+
+    private func makeSyntheticPairType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        firstType: TypeID,
+        secondType: TypeID
+    ) -> TypeID {
+        let pairFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Pair"),
+        ]
+        let pairSymbol = symbols.lookup(fqName: pairFQName) ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        guard let pairSym = pairSymbol else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: pairSym,
+            args: [.invariant(firstType), .invariant(secondType)],
+            nullability: .nonNull
+        )))
+    }
 }

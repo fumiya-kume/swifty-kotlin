@@ -135,8 +135,8 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
     func testFilterThenMapMatchesExpectedChain() {
         let source = makeList([1, 2, 3])
-        let filtered = kk_list_filter(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil)
-        let mapped = kk_list_map(filtered, unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil)
+        let filtered = kk_list_filter(source, unsafeBitCast(filterGreaterThanOne, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        let mapped = kk_list_map(filtered, unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(mapped), [4, 6])
     }
 
@@ -144,22 +144,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let source = makeList([1, 2, 3])
         let closure = makeArray([5])
 
-        let mapped = kk_list_map(source, unsafeBitCast(addCapture, to: Int.self), closure, nil)
+        let mapped = kk_list_map(source, unsafeBitCast(addCapture, to: Int.self), closure, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(mapped), [6, 7, 8])
 
-        _ = kk_list_forEach(source, unsafeBitCast(forEachCapture, to: Int.self), closure, nil)
+        _ = kk_list_forEach(source, unsafeBitCast(forEachCapture, to: Int.self), closure, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(gHOFState.sumSnapshot(), 21)
     }
 
     func testFlatMapFoldReduceAndSortedBy() {
         let source = makeList([1, 2, 3])
-        let flatMapped = kk_list_flatMap(source, unsafeBitCast(flatMapPair, to: Int.self), 0, nil)
+        let flatMapped = kk_list_flatMap(source, unsafeBitCast(flatMapPair, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(flatMapped), [1, 10, 2, 20, 3, 30])
 
         XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil), 6)
         XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil), 6)
 
-        let sorted = kk_list_sortedBy(makeList([21, 11, 12, 22]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil)
+        let sorted = kk_list_sortedBy(makeList([21, 11, 12, 22]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [11, 12, 21, 22])
     }
 

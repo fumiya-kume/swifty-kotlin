@@ -1,7 +1,7 @@
 import Foundation
 
 extension CollectionLiteralLoweringPass {
-    func run(module: KIRModule, ctx: KIRContext) throws {
+    func rewriteCalls(module: KIRModule, ctx: KIRContext) throws {
         let lookup = CollectionLiteralLookupTables(interner: ctx.interner)
         let builderLambdaKinds = collectBuilderLambdaKinds(
             module: module,
