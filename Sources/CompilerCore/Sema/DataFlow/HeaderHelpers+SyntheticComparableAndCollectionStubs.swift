@@ -1310,7 +1310,7 @@ extension DataFlowSemaPhase {
         let mapIndexedName = interner.intern("mapIndexed")
         let mapIndexedFQName = listFQName + [mapIndexedName]
         if symbols.lookup(fqName: mapIndexedFQName) == nil {
-            // mapIndexed is tricky because of the generic R. 
+            // mapIndexed is tricky because of the generic R.
             // For synthetic stub, we might simplify to List<Any?> or just have it resolve via fallback if generic R is hard to define here.
             // But let's try to define a local type parameter R for the function.
             let rName = interner.intern("R")
