@@ -1343,7 +1343,7 @@ extension DataFlowSemaPhase {
                 visibility: .private,
                 flags: []
             )
-            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
 
             let transformType = types.make(.functionType(FunctionType(
                 params: [types.intType, listTypeParamType],

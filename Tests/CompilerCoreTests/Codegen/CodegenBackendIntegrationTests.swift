@@ -454,6 +454,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println(value)
             }
             println(values.mapIndexed { index, value -> index + value.length })
+            val indexedAny: Any = values.withIndex()[1]
+            println(indexedAny is kotlin.collections.IndexedValue<*>)
+            if (indexedAny is kotlin.collections.IndexedValue<*>) {
+                println("cast-ok")
+            }
         }
         """
 
@@ -469,7 +474,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\n")
+            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\ntrue\ncast-ok\n")
         }
     }
 

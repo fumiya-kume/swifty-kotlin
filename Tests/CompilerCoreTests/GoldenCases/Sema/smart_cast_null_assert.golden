@@ -175,7 +175,7 @@ symbol s173 kind=function fq=kotlin.collections.IndexedValue.value vis=public fl
 symbol s174 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[] ret=Class#12<out Class#168<out T#13>> suspend=0 defaults=[] vararg=[]
 symbol s175 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[(Int, T#13) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s176 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s177 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[(Int, T#13) -> T#176?] ret=Class#12<out T#176?> suspend=0 defaults=[] vararg=[]
+symbol s177 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=synthetic sig=recv=Class#12<out T#13> params=[(Int, T#13) -> T#176] ret=Class#12<out T#176> suspend=0 defaults=[] vararg=[]
 symbol s178 kind=function fq=nullAssertNarrows vis=public flags=_ sig=recv=_ params=[Int?] ret=Int suspend=0 defaults=[0] vararg=[0]
 symbol s179 kind=valueParameter fq=nullAssertNarrows.$178.x vis=private flags=_
 file f0 package=_

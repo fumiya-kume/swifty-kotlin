@@ -1,5 +1,22 @@
 import Foundation
 
+private let indexedValueRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.collections.IndexedValue".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
+private func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
+    let raw = registerRuntimeObject(RuntimePairBox(first: index, second: value))
+    runtimeRegisterObjectType(rawValue: raw, classID: indexedValueRuntimeTypeID)
+    return raw
+}
+
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -409,7 +426,7 @@ public func kk_list_withIndex(_ listRaw: Int) -> Int {
     var indexed: [Int] = []
     indexed.reserveCapacity(elements.count)
     for (index, element) in elements.enumerated() {
-        indexed.append(kk_pair_new(index, element))
+        indexed.append(runtimeIndexedValueNew(index: index, value: element))
     }
     return registerRuntimeObject(RuntimeListBox(elements: indexed))
 }
