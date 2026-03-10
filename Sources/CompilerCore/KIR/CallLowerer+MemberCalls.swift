@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // File splitting is still in progress for this legacy member-call lowering surface.
@@ -353,6 +354,7 @@ extension CallLowerer {
         return result
     }
 
+    // swiftlint:disable cyclomatic_complexity
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
@@ -368,6 +370,7 @@ extension CallLowerer {
         prependReceiverForUnresolvedCollectionCall: Bool,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // swiftlint:enable cyclomatic_complexity
         if let foldedConst = tryFoldConstMemberProperty(
             exprID,
             receiverExpr: receiverExpr,

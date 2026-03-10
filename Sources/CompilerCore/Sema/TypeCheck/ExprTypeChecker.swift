@@ -10,6 +10,7 @@ final class ExprTypeChecker {
 
     // MARK: - Main Dispatch (from +ExprInference.swift)
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferExpr(
         _ id: ExprID,
         ctx: TypeInferenceContext,
@@ -283,7 +284,7 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: boolType)
             return boolType
 
-        case let .asCast(exprID, typeRefID, isSafe, _):
+        case let .asCast(exprID, typeRefID, isSafe, range):
             _ = driver.inferExpr(exprID, ctx: ctx, locals: &locals)
             let targetType = driver.helpers.resolveTypeRef(
                 typeRefID,
@@ -299,6 +300,25 @@ final class ExprTypeChecker {
                 targetType
             }
             sema.bindings.bindCastTargetType(id, type: targetType)
+            if let typeRef = ast.arena.typeRef(typeRefID),
+               case let .named(_, argRefs, _) = typeRef,
+               !argRefs.isEmpty
+            {
+                let hasNonStarArg = argRefs.contains { arg in
+                    if case .star = arg {
+                        return false
+                    }
+                    return true
+                }
+                if hasNonStarArg {
+                    let operatorText = isSafe ? "as?" : "as"
+                    ctx.semaCtx.diagnostics.warning(
+                        "KSWIFTK-SEMA-UNCHECKED-CAST",
+                        "Unchecked cast '\(operatorText)' to generic type erases type arguments at runtime.",
+                        range: range
+                    )
+                }
+            }
             // Smart cast: after `x as T`, narrow x to intersection of original & T (P5-97/P5-100)
             if !isSafe,
                let castSubjectExpr = ast.arena.expr(exprID),

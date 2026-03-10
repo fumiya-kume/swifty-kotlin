@@ -18,9 +18,7 @@ extension KotlinParser {
                 )
             }
         }
-        while case let .keyword(keyword) = stream.peek().kind, Self.isDeclarationModifierKeyword(keyword) {
-            _ = consumeToken(into: &modifierChildren, range: &modifierRange)
-        }
+        parseLeadingDeclarationPrefix(into: &modifierChildren, range: &modifierRange)
         let token = stream.peek()
         switch token.kind {
         case .keyword(.class):
@@ -73,6 +71,13 @@ extension KotlinParser {
             }
             return parseDeclaration()
         default:
+            if !modifierChildren.isEmpty {
+                let nextKind = stream.peek().kind
+                if nextKind != .keyword(.package), nextKind != .keyword(.import) {
+                    parseTail(inBlock: false, into: &modifierChildren, range: &modifierRange)
+                }
+                return arena.appendNode(kind: .statement, range: modifierRange.value ?? invalidRange, modifierChildren)
+            }
             return parseStatement(inBlock: false)
         }
     }

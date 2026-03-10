@@ -1,4 +1,90 @@
 extension KotlinParser {
+    func parseLeadingDeclarationPrefix(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        var consumedAny = true
+        while consumedAny {
+            consumedAny = false
+            if consumeDeclarationAnnotationPrefixIfPresent(into: &children, range: &range) {
+                consumedAny = true
+                continue
+            }
+            if case let .keyword(keyword) = stream.peek().kind,
+               Self.isDeclarationModifierKeyword(keyword)
+            {
+                _ = consumeToken(into: &children, range: &range)
+                consumedAny = true
+            }
+        }
+    }
+
+    func consumeDeclarationAnnotationPrefixIfPresent(
+        into children: inout [SyntaxChild],
+        range: inout RangeAccumulator
+    ) -> Bool {
+        guard stream.peek().kind == .symbol(.at) else {
+            return false
+        }
+
+        _ = consumeToken(into: &children, range: &range) // '@'
+
+        // Optional use-site target: `@get:`, `@field:`, `@file:`, etc.
+        let first = stream.peek()
+        if isAnnotationUseSiteTarget(first),
+           stream.peek(1).kind == .symbol(.colon)
+        {
+            _ = consumeToken(into: &children, range: &range)
+            _ = consumeToken(into: &children, range: &range)
+        }
+
+        // Qualified annotation name: `Foo`, `kotlin.Deprecated`, etc.
+        if isIdentifierLike(stream.peek().kind) {
+            _ = consumeToken(into: &children, range: &range)
+            while stream.peek().kind == .symbol(.dot),
+                  isIdentifierLike(stream.peek(1).kind)
+            {
+                _ = consumeToken(into: &children, range: &range) // '.'
+                _ = consumeToken(into: &children, range: &range) // name segment
+            }
+        }
+
+        // Optional annotation argument list: `(...)`, allowing nested parens.
+        if stream.peek().kind == .symbol(.lParen) {
+            var depth = 0
+            while !stream.atEOF() {
+                let token = consumeToken(into: &children, range: &range)
+                if token.kind == .symbol(.lParen) {
+                    depth += 1
+                } else if token.kind == .symbol(.rParen) {
+                    depth -= 1
+                    if depth <= 0 {
+                        break
+                    }
+                }
+            }
+        }
+
+        return true
+    }
+
+    func isAnnotationUseSiteTarget(_ token: Token) -> Bool {
+        switch token.kind {
+        case .softKeyword(.get), .softKeyword(.set), .softKeyword(.field), .softKeyword(.property),
+             .softKeyword(.receiver), .softKeyword(.param), .softKeyword(.setparam),
+             .softKeyword(.delegate), .softKeyword(.file):
+            return true
+        case let .identifier(id), let .backtickedIdentifier(id):
+            let name = interner.resolve(id)
+            return [
+                "get", "set", "field", "property", "receiver", "param", "setparam", "delegate", "file",
+            ].contains(name)
+        case let .keyword(keyword):
+            return [
+                "get", "set", "field", "property", "receiver", "param", "setparam", "delegate", "file",
+            ].contains(keyword.rawValue)
+        default:
+            return false
+        }
+    }
+
     func parseBalancedGroup(opening: Symbol, closing: Symbol) -> NodeID {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
@@ -140,6 +226,9 @@ extension KotlinParser {
     }
 
     func isDeclarationStart(_ kind: TokenKind) -> Bool {
+        if kind == .symbol(.at) {
+            return true
+        }
         if case let .keyword(keyword) = kind, isDeclarationKeyword(keyword) {
             return true
         }
@@ -230,6 +319,9 @@ extension KotlinParser {
     }
 
     func isLikelyTopLevelDeclarationStart(_ token: Token) -> Bool {
+        if token.kind == .symbol(.at) {
+            return true
+        }
         if isDeclarationStart(token.kind) {
             return true
         }

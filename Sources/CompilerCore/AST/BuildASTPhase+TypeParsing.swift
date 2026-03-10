@@ -28,14 +28,14 @@ extension BuildASTPhase {
         interner: StringInterner
     ) -> InternedString {
         let tokens = collectTokens(from: nodeID, in: arena)
-        guard let paramsOpenIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+        guard let paramsOpenIndex = functionParameterOpenParenIndex(in: tokens) else {
             return declarationName(from: nodeID, in: arena, interner: interner)
         }
-        if paramsOpenIndex == 0 {
+        guard let funIndex = functionKeywordIndex(in: tokens), paramsOpenIndex > funIndex else {
             return declarationName(from: nodeID, in: arena, interner: interner)
         }
 
-        for index in stride(from: paramsOpenIndex - 1, through: 0, by: -1) {
+        for index in stride(from: paramsOpenIndex - 1, through: funIndex + 1, by: -1) {
             let token = tokens[index]
             if !isTypeLikeNameToken(token.kind) {
                 continue
@@ -54,7 +54,7 @@ extension BuildASTPhase {
         astArena: ASTArena
     ) -> TypeRefID? {
         let tokens = collectTokens(from: nodeID, in: arena)
-        guard let paramsOpenIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }),
+        guard let paramsOpenIndex = functionParameterOpenParenIndex(in: tokens),
               paramsOpenIndex > 0
         else {
             return nil
@@ -390,7 +390,7 @@ extension BuildASTPhase {
     }
 
     func firstFunctionParameterCloseParen(in tokens: [Token]) -> Int? {
-        guard let openIndex = tokens.firstIndex(where: { $0.kind == .symbol(.lParen) }) else {
+        guard let openIndex = functionParameterOpenParenIndex(in: tokens) else {
             return nil
         }
         let afterClose = skipBalancedBracket(in: tokens, from: openIndex, open: .symbol(.lParen), close: .symbol(.rParen))
@@ -398,6 +398,41 @@ extension BuildASTPhase {
             return nil
         }
         return afterClose - 1
+    }
+
+    func functionKeywordIndex(in tokens: [Token]) -> Int? {
+        tokens.firstIndex(where: { token in
+            token.kind == .keyword(.fun)
+        })
+    }
+
+    /// Returns the opening parenthesis index of the function parameter list.
+    /// The scan is anchored at the `fun` keyword to avoid picking annotation
+    /// argument lists that appear before the declaration keyword.
+    func functionParameterOpenParenIndex(in tokens: [Token]) -> Int? {
+        guard let funIndex = functionKeywordIndex(in: tokens) else {
+            return nil
+        }
+        var index = funIndex + 1
+        if index < tokens.count, tokens[index].kind == .symbol(.lessThan) {
+            index = skipBalancedBracket(
+                in: tokens,
+                from: index,
+                open: .symbol(.lessThan),
+                close: .symbol(.greaterThan)
+            )
+        }
+        while index < tokens.count {
+            let kind = tokens[index].kind
+            if kind == .symbol(.lParen) {
+                return index
+            }
+            if kind == .symbol(.lBrace) {
+                return nil
+            }
+            index += 1
+        }
+        return nil
     }
 
     func parseTypeRef(

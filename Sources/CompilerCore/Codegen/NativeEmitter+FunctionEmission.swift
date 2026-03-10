@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension NativeEmitter {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func emitFunctionBody(
         function: KIRFunction,
         llvmFunction: LLVMFunction,

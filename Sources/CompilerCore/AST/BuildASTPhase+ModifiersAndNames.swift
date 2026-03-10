@@ -76,19 +76,24 @@ extension BuildASTPhase {
         isPackageHeader: Bool
     ) -> [InternedString] {
         var names: [InternedString] = []
-        for child in arena.children(of: nodeID) {
+        let children = arena.children(of: nodeID)
+        let targetKeyword: TokenKind = isPackageHeader ? .keyword(.package) : .keyword(.import)
+
+        var startIndex = 0
+        if let idx = children.firstIndex(where: { child in
+            guard case let .token(tokenID) = child, let token = resolveToken(tokenID, in: arena) else { return false }
+            return token.kind == targetKeyword
+        }) {
+            startIndex = idx + 1
+        }
+
+        for child in children[startIndex...] {
             guard case let .token(tokenID) = child,
                   let token = resolveToken(tokenID, in: arena)
             else {
                 continue
             }
             if case .symbol(.star) = token.kind {
-                continue
-            }
-            if isPackageHeader, case .keyword(.package) = token.kind {
-                continue
-            }
-            if !isPackageHeader, case .keyword(.import) = token.kind {
                 continue
             }
             if !isPackageHeader, case .keyword(.as) = token.kind {

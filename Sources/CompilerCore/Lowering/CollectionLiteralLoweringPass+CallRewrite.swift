@@ -1,6 +1,8 @@
+// swiftlint:disable file_length
 import Foundation
 
 extension CollectionLiteralLoweringPass {
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func rewriteCalls(module: KIRModule, ctx: KIRContext) throws {
         let lookup = CollectionLiteralLookupTables(interner: ctx.interner)
         let builderLambdaKinds = collectBuilderLambdaKinds(

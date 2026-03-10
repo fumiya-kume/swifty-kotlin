@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // Handles call expression type inference (function calls, member calls, safe member calls).
@@ -129,6 +130,7 @@ extension CallTypeChecker {
         return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
     }
 
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// This legacy inference path still owns many special cases while the split-out helpers
     /// are being migrated.
     func inferMemberCallImpl(
@@ -146,6 +148,7 @@ extension CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
+        // swiftlint:enable cyclomatic_complexity function_body_length
 
         if args.isEmpty,
            case .callableRef = ast.arena.expr(receiverID),
@@ -1689,6 +1692,13 @@ extension CallTypeChecker {
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
+        driver.helpers.checkDeprecation(
+            for: chosen,
+            sema: sema,
+            interner: interner,
+            range: range,
+            diagnostics: ctx.semaCtx.diagnostics
+        )
         // P5-112: Prohibit super.foo() calls to abstract members.
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),

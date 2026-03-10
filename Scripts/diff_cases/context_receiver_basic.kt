@@ -4,7 +4,7 @@ class Greeter {
     }
 }
 
-context(Greeter)
+context(_: Greeter)
 fun message(): String = "hello"
 
 fun main() {

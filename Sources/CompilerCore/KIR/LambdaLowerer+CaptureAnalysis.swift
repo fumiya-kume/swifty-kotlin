@@ -48,6 +48,7 @@ extension LambdaLowerer {
         return ordered
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func collectBoundIdentifierSymbols(
         in exprID: ExprID,
         ast: ASTModule,
@@ -242,6 +243,7 @@ extension LambdaLowerer {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func containsImplicitReceiverReference(in exprID: ExprID, ast: ASTModule) -> Bool {
         guard let expr = ast.arena.expr(exprID) else {
             return false

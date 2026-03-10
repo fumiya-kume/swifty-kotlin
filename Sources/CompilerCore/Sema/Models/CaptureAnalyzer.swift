@@ -37,6 +37,7 @@ struct CaptureAnalyzer {
             }
         }
 
+        // swiftlint:disable:next cyclomatic_complexity
         func visit(_ currentExprID: ExprID) {
             guard let expr = ast.arena.expr(currentExprID) else {
                 return

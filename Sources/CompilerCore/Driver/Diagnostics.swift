@@ -50,9 +50,15 @@ public final class DiagnosticEngine: @unchecked Sendable {
     /// Register a @Suppress annotation: suppress the given diagnostic code for any
     /// diagnostic whose primary range overlaps or is contained within `range`.
     public func addSuppression(code: String, range: SourceRange) {
+        let expandedCodes = DiagnosticRegistry.suppressionCodes(for: code)
+        guard !expandedCodes.isEmpty else {
+            return
+        }
         lock.lock()
         defer { lock.unlock() }
-        suppressions[code, default: []].append(range)
+        for expanded in expandedCodes {
+            suppressions[expanded, default: []].append(range)
+        }
     }
 
     public func emit(_ diagnostic: Diagnostic) {

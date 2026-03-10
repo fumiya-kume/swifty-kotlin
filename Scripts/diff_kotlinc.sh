@@ -364,9 +364,9 @@ run_case() {
     cp "$kt_file" "$kts_tmp"
     local script_exit=0
     if [[ -n "$KOTLINC_CLASSPATH" ]]; then
-      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -classpath "$KOTLINC_CLASSPATH" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters -classpath "$KOTLINC_CLASSPATH" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     else
-      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$KOTLINC" -Xcontext-parameters -script "$kts_tmp" >"$ref_run_stdout" 2>"$ref_run_stderr" || script_exit=$?
     fi
     if [[ $script_exit -eq 124 ]]; then
       # Timeout in script mode is a runtime timeout, not a compile timeout
@@ -378,9 +378,9 @@ run_case() {
     fi
   else
     if [[ -n "$KOTLINC_CLASSPATH" ]]; then
-      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -classpath "$KOTLINC_CLASSPATH" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters -classpath "$KOTLINC_CLASSPATH" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     else
-      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
+      "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KOTLINC" -Xcontext-parameters "$kt_file" -include-runtime -d "$ref_jar" >"$ref_compile_stdout" 2>"$ref_compile_stderr" || ref_compile_exit=$?
     fi
     if [[ $ref_compile_exit -eq 0 ]]; then
       if [[ -n "$KOTLINC_CLASSPATH" ]]; then

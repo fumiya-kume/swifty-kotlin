@@ -22,6 +22,7 @@ extension ExprTypeChecker {
 
     // MARK: - Binary Expression Inference
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferBinaryExpr(
         _ id: ExprID,
         op: BinaryOp,

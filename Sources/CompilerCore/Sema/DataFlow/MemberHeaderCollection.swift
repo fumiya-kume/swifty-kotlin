@@ -61,6 +61,13 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: funDecl.modifiers),
                 flags: memberFlags
             )
+            registerAnnotations(
+                for: decl,
+                symbol: memberSymbol,
+                declRange: funDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
             scope.insert(memberSymbol)
@@ -179,6 +186,13 @@ extension DataFlowSemaPhase {
                 declSite: propertyDecl.range,
                 visibility: visibility(from: propertyDecl.modifiers),
                 flags: propertyFlags
+            )
+            registerAnnotations(
+                for: decl,
+                symbol: memberSymbol,
+                declRange: propertyDecl.range,
+                symbols: symbols,
+                diagnostics: diagnostics
             )
             bindings.bindDecl(declID, symbol: memberSymbol)
             symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
@@ -319,6 +333,13 @@ extension DataFlowSemaPhase {
                 declSite: nestedClass.range,
                 visibility: visibility(from: nestedClass.modifiers),
                 flags: flags(from: nestedClass.modifiers)
+            )
+            registerAnnotations(
+                for: decl,
+                symbol: nestedSymbol,
+                declRange: nestedClass.range,
+                symbols: symbols,
+                diagnostics: diagnostics
             )
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
@@ -528,6 +549,13 @@ extension DataFlowSemaPhase {
                 visibility: visibility(from: nestedInterface.modifiers),
                 flags: nestedFlags
             )
+            registerAnnotations(
+                for: decl,
+                symbol: nestedSymbol,
+                declRange: nestedInterface.range,
+                symbols: symbols,
+                diagnostics: diagnostics
+            )
             bindings.bindDecl(declID, symbol: nestedSymbol)
             symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)
             scope.insert(nestedSymbol)
@@ -622,6 +650,13 @@ extension DataFlowSemaPhase {
             declSite: nestedObject.range,
             visibility: visibility(from: nestedObject.modifiers),
             flags: flags(from: nestedObject.modifiers)
+        )
+        registerAnnotations(
+            for: decl,
+            symbol: nestedSymbol,
+            declRange: nestedObject.range,
+            symbols: symbols,
+            diagnostics: diagnostics
         )
         bindings.bindDecl(declID, symbol: nestedSymbol)
         symbols.setParentSymbol(ownerSymbol, for: nestedSymbol)

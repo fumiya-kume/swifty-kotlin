@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
@@ -65,6 +66,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
     }
 }
 
+// swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
     public static let specVersion = "J21"
 

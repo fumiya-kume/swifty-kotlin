@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "suppress_unchecked_cast.kt",
+      "range": {
+        "start": { "line": 5, "character": 41 },
+        "end": { "line": 5, "character": 42 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-SEMA-UNCHECKED-CAST",
+      "source": "kswiftk",
+      "message": "Unchecked cast 'as' to generic type erases type arguments at runtime.",
+      "codeActions": []
+    }
+  ]
+}
