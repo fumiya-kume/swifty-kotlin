@@ -52,11 +52,11 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | 2 | **Lex** | ソースバイト列 | `ctx.tokens`, `ctx.tokensByFile` | `Driver/FrontendPhases.swift`, `Lexer/KotlinLexer*.swift` |
 | 3 | **Parse** | トークン列 | `ctx.syntaxTrees` (CST) | `Driver/FrontendPhases.swift`, `Parser/KotlinParser*.swift` |
 | 4 | **BuildAST** | CST | `ctx.ast` (ASTModule) | `Driver/FrontendPhases.swift`, `AST/BuildASTPhase+*.swift` |
-| 5 | **SemaPasses** | AST | `ctx.sema` (SemaModule) | `Sema/SemaPasses.swift` -> DataFlowSemaPass + TypeCheckSemaPass |
+| 5 | **SemaPasses** | AST | `ctx.sema` (SemaModule) | `Sema/Infrastructure/SemaPhase.swift` -> `DataFlow/Phase.swift` + `TypeCheck/TypeCheckSemaPhase.swift` |
 | 6 | **BuildKIR** | AST + Sema | `ctx.kir` (KIRModule) | `KIR/BuildKIRPass.swift`, `KIR/KIRLoweringDriver.swift` |
 | 7 | **Lowering** | KIR | KIR (in-place 変換) | `Lowering/LoweringPhase.swift` + 各 `*LoweringPass.swift` |
-| 8 | **Codegen** | KIR | `.o` / `.ll` / `.kir` / `.kklib` | `Codegen/CodegenPass.swift`, `Codegen/LLVMBackend*.swift`, `Codegen/LLVMCAPIBackend.swift` |
-| 9 | **Link** | `.o` ファイル | 実行ファイル (clang 呼び出し) | `Codegen/LinkPass.swift` |
+| 8 | **Codegen** | KIR | `.o` / `.ll` / `.kir` / `.kklib` | `Codegen/CodegenPhase.swift`, `Codegen/LLVMBackend.swift`, `Codegen/NativeEmitter.swift` |
+| 9 | **Link** | `.o` ファイル | 実行ファイル (clang 呼び出し) | `Codegen/LinkPhase.swift` |
 
 ---
 
@@ -69,10 +69,10 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 | `Lexer/` | トークン化 | `KotlinLexer.swift`, `KotlinLexer+Strings.swift`, `KotlinLexer+Literals.swift`, `TokenModel.swift`, `TokenStream.swift` | 新リテラル追加、文字列テンプレート修正 |
 | `Parser/` | CST 構築 | `KotlinParser.swift`, `KotlinParser+Declarations.swift`, `KotlinParser+Statements.swift`, `SyntaxArena.swift` | 新構文のパース対応 |
 | `AST/` | CST -> AST 変換 | `BuildASTPhase+*.swift` (20+ファイル), `ASTModels.swift`, `ASTDeclModels.swift`, `ASTExprModels.swift`, `ASTArena.swift` | 新 AST ノード追加、式パーサ修正 |
-| `Sema/` | 型チェック / データフロー解析 | `TypeCheckSemaPass.swift`, `DataFlowSemaPass.swift` (+多数の分割ファイル), `TypeSystem.swift`, `OverloadResolver.swift`, `ConstraintSolver.swift`, `SemanticsModels.swift`, `TypeModels.swift` | 型推論修正、オーバーロード解決、smart cast |
+| `Sema/` | 型チェック / データフロー解析 | `Infrastructure/SemaPhase.swift`, `DataFlow/Phase.swift`, `TypeCheck/TypeCheckSemaPhase.swift`, `Resolution/OverloadResolver.swift`, `Resolution/ConstraintSolver.swift`, `TypeSystem/TypeSystem.swift`, `Models/SemanticsModels.swift`, `TypeSystem/TypeModels.swift` | 型推論修正、オーバーロード解決、smart cast |
 | `KIR/` | 型付き中間表現 | `KIRModels.swift`, `BuildKIRPass.swift`, `KIRLoweringDriver.swift`, `ExprLowerer.swift`, `CallLowerer.swift`, `ControlFlowLowerer.swift`, `MemberLowerer.swift`, `LambdaLowerer.swift` | IR 命令追加、コール生成修正 |
 | `Lowering/` | KIR 脱糖パス群 | `LoweringPhase.swift` (パス登録), 各パス: `ForLoweringPass`, `PropertyLoweringPass`, `OperatorLoweringPass`, `InlineLoweringPass`, `CoroutineLoweringPass` (+分割3ファイル), `ABILoweringPass`, `LambdaClosureConversionPass`, `DataEnumSealedSynthesisPass`, `CollectionLiteralLoweringPass`, `StdlibDelegateLoweringPass`, `NormalizeBlocksPass` | for/when/property のデシュガー修正、新 lowering pass 追加 |
-| `Codegen/` | LLVM IR 生成 + リンク | `CodegenPass.swift`, `LLVMBackend.swift` (+分割4ファイル), `LLVMCAPIBackend.swift`, `LLVMCAPIBindings.swift` (+分割4ファイル), `NativeEmitter.swift` (+分割2ファイル), `LinkPass.swift`, `NameMangler.swift`, `CodegenBackend.swift` | コード生成バグ、ABI修正、リンクエラー |
+| `Codegen/` | LLVM IR 生成 + リンク | `CodegenPhase.swift`, `LLVMBackend.swift`, `LLVMCAPIBindings.swift` (+分割4ファイル), `NativeEmitter.swift` (+分割2ファイル), `LinkPhase.swift`, `NameMangler.swift` | コード生成バグ、ABI修正、リンクエラー |
 | `Driver/` | パイプライン制御 + 横断インフラ | `Driver.swift`, `CompilationContext.swift`, `Diagnostics.swift`, `Phases.swift`, `FrontendPhases.swift`, `SourceManager.swift`, `SourceLocation.swift`, `CommandRunner.swift`, `PhaseTimer.swift`, `IncrementalCompilationCache.swift`, `DependencyGraph.swift`, `FileFingerprint.swift` | 新フェーズ追加、診断メッセージ修正、インクリメンタルビルド |
 
 ### `Sources/KSwiftKCLI/`
@@ -100,6 +100,15 @@ LoadSources --> Lex --> Parse --> BuildAST --> SemaPasses --> BuildKIR --> Lower
 |---|---|
 | `include/llvm_shim.h` | LLVM C API ヘッダブリッジ |
 | `module.modulemap` | SwiftPM 用モジュールマップ |
+
+---
+
+## 4.1 ファイル分割命名規約
+
+- 分割ファイルの suffix は責務ベースで命名する（例: `+MemberCallResolution.swift`, `+TypeAliasExpansion.swift`）。
+- `+Part`, `+Part2`, `+Part3` のような番号付き分割名は新規追加しない。
+- この規約は `Sources` と `Tests` の両方に適用する。
+- 分割ファイルの責務が変わった場合は、同一 PR でファイル名も更新する。
 
 ---
 
@@ -192,8 +201,8 @@ KIRModule (lowered)
 | `DiagnosticEngine` | `Driver/Diagnostics.swift` | エラー/警告の収集・ソート・表示 (`KSWIFTK-*` コード体系) |
 | `SourceManager` | `Driver/SourceManager.swift` | ファイル管理、行列番号計算 (O(log N)) |
 | `StringInterner` | `Driver/CompilationContext.swift` 内 | 文字列 -> InternedString (Int32) の双方向変換 |
-| `SymbolTable` | `Sema/SemanticsModels.swift` | シンボル定義・FQName/ShortName 索引・関数シグネチャ・レイアウト |
-| `TypeSystem` | `Sema/TypeSystem.swift` | 型の登録・部分型判定・変性・置換 |
+| `SymbolTable` | `Sema/Models/SemanticsModels.swift` | シンボル定義・FQName/ShortName 索引・関数シグネチャ・レイアウト |
+| `TypeSystem` | `Sema/TypeSystem/TypeSystem.swift` | 型の登録・部分型判定・変性・置換 |
 | `NameMangler` | `Codegen/NameMangler.swift` | ABI 安定なマングル名生成 |
 | `PhaseTimer` | `Driver/PhaseTimer.swift` | フェーズ実行時間計測 (`-Xfrontend time-phases`) |
 | `IncrementalCompilationCache` | `Driver/IncrementalCompilationCache.swift` | フィンガープリントベースのインクリメンタルビルド |
@@ -202,14 +211,11 @@ KIRModule (lowered)
 
 ## 9. Codegen バックエンド
 
-2つのバックエンドが存在し、`-Xir backend=...` で選択可能:
+LLVM C API を `dlopen`/`dlsym` で動的ロードし、ネイティブ IR を生成する単一バックエンド:
 
-| バックエンド | クラス | 説明 |
-|---|---|---|
-| **LLVM C API** (デフォルト) | `LLVMCAPIBackend` | LLVM C API を `dlopen`/`dlsym` で動的ロード。ネイティブ IR 生成 |
-| **Synthetic C** (フォールバック) | `LLVMBackend` | C コードを生成し clang でコンパイル。LLVM 未検出時のフォールバック |
-
-選択ロジック: `CodegenPass.selectedBackend()` — LLVM ライブラリが使えれば自動で `llvm-c-api` を選択。
+| クラス | 説明 |
+|---|---|
+| `LLVMBackend` | LLVM C API 動的ロード。`NativeEmitter` が KIR → LLVM IR 変換を実行 |
 
 ---
 
@@ -253,26 +259,26 @@ KIRModule (lowered)
 1. `Lexer/` — 新トークンが必要なら `TokenModel.swift` の `TokenKind` / `Keyword` を拡張
 2. `Parser/` — `KotlinParser+Declarations.swift` or `KotlinParser+Statements.swift` にパースルール追加
 3. `AST/` — `ASTDeclModels.swift` or `ASTExprModels.swift` に新 AST ノード追加、`BuildASTPhase+*.swift` で CST->AST 変換
-4. `Sema/` — `DataFlowSemaPass.swift` でヘッダ収集、`TypeCheckSemaPass.swift` で型チェック
+4. `Sema/` — `DataFlow/Phase.swift` でヘッダ収集、`TypeCheck/TypeCheckSemaPhase.swift` で型チェック
 5. `KIR/` — `ExprLowerer.swift` or `MemberLowerer.swift` で KIR 生成
 6. `Lowering/` — 必要なら専用 `*LoweringPass.swift` を追加し `LoweringPhase.passes` に登録
 7. テスト — `Tests/CompilerCoreTests/` の該当ディレクトリ + `Scripts/diff_cases/` に回帰ケース追加
 
 ### 型チェック / 型推論のバグを直す
 
-1. `Sema/TypeCheckSemaPass.swift` — 式型チェックのメインドライバ
-2. `Sema/ExprTypeChecker.swift` — 式ごとの型推論ロジック
-3. `Sema/CallTypeChecker.swift` — 関数呼び出しの型チェック
-4. `Sema/OverloadResolver.swift` — オーバーロード候補のランキング
-5. `Sema/ConstraintSolver.swift` — ジェネリクス型引数推論
-6. `Sema/TypeSystem.swift` — 部分型判定 (`isSubtype`)、`TypeSystem+Subtyping.swift`, `TypeSystem+Substitution.swift`
+1. `Sema/TypeCheck/TypeCheckSemaPhase.swift` — 式型チェックのメインドライバ
+2. `Sema/TypeCheck/ExprTypeChecker.swift` — 式ごとの型推論ロジック
+3. `Sema/TypeCheck/CallTypeChecker.swift` — 関数呼び出しの型チェック
+4. `Sema/Resolution/OverloadResolver.swift` — オーバーロード候補のランキング
+5. `Sema/Resolution/ConstraintSolver.swift` — ジェネリクス型引数推論
+6. `Sema/TypeSystem/TypeSystem.swift` — 部分型判定 (`isSubtype`)、`TypeSystem/Subtyping.swift`, `TypeSystem/Substitution.swift`
 
 ### コード生成 / リンクエラーを直す
 
-1. `Codegen/LLVMCAPIBackend.swift` — ネイティブ LLVM IR 生成
-2. `Codegen/LLVMBackend.swift` + 分割ファイル — Synthetic C 生成
-3. `Codegen/NativeEmitter.swift` + `NativeEmitter+FunctionEmission.swift` — 関数本体の IR エミッション
-4. `Codegen/LinkPass.swift` — リンクコマンド構築、エントリラッパー生成
+1. `Codegen/LLVMBackend.swift` — LLVM バックエンド初期化・エラーハンドリング
+2. `Codegen/NativeEmitter.swift` + `NativeEmitter+FunctionEmission.swift` — KIR → LLVM IR エミッション
+3. `Codegen/CodegenPhase.swift` — Codegen フェーズ制御、emit モード分岐
+4. `Codegen/LinkPhase.swift` — リンクコマンド構築、エントリラッパー生成
 5. `Codegen/NameMangler.swift` — シンボル名マングリング
 6. `Codegen/RuntimeABIExterns.swift` — ランタイムヘルパーの extern 宣言
 
@@ -313,8 +319,8 @@ KIRModule (lowered)
 | `DeclID` | `AST/ASTArena.swift` | AST 宣言 |
 | `ExprID` | `AST/ASTModels.swift` | AST 式 |
 | `TypeRefID` | `AST/ASTModels.swift` | AST 型参照 |
-| `SymbolID` | `Sema/SemanticsModels.swift` | 意味解析シンボル |
-| `TypeID` | `Sema/TypeModels.swift` | 型システム内の型 |
+| `SymbolID` | `Sema/Models/SemanticsModels.swift` | 意味解析シンボル |
+| `TypeID` | `Sema/TypeSystem/TypeModels.swift` | 型システム内の型 |
 | `KIRDeclID` | `KIR/KIRModels.swift` | KIR 宣言 |
 | `KIRExprID` | `KIR/KIRModels.swift` | KIR 式/レジスタ |
 
@@ -334,7 +340,7 @@ module.kklib/
     *.kirbin           -- inline 関数の KIR シリアライズ (跨モジュール inline 展開用)
 ```
 
-消費側: `-I path/to/module.kklib` でインポート。`DataFlowSemaPass+LibraryImport.swift` 系ファイルで読み込み。
+消費側: `-I path/to/module.kklib` でインポート。`Sema/DataFlow/LibraryImport.swift` 系ファイルで読み込み。
 
 ---
 

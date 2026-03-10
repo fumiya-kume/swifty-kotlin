@@ -116,23 +116,19 @@ public struct KIRFunction: Sendable {
     public var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
+    public let isTailrec: Bool
     public let sourceRange: SourceRange? // function-level source location
     public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
-        symbol: SymbolID, name: InternedString, params: [KIRParameter],
-        returnType: TypeID, body: [KIRInstruction],
-        isSuspend: Bool, isInline: Bool,
+        symbol: SymbolID, name: InternedString, params: [KIRParameter], returnType: TypeID,
+        body: [KIRInstruction], isSuspend: Bool, isInline: Bool, isTailrec: Bool = false,
         sourceRange: SourceRange? = nil, instructionLocations: [SourceRange?] = []
     ) {
-        self.symbol = symbol
-        self.name = name
-        self.params = params
-        self.returnType = returnType
-        self.body = body
-        self.isSuspend = isSuspend
-        self.isInline = isInline
-        self.sourceRange = sourceRange
+        self.symbol = symbol; self.name = name; self.params = params
+        self.returnType = returnType; self.body = body
+        self.isSuspend = isSuspend; self.isInline = isInline
+        self.isTailrec = isTailrec; self.sourceRange = sourceRange
         self.instructionLocations = instructionLocations
     }
 }
@@ -277,7 +273,7 @@ public final class KIRModule {
             switch decl {
             case let .function(function):
                 let name = interner.resolve(function.name)
-                lines.append("decl[\(index)] function \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
+                lines.append("decl[\(index)] function #\(function.symbol.rawValue) \(name) params=\(function.params.count) suspend=\(function.isSuspend) inline=\(function.isInline)")
                 for instruction in function.body {
                     lines.append("  \(instructionDescription(instruction, interner: interner, arena: arena, symbols: symbols))")
                 }

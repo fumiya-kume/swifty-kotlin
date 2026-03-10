@@ -143,6 +143,9 @@ extension KotlinParser {
         if case let .keyword(keyword) = kind, isDeclarationKeyword(keyword) {
             return true
         }
+        if case .softKeyword(.context) = kind {
+            return true
+        }
         return false
     }
 

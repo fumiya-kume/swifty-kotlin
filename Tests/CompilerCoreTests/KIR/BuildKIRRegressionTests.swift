@@ -2,7 +2,6 @@
 import Foundation
 import XCTest
 
-// swiftlint:disable:next type_body_length
 final class BuildKIRRegressionTests: XCTestCase {
     func testLoadSourcesPhaseReportsMissingInputsAndUnreadableFiles() {
         let emptyCtx = makeCompilationContext(inputs: [])
@@ -37,10 +36,12 @@ final class BuildKIRRegressionTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
             XCTAssertEqual(module.executedLowerings, [
+                "TailrecLowering",
                 "NormalizeBlocks",
                 "OperatorLowering",
                 "ForLowering",
                 "CollectionLiteralLowering",
+                "FlowLowering",
                 "PropertyLowering",
                 "StdlibDelegateLowering",
                 "JvmStaticLowering",
@@ -304,6 +305,73 @@ final class BuildKIRRegressionTests: XCTestCase {
                 symbolNames(for: arguments, module: module, sema: sema, interner: ctx.interner),
                 ["a", "b"]
             )
+        }
+    }
+
+    func testBuildKIRUsesChosenUnaryOperatorSymbolForUnaryMinusExpression() throws {
+        let source = """
+        class Vec {
+            operator fun unaryMinus(): Vec = this
+        }
+        fun useUnary(a: Vec): Vec = -a
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+
+            let operatorExprID = try XCTUnwrap(topLevelExpressionBodyExprID(
+                named: "useUnary",
+                ast: ast,
+                interner: ctx.interner
+            ))
+            guard let operatorExpr = ast.arena.expr(operatorExprID),
+                  case let .unaryExpr(op, _, _) = operatorExpr
+            else {
+                XCTFail("Expected useUnary body to be a unary expression.")
+                return
+            }
+            XCTAssertEqual(op, .unaryMinus)
+            let resolvedBinding = try XCTUnwrap(sema.bindings.callBindings[operatorExprID])
+            let chosenSymbol = resolvedBinding.chosenCallee
+            let chosenSemanticSymbol = try XCTUnwrap(sema.symbols.symbol(chosenSymbol))
+            XCTAssertEqual(ctx.interner.resolve(chosenSemanticSymbol.name), "unaryMinus")
+            let ownerSymbolID = try XCTUnwrap(sema.symbols.parentSymbol(for: chosenSymbol))
+            let ownerSymbol = try XCTUnwrap(sema.symbols.symbol(ownerSymbolID))
+            XCTAssertEqual(ctx.interner.resolve(ownerSymbol.name), "Vec")
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: chosenSymbol))
+            XCTAssertNotNil(signature.receiverType)
+            XCTAssertEqual(sema.bindings.exprTypes[operatorExprID], signature.returnType)
+
+            try BuildKIRPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "useUnary", in: module, interner: ctx.interner)
+            let resolvedCall = try XCTUnwrap(body.first { instruction in
+                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                    return false
+                }
+                return symbol == chosenSymbol
+            })
+            guard case let .call(callSymbol, callee, arguments, _, _, _, _) = resolvedCall else {
+                XCTFail("Expected chosen call instruction for useUnary.")
+                return
+            }
+
+            XCTAssertEqual(callSymbol, chosenSymbol)
+            XCTAssertEqual(ctx.interner.resolve(callee), "unaryMinus")
+            XCTAssertEqual(
+                symbolNames(for: arguments, module: module, sema: sema, interner: ctx.interner),
+                ["a"]
+            )
+            XCTAssertFalse(body.contains { instruction in
+                guard case let .binary(op, _, _, _) = instruction else {
+                    return false
+                }
+                return op == .subtract
+            })
         }
     }
 

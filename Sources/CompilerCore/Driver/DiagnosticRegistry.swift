@@ -1,4 +1,3 @@
-// swiftlint:disable file_length type_body_length trailing_comma
 import Foundation
 
 /// Describes a single code action (quick-fix) that an LSP client can offer to the user.
@@ -245,12 +244,6 @@ public enum DiagnosticRegistry {
             summary: "Type mismatch in argument."
         ),
         DiagnosticDescriptor(
-            code: "KSWIFTK-SEMA-0030",
-            pass: "SEMA",
-            defaultSeverity: .error,
-            summary: "Type inference failure."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0031",
             pass: "SEMA",
             defaultSeverity: .error,
@@ -392,6 +385,12 @@ public enum DiagnosticRegistry {
             summary: "Cannot apply postfix operator to operand type."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-TAILREC",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Function marked 'tailrec' but last expression is not a self-recursive call."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-DIAMOND",
             pass: "SEMA",
             defaultSeverity: .error,
@@ -430,6 +429,19 @@ public enum DiagnosticRegistry {
             pass: "SEMA",
             defaultSeverity: .error,
             summary: "Cannot use non-reified type parameter in reified context."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-BOUND",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Type argument does not satisfy upper bound constraint."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-PLATFORM",
+            pass: "SEMA",
+            defaultSeverity: .warning,
+            summary: "Platform-typed expression used without null check; may throw NullPointerException at runtime.",
+            codeActions: [DiagnosticCodeAction(title: "Add null check before use")]
         ),
     ]
 
@@ -565,46 +577,16 @@ public enum DiagnosticRegistry {
 
     static let backendDescriptors: [DiagnosticDescriptor] = [
         DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0001",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C code generation failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-0002",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "C compilation (clang) failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1002",
-            pass: "BACKEND",
-            defaultSeverity: .warning,
-            summary: "LLVM C API backend: non-fatal codegen warning."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1003",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: function codegen failure."
-        ),
-        DiagnosticDescriptor(
-            code: "KSWIFTK-BACKEND-1004",
-            pass: "BACKEND",
-            defaultSeverity: .error,
-            summary: "LLVM C API backend: module verification failure."
-        ),
-        DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1006",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: library load failure."
+            summary: "LLVM backend emission failure."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-BACKEND-1007",
             pass: "BACKEND",
             defaultSeverity: .error,
-            summary: "LLVM C API backend: symbol resolution failure."
+            summary: "LLVM backend bindings unavailable."
         ),
     ]
 
@@ -674,5 +656,3 @@ public enum DiagnosticRegistry {
             + pipelineDescriptors
             + iceDescriptors
 }
-
-// swiftlint:enable file_length type_body_length trailing_comma

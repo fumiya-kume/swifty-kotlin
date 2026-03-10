@@ -15,7 +15,7 @@ enum TypeRefParserCore {
         )
 
         static let expressionInline = Options(
-            allowQualifiedPath: false,
+            allowQualifiedPath: true,
             allowFunctionType: false,
             allowKeywordIdentifiers: true,
             reserveVarianceKeywords: false

@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -16,7 +15,18 @@ extension BuildASTPhase {
 
     func makeClassDecl(from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner, astArena: ASTArena) -> ClassDecl {
         let node = arena.node(nodeID)
+        let primaryConstructorParams = declarationValueParameters(
+            from: nodeID,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
         let members = declarationMemberDecls(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let constructorProperties = primaryConstructorPropertyDecls(
+            from: primaryConstructorParams,
+            classRange: node.range,
+            astArena: astArena
+        )
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let whereClauses = declarationWhereClauses(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let typeParams = applyWhereClauses(rawTypeParams, whereClauses: whereClauses)
@@ -29,20 +39,73 @@ extension BuildASTPhase {
             annotations: annotations,
             isInner: modifiers.contains(.inner),
             typeParams: typeParams,
-            primaryConstructorParams: declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            primaryConstructorParams: primaryConstructorParams,
+            primaryConstructorModifiers: declarationPrimaryConstructorModifiers(from: nodeID, in: arena),
             hasPrimaryConstructorSyntax: declarationHasPrimaryConstructorSyntax(from: nodeID, in: arena),
-            superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            superTypeEntries: declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             enumEntries: declarationEnumEntries(from: nodeID, in: arena, interner: interner),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena),
             classBodyInitOrder: declarationClassBodyInitOrder(from: nodeID, in: arena, interner: interner),
             secondaryConstructors: declarationSecondaryConstructors(from: nodeID, in: arena, interner: interner, astArena: astArena),
             memberFunctions: members.functions,
-            memberProperties: members.properties,
+            memberProperties: constructorProperties + members.properties,
             nestedClasses: members.nestedClasses,
             nestedObjects: members.nestedObjects,
             companionObject: members.companionObject
         )
+    }
+
+    /// Extracts modifiers attached to the primary constructor declaration in a
+    /// class header, e.g. `class Foo private constructor()`.
+    func declarationPrimaryConstructorModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
+        let tokens = collectTokens(from: nodeID, in: arena)
+        var sawClassKeyword = false
+        var sawClassName = false
+        var angleBracketDepth = 0
+        var constructorModifiers: Modifiers = []
+
+        for token in tokens {
+            if !sawClassKeyword {
+                if case .keyword(.class) = token.kind {
+                    sawClassKeyword = true
+                }
+                continue
+            }
+            if !sawClassName {
+                switch token.kind {
+                case .identifier, .backtickedIdentifier:
+                    sawClassName = true
+                default:
+                    break
+                }
+                continue
+            }
+            if token.kind == .symbol(.lessThan) {
+                angleBracketDepth += 1
+                continue
+            }
+            if token.kind == .symbol(.greaterThan) {
+                angleBracketDepth = max(0, angleBracketDepth - 1)
+                continue
+            }
+            if angleBracketDepth > 0 {
+                continue
+            }
+            switch token.kind {
+            case .keyword(.constructor), .softKeyword(.constructor):
+                return constructorModifiers
+            case .symbol(.lParen), .symbol(.colon), .symbol(.lBrace):
+                return []
+            default:
+                break
+            }
+            if let modifier = modifier(from: token) {
+                constructorModifiers.insert(modifier)
+            }
+        }
+
+        return []
     }
 
     /// Detects whether the class header contains explicit constructor parentheses,
@@ -147,9 +210,17 @@ extension BuildASTPhase {
         let modifiers = declarationModifiers(from: nodeID, in: arena)
         let isSuspend = modifiers.contains(.suspend)
         let isInline = modifiers.contains(.inline)
+        let isTailrec = modifiers.contains(.tailrec)
         let functionName = declarationFunctionName(from: nodeID, in: arena, interner: interner)
         let valueParams = declarationValueParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
-        let receiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let explicitReceiverType = declarationReceiverType(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        let contextReceiverTypes = declarationContextReceiverTypes(
+            from: nodeID,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
+        let receiverType = explicitReceiverType ?? contextReceiverTypes.first
         let returnType = declarationReturnType(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let body = declarationBody(from: nodeID, in: arena, interner: interner, astArena: astArena)
         let rawTypeParams = declarationTypeParameters(from: nodeID, in: arena, interner: interner, astArena: astArena)
@@ -167,7 +238,8 @@ extension BuildASTPhase {
             returnType: returnType,
             body: body,
             isSuspend: isSuspend,
-            isInline: isInline
+            isInline: isInline,
+            isTailrec: isTailrec
         )
     }
 
@@ -199,7 +271,7 @@ extension BuildASTPhase {
         let propertyName: InternedString = if receiverType != nil {
             declarationPropertyNameAfterDot(from: nodeID, in: arena, interner: interner)
         } else {
-            declarationName(from: nodeID, in: arena, interner: interner)
+            declarationPropertyName(from: nodeID, in: arena, interner: interner)
         }
         return PropertyDecl(
             range: node.range,
@@ -274,19 +346,67 @@ extension BuildASTPhase {
         interner: StringInterner,
         astArena: ASTArena
     ) -> [ValueParamDecl] {
+        let node = arena.node(nodeID)
         let tokens = collectTokens(from: nodeID, in: arena)
-        // Only look for the opening `(` that occurs before any `{` (class body).
-        // This prevents picking up `(` from member function declarations like
-        // `class F { operator fun invoke(x: Int) }` as constructor parameters.
-        guard let startIndex = tokens.firstIndex(where: { token in
-            if case .symbol(.lParen) = token.kind {
-                return true
+        let startIndex: Int?
+        switch node.kind {
+        case .classDecl:
+            var pastClassKeyword = false
+            var pastDeclarationName = false
+            var angleBracketDepth = 0
+            var foundIndex: Int?
+            for (index, token) in tokens.enumerated() {
+                if !pastClassKeyword {
+                    if case .keyword(.class) = token.kind {
+                        pastClassKeyword = true
+                    }
+                    continue
+                }
+                if !pastDeclarationName {
+                    if internedIdentifier(from: token, interner: interner) != nil {
+                        pastDeclarationName = true
+                    } else {
+                        continue
+                    }
+                    continue
+                }
+                if token.kind == .symbol(.lessThan) {
+                    angleBracketDepth += 1
+                    continue
+                }
+                if token.kind == .symbol(.greaterThan) {
+                    angleBracketDepth = max(0, angleBracketDepth - 1)
+                    continue
+                }
+                if angleBracketDepth > 0 {
+                    continue
+                }
+                if token.kind == .symbol(.lParen) {
+                    foundIndex = index
+                    break
+                }
+                if token.kind == .symbol(.colon) || token.kind == .symbol(.lBrace) {
+                    break
+                }
             }
-            if case .symbol(.lBrace) = token.kind {
-                return true
-            }
-            return false
-        }), case .symbol(.lParen) = tokens[startIndex].kind else {
+            startIndex = foundIndex
+        default:
+            // Only look for the opening `(` that occurs before any `{` (class body).
+            // This prevents picking up `(` from member function declarations like
+            // `class F { operator fun invoke(x: Int) }` as constructor parameters.
+            startIndex = tokens.firstIndex(where: { token in
+                if case .symbol(.lParen) = token.kind {
+                    return true
+                }
+                if case .symbol(.lBrace) = token.kind {
+                    return true
+                }
+                return false
+            })
+        }
+        guard let startIndex,
+              case .symbol(.lParen) = tokens[startIndex].kind
+        else {
             return []
         }
 
@@ -364,7 +484,11 @@ extension BuildASTPhase {
         guard let name = internedIdentifier(from: nameToken, interner: interner) else {
             return
         }
-        if case let .keyword(keyword) = nameToken.kind, isLeadingDeclarationKeyword(keyword) {
+        if case let .keyword(keyword) = nameToken.kind,
+           isLeadingDeclarationKeyword(keyword),
+           keyword != .value,
+           keyword != .data
+        {
             return
         }
 
@@ -382,6 +506,8 @@ extension BuildASTPhase {
             }
             return false
         })
+        let isValProperty = withoutDefault.contains(where: { $0.kind == .keyword(.val) })
+        let isVarProperty = withoutDefault.contains(where: { $0.kind == .keyword(.var) })
         let defaultValueExpr: ExprID?
         if let defaultTokens = split.defaultTokens?
             .filter({ $0.kind != .symbol(.semicolon) }),
@@ -395,9 +521,32 @@ extension BuildASTPhase {
         parameters.append(ValueParamDecl(
             name: name,
             type: typeRef,
+            isProperty: isValProperty || isVarProperty,
+            isMutableProperty: isVarProperty,
             hasDefaultValue: hasDefaultValue,
             isVararg: isVararg,
             defaultValue: defaultValueExpr
         ))
+    }
+
+    private func primaryConstructorPropertyDecls(
+        from params: [ValueParamDecl],
+        classRange: SourceRange,
+        astArena: ASTArena
+    ) -> [DeclID] {
+        params.compactMap { param in
+            guard param.isProperty else {
+                return nil
+            }
+            let property = PropertyDecl(
+                range: classRange,
+                name: param.name,
+                modifiers: [],
+                type: param.type,
+                isVar: param.isMutableProperty,
+                isSynthesizedPrimaryConstructorProperty: true
+            )
+            return astArena.appendDecl(.propertyDecl(property))
+        }
     }
 }

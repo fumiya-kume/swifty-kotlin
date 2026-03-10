@@ -55,6 +55,44 @@ final class DelegateStorageSymbolTableTests: XCTestCase {
         XCTAssertEqual(symbols.delegateStorageSymbol(for: property), storage)
         XCTAssertEqual(symbols.propertyType(for: property), intType)
     }
+
+    func testMultipleDelegateStorageSymbolsAreIndependent() {
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let propA = symbols.define(
+            kind: .property,
+            name: interner.intern("a"),
+            fqName: [interner.intern("a")],
+            declSite: nil,
+            visibility: .public
+        )
+        let propB = symbols.define(
+            kind: .property,
+            name: interner.intern("b"),
+            fqName: [interner.intern("b")],
+            declSite: nil,
+            visibility: .public
+        )
+        let storageA = symbols.define(
+            kind: .field,
+            name: interner.intern("$delegate_a"),
+            fqName: [interner.intern("$delegate_a")],
+            declSite: nil,
+            visibility: .private
+        )
+        let storageB = symbols.define(
+            kind: .field,
+            name: interner.intern("$delegate_b"),
+            fqName: [interner.intern("$delegate_b")],
+            declSite: nil,
+            visibility: .private
+        )
+        symbols.setDelegateStorageSymbol(storageA, for: propA)
+        symbols.setDelegateStorageSymbol(storageB, for: propB)
+        XCTAssertEqual(symbols.delegateStorageSymbol(for: propA), storageA)
+        XCTAssertEqual(symbols.delegateStorageSymbol(for: propB), storageB)
+        XCTAssertNotEqual(symbols.delegateStorageSymbol(for: propA), storageB)
+    }
 }
 
 // MARK: - Sema Delegate Type Checking Tests
@@ -178,6 +216,75 @@ final class SemaDelegateTypeCheckTests: XCTestCase {
         }
     }
 
+    func testMutableDelegatedPropertyCreatesStorageSymbol() throws {
+        let source = """
+        class MyDelegate {
+            fun getValue(thisRef: Any?, property: Any?): Int = 0
+            fun setValue(thisRef: Any?, property: Any?, value: Int) {}
+        }
+        class Foo {
+            var x: Int by MyDelegate()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let fooFQ = [interner.intern("Foo")]
+            let fooChildren = sema.symbols.children(ofFQName: fooFQ)
+
+            let delegateStorageSymbols = fooChildren.filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                return interner.resolve(sym.name) == "$delegate_x"
+            }
+            XCTAssertFalse(delegateStorageSymbols.isEmpty, "Expected $delegate_x storage symbol for var delegate")
+
+            if let storageSymID = delegateStorageSymbols.first,
+               let storageSym = sema.symbols.symbol(storageSymID)
+            {
+                XCTAssertEqual(storageSym.kind, .field)
+                XCTAssertEqual(storageSym.visibility, .private)
+            }
+        }
+    }
+
+    func testMultipleDelegatedPropertiesCreateSeparateStorageSymbols() throws {
+        let source = """
+        class MyDelegate {
+            fun getValue(thisRef: Any?, property: Any?): Int = 42
+        }
+        class Foo {
+            val x: Int by MyDelegate()
+            val y: Int by MyDelegate()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+
+            let fooFQ = [interner.intern("Foo")]
+            let fooChildren = sema.symbols.children(ofFQName: fooFQ)
+
+            let delegateStorageSymbols = fooChildren.filter { symbolID in
+                guard let sym = sema.symbols.symbol(symbolID) else { return false }
+                return interner.resolve(sym.name).hasPrefix("$delegate_")
+            }
+            XCTAssertEqual(delegateStorageSymbols.count, 2, "Expected two separate delegate storage symbols for two delegated properties")
+
+            let storageNames = delegateStorageSymbols.compactMap { id in
+                sema.symbols.symbol(id).map { interner.resolve($0.name) }
+            }
+            XCTAssertTrue(storageNames.contains("$delegate_x"), "Expected $delegate_x storage symbol")
+            XCTAssertTrue(storageNames.contains("$delegate_y"), "Expected $delegate_y storage symbol")
+        }
+    }
+
     func testDelegatedPropertyRecordsDelegateTypeOnSyntheticSymbol() throws {
         let source = """
         class MyDelegate {
@@ -241,7 +348,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
             XCTAssertFalse(getterFunctions.isEmpty, "Expected synthesized getter with getValue call")
 
-            // Verify the getValue call has exactly 2 arguments (thisRef, kProperty).
+            // Custom delegates prepend the delegate handle before thisRef and kProperty.
             if let getter = getterFunctions.first {
                 let getValueCalls = getter.body.compactMap { instruction -> [KIRExprID]? in
                     guard case let .call(_, callee, args, _, _, _, _) = instruction,
@@ -250,7 +357,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
                 }
                 XCTAssertFalse(getValueCalls.isEmpty)
                 if let args = getValueCalls.first {
-                    XCTAssertEqual(args.count, 2, "getValue should have 2 arguments: thisRef and kProperty")
+                    XCTAssertEqual(args.count, 3, "getValue should have 3 arguments: delegate, thisRef, and kProperty")
                 }
             }
         }
@@ -283,7 +390,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
             XCTAssertFalse(setterFunctions.isEmpty, "Expected synthesized setter with setValue call")
 
-            // Verify the setValue call has exactly 3 arguments (thisRef, kProperty, value).
+            // Custom delegates prepend the delegate handle before thisRef, kProperty, and value.
             if let setter = setterFunctions.first {
                 let setValueCalls = setter.body.compactMap { instruction -> [KIRExprID]? in
                     guard case let .call(_, callee, args, _, _, _, _) = instruction,
@@ -292,7 +399,7 @@ final class KIRDelegateAccessorTests: XCTestCase {
                 }
                 XCTAssertFalse(setValueCalls.isEmpty)
                 if let args = setValueCalls.first {
-                    XCTAssertEqual(args.count, 3, "setValue should have 3 arguments: thisRef, kProperty, value")
+                    XCTAssertEqual(args.count, 4, "setValue should have 4 arguments: delegate, thisRef, kProperty, and value")
                 }
             }
         }
@@ -368,9 +475,10 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
             let module = try XCTUnwrap(ctx.kir)
             let interner = ctx.interner
-            let sema = try XCTUnwrap(ctx.sema)
+            _ = try XCTUnwrap(ctx.sema)
 
-            // Find the getter and check that getValue's symbol is the delegate storage.
+            // Find the getter and check that getValue resolves as a direct member call,
+            // rather than using the delegate storage field as the callee symbol.
             let getterFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
                 guard case let .function(fn) = decl else { return nil }
                 let name = interner.resolve(fn.name)
@@ -380,22 +488,12 @@ final class KIRDelegateAccessorTests: XCTestCase {
             }
 
             if let getter = getterFunctions.first {
-                let getValueCallSymbols = getter.body.compactMap { instruction -> SymbolID? in
-                    guard case let .call(sym, callee, _, _, _, _, _) = instruction,
-                          interner.resolve(callee) == "getValue" else { return nil }
-                    return sym
+                let getValueCallCount = getter.body.reduce(into: 0) { count, instruction in
+                    guard case let .call(_, callee, _, _, _, _, _) = instruction,
+                          interner.resolve(callee) == "getValue" else { return }
+                    count += 1
                 }
-                XCTAssertFalse(getValueCallSymbols.isEmpty)
-                if let sym = getValueCallSymbols.first {
-                    // The symbol should be a delegate storage field ($delegate_x).
-                    let symInfo = sema.symbols.symbol(sym)
-                    XCTAssertNotNil(symInfo)
-                    if let symInfo {
-                        XCTAssertEqual(symInfo.kind, .field)
-                        XCTAssertTrue(interner.resolve(symInfo.name).hasPrefix("$delegate_"),
-                                      "getValue call symbol should be a $delegate_ field")
-                    }
-                }
+                XCTAssertGreaterThan(getValueCallCount, 0, "Expected synthesized getter to contain a direct getValue call")
             }
         }
     }
@@ -403,4 +501,62 @@ final class KIRDelegateAccessorTests: XCTestCase {
 
 // MARK: - Constructor Delegate Initialization Tests
 
-final class ConstructorDelegateInitTests: XCTestCase {}
+final class ConstructorDelegateInitTests: XCTestCase {
+    func testConstructorEmitsInitializerForDelegateStorage() throws {
+        let source = """
+        class MyDelegate {
+            fun getValue(thisRef: Any?, property: Any?): Int = 42
+        }
+        class Foo {
+            val x: Int by MyDelegate()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let interner = ctx.interner
+
+            // In KIR, constructors are named after the class (e.g. "Foo"), not "<init>".
+            let constructors = module.arena.declarations.compactMap { decl -> KIRFunction? in
+                guard case let .function(fn) = decl else { return nil }
+                guard interner.resolve(fn.name) == "Foo" else { return nil }
+                return fn
+            }
+            XCTAssertFalse(constructors.isEmpty, "Expected a Foo constructor function in KIR")
+
+            let anyConstructorCallsMyDelegate = constructors.contains { fn in
+                extractCallees(from: fn.body, interner: interner).contains("MyDelegate")
+            }
+            XCTAssertTrue(anyConstructorCallsMyDelegate, "Expected Foo constructor to initialize delegate storage with MyDelegate()")
+        }
+    }
+
+    func testMultipleDelegatedPropertiesEmitSeparateGlobalsInKIR() throws {
+        let source = """
+        class MyDelegate {
+            fun getValue(thisRef: Any?, property: Any?): Int = 42
+        }
+        class Foo {
+            val x: Int by MyDelegate()
+            val y: Int by MyDelegate()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let interner = ctx.interner
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let delegateGlobals = module.arena.declarations.compactMap { decl -> KIRGlobal? in
+                guard case let .global(g) = decl else { return nil }
+                guard let sym = sema.symbols.symbol(g.symbol) else { return nil }
+                return interner.resolve(sym.name).hasPrefix("$delegate_") ? g : nil
+            }
+            XCTAssertEqual(delegateGlobals.count, 2, "Expected two separate delegate globals for two delegated properties")
+        }
+    }
+}

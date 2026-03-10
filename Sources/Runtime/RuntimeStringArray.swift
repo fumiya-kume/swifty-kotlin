@@ -20,6 +20,12 @@ public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))
 }
 
+@_cdecl("kk_abort_unreachable")
+public func kk_abort_unreachable(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    _ = outThrown
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: reached unreachable code")
+}
+
 let runtimePanicDiagnosticCode = "KSWIFTK-RUNTIME-0001"
 
 private enum RuntimeTypeTokenEncoding {
@@ -222,6 +228,11 @@ public func kk_object_new(_ length: Int, _ classId: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
+@_cdecl("kk_object_type_id")
+public func kk_object_type_id(_ objectRaw: Int) -> Int {
+    Int(runtimeObjectTypeID(rawValue: objectRaw) ?? 0)
+}
+
 /// Returns the simple name of the type encoded in the given type token as a
 /// runtime string pointer.  For builtin types the name is derived from the
 /// token base; for nominal types the compiler supplies a `nameHint` string
@@ -283,6 +294,30 @@ public func kk_type_register_iface(_ childTypeId: Int, _ ifaceTypeId: Int) -> In
     return 0
 }
 
+@_cdecl("kk_object_register_itable_method")
+public func kk_object_register_itable_method(
+    _ objectRaw: Int,
+    _ ifaceSlot: Int,
+    _ methodSlot: Int,
+    _ functionRaw: Int
+) -> Int {
+    guard ifaceSlot >= 0,
+          methodSlot >= 0,
+          functionRaw != 0,
+          let objectPtr = UnsafeMutableRawPointer(bitPattern: objectRaw)
+    else {
+        return 0
+    }
+    let objectKey = UInt(bitPattern: objectPtr)
+    let dispatchKey = (UInt64(UInt32(ifaceSlot)) << 32) | UInt64(UInt32(methodSlot))
+    runtimeStorage.withLock { state in
+        var methods = state.objectItableMethods[objectKey] ?? [:]
+        methods[dispatchKey] = functionRaw
+        state.objectItableMethods[objectKey] = methods
+    }
+    return 0
+}
+
 @_cdecl("kk_array_get")
 public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
@@ -293,6 +328,16 @@ public func kk_array_get(_ arrayRaw: Int, _ index: Int, _ outThrown: UnsafeMutab
     guard array.elements.indices.contains(index) else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "Array index \(index) out of bounds for length \(array.elements.count).")
         return 0
+    }
+    return array.elements[index]
+}
+
+@_cdecl("kk_array_get_inbounds")
+public func kk_array_get_inbounds(_ arrayRaw: Int, _ index: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw),
+          array.elements.indices.contains(index)
+    else {
+        fatalError("kk_array_get_inbounds precondition failed")
     }
     return array.elements[index]
 }
@@ -385,9 +430,144 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print(stringBox.value)
         return
     }
+    if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
+        Swift.print(doubleBox.value)
+        return
+    }
+    if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
+        Swift.print(floatBox.value)
+        return
+    }
+    if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
+        Swift.print(longBox.value)
+        return
+    }
     if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
         Swift.print("Throwable(\(throwable.message))")
         return
     }
+    if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
+        if let scalar = UnicodeScalar(charBox.value) {
+            Swift.print(Character(scalar))
+        } else {
+            Swift.print("�")
+        }
+        return
+    }
+    if let listBox = tryCast(raw, to: RuntimeListBox.self) {
+        let rendered = listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
+    if let setBox = tryCast(raw, to: RuntimeSetBox.self) {
+        let rendered = setBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
+    if let mapBox = tryCast(raw, to: RuntimeMapBox.self) {
+        let rendered = zip(mapBox.keys, mapBox.values).map { key, value in
+            "\(runtimeRenderAnyForPrint(key))=\(runtimeRenderAnyForPrint(value))"
+        }.joined(separator: ", ")
+        Swift.print("{\(rendered)}")
+        return
+    }
+    if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
+        let first = runtimeRenderAnyForPrint(pairBox.first)
+        let second = runtimeRenderAnyForPrint(pairBox.second)
+        Swift.print("(\(first), \(second))")
+        return
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
+        let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
+        Swift.print("[\(rendered)]")
+        return
+    }
     Swift.print("<object \(raw)>")
+}
+
+private func runtimeRenderAnyForPrint(_ value: Int) -> String {
+    if value == runtimeNullSentinelInt {
+        return "null"
+    }
+    guard let raw = UnsafeMutableRawPointer(bitPattern: value) else {
+        return String(value)
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: raw))
+    }
+    guard isObjectPointer else {
+        return String(value)
+    }
+    if let boolBox = tryCast(raw, to: RuntimeBoolBox.self) {
+        return boolBox.value ? "true" : "false"
+    }
+    if let intBox = tryCast(raw, to: RuntimeIntBox.self) {
+        return String(intBox.value)
+    }
+    if let stringBox = tryCast(raw, to: RuntimeStringBox.self) {
+        return stringBox.value
+    }
+    if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
+        return String(doubleBox.value)
+    }
+    if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
+        return String(floatBox.value)
+    }
+    if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
+        return String(longBox.value)
+    }
+    if let charBox = tryCast(raw, to: RuntimeCharBox.self) {
+        if let scalar = UnicodeScalar(charBox.value) {
+            return String(Character(scalar))
+        }
+        return "�"
+    }
+    if let throwable = tryCast(raw, to: RuntimeThrowableBox.self) {
+        return "Throwable(\(throwable.message))"
+    }
+    if let listBox = tryCast(raw, to: RuntimeListBox.self) {
+        return "[\(listBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    if let setBox = tryCast(raw, to: RuntimeSetBox.self) {
+        return "[\(setBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    if let mapBox = tryCast(raw, to: RuntimeMapBox.self) {
+        let rendered = zip(mapBox.keys, mapBox.values).map { key, value in
+            "\(runtimeRenderAnyForPrint(key))=\(runtimeRenderAnyForPrint(value))"
+        }.joined(separator: ", ")
+        return "{\(rendered)}"
+    }
+    if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
+        let first = runtimeRenderAnyForPrint(pairBox.first)
+        let second = runtimeRenderAnyForPrint(pairBox.second)
+        return "(\(first), \(second))"
+    }
+    if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
+        return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    return "<object \(raw)>"
+}
+
+// MARK: - String nullable receiver helpers
+
+@_cdecl("kk_string_isNullOrEmpty")
+public func kk_string_isNullOrEmpty(_ strRaw: Int) -> Int {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return kk_box_bool(1)
+    }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(str.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNullOrBlank")
+public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
+    guard let rawPointer = UnsafeMutableRawPointer(bitPattern: strRaw) else {
+        return kk_box_bool(1)
+    }
+    guard let str = extractString(from: rawPointer) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
 }

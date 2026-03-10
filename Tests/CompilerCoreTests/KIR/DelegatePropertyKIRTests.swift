@@ -1,4 +1,3 @@
-// swiftlint:disable type_body_length
 @testable import CompilerCore
 import Foundation
 import XCTest
@@ -125,10 +124,10 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: mainBody, interner: ctx.interner)
 
-            XCTAssertTrue(callees.contains("kk_custom_delegate_create"),
-                          "Expected kk_custom_delegate_create in main body, got: \(callees)")
-            XCTAssertTrue(callees.contains("kk_custom_delegate_get_value"),
-                          "Expected kk_custom_delegate_get_value in main body, got: \(callees)")
+            XCTAssertTrue(callees.contains("myCustomDelegate"),
+                          "Expected delegate constructor/factory call in main body, got: \(callees)")
+            XCTAssertTrue(callees.contains("get"),
+                          "Expected synthesized property getter call in main body, got: \(callees)")
         }
     }
 
@@ -145,10 +144,10 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let throwFlags = extractThrowFlags(from: mainBody, interner: ctx.interner)
 
-            XCTAssertEqual(throwFlags["kk_custom_delegate_create"]?.allSatisfy { $0 == false }, true,
-                           "kk_custom_delegate_create should be non-throwing")
-            XCTAssertEqual(throwFlags["kk_custom_delegate_get_value"]?.allSatisfy { $0 == false }, true,
-                           "kk_custom_delegate_get_value should be non-throwing")
+            XCTAssertEqual(throwFlags["myCustomDelegate"]?.allSatisfy { $0 == false }, true,
+                           "delegate constructor/factory should be non-throwing")
+            XCTAssertEqual(throwFlags["get"]?.allSatisfy { $0 == false }, true,
+                           "synthesized property getter should be non-throwing")
         }
     }
 
@@ -193,9 +192,11 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: mainBody, interner: ctx.interner)
 
-            // After lowering, custom delegate access should use kk_custom_delegate_get_value.
-            XCTAssertTrue(callees.contains("kk_custom_delegate_get_value"),
-                          "Expected kk_custom_delegate_get_value after lowering, got: \(callees)")
+            // After lowering, custom delegate access should stay on the synthesized accessor path.
+            XCTAssertTrue(callees.contains("get"),
+                          "Expected synthesized property getter after lowering, got: \(callees)")
+            XCTAssertFalse(callees.contains("kk_property_access"),
+                           "kk_property_access should be rewritten after PropertyLowering")
         }
     }
 
@@ -285,8 +286,8 @@ final class DelegatePropertyKIRTests: XCTestCase {
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
             let callees = extractCallees(from: mainBody, interner: ctx.interner)
 
-            // Unknown delegate should produce kk_custom_delegate_create.
-            XCTAssertTrue(callees.contains("kk_custom_delegate_create"),
+            // Unknown delegate should stay on the custom delegate path via its own constructor/factory.
+            XCTAssertTrue(callees.contains("someUnknownDelegate"),
                           "unknown delegate should be detected as custom kind, got: \(callees)")
             XCTAssertFalse(callees.contains("kk_lazy_create"),
                            "unknown delegate should NOT produce lazy create, got: \(callees)")
@@ -375,5 +376,3 @@ final class DelegatePropertyKIRTests: XCTestCase {
         }
     }
 }
-
-// swiftlint:enable type_body_length

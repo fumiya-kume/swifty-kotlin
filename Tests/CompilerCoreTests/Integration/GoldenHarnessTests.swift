@@ -24,6 +24,21 @@ final class GoldenHarnessTests: XCTestCase {
         }
     }
 
+    func testInvokeOperatorIsolated() throws {
+        let sourcePath = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent() // Integration/
+            .deletingLastPathComponent() // CompilerCoreTests/
+            .appendingPathComponent("GoldenCases", isDirectory: true)
+            .appendingPathComponent("Sema", isDirectory: true)
+            .appendingPathComponent("invoke_operator.kt")
+            .path
+
+        let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenSema", emit: .kirDump)
+        try runFrontend(ctx)
+        try SemaPhase().run(ctx)
+        print("RAN ISOLATED TEST SUCCESSFULLY")
+    }
+
     func testParserGolden() throws {
         try runGoldenSuite(.parser) { sourcePath in
             let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenParser", emit: .kirDump)
@@ -66,15 +81,29 @@ final class GoldenHarnessTests: XCTestCase {
                     extra.append("type=\(sema.types.renderType(propertyType))")
                 }
                 let extras = extra.isEmpty ? "" : " " + extra.joined(separator: " ")
+                let fq = renderFQName(symbol.fqName, interner: ctx.interner)
+                let flags = renderSymbolFlags(symbol.flags)
                 lines.append(
-                    "symbol s\(symbol.id.rawValue) kind=\(symbol.kind) fq=\(renderFQName(symbol.fqName, interner: ctx.interner)) vis=\(symbol.visibility) flags=\(renderSymbolFlags(symbol.flags))\(extras)"
+                    "symbol s\(symbol.id.rawValue) kind=\(symbol.kind) fq=\(fq)"
+                        + " vis=\(symbol.visibility) flags=\(flags)\(extras)"
                 )
             }
 
             for file in ast.sortedFiles {
-                lines.append(
-                    "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
-                )
+                var fileLine = "file f\(file.fileID.rawValue) package=\(renderFQName(file.packageFQName, interner: ctx.interner))"
+                if !file.annotations.isEmpty {
+                    let renderedAnnotations = file.annotations.map { annotation in
+                        let targetPrefix = annotation.useSiteTarget.map { "@\($0):" } ?? "@"
+                        let arguments = if annotation.arguments.isEmpty {
+                            ""
+                        } else {
+                            "(\(annotation.arguments.map(renderAnnotationArgument).joined(separator: ",")))"
+                        }
+                        return "\(targetPrefix)\(annotation.name)\(arguments)"
+                    }.joined(separator: ",")
+                    fileLine += " annotations=[\(renderedAnnotations)]"
+                }
+                lines.append(fileLine)
                 for declID in file.topLevelDecls {
                     guard let decl = ast.arena.decl(declID) else {
                         continue
@@ -276,5 +305,21 @@ final class GoldenHarnessTests: XCTestCase {
             return "s\(symbol.rawValue)"
         }
         return "_"
+    }
+
+    private func renderAnnotationArgument(_ argument: String) -> String {
+        guard argument.count >= 2,
+              argument.first == "\"",
+              argument.last == "\""
+        else {
+            return argument
+        }
+        let innerStart = argument.index(after: argument.startIndex)
+        let innerEnd = argument.index(before: argument.endIndex)
+        let inner = String(argument[innerStart ..< innerEnd])
+        if inner.first == "\"", inner.last == "\"" {
+            return inner
+        }
+        return argument
     }
 }

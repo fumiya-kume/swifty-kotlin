@@ -1,4 +1,3 @@
-// swiftlint:disable file_length type_body_length
 @testable import CompilerCore
 import XCTest
 
@@ -372,7 +371,7 @@ final class DiagnosticEngineTests: XCTestCase {
             "\"line\"", "\"character\"",
             "\"severity\"", "\"severityLabel\"",
             "\"code\"", "\"source\"", "\"message\"",
-            "\"codeActions\"", // swiftlint:disable:this trailing_comma
+            "\"codeActions\"",
         ]
         for field in requiredFields {
             XCTAssertTrue(json.contains(field), "JSON should contain field: \(field)")
@@ -436,5 +435,3 @@ final class DiagnosticEngineTests: XCTestCase {
         XCTAssertEqual(diag.codeActions[0].title, "Fix it")
     }
 }
-
-// swiftlint:enable file_length type_body_length

@@ -1,74 +1,70 @@
 import Foundation
 
 extension BuildASTPhase {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    private static let keywordModifierMap: [Keyword: Modifiers.Element] = [
+        .public: .public, .private: .private, .internal: .internal, .protected: .protected,
+        .final: .final, .open: .open, .abstract: .abstract, .sealed: .sealed,
+        .data: .data, .annotation: .annotationClass, .inline: .inline, .suspend: .suspend,
+        .tailrec: .tailrec, .operator: .operator, .infix: .infix,
+        .crossinline: .crossinline, .noinline: .noinline, .vararg: .vararg,
+        .external: .external, .expect: .expect, .actual: .actual, .value: .value,
+        .enum: .enumModifier, .inner: .inner, .companion: .companion,
+        .const: .const, .override: .override, .fun: .funModifier, .lateinit: .lateinit,
+    ]
+
+    func modifier(from token: Token) -> Modifiers.Element? {
+        guard case let .keyword(keyword) = token.kind else {
+            return nil
+        }
+        return Self.keywordModifierMap[keyword]
+    }
+
     func declarationModifiers(from nodeID: NodeID, in arena: SyntaxArena) -> Modifiers {
         var modifiers: Modifiers = []
-        for child in arena.children(of: nodeID) {
+        let children = arena.children(of: nodeID)
+        var index = children.startIndex
+        while index < children.endIndex {
+            let child = children[index]
             if case let .token(tokenID) = child,
                let token = resolveToken(tokenID, in: arena)
             {
-                switch token.kind {
-                case .keyword(.public):
-                    modifiers.insert(.public)
-                case .keyword(.private):
-                    modifiers.insert(.private)
-                case .keyword(.internal):
-                    modifiers.insert(.internal)
-                case .keyword(.protected):
-                    modifiers.insert(.protected)
-                case .keyword(.final):
-                    modifiers.insert(.final)
-                case .keyword(.open):
-                    modifiers.insert(.open)
-                case .keyword(.abstract):
-                    modifiers.insert(.abstract)
-                case .keyword(.sealed):
-                    modifiers.insert(.sealed)
-                case .keyword(.data):
-                    modifiers.insert(.data)
-                case .keyword(.annotation):
-                    modifiers.insert(.annotationClass)
-                case .keyword(.inline):
-                    modifiers.insert(.inline)
-                case .keyword(.suspend):
-                    modifiers.insert(.suspend)
-                case .keyword(.tailrec):
-                    modifiers.insert(.tailrec)
-                case .keyword(.operator):
-                    modifiers.insert(.operator)
-                case .keyword(.infix):
-                    modifiers.insert(.infix)
-                case .keyword(.crossinline):
-                    modifiers.insert(.crossinline)
-                case .keyword(.noinline):
-                    modifiers.insert(.noinline)
-                case .keyword(.vararg):
-                    modifiers.insert(.vararg)
-                case .keyword(.external):
-                    modifiers.insert(.external)
-                case .keyword(.expect):
-                    modifiers.insert(.expect)
-                case .keyword(.actual):
-                    modifiers.insert(.actual)
-                case .keyword(.value):
-                    modifiers.insert(.value)
-                case .keyword(.enum):
-                    modifiers.insert(.enumModifier)
-                case .keyword(.inner):
-                    modifiers.insert(.inner)
-                case .keyword(.companion):
-                    modifiers.insert(.companion)
-                case .keyword(.const):
-                    modifiers.insert(.const)
-                case .keyword(.override):
-                    modifiers.insert(.override)
-                case .keyword(.fun):
-                    modifiers.insert(.funModifier)
-                default:
+                if case let .keyword(keyword) = token.kind {
+                    switch keyword {
+                    case .fun:
+                        let nextKeyword: Keyword? = if children.index(after: index) < children.endIndex {
+                            children[children.index(after: index)...].compactMap { child -> Keyword? in
+                                guard case let .token(nextTokenID) = child,
+                                      let nextToken = resolveToken(nextTokenID, in: arena),
+                                      case let .keyword(nextKeyword) = nextToken.kind
+                                else {
+                                    return nil
+                                }
+                                return nextKeyword
+                            }.first
+                        } else {
+                            nil
+                        }
+                        if nextKeyword == .interface {
+                            modifiers.insert(.funModifier)
+                            index = children.index(after: index)
+                            continue
+                        }
+                        return modifiers
+                    case .class, .object, .interface, .val, .var, .typealias:
+                        return modifiers
+                    default:
+                        break
+                    }
+                }
+                if let modifier = modifier(from: token) {
+                    modifiers.insert(modifier)
+                    index = children.index(after: index)
                     continue
                 }
+                index = children.index(after: index)
+                continue
             }
+            index = children.index(after: index)
         }
         return modifiers
     }

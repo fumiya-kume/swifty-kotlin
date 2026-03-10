@@ -112,39 +112,34 @@ private func lazyCountingInit() -> Int {
     return 99
 }
 
-private let lazyCountingInitCConv: @convention(c) () -> Int = { lazyCountingInit() }
+private let lazyCountingInitCConv: KKThunkEntryPoint = { _ in lazyCountingInit() }
 
-private let lazySimple42: @convention(c) () -> Int = { 42 }
-private let lazySimple77: @convention(c) () -> Int = { 77 }
+private let lazySimple42: KKThunkEntryPoint = { _ in 42 }
+private let lazySimple77: KKThunkEntryPoint = { _ in 77 }
 
-private let observableNoopCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in }
-private let observableCaptureCallback: @convention(c) (Int, Int, Int) -> Void = { _, old, new in
+private let observableNoopCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in 0 }
+private let observableCaptureCallback: KKDelegateObserverEntryPoint = { _, old, new, _ in
     gDelegateState.setObservableCaptured(old: old, new: new)
+    return 0
 }
 
-private let observableOrderCallback: @convention(c) (Int, Int, Int) -> Void = { _, _, _ in
+private let observableOrderCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in
     let handle = gDelegateState.observableHandleSnapshot()
     gDelegateState.setObservableValueInsideCallback(kk_observable_get_value(handle))
+    return 0
 }
 
-private let vetoableAcceptCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 1 }
-private let vetoableRejectCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in 0 }
-private let vetoableOrderCallback: @convention(c) (Int, Int, Int) -> Int = { _, _, _ in
+private let vetoableAcceptCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in 1 }
+private let vetoableRejectCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in 0 }
+private let vetoableOrderCallback: KKDelegateObserverEntryPoint = { _, _, _, _ in
     let handle = gDelegateState.vetoableHandleSnapshot()
     gDelegateState.setVetoableValueInsideCallback(kk_vetoable_get_value(handle))
     return 1
 }
 
-final class RuntimeDelegateTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
+final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
+    override func resetIsolatedRuntimeTestState() {
         gDelegateState.reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
     }
 
     // MARK: - Lazy Delegate Tests

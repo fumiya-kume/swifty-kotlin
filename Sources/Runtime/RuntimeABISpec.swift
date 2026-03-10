@@ -1,4 +1,4 @@
-// swiftlint:disable file_length type_body_length trailing_comma
+// swiftlint:disable file_length type_body_length
 public enum RuntimeABICType: String, Equatable, Sendable {
     case void
     case uint32 = "uint32_t"
@@ -67,7 +67,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 }
 
 public enum RuntimeABISpec {
-    public static let specVersion = "J19"
+    public static let specVersion = "J21"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -121,6 +121,14 @@ public enum RuntimeABISpec {
             returnType: .noreturn,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_abort_unreachable",
+            parameters: [
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
@@ -152,9 +160,292 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_compare_any",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_length",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trim",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_lowercase",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_uppercase",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trimIndent",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trimMargin_default",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_trimMargin",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "marginPrefixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_format",
+            parameters: [
+                RuntimeABIParameter(name: "formatRaw", type: .intptr),
+                RuntimeABIParameter(name: "argsArrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_isNullOrEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_isNullOrBlank",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_startsWith",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "prefixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_endsWith",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "suffixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_contains_str",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replace",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "oldRaw", type: .intptr),
+                RuntimeABIParameter(name: "newRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_substring",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "startRaw", type: .intptr),
+                RuntimeABIParameter(name: "endRaw", type: .intptr),
+                RuntimeABIParameter(name: "hasEndRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_split",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "delimRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toInt",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toIntOrNull",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toDouble",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toDoubleOrNull",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_indexOf",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_lastIndexOf",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_padStart",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "lengthRaw", type: .intptr),
+                RuntimeABIParameter(name: "padCharRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_padEnd",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "lengthRaw", type: .intptr),
+                RuntimeABIParameter(name: "padCharRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_repeat",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "countRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toList",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toCharArray",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_take",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "nRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_drop",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "nRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_takeLast",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "nRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_dropLast",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "nRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -166,6 +457,14 @@ public enum RuntimeABISpec {
             name: "kk_println_any",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
+            ],
+            returnType: .void,
+            section: "Println"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_println_bool",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .void,
             section: "Println"
@@ -426,7 +725,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "tag", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -437,6 +736,22 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
                 RuntimeABIParameter(name: "collectorFnPtr", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_retain",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_release",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -628,6 +943,24 @@ public enum RuntimeABISpec {
             section: "Boxing"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_lateinit_is_initialized",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_lateinit_get_or_throw",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "propertyName", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_unbox_int",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .intptr),
@@ -637,6 +970,70 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_unbox_bool",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_double",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_box_char",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_long",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_float",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_double",
+            parameters: [
+                RuntimeABIParameter(name: "obj", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Boxing"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_unbox_char",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .intptr),
             ],
@@ -664,11 +1061,28 @@ public enum RuntimeABISpec {
             section: "Array"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_object_type_id",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_array_get",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Array"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_get_inbounds",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
             ],
             returnType: .intptr,
             section: "Array"
@@ -710,6 +1124,17 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "childTypeId", type: .intptr),
                 RuntimeABIParameter(name: "ifaceTypeId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "TypeCheck"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_object_register_itable_method",
+            parameters: [
+                RuntimeABIParameter(name: "objectRaw", type: .intptr),
+                RuntimeABIParameter(name: "ifaceSlot", type: .intptr),
+                RuntimeABIParameter(name: "methodSlot", type: .intptr),
+                RuntimeABIParameter(name: "functionRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"
@@ -893,6 +1318,37 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Delegate"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_create",
+            parameters: [
+                RuntimeABIParameter(name: "delegateHandle", type: .intptr),
+                RuntimeABIParameter(name: "getValueFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "setValueFnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_custom_delegate_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "thisRef", type: .intptr),
+                RuntimeABIParameter(name: "property", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
     ]
     /// Bitwise/Shift (P5-103)
     public static let bitwiseFunctions: [RuntimeABIFunctionSpec] = [
@@ -1016,4 +1472,4 @@ public enum RuntimeABISpec {
     }
 }
 
-// swiftlint:enable file_length type_body_length trailing_comma
+// swiftlint:enable file_length type_body_length

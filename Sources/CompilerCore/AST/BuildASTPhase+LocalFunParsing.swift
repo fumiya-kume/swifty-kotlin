@@ -51,24 +51,9 @@ extension BuildASTPhase {
         }
         index += 1
 
-        var returnType: TypeRefID?
-        if index < statementTokens.count, statementTokens[index].kind == .symbol(.colon) {
-            index += 1
-            var typeTokens: [Token] = []
-            var typeDepth = BracketDepth()
-            while index < statementTokens.count {
-                let token = statementTokens[index]
-                if typeDepth.isAtTopLevel {
-                    if token.kind == .symbol(.lBrace) || token.kind == .symbol(.assign) {
-                        break
-                    }
-                }
-                typeDepth.track(token.kind)
-                typeTokens.append(token)
-                index += 1
-            }
-            returnType = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
-        }
+        let returnType = parseReturnTypeAnnotation(
+            from: statementTokens, index: &index, interner: interner, astArena: astArena
+        )
 
         let body: FunctionBody
         if index < statementTokens.count, statementTokens[index].kind == .symbol(.assign) {
@@ -81,64 +66,9 @@ extension BuildASTPhase {
                 body = .unit
             }
         } else if index < statementTokens.count, statementTokens[index].kind == .symbol(.lBrace) {
-            var braceDepth = 0
-            var bodyTokens: [Token] = []
-            let braceStart = index
-            while index < statementTokens.count {
-                let token = statementTokens[index]
-                if token.kind == .symbol(.lBrace) {
-                    braceDepth += 1
-                } else if token.kind == .symbol(.rBrace) {
-                    braceDepth -= 1
-                    if braceDepth == 0 {
-                        index += 1
-                        break
-                    }
-                }
-                if braceDepth >= 1, !(braceDepth == 1 && token.kind == .symbol(.lBrace)) {
-                    bodyTokens.append(token)
-                }
-                index += 1
-            }
-            if !bodyTokens.isEmpty {
-                let stmtGroups = splitTokensIntoStatements(bodyTokens)
-                var blockExprs: [ExprID] = []
-                for stmtTokens in stmtGroups {
-                    let filtered = stmtTokens.filter { $0.kind != .symbol(.semicolon) }
-                    guard !filtered.isEmpty else { continue }
-                    if let localFun = parseLocalFunDeclExpr(from: stmtTokens, interner: interner, astArena: astArena) {
-                        blockExprs.append(localFun)
-                    } else if let localDecl = parseLocalDeclarationExpr(from: filtered, interner: interner, astArena: astArena) {
-                        blockExprs.append(localDecl)
-                    } else if let localAssign = parseLocalAssignmentExpr(from: filtered, interner: interner, astArena: astArena) {
-                        blockExprs.append(localAssign)
-                    } else {
-                        let parser = ExpressionParser(tokens: filtered, interner: interner, astArena: astArena)
-                        if let exprID = parser.parse() {
-                            blockExprs.append(exprID)
-                        }
-                    }
-                }
-                if !blockExprs.isEmpty,
-                   let firstRange = astArena.exprRange(blockExprs.first!),
-                   let lastRange = astArena.exprRange(blockExprs.last!)
-                {
-                    let bodyRange = SourceRange(start: firstRange.start, end: lastRange.end)
-                    body = .block(blockExprs, bodyRange)
-                } else {
-                    let bodyRange = SourceRange(
-                        start: statementTokens[braceStart].range.start,
-                        end: statementTokens[min(index, statementTokens.count - 1)].range.end
-                    )
-                    body = .block([], bodyRange)
-                }
-            } else {
-                let bodyRange = SourceRange(
-                    start: statementTokens[braceStart].range.start,
-                    end: statementTokens[min(index, statementTokens.count - 1)].range.end
-                )
-                body = .block([], bodyRange)
-            }
+            body = parseBraceBody(
+                from: statementTokens, index: &index, interner: interner, astArena: astArena
+            )
         } else {
             body = .unit
         }
@@ -159,5 +89,99 @@ extension BuildASTPhase {
             body: body,
             range: range
         ))
+    }
+
+    // MARK: - Local Fun Parsing Helpers
+
+    private func parseReturnTypeAnnotation(
+        from statementTokens: [Token],
+        index: inout Int,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> TypeRefID? {
+        guard index < statementTokens.count, statementTokens[index].kind == .symbol(.colon) else {
+            return nil
+        }
+        index += 1
+        var typeTokens: [Token] = []
+        var typeDepth = BracketDepth()
+        while index < statementTokens.count {
+            let token = statementTokens[index]
+            if typeDepth.isAtTopLevel {
+                if token.kind == .symbol(.lBrace) || token.kind == .symbol(.assign) {
+                    break
+                }
+            }
+            typeDepth.track(token.kind)
+            typeTokens.append(token)
+            index += 1
+        }
+        return parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
+    }
+
+    private func parseBraceBody(
+        from statementTokens: [Token],
+        index: inout Int,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> FunctionBody {
+        var braceDepth = 0
+        var bodyTokens: [Token] = []
+        let braceStart = index
+        while index < statementTokens.count {
+            let token = statementTokens[index]
+            if token.kind == .symbol(.lBrace) {
+                braceDepth += 1
+            } else if token.kind == .symbol(.rBrace) {
+                braceDepth -= 1
+                if braceDepth == 0 {
+                    index += 1
+                    break
+                }
+            }
+            if braceDepth >= 1, !(braceDepth == 1 && token.kind == .symbol(.lBrace)) {
+                bodyTokens.append(token)
+            }
+            index += 1
+        }
+        if !bodyTokens.isEmpty {
+            let stmtGroups = splitTokensIntoStatements(bodyTokens)
+            var blockExprs: [ExprID] = []
+            for stmtTokens in stmtGroups {
+                let filtered = stmtTokens.filter { $0.kind != .symbol(.semicolon) }
+                guard !filtered.isEmpty else { continue }
+                if let localFun = parseLocalFunDeclExpr(from: stmtTokens, interner: interner, astArena: astArena) {
+                    blockExprs.append(localFun)
+                } else if let localDecl = parseLocalDeclarationExpr(from: filtered, interner: interner, astArena: astArena) {
+                    blockExprs.append(localDecl)
+                } else if let localAssign = parseLocalAssignmentExpr(from: filtered, interner: interner, astArena: astArena) {
+                    blockExprs.append(localAssign)
+                } else {
+                    let parser = ExpressionParser(tokens: filtered, interner: interner, astArena: astArena)
+                    if let exprID = parser.parse() {
+                        blockExprs.append(exprID)
+                    }
+                }
+            }
+            if !blockExprs.isEmpty,
+               let firstRange = astArena.exprRange(blockExprs.first!),
+               let lastRange = astArena.exprRange(blockExprs.last!)
+            {
+                let bodyRange = SourceRange(start: firstRange.start, end: lastRange.end)
+                return .block(blockExprs, bodyRange)
+            } else {
+                let bodyRange = SourceRange(
+                    start: statementTokens[braceStart].range.start,
+                    end: statementTokens[min(index, statementTokens.count - 1)].range.end
+                )
+                return .block([], bodyRange)
+            }
+        } else {
+            let bodyRange = SourceRange(
+                start: statementTokens[braceStart].range.start,
+                end: statementTokens[min(index, statementTokens.count - 1)].range.end
+            )
+            return .block([], bodyRange)
+        }
     }
 }

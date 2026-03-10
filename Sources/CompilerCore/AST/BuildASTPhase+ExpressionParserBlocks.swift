@@ -98,6 +98,8 @@ extension BuildASTPhase.ExpressionParser {
                 if hasNewline, lastTokenIndex >= groupStart {
                     let lastKind = tokens[lastTokenIndex].kind
                     let lastIsContinuation = isBinaryOperatorTokenKind(lastKind)
+                        || lastKind == .symbol(.lParen)
+                        || lastKind == .symbol(.comma)
                     let nextIsContinuation = isBinaryOperatorTokenKind(token.kind)
                     if !lastIsContinuation, !nextIsContinuation {
                         ranges.append((groupStart, lastTokenIndex + 1))
@@ -143,18 +145,6 @@ extension BuildASTPhase.ExpressionParser {
         }
     }
 
-    func isLocalDeclarationTokens(_ tokens: [Token]) -> Bool {
-        BuildASTPhase.LocalStatementCore.isLocalDeclarationTokens(tokens)
-    }
-
-    func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-        BuildASTPhase.LocalStatementCore.isLocalAssignmentTokens(tokens)
-    }
-
-    func parseLocalDeclFromTokens(_ tokens: [Token]) -> ExprID? {
-        parseLocalDeclFromSlice(tokens[...])
-    }
-
     func parseLocalDeclFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {
         let interner = interner
         let astArena = astArena
@@ -175,12 +165,19 @@ extension BuildASTPhase.ExpressionParser {
                 )
                 return parser.parseTypeReference(first.range)
             },
-            resolveDeclarationName: { token, _ in
+            resolveDeclarationName: { token, interner in
+                guard TypeRefParserCore.isTypeLikeNameToken(token.kind) else {
+                    return nil
+                }
                 switch token.kind {
                 case let .identifier(name), let .backtickedIdentifier(name):
-                    name
+                    return name
+                case let .keyword(keyword):
+                    return interner.intern(keyword.rawValue)
+                case let .softKeyword(keyword):
+                    return interner.intern(keyword.rawValue)
                 default:
-                    nil
+                    return nil
                 }
             }
         )
@@ -189,10 +186,6 @@ extension BuildASTPhase.ExpressionParser {
             context: context,
             options: .blockExpression
         )
-    }
-
-    func parseLocalAssignFromTokens(_ tokens: [Token]) -> ExprID? {
-        parseLocalAssignFromSlice(tokens[...])
     }
 
     func parseLocalAssignFromSlice(_ tokens: ArraySlice<Token>) -> ExprID? {

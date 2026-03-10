@@ -74,18 +74,18 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 3)
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 4)
     }
 
     func testStringFunctionCount() {
-        // kk_string_from_utf8, kk_string_concat, kk_string_compareTo, kk_string_length
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 4)
+        // Keep this in sync with RuntimeABISpec.stringFunctions entries.
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 36)
     }
 
     func testPrintlnFunctionCount() {
-        // kk_println_any
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 1)
+        // kk_println_any, kk_println_bool
+        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 2)
     }
 
     func testGCFunctionCount() {
@@ -97,19 +97,20 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testCoroutineFunctionCount() {
-        // 19 base + 12 consolidated stubs + 7 structured concurrency (P5-89)
-        // + 4 CORO-002 cancellation
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 42)
+        // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
+        // Includes CORO-002 cancellation and CORO-003 flow ownership helpers.
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 44)
     }
 
     func testBoxingFunctionCount() {
-        // kk_box_int, kk_box_bool, kk_unbox_int, kk_unbox_bool
-        XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 4)
+        // Primitive boxing/unboxing helpers plus the lateinit initialization helpers.
+        XCTAssertEqual(RuntimeABISpec.boxingFunctions.count, 14)
     }
 
     func testArrayFunctionCount() {
-        // kk_array_new, kk_object_new, kk_array_get, kk_array_set, kk_vararg_spread_concat
-        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 5)
+        // kk_array_new, kk_object_new, kk_object_type_id, kk_array_get, kk_array_get_inbounds,
+        // kk_array_set, kk_vararg_spread_concat
+        XCTAssertEqual(RuntimeABISpec.arrayFunctions.count, 7)
     }
 
     func testBitwiseFunctionCount() {
@@ -257,6 +258,14 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(
             spec.cDeclaration,
             "_Noreturn void kk_panic(const char * cstr);"
+        )
+    }
+
+    func testCDeclarationForKKAbortUnreachable() throws {
+        let spec = try requireSpec("kk_abort_unreachable")
+        XCTAssertEqual(
+            spec.cDeclaration,
+            "intptr_t kk_abort_unreachable(intptr_t * _Nullable outThrown);"
         )
     }
 

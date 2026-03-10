@@ -39,7 +39,7 @@ private func extractSuperCallFlagsAcrossOverrides(
 }
 
 final class SuperCallAndQualifiedThisTests: XCTestCase {
-    // MARK: - Test 1: super.method() produces isSuperCall=true in KIR
+    // MARK: - super.method() isSuperCall flag
 
     func testSuperCallProducesIsSuperCallTrueInKIR() throws {
         let source = """
@@ -67,8 +67,6 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 2: Regular (non-super) method call has isSuperCall=false
-
     func testRegularMemberCallHasIsSuperCallFalse() throws {
         let source = """
         class Greeter {
@@ -94,7 +92,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 3: isSuperCall survives full lowering pipeline
+    // MARK: - isSuperCall through lowering pipeline
 
     func testIsSuperCallSurvivesFullLoweringPipeline() throws {
         let source = """
@@ -124,8 +122,6 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 4: isSuperCall preserved through ABI lowering (Any parameter boundary)
-
     func testIsSuperCallPreservedThroughABILowering() throws {
         // Use Any parameter to force ABI boxing pass to rewrite the call
         let source = """
@@ -154,7 +150,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 5: Qualified this@Label resolves to outer class type
+    // MARK: - Qualified this@Label
 
     func testQualifiedThisResolvesToOuterClassType() throws {
         let source = """
@@ -176,8 +172,6 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 6: Unresolved qualified this@Label emits SEMA-0053
-
     func testUnresolvedQualifiedThisEmitsDiagnostic() throws {
         let source = """
         class Outer {
@@ -194,7 +188,7 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
         }
     }
 
-    // MARK: - Test 7: KIR dump format includes super=1 tag for super calls
+    // MARK: - KIR dump format
 
     func testKIRDumpFormatIncludesSuperTag() throws {
         let source = """
@@ -217,8 +211,6 @@ final class SuperCallAndQualifiedThisTests: XCTestCase {
                           "Expected KIR dump to contain 'super=1' for super call, got:\n\(dumpOutput)")
         }
     }
-
-    // MARK: - Test 8: Non-super calls do not have super=1 in dump
 
     func testKIRDumpDoesNotIncludeSuperTagForRegularCalls() throws {
         let source = """

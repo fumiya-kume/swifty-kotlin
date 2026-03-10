@@ -6,39 +6,18 @@ extension BuildASTPhase {
         in arena: SyntaxArena,
         interner: StringInterner
     ) -> [EnumEntryDecl] {
-        var entries: [EnumEntryDecl] = []
-        var stack: [NodeID] = [nodeID]
-        while let current = stack.popLast() {
-            for child in arena.children(of: current) {
-                guard case let .node(childID) = child else {
-                    continue
-                }
-                let childNode = arena.node(childID)
-                if childNode.kind == .enumEntry {
-                    let expanded = declarationEnumEntries(
-                        fromEnumEntryNode: childID,
-                        in: arena,
-                        interner: interner
-                    )
-                    if expanded.isEmpty {
-                        entries.append(makeEnumEntryDecl(from: childID, in: arena, interner: interner))
-                    } else {
-                        entries.append(contentsOf: expanded)
-                    }
-                } else {
-                    stack.append(childID)
-                }
+        guard let bodyBlockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else {
+                return nil
             }
+            return childID
+        }).first else {
+            return []
         }
-        return entries
-    }
 
-    private func declarationEnumEntries(
-        fromEnumEntryNode nodeID: NodeID,
-        in arena: SyntaxArena,
-        interner: StringInterner
-    ) -> [EnumEntryDecl] {
-        let tokens = collectTokens(from: nodeID, in: arena)
+        let tokens = collectTokens(from: bodyBlockID, in: arena)
         guard !tokens.isEmpty else {
             return []
         }
@@ -46,10 +25,38 @@ extension BuildASTPhase {
         var segments: [[Token]] = []
         var current: [Token] = []
         var depth = BracketDepth()
+        var seenOpeningBrace = false
 
         for token in tokens {
+            if !seenOpeningBrace {
+                if token.kind == .symbol(.lBrace) {
+                    seenOpeningBrace = true
+                }
+                continue
+            }
+
             if depth.isAtTopLevel,
-               token.kind == .symbol(.comma) || token.kind == .symbol(.semicolon)
+               token.kind == .symbol(.rBrace)
+            {
+                if !current.isEmpty {
+                    segments.append(current)
+                    current.removeAll(keepingCapacity: true)
+                }
+                break
+            }
+
+            if depth.isAtTopLevel,
+               token.kind == .symbol(.semicolon)
+            {
+                if !current.isEmpty {
+                    segments.append(current)
+                    current.removeAll(keepingCapacity: true)
+                }
+                break
+            }
+
+            if depth.isAtTopLevel,
+               token.kind == .symbol(.comma)
             {
                 if !current.isEmpty {
                     segments.append(current)
@@ -57,6 +64,7 @@ extension BuildASTPhase {
                 }
                 continue
             }
+
             depth.track(token.kind)
             current.append(token)
         }
@@ -110,12 +118,15 @@ extension BuildASTPhase {
         return aliases
     }
 
-    func declarationSuperTypes(
+    /// Parses supertype entries for class declarations, including optional
+    /// `by expr` delegation (e.g. `class Foo(impl: Printer) : Printer by impl`).
+    /// Returns `[SuperTypeEntry]`; use `declarationSuperTypes` for interface/object.
+    func declarationSuperTypeEntries(
         from nodeID: NodeID,
         in arena: SyntaxArena,
         interner: StringInterner,
         astArena: ASTArena
-    ) -> [TypeRefID] {
+    ) -> [SuperTypeEntry] {
         let tokens = collectTokens(from: nodeID, in: arena)
         guard !tokens.isEmpty else {
             return []
@@ -141,7 +152,7 @@ extension BuildASTPhase {
         }
         index += 1
 
-        var refs: [TypeRefID] = []
+        var entries: [SuperTypeEntry] = []
         var current: [Token] = []
         var depth = BracketDepth()
         while index < tokens.count {
@@ -154,12 +165,8 @@ extension BuildASTPhase {
                     break
                 }
                 if token.kind == .symbol(.comma) {
-                    if let ref = parseTypeRef(
-                        from: stripSuperTypeInvocation(from: current),
-                        interner: interner,
-                        astArena: astArena
-                    ) {
-                        refs.append(ref)
+                    if let entry = parseSuperTypeEntry(from: current, interner: interner, astArena: astArena) {
+                        entries.append(entry)
                     }
                     current.removeAll(keepingCapacity: true)
                     index += 1
@@ -171,14 +178,64 @@ extension BuildASTPhase {
             current.append(token)
             index += 1
         }
-        if let ref = parseTypeRef(
-            from: stripSuperTypeInvocation(from: current),
-            interner: interner,
-            astArena: astArena
-        ) {
-            refs.append(ref)
+        if let entry = parseSuperTypeEntry(from: current, interner: interner, astArena: astArena) {
+            entries.append(entry)
         }
-        return refs
+        return entries
+    }
+
+    /// Parses a single supertype chunk, optionally with `by expr` (class delegation).
+    private func parseSuperTypeEntry(
+        from tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> SuperTypeEntry? {
+        let stripped = stripSuperTypeInvocation(from: tokens)
+        guard !stripped.isEmpty else { return nil }
+
+        var byIndex: Int?
+        var depth = BracketDepth()
+        for (index, token) in stripped.enumerated() {
+            if case .softKeyword(.by) = token.kind, depth.isAtTopLevel {
+                byIndex = index
+                break
+            }
+            depth.track(token.kind)
+        }
+
+        let typeTokens: [Token]
+        let exprTokens: ArraySlice<Token>
+        if let byIndex {
+            typeTokens = Array(stripped[..<byIndex])
+            exprTokens = stripped[(byIndex + 1)...].filter { $0.kind != .symbol(.semicolon) }
+        } else {
+            typeTokens = stripped
+            exprTokens = [][...]
+        }
+
+        guard let typeRef = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena) else {
+            return nil
+        }
+
+        let delegateExpr: ExprID?
+        if exprTokens.isEmpty {
+            delegateExpr = nil
+        } else {
+            let parser = ExpressionParser(tokens: exprTokens, interner: interner, astArena: astArena)
+            delegateExpr = parser.parse()
+        }
+
+        return SuperTypeEntry(typeRef: typeRef, delegateExpression: delegateExpr)
+    }
+
+    func declarationSuperTypes(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> [TypeRefID] {
+        let entries = declarationSuperTypeEntries(from: nodeID, in: arena, interner: interner, astArena: astArena)
+        return entries.map(\.typeRef)
     }
 
     func stripSuperTypeInvocation(from tokens: [Token]) -> [Token] {
@@ -218,41 +275,55 @@ extension BuildASTPhase {
         var companionObject: DeclID?
 
         for child in arena.children(of: bodyBlockID) {
-            guard case let .node(childID) = child else {
-                continue
-            }
-            let childNode = arena.node(childID)
-            switch childNode.kind {
-            case .funDecl:
-                let funDecl = makeFunDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.funDecl(funDecl))
-                functions.append(declID)
-            case .propertyDecl:
-                let propDecl = makePropertyDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.propertyDecl(propDecl))
-                properties.append(declID)
-            case .classDecl:
-                let classDecl = makeClassDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.classDecl(classDecl))
-                nestedClasses.append(declID)
-            case .interfaceDecl:
-                let interfaceDecl = makeInterfaceDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.interfaceDecl(interfaceDecl))
-                nestedClasses.append(declID)
-            case .objectDecl:
-                let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
-                let declID = astArena.appendDecl(.objectDecl(objectDecl))
-                if objectDecl.modifiers.contains(.companion) {
-                    companionObject = declID
-                } else {
-                    nestedObjects.append(declID)
-                }
-            default:
-                continue
-            }
+            guard case let .node(childID) = child else { continue }
+            processMemberChild(
+                childID,
+                in: arena, interner: interner, astArena: astArena,
+                functions: &functions, properties: &properties,
+                nestedClasses: &nestedClasses, nestedObjects: &nestedObjects,
+                companionObject: &companionObject
+            )
         }
 
         return (functions, properties, nestedClasses, nestedObjects, companionObject)
+    }
+
+    private func processMemberChild(
+        _ childID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena,
+        functions: inout [DeclID],
+        properties: inout [DeclID],
+        nestedClasses: inout [DeclID],
+        nestedObjects: inout [DeclID],
+        companionObject: inout DeclID?
+    ) {
+        let childNode = arena.node(childID)
+        switch childNode.kind {
+        case .funDecl:
+            let funDecl = makeFunDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            functions.append(astArena.appendDecl(.funDecl(funDecl)))
+        case .propertyDecl:
+            let propDecl = makePropertyDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            properties.append(astArena.appendDecl(.propertyDecl(propDecl)))
+        case .classDecl:
+            let classDecl = makeClassDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            nestedClasses.append(astArena.appendDecl(.classDecl(classDecl)))
+        case .interfaceDecl:
+            let interfaceDecl = makeInterfaceDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            nestedClasses.append(astArena.appendDecl(.interfaceDecl(interfaceDecl)))
+        case .objectDecl:
+            let objectDecl = makeObjectDecl(from: childID, in: arena, interner: interner, astArena: astArena)
+            let declID = astArena.appendDecl(.objectDecl(objectDecl))
+            if objectDecl.modifiers.contains(.companion) {
+                companionObject = declID
+            } else {
+                nestedObjects.append(declID)
+            }
+        default:
+            break
+        }
     }
 
     /// Walks the class body block and records the declaration-order sequence

@@ -35,64 +35,82 @@ final class InlineLoweringPass: LoweringPass {
         }
         let inlineFunctionsByName = Dictionary(grouping: inlineFunctionsBySymbol.values, by: \.name)
 
-        module.arena.transformFunctions { function in
-            var updated = function
-            var loweredBody: [KIRInstruction] = []
-            loweredBody.reserveCapacity(function.body.count)
-            var aliases: [KIRExprID: KIRExprID] = [:]
-
-            for originalInstruction in function.body {
-                let instruction = rewriteInstruction(originalInstruction, aliases: aliases)
-                if let defined = definedResult(in: instruction) {
-                    aliases.removeValue(forKey: defined)
-                }
-
-                guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                let inlineTarget: KIRFunction? = if let symbol, let target = inlineFunctionsBySymbol[symbol] {
-                    target
-                } else if let byName = inlineFunctionsByName[callee], byName.count == 1 {
-                    byName[0]
-                } else {
-                    nil
-                }
-
-                guard let inlineTarget, inlineTarget.symbol != function.symbol else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-                let expansion = expandInlineCall(
-                    inlineTarget: inlineTarget,
-                    arguments: arguments,
-                    module: module,
-                    ctx: ctx
-                )
-                guard let expansion else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                loweredBody.append(contentsOf: expansion.instructions)
-                if let result {
-                    if let returnedExpr = expansion.returnedExpr {
-                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
-                    } else {
-                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
-                        aliases[result] = unitExpr
-                    }
-                }
-            }
-
-            updated.body = loweredBody
-            if updated.body.isEmpty {
-                updated.body = [.returnUnit]
-            }
-            return updated
+        module.arena.transformFunctions { [self] function in
+            inlineTransform(
+                function: function,
+                inlineFunctionsBySymbol: inlineFunctionsBySymbol,
+                inlineFunctionsByName: inlineFunctionsByName,
+                module: module,
+                ctx: ctx,
+                unitType: unitType
+            )
         }
         module.recordLowering(Self.name)
+    }
+
+    private func inlineTransform(
+        function: KIRFunction,
+        inlineFunctionsBySymbol: [SymbolID: KIRFunction],
+        inlineFunctionsByName: [InternedString: [KIRFunction]],
+        module: KIRModule,
+        ctx: KIRContext,
+        unitType: TypeID?
+    ) -> KIRFunction {
+        var updated = function
+        var loweredBody: [KIRInstruction] = []
+        loweredBody.reserveCapacity(function.body.count)
+        var aliases: [KIRExprID: KIRExprID] = [:]
+
+        for originalInstruction in function.body {
+            let instruction = rewriteInstruction(originalInstruction, aliases: aliases)
+            if let defined = definedResult(in: instruction) {
+                aliases.removeValue(forKey: defined)
+            }
+
+            guard case let .call(symbol, callee, arguments, result, _, _, _) = instruction else {
+                loweredBody.append(instruction)
+                continue
+            }
+
+            let inlineTarget: KIRFunction? = if let symbol, let target = inlineFunctionsBySymbol[symbol] {
+                target
+            } else if let byName = inlineFunctionsByName[callee], byName.count == 1 {
+                byName[0]
+            } else {
+                nil
+            }
+
+            guard let inlineTarget, inlineTarget.symbol != function.symbol else {
+                loweredBody.append(instruction)
+                continue
+            }
+            let expansion = expandInlineCall(
+                inlineTarget: inlineTarget,
+                arguments: arguments,
+                module: module,
+                ctx: ctx
+            )
+            guard let expansion else {
+                loweredBody.append(instruction)
+                continue
+            }
+
+            loweredBody.append(contentsOf: expansion.instructions)
+            if let result {
+                if let returnedExpr = expansion.returnedExpr {
+                    aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
+                } else {
+                    let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                    aliases[result] = unitExpr
+                }
+            }
+        }
+
+        updated.body = loweredBody
+        if updated.body.isEmpty {
+            updated.body = [.returnUnit]
+        }
+        return updated
     }
 
     private func expandInlineCall(
@@ -107,20 +125,11 @@ final class InlineLoweringPass: LoweringPass {
 
         let parameterValues = Dictionary(uniqueKeysWithValues: zip(inlineTarget.params.map(\.symbol), arguments))
 
-        var typeParamTokenValues: [SymbolID: KIRExprID] = [:]
-        if let sema = ctx.sema,
-           let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
-           !sig.reifiedTypeParameterIndices.isEmpty
-        {
-            for index in sig.reifiedTypeParameterIndices.sorted() {
-                guard index < sig.typeParameterSymbols.count else { continue }
-                let typeParamSymbol = sig.typeParameterSymbols[index]
-                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
-                if let tokenArg = parameterValues[tokenSymbol] {
-                    typeParamTokenValues[typeParamSymbol] = tokenArg
-                }
-            }
-        }
+        let typeParamTokenValues = buildTypeParamTokenValues(
+            inlineTarget: inlineTarget,
+            parameterValues: parameterValues,
+            ctx: ctx
+        )
 
         var localExprMap: [KIRExprID: KIRExprID] = [:]
         var lowered: [KIRInstruction] = []
@@ -157,12 +166,10 @@ final class InlineLoweringPass: LoweringPass {
                 returnedExpr = resolveAlias(of: value, aliases: localExprMap)
 
             case let .constValue(result, value):
-                if case let .symbolRef(symbol) = value, let argument = parameterValues[symbol] {
-                    localExprMap[result] = argument
-                    continue
-                }
-                if case let .symbolRef(symbol) = value, let tokenArg = typeParamTokenValues[symbol] {
-                    localExprMap[result] = tokenArg
+                if case let .symbolRef(symbol) = value,
+                   let mapped = parameterValues[symbol] ?? typeParamTokenValues[symbol]
+                {
+                    localExprMap[result] = mapped
                     continue
                 }
                 let loweredResult = cloneExpr(result, in: module.arena)
@@ -294,6 +301,29 @@ final class InlineLoweringPass: LoweringPass {
         }
 
         return InlineExpansion(instructions: lowered, returnedExpr: returnedExpr)
+    }
+
+    private func buildTypeParamTokenValues(
+        inlineTarget: KIRFunction,
+        parameterValues: [SymbolID: KIRExprID],
+        ctx: KIRContext
+    ) -> [SymbolID: KIRExprID] {
+        guard let sema = ctx.sema,
+              let sig = sema.symbols.functionSignature(for: inlineTarget.symbol),
+              !sig.reifiedTypeParameterIndices.isEmpty
+        else {
+            return [:]
+        }
+        var result: [SymbolID: KIRExprID] = [:]
+        for index in sig.reifiedTypeParameterIndices.sorted() {
+            guard index < sig.typeParameterSymbols.count else { continue }
+            let typeParamSymbol = sig.typeParameterSymbols[index]
+            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParamSymbol)
+            if let tokenArg = parameterValues[tokenSymbol] {
+                result[typeParamSymbol] = tokenArg
+            }
+        }
+        return result
     }
 
     private func rewriteInstruction(_ instruction: KIRInstruction, aliases: [KIRExprID: KIRExprID]) -> KIRInstruction {

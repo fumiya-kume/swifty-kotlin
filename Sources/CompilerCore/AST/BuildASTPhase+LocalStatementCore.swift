@@ -167,23 +167,28 @@ extension BuildASTPhase {
                 }
             }
 
-            var assignIndex: Int?
+            var initializerStartIndex: Int?
+            var isDelegated = false
             var assignDepth = BuildASTPhase.BracketDepth()
             var index = statementTokens.startIndex
             while index < statementTokens.endIndex {
                 let token = statementTokens[index]
-                if token.kind == .symbol(.assign), assignDepth.isAtTopLevel {
-                    assignIndex = index
-                    break
+                if assignDepth.isAtTopLevel {
+                    if token.kind == .symbol(.assign)
+                        || token.kind == .softKeyword(.by)
+                    {
+                        isDelegated = token.kind == .softKeyword(.by)
+                        initializerStartIndex = statementTokens.index(after: index)
+                        break
+                    }
                 }
                 assignDepth.track(token.kind)
                 index = statementTokens.index(after: index)
             }
 
             var initializerExpr: ExprID?
-            if let assignIndex {
-                let initStart = statementTokens.index(after: assignIndex)
-                let initTokens = stripSemicolons(statementTokens[initStart ..< statementTokens.endIndex])
+            if let initializerStartIndex {
+                let initTokens = stripSemicolons(statementTokens[initializerStartIndex ..< statementTokens.endIndex])
                 guard !initTokens.isEmpty else {
                     return nil
                 }
@@ -211,8 +216,33 @@ extension BuildASTPhase {
                 isMutable: isMutable,
                 typeAnnotation: typeAnnotation,
                 initializer: initializerExpr,
+                isDelegated: isDelegated,
                 range: range
             ))
+        }
+
+        static func isLocalDelegateFactoryExpr(
+            _ exprID: ExprID,
+            ast: ASTModule,
+            interner: StringInterner
+        ) -> Bool {
+            guard let expr = ast.arena.expr(exprID) else {
+                return false
+            }
+            switch expr {
+            case let .call(callee, _, _, _):
+                guard let calleeExpr = ast.arena.expr(callee),
+                      case let .nameRef(calleeName, _) = calleeExpr
+                else {
+                    return false
+                }
+                return interner.resolve(calleeName) == "lazy"
+            case let .memberCall(_, calleeName, _, _, _):
+                let name = interner.resolve(calleeName)
+                return name == "observable" || name == "vetoable"
+            default:
+                return false
+            }
         }
 
         static func parseLocalAssignment(

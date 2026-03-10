@@ -22,7 +22,7 @@ final class CLIParserTests: XCTestCase {
             "-l", "runtime",
             "--target", "x86_64-apple-macos",
             "-Xfrontend", "time-phases",
-            "-Xir", "backend=llvm-c-api",
+            "-Xir", "trace-lowering",
             "-Xruntime", "trace=true",
             "-g",
             "main.kt",
@@ -36,7 +36,7 @@ final class CLIParserTests: XCTestCase {
         XCTAssertEqual(options.libraryPaths, ["lib"])
         XCTAssertEqual(options.linkLibraries, ["runtime"])
         XCTAssertEqual(options.frontendFlags, ["time-phases"])
-        XCTAssertEqual(options.irFlags, ["backend=llvm-c-api"])
+        XCTAssertEqual(options.irFlags, ["trace-lowering"])
         XCTAssertEqual(options.runtimeFlags, ["trace=true"])
         XCTAssertTrue(options.debugInfo)
         XCTAssertEqual(options.inputs, ["main.kt"])

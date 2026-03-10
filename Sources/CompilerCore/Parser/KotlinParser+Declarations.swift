@@ -1,8 +1,23 @@
 extension KotlinParser {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func parseDeclaration() -> NodeID {
         var modifierChildren: [SyntaxChild] = []
         var modifierRange = RangeAccumulator()
+        if case .softKeyword(.context) = stream.peek().kind {
+            _ = consumeToken(into: &modifierChildren, range: &modifierRange)
+            if case .symbol(.lParen) = stream.peek().kind {
+                let group = parseBalancedGroup(opening: .lParen, closing: .rParen)
+                modifierChildren.append(.node(group))
+                modifierRange.append(childRange(.node(group)))
+            } else {
+                insertMissingToken(
+                    expected: .symbol(.lParen),
+                    into: &modifierChildren,
+                    range: &modifierRange,
+                    code: "KSWIFTK-PARSE-0001",
+                    message: "Expected '(' after context."
+                )
+            }
+        }
         while case let .keyword(keyword) = stream.peek().kind, Self.isDeclarationModifierKeyword(keyword) {
             _ = consumeToken(into: &modifierChildren, range: &modifierRange)
         }
@@ -360,6 +375,10 @@ extension KotlinParser {
             } else {
                 _ = consumeToken(into: &children, range: &range)
             }
+            return
+        }
+        let next = stream.peek()
+        if hasLeadingNewline(next), isDeclarationStart(next.kind) {
             return
         }
         parseTail(inBlock: false, into: &children, range: &range)

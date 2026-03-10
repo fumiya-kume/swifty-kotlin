@@ -57,6 +57,34 @@ extension CallLowerer {
             } else {
                 result
             }
+            if isCompareToDesugaring,
+               shouldLowerComparableTypeParamViaRuntime(
+                   chosenCallee: callBinding.chosenCallee,
+                   receiverExpr: lhs,
+                   sema: sema
+               )
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_compare_any"),
+                    arguments: [lhsID, rhsID],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let cmpOp: KIRBinaryOp
+                switch op {
+                case .lessThan: cmpOp = .lessThan
+                case .lessOrEqual: cmpOp = .lessOrEqual
+                case .greaterThan: cmpOp = .greaterThan
+                case .greaterOrEqual: cmpOp = .greaterOrEqual
+                default: fatalError("Unreachable: erased Comparable runtime path only applies to comparison operators")
+                }
+                instructions.append(.binary(op: cmpOp, lhs: callResult, rhs: zeroExpr, result: result))
+                return result
+            }
             let normalizedResult = driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: [rhsID],
                 callBinding: callBinding,
@@ -85,7 +113,9 @@ extension CallLowerer {
                     finalArguments.append(tokenExpr)
                 }
             }
-            if normalizedResult.defaultMask != 0 {
+            if normalizedResult.defaultMask != 0,
+               sema.symbols.externalLinkName(for: callBinding.chosenCallee)?.isEmpty ?? true
+            {
                 let maskExpr = arena.appendExpr(.intLiteral(Int64(normalizedResult.defaultMask)), type: intType)
                 instructions.append(.constValue(result: maskExpr, value: .intLiteral(Int64(normalizedResult.defaultMask))))
                 finalArguments.append(maskExpr)
@@ -283,6 +313,23 @@ extension CallLowerer {
         return result
     }
 
+    private func shouldLowerComparableTypeParamViaRuntime(
+        chosenCallee: SymbolID,
+        receiverExpr: ExprID,
+        sema: SemaModule
+    ) -> Bool {
+        guard let comparableSymbol = sema.types.comparableInterfaceSymbol,
+              sema.symbols.parentSymbol(for: chosenCallee) == comparableSymbol,
+              let receiverType = sema.bindings.exprTypes[receiverExpr]
+        else {
+            return false
+        }
+        if case .typeParam = sema.types.kind(of: receiverType) {
+            return true
+        }
+        return false
+    }
+
     // MARK: - Array Operations
 
     func lowerIndexedAccessExpr(
@@ -306,6 +353,57 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let callBinding = recoverMemberCallBinding(
+            exprID: exprID,
+            receiverExpr: receiverExpr,
+            calleeName: interner.intern("get"),
+            argumentExprs: indices,
+            sema: sema
+        ) ?? sema.bindings.callBindings[exprID]
+        if let chosenGet = callBinding?.chosenCallee,
+           chosenGet != .invalid,
+           let signature = sema.symbols.functionSignature(for: chosenGet),
+           signature.receiverType != nil
+        {
+            let loweredIndices = indices.map { indexExpr in
+                driver.lowerExpr(
+                    indexExpr,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            emitMemberCallInstruction(
+                normalized: driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredIndices,
+                    callBinding: callBinding,
+                    chosenCallee: chosenGet,
+                    spreadFlags: Array(repeating: false, count: loweredIndices.count),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ),
+                callBinding: callBinding,
+                chosenCallee: chosenGet,
+                calleeName: interner.intern("get"),
+                receiver: MemberCallReceiver(expr: receiverExpr, loweredID: receiverID),
+                result: result,
+                isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: [receiverID] + loweredIndices
+            )
+            return result
+        }
         // Built-in array get only supports a single Int index
         assert(!indices.isEmpty, "indices must not be empty for indexed access")
         let indexID = driver.lowerExpr(
@@ -330,7 +428,7 @@ extension CallLowerer {
     }
 
     func lowerIndexedAssignExpr(
-        _: ExprID,
+        _ exprID: ExprID,
         receiverExpr: ExprID,
         indices: [ExprID],
         valueExpr: ExprID,
@@ -370,6 +468,56 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        if let callBinding = sema.bindings.callBindings[exprID] {
+            let chosenSet = callBinding.chosenCallee
+            var loweredIndices: [KIRExprID] = []
+            for (i, indexExpr) in indices.enumerated() {
+                if i == 0 {
+                    loweredIndices.append(indexID)
+                } else {
+                    let loweredIndex = driver.lowerExpr(
+                        indexExpr,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    loweredIndices.append(loweredIndex)
+                }
+            }
+            let loweredArgs = loweredIndices + [valueID]
+            let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.unitType)
+            emitMemberCallInstruction(
+                normalized: driver.callSupportLowerer.normalizedCallArguments(
+                    providedArguments: loweredArgs,
+                    callBinding: callBinding,
+                    chosenCallee: chosenSet,
+                    spreadFlags: Array(repeating: false, count: loweredArgs.count),
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                ),
+                callBinding: callBinding,
+                chosenCallee: chosenSet,
+                calleeName: interner.intern("set"),
+                receiver: MemberCallReceiver(expr: receiverExpr, loweredID: receiverID),
+                result: callResult,
+                isSuperCall: sema.bindings.isSuperCallExpr(exprID),
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions,
+                arguments: [receiverID] + loweredArgs
+            )
+            let unit = arena.appendExpr(.unit, type: sema.types.unitType)
+            instructions.append(.constValue(result: unit, value: .unit))
+            return unit
+        }
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_array_set"),

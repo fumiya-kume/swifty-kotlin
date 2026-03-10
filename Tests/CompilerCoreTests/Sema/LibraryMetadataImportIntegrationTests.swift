@@ -157,6 +157,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -201,6 +202,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -248,6 +250,7 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
         try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
 
         let manifest = """
@@ -315,6 +318,133 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
             XCTAssertTrue(metadata.contains("property "))
             XCTAssertTrue(metadata.contains("sig=F1<I,I>"))
             XCTAssertTrue(metadata.contains("sig=I"))
+        }
+    }
+
+    func testPlatformWarningEmittedForImportedMissingSignatureInExplicitNonNullContext() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtPlatformWarn",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=1
+        function _ fq=ext.platformValue schema=v1 arity=0 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = """
+        import ext.platformValue
+
+        fun useExplicit(): Any {
+            val x: Any = platformValue()
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "PlatformWarn",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runSema(ctx)
+
+            assertHasDiagnostic("KSWIFTK-SEMA-PLATFORM", in: ctx)
+            let warnings = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-PLATFORM" }
+            XCTAssertFalse(warnings.isEmpty)
+            XCTAssertTrue(warnings.allSatisfy { $0.primaryRange != nil })
+        }
+    }
+
+    func testPlatformWarningSuppressedForInferredReturnTypeFromImportedMissingSignature() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtPlatformSuppressed",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=1
+        function _ fq=ext.platformValue schema=v1 arity=0 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = """
+        import ext.platformValue
+
+        fun inferred() = platformValue()
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "PlatformWarnSuppressed",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-PLATFORM", in: ctx)
+        }
+    }
+
+    func testPlatformValueAssignsToExplicitNullableContextWithoutWarning() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtPlatformNullable",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=1
+        function _ fq=ext.platformValue schema=v1 arity=0 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = """
+        import ext.platformValue
+
+        fun useNullable(): Any? {
+            val x: Any? = platformValue()
+            return x
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "PlatformNullable",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-SEMA-PLATFORM", in: ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError)
         }
     }
 }

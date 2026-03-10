@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 /// Represents a single annotation usage in Kotlin source code, e.g. `@Suppress("UNCHECKED_CAST")`.
 public struct AnnotationNode {
     /// The simple or qualified name of the annotation (e.g. "Suppress", "kotlin.Deprecated").
@@ -21,6 +20,26 @@ public struct ASTFile {
     public let imports: [ImportDecl]
     public let topLevelDecls: [DeclID]
     public let scriptBody: [ExprID]
+    public let annotations: [AnnotationNode]
+    public let range: SourceRange?
+
+    public init(
+        fileID: FileID,
+        packageFQName: [InternedString],
+        imports: [ImportDecl],
+        topLevelDecls: [DeclID],
+        scriptBody: [ExprID],
+        annotations: [AnnotationNode] = [],
+        range: SourceRange? = nil
+    ) {
+        self.fileID = fileID
+        self.packageFQName = packageFQName
+        self.imports = imports
+        self.topLevelDecls = topLevelDecls
+        self.scriptBody = scriptBody
+        self.annotations = annotations
+        self.range = range
+    }
 }
 
 public enum ConstructorDelegationKind: Equatable {
@@ -62,6 +81,21 @@ public struct ConstructorDecl {
     }
 }
 
+/// A single supertype entry in a class declaration, optionally with delegation.
+/// Used for `class Foo(impl: Printer) : Printer by impl` — the `by expr` part
+/// delegates interface implementation to the given expression.
+public struct SuperTypeEntry: Equatable {
+    public let typeRef: TypeRefID
+    /// When present, this supertype (must be an interface) is implemented by
+    /// delegating to the given expression. Absent for non-delegated supertypes.
+    public let delegateExpression: ExprID?
+
+    public init(typeRef: TypeRefID, delegateExpression: ExprID? = nil) {
+        self.typeRef = typeRef
+        self.delegateExpression = delegateExpression
+    }
+}
+
 /// Represents a member in the class body initialization sequence.
 /// Used to guarantee Kotlin's declaration-order execution of property
 /// initializers and `init` blocks.
@@ -82,10 +116,14 @@ public struct ClassDecl {
     public let isInner: Bool
     public let typeParams: [TypeParamDecl]
     public let primaryConstructorParams: [ValueParamDecl]
+    /// Modifiers attached specifically to the primary constructor declaration,
+    /// e.g. `class Foo private constructor()`.
+    public let primaryConstructorModifiers: Modifiers
     /// `true` when the class header contains explicit constructor parentheses,
     /// distinguishing `class Foo()` (has primary ctor) from `class Foo` (no primary ctor).
     public let hasPrimaryConstructorSyntax: Bool
-    public let superTypes: [TypeRefID]
+    /// Supertype entries; each may have an optional `by expr` for interface delegation.
+    public let superTypeEntries: [SuperTypeEntry]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let enumEntries: [EnumEntryDecl]
     public let initBlocks: [FunctionBody]
@@ -110,8 +148,9 @@ public struct ClassDecl {
         isInner: Bool = false,
         typeParams: [TypeParamDecl] = [],
         primaryConstructorParams: [ValueParamDecl] = [],
+        primaryConstructorModifiers: Modifiers = [],
         hasPrimaryConstructorSyntax: Bool = false,
-        superTypes: [TypeRefID] = [],
+        superTypeEntries: [SuperTypeEntry] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         enumEntries: [EnumEntryDecl] = [],
         initBlocks: [FunctionBody] = [],
@@ -130,8 +169,9 @@ public struct ClassDecl {
         self.isInner = isInner
         self.typeParams = typeParams
         self.primaryConstructorParams = primaryConstructorParams
+        self.primaryConstructorModifiers = primaryConstructorModifiers
         self.hasPrimaryConstructorSyntax = hasPrimaryConstructorSyntax
-        self.superTypes = superTypes
+        self.superTypeEntries = superTypeEntries
         self.nestedTypeAliases = nestedTypeAliases
         self.enumEntries = enumEntries
         self.initBlocks = initBlocks
@@ -248,6 +288,7 @@ public struct FunDecl {
     public let body: FunctionBody
     public let isSuspend: Bool
     public let isInline: Bool
+    public let isTailrec: Bool
 
     public init(
         range: SourceRange,
@@ -260,7 +301,8 @@ public struct FunDecl {
         returnType: TypeRefID? = nil,
         body: FunctionBody = .unit,
         isSuspend: Bool = false,
-        isInline: Bool = false
+        isInline: Bool = false,
+        isTailrec: Bool = false
     ) {
         self.range = range
         self.name = name
@@ -273,6 +315,7 @@ public struct FunDecl {
         self.body = body
         self.isSuspend = isSuspend
         self.isInline = isInline
+        self.isTailrec = isTailrec
     }
 }
 
@@ -324,6 +367,9 @@ public struct PropertyDecl {
     /// The receiver type reference for extension properties (e.g. `val Int.double`).
     /// `nil` for regular (non-extension) properties.
     public let receiverType: TypeRefID?
+    /// `true` for synthetic member properties materialized from primary
+    /// constructor `val` / `var` parameters.
+    public let isSynthesizedPrimaryConstructorProperty: Bool
 
     public init(
         range: SourceRange,
@@ -337,7 +383,8 @@ public struct PropertyDecl {
         setter: PropertyAccessorDecl? = nil,
         delegateExpression: ExprID? = nil,
         delegateBody: FunctionBody? = nil,
-        receiverType: TypeRefID? = nil
+        receiverType: TypeRefID? = nil,
+        isSynthesizedPrimaryConstructorProperty: Bool = false
     ) {
         self.range = range
         self.name = name
@@ -351,6 +398,7 @@ public struct PropertyDecl {
         self.delegateExpression = delegateExpression
         self.delegateBody = delegateBody
         self.receiverType = receiverType
+        self.isSynthesizedPrimaryConstructorProperty = isSynthesizedPrimaryConstructorProperty
     }
 }
 
@@ -391,24 +439,45 @@ public struct TypeParamDecl {
     public let name: InternedString
     public let variance: TypeVariance
     public let isReified: Bool
-    public let upperBound: TypeRefID?
+    public let upperBounds: [TypeRefID]
+
+    public var upperBound: TypeRefID? {
+        upperBounds.first
+    }
 
     public init(
         name: InternedString,
         variance: TypeVariance = .invariant,
         isReified: Bool = false,
-        upperBound: TypeRefID? = nil
+        upperBounds: [TypeRefID] = []
     ) {
         self.name = name
         self.variance = variance
         self.isReified = isReified
-        self.upperBound = upperBound
+        self.upperBounds = upperBounds
+    }
+
+    public init(
+        name: InternedString,
+        variance: TypeVariance = .invariant,
+        isReified: Bool = false,
+        upperBound: TypeRefID?
+    ) {
+        self.name = name
+        self.variance = variance
+        self.isReified = isReified
+        upperBounds = upperBound.map { [$0] } ?? []
     }
 }
 
 public struct ValueParamDecl: Equatable {
     public let name: InternedString
     public let type: TypeRefID?
+    /// `true` when the primary constructor parameter is declared as a property
+    /// via `val` or `var`.
+    public let isProperty: Bool
+    /// `true` only for `var` primary constructor properties.
+    public let isMutableProperty: Bool
     public let hasDefaultValue: Bool
     public let isVararg: Bool
     public let defaultValue: ExprID?
@@ -416,12 +485,16 @@ public struct ValueParamDecl: Equatable {
     public init(
         name: InternedString,
         type: TypeRefID?,
+        isProperty: Bool = false,
+        isMutableProperty: Bool = false,
         hasDefaultValue: Bool = false,
         isVararg: Bool = false,
         defaultValue: ExprID? = nil
     ) {
         self.name = name
         self.type = type
+        self.isProperty = isProperty
+        self.isMutableProperty = isMutableProperty
         self.hasDefaultValue = hasDefaultValue
         self.isVararg = isVararg
         self.defaultValue = defaultValue

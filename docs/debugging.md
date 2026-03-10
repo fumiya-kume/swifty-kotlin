@@ -109,7 +109,7 @@ Source locations flow through the compiler pipeline as follows:
 
 1. **Parser** records `SourceRange` (file, start offset, end offset) for each
    AST expression node.
-2. **KIR Lowering** (`ExprLowerer+Part2.swift`) extracts the `SourceRange` from
+2. **KIR Lowering** (`ExprLowerer+InstructionLocationTracking.swift`) extracts the `SourceRange` from
    each `Expr` and records it in `KIRLoweringEmitContext.instructionLocations`
    as a parallel array alongside the emitted instructions.
 3. **KIRFunction** stores both `body` (instructions) and
@@ -136,7 +136,6 @@ This allows `lldb` to display local variable names and values in `frame variable
 ### No debug info in output
 
 - Ensure `-g` flag is passed to `kswiftc`
-- Verify LLVM C API backend is selected (check for `backend=llvm-c-api` in IR flags)
 - Check that `libLLVM` is available and the debug info symbols are loaded
 
 ### Breakpoints not resolving

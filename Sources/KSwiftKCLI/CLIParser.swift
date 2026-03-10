@@ -24,13 +24,12 @@ enum CLIParser {
       -l <name>              Link library
       --target <triple>      Target triple (arch-vendor-os[-version])
       -Xfrontend <flag>      Frontend feature flag (e.g. time-phases)
-      -Xir <flag>            IR/lowering feature flag (e.g. backend=llvm-c-api, backend-strict=true)
+      -Xir <flag>            IR/lowering feature flag (e.g. trace-lowering)
       -Xruntime <flag>       Runtime feature flag
       -Xdiagnostics <format> Diagnostic output format (text|json)
       -g                     Emit debug info
     """
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func parse(args: [String]) throws -> CompilerOptions {
         var inputPaths: [String] = []
         var outputPath = "./a.out"

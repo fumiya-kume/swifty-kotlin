@@ -6,6 +6,15 @@ Run all cases:
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases
 ```
 
+Run with additional kotlinx classpath (for `Flow`-related cases).  
+`diff_kotlinc.sh` now auto-downloads `kotlinx-coroutines-core-jvm` when it detects coroutine imports and no `--kotlinc-classpath` is provided.
+
+```bash
+bash Scripts/diff_kotlinc.sh \
+  --kotlinc-classpath "/path/to/kotlinx-coroutines-core-jvm.jar" \
+  Scripts/diff_cases/flow_cold.kt
+```
+
 Cases:
 
 - `hello.kt`: minimal executable smoke case
@@ -14,6 +23,7 @@ Cases:
 - `if_expr.kt`: expression-body `if` function
 - `named_default.kt`: named argument + default parameter補完
 - `extension_receiver.kt`: extension receiver 呼び出しと `this` 束縛
+- `nullable_receiver_ext.kt`: nullable receiver 拡張（`fun T?.foo()`）の直接呼び出しと優先順位 parity（出力は `1/0` 比較）
 - `local_var.kt`: block 内 local `val` 宣言と参照
 - `local_assign.kt`: block 内 local `var` 再代入
 - `loop_basic.kt`: `while` / `do-while` の制御フローと `break` の基本実行
@@ -29,12 +39,19 @@ Cases:
 - `intersection_definitely_non_null.kt`: `T & Any`（definitely non-null）での通常呼び出しと safe-call の parity
 - `star_projection.kt`: use-site star projection（`Box<*>`）の型解決 parity
 - `generic_typealias.kt`: 循環 typealias（`A = B`, `B = A`）の compile-error parity
+- `cast_operators.kt`: `as` / `as?` キャストと null 結果の parity
 - `is_type_check.kt`: `is` / `!is` と `&&` / `||` の smart-cast 伝播 parity
 - `is_type_check_non_reified_error.kt`: non-reified 型パラメータへの `is` チェック compile-error parity
 - `try_expression.kt`: `try` 式（multi-catch / partial catch / `finally` 実行順）の parity
 - `interface_default_method.kt`: interface default method（body あり fun）の default 実装呼び出しと concrete override の共存 parity
 - `abstract_class.kt`: abstract class / abstract member の制約と override 強制（abstract fun, multi-level inheritance chain）
+- `tailrec_fun.kt`: `tailrec` 関数の再帰実行 parity
+- `builder_dsl.kt`: `buildString` DSL builder の正常系 parity
+- `builder_dsl_invalid_arg.kt`: builder への不正引数（非 lambda）を compile error として扱う parity
+- `builder_dsl_shadowing.kt`: user-defined `buildString` / `buildList` / `buildMap` が DSL 特別扱いに奪われないことの parity
 - `sequence_lazy.kt`: `Sequence<T>` lazy evaluation chain（`asSequence` → `map` → `filter` → `toList`）の parity
 - `stdlib_collection_hof.kt`: collection HOF（map/filter/flatMap/fold/reduce/any/all/none/groupBy/sortedBy/find/count/first/last）と capture lambda の parity
+- `stdlib_string_ops.kt`: String stdlib parity（`trim/split/replace/startsWith/endsWith/contains/toInt/toDouble/format/substring/lowercase/uppercase/toIntOrNull/toDoubleOrNull/indexOf/lastIndexOf/padStart/padEnd/repeat/reversed/toList/toCharArray/drop/take/dropLast/takeLast`）
+- `flow_cold.kt`: `Flow<T>` cold stream chain（`flow { emit(...) }.map { ... }.collect { ... }`）の parity（kotlinx classpath 必須）
 
 The set intentionally includes both successful programs and compile-error cases.

@@ -1,4 +1,3 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension BuildASTPhase {
@@ -101,7 +100,28 @@ extension BuildASTPhase {
             let isDotContinuation = filtered.first.map {
                 $0.kind == .symbol(.dot) || $0.kind == .symbol(.questionDot)
             } ?? false
-            if isDotContinuation, !rawGroups.isEmpty {
+            let shouldMergeWithPrevious: Bool
+            if !rawGroups.isEmpty {
+                let previousFiltered = filteredGroups[filteredGroups.count - 1]
+                let previousEndsWithContinuation = previousFiltered.last.map {
+                    isBinaryOperatorToken($0.kind)
+                        || $0.kind == .symbol(.lParen)
+                        || $0.kind == .symbol(.comma)
+                } ?? false
+                let currentStartsWithContinuation = filtered.first.map {
+                    isBinaryOperatorToken($0.kind)
+                        || $0.kind == .symbol(.comma)
+                        || $0.kind == .symbol(.rParen)
+                        || $0.kind == .symbol(.rBracket)
+                } ?? false
+                shouldMergeWithPrevious = isDotContinuation
+                    || previousEndsWithContinuation
+                    || currentStartsWithContinuation
+                    || hasUnclosedStatementDelimiter(previousFiltered)
+            } else {
+                shouldMergeWithPrevious = false
+            }
+            if shouldMergeWithPrevious {
                 rawGroups[rawGroups.count - 1].append(contentsOf: rawTokens)
                 filteredGroups[filteredGroups.count - 1].append(contentsOf: filtered)
                 continue
@@ -110,6 +130,24 @@ extension BuildASTPhase {
             rawGroups.append(rawTokens)
             filteredGroups.append(filtered)
         }
+    }
+
+    private func hasUnclosedStatementDelimiter(_ tokens: [Token]) -> Bool {
+        var parenDepth = 0
+        var bracketDepth = 0
+        var braceDepth = 0
+        for token in tokens {
+            switch token.kind {
+            case .symbol(.lParen): parenDepth += 1
+            case .symbol(.rParen): parenDepth = max(0, parenDepth - 1)
+            case .symbol(.lBracket): bracketDepth += 1
+            case .symbol(.rBracket): bracketDepth = max(0, bracketDepth - 1)
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
+            default: break
+            }
+        }
+        return parenDepth > 0 || bracketDepth > 0 || braceDepth > 0
     }
 
     /// Parse a single (possibly merged) statement token group, trying local
@@ -281,7 +319,6 @@ extension BuildASTPhase {
     // Annotations appear as `@Name` or `@Name(args)` tokens before the declaration
     // keyword (class, fun, val, var, etc.).  Also handles use-site targets like
     // `@get:Name` or `@field:Name(args)`.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func declarationAnnotations(
         from nodeID: NodeID, in arena: SyntaxArena, interner: StringInterner
     ) -> [AnnotationNode] {
@@ -307,9 +344,9 @@ extension BuildASTPhase {
             if index + 1 < tokens.count, tokens[index + 1].kind == .symbol(.colon) {
                 let candidate = tokens[index]
                 if let candidateName = tokenText(candidate, interner: interner) {
-                    let knownTargets: Set<String> = [
+                    let knownTargets: Set = [
                         "get", "set", "field", "param", "setparam",
-                        "delegate", "property", "receiver", "file", // swiftlint:disable:this trailing_comma
+                        "delegate", "property", "receiver", "file",
                     ]
                     if knownTargets.contains(candidateName) {
                         useSiteTarget = candidateName
@@ -400,8 +437,7 @@ extension BuildASTPhase {
         }
     }
 
-    // Returns a raw text representation for any token, used for annotation argument parsing.
-    // swiftlint:disable:next cyclomatic_complexity
+    /// Returns a raw text representation for any token, used for annotation argument parsing.
     private func tokenRawText(_ token: Token, interner: StringInterner) -> String {
         switch token.kind {
         case let .identifier(interned), let .backtickedIdentifier(interned):

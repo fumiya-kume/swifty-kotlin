@@ -1,7 +1,12 @@
 import Foundation
 
+struct StateMachineTypeContext {
+    let continuationType: TypeID
+    let intType: TypeID?
+    let unitType: TypeID?
+}
+
 extension CoroutineLoweringPass {
-    // swiftlint:disable:next function_body_length
     func lowerSuspendBodyToStateMachineSkeleton(
         originalBody: [KIRInstruction],
         continuationParameterSymbol: SymbolID,
@@ -14,10 +19,11 @@ extension CoroutineLoweringPass {
         runtimeDelayCallee: InternedString,
         suspendPlan: SuspendLoweringPlan,
         spillSlotByExpr: [KIRExprID: Int64],
-        continuationType: TypeID,
-        intType: TypeID?,
-        unitType: TypeID?
+        smTypes: StateMachineTypeContext
     ) -> [KIRInstruction] {
+        let continuationType = smTypes.continuationType
+        let intType = smTypes.intType
+        let unitType = smTypes.unitType
         let enterCallee = interner.intern("kk_coroutine_state_enter")
         let setLabelCallee = interner.intern("kk_coroutine_state_set_label")
         let exitCallee = interner.intern("kk_coroutine_state_exit")
@@ -124,9 +130,9 @@ extension CoroutineLoweringPass {
                 }
 
                 // CORO-002: Check cancellation after resuming from suspension point.
-                // If cancelled, kk_coroutine_check_cancellation writes a CancellationException
-                // into outThrown and returns 1. We use thrownResult: nil so that codegen
-                // auto-generates the early-return propagation on non-zero thrown.
+                // If cancelled, kk_coroutine_check_cancellation writes a
+                // CancellationException into the original call's thrown slot so
+                // surrounding try/catch blocks can observe it.
                 let cancelCheckResult = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: intType
@@ -138,7 +144,7 @@ extension CoroutineLoweringPass {
                         arguments: [continuationExpr],
                         result: cancelCheckResult,
                         canThrow: true,
-                        thrownResult: nil
+                        thrownResult: transition.suspendingInstructionCallInfo?.thrownResult
                     )
                 )
             }
@@ -219,7 +225,7 @@ extension CoroutineLoweringPass {
                                 arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
-                                thrownResult: nil,
+                                thrownResult: suspendCallInfo.thrownResult,
                                 dispatch: dispatch
                             )
                         )
@@ -231,7 +237,7 @@ extension CoroutineLoweringPass {
                                 arguments: loweredSuspendArguments,
                                 result: suspensionResult,
                                 canThrow: suspendCallInfo.canThrow,
-                                thrownResult: nil,
+                                thrownResult: suspendCallInfo.thrownResult,
                                 isSuperCall: suspendCallInfo.isSuperCall
                             )
                         )
@@ -327,6 +333,7 @@ extension CoroutineLoweringPass {
     struct SuspendTransition {
         let sourceInstructionIndex: Int
         let callResultExpr: KIRExprID?
+        let suspendingInstructionCallInfo: CallInfo?
     }
 
     struct SpillPlan {

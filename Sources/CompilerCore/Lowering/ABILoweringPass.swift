@@ -1,195 +1,45 @@
-// swiftlint:disable file_length
 import Foundation
 
-// swiftlint:disable:next type_body_length
+struct BoxingCalleeNames {
+    let int: InternedString
+    let bool: InternedString
+    let long: InternedString
+    let float: InternedString
+    let double: InternedString
+    let char: InternedString
+}
+
+struct UnboxingCalleeNames {
+    let int: InternedString
+    let bool: InternedString
+    let long: InternedString
+    let float: InternedString
+    let double: InternedString
+    let char: InternedString
+}
+
 final class ABILoweringPass: LoweringPass {
     static let name = "ABILowering"
 
     func run(module: KIRModule, ctx: KIRContext) throws {
-        let nonThrowingCallees: Set<InternedString> = Set([
-            ctx.interner.intern("kk_op_add"),
-            ctx.interner.intern("kk_op_sub"),
-            ctx.interner.intern("kk_op_mul"),
-            ctx.interner.intern("kk_op_div"),
-            ctx.interner.intern("kk_op_mod"),
-            ctx.interner.intern("kk_op_udiv"),
-            ctx.interner.intern("kk_op_urem"),
-            ctx.interner.intern("kk_op_ult"),
-            ctx.interner.intern("kk_op_ule"),
-            ctx.interner.intern("kk_op_ugt"),
-            ctx.interner.intern("kk_op_uge"),
-            ctx.interner.intern("kk_uint_to_int"),
-            ctx.interner.intern("kk_ulong_to_int"),
-            ctx.interner.intern("kk_int_to_uint"),
-            ctx.interner.intern("kk_long_to_uint"),
-            ctx.interner.intern("kk_int_to_long"),
-            ctx.interner.intern("kk_uint_to_long"),
-            ctx.interner.intern("kk_int_to_ulong"),
-            ctx.interner.intern("kk_long_to_ulong"),
-            ctx.interner.intern("kk_uint_to_ulong"),
-            ctx.interner.intern("kk_op_eq"),
-            ctx.interner.intern("kk_string_concat"),
-            ctx.interner.intern("kk_string_length"),
-            ctx.interner.intern("kk_op_is"),
-            ctx.interner.intern("kk_op_safe_cast"),
-            ctx.interner.intern("kk_op_contains"),
-            ctx.interner.intern("kk_op_not"),
-            ctx.interner.intern("kk_op_uplus"),
-            ctx.interner.intern("kk_op_uminus"),
+        let nonThrowingCallees = nonThrowingCallees(interner: ctx.interner)
 
-            ctx.interner.intern("kk_for_lowered"),
-            ctx.interner.intern("kk_range_iterator"),
-            ctx.interner.intern("kk_range_hasNext"),
-            ctx.interner.intern("kk_range_next"),
-            ctx.interner.intern("kk_op_rangeTo"),
-            ctx.interner.intern("kk_op_rangeUntil"),
-            ctx.interner.intern("kk_op_downTo"),
-            ctx.interner.intern("kk_op_step"),
-            // kk_property_access removed — PropertyLowering now emits direct accessor
-            // calls with synthetic symbols; canThrow is handled via symbol check below.
-            ctx.interner.intern("kk_lambda_invoke"),
-            ctx.interner.intern("kk_println_any"),
-            ctx.interner.intern("kk_coroutine_suspended"),
-            ctx.interner.intern("kk_coroutine_continuation_new"),
-            ctx.interner.intern("kk_coroutine_state_enter"),
-            ctx.interner.intern("kk_coroutine_state_set_label"),
-            ctx.interner.intern("kk_coroutine_state_exit"),
-            ctx.interner.intern("kk_coroutine_state_set_spill"),
-            ctx.interner.intern("kk_coroutine_state_get_spill"),
-            ctx.interner.intern("kk_coroutine_state_set_completion"),
-            ctx.interner.intern("kk_coroutine_state_get_completion"),
-            ctx.interner.intern("kk_kxmini_run_blocking"),
-            ctx.interner.intern("kk_kxmini_launch"),
-            ctx.interner.intern("kk_kxmini_async"),
-            ctx.interner.intern("kk_kxmini_async_await"),
-            ctx.interner.intern("kk_kxmini_delay"),
-            ctx.interner.intern("kk_coroutine_launcher_arg_set"),
-            ctx.interner.intern("kk_coroutine_launcher_arg_get"),
-            ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
-            ctx.interner.intern("kk_kxmini_launch_with_cont"),
-            ctx.interner.intern("kk_kxmini_async_with_cont"),
-            ctx.interner.intern("kk_coroutine_scope_run"),
-            ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
-            ctx.interner.intern("kk_coroutine_scope_new"),
-            ctx.interner.intern("kk_coroutine_scope_cancel"),
-            ctx.interner.intern("kk_coroutine_scope_wait"),
-            ctx.interner.intern("kk_coroutine_scope_register_child"),
-            ctx.interner.intern("kk_job_join"),
-            ctx.interner.intern("kk_array_new"),
-            ctx.interner.intern("kk_object_new"),
-            ctx.interner.intern("kk_vararg_spread_concat"),
-            ctx.interner.intern("kk_type_register_super"),
-            ctx.interner.intern("kk_type_register_iface"),
-            ctx.interner.intern("kk_box_int"),
-            ctx.interner.intern("kk_box_bool"),
-            ctx.interner.intern("kk_box_long"),
-            ctx.interner.intern("kk_box_float"),
-            ctx.interner.intern("kk_box_double"),
-            ctx.interner.intern("kk_box_char"),
-            ctx.interner.intern("kk_unbox_int"),
-            ctx.interner.intern("kk_unbox_bool"),
-            ctx.interner.intern("kk_unbox_long"),
-            ctx.interner.intern("kk_unbox_float"),
-            ctx.interner.intern("kk_unbox_double"),
-            ctx.interner.intern("kk_unbox_char"),
-            ctx.interner.intern("kk_println_float"),
-            ctx.interner.intern("kk_println_double"),
-            ctx.interner.intern("kk_println_char"),
-            ctx.interner.intern("kk_op_fadd"),
-            ctx.interner.intern("kk_op_fsub"),
-            ctx.interner.intern("kk_op_fmul"),
-            ctx.interner.intern("kk_op_fdiv"),
-            ctx.interner.intern("kk_op_fmod"),
-            ctx.interner.intern("kk_op_feq"),
-            ctx.interner.intern("kk_op_fne"),
-            ctx.interner.intern("kk_op_flt"),
-            ctx.interner.intern("kk_op_fle"),
-            ctx.interner.intern("kk_op_fgt"),
-            ctx.interner.intern("kk_op_fge"),
-            ctx.interner.intern("kk_op_dadd"),
-            ctx.interner.intern("kk_op_dsub"),
-            ctx.interner.intern("kk_op_dmul"),
-            ctx.interner.intern("kk_op_ddiv"),
-            ctx.interner.intern("kk_op_dmod"),
-            ctx.interner.intern("kk_op_deq"),
-            ctx.interner.intern("kk_op_dne"),
-            ctx.interner.intern("kk_op_dlt"),
-            ctx.interner.intern("kk_op_dle"),
-            ctx.interner.intern("kk_op_dgt"),
-            ctx.interner.intern("kk_op_dge"),
-            ctx.interner.intern("kk_println_long"),
-            ctx.interner.intern("kk_int_to_float_bits"),
-            ctx.interner.intern("kk_int_to_double_bits"),
-            ctx.interner.intern("kk_float_to_double_bits"),
-            ctx.interner.intern("kk_any_to_string"),
-            ctx.interner.intern("kk_throwable_is_cancellation"),
-            ctx.interner.intern("kk_op_elvis"),
-            ctx.interner.intern("kk_lazy_create"),
-            ctx.interner.intern("kk_lazy_get_value"),
-            ctx.interner.intern("kk_observable_create"),
-            ctx.interner.intern("kk_observable_get_value"),
-            ctx.interner.intern("kk_observable_set_value"),
-            ctx.interner.intern("kk_vetoable_create"),
-            ctx.interner.intern("kk_vetoable_get_value"),
-            ctx.interner.intern("kk_vetoable_set_value"),
-            ctx.interner.intern("kk_custom_delegate_create"),
-            ctx.interner.intern("kk_custom_delegate_get_value"),
-            ctx.interner.intern("kk_custom_delegate_set_value"),
-            ctx.interner.intern("kk_list_of"),
-            ctx.interner.intern("kk_list_size"),
-            ctx.interner.intern("kk_list_get"),
-            ctx.interner.intern("kk_list_contains"),
-            ctx.interner.intern("kk_list_is_empty"),
-            ctx.interner.intern("kk_list_iterator"),
-            ctx.interner.intern("kk_list_iterator_hasNext"),
-            ctx.interner.intern("kk_list_iterator_next"),
-            ctx.interner.intern("kk_list_to_string"),
-            // NOTE: kk_list_map/filter/forEach/flatMap/any/none/all are NOT
-            // non-throwing — the lambda argument can throw, so they need an
-            // outThrown slot allocated by the ABI lowering pass.
-            ctx.interner.intern("kk_map_of"),
-            ctx.interner.intern("kk_map_size"),
-            ctx.interner.intern("kk_map_get"),
-            ctx.interner.intern("kk_map_contains_key"),
-            ctx.interner.intern("kk_map_is_empty"),
-            ctx.interner.intern("kk_map_to_string"),
-            ctx.interner.intern("kk_map_iterator"),
-            ctx.interner.intern("kk_map_iterator_hasNext"),
-            ctx.interner.intern("kk_map_iterator_next"),
-            ctx.interner.intern("kk_array_of"),
-            ctx.interner.intern("kk_array_size"),
-            // Bitwise/shift (P5-103)
-            ctx.interner.intern("kk_bitwise_and"),
-            ctx.interner.intern("kk_bitwise_or"),
-            ctx.interner.intern("kk_bitwise_xor"),
-            ctx.interner.intern("kk_op_inv"),
-            ctx.interner.intern("kk_op_shl"),
-            ctx.interner.intern("kk_op_shr"),
-            ctx.interner.intern("kk_op_ushr"),
-            ctx.interner.intern("kk_int_toString_radix"),
-            // Sequence (STDLIB-003) — these are non-throwing extern C functions.
-            ctx.interner.intern("kk_sequence_from_list"),
-            ctx.interner.intern("kk_sequence_map"),
-            ctx.interner.intern("kk_sequence_filter"),
-            ctx.interner.intern("kk_sequence_take"),
-            ctx.interner.intern("kk_sequence_to_list"),
-            ctx.interner.intern("kk_sequence_builder_create"),
-            ctx.interner.intern("kk_sequence_builder_yield"),
-            ctx.interner.intern("kk_sequence_builder_build"),
-        ]).union(Self.kPropertyStubCallees(ctx.interner))
-
-        let boxIntCallee = ctx.interner.intern("kk_box_int")
-        let boxBoolCallee = ctx.interner.intern("kk_box_bool")
-        let boxLongCallee = ctx.interner.intern("kk_box_long")
-        let boxFloatCallee = ctx.interner.intern("kk_box_float")
-        let boxDoubleCallee = ctx.interner.intern("kk_box_double")
-        let boxCharCallee = ctx.interner.intern("kk_box_char")
-        let unboxIntCallee = ctx.interner.intern("kk_unbox_int")
-        let unboxBoolCallee = ctx.interner.intern("kk_unbox_bool")
-        let unboxLongCallee = ctx.interner.intern("kk_unbox_long")
-        let unboxFloatCallee = ctx.interner.intern("kk_unbox_float")
-        let unboxDoubleCallee = ctx.interner.intern("kk_unbox_double")
-        let unboxCharCallee = ctx.interner.intern("kk_unbox_char")
+        let boxCallees = BoxingCalleeNames(
+            int: ctx.interner.intern("kk_box_int"),
+            bool: ctx.interner.intern("kk_box_bool"),
+            long: ctx.interner.intern("kk_box_long"),
+            float: ctx.interner.intern("kk_box_float"),
+            double: ctx.interner.intern("kk_box_double"),
+            char: ctx.interner.intern("kk_box_char")
+        )
+        let unboxCallees = UnboxingCalleeNames(
+            int: ctx.interner.intern("kk_unbox_int"),
+            bool: ctx.interner.intern("kk_unbox_bool"),
+            long: ctx.interner.intern("kk_unbox_long"),
+            float: ctx.interner.intern("kk_unbox_float"),
+            double: ctx.interner.intern("kk_unbox_double"),
+            char: ctx.interner.intern("kk_unbox_char")
+        )
 
         let types = ctx.sema?.types
         let symbols = ctx.sema?.symbols
@@ -231,12 +81,7 @@ final class ABILoweringPass: LoweringPass {
                             module: module,
                             types: types,
                             symbols: symbols,
-                            boxIntCallee: boxIntCallee,
-                            boxBoolCallee: boxBoolCallee,
-                            boxLongCallee: boxLongCallee,
-                            boxFloatCallee: boxFloatCallee,
-                            boxDoubleCallee: boxDoubleCallee,
-                            boxCharCallee: boxCharCallee,
+                            boxCallees: boxCallees,
                             newBody: &newBody
                         )
                     } else {
@@ -250,12 +95,7 @@ final class ABILoweringPass: LoweringPass {
                         module: module,
                         types: types,
                         symbols: symbols,
-                        unboxIntCallee: unboxIntCallee,
-                        unboxBoolCallee: unboxBoolCallee,
-                        unboxLongCallee: unboxLongCallee,
-                        unboxFloatCallee: unboxFloatCallee,
-                        unboxDoubleCallee: unboxDoubleCallee,
-                        unboxCharCallee: unboxCharCallee
+                        unboxCallees: unboxCallees
                     )
                     if let (vcUnboxCallee, vcReturnType) = vcUnbox, let vcResult {
                         let tempResult = module.arena.appendExpr(
@@ -306,104 +146,39 @@ final class ABILoweringPass: LoweringPass {
                 }
 
                 // Handle returnValue: box primitive if function returns Any/Any?
-                if case let .returnValue(value) = instruction, let types {
-                    if let functionReturnKind, isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols) {
-                        let valueType = intrinsicArgType(value, arena: module.arena, types: types)
-                        if let valueType {
-                            let resolvedValueKind = resolveValueClassKind(
-                                types.kind(of: valueType), types: types, symbols: symbols
-                            )
-                            if let boxCallee = boxCalleeForPrimitive(
-                                resolvedValueKind,
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
-                            ) {
-                                let boxedResult = module.arena.appendExpr(
-                                    .temporary(Int32(module.arena.expressions.count)),
-                                    type: function.returnType
-                                )
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: boxCallee,
-                                    arguments: [value],
-                                    result: boxedResult,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                newBody.append(.returnValue(boxedResult))
-                                idx += 1
-                                continue
-                            }
-                        }
-                    }
+                if case let .returnValue(value) = instruction, let types,
+                   let rewritten = rewriteReturnValueBoxing(
+                       value: value,
+                       functionReturnKind: functionReturnKind,
+                       returnType: function.returnType,
+                       module: module, types: types, symbols: symbols,
+                       boxCallees: boxCallees
+                   )
+                {
+                    newBody.append(contentsOf: rewritten)
+                    idx += 1
+                    continue
+                }
+                if case .returnValue = instruction {
                     newBody.append(instruction)
                     idx += 1
                     continue
                 }
 
                 // Handle copy: insert boxing/unboxing at type boundaries
-                if case let .copy(from, to) = instruction, let types {
-                    let fromType = intrinsicArgType(from, arena: module.arena, types: types)
-                    let toType = module.arena.exprType(to)
-                    if let fromType, let toType {
-                        let rawFromKind = types.kind(of: fromType)
-                        let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
-                        let rawToKind = types.kind(of: toType)
-                        let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
-                        // Box: primitive → Any/Any?, nonNull primitive → nullable primitive, or primitive → non-value-class reference
-                        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind) || isNonValueClassReference(rawToKind, symbols: symbols) {
-                            if let boxCallee = boxCalleeForPrimitive(
-                                fromKind,
-                                boxIntCallee: boxIntCallee,
-                                boxBoolCallee: boxBoolCallee,
-                                boxLongCallee: boxLongCallee,
-                                boxFloatCallee: boxFloatCallee,
-                                boxDoubleCallee: boxDoubleCallee,
-                                boxCharCallee: boxCharCallee
-                            ) {
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: boxCallee,
-                                    arguments: [from],
-                                    result: to,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                idx += 1
-                                continue
-                            }
-                        }
-                        // Unbox: Any/Any?, non-value-class reference, or nullable primitive → nonNull primitive
-                        if needsUnboxing(sourceKind: fromKind, targetKind: toKind, symbols: symbols) {
-                            if let unboxCallee = unboxingCallee(
-                                sourceKind: fromKind,
-                                targetKind: toKind,
-                                unboxIntCallee: unboxIntCallee,
-                                unboxBoolCallee: unboxBoolCallee,
-                                unboxLongCallee: unboxLongCallee,
-                                unboxFloatCallee: unboxFloatCallee,
-                                unboxDoubleCallee: unboxDoubleCallee,
-                                unboxCharCallee: unboxCharCallee,
-                                types: types,
-                                symbols: symbols
-                            ) {
-                                newBody.append(.call(
-                                    symbol: nil,
-                                    callee: unboxCallee,
-                                    arguments: [from],
-                                    result: to,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                ))
-                                idx += 1
-                                continue
-                            }
-                        }
-                    }
+                if case let .copy(from, to) = instruction, let types,
+                   let rewritten = rewriteCopyBoxingOrUnboxing(
+                       from: from, to: to,
+                       module: module, types: types, symbols: symbols,
+                       boxCallees: boxCallees,
+                       unboxCallees: unboxCallees
+                   )
+                {
+                    newBody.append(rewritten)
+                    idx += 1
+                    continue
+                }
+                if case .copy = instruction {
                     newBody.append(instruction)
                     idx += 1
                     continue
@@ -440,12 +215,7 @@ final class ABILoweringPass: LoweringPass {
                         module: module,
                         types: types,
                         symbols: symbols,
-                        boxIntCallee: boxIntCallee,
-                        boxBoolCallee: boxBoolCallee,
-                        boxLongCallee: boxLongCallee,
-                        boxFloatCallee: boxFloatCallee,
-                        boxDoubleCallee: boxDoubleCallee,
-                        boxCharCallee: boxCharCallee,
+                        boxCallees: boxCallees,
                         newBody: &newBody
                     )
                 } else {
@@ -460,12 +230,7 @@ final class ABILoweringPass: LoweringPass {
                     module: module,
                     types: types,
                     symbols: symbols,
-                    unboxIntCallee: unboxIntCallee,
-                    unboxBoolCallee: unboxBoolCallee,
-                    unboxLongCallee: unboxLongCallee,
-                    unboxFloatCallee: unboxFloatCallee,
-                    unboxDoubleCallee: unboxDoubleCallee,
-                    unboxCharCallee: unboxCharCallee
+                    unboxCallees: unboxCallees
                 )
 
                 if let (resolvedUnboxCallee, resolvedReturnType) = resolvedUnbox, let result {
@@ -519,410 +284,78 @@ final class ABILoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
-    private func applyArgumentBoxing(
-        arguments: [KIRExprID],
-        signature: FunctionSignature,
-        receiverOffset: Int,
+    private func rewriteReturnValueBoxing(
+        value: KIRExprID,
+        functionReturnKind: TypeKind?,
+        returnType: TypeID,
         module: KIRModule,
         types: TypeSystem,
         symbols: SymbolTable?,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString,
-        newBody: inout [KIRInstruction]
-    ) -> [KIRExprID] {
-        var boxedArguments = arguments
-        let parameterTypes = signature.parameterTypes
-        let varargFlags = signature.valueParameterIsVararg
-        for argIndex in arguments.indices {
-            let paramIndex = argIndex - receiverOffset
-            guard paramIndex >= 0, paramIndex < parameterTypes.count else {
-                continue
-            }
-            if paramIndex < varargFlags.count, varargFlags[paramIndex] {
-                continue
-            }
-            let paramType = parameterTypes[paramIndex]
-            let argType = intrinsicArgType(arguments[argIndex], arena: module.arena, types: types)
-            guard let argType else {
-                continue
-            }
-            if let boxCallee = boxingCallee(
-                argType: argType,
-                paramType: paramType,
-                types: types,
-                boxIntCallee: boxIntCallee,
-                boxBoolCallee: boxBoolCallee,
-                boxLongCallee: boxLongCallee,
-                boxFloatCallee: boxFloatCallee,
-                boxDoubleCallee: boxDoubleCallee,
-                boxCharCallee: boxCharCallee,
-                symbols: symbols
-            ) {
-                let boxedResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: paramType
-                )
-                newBody.append(.call(
-                    symbol: nil,
-                    callee: boxCallee,
-                    arguments: [arguments[argIndex]],
-                    result: boxedResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                boxedArguments[argIndex] = boxedResult
-            }
-        }
-        return boxedArguments
-    }
-
-    private func resolveUnboxForCall(
-        callSymbol: SymbolID?,
-        callee: InternedString,
-        result: KIRExprID?,
-        signatureByName: [InternedString: FunctionSignature],
-        module: KIRModule,
-        types: TypeSystem?,
-        symbols: SymbolTable?,
-        unboxIntCallee: InternedString,
-        unboxBoolCallee: InternedString,
-        unboxLongCallee: InternedString,
-        unboxFloatCallee: InternedString,
-        unboxDoubleCallee: InternedString,
-        unboxCharCallee: InternedString
-    ) -> (InternedString, TypeID)? {
-        guard let types, let result else { return nil }
-        var returnType: TypeID?
-        if let callSymbol {
-            returnType = returnTypeForCall(callSymbol: callSymbol, symbols: symbols)
-        }
-        if returnType == nil {
-            returnType = signatureByName[callee]?.returnType
-        }
-        guard let returnType else { return nil }
-        let returnKind = resolveValueClassKind(types.kind(of: returnType), types: types, symbols: symbols)
-        let resultType = module.arena.exprType(result)
-        guard let resultType else { return nil }
-        let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
-        guard needsUnboxing(sourceKind: returnKind, targetKind: resultKind, symbols: symbols) else {
+        boxCallees: BoxingCalleeNames
+    ) -> [KIRInstruction]? {
+        guard let functionReturnKind,
+              isAnyOrNullableAny(functionReturnKind) || isNonValueClassReference(functionReturnKind, symbols: symbols),
+              let valueType = intrinsicArgType(value, arena: module.arena, types: types)
+        else {
             return nil
         }
-        guard let unboxCallee = unboxingCallee(
-            sourceKind: returnKind,
-            targetKind: resultKind,
-            unboxIntCallee: unboxIntCallee,
-            unboxBoolCallee: unboxBoolCallee,
-            unboxLongCallee: unboxLongCallee,
-            unboxFloatCallee: unboxFloatCallee,
-            unboxDoubleCallee: unboxDoubleCallee,
-            unboxCharCallee: unboxCharCallee,
-            types: types,
-            symbols: symbols
+        let resolvedValueKind = resolveValueClassKind(
+            types.kind(of: valueType), types: types, symbols: symbols
+        )
+        guard let boxCallee = boxCalleeForPrimitive(
+            resolvedValueKind,
+            boxCallees: boxCallees
         ) else {
             return nil
         }
-        return (unboxCallee, returnType)
+        let boxedResult = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: returnType
+        )
+        return [
+            .call(symbol: nil, callee: boxCallee, arguments: [value],
+                  result: boxedResult, canThrow: false, thrownResult: nil),
+            .returnValue(boxedResult),
+        ]
     }
 
-    /// Resolves a value class type to its underlying primitive type kind.
-    /// If the type is a value class with a primitive underlying type, returns
-    /// the underlying type's kind. Otherwise returns the original kind.
-    private func resolveValueClassKind(
-        _ kind: TypeKind,
+    private func rewriteCopyBoxingOrUnboxing(
+        from: KIRExprID, to: KIRExprID,
+        module: KIRModule,
         types: TypeSystem,
-        symbols: SymbolTable?
-    ) -> TypeKind {
-        guard let symbols else { return kind }
-        if case let .classType(ct) = kind {
-            // Do not resolve nullable value class types — they are boxed at the ABI level.
-            guard ct.nullability == .nonNull else { return kind }
-            let sym = symbols.symbol(ct.classSymbol)
-            if let sym, sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol)
-            {
-                return types.kind(of: underlyingType)
-            }
-        }
-        return kind
-    }
-
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
-    private func boxingCallee(
-        argType: TypeID,
-        paramType: TypeID,
-        types: TypeSystem,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString,
-        symbols: SymbolTable? = nil
-    ) -> InternedString? {
-        let rawArgKind = types.kind(of: argType)
-        let argKind = resolveValueClassKind(rawArgKind, types: types, symbols: symbols)
-        let paramKind = types.kind(of: paramType)
-
-        // Treat Any/Any? and non-value-class reference types as boxing boundaries.
-        let isReferenceBoxingBoundary: Bool = {
-            if isAnyOrNullableAny(paramKind) {
-                return true
-            }
-            if case let .classType(ct) = paramKind {
-                // If we know this is a non-null value class, do not treat it as a boxing boundary.
-                // Nullable value class types (e.g. Meter?) are boxed at ABI level and ARE boundaries.
-                if let symbols,
-                   let sym = symbols.symbol(ct.classSymbol),
-                   sym.flags.contains(.valueType),
-                   ct.nullability == .nonNull
-                {
-                    return false
-                }
-                // Otherwise, any non-value-class reference type is a boxing boundary.
-                return true
-            }
-            return false
-        }()
-
-        guard isReferenceBoxingBoundary else {
-            if case let .primitive(paramPrimitive, .nullable) = paramKind,
-               case let .primitive(argPrimitive, .nonNull) = argKind,
-               paramPrimitive == argPrimitive
-            {
-                switch argPrimitive {
-                case .int:
-                    return boxIntCallee
-                case .long:
-                    return boxLongCallee
-                case .boolean:
-                    return boxBoolCallee
-                case .float:
-                    return boxFloatCallee
-                case .double:
-                    return boxDoubleCallee
-                case .char:
-                    return boxCharCallee
-                case .uint, .ubyte, .ushort:
-                    return boxIntCallee
-                case .ulong:
-                    return boxLongCallee
-                default:
-                    return nil
-                }
-            }
+        symbols: SymbolTable?,
+        boxCallees: BoxingCalleeNames,
+        unboxCallees: UnboxingCalleeNames
+    ) -> KIRInstruction? {
+        guard let fromType = intrinsicArgType(from, arena: module.arena, types: types),
+              let toType = module.arena.exprType(to)
+        else {
             return nil
         }
-
-        switch argKind {
-        case .primitive(.int, _):
-            return boxIntCallee
-        case .primitive(.long, _):
-            return boxLongCallee
-        case .primitive(.boolean, _):
-            return boxBoolCallee
-        case .primitive(.float, _):
-            return boxFloatCallee
-        case .primitive(.double, _):
-            return boxDoubleCallee
-        case .primitive(.char, _):
-            return boxCharCallee
-        case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return boxIntCallee
-        case .primitive(.ulong, _):
-            return boxLongCallee
-        default:
-            return nil
-        }
-    }
-
-    // swiftlint:disable:next cyclomatic_complexity
-    private func unboxingCallee(
-        sourceKind: TypeKind,
-        targetKind: TypeKind,
-        unboxIntCallee: InternedString,
-        unboxBoolCallee: InternedString,
-        unboxLongCallee: InternedString,
-        unboxFloatCallee: InternedString,
-        unboxDoubleCallee: InternedString,
-        unboxCharCallee: InternedString,
-        types: TypeSystem? = nil,
-        symbols: SymbolTable? = nil
-    ) -> InternedString? {
-        let resolvedTargetKind: TypeKind = if let types, let symbols {
-            resolveValueClassKind(targetKind, types: types, symbols: symbols)
-        } else {
-            targetKind
-        }
-        guard needsUnboxing(sourceKind: sourceKind, targetKind: resolvedTargetKind, symbols: symbols) else {
-            return nil
-        }
-
-        switch resolvedTargetKind {
-        case .primitive(.int, _):
-            return unboxIntCallee
-        case .primitive(.long, _):
-            return unboxLongCallee
-        case .primitive(.boolean, _):
-            return unboxBoolCallee
-        case .primitive(.float, _):
-            return unboxFloatCallee
-        case .primitive(.double, _):
-            return unboxDoubleCallee
-        case .primitive(.char, _):
-            return unboxCharCallee
-        case .primitive(.uint, _), .primitive(.ubyte, _), .primitive(.ushort, _):
-            return unboxIntCallee
-        case .primitive(.ulong, _):
-            return unboxLongCallee
-        default:
-            return nil
-        }
-    }
-
-    private func intrinsicArgType(
-        _ argExprID: KIRExprID,
-        arena: KIRArena,
-        types: TypeSystem
-    ) -> TypeID? {
-        if let kind = arena.expr(argExprID) {
-            switch kind {
-            case .intLiteral:
-                return types.make(.primitive(.int, .nonNull))
-            case .longLiteral:
-                return types.make(.primitive(.long, .nonNull))
-            case .uintLiteral:
-                return types.make(.primitive(.uint, .nonNull))
-            case .ulongLiteral:
-                return types.make(.primitive(.ulong, .nonNull))
-            case .floatLiteral:
-                return types.make(.primitive(.float, .nonNull))
-            case .doubleLiteral:
-                return types.make(.primitive(.double, .nonNull))
-            case .charLiteral:
-                return types.make(.primitive(.char, .nonNull))
-            case .boolLiteral:
-                return types.make(.primitive(.boolean, .nonNull))
-            case .stringLiteral:
-                return types.make(.primitive(.string, .nonNull))
-            default:
-                break
-            }
-        }
-        return arena.exprType(argExprID)
-    }
-
-    private func isAnyOrNullableAny(_ kind: TypeKind) -> Bool {
-        if case .any = kind {
-            return true
-        }
-        return false
-    }
-
-    /// Returns true if the type kind is a non-value-class reference type (interface, regular class).
-    /// Value class arguments need boxing when passed to such types.
-    /// Nullable value class types (e.g. Meter?) ARE boxing boundaries since they are boxed at ABI level.
-    private func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
-        if case let .classType(ct) = kind {
-            if let symbols,
-               let sym = symbols.symbol(ct.classSymbol),
-               sym.flags.contains(.valueType),
-               ct.nullability == .nonNull
-            {
-                return false
-            }
-            return true
-        }
-        return false
-    }
-
-    /// Determines whether unboxing is needed when converting from sourceKind to targetKind.
-    /// Unboxing is required when:
-    /// - Source is Any or Any? and target is a primitive (existing behavior)
-    /// - Source is a non-value-class reference type and target is a primitive (interface → value class)
-    /// - Source is a nullable primitive and target is a non-null primitive of the same kind
-    private func needsUnboxing(
-        sourceKind: TypeKind,
-        targetKind: TypeKind,
-        symbols: SymbolTable? = nil
-    ) -> Bool {
-        if isAnyOrNullableAny(sourceKind) {
-            if case .primitive(_, .nonNull) = targetKind {
-                return true
-            }
-            return false
-        }
-        // Non-value-class reference type → primitive: unbox (e.g. interface → value class)
-        if isNonValueClassReference(sourceKind, symbols: symbols) {
-            if case .primitive(_, .nonNull) = targetKind {
-                return true
-            }
-            return false
-        }
-        if case let .primitive(sourcePrimitive, .nullable) = sourceKind,
-           case let .primitive(targetPrimitive, .nonNull) = targetKind,
-           sourcePrimitive == targetPrimitive
+        let rawFromKind = types.kind(of: fromType)
+        let fromKind = resolveValueClassKind(rawFromKind, types: types, symbols: symbols)
+        let rawToKind = types.kind(of: toType)
+        let toKind = resolveValueClassKind(rawToKind, types: types, symbols: symbols)
+        if isAnyOrNullableAny(toKind) || needsBoxingForCopy(sourceKind: fromKind, targetKind: toKind)
+            || isNonValueClassReference(rawToKind, symbols: symbols),
+            let boxCallee = boxCalleeForPrimitive(
+                fromKind,
+                boxCallees: boxCallees
+            )
         {
-            return true
+            return .call(symbol: nil, callee: boxCallee, arguments: [from],
+                         result: to, canThrow: false, thrownResult: nil)
         }
-        return false
-    }
-
-    /// Determines whether a copy from sourceKind to targetKind requires boxing.
-    /// Boxing is needed when a non-null primitive is copied to a nullable primitive slot.
-    private func needsBoxingForCopy(sourceKind: TypeKind, targetKind: TypeKind) -> Bool {
-        if case let .primitive(sourcePrimitive, .nonNull) = sourceKind,
-           case let .primitive(targetPrimitive, .nullable) = targetKind,
-           sourcePrimitive == targetPrimitive
+        if needsUnboxing(sourceKind: fromKind, targetKind: toKind, symbols: symbols),
+           let unboxCallee = unboxingCallee(
+               sourceKind: fromKind, targetKind: toKind,
+               unboxCallees: unboxCallees,
+               types: types, symbols: symbols
+           )
         {
-            return true
+            return .call(symbol: nil, callee: unboxCallee, arguments: [from],
+                         result: to, canThrow: false, thrownResult: nil)
         }
-        return false
-    }
-
-    /// Returns the boxing callee for a given primitive type kind, or nil if the kind is not a
-    /// primitive that needs boxing (e.g., String or non-primitive types).
-    private func boxCalleeForPrimitive(
-        _ kind: TypeKind,
-        boxIntCallee: InternedString,
-        boxBoolCallee: InternedString,
-        boxLongCallee: InternedString,
-        boxFloatCallee: InternedString,
-        boxDoubleCallee: InternedString,
-        boxCharCallee: InternedString
-    ) -> InternedString? {
-        switch kind {
-        case .primitive(.int, .nonNull):
-            boxIntCallee
-        case .primitive(.long, .nonNull):
-            boxLongCallee
-        case .primitive(.boolean, .nonNull):
-            boxBoolCallee
-        case .primitive(.float, .nonNull):
-            boxFloatCallee
-        case .primitive(.double, .nonNull):
-            boxDoubleCallee
-        case .primitive(.char, .nonNull):
-            boxCharCallee
-        case .primitive(.uint, .nonNull), .primitive(.ubyte, .nonNull), .primitive(.ushort, .nonNull):
-            boxIntCallee
-        case .primitive(.ulong, .nonNull):
-            boxLongCallee
-        default:
-            nil
-        }
-    }
-
-    private func returnTypeForCall(
-        callSymbol: SymbolID?,
-        symbols: SymbolTable?
-    ) -> TypeID? {
-        guard let callSymbol, let symbols else {
-            return nil
-        }
-        return symbols.functionSignature(for: callSymbol)?.returnType
+        return nil
     }
 }

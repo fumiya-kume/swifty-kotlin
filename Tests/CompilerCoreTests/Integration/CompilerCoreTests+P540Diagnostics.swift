@@ -60,9 +60,7 @@ extension CompilerCoreTests {
         assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
-    func testUnresolvedSafeMemberCallFallsBackToAnyNullable() throws {
-        // Safe member calls with unknown methods fall back to Any? (not errorType)
-        // because the compiler may not enumerate all built-in methods (e.g. hashCode).
+    func testUnresolvedSafeMemberCallEmitsDiagnostic() throws {
         let source = """
         class Foo
         fun test(f: Foo?) = f?.missing()
@@ -70,7 +68,7 @@ extension CompilerCoreTests {
         let ctx = makeContextFromSource(source)
         try runSema(ctx)
 
-        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
     }
 
     func testUnresolvedBinaryOperatorEmitsDiagnostic() throws {
@@ -290,5 +288,85 @@ extension CompilerCoreTests {
         try runSema(ctx)
 
         assertNoDiagnostic("KSWIFTK-SEMA-0002", in: ctx)
+    }
+
+    // MARK: - Additional unresolved-reference cases
+
+    func testUnresolvedPropertyReadEmitsDiagnostic() throws {
+        let source = """
+        class Foo
+        fun test(f: Foo): Int = f.missingProp
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testResolvedPropertyReadDoesNotEmitDiagnostic() throws {
+        let source = """
+        class Foo(val x: Int)
+        fun test(f: Foo): Int = f.x
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+    }
+
+    func testUnresolvedConstructorCallEmitsDiagnostic() throws {
+        let source = """
+        fun test() {
+            val x = NoSuchClass()
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        XCTAssertTrue(
+            ctx.diagnostics.diagnostics.contains(where: { ["KSWIFTK-SEMA-0022", "KSWIFTK-SEMA-0023"].contains($0.code) }),
+            "Expected unresolved-reference diagnostic for unknown constructor, got: \(ctx.diagnostics.diagnostics.map(\.code))"
+        )
+    }
+
+    func testResolvedConstructorCallDoesNotEmitUnresolvedDiagnostic() throws {
+        let source = """
+        class Point(val x: Int, val y: Int)
+        fun test(): Point = Point(1, 2)
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+        assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
+    }
+
+    func testCascadingFromUnresolvedTypeAnnotationDoesNotDoubleReport() throws {
+        // The unresolved type `Ghost` should produce SEMA-0025 once; using the
+        // variable afterward should not produce a second SEMA-0022 for `x`.
+        let source = """
+        fun test() {
+            val x: Ghost = 0
+            val y = x + 1
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertHasDiagnostic("KSWIFTK-SEMA-0025", in: ctx)
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 0, in: ctx)
+    }
+
+    func testMultipleUnresolvedIdentifiersEachEmitDiagnostic() throws {
+        let source = """
+        fun test() {
+            val a = missingA
+            val b = missingB
+        }
+        """
+        let ctx = makeContextFromSource(source)
+        try runSema(ctx)
+
+        assertDiagnosticCount("KSWIFTK-SEMA-0022", expected: 2, in: ctx)
     }
 }

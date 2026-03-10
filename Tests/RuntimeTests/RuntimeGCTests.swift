@@ -45,17 +45,7 @@ private func withDummyTypeInfo(_ body: (UnsafeRawPointer) -> Void) {
     }
 }
 
-final class RuntimeGCTests: XCTestCase {
-    override func setUp() {
-        super.setUp()
-        kk_runtime_force_reset()
-    }
-
-    override func tearDown() {
-        kk_runtime_force_reset()
-        super.tearDown()
-    }
-
+final class RuntimeGCTests: IsolatedRuntimeXCTestCase {
     func testGCCollectsUnreachableAllocation() {
         withDummyTypeInfo { ti in
             _ = kk_alloc(16, ti)

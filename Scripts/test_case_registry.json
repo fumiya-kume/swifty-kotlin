@@ -413,6 +413,16 @@
           "type": "diff",
           "name": "data_object",
           "template": "Scripts/test_templates/diff/data_object.kt"
+        },
+        {
+          "type": "golden-sema",
+          "name": "anonymous_object_local",
+          "template": "Scripts/test_templates/sema/anonymous_object_local.kt"
+        },
+        {
+          "type": "diff",
+          "name": "anonymous_object_local",
+          "template": "Scripts/test_templates/diff/anonymous_object_local.kt"
         }
       ]
     },
@@ -709,6 +719,18 @@
       ]
     },
     {
+      "task": "CORO-003",
+      "category": "coroutines",
+      "description": "Flow cold stream (flow/map/filter/take/collect)",
+      "cases": [
+        {
+          "type": "diff",
+          "name": "flow_cold",
+          "template": "Scripts/test_templates/diff/flow_cold.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-137",
       "category": "stdlib",
       "description": "Scope functions (let/run/apply/also)",
@@ -758,6 +780,23 @@
           "type": "diff",
           "name": "stdlib_collection_hof",
           "template": "Scripts/test_templates/diff/stdlib_collection_hof.kt"
+        }
+      ]
+    },
+    {
+      "task": "STDLIB-006",
+      "category": "stdlib",
+      "description": "String stdlib members (trim/startsWith/replace/split/toInt/toDouble/format)",
+      "cases": [
+        {
+          "type": "golden-sema",
+          "name": "stdlib_string_ops",
+          "template": "Scripts/test_templates/sema/stdlib_string_ops.kt"
+        },
+        {
+          "type": "diff",
+          "name": "stdlib_string_ops",
+          "template": "Scripts/test_templates/diff/stdlib_string_ops.kt"
         }
       ]
     },

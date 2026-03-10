@@ -4,26 +4,51 @@ final class CoroutineLoweringPass: LoweringPass {
     /// Internal visibility is required for cross-file extension decomposition
     static let name = "CoroutineLowering"
 
-    private struct SuspendCallLookupKey: Hashable {
+    typealias LoweredSuspendFunction = (name: InternedString, symbol: SymbolID)
+
+    struct SuspendCallLookupKey: Hashable {
         let name: InternedString
         let arity: Int
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
-        let launcherCallees: Set<InternedString> = [
+        let callCallees: Set<InternedString> = [
             ctx.interner.intern("runBlocking"),
             ctx.interner.intern("launch"),
             ctx.interner.intern("async"),
+            ctx.interner.intern("withContext"),
             ctx.interner.intern("coroutineScope"),
+            ctx.interner.intern("flow"),
+            ctx.interner.intern("emit"),
+            ctx.interner.intern("collect"),
+            ctx.interner.intern("map"),
+            ctx.interner.intern("filter"),
+            ctx.interner.intern("take"),
+            ctx.interner.intern("kk_flow_create"),
+            ctx.interner.intern("kk_flow_emit"),
+            ctx.interner.intern("kk_flow_collect"),
+        ]
+        let virtualCallees: Set<InternedString> = [
+            ctx.interner.intern("collect"),
+            ctx.interner.intern("map"),
+            ctx.interner.intern("filter"),
+            ctx.interner.intern("take"),
         ]
         for decl in module.arena.declarations {
             if case let .function(function) = decl {
                 if function.isSuspend { return true }
                 for instruction in function.body {
-                    if case let .call(_, callee, _, _, _, _, _) = instruction,
-                       launcherCallees.contains(callee)
-                    {
-                        return true
+                    switch instruction {
+                    case let .call(_, callee, _, _, _, _, _):
+                        if callCallees.contains(callee) {
+                            return true
+                        }
+                    case let .virtualCall(_, callee, _, _, _, _, _, _):
+                        if virtualCallees.contains(callee) {
+                            return true
+                        }
+                    default:
+                        break
                     }
                 }
             }
@@ -32,12 +57,16 @@ final class CoroutineLoweringPass: LoweringPass {
     }
 
     func run(module: KIRModule, ctx: KIRContext) throws {
+        // Lower flow { }, emit, map, filter, take, collect before suspend-function lowering.
+        lowerFlowExpressions(module: module, ctx: ctx)
+
         let anyType = ctx.sema?.types.nullableAnyType ?? ctx.sema?.types.anyType
         let intType = ctx.sema?.types.make(.primitive(.int, .nonNull))
         let unitType = ctx.sema?.types.unitType
         let kxMiniRunBlockingCallee = ctx.interner.intern("runBlocking")
         let kxMiniLaunchCallee = ctx.interner.intern("launch")
         let kxMiniAsyncCallee = ctx.interner.intern("async")
+        let kxMiniWithContextCallee = ctx.interner.intern("withContext")
         let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
@@ -45,6 +74,7 @@ final class CoroutineLoweringPass: LoweringPass {
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
         let runtimeCoroutineScopeRunCallee = ctx.interner.intern("kk_coroutine_scope_run")
         let runtimeDelayCallee = ctx.interner.intern("kk_kxmini_delay")
+        let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
         let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee]
         let kxMiniLauncherRuntimeCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: runtimeRunBlockingCallee,
@@ -85,12 +115,14 @@ final class CoroutineLoweringPass: LoweringPass {
                 existingFunctionNames: &existingFunctionNames,
                 interner: ctx.interner
             )
-            let loweredSymbol = defineSyntheticCoroutineFunctionSymbol(
+            let loweredFunctionSymbol = defineSyntheticCoroutineFunctionSymbol(
                 original: suspendFunction,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema
             )
+            let loweredSymbol = loweredFunctionSymbol.kirSymbol
+            let loweredSemaSymbol = loweredFunctionSymbol.semaSymbol
             let suspendLoweringPlan = analyzeSuspendLoweringPlan(
                 originalBody: suspendFunction.body,
                 suspendFunctionSymbols: suspendFunctionSymbols,
@@ -108,7 +140,7 @@ final class CoroutineLoweringPass: LoweringPass {
             let continuationType = continuationNominal?.continuationType
                 ?? (ctx.sema?.types.nullableAnyType ?? suspendFunction.returnType)
             let continuationParameterSymbol = defineSyntheticContinuationParameterSymbol(
-                owner: loweredSymbol,
+                owner: loweredSemaSymbol ?? loweredSymbol,
                 loweredName: loweredName,
                 nextSyntheticSymbol: &nextSyntheticSymbol,
                 sema: ctx.sema,
@@ -126,9 +158,11 @@ final class CoroutineLoweringPass: LoweringPass {
                 runtimeDelayCallee: runtimeDelayCallee,
                 suspendPlan: suspendLoweringPlan,
                 spillSlotByExpr: continuationNominal?.spillSlotByExpr ?? [:],
-                continuationType: continuationType,
-                intType: intType,
-                unitType: unitType
+                smTypes: StateMachineTypeContext(
+                    continuationType: continuationType,
+                    intType: intType,
+                    unitType: unitType
+                )
             )
             if let continuationNominal {
                 _ = module.arena.appendDecl(.nominalType(KIRNominalType(symbol: continuationNominal.typeSymbol)))
@@ -153,95 +187,33 @@ final class CoroutineLoweringPass: LoweringPass {
             loweredByNameBuckets[suspendFunction.name, default: []].append(lowered)
             let byNameArityKey = SuspendCallLookupKey(name: suspendFunction.name, arity: suspendFunction.params.count)
             loweredByNameArityBuckets[byNameArityKey, default: []].append(lowered)
-            updateLoweredFunctionSignatureIfPossible(
-                loweredSymbol: loweredSymbol,
-                continuationParameterSymbol: continuationParameterSymbol,
-                originalSymbol: suspendFunction.symbol,
-                continuationType: continuationType,
-                sema: ctx.sema
-            )
+            if let loweredSemaSymbol {
+                updateLoweredFunctionSignatureIfPossible(
+                    loweredSymbol: loweredSemaSymbol,
+                    continuationParameterSymbol: continuationParameterSymbol,
+                    originalSymbol: suspendFunction.symbol,
+                    continuationType: continuationType,
+                    sema: ctx.sema
+                )
+            }
         }
-
-        var launcherThunkByOriginalSymbol: [SymbolID: (name: InternedString, symbol: SymbolID)] = [:]
 
         let launcherArgGetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_get")
-        for suspendFunction in suspendFunctions where suspendFunction.params.count > 0 {
-            guard let loweredTarget = loweredBySymbol[suspendFunction.symbol] else {
-                continue
-            }
-            let rawThunkName = ctx.interner.intern(
-                "kk_launcher_thunk_" + ctx.interner.resolve(suspendFunction.name)
-            )
-            let thunkName = uniqueFunctionName(
-                preferred: rawThunkName,
-                existingFunctionNames: &existingFunctionNames,
-                interner: ctx.interner
-            )
-            let thunkSymbol = allocateSyntheticSymbol(&nextSyntheticSymbol)
-            let thunkContParamSymbol = allocateSyntheticSymbol(&nextSyntheticSymbol)
-            let contType = continuationTypeByLoweredSymbol[loweredTarget.symbol]
-                ?? anyType ?? suspendFunction.returnType
-
-            var thunkBody: [KIRInstruction] = []
-
-            let contRef = module.arena.appendExpr(
-                .symbolRef(thunkContParamSymbol),
-                type: contType
-            )
-
-            var callArgExprs: [KIRExprID] = []
-            for paramIndex in 0 ..< suspendFunction.params.count {
-                let slotExpr = module.arena.appendExpr(
-                    .intLiteral(Int64(paramIndex)),
-                    type: intType
-                )
-                let argResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: suspendFunction.params[paramIndex].type
-                )
-                thunkBody.append(
-                    .call(
-                        symbol: nil,
-                        callee: launcherArgGetCallee,
-                        arguments: [contRef, slotExpr],
-                        result: argResult,
-                        canThrow: false,
-                        thrownResult: nil
-                    )
-                )
-                callArgExprs.append(argResult)
-            }
-
-            callArgExprs.append(contRef)
-
-            let callResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)),
-                type: contType
-            )
-            thunkBody.append(
-                .call(
-                    symbol: loweredTarget.symbol,
-                    callee: loweredTarget.name,
-                    arguments: callArgExprs,
-                    result: callResult,
-                    canThrow: true,
-                    thrownResult: nil
-                )
-            )
-            thunkBody.append(.returnValue(callResult))
-
-            let thunkFunction = KIRFunction(
-                symbol: thunkSymbol,
-                name: thunkName,
-                params: [KIRParameter(symbol: thunkContParamSymbol, type: contType)],
-                returnType: contType,
-                body: thunkBody,
-                isSuspend: false,
-                isInline: false
-            )
-            _ = module.arena.appendDecl(.function(thunkFunction))
-            launcherThunkByOriginalSymbol[suspendFunction.symbol] = (name: thunkName, symbol: thunkSymbol)
-        }
+        let launcherThunkContext = LauncherThunkSynthesisContext(
+            module: module,
+            interner: ctx.interner,
+            anyType: anyType,
+            intType: intType,
+            launcherArgGetCallee: launcherArgGetCallee,
+            loweredBySymbol: loweredBySymbol,
+            continuationTypeByLoweredSymbol: continuationTypeByLoweredSymbol
+        )
+        let launcherThunkByOriginalSymbol = synthesizeLauncherThunks(
+            suspendFunctions: suspendFunctions,
+            nextSyntheticSymbol: &nextSyntheticSymbol,
+            existingFunctionNames: &existingFunctionNames,
+            using: launcherThunkContext
+        )
 
         let loweredByUniqueName = loweredByNameBuckets.reduce(into: [InternedString: (name: InternedString, symbol: SymbolID)]()) { partial, entry in
             guard entry.value.count == 1, let value = entry.value.first else {
@@ -257,6 +229,7 @@ final class CoroutineLoweringPass: LoweringPass {
         }
         let continuationFactory = ctx.interner.intern("kk_coroutine_continuation_new")
         let launcherArgSetCallee = ctx.interner.intern("kk_coroutine_launcher_arg_set")
+        let runtimeRunBlockingWithContCallee = ctx.interner.intern("kk_kxmini_run_blocking_with_cont")
         let kxMiniLauncherWithContCallees: [InternedString: InternedString] = [
             kxMiniRunBlockingCallee: ctx.interner.intern("kk_kxmini_run_blocking_with_cont"),
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
@@ -264,219 +237,27 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
         ]
 
-        module.arena.transformFunctions { function in
-            var updated = function
-            var loweredBody: [KIRInstruction] = []
-            loweredBody.reserveCapacity(function.body.count)
-            for instruction in function.body {
-                guard case let .call(symbol, callee, arguments, result, canThrow, _, isSuperCall) = instruction else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                if symbol == nil,
-                   let runtimeLauncherCallee = kxMiniLauncherRuntimeCallees[callee]
-                {
-                    guard arguments.count >= 1 else {
-                        ctx.diagnostics.error(
-                            "KSWIFTK-CORO-0001",
-                            "Coroutine launcher '\(ctx.interner.resolve(callee))' expects at least one suspend function reference argument.",
-                            range: nil
-                        )
-                        loweredBody.append(instruction)
-                        continue
-                    }
-
-                    guard let argumentExpr = module.arena.expr(arguments[0]),
-                          case let .symbolRef(referencedSymbol) = argumentExpr,
-                          let loweredTarget = loweredBySymbol[referencedSymbol]
-                    else {
-                        ctx.diagnostics.error(
-                            "KSWIFTK-CORO-0002",
-                            "Coroutine launcher '\(ctx.interner.resolve(callee))' requires a suspend function reference argument.",
-                            range: nil
-                        )
-                        loweredBody.append(instruction)
-                        continue
-                    }
-
-                    let targetArity = suspendFunctionArityBySymbol[referencedSymbol] ?? 0
-                    let extraArgs = Array(arguments.dropFirst())
-
-                    guard extraArgs.count == targetArity else {
-                        ctx.diagnostics.error(
-                            "KSWIFTK-CORO-0003",
-                            "Coroutine launcher '\(ctx.interner.resolve(callee))' passed \(extraArgs.count) argument(s) but referenced suspend function expects \(targetArity).",
-                            range: nil
-                        )
-                        loweredBody.append(instruction)
-                        continue
-                    }
-
-                    if targetArity == 0 {
-                        let entryPointExpr = module.arena.appendExpr(
-                            .temporary(Int32(module.arena.expressions.count)),
-                            type: intType
-                        )
-                        loweredBody.append(
-                            .constValue(
-                                result: entryPointExpr,
-                                value: .symbolRef(loweredTarget.symbol)
-                            )
-                        )
-
-                        let entryFunctionID = module.arena.appendExpr(
-                            .temporary(Int32(module.arena.expressions.count)),
-                            type: intType
-                        )
-                        loweredBody.append(
-                            .constValue(
-                                result: entryFunctionID,
-                                value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
-                            )
-                        )
-
-                        loweredBody.append(
-                            .call(
-                                symbol: nil,
-                                callee: runtimeLauncherCallee,
-                                arguments: [entryPointExpr, entryFunctionID],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: nil
-                            )
-                        )
-                    } else {
-                        guard let thunk = launcherThunkByOriginalSymbol[referencedSymbol] else {
-                            preconditionFailure("Internal error: launcher thunk not found for suspend function '\(ctx.interner.resolve(loweredTarget.name))'")
-                        }
-
-                        let loweredFunctionIDExpr = module.arena.appendExpr(
-                            .intLiteral(Int64(loweredTarget.symbol.rawValue)),
-                            type: intType
-                        )
-                        let contExpr = module.arena.appendExpr(
-                            .temporary(Int32(module.arena.expressions.count)),
-                            type: intType
-                        )
-                        loweredBody.append(
-                            .call(
-                                symbol: nil,
-                                callee: continuationFactory,
-                                arguments: [loweredFunctionIDExpr],
-                                result: contExpr,
-                                canThrow: false,
-                                thrownResult: nil
-                            )
-                        )
-
-                        for (index, argExpr) in extraArgs.enumerated() {
-                            let slotExpr = module.arena.appendExpr(
-                                .intLiteral(Int64(index)),
-                                type: intType
-                            )
-                            loweredBody.append(
-                                .call(
-                                    symbol: nil,
-                                    callee: launcherArgSetCallee,
-                                    arguments: [contExpr, slotExpr, argExpr],
-                                    result: nil,
-                                    canThrow: false,
-                                    thrownResult: nil
-                                )
-                            )
-                        }
-
-                        let thunkRefExpr = module.arena.appendExpr(
-                            .temporary(Int32(module.arena.expressions.count)),
-                            type: intType
-                        )
-                        loweredBody.append(
-                            .constValue(
-                                result: thunkRefExpr,
-                                value: .symbolRef(thunk.symbol)
-                            )
-                        )
-
-                        guard let runtimeWithContCallee = kxMiniLauncherWithContCallees[callee] else {
-                            assertionFailure("Internal compiler error: missing runtime _with_cont callee mapping for launcher callee")
-                            loweredBody.append(instruction)
-                            continue
-                        }
-
-                        loweredBody.append(
-                            .call(
-                                symbol: nil,
-                                callee: runtimeWithContCallee,
-                                arguments: [thunkRefExpr, contExpr],
-                                result: result,
-                                canThrow: canThrow,
-                                thrownResult: nil
-                            )
-                        )
-                    }
-                    continue
-                }
-
-                let loweredTarget: (name: InternedString, symbol: SymbolID)? = if let symbol, let bySymbol = loweredBySymbol[symbol] {
-                    bySymbol
-                } else if let byNameArity = loweredByUniqueNameArity[
-                    SuspendCallLookupKey(name: callee, arity: arguments.count)
-                ] {
-                    byNameArity
-                } else if let byName = loweredByUniqueName[callee] {
-                    byName
-                } else {
-                    nil
-                }
-
-                guard let loweredTarget else {
-                    loweredBody.append(instruction)
-                    continue
-                }
-
-                let continuationFunctionID = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: intType
-                )
-                loweredBody.append(
-                    .constValue(
-                        result: continuationFunctionID,
-                        value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
-                    )
-                )
-
-                let continuationTemp = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: continuationTypeByLoweredSymbol[loweredTarget.symbol] ?? anyType
-                )
-                loweredBody.append(
-                    .call(
-                        symbol: nil,
-                        callee: continuationFactory,
-                        arguments: [continuationFunctionID],
-                        result: continuationTemp,
-                        canThrow: false,
-                        thrownResult: nil
-                    )
-                )
-                var loweredArguments = arguments
-                loweredArguments.append(continuationTemp)
-                loweredBody.append(
-                    .call(
-                        symbol: loweredTarget.symbol,
-                        callee: loweredTarget.name,
-                        arguments: loweredArguments,
-                        result: result,
-                        canThrow: canThrow,
-                        thrownResult: nil,
-                        isSuperCall: isSuperCall
-                    )
-                )
-            }
-            updated.body = loweredBody
-            return updated
-        }
+        let rewriteContext = SuspendRewriteContext(
+            module: module,
+            ctx: ctx,
+            anyType: anyType,
+            intType: intType,
+            flowCollectCallee: flowCollectCallee,
+            withContextCallee: kxMiniWithContextCallee,
+            runtimeWithContextCallee: ctx.interner.intern("kk_with_context"),
+            continuationFactory: continuationFactory,
+            launcherArgSetCallee: launcherArgSetCallee,
+            runtimeRunBlockingWithContCallee: runtimeRunBlockingWithContCallee,
+            kxMiniLauncherRuntimeCallees: kxMiniLauncherRuntimeCallees,
+            kxMiniLauncherWithContCallees: kxMiniLauncherWithContCallees,
+            loweredBySymbol: loweredBySymbol,
+            continuationTypeByLoweredSymbol: continuationTypeByLoweredSymbol,
+            suspendFunctionArityBySymbol: suspendFunctionArityBySymbol,
+            loweredByUniqueNameArity: loweredByUniqueNameArity,
+            loweredByUniqueName: loweredByUniqueName,
+            launcherThunkByOriginalSymbol: launcherThunkByOriginalSymbol
+        )
+        rewriteSuspendFunctionsAndCallSites(using: rewriteContext)
         module.recordLowering(Self.name)
     }
 

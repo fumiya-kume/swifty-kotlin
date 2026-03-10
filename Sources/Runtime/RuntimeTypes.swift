@@ -43,6 +43,8 @@ public protocol KKContinuation {
 }
 
 typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
+typealias KKThunkEntryPoint = @convention(c) (UnsafeMutablePointer<Int>?) -> Int
+typealias KKDelegateObserverEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 final class RuntimeStringBox {
     let value: String
@@ -88,6 +90,16 @@ final class RuntimeObjectBox: RuntimeArrayBox {
     }
 }
 
+final class RuntimePairBox {
+    let first: Int
+    let second: Int
+
+    init(first: Int, second: Int) {
+        self.first = first
+        self.second = second
+    }
+}
+
 final class RuntimeIntBox {
     let value: Int
 
@@ -104,12 +116,54 @@ final class RuntimeBoolBox {
     }
 }
 
+final class RuntimeLongBox {
+    let value: Int
+
+    init(_ value: Int) {
+        self.value = value
+    }
+}
+
+final class RuntimeFloatBox {
+    let value: Float
+
+    init(_ value: Float) {
+        self.value = value
+    }
+}
+
+final class RuntimeDoubleBox {
+    let value: Double
+
+    init(_ value: Double) {
+        self.value = value
+    }
+}
+
+final class RuntimeCharBox {
+    let value: Int
+
+    init(_ value: Int) {
+        self.value = value
+    }
+}
+
 // MARK: - Collection Types (STDLIB-001)
 
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.
 /// Stores elements as an array of `Int` (opaque intptr_t values).
 final class RuntimeListBox {
-    let elements: [Int]
+    var elements: [Int]
+
+    init(elements: [Int]) {
+        self.elements = elements
+    }
+}
+
+/// Runtime box for `setOf(...)` / `mutableSetOf(...)`.
+/// Stores unique elements in insertion order as an array of `Int`.
+final class RuntimeSetBox {
+    var elements: [Int]
 
     init(elements: [Int]) {
         self.elements = elements
@@ -119,8 +173,8 @@ final class RuntimeListBox {
 /// Runtime box for `mapOf(...)` / `mutableMapOf(...)`.
 /// Stores keys and values as parallel arrays of `Int` (opaque intptr_t values).
 final class RuntimeMapBox {
-    let keys: [Int]
-    let values: [Int]
+    var keys: [Int]
+    var values: [Int]
 
     init(keys: [Int], values: [Int]) {
         self.keys = keys
@@ -217,8 +271,12 @@ final class RuntimeLazyBox {
         if let cached = cachedValue {
             return cached
         }
-        let fnPtr = unsafeBitCast(initializerFnPtr, to: (@convention(c) () -> Int).self)
-        let value = fnPtr()
+        let fnPtr = unsafeBitCast(initializerFnPtr, to: KKThunkEntryPoint.self)
+        var thrown = 0
+        let value = fnPtr(&thrown)
+        if thrown != 0 {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: lazy initializer threw")
+        }
         cachedValue = value
         return value
     }

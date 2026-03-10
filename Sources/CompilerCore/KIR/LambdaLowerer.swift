@@ -15,7 +15,6 @@ final class LambdaLowerer {
         self.driver = driver
     }
 
-    // swiftlint:disable:next function_body_length
     func lowerLambdaLiteralExpr(
         _ exprID: ExprID,
         params: [InternedString],
@@ -45,8 +44,20 @@ final class LambdaLowerer {
             return functionType
         }
 
-        let lambdaSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
         let lambdaName = syntheticLambdaName(for: exprID, interner: interner)
+        let isSamConversion = sema.bindings.isSamConversion(exprID)
+        let lambdaSymbol: SymbolID = if isSamConversion {
+            sema.symbols.define(
+                kind: .function,
+                name: lambdaName,
+                fqName: [lambdaName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+        } else {
+            driver.ctx.syntheticLambdaSymbol(for: exprID)
+        }
 
         // Effective parameter count: when the AST has zero explicit params but
         // the bound function type declares parameters (implicit `it`), use the
@@ -155,6 +166,26 @@ final class LambdaLowerer {
         )
         driver.ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
 
+        if isSamConversion,
+           let boundType,
+           case let .classType(interfaceType) = sema.types.kind(of: boundType),
+           let samValue = lowerSamWrapperValue(
+               exprID,
+               interfaceSymbol: interfaceType.classSymbol,
+               lambdaSymbol: lambdaSymbol,
+               lambdaName: lambdaName,
+               lambdaReturnType: lambdaReturnType,
+               captureBindings: captureBindings,
+               samMethodParamTypes: lambdaParameterTypes,
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            return samValue
+        }
+
         // For SAM-converted lambdas, use the function type (not the interface
         // type) so the KIR callable value machinery dispatches correctly.
         let lambdaValueType = effectiveFuncTypeID
@@ -178,6 +209,297 @@ final class LambdaLowerer {
             captureArguments: captureBindings.map(\.valueExpr)
         )
         return lambdaValueExpr
+    }
+
+    private func lowerSamWrapperValue(
+        _ exprID: ExprID,
+        interfaceSymbol: SymbolID,
+        lambdaSymbol: SymbolID,
+        lambdaName: InternedString,
+        lambdaReturnType: TypeID,
+        captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)],
+        samMethodParamTypes: [TypeID],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let interfaceInfo = sema.symbols.symbol(interfaceSymbol),
+              interfaceInfo.kind == .interface,
+              interfaceInfo.flags.contains(.funInterface),
+              let samMethod = samMethodSymbolAndSignature(for: interfaceSymbol, sema: sema)
+        else {
+            return nil
+        }
+
+        let wrapperName = interner.intern("kk_sam_wrapper_\(exprID.rawValue)")
+        let wrapperFQName = [wrapperName]
+        let wrapperSymbol = sema.symbols.define(
+            kind: .class,
+            name: wrapperName,
+            fqName: wrapperFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        sema.symbols.setDirectSupertypes([interfaceSymbol], for: wrapperSymbol)
+        sema.types.setNominalDirectSupertypes([interfaceSymbol], for: wrapperSymbol)
+
+        let wrapperType = sema.types.make(.classType(ClassType(
+            classSymbol: wrapperSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        var fieldOffsets: [SymbolID: Int] = [:]
+        var nextFieldOffset = 2
+        let captureFieldSymbols = captureBindings.enumerated().map { index, capture in
+            let fieldName = interner.intern("$sam_capture_\(index)")
+            let fieldSymbol = sema.symbols.define(
+                kind: .field,
+                name: fieldName,
+                fqName: wrapperFQName + [fieldName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            sema.symbols.setParentSymbol(wrapperSymbol, for: fieldSymbol)
+            sema.symbols.setPropertyType(capture.param.type, for: fieldSymbol)
+            fieldOffsets[fieldSymbol] = nextFieldOffset
+            nextFieldOffset += 1
+            return fieldSymbol
+        }
+
+        let methodName = samMethod.info.name
+        let methodSymbol = sema.symbols.define(
+            kind: .function,
+            name: methodName,
+            fqName: wrapperFQName + [methodName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        sema.symbols.setParentSymbol(wrapperSymbol, for: methodSymbol)
+
+        let methodParamSymbols: [SymbolID] = samMethod.signature.parameterTypes.enumerated().map { index, type in
+            let paramName = interner.intern("$p\(index)")
+            let paramSymbol = sema.symbols.define(
+                kind: .valueParameter,
+                name: paramName,
+                fqName: wrapperFQName + [methodName, paramName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            sema.symbols.setPropertyType(type, for: paramSymbol)
+            return paramSymbol
+        }
+        sema.symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: wrapperType,
+                parameterTypes: samMethod.signature.parameterTypes,
+                returnType: samMethod.signature.returnType,
+                isSuspend: samMethod.signature.isSuspend,
+                valueParameterSymbols: methodParamSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: methodParamSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: methodParamSymbols.count),
+                typeParameterSymbols: []
+            ),
+            for: methodSymbol
+        )
+        sema.symbols.setNominalLayout(
+            NominalLayout(
+                objectHeaderWords: 2,
+                instanceFieldCount: captureFieldSymbols.count,
+                instanceSizeWords: max(2 + captureFieldSymbols.count, 1),
+                fieldOffsets: fieldOffsets,
+                vtableSlots: [methodSymbol: 0, samMethod.symbol: 0],
+                itableSlots: [interfaceSymbol: 0],
+                vtableSize: 1,
+                superClass: nil
+            ),
+            for: wrapperSymbol
+        )
+
+        let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: wrapperSymbol)))
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+
+        let scopeSnapshot = driver.ctx.saveScope()
+        driver.ctx.resetScopeForFunction()
+        driver.ctx.beginCallableLoweringScope()
+        driver.ctx.currentFunctionSymbol = methodSymbol
+
+        let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: methodSymbol)
+        let receiverExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: wrapperType)
+        driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+        driver.ctx.currentImplicitReceiverExprID = receiverExpr
+
+        let methodParams = [KIRParameter(symbol: receiverSymbol, type: wrapperType)]
+            + zip(methodParamSymbols, samMethod.signature.parameterTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
+        var methodBody: [KIRInstruction] = [.beginBlock]
+        methodBody.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+
+        var loadedCaptureExprs: [KIRExprID] = []
+        for (index, fieldSymbol) in captureFieldSymbols.enumerated() {
+            guard let fieldOffset = fieldOffsets[fieldSymbol] else {
+                continue
+            }
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+            methodBody.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+            let captureType = captureBindings[index].param.type
+            let loadedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: captureType)
+            methodBody.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_get_inbounds"),
+                arguments: [receiverExpr, offsetExpr],
+                result: loadedExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            loadedCaptureExprs.append(loadedExpr)
+        }
+
+        let loweredMethodParamExprs = zip(methodParamSymbols, samMethod.signature.parameterTypes).map { symbol, type in
+            let expr = arena.appendExpr(.symbolRef(symbol), type: type)
+            methodBody.append(.constValue(result: expr, value: .symbolRef(symbol)))
+            return expr
+        }
+
+        let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: lambdaReturnType)
+        methodBody.append(.call(
+            symbol: lambdaSymbol,
+            callee: lambdaName,
+            arguments: loadedCaptureExprs + loweredMethodParamExprs,
+            result: callResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        if samMethod.signature.returnType == sema.types.unitType {
+            methodBody.append(.returnUnit)
+        } else {
+            methodBody.append(.returnValue(callResult))
+        }
+        methodBody.append(.endBlock)
+
+        let methodDeclID = arena.appendDecl(.function(KIRFunction(
+            symbol: methodSymbol,
+            name: methodName,
+            params: methodParams,
+            returnType: samMethod.signature.returnType,
+            body: methodBody,
+            isSuspend: samMethod.signature.isSuspend,
+            isInline: false
+        )))
+        driver.ctx.pendingGeneratedCallableDeclIDs.append(methodDeclID)
+        driver.ctx.restoreScope(scopeSnapshot)
+
+        let slotCount = Int64(max(2 + captureFieldSymbols.count, 1))
+        let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: sema.types.intType)
+        instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+        let classIDValue = RuntimeTypeCheckToken.stableNominalTypeID(
+            symbol: wrapperSymbol,
+            sema: sema,
+            interner: interner
+        )
+        let classIDExpr = arena.appendExpr(.intLiteral(classIDValue), type: sema.types.intType)
+        instructions.append(.constValue(result: classIDExpr, value: .intLiteral(classIDValue)))
+        let wrapperValue = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.make(.classType(ClassType(classSymbol: interfaceSymbol, args: [], nullability: .nonNull)))
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_object_new"),
+            arguments: [slotCountExpr, classIDExpr],
+            result: wrapperValue,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let childTypeExpr = arena.appendExpr(.intLiteral(classIDValue), type: sema.types.intType)
+        instructions.append(.constValue(result: childTypeExpr, value: .intLiteral(classIDValue)))
+        let interfaceTypeID = RuntimeTypeCheckToken.stableNominalTypeID(
+            symbol: interfaceSymbol,
+            sema: sema,
+            interner: interner
+        )
+        let interfaceTypeExpr = arena.appendExpr(.intLiteral(interfaceTypeID), type: sema.types.intType)
+        instructions.append(.constValue(result: interfaceTypeExpr, value: .intLiteral(interfaceTypeID)))
+        let registerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_type_register_iface"),
+            arguments: [childTypeExpr, interfaceTypeExpr],
+            result: registerResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let ifaceSlot = Int64(sema.symbols.nominalLayout(for: wrapperSymbol)?.itableSlots[interfaceSymbol] ?? 0)
+        let methodSlot = Int64(sema.symbols.nominalLayout(for: interfaceSymbol)?.vtableSlots[samMethod.symbol] ?? 0)
+        let ifaceSlotExpr = arena.appendExpr(.intLiteral(ifaceSlot), type: sema.types.intType)
+        instructions.append(.constValue(result: ifaceSlotExpr, value: .intLiteral(ifaceSlot)))
+        let methodSlotExpr = arena.appendExpr(.intLiteral(methodSlot), type: sema.types.intType)
+        instructions.append(.constValue(result: methodSlotExpr, value: .intLiteral(methodSlot)))
+        let methodFnExpr = arena.appendExpr(.symbolRef(methodSymbol), type: sema.types.intType)
+        instructions.append(.constValue(result: methodFnExpr, value: .symbolRef(methodSymbol)))
+        let registerMethodResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_object_register_itable_method"),
+            arguments: [wrapperValue, ifaceSlotExpr, methodSlotExpr, methodFnExpr],
+            result: registerMethodResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, capture) in captureBindings.enumerated() {
+            guard index < captureFieldSymbols.count,
+                  let fieldOffset = fieldOffsets[captureFieldSymbols[index]]
+            else {
+                continue
+            }
+            let offsetExpr = arena.appendExpr(.intLiteral(Int64(fieldOffset)), type: sema.types.intType)
+            instructions.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+            let unusedResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [wrapperValue, offsetExpr, capture.valueExpr],
+                result: unusedResult,
+                canThrow: true,
+                thrownResult: nil
+            ))
+        }
+
+        _ = samMethodParamTypes
+        return wrapperValue
+    }
+
+    private func samMethodSymbolAndSignature(
+        for interfaceSymbol: SymbolID,
+        sema: SemaModule
+    ) -> (symbol: SymbolID, info: SemanticSymbol, signature: FunctionSignature)? {
+        guard let interfaceInfo = sema.symbols.symbol(interfaceSymbol),
+              interfaceInfo.kind == .interface,
+              interfaceInfo.flags.contains(.funInterface)
+        else {
+            return nil
+        }
+        let abstractMethods = sema.symbols.children(ofFQName: interfaceInfo.fqName).compactMap { childID -> (SymbolID, SemanticSymbol, FunctionSignature)? in
+            guard let childInfo = sema.symbols.symbol(childID),
+                  childInfo.kind == .function,
+                  childInfo.flags.contains(.abstractType),
+                  let signature = sema.symbols.functionSignature(for: childID)
+            else {
+                return nil
+            }
+            return (childID, childInfo, signature)
+        }
+        guard abstractMethods.count == 1 else {
+            return nil
+        }
+        return abstractMethods[0]
     }
 
     func lowerCallableRefExpr(

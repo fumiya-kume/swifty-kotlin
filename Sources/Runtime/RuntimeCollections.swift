@@ -1,5 +1,33 @@
 import Foundation
 
+func runtimeDeduplicatePreservingOrder(_ elements: [Int]) -> [Int] {
+    var seen: [Int] = []
+    var unique: [Int] = []
+    unique.reserveCapacity(elements.count)
+    for element in elements where !seen.contains(where: { runtimeValuesEqual($0, element) }) {
+        seen.append(element)
+        unique.append(element)
+    }
+    return unique
+}
+
+func runtimeNormalizeMapEntries(keys: [Int], values: [Int]) -> ([Int], [Int]) {
+    var normalizedKeys: [Int] = []
+    var normalizedValues: [Int] = []
+    let count = min(keys.count, values.count)
+    for index in 0 ..< count {
+        let key = keys[index]
+        let value = values[index]
+        if let existing = normalizedKeys.firstIndex(where: { runtimeValuesEqual($0, key) }) {
+            normalizedValues[existing] = value
+        } else {
+            normalizedKeys.append(key)
+            normalizedValues.append(value)
+        }
+    }
+    return (normalizedKeys, normalizedValues)
+}
+
 // MARK: - List Functions (STDLIB-001)
 
 /// Creates a new immutable list from an array of elements.
@@ -13,12 +41,7 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
         elements = Array(array.elements.prefix(count))
     }
-    let box = RuntimeListBox(elements: elements)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
 /// Returns the size of a list.
@@ -52,24 +75,24 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
 /// - Parameters:
 ///   - listRaw: Opaque handle to a `RuntimeListBox`.
 ///   - element: The element to search for.
-/// - Returns: Raw Boolean payload (1/0).
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_contains")
 public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return 0
+        return kk_box_bool(0)
     }
-    return list.elements.contains(element) ? 1 : 0
+    return kk_box_bool(list.elements.contains(where: { runtimeValuesEqual($0, element) }) ? 1 : 0)
 }
 
 /// Checks if a list is empty.
 /// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: Raw Boolean payload (1/0).
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_is_empty")
 public func kk_list_is_empty(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return 1
+        return kk_box_bool(1)
     }
-    return list.elements.isEmpty ? 1 : 0
+    return kk_box_bool(list.elements.isEmpty ? 1 : 0)
 }
 
 /// Creates an iterator over a list.
@@ -139,562 +162,142 @@ public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
-// MARK: - List Higher-Order Functions (STDLIB-005)
-
-private func runtimeEmptyListHandle() -> Int {
-    runtimeRetainObjectHandle(RuntimeListBox(elements: []))
-}
-
-private func runtimeEmptyMapHandle() -> Int {
-    runtimeRetainObjectHandle(RuntimeMapBox(keys: [], values: []))
-}
-
-private func runtimeSortedByKeyLess(_ lhs: Int, _ rhs: Int) -> Bool {
-    if lhs == rhs {
-        return false
-    }
-    if lhs == runtimeNullSentinelInt {
-        return true
-    }
-    if rhs == runtimeNullSentinelInt {
-        return false
-    }
-    let lhsUnboxed = runtimeCollectionUnbox(lhs)
-    let rhsUnboxed = runtimeCollectionUnbox(rhs)
-    if lhsUnboxed != lhs || rhsUnboxed != rhs {
-        return lhsUnboxed < rhsUnboxed
-    }
-    return lhs < rhs
-}
-
-@_cdecl("kk_list_map")
-public func kk_list_map(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
+@_cdecl("kk_list_to_mutable_list")
+public func kk_list_to_mutable_list(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return runtimeEmptyListHandle()
+        return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    guard fnPtr != 0 else {
-        return runtimeRetainObjectHandle(RuntimeListBox(elements: list.elements))
-    }
-    var mapped: [Int] = []
-    mapped.reserveCapacity(list.elements.count)
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeEmptyListHandle()
-        }
-        mapped.append(runtimeCollectionUnbox(value))
-    }
-    return runtimeRetainObjectHandle(RuntimeListBox(elements: mapped))
+    return registerRuntimeObject(RuntimeListBox(elements: list.elements))
 }
 
-@_cdecl("kk_list_filter")
-public func kk_list_filter(
+@_cdecl("kk_list_joinToString")
+public func kk_list_joinToString(
     _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
+    _ separatorRaw: Int,
+    _ prefixRaw: Int,
+    _ postfixRaw: Int
+) -> UnsafeMutableRawPointer {
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let rendered = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + rendered + postfix
+    let utf8 = Array(stringValue.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
+@_cdecl("kk_list_to_set")
+public func kk_list_to_set(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return runtimeEmptyListHandle()
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
     }
-    guard fnPtr != 0 else {
-        return runtimeEmptyListHandle()
-    }
-    var filtered: [Int] = []
-    filtered.reserveCapacity(list.elements.count)
-    for element in list.elements {
-        var thrown = 0
-        let predicate = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeEmptyListHandle()
-        }
-        if runtimeCollectionBool(predicate) {
-            filtered.append(element)
-        }
-    }
-    return runtimeRetainObjectHandle(RuntimeListBox(elements: filtered))
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
-@_cdecl("kk_list_flatMap")
-public func kk_list_flatMap(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
+@_cdecl("kk_mutable_list_add")
+public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return runtimeEmptyListHandle()
+        return kk_box_bool(0)
     }
-    guard fnPtr != 0 else {
-        return runtimeEmptyListHandle()
-    }
-    var flattened: [Int] = []
-    for element in list.elements {
-        var thrown = 0
-        let subListRaw = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeEmptyListHandle()
-        }
-        if let subList = runtimeListBox(from: subListRaw) {
-            flattened.append(contentsOf: subList.elements)
-        }
-    }
-    return runtimeRetainObjectHandle(RuntimeListBox(elements: flattened))
+    list.elements.append(elem)
+    return kk_box_bool(1)
 }
 
-@_cdecl("kk_list_forEach")
-public func kk_list_forEach(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
+@_cdecl("kk_mutable_list_removeAt")
+public func kk_mutable_list_removeAt(_ listRaw: Int, _ index: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw),
-          fnPtr != 0
-    else {
-        return 0
-    }
-    for element in list.elements {
-        var thrown = 0
-        _ = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-    }
-    return 0
-}
-
-@_cdecl("kk_list_fold")
-public func kk_list_fold(
-    _ listRaw: Int,
-    _ initial: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          fnPtr != 0
-    else {
-        return initial
-    }
-    var accumulator = initial
-    for element in list.elements {
-        var thrown = 0
-        let next = runtimeInvokeCollectionLambda2(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            lhs: accumulator,
-            rhs: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return initial
-        }
-        accumulator = runtimeCollectionUnbox(next)
-    }
-    return accumulator
-}
-
-@_cdecl("kk_list_reduce")
-public func kk_list_reduce(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          !list.elements.isEmpty,
-          fnPtr != 0
-    else {
-        runtimeSetThrown(outThrown, 1)
-        return 0
-    }
-    var accumulator = list.elements[0]
-    for element in list.elements.dropFirst() {
-        var thrown = 0
-        let next = runtimeInvokeCollectionLambda2(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            lhs: accumulator,
-            rhs: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        accumulator = runtimeCollectionUnbox(next)
-    }
-    return accumulator
-}
-
-@_cdecl("kk_list_any")
-public func kk_list_any(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw) else {
-        return 0
-    }
-    if fnPtr == 0 {
-        return list.elements.isEmpty ? 0 : 1
-    }
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if runtimeCollectionBool(value) {
-            return 1
-        }
-    }
-    return 0
-}
-
-@_cdecl("kk_list_all")
-public func kk_list_all(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw) else {
-        return 1
-    }
-    if fnPtr == 0 {
-        return 1
-    }
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if !runtimeCollectionBool(value) {
-            return 0
-        }
-    }
-    return 1
-}
-
-@_cdecl("kk_list_none")
-public func kk_list_none(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw) else {
-        return 1
-    }
-    if fnPtr == 0 {
-        return list.elements.isEmpty ? 1 : 0
-    }
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if runtimeCollectionBool(value) {
-            return 0
-        }
-    }
-    return 1
-}
-
-@_cdecl("kk_list_count")
-public func kk_list_count(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw) else {
-        return 0
-    }
-    if fnPtr == 0 {
-        return list.elements.count
-    }
-    var count = 0
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if runtimeCollectionBool(value) {
-            count += 1
-        }
-    }
-    return count
-}
-
-@_cdecl("kk_list_first")
-public func kk_list_first(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          !list.elements.isEmpty
-    else {
-        runtimeSetThrown(outThrown, 1)
-        return 0
-    }
-    if fnPtr == 0 {
-        return list.elements[0]
-    }
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if runtimeCollectionBool(value) {
-            return element
-        }
-    }
-    runtimeSetThrown(outThrown, 1)
-    return 0
-}
-
-@_cdecl("kk_list_last")
-public func kk_list_last(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          !list.elements.isEmpty
-    else {
-        runtimeSetThrown(outThrown, 1)
-        return 0
-    }
-    if fnPtr == 0 {
-        return list.elements[list.elements.count - 1]
-    }
-    for element in list.elements.reversed() {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return 0
-        }
-        if runtimeCollectionBool(value) {
-            return element
-        }
-    }
-    runtimeSetThrown(outThrown, 1)
-    return 0
-}
-
-@_cdecl("kk_list_find")
-public func kk_list_find(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          fnPtr != 0
+          list.elements.indices.contains(index)
     else {
         return runtimeNullSentinelInt
     }
-    for element in list.elements {
-        var thrown = 0
-        let value = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeNullSentinelInt
-        }
-        if runtimeCollectionBool(value) {
-            return element
-        }
-    }
-    return runtimeNullSentinelInt
+    return list.elements.remove(at: index)
 }
 
-@_cdecl("kk_list_groupBy")
-public func kk_list_groupBy(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
-    guard let list = runtimeListBox(from: listRaw),
-          fnPtr != 0
-    else {
-        return runtimeEmptyMapHandle()
-    }
-
-    var keyOrder: [Int] = []
-    var buckets: [Int: [Int]] = [:]
-    for element in list.elements {
-        var thrown = 0
-        let keyValue = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeEmptyMapHandle()
-        }
-        let key = runtimeCollectionUnbox(keyValue)
-        if buckets[key] == nil {
-            keyOrder.append(key)
-            buckets[key] = []
-        }
-        buckets[key, default: []].append(element)
-    }
-
-    var keys: [Int] = []
-    var values: [Int] = []
-    keys.reserveCapacity(keyOrder.count)
-    values.reserveCapacity(keyOrder.count)
-    for key in keyOrder {
-        keys.append(key)
-        let bucket = buckets[key] ?? []
-        let bucketRaw = runtimeRetainObjectHandle(RuntimeListBox(elements: bucket))
-        values.append(bucketRaw)
-    }
-    return runtimeRetainObjectHandle(RuntimeMapBox(keys: keys, values: values))
-}
-
-@_cdecl("kk_list_sortedBy")
-public func kk_list_sortedBy(
-    _ listRaw: Int,
-    _ fnPtr: Int,
-    _ closureRaw: Int,
-    _ outThrown: UnsafeMutablePointer<Int>?
-) -> Int {
-    runtimeSetThrown(outThrown, 0)
+@_cdecl("kk_mutable_list_clear")
+public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return runtimeEmptyListHandle()
+        return 0
     }
-    guard fnPtr != 0 else {
-        return runtimeRetainObjectHandle(RuntimeListBox(elements: list.elements))
-    }
+    list.elements.removeAll(keepingCapacity: false)
+    return 0
+}
 
-    var decorated: [(key: Int, index: Int, value: Int)] = []
-    decorated.reserveCapacity(list.elements.count)
-    for (index, element) in list.elements.enumerated() {
-        var thrown = 0
-        let key = runtimeInvokeCollectionLambda1(
-            fnPtr: fnPtr,
-            closureRaw: closureRaw,
-            value: element,
-            outThrown: &thrown
-        )
-        if thrown != 0 {
-            runtimeSetThrown(outThrown, thrown)
-            return runtimeEmptyListHandle()
-        }
-        decorated.append((key: runtimeCollectionUnbox(key), index: index, value: element))
+// MARK: - Set Functions (STDLIB-001)
+
+@_cdecl("kk_set_of")
+public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
+    var elements: [Int] = []
+    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
+        elements = Array(array.elements.prefix(count))
     }
-    decorated.sort { lhs, rhs in
-        if runtimeSortedByKeyLess(lhs.key, rhs.key) {
-            return true
-        }
-        if runtimeSortedByKeyLess(rhs.key, lhs.key) {
-            return false
-        }
-        return lhs.index < rhs.index
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
+}
+
+@_cdecl("kk_set_size")
+public func kk_set_size(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return 0
     }
-    let sortedElements = decorated.map(\.value)
-    return runtimeRetainObjectHandle(RuntimeListBox(elements: sortedElements))
+    return set.elements.count
+}
+
+@_cdecl("kk_set_contains")
+public func kk_set_contains(_ setRaw: Int, _ element: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(set.elements.contains(where: { runtimeValuesEqual($0, element) }) ? 1 : 0)
+}
+
+@_cdecl("kk_set_is_empty")
+public func kk_set_is_empty(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(set.elements.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_set_to_string")
+public func kk_set_to_string(_ setRaw: Int) -> UnsafeMutableRawPointer {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        let str = "[]"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let parts = set.elements.map(runtimeElementToString)
+    let str = "[" + parts.joined(separator: ", ") + "]"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
+@_cdecl("kk_mutable_set_add")
+public func kk_mutable_set_add(_ setRaw: Int, _ elem: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    if set.elements.contains(where: { runtimeValuesEqual($0, elem) }) {
+        return kk_box_bool(0)
+    }
+    set.elements.append(elem)
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_mutable_set_remove")
+public func kk_mutable_set_remove(_ setRaw: Int, _ elem: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw),
+          let index = set.elements.firstIndex(where: { runtimeValuesEqual($0, elem) })
+    else {
+        return kk_box_bool(0)
+    }
+    set.elements.remove(at: index)
+    return kk_box_bool(1)
 }
 
 // MARK: - Map Functions (STDLIB-001)
@@ -716,12 +319,46 @@ public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) 
             values = Array(arrays.values.prefix(effectiveCount))
         }
     }
+    (keys, values) = runtimeNormalizeMapEntries(keys: keys, values: values)
     let box = RuntimeMapBox(keys: keys, values: values)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_mutable_map_put")
+public func kk_mutable_map_put(_ mapRaw: Int, _ key: Int, _ value: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return runtimeNullSentinelInt
+    }
+    if let index = map.keys.firstIndex(where: { runtimeValuesEqual($0, key) }) {
+        let previous = index < map.values.count ? map.values[index] : runtimeNullSentinelInt
+        if index < map.values.count {
+            map.values[index] = value
+        } else {
+            map.values.append(value)
+        }
+        return previous
+    }
+    map.keys.append(key)
+    map.values.append(value)
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_mutable_map_remove")
+public func kk_mutable_map_remove(_ mapRaw: Int, _ key: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw),
+          let index = map.keys.firstIndex(where: { runtimeValuesEqual($0, key) })
+    else {
+        return runtimeNullSentinelInt
+    }
+    map.keys.remove(at: index)
+    guard index < map.values.count else {
+        return runtimeNullSentinelInt
+    }
+    return map.values.remove(at: index)
 }
 
 /// Returns the size of a map.
@@ -745,7 +382,7 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
         return runtimeNullSentinelInt
     }
-    for (idx, mapKey) in map.keys.enumerated() where mapKey == key {
+    for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
         guard idx < map.values.count else { return runtimeNullSentinelInt }
         return map.values[idx]
     }
@@ -756,24 +393,40 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
 /// - Parameters:
 ///   - mapRaw: Opaque handle to a `RuntimeMapBox`.
 ///   - key: The key to search for.
-/// - Returns: Raw Boolean payload (1/0).
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_contains_key")
 public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return 0
+        return kk_box_bool(0)
     }
-    return map.keys.contains(key) ? 1 : 0
+    return kk_box_bool(map.keys.contains(where: { runtimeValuesEqual($0, key) }) ? 1 : 0)
 }
 
 /// Checks if a map is empty.
 /// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: Raw Boolean payload (1/0).
+/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_is_empty")
 public func kk_map_is_empty(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return 1
+        return kk_box_bool(1)
     }
-    return map.keys.isEmpty ? 1 : 0
+    return kk_box_bool(map.keys.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_map_keys")
+public func kk_map_keys(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(map.keys)))
+}
+
+@_cdecl("kk_map_values")
+public func kk_map_values(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: map.values))
 }
 
 /// Creates an iterator over a map's entries.
@@ -846,6 +499,14 @@ public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
+@_cdecl("kk_map_to_mutable_map")
+public func kk_map_to_mutable_map(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: map.keys, values: map.values))
+}
+
 // MARK: - Array Functions (STDLIB-001)
 
 /// Creates a new array from existing elements (identity/tagging operation).
@@ -881,9 +542,7 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
 /// - Returns: Opaque handle (Int) to a `RuntimeArrayBox` containing 2 elements.
 @_cdecl("kk_pair_new")
 public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
-    let box = RuntimeArrayBox(length: 2)
-    box.elements[0] = first
-    box.elements[1] = second
+    let box = RuntimePairBox(first: first, second: second)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))
@@ -896,9 +555,9 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 /// - Returns: The first element.
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return runtimeNullSentinelInt }
-    return array.elements[0]
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+    return pairBox.first
 }
 
 /// Returns the second element of a Pair.
@@ -906,9 +565,9 @@ public func kk_pair_first(_ pairRaw: Int) -> Int {
 /// - Returns: The second element.
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2 else { return runtimeNullSentinelInt }
-    return array.elements[1]
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+    return pairBox.second
 }
 
 /// Converts a Pair to its string representation (e.g. "(1, one)").
@@ -916,8 +575,8 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
 /// - Returns: Opaque handle to a RuntimeStringBox containing the string.
 @_cdecl("kk_pair_to_string")
 public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
-    guard let array = runtimeArrayBox(from: pairRaw),
-          array.elements.count >= 2
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
         let str = "(null, null)"
         let utf8 = Array(str.utf8)
@@ -925,8 +584,8 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
             kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
         }
     }
-    let firstStr = runtimeElementToString(array.elements[0])
-    let secondStr = runtimeElementToString(array.elements[1])
+    let firstStr = runtimeElementToString(pairBox.first)
+    let secondStr = runtimeElementToString(pairBox.second)
     let str = "(\(firstStr), \(secondStr))"
     let utf8 = Array(str.utf8)
     return utf8.withUnsafeBufferPointer { buf in

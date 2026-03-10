@@ -258,7 +258,7 @@ public final class NameMangler {
     }
 
     private func applyNullability(_ encoded: String, nullability: Nullability) -> String {
-        if nullability == .nullable {
+        if nullability.erasedForMetadata == .nullable {
             return "Q<\(encoded)>"
         }
         return encoded

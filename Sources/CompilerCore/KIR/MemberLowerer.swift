@@ -1,3 +1,4 @@
+// swiftlint:disable cyclomatic_complexity
 import Foundation
 
 /// Delegate class for KIR lowering: MemberLowerer.
@@ -60,11 +61,7 @@ final class MemberLowerer {
             }
             let returnType = signature?.returnType ?? sema.types.unitType
             var body: [KIRInstruction] = [.beginBlock]
-            if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-               let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-            {
-                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
-            }
+            bindFunctionParameterLocals(params: params, body: &body, arena: arena)
             switch function.body {
             case let .block(exprIDs, _):
                 var lastValue: KIRExprID?
@@ -131,7 +128,8 @@ final class MemberLowerer {
                         returnType: returnType,
                         body: body,
                         isSuspend: function.isSuspend,
-                        isInline: function.isInline
+                        isInline: function.isInline,
+                        isTailrec: function.isTailrec
                     )
                 )
             )
@@ -229,6 +227,11 @@ final class MemberLowerer {
             // synthesise getter (and setter for var) that call getValue/setValue
             // on the delegate instance.
             if propertyDecl.delegateExpression != nil {
+                let delegateKind = driver.detectDelegateKind(
+                    delegateExpr: propertyDecl.delegateExpression,
+                    ast: ast,
+                    interner: interner
+                )
                 let delegateStorageSymbol: SymbolID
                 if let existingStorage = sema.symbols.delegateStorageSymbol(for: symbol) {
                     delegateStorageSymbol = existingStorage
@@ -255,6 +258,7 @@ final class MemberLowerer {
                     propertySymbol: symbol,
                     propertyType: propType,
                     delegateStorageSymbol: delegateStorageSymbol,
+                    delegateKind: delegateKind,
                     accessorKind: .getter,
                     ast: ast,
                     sema: sema,
@@ -269,6 +273,7 @@ final class MemberLowerer {
                         propertySymbol: symbol,
                         propertyType: propType,
                         delegateStorageSymbol: delegateStorageSymbol,
+                        delegateKind: delegateKind,
                         accessorKind: .setter,
                         ast: ast,
                         sema: sema,
@@ -372,6 +377,7 @@ final class MemberLowerer {
         propertySymbol: SymbolID,
         propertyType: TypeID,
         delegateStorageSymbol: SymbolID,
+        delegateKind: StdlibDelegateKind,
         accessorKind: PropertyAccessorKind,
         ast: ASTModule,
         sema: SemaModule,
@@ -390,6 +396,7 @@ final class MemberLowerer {
             propertySymbol: propertySymbol,
             propertyType: propertyType,
             delegateStorageSymbol: delegateStorageSymbol,
+            delegateKind: delegateKind,
             accessorKind: accessorKind,
             shared: shared,
             allDecls: &allDecls
@@ -429,5 +436,24 @@ final class MemberLowerer {
             shared: shared,
             allDecls: &allDecls
         )
+    }
+
+    private func bindFunctionParameterLocals(
+        params: [KIRParameter],
+        body: inout [KIRInstruction],
+        arena: KIRArena
+    ) {
+        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+           let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
+        {
+            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
+            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverExpr
+        }
+
+        for param in params where param.symbol != driver.ctx.currentImplicitReceiverSymbol {
+            let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
+            body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
+            driver.ctx.localValuesBySymbol[param.symbol] = paramExpr
+        }
     }
 }

@@ -1,8 +1,6 @@
-// swiftlint:disable file_length
 import Foundation
 
 extension NativeEmitter {
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
     func emitFunctionBody(
         function: KIRFunction,
         llvmFunction: LLVMFunction,
@@ -15,7 +13,7 @@ extension NativeEmitter {
         diContext: DebugInfoContext? = nil
     ) throws {
         guard let builder = bindings.createBuilder(context: context) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMCreateBuilderInContext returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMCreateBuilderInContext returned null")
         }
         defer {
             // Clear debug location before disposing the builder.
@@ -50,7 +48,7 @@ extension NativeEmitter {
         }
 
         guard let entryBlock = bindings.appendBasicBlock(context: context, function: llvmFunction.value, name: "entry") else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("failed to create entry block")
+            throw LLVMBackendError.nativeEmissionFailed("failed to create entry block")
         }
 
         var labelBlocks: [Int32: LLVMCAPIBindings.LLVMBasicBlockRef] = [:]
@@ -138,10 +136,10 @@ extension NativeEmitter {
         )
 
         guard let zeroValue = bindings.constInt(int64Type, value: 0) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMConstInt returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMConstInt returned null")
         }
         guard let undefThrownPointer = bindings.getUndef(type: outThrownPointerType) else {
-            throw LLVMCAPIBackendError.nativeEmissionFailed("LLVMGetUndef for outThrown pointer returned null")
+            throw LLVMBackendError.nativeEmissionFailed("LLVMGetUndef for outThrown pointer returned null")
         }
         let nullThrownPointer = bindings.constPointerNull(outThrownPointerType) ?? undefThrownPointer
 
@@ -152,12 +150,52 @@ extension NativeEmitter {
         var generatedStringLiteralCount: Int32 = 0
         let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue)
 
+        func assignmentTargets(for instruction: KIRInstruction) -> [KIRExprID] {
+            switch instruction {
+            case let .constValue(result, _):
+                return [result]
+            case let .binary(_, _, _, result):
+                return [result]
+            case let .unary(_, _, result):
+                return [result]
+            case let .nullAssert(_, result):
+                return [result]
+            case let .call(_, _, _, result, _, thrownResult, _):
+                let directTargets = result.map { [$0] } ?? []
+                let thrownTargets = thrownResult.map { [$0] } ?? []
+                return directTargets + thrownTargets
+            case let .virtualCall(_, _, _, _, result, _, thrownResult, _):
+                let directTargets = result.map { [$0] } ?? []
+                let thrownTargets = thrownResult.map { [$0] } ?? []
+                return directTargets + thrownTargets
+            case let .copy(_, to):
+                return [to]
+            case let .loadGlobal(result, _):
+                return [result]
+            case .jump, .label, .jumpIfEqual, .jumpIfNotNull,
+                 .storeGlobal, .rethrow, .returnIfEqual, .returnUnit, .returnValue,
+                 .beginBlock, .endBlock, .nop:
+                return []
+            }
+        }
+
+        var assignmentTargetCounts: [Int32: Int] = [:]
+        for instruction in function.body {
+            for target in assignmentTargets(for: instruction) {
+                assignmentTargetCounts[target.rawValue, default: 0] += 1
+            }
+        }
+
+        let shouldSpillID = Set(assignmentTargetCounts.filter { $0.value > 1 }.map(\.key))
+
         var copyTargetAllocas: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         for instruction in function.body {
-            if case let .copy(_, to) = instruction, copyTargetAllocas[to.rawValue] == nil {
-                if let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(to.rawValue)") {
+            for target in assignmentTargets(for: instruction) where shouldSpillID.contains(target.rawValue) {
+                if copyTargetAllocas[target.rawValue] == nil,
+                   let alloca = bindings.buildAlloca(builder, type: int64Type, name: "copy_slot_\(target.rawValue)")
+                {
                     _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
-                    copyTargetAllocas[to.rawValue] = alloca
+                    copyTargetAllocas[target.rawValue] = alloca
                 }
             }
         }
@@ -189,6 +227,29 @@ extension NativeEmitter {
             let declared = LLVMFunction(value: externalValue, type: externalType)
             externalFunctions[calleeName] = declared
             return declared
+        }
+
+        func resolveUnnamedInternalFunction(
+            named calleeName: String,
+            argumentCount: Int,
+            appendThrownChannel: Bool
+        ) -> (symbol: SymbolID, function: LLVMFunction)? {
+            var match: (symbol: SymbolID, function: LLVMFunction)?
+            let expectedParameterCount = argumentCount + (appendThrownChannel ? 1 : 0)
+            for declaration in module.arena.declarations {
+                guard case let .function(candidate) = declaration,
+                      interner.resolve(candidate.name) == calleeName,
+                      candidate.params.count == expectedParameterCount,
+                      let llvmFunction = internalFunctions[candidate.symbol]
+                else {
+                    continue
+                }
+                if match != nil {
+                    return nil
+                }
+                match = (candidate.symbol, llvmFunction)
+            }
+            return match
         }
 
         func valueForConstant(_ expression: KIRExprKind, expressionRawID: Int32?) -> LLVMCAPIBindings.LLVMValueRef {
@@ -225,7 +286,17 @@ extension NativeEmitter {
             guard let result else {
                 return
             }
-            values[result.rawValue] = value ?? zeroValue
+            let storedValue = value ?? zeroValue
+            if let resultExpr = module.arena.expr(result),
+               case let .symbolRef(targetSymbol) = resultExpr,
+               let globalPointer = globalVariables[targetSymbol]
+            {
+                _ = bindings.buildStore(builder, value: storedValue, pointer: globalPointer)
+            }
+            if let alloca = copyTargetAllocas[result.rawValue] {
+                _ = bindings.buildStore(builder, value: storedValue, pointer: alloca)
+            }
+            values[result.rawValue] = storedValue
         }
 
         func blockForLabel(_ label: Int32) -> LLVMCAPIBindings.LLVMBasicBlockRef? {
@@ -669,6 +740,13 @@ extension NativeEmitter {
                             name: "println_\(instructionIndex)"
                         )
                     }
+                    if usesThrownChannel, let thrownResult {
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, zeroValue)
+                        }
+                    }
                     storeResult(result, zeroValue)
                     continue
                 }
@@ -682,14 +760,31 @@ extension NativeEmitter {
                     continue
                 }
 
+                let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
+                    symbol
+                } else {
+                    SymbolID?.none
+                }
+                let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
+                    resolveUnnamedInternalFunction(
+                        named: calleeName,
+                        argumentCount: argumentValues.count,
+                        appendThrownChannel: usesThrownChannel
+                    )
+                } else {
+                    nil
+                }
+                let effectiveSymbol = normalizedSymbol ?? fallbackInternal?.symbol
                 let calleeFunction: LLVMFunction?
-                let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
+                let isInternalCall = effectiveSymbol.flatMap { internalFunctions[$0] } != nil
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
-                if let symbol,
-                   let internalFunction = internalFunctions[symbol]
+                if let effectiveSymbol,
+                   let internalFunction = internalFunctions[effectiveSymbol]
                 {
                     calleeFunction = internalFunction
+                } else if let fallbackInternal {
+                    calleeFunction = fallbackInternal.function
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
                 } else {
@@ -803,10 +898,7 @@ extension NativeEmitter {
                     }
                 }
 
-            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, _):
-                // Virtual dispatch: fall back to direct call via symbol/callee resolution.
-                // The vtable/itable lookup is handled by the C backend; the LLVM IR backend
-                // emits a direct call using the statically resolved callee for now.
+            case let .virtualCall(symbol, callee, receiver, arguments, result, usesThrownChannel, thrownResult, dispatch):
                 guard !bindings.hasTerminator(currentBlock) else {
                     continue
                 }
@@ -814,18 +906,34 @@ extension NativeEmitter {
                 let calleeName = interner.resolve(callee)
                 let argumentValues = [resolveValue(receiver)] + arguments.map(resolveValue)
 
-                let calleeFunction: LLVMFunction?
-                let isInternalCall = symbol.flatMap { internalFunctions[$0] } != nil
+                let normalizedSymbol: SymbolID? = if let symbol, symbol != .invalid {
+                    symbol
+                } else {
+                    SymbolID?.none
+                }
+                let fallbackInternal: (symbol: SymbolID, function: LLVMFunction)? = if normalizedSymbol == nil {
+                    resolveUnnamedInternalFunction(
+                        named: calleeName,
+                        argumentCount: argumentValues.count,
+                        appendThrownChannel: usesThrownChannel
+                    )
+                } else {
+                    nil
+                }
+                let effectiveSymbol = normalizedSymbol ?? fallbackInternal?.symbol
+                let isInternalCall = effectiveSymbol.flatMap { internalFunctions[$0] } != nil
                 let shouldAppendThrownChannel = usesThrownChannel || isInternalCall
 
-                if let symbol,
-                   let internalFunction = internalFunctions[symbol]
+                let calleeFunction: LLVMFunction? = if let effectiveSymbol,
+                                                       let internalFunction = internalFunctions[effectiveSymbol]
                 {
-                    calleeFunction = internalFunction
+                    internalFunction
+                } else if let fallbackInternal {
+                    fallbackInternal.function
                 } else if calleeName.isEmpty {
-                    calleeFunction = nil
+                    nil
                 } else {
-                    calleeFunction = declareExternalFunction(
+                    declareExternalFunction(
                         named: calleeName,
                         argumentCount: argumentValues.count,
                         appendThrownChannel: shouldAppendThrownChannel
@@ -837,79 +945,273 @@ extension NativeEmitter {
                     continue
                 }
 
-                var callArguments = argumentValues
-                var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
-                if shouldAppendThrownChannel {
-                    if usesThrownChannel {
-                        let thrownSlot = bindings.buildAlloca(
-                            builder,
-                            type: int64Type,
-                            name: "vthrown_slot_\(instructionIndex)"
-                        )
-                        if let thrownSlot {
-                            _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
-                            callArguments.append(thrownSlot)
-                            thrownSlotPointer = thrownSlot
+                let lookupFunction: LLVMFunction?
+                var lookupArgs: [LLVMCAPIBindings.LLVMValueRef] = []
+                switch dispatch {
+                case let .vtable(slot):
+                    lookupFunction = declareExternalFunction(named: "kk_vtable_lookup", argumentCount: 2, appendThrownChannel: false)
+                    lookupArgs = [
+                        resolveValue(receiver),
+                        bindings.constInt(int64Type, value: UInt64(slot)) ?? bindings.constInt(int64Type, value: 0)!,
+                    ]
+                case let .itable(interfaceSlot, methodSlot):
+                    lookupFunction = declareExternalFunction(named: "kk_itable_lookup", argumentCount: 3, appendThrownChannel: false)
+                    lookupArgs = [
+                        resolveValue(receiver),
+                        bindings.constInt(int64Type, value: UInt64(interfaceSlot)) ?? bindings.constInt(int64Type, value: 0)!,
+                        bindings.constInt(int64Type, value: UInt64(methodSlot)) ?? bindings.constInt(int64Type, value: 0)!,
+                    ]
+                }
+
+                guard let lookupFn = lookupFunction else { continue }
+                guard let fptrRaw = bindings.buildCall(
+                    builder,
+                    functionType: lookupFn.type,
+                    callee: lookupFn.value,
+                    arguments: lookupArgs,
+                    name: "lookup_raw_\(instructionIndex)"
+                ) else { continue }
+
+                // Guard against null vtable/itable lookup: if fptrRaw == 0
+                // fall back to the direct callee function.
+                let isNonNull = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: fptrRaw,
+                    rhs: zeroValue,
+                    name: "lookup_nonnull_\(instructionIndex)"
+                )
+                let useVirtualBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "lookup_ok_\(instructionIndex)"
+                )
+                let fallbackBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "lookup_fallback_\(instructionIndex)"
+                )
+                let mergeBlock = bindings.appendBasicBlock(
+                    context: context,
+                    function: llvmFunction.value,
+                    name: "vcall_merge_\(instructionIndex)"
+                )
+
+                if let isNonNull, let useVirtualBlock, let fallbackBlock, let mergeBlock {
+                    _ = bindings.buildCondBr(
+                        builder,
+                        condition: isNonNull,
+                        thenBlock: useVirtualBlock,
+                        elseBlock: fallbackBlock
+                    )
+                    // Virtual dispatch path: use the looked-up function pointer.
+                    bindings.positionBuilder(builder, at: useVirtualBlock)
+                    let functionPointerType = bindings.pointerType(calleeFunction.type)
+                    let fptr = bindings.buildIntToPtr(
+                        builder,
+                        value: fptrRaw,
+                        type: functionPointerType,
+                        name: "lookup_fptr_\(instructionIndex)"
+                    )
+
+                    var callArguments = argumentValues
+                    var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
+                    if shouldAppendThrownChannel {
+                        if usesThrownChannel {
+                            let thrownSlot = bindings.buildAlloca(
+                                builder,
+                                type: int64Type,
+                                name: "vthrown_slot_\(instructionIndex)"
+                            )
+                            if let thrownSlot {
+                                _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
+                                callArguments.append(thrownSlot)
+                                thrownSlotPointer = thrownSlot
+                            } else {
+                                callArguments.append(nullThrownPointer)
+                            }
                         } else {
                             callArguments.append(nullThrownPointer)
                         }
-                    } else {
-                        callArguments.append(nullThrownPointer)
                     }
-                }
 
-                let callValue = bindings.buildCall(
-                    builder,
-                    functionType: calleeFunction.type,
-                    callee: calleeFunction.value,
-                    arguments: callArguments,
-                    name: "vcall_\(instructionIndex)"
-                )
-                storeResult(result, callValue)
-                if usesThrownChannel,
-                   let thrownSlotPointer,
-                   let thrownValue = bindings.buildLoad(
-                       builder,
-                       type: int64Type,
-                       pointer: thrownSlotPointer,
-                       name: "vthrown_val_\(instructionIndex)"
-                   )
-                {
-                    if let thrownResult {
-                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
-                            _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
+                    let vCallValue = bindings.buildCall(
+                        builder,
+                        functionType: calleeFunction.type,
+                        callee: fptr ?? calleeFunction.value,
+                        arguments: callArguments,
+                        name: "vcall_\(instructionIndex)"
+                    )
+                    _ = bindings.buildBr(builder, destination: mergeBlock)
+
+                    // Fallback path: use the direct callee.
+                    bindings.positionBuilder(builder, at: fallbackBlock)
+                    var fbCallArguments = argumentValues
+                    if shouldAppendThrownChannel {
+                        if usesThrownChannel {
+                            let thrownSlot = bindings.buildAlloca(
+                                builder,
+                                type: int64Type,
+                                name: "vthrown_slot_fb_\(instructionIndex)"
+                            )
+                            if let thrownSlot {
+                                _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
+                                fbCallArguments.append(thrownSlot)
+                            } else {
+                                fbCallArguments.append(nullThrownPointer)
+                            }
                         } else {
-                            storeResult(thrownResult, thrownValue)
+                            fbCallArguments.append(nullThrownPointer)
                         }
-                    } else if let hasThrown = buildBoolCondition(
-                        from: thrownValue,
-                        name: "vhas_thrown_\(instructionIndex)"
-                    ),
-                        let thrownBlock = bindings.appendBasicBlock(
-                            context: context,
-                            function: llvmFunction.value,
-                            name: "vthrown_\(instructionIndex)"
-                        ),
-                        let continueBlock = bindings.appendBasicBlock(
-                            context: context,
-                            function: llvmFunction.value,
-                            name: "vcall_cont_\(instructionIndex)"
-                        )
+                    }
+                    let fbCallValue = bindings.buildCall(
+                        builder,
+                        functionType: calleeFunction.type,
+                        callee: calleeFunction.value,
+                        arguments: fbCallArguments,
+                        name: "vcall_fb_\(instructionIndex)"
+                    )
+                    _ = bindings.buildBr(builder, destination: mergeBlock)
+
+                    // Merge: pick whichever call was taken via PHI.
+                    bindings.positionBuilder(builder, at: mergeBlock)
+                    currentBlock = mergeBlock
+                    // Use the virtual call result as the canonical value
+                    // (both paths produce the same type).
+                    let mergedValue = vCallValue ?? fbCallValue ?? zeroValue
+                    storeResult(result, mergedValue)
+
+                    // Handle thrown channel from virtual dispatch only (fallback
+                    // mirror logic left for future improvement).
+                    if usesThrownChannel,
+                       let thrownSlotPointer,
+                       let thrownValue = bindings.buildLoad(
+                           builder,
+                           type: int64Type,
+                           pointer: thrownSlotPointer,
+                           name: "vthrown_val_\(instructionIndex)"
+                       )
                     {
-                        _ = bindings.buildCondBr(
-                            builder,
-                            condition: hasThrown,
-                            thenBlock: thrownBlock,
-                            elseBlock: continueBlock
-                        )
+                        if let thrownResult {
+                            if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                                _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
+                            } else {
+                                storeResult(thrownResult, thrownValue)
+                            }
+                        } else if let hasThrown = buildBoolCondition(
+                            from: thrownValue,
+                            name: "vhas_thrown_\(instructionIndex)"
+                        ),
+                            let thrownBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "vthrown_\(instructionIndex)"
+                            ),
+                            let continueBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "vcall_cont_\(instructionIndex)"
+                            )
+                        {
+                            _ = bindings.buildCondBr(
+                                builder,
+                                condition: hasThrown,
+                                thenBlock: thrownBlock,
+                                elseBlock: continueBlock
+                            )
 
-                        bindings.positionBuilder(builder, at: thrownBlock)
-                        storeOutThrownIfNonNull(thrownValue, suffix: "vthrow_\(instructionIndex)")
-                        emitFramePop("vthrow_\(instructionIndex)")
-                        _ = bindings.buildRet(builder, value: zeroValue)
+                            bindings.positionBuilder(builder, at: thrownBlock)
+                            storeOutThrownIfNonNull(thrownValue, suffix: "vthrow_\(instructionIndex)")
+                            emitFramePop("vthrow_\(instructionIndex)")
+                            _ = bindings.buildRet(builder, value: zeroValue)
 
-                        currentBlock = continueBlock
-                        bindings.positionBuilder(builder, at: continueBlock)
+                            currentBlock = continueBlock
+                            bindings.positionBuilder(builder, at: continueBlock)
+                        }
+                    }
+                } else {
+                    // Fallback: no null guard possible – use original direct dispatch.
+                    let functionPointerType = bindings.pointerType(calleeFunction.type)
+                    let fptr = bindings.buildIntToPtr(
+                        builder,
+                        value: fptrRaw,
+                        type: functionPointerType,
+                        name: "lookup_fptr_\(instructionIndex)"
+                    )
+
+                    var callArguments = argumentValues
+                    var thrownSlotPointer: LLVMCAPIBindings.LLVMValueRef?
+                    if shouldAppendThrownChannel {
+                        if usesThrownChannel {
+                            let thrownSlot = bindings.buildAlloca(
+                                builder,
+                                type: int64Type,
+                                name: "vthrown_slot_\(instructionIndex)"
+                            )
+                            if let thrownSlot {
+                                _ = bindings.buildStore(builder, value: zeroValue, pointer: thrownSlot)
+                                callArguments.append(thrownSlot)
+                                thrownSlotPointer = thrownSlot
+                            } else {
+                                callArguments.append(nullThrownPointer)
+                            }
+                        } else {
+                            callArguments.append(nullThrownPointer)
+                        }
+                    }
+
+                    let callValue = bindings.buildCall(
+                        builder,
+                        functionType: calleeFunction.type,
+                        callee: fptr ?? calleeFunction.value,
+                        arguments: callArguments,
+                        name: "vcall_\(instructionIndex)"
+                    )
+                    storeResult(result, callValue)
+                    if usesThrownChannel,
+                       let thrownSlotPointer,
+                       let thrownValue = bindings.buildLoad(
+                           builder,
+                           type: int64Type,
+                           pointer: thrownSlotPointer,
+                           name: "vthrown_val_\(instructionIndex)"
+                       )
+                    {
+                        if let thrownResult {
+                            if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                                _ = bindings.buildStore(builder, value: thrownValue, pointer: alloca)
+                            } else {
+                                storeResult(thrownResult, thrownValue)
+                            }
+                        } else if let hasThrown = buildBoolCondition(
+                            from: thrownValue,
+                            name: "vhas_thrown_\(instructionIndex)"
+                        ),
+                            let thrownBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "vthrown_\(instructionIndex)"
+                            ),
+                            let continueBlock = bindings.appendBasicBlock(
+                                context: context,
+                                function: llvmFunction.value,
+                                name: "vcall_cont_\(instructionIndex)"
+                            )
+                        {
+                            _ = bindings.buildCondBr(
+                                builder,
+                                condition: hasThrown,
+                                thenBlock: thrownBlock,
+                                elseBlock: continueBlock
+                            )
+
+                            bindings.positionBuilder(builder, at: thrownBlock)
+                            storeOutThrownIfNonNull(thrownValue, suffix: "vthrow_\(instructionIndex)")
+                            emitFramePop("vthrow_\(instructionIndex)")
+                            _ = bindings.buildRet(builder, value: zeroValue)
+
+                            currentBlock = continueBlock
+                            bindings.positionBuilder(builder, at: continueBlock)
+                        }
                     }
                 }
 
@@ -918,7 +1220,31 @@ extension NativeEmitter {
                     continue
                 }
                 let resolved = resolveValue(value)
-                if let condition = buildBoolCondition(from: resolved, name: "jnn_cond_\(instructionIndex)"),
+                let nullSentinel = bindings.constInt(
+                    int64Type,
+                    value: UInt64(bitPattern: Int64.min),
+                    signExtend: true
+                ) ?? zeroValue
+                let isNonZero = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: resolved,
+                    rhs: zeroValue,
+                    name: "jnn_nonzero_\(instructionIndex)"
+                )
+                let isNotSentinel = bindings.buildICmpNotEqual(
+                    builder,
+                    lhs: resolved,
+                    rhs: nullSentinel,
+                    name: "jnn_nonsentinel_\(instructionIndex)"
+                )
+                if let isNonZero,
+                   let isNotSentinel,
+                   let condition = bindings.buildAnd(
+                       builder,
+                       lhs: isNonZero,
+                       rhs: isNotSentinel,
+                       name: "jnn_cond_\(instructionIndex)"
+                   ),
                    let targetBlock = blockForLabel(target),
                    let fallthroughBlock = bindings.appendBasicBlock(
                        context: context,

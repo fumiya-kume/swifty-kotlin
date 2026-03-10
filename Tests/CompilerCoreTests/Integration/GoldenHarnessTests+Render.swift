@@ -4,7 +4,6 @@ import Foundation
 // MARK: - Render helpers extracted from GoldenHarnessTests to reduce type/file body length.
 
 extension GoldenHarnessTests {
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func renderExpr(_ expr: Expr, interner: StringInterner) -> String {
         switch expr {
         case let .intLiteral(value, _):
@@ -43,10 +42,11 @@ extension GoldenHarnessTests {
         case let .continueExpr(label, _):
             let labelStr = label.map { "@\(interner.resolve($0))" } ?? ""
             return "continue\(labelStr)"
-        case let .localDecl(name, isMutable, typeAnnotation, initializer, _):
+        case let .localDecl(name, isMutable, typeAnnotation, initializer, isDelegated, _):
             let typeStr = typeAnnotation.map { "t\($0.rawValue)" } ?? "_"
             let initStr = initializer.map { "e\($0.rawValue)" } ?? "_"
-            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)"
+            let delegatedStr = isDelegated ? " delegated=1" : ""
+            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)\(delegatedStr)"
         case let .localAssign(name, value, _):
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
         case let .indexedAssign(receiver, indices, value, _):
@@ -121,7 +121,7 @@ extension GoldenHarnessTests {
             let renderedParams = params.map { interner.resolve($0) }.joined(separator: ",")
             let labelStr = label.map { " label=\(interner.resolve($0))" } ?? ""
             return "lambda params=[\(renderedParams)] body=e\(body.rawValue)\(labelStr)"
-        case let .objectLiteral(superTypes, _):
+        case let .objectLiteral(superTypes, _, _):
             let renderedSuperTypes = superTypes.map { "t\($0.rawValue)" }.joined(separator: ",")
             return "objectLiteral supers=[\(renderedSuperTypes)]"
         case let .callableRef(receiver, member, _):
@@ -201,18 +201,20 @@ extension GoldenHarnessTests {
         let vararg = signature.valueParameterIsVararg.map { $0 ? "1" : "0" }.joined(separator: ",")
         var result = "recv=\(receiver) params=[\(parameters)] ret=\(returnType)"
         result += " suspend=\(signature.isSuspend ? 1 : 0) defaults=[\(defaults)] vararg=[\(vararg)]"
-        let hasBounds = !signature.typeParameterUpperBounds.isEmpty
-            && signature.typeParameterUpperBounds.contains(where: { $0 != nil })
+        let hasBounds = !signature.typeParameterUpperBoundsList.isEmpty
+            && signature.typeParameterUpperBoundsList.contains(where: { !$0.isEmpty })
         if hasBounds {
-            let bounds = signature.typeParameterUpperBounds.map { bound in
-                bound.map { types.renderType($0) } ?? "_"
+            let bounds = signature.typeParameterUpperBoundsList.map { upperBounds in
+                if upperBounds.isEmpty {
+                    return "_"
+                }
+                return upperBounds.map { types.renderType($0) }.joined(separator: "&")
             }.joined(separator: ",")
             result += " bounds=[\(bounds)]"
         }
         return result
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     func renderSymbolFlags(_ flags: SymbolFlags) -> String {
         if flags.isEmpty {
             return "_"

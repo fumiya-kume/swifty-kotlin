@@ -6,13 +6,13 @@ final class PropertyLoweringPass: LoweringPass {
     /// Lazily built reverse map from backing field symbol to its owning property symbol.
     private var backingFieldToPropertyMap: [SymbolID: SymbolID]?
 
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
     func run(module: KIRModule, ctx: KIRContext) throws {
         let getterName = ctx.interner.intern("get")
         let setterName = ctx.interner.intern("set")
         let getValueName = ctx.interner.intern("getValue")
         let setValueName = ctx.interner.intern("setValue")
         let interner = ctx.interner
+        let sema = ctx.sema
 
         // Collect all function symbols emitted into the KIR module so we can
         // verify that a getter accessor actually exists before rewriting.
@@ -208,7 +208,11 @@ final class PropertyLoweringPass: LoweringPass {
                 // kk_property_access indirection and accessor-kind
                 // boolean argument.
                 let isSetter = callee == setterName
-                if let sym = symbol {
+                if let sym = symbol,
+                   let sema,
+                   let symInfo = sema.symbols.symbol(sym),
+                   symInfo.kind == .property || symInfo.kind == .backingField
+                {
                     let accessorSymbol = isSetter
                         ? SyntheticSymbolScheme.propertySetterAccessorSymbol(for: sym)
                         : SyntheticSymbolScheme.propertyGetterAccessorSymbol(for: sym)

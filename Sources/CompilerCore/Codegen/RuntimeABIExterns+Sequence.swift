@@ -1,5 +1,4 @@
-// swiftlint:disable identifier_name trailing_comma
-
+// swiftlint:disable identifier_name
 // MARK: - Sequence Extern Declarations (STDLIB-003)
 
 public extension RuntimeABIExterns {
@@ -62,5 +61,3 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 }
-
-// swiftlint:enable identifier_name trailing_comma

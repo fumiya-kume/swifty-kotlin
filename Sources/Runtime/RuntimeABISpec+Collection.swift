@@ -1,8 +1,4 @@
-// Collection ABI specs (STDLIB-001)
-// swiftlint:disable trailing_comma
-
 public extension RuntimeABISpec {
-    /// Collection functions for List, Map, and Array operations.
     static let collectionFunctions: [RuntimeABIFunctionSpec] = [
         // List
         RuntimeABIFunctionSpec(
@@ -80,173 +76,77 @@ public extension RuntimeABISpec {
             returnType: .opaquePointer,
             section: "Collection"
         ),
-        // Higher-order list functions (STDLIB-005)
         RuntimeABIFunctionSpec(
-            name: "kk_list_map",
+            name: "kk_list_to_mutable_list",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_list_filter",
+            name: "kk_list_joinToString",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                RuntimeABIParameter(name: "separatorRaw", type: .intptr),
+                RuntimeABIParameter(name: "prefixRaw", type: .intptr),
+                RuntimeABIParameter(name: "postfixRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_list_to_set",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // Set
+        RuntimeABIFunctionSpec(
+            name: "kk_set_of",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_list_flatMap",
+            name: "kk_set_size",
             parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_list_forEach",
+            name: "kk_set_contains",
             parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_list_fold",
+            name: "kk_set_is_empty",
             parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_list_reduce",
+            name: "kk_set_to_string",
             parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
             ],
-            returnType: .intptr,
+            returnType: .opaquePointer,
             section: "Collection"
         ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_any",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_all",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_none",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_count",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_first",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_last",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_find",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_groupBy",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_list_sortedBy",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
+    ] + Self.collectionHOFFunctions + [
         // Map
         RuntimeABIFunctionSpec(
             name: "kk_map_of",
@@ -293,11 +193,35 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_map_keys",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_map_values",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_map_to_string",
             parameters: [
                 RuntimeABIParameter(name: "mapRaw", type: .intptr),
             ],
             returnType: .opaquePointer,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_map_to_mutable_map",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+            ],
+            returnType: .intptr,
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
@@ -413,7 +337,7 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_mutable_list_add",
+            name: "kk_builder_list_add",
             parameters: [
                 RuntimeABIParameter(name: "elem", type: .intptr),
             ],
@@ -421,7 +345,51 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_mutable_map_put",
+            name: "kk_mutable_list_add",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "elem", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_removeAt",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "index", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_list_clear",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_set_add",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+                RuntimeABIParameter(name: "elem", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_set_remove",
+            parameters: [
+                RuntimeABIParameter(name: "setRaw", type: .intptr),
+                RuntimeABIParameter(name: "elem", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_builder_map_put",
             parameters: [
                 RuntimeABIParameter(name: "key", type: .intptr),
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -429,7 +397,192 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_map_put",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "key", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutable_map_remove",
+            parameters: [
+                RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                RuntimeABIParameter(name: "key", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
     ]
-}
 
-// swiftlint:enable trailing_comma
+    private static let hofLambdaParams: [RuntimeABIParameter] = [
+        RuntimeABIParameter(name: "listRaw", type: .intptr),
+        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+    ]
+
+    private static func hofSpec(_ name: String) -> RuntimeABIFunctionSpec {
+        RuntimeABIFunctionSpec(
+            name: name, parameters: hofLambdaParams,
+            returnType: .intptr, section: "Collection"
+        )
+    }
+
+    static let collectionHOFFunctions: [RuntimeABIFunctionSpec] = {
+        let foldSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_fold",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let before = [
+            "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_forEach",
+            "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
+        ]
+        let genericAfter = [
+            "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
+            "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
+        ]
+        let filterNotNullSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_filterNotNull",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateBySpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateBy",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateWithSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associateWith",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let associateSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_associate",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let zipSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_zip",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let unzipSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_unzip",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let withIndexSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_withIndex",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let forEachIndexedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_forEachIndexed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let mapIndexedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_mapIndexed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let takeSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_take",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let dropSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_drop",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let reversedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let sortedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_sorted",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let distinctSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_distinct",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        return before.map { hofSpec($0) }
+            + [filterNotNullSpec, foldSpec]
+            + genericAfter.map { hofSpec($0) }
+            + [
+                associateBySpec, associateWithSpec, associateSpec,
+                zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
+                takeSpec, dropSpec, reversedSpec, sortedSpec, distinctSpec,
+            ]
+    }()
+}

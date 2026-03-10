@@ -81,6 +81,9 @@ jobs:
     name: kotlinc Diff Regression
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      KOTLIN_VERSION: "2.3.10"
+      KOTLINX_COROUTINES_VERSION: "1.10.2"
     steps:
       - uses: actions/checkout@v4
       - name: Install Swift
@@ -95,11 +98,25 @@ jobs:
           echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: Install Kotlin and Java
-        run: sudo apt-get install -y kotlin default-jdk
+        run: |
+          sudo apt-get install -y default-jdk unzip
+          TOOLS_DIR="${RUNNER_TEMP}/kotlin-tools"
+          KOTLIN_DIR="${TOOLS_DIR}/kotlin"
+          mkdir -p "$TOOLS_DIR"
+
+          curl -sSL -o "${TOOLS_DIR}/kotlin-compiler.zip" \
+            "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.zip"
+          unzip -q "${TOOLS_DIR}/kotlin-compiler.zip" -d "$KOTLIN_DIR"
+          echo "${KOTLIN_DIR}/kotlinc/bin" >> "$GITHUB_PATH"
+
+          curl -sSL -o "${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" \
+            "https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-core-jvm/${KOTLINX_COROUTINES_VERSION}/kotlinx-coroutines-core-jvm-${KOTLINX_COROUTINES_VERSION}.jar"
+          echo "KOTLINC_CLASSPATH=${TOOLS_DIR}/kotlinx-coroutines-core-jvm.jar" >> "$GITHUB_ENV"
       - name: Verify prerequisites
         run: |
           java -version
           kotlinc -version
+          test -f "$KOTLINC_CLASSPATH"
       - name: Build compiler
         run: swift build -Xswiftc -swift-version -Xswiftc 6
       - name: Build with strict concurrency (warnings)

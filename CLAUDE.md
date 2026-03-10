@@ -65,7 +65,7 @@ Source files are grouped into subdirectories that mirror the compiler pipeline:
 | `Sema/` | `TypeCheckSemaPass*.swift`, `DataFlowSemaPass*.swift`, `OverloadResolver.swift`, `ConstraintSolver.swift`, `TypeSystem*.swift`, `TypeModels.swift` | Type checking, data flow, overload resolution |
 | `KIR/` | `BuildKIRPass*.swift`, `KIRModels.swift` | Typed intermediate representation |
 | `Lowering/` | `LoweringPhase.swift`, `*LoweringPass.swift`, `*SynthesisPass.swift` | Desugaring (for, when, property, inline, coroutine, ABI, etc.) |
-| `Codegen/` | `LLVMCAPIBackend.swift`, `LLVMBackend*.swift`, `CodegenPass.swift`, `NativeEmitter*.swift`, `LinkPass.swift`, `NameMangler.swift` | LLVM IR generation & linking |
+| `Codegen/` | `LLVMBackend.swift`, `CodegenPhase.swift`, `NativeEmitter*.swift`, `LLVMCAPIBindings*.swift`, `LinkPhase.swift`, `NameMangler.swift` | LLVM IR generation & linking |
 | `Driver/` | `Driver.swift`, `CompilationContext.swift`, `Diagnostics.swift`, `Phases.swift`, `FrontendPhases.swift`, `SourceManager.swift`, `SourceLocation.swift`, `CommandRunner.swift` | Pipeline orchestration & cross-cutting infrastructure |
 
 ### Cross-cutting Infrastructure

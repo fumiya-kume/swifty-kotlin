@@ -14,7 +14,7 @@
 #
 # Each configuration is a combination of:
 #   --emit kir | object | executable
-#   -Xir backend=synthetic-c | backend=llvm-c-api
+#   -Xir backend=llvm-c-api
 #
 # Results are saved as TSV and/or JSON in the output directory.
 
@@ -77,7 +77,7 @@ echo ""
 mkdir -p "$OUTPUT_DIR"
 
 EMIT_MODES=(kir object executable)
-BACKENDS=(synthetic-c llvm-c-api)
+BACKENDS=(llvm-c-api)
 
 TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
 GIT_HASH=$(cd "$REPO_ROOT" && git rev-parse --short HEAD 2>/dev/null || echo "unknown")

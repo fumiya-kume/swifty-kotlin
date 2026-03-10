@@ -3,21 +3,23 @@ import Foundation
 public final class CodegenPhase: CompilerPhase {
     public static let name = "Codegen"
 
-    private enum BackendKind {
-        case syntheticC
-        case llvmCAPI
-    }
-
-    private struct BackendSelection {
-        let kind: BackendKind
-        let isStrictMode: Bool
-    }
-
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available for codegen.")
+        }
+        let fileFacadeNamesByFileID = CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
+
+        if ctx.options.emit == .kirDump {
+            let path = outputPath(base: ctx.options.outputPath, defaultExtension: "kir")
+            let dump = kir.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
+            do {
+                try dump.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
+                return
+            } catch {
+                throw CompilerPipelineError.outputUnavailable
+            }
         }
 
         let runtime = RuntimeLinkInfo(
@@ -25,55 +27,55 @@ public final class CodegenPhase: CompilerPhase {
             libraries: ctx.options.linkLibraries,
             extraObjects: []
         )
-        let backend = makeBackend(ctx: ctx)
+        let backend = try makeBackend(ctx: ctx)
 
         do {
             switch ctx.options.emit {
-            case .kirDump:
-                let path = outputPath(base: ctx.options.outputPath, defaultExtension: "kir")
-                let dump = kir.dump(interner: ctx.interner, symbols: ctx.sema?.symbols)
-                try dump.write(to: URL(fileURLWithPath: path), atomically: true, encoding: .utf8)
-
             case .llvmIR:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "ll")
-                try backend.emitLLVMIR(module: kir, runtime: runtime, outputIRPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
+                try backend.emitLLVMIR(
+                    module: kir,
+                    runtime: runtime,
+                    outputIRPath: path,
+                    interner: ctx.interner,
+                    sourceManager: ctx.sourceManager,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
                 ctx.generatedLLVMIRPath = path
 
-            case .object, .executable:
+            case .object:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
-                try backend.emitObject(module: kir, runtime: runtime, outputObjectPath: path, interner: ctx.interner, sourceManager: ctx.sourceManager)
+                try backend.emitObject(
+                    module: kir,
+                    runtime: runtime,
+                    outputObjectPath: path,
+                    interner: ctx.interner,
+                    sourceManager: ctx.sourceManager,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
                 ctx.generatedObjectPath = path
-                ctx.runtimeStubObjectPath = runtimeStubObjectPath(backend: backend, ctx: ctx)
+
+            case .executable:
+                let path = executableObjectPath(base: ctx.options.outputPath)
+                try backend.emitObject(
+                    module: kir,
+                    runtime: runtime,
+                    outputObjectPath: path,
+                    interner: ctx.interner,
+                    sourceManager: ctx.sourceManager,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
+                ctx.generatedObjectPath = path
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
+
+            case .kirDump:
+                break
             }
         } catch {
             throw CompilerPipelineError.outputUnavailable
         }
-    }
-
-    /// Returns the path to a pre-compiled runtime stub `.o` that provides
-    /// weak definitions for all runtime helper functions.  Both the synthetic-C
-    /// backend (`LLVMBackend`) and the native LLVM-C-API backend
-    /// (`LLVMCAPIBackend`) emit code that references these helpers as external
-    /// symbols, so the stub must be linked regardless of which backend produced
-    /// the user-code object file.
-    private func runtimeStubObjectPath(backend: any CodegenBackend, ctx: CompilationContext) -> String? {
-        if let llvmBackend = backend as? LLVMBackend {
-            return llvmBackend.runtimeStubPath()
-        }
-        // For non-synthetic backends (e.g. LLVMCAPIBackend) we still need the
-        // runtime stub at link time.  Create a lightweight LLVMBackend solely
-        // to compile / retrieve the cached stub object.
-        let stubProvider = LLVMBackend(
-            target: ctx.options.target,
-            optLevel: ctx.options.optLevel,
-            debugInfo: ctx.options.debugInfo,
-            diagnostics: ctx.diagnostics
-        )
-        stubProvider.phaseTimer = ctx.phaseTimer
-        return stubProvider.runtimeStubPath()
     }
 
     private func outputPath(base: String, defaultExtension: String) -> String {
@@ -84,9 +86,23 @@ public final class CodegenPhase: CompilerPhase {
         return base
     }
 
+    private func executableObjectPath(base: String) -> String {
+        // Keep the linker output path and the intermediate object path distinct,
+        // even when the user passes an executable filename with an extension.
+        let fileURL = URL(fileURLWithPath: base)
+        if fileURL.pathExtension == "o" {
+            return fileURL
+                .deletingPathExtension()
+                .appendingPathExtension("executable")
+                .appendingPathExtension("o")
+                .path
+        }
+        return fileURL.appendingPathExtension("o").path
+    }
+
     private func emitLibrary(
         module: KIRModule,
-        backend: any CodegenBackend,
+        backend: LLVMBackend,
         runtime: RuntimeLinkInfo,
         ctx: CompilationContext
     ) throws {
@@ -103,7 +119,14 @@ public final class CodegenPhase: CompilerPhase {
         try fm.createDirectory(atPath: inlineDir, withIntermediateDirectories: true)
 
         let objectPath = objectsDir + "/\(ctx.options.moduleName)_0.o"
-        try backend.emitObject(module: module, runtime: runtime, outputObjectPath: objectPath, interner: ctx.interner, sourceManager: ctx.sourceManager)
+        try backend.emitObject(
+            module: module,
+            runtime: runtime,
+            outputObjectPath: objectPath,
+            interner: ctx.interner,
+            sourceManager: ctx.sourceManager,
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
+        )
         ctx.generatedObjectPath = objectPath
 
         try emitInlineKIRArtifacts(module: module, outputDir: inlineDir, ctx: ctx)
@@ -130,80 +153,13 @@ public final class CodegenPhase: CompilerPhase {
         try metadata.write(to: URL(fileURLWithPath: metadataPath), atomically: true, encoding: .utf8)
     }
 
-    private func makeBackend(ctx: CompilationContext) -> any CodegenBackend {
-        let selection = selectedBackend(irFlags: ctx.options.irFlags, target: ctx.options.target,
-                                        diagnostics: ctx.diagnostics)
-        switch selection.kind {
-        case .syntheticC:
-            let backend = LLVMBackend(
-                target: ctx.options.target,
-                optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
-                diagnostics: ctx.diagnostics
-            )
-            backend.phaseTimer = ctx.phaseTimer
-            return backend
-        case .llvmCAPI:
-            return LLVMCAPIBackend(
-                target: ctx.options.target,
-                optLevel: ctx.options.optLevel,
-                debugInfo: ctx.options.debugInfo,
-                diagnostics: ctx.diagnostics,
-                isStrictMode: selection.isStrictMode
-            )
-        }
-    }
-
-    private func selectedBackend(
-        irFlags: [String], target: TargetTriple, diagnostics: DiagnosticEngine
-    ) -> BackendSelection {
-        var requestedBackend: String?
-        var isStrictMode = false
-
-        for flag in irFlags {
-            if flag == "backend-strict" {
-                isStrictMode = true
-                continue
-            }
-            if flag.hasPrefix("backend-strict=") {
-                let value = String(flag.dropFirst("backend-strict=".count))
-                isStrictMode = parseStrictModeFlag(value) ?? isStrictMode
-                continue
-            }
-            guard flag.hasPrefix("backend=") else {
-                continue
-            }
-            requestedBackend = String(flag.dropFirst("backend=".count))
-        }
-
-        guard let requestedBackend else {
-            return llvmCapiBackendUsableForDefaultSelection(target: target)
-                ? BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
-                : BackendSelection(kind: .syntheticC, isStrictMode: false)
-        }
-
-        switch requestedBackend {
-        case "synthetic-c", "synthetic":
-            return BackendSelection(kind: .syntheticC, isStrictMode: false)
-        case "llvm-c-api", "llvm-capi":
-            return BackendSelection(kind: .llvmCAPI, isStrictMode: isStrictMode)
-        default:
-            diagnostics.warning("KSWIFTK-BACKEND-1002",
-                                "Unknown backend '\(requestedBackend)'; falling back to synthetic C backend.",
-                                range: nil)
-            return BackendSelection(kind: .syntheticC, isStrictMode: false)
-        }
-    }
-
-    private func parseStrictModeFlag(_ value: String) -> Bool? {
-        switch value.lowercased() {
-        case "1", "true", "yes", "on":
-            true
-        case "0", "false", "no", "off":
-            false
-        default:
-            nil
-        }
+    private func makeBackend(ctx: CompilationContext) throws -> LLVMBackend {
+        try LLVMBackend(
+            target: ctx.options.target,
+            optLevel: ctx.options.optLevel,
+            debugInfo: ctx.options.debugInfo,
+            diagnostics: ctx.diagnostics
+        )
     }
 
     private func emitInlineKIRArtifacts(
@@ -281,7 +237,9 @@ public final class CodegenPhase: CompilerPhase {
             let resultValue = result.map { String($0.rawValue) } ?? "_"
             let thrownResultValue = thrownResult.map { String($0.rawValue) } ?? "_"
             let calleeName = base64Encode(interner.resolve(callee))
-            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) isSuperCall=\(isSuperCall ? 1 : 0)"
+            return "call symbol=\(symbolValue) calleeB64=\(calleeName) args=[\(args)]"
+                + " result=\(resultValue) canThrow=\(canThrow ? 1 : 0)"
+                + " thrownResult=\(thrownResultValue) isSuperCall=\(isSuperCall ? 1 : 0)"
         case let .virtualCall(symbol, callee, receiver, arguments, result, canThrow, thrownResult, dispatch):
             let args = arguments.map { String($0.rawValue) }.joined(separator: ",")
             let symbolValue = symbol.map { String($0.rawValue) } ?? "_"
@@ -294,7 +252,10 @@ public final class CodegenPhase: CompilerPhase {
             case let .itable(interfaceSlot, methodSlot):
                 "itable:\(interfaceSlot):\(methodSlot)"
             }
-            return "virtualCall symbol=\(symbolValue) calleeB64=\(calleeName) receiver=\(receiver.rawValue) args=[\(args)] result=\(resultValue) canThrow=\(canThrow ? 1 : 0) thrownResult=\(thrownResultValue) dispatch=\(dispatchStr)"
+            return "virtualCall symbol=\(symbolValue) calleeB64=\(calleeName)"
+                + " receiver=\(receiver.rawValue) args=[\(args)]"
+                + " result=\(resultValue) canThrow=\(canThrow ? 1 : 0)"
+                + " thrownResult=\(thrownResultValue) dispatch=\(dispatchStr)"
         case let .jumpIfNotNull(value, target):
             return "jumpIfNotNull value=\(value.rawValue) target=\(target)"
         case let .copy(from, to):
@@ -356,11 +317,16 @@ public final class CodegenPhase: CompilerPhase {
         }
         let functionLinkNamesBySymbol: [SymbolID: String] = {
             guard let kir = ctx.kir else { return [:] }
+            let facadeNames = CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
             return kir.arena.declarations.reduce(into: [:]) { partial, decl in
                 guard case let .function(function) = decl else {
                     return
                 }
-                partial[function.symbol] = LLVMBackend.cFunctionSymbol(for: function, interner: ctx.interner)
+                partial[function.symbol] = CodegenSymbolSupport.cFunctionSymbol(
+                    for: function,
+                    interner: ctx.interner,
+                    fileFacadeNamesByFileID: facadeNames
+                )
             }
         }()
         let encoder = MetadataEncoder()

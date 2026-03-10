@@ -146,7 +146,7 @@ extension ASTModelsTests {
         let typeRefID = arena.appendTypeRef(.named(path: [interner.intern("Int")], args: [], nullable: false))
 
         let localDecl = Expr.localDecl(name: name, isMutable: true, typeAnnotation: typeRefID, initializer: initID, range: r)
-        if case let .localDecl(n, mut, ta, init_, _) = localDecl {
+        if case let .localDecl(n, mut, ta, init_, _, _) = localDecl {
             XCTAssertEqual(n, name)
             XCTAssertTrue(mut)
             XCTAssertEqual(ta, typeRefID)

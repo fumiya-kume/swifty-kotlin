@@ -63,7 +63,6 @@ final class CompilationContextTests: XCTestCase {
         XCTAssertNil(ctx.kir)
         XCTAssertNil(ctx.generatedObjectPath)
         XCTAssertNil(ctx.generatedLLVMIRPath)
-        XCTAssertNil(ctx.runtimeStubObjectPath)
         XCTAssertNil(ctx.incrementalCache)
         XCTAssertNil(ctx.incrementalRecompileSet)
         XCTAssertNil(ctx.phaseTimer)

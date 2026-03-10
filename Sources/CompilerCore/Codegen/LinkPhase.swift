@@ -6,21 +6,20 @@ public final class LinkPhase: CompilerPhase {
     public init() {}
 
     public func run(_ ctx: CompilationContext) throws {
-        if ctx.options.emit != .executable {
-            return
-        }
-
+        guard ctx.options.emit == .executable else { return }
         guard let objectPath = ctx.generatedObjectPath,
               FileManager.default.fileExists(atPath: objectPath)
         else {
             throw CompilerPipelineError.outputUnavailable
         }
-
         guard let kir = ctx.kir else {
             throw CompilerPipelineError.invalidInput("KIR not available during link.")
         }
-
-        guard let entrySymbol = resolveEntrySymbol(kir: kir, interner: ctx.interner) else {
+        guard let entrySymbol = resolveEntrySymbol(
+            kir: kir,
+            interner: ctx.interner,
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
+        ) else {
             ctx.diagnostics.error(
                 "KSWIFTK-LINK-0002",
                 "No entry point 'main' function found for executable emission.",
@@ -28,72 +27,36 @@ public final class LinkPhase: CompilerPhase {
             )
             throw CompilerPipelineError.outputUnavailable
         }
+        try performLink(objectPath: objectPath, entrySymbol: entrySymbol, ctx: ctx)
+    }
 
-        let wrapperSource = """
-        #include <stdint.h>
-        #include <stddef.h>
-        #include <stdio.h>
-        extern intptr_t \(entrySymbol)(intptr_t* outThrown);
-        int main(void) {
-          intptr_t thrown = 0;
-          intptr_t result = \(entrySymbol)(&thrown);
-          if (thrown != 0) {
-            fprintf(
-              stderr,
-              "KSwiftK panic [KSWIFTK-LINK-0003]: Unhandled top-level exception (%p)\\n",
-              (void*)(uintptr_t)thrown
-            );
-            return 1;
-          }
-          return (int)result;
-        }
-        """
-        let wrapperURL = stableEntryWrapperURL(outputPath: ctx.options.outputPath)
+    private func performLink(objectPath: String, entrySymbol: String, ctx: CompilationContext) throws {
         let autoLinkedObjects = discoverLibraryObjects(searchPaths: ctx.options.searchPaths)
-
         do {
-            try writeIfChanged(content: wrapperSource, to: wrapperURL)
-
-            var linkInputs: [String] = [objectPath, wrapperURL.path]
-            if let stubPath = ctx.runtimeStubObjectPath,
-               FileManager.default.fileExists(atPath: stubPath)
-            {
-                linkInputs.append(stubPath)
+            let runtimeObjects = try CodegenRuntimeSupport.runtimeObjectPaths(target: ctx.options.target)
+            let entryWrapperObjectPath = try LLVMEntryPointObjectEmitter(target: ctx.options.target)
+                .emit(entrySymbol: entrySymbol, outputPath: ctx.options.outputPath)
+            let autolinkStubPath = try emitSwiftAutolinkStubIfNeeded(target: ctx.options.target)
+            let linkInputs = buildLinkInputs(
+                objectPath: objectPath, entryWrapperObjectPath: entryWrapperObjectPath,
+                runtimeObjects: runtimeObjects, autoLinkedObjects: autoLinkedObjects
+            )
+            var args = linkInputs
+            if let autolinkStubPath {
+                args.append(autolinkStubPath)
             }
-            for extraObject in autoLinkedObjects where !linkInputs.contains(extraObject) {
-                linkInputs.append(extraObject)
-            }
-
-            var args: [String] = linkInputs
-            if ctx.options.debugInfo {
-                args.append("-g")
-            }
-            args.append("-o")
-            args.append(ctx.options.outputPath)
-            args.append(contentsOf: clangTargetArgs(ctx.options.target))
-            for path in ctx.options.libraryPaths {
-                args.append("-L\(path)")
-            }
-            for library in ctx.options.linkLibraries {
-                args.append("-l\(library)")
-            }
-            let clangPath = CommandRunner.resolveExecutable("clang", fallback: "/usr/bin/clang")
+            if ctx.options.debugInfo { args.append("-g") }
+            args.append(contentsOf: ["-o", ctx.options.outputPath])
+            args.append(contentsOf: linkerDriverArgs(for: ctx.options.target))
+            ctx.options.libraryPaths.forEach { args.append("-L\($0)") }
+            ctx.options.linkLibraries.forEach { args.append("-l\($0)") }
+            let swiftcPath = CommandRunner.resolveExecutable("swiftc", fallback: "/usr/bin/swiftc")
             _ = try CommandRunner.run(
-                executable: clangPath,
-                arguments: args,
-                phaseTimer: ctx.phaseTimer,
-                subPhaseName: "Link/clang"
+                executable: swiftcPath, arguments: args,
+                phaseTimer: ctx.phaseTimer, subPhaseName: "Link/swiftc"
             )
         } catch let error as CommandRunnerError {
-            let message: String
-            switch error {
-            case let .launchFailed(reason):
-                message = "Failed to launch linker: \(reason)"
-            case let .nonZeroExit(result):
-                let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-                message = stderr.isEmpty ? "Linker failed with exit code \(result.exitCode)." : "Linker failed: \(stderr)"
-            }
-            ctx.diagnostics.error("KSWIFTK-LINK-0001", message, range: nil)
+            ctx.diagnostics.error("KSWIFTK-LINK-0001", commandRunnerErrorMessage(error), range: nil)
             throw CompilerPipelineError.outputUnavailable
         } catch {
             ctx.diagnostics.error("KSWIFTK-LINK-0001", "Link step failed: \(error)", range: nil)
@@ -101,24 +64,99 @@ public final class LinkPhase: CompilerPhase {
         }
     }
 
-    private func resolveEntrySymbol(kir: KIRModule, interner: StringInterner) -> String? {
+    private func emitSwiftAutolinkStubIfNeeded(target: TargetTriple) throws -> String? {
+        guard target.os.hasPrefix("linux") else {
+            return nil
+        }
+
+        let stubDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kswiftk-link-stubs", isDirectory: true)
+        try FileManager.default.createDirectory(at: stubDirectory, withIntermediateDirectories: true)
+
+        let stubName = "runtime-autolink-\(CodegenRuntimeSupport.stableFNV1a64Hex(CodegenRuntimeSupport.targetTripleString(target))).swift"
+        let stubURL = stubDirectory.appendingPathComponent(stubName)
+        let stubContents = """
+        import Dispatch
+        import Foundation
+
+        @inline(never)
+        private func _kswiftkRuntimeAutolinkAnchor() {
+            _ = NSLock()
+            _ = DispatchQueue.global(qos: .default)
+            _ = DispatchSemaphore(value: 0)
+        }
+        """
+        if !FileManager.default.fileExists(atPath: stubURL.path) {
+            try stubContents.write(to: stubURL, atomically: true, encoding: .utf8)
+        }
+        return stubURL.path
+    }
+
+    private func buildLinkInputs(
+        objectPath: String,
+        entryWrapperObjectPath: String,
+        runtimeObjects: [String],
+        autoLinkedObjects: [String]
+    ) -> [String] {
+        var linkInputs: [String] = [objectPath, entryWrapperObjectPath]
+        for obj in runtimeObjects where !linkInputs.contains(obj) {
+            linkInputs.append(obj)
+        }
+        for obj in autoLinkedObjects where !linkInputs.contains(obj) {
+            linkInputs.append(obj)
+        }
+        return linkInputs
+    }
+
+    private func commandRunnerErrorMessage(_ error: CommandRunnerError) -> String {
+        switch error {
+        case let .launchFailed(reason):
+            return "Failed to launch linker: \(reason)"
+        case let .nonZeroExit(result):
+            let stderr = result.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            let stdout = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+            let output = "STDOUT: \(stdout)\nSTDERR: \(stderr)"
+            return "Linker failed with exit code \(result.exitCode):\n\(output)"
+        }
+    }
+
+    private func resolveEntrySymbol(
+        kir: KIRModule,
+        interner: StringInterner,
+        fileFacadeNamesByFileID: [Int32: String]
+    ) -> String? {
         for decl in kir.arena.declarations {
             guard case let .function(function) = decl else {
                 continue
             }
             if interner.resolve(function.name) == "main" {
-                return LLVMBackend.cFunctionSymbol(for: function, interner: interner)
+                return CodegenSymbolSupport.cFunctionSymbol(
+                    for: function,
+                    interner: interner,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
             }
         }
         return nil
     }
 
-    private func clangTargetArgs(_ target: TargetTriple) -> [String] {
-        var triple = "\(target.arch)-\(target.vendor)-\(target.os)"
-        if let version = target.osVersion, !version.isEmpty {
-            triple += version
+    func linkerDriverArgs(for target: TargetTriple) -> [String] {
+        var args = ["-target", linkerTargetTriple(target)]
+        if target.os.hasPrefix("linux") {
+            args.append(contentsOf: ["-Xlinker", "-no-pie", "-parse-as-library"])
         }
-        return ["-target", triple]
+        return args
+    }
+
+    private func linkerTargetTriple(_ target: TargetTriple) -> String {
+        if let version = target.osVersion, !version.isEmpty {
+            return CodegenRuntimeSupport.targetTripleString(target)
+        }
+        if target.vendor == "apple", target.os == "macosx" {
+            let minimumVersion = target.arch == "arm64" ? "11.0" : "10.9"
+            return CodegenRuntimeSupport.targetTripleString(target) + minimumVersion
+        }
+        return CodegenRuntimeSupport.targetTripleString(target)
     }
 
     private func discoverLibraryObjects(searchPaths: [String]) -> [String] {
@@ -156,43 +194,6 @@ public final class LinkPhase: CompilerPhase {
             }
         }
         return collected
-    }
-
-    /// Returns a deterministic URL for the entry wrapper C source file,
-    /// derived from the output path so the same compilation reuses the file.
-    /// Files are placed under a dedicated `kswiftk` subdirectory to avoid
-    /// collisions with unrelated entries in the shared temp directory.
-    private func stableEntryWrapperURL(outputPath: String) -> URL {
-        let key = LLVMBackend.stableFNV1a64Hex(outputPath)
-        let cacheDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("kswiftk", isDirectory: true)
-        do {
-            try FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
-        } catch {
-            FileHandle.standardError.write(
-                Data("warning: failed to create cache directory at \(cacheDir.path): \(error)\n".utf8)
-            )
-        }
-        return cacheDir.appendingPathComponent("entry_\(key).c")
-    }
-
-    /// Writes `content` to `url` only when the file does not already exist
-    /// or when the existing content differs, avoiding unnecessary I/O and
-    /// downstream rebuilds.
-    private func writeIfChanged(content: String, to url: URL) throws {
-        if FileManager.default.fileExists(atPath: url.path) {
-            do {
-                let existing = try String(contentsOf: url, encoding: .utf8)
-                if existing == content {
-                    return
-                }
-            } catch {
-                FileHandle.standardError.write(
-                    Data("warning: failed to read existing file at \(url.path); overwriting. Error: \(error)\n".utf8)
-                )
-            }
-        }
-        try content.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func objectPaths(from libraryDir: String) -> [String] {
