@@ -445,7 +445,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     }
 
     func testCodegenListIndexedHelpersUseRuntimeHOFs() throws {
-        try XCTSkipIf(true, "withIndex/forEachIndexed/mapIndexed link fails (outputUnavailable) in some environments")
         let source = """
         fun main() {
             val values = listOf("a", "bb")

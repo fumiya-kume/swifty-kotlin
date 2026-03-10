@@ -234,6 +234,14 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListIndexedMembers(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         return listInterfaceSymbol
     }
 
@@ -1205,5 +1213,247 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+    }
+
+    private func registerListIndexedMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        // withIndex(): List<IndexedValue<E>>
+        let indexedValueSymbol = registerSyntheticIndexedValueStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+        let indexedValueType = types.make(.classType(ClassType(
+            classSymbol: indexedValueSymbol,
+            args: [.invariant(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let listSymbol = listInterfaceSymbol
+        let listIndexedValueType = types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(indexedValueType)],
+            nullability: .nonNull
+        )))
+
+        let withIndexName = interner.intern("withIndex")
+        let withIndexFQName = listFQName + [withIndexName]
+        if symbols.lookup(fqName: withIndexFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: withIndexName,
+                fqName: withIndexFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_withIndex", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: listIndexedValueType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // forEachIndexed(action: (Int, E) -> Unit)
+        let forEachIndexedName = interner.intern("forEachIndexed")
+        let forEachIndexedFQName = listFQName + [forEachIndexedName]
+        if symbols.lookup(fqName: forEachIndexedFQName) == nil {
+            let actionType = types.make(.functionType(FunctionType(
+                params: [types.intType, listTypeParamType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: forEachIndexedName,
+                fqName: forEachIndexedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_forEachIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [actionType],
+                    returnType: types.unitType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // mapIndexed(transform: (Int, E) -> R): List<R>
+        let mapIndexedName = interner.intern("mapIndexed")
+        let mapIndexedFQName = listFQName + [mapIndexedName]
+        if symbols.lookup(fqName: mapIndexedFQName) == nil {
+            // mapIndexed is tricky because of the generic R. 
+            // For synthetic stub, we might simplify to List<Any?> or just have it resolve via fallback if generic R is hard to define here.
+            // But let's try to define a local type parameter R for the function.
+            let rName = interner.intern("R")
+            let rFQName = mapIndexedFQName + [rName]
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: rFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
+            
+            let transformType = types.make(.functionType(FunctionType(
+                params: [types.intType, listTypeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let listRType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: mapIndexedName,
+                fqName: mapIndexedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_mapIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [transformType],
+                    returnType: listRType,
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1 // Only List's E is class-level
+                ),
+                for: memberSymbol
+            )
+        }
+    }
+
+    private func registerSyntheticIndexedValueStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let name = interner.intern("IndexedValue")
+        let fqName = kotlinCollectionsPkg + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        let symbol = symbols.define(
+            kind: .interface,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let tName = interner.intern("T")
+        let tFQName = fqName + [tName]
+        let tSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tName,
+            fqName: tFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([tSymbol], for: symbol)
+        types.setNominalTypeParameterVariances([.invariant], for: symbol)
+
+        // Add index: Int and value: T properties (component1, component2 for destructuring)
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [.invariant(tType)],
+            nullability: .nonNull
+        )))
+
+        func registerComponent(name: String, ret: TypeID, externalLinkName: String) {
+            let mName = interner.intern(name)
+            let mFQName = fqName + [mName]
+            let mSymbol = symbols.define(
+                kind: .function,
+                name: mName,
+                fqName: mFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(symbol, for: mSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: mSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: ret,
+                    typeParameterSymbols: [tSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: mSymbol
+            )
+        }
+
+        func registerPropertyGetter(name: String, ret: TypeID, externalLinkName: String) {
+            let mName = interner.intern(name)
+            let mFQName = fqName + [mName]
+            let mSymbol = symbols.define(
+                kind: .function, // For synthetic stub, we treat it as a function/getter
+                name: mName,
+                fqName: mFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(symbol, for: mSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: mSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: ret,
+                    typeParameterSymbols: [tSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: mSymbol
+            )
+        }
+
+        registerComponent(name: "component1", ret: types.intType, externalLinkName: "kk_pair_first")
+        registerComponent(name: "component2", ret: tType, externalLinkName: "kk_pair_second")
+        registerPropertyGetter(name: "index", ret: types.intType, externalLinkName: "kk_pair_first")
+        registerPropertyGetter(name: "value", ret: tType, externalLinkName: "kk_pair_second")
+
+        return symbol
     }
 }
