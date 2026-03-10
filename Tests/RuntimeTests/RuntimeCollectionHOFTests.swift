@@ -61,6 +61,10 @@ private let foldSum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) 
     acc + value
 }
 
+private let foldOrder: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
+    acc * 10 + value
+}
+
 private let addCapture: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { closureRaw, value, outThrown in
     var thrown = 0
     let capture = kk_array_get(closureRaw, 0, &thrown)
@@ -156,11 +160,11 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let flatMapped = kk_list_flatMap(source, unsafeBitCast(flatMapPair, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(flatMapped), [1, 10, 2, 20, 3, 30])
 
-        XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil), 6)
-        XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil), 6)
+        XCTAssertEqual(kk_list_fold(source, 0, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
+        XCTAssertEqual(kk_list_reduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil), 123)
 
-        let sorted = kk_list_sortedBy(makeList([21, 11, 12, 22]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
-        XCTAssertEqual(listElements(sorted), [11, 12, 21, 22])
+        let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
     }
 
     func testAnyAllNoneShortCircuitAndNoArgOverloads() {

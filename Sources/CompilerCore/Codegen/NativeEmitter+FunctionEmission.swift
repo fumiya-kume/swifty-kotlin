@@ -334,6 +334,15 @@ extension NativeEmitter {
             return bindings.buildICmpNotEqual(builder, lhs: normalizedValue, rhs: zeroValue, name: name)
         }
 
+        /// Builds a condition for exception-thrown slot checks. Does NOT call kk_unbox_bool;
+        /// thrown slots hold raw integers (0 = no exception, non-zero = exception).
+        func buildThrownSlotCondition(
+            from value: LLVMCAPIBindings.LLVMValueRef,
+            name: String
+        ) -> LLVMCAPIBindings.LLVMValueRef? {
+            bindings.buildICmpNotEqual(builder, lhs: value, rhs: zeroValue, name: name)
+        }
+
         func storeOutThrownIfNonNull(
             _ value: LLVMCAPIBindings.LLVMValueRef,
             suffix: String
@@ -679,7 +688,7 @@ extension NativeEmitter {
                             pointer: thrownSlot,
                             name: "notnull_thrown_val_\(instructionIndex)"
                         ),
-                            let hasThrown = buildBoolCondition(
+                            let hasThrown = buildThrownSlotCondition(
                                 from: thrownValue,
                                 name: "notnull_has_thrown_\(instructionIndex)"
                             ),
@@ -866,7 +875,7 @@ extension NativeEmitter {
                         } else {
                             storeResult(thrownResult, thrownValue)
                         }
-                    } else if let hasThrown = buildBoolCondition(
+                    } else if let hasThrown = buildThrownSlotCondition(
                         from: thrownValue,
                         name: "has_thrown_\(instructionIndex)"
                     ),
@@ -1097,7 +1106,7 @@ extension NativeEmitter {
                             } else {
                                 storeResult(thrownResult, thrownValue)
                             }
-                        } else if let hasThrown = buildBoolCondition(
+                        } else if let hasThrown = buildThrownSlotCondition(
                             from: thrownValue,
                             name: "vhas_thrown_\(instructionIndex)"
                         ),
@@ -1182,7 +1191,7 @@ extension NativeEmitter {
                             } else {
                                 storeResult(thrownResult, thrownValue)
                             }
-                        } else if let hasThrown = buildBoolCondition(
+                        } else if let hasThrown = buildThrownSlotCondition(
                             from: thrownValue,
                             name: "vhas_thrown_\(instructionIndex)"
                         ),

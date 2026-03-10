@@ -11,9 +11,9 @@ fun main() {
 
     println(listOf(1, 2, 3, 4).any())
     println(listOf<Int>().none())
-    println(listOf(1, 2, 3, 4).any { it > 3 })
-    println(listOf(1, 2, 3, 4).all { it > 0 })
-    println(listOf(1, 2, 3, 4).none { it < 0 })
+    println(listOf(1, 2, 3, 4).any { println("any"); it > 2 })
+    println(listOf(1, 2, 3, 4).all { println("all"); it < 3 })
+    println(listOf(1, 2, 3, 4).none { println("none"); it == 2 })
 
     println(listOf(1, 2, 3, 4).count())
     println(listOf(1, 2, 3, 4).count { it % 2 == 0 })
