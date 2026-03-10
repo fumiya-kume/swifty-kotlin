@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 
 // Collection type stubs (List<E>, MutableList<E>) for kotlin.collections,
@@ -1323,7 +1324,7 @@ extension DataFlowSemaPhase {
                 flags: []
             )
             let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
-            
+
             let transformType = types.make(.functionType(FunctionType(
                 params: [types.intType, listTypeParamType],
                 returnType: rType,
