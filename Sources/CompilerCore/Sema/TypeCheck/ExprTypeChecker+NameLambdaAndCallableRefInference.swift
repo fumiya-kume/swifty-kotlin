@@ -311,7 +311,8 @@ extension ExprTypeChecker {
             "Unresolved reference '\(resolvedName)'.",
             range: nameRange
         )
-        return nil
+        sema.bindings.bindExprType(id, type: sema.types.errorType)
+        return sema.types.errorType
     }
 
     private func resolveTypeForCandidate(_ symbol: SemanticSymbol, sema: SemaModule) -> TypeID? {

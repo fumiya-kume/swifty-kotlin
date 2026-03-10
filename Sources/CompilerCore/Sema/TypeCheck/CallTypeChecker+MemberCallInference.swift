@@ -386,7 +386,7 @@ extension CallTypeChecker {
         } else {
             sema.types.anyType
         }
-        _ = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
+        let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
         let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
@@ -420,6 +420,9 @@ extension CallTypeChecker {
                         params: [collectionElementType],
                         returnType: lambdaReturnType
                     )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
 
                     switch calleeStr {
@@ -459,20 +462,33 @@ extension CallTypeChecker {
                 }
 
             case "fold":
-                guard args.count == 2 else { return sema.types.anyType }
+                guard args.count == 2 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
                 let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [initialType, collectionElementType],
                     returnType: initialType
                 )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = initialType
 
             case "reduce":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType, collectionElementType],
                     returnType: collectionElementType
                 )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = collectionElementType
 
@@ -481,6 +497,9 @@ extension CallTypeChecker {
                     params: [collectionElementType],
                     returnType: sema.types.anyType
                 )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 let keyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                     sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
@@ -505,6 +524,9 @@ extension CallTypeChecker {
                     params: [collectionElementType],
                     returnType: sema.types.anyType
                 )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = receiverType
 
@@ -515,6 +537,14 @@ extension CallTypeChecker {
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
+        }
+
+        if isFlowHOF,
+           let lambdaArg = args.first?.expr,
+           let lambdaExpr = ast.arena.expr(lambdaArg),
+           case .lambdaLiteral = lambdaExpr
+        {
+            sema.bindings.markCollectionHOFLambdaExpr(lambdaArg)
         }
 
         // Infer argument types for the normal resolution path (scope functions and

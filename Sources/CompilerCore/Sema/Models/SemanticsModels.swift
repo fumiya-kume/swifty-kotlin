@@ -849,6 +849,8 @@ public final class BindingTable {
     public private(set) var scopeFunctionExprIDs: Set<ExprID> = []
     /// Maps scope function call expression IDs to their kind.
     public private(set) var scopeFunctionKinds: [ExprID: ScopeFunctionKind] = [:]
+    /// Tracks lambda literals that need the collection HOF closure parameter ABI.
+    public private(set) var collectionHOFLambdaExprIDs: Set<ExprID> = []
     /// Tracks stdlib calls that require dedicated lowering.
     public private(set) var stdlibSpecialCallExprIDs: Set<ExprID> = []
     /// Maps stdlib special call expressions to their lowering kind.
@@ -1090,6 +1092,16 @@ public final class BindingTable {
     /// Retrieve the scope function kind for a scope function call expression.
     public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
         scopeFunctionKinds[expr]
+    }
+
+    /// Mark a lambda literal as requiring collection HOF closure ABI lowering.
+    public func markCollectionHOFLambdaExpr(_ expr: ExprID) {
+        collectionHOFLambdaExprIDs.insert(expr)
+    }
+
+    /// Whether the lambda literal requires collection HOF closure ABI lowering.
+    public func isCollectionHOFLambdaExpr(_ expr: ExprID) -> Bool {
+        collectionHOFLambdaExprIDs.contains(expr)
     }
 
     /// Mark a call expression as a stdlib special call requiring custom lowering.

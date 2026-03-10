@@ -37,8 +37,12 @@ extension CallTypeChecker {
         ),
             args.indices.contains(expectation.argumentIndex)
         {
+            let lambdaArgExpr = args[expectation.argumentIndex].expr
+            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
+            }
             _ = driver.inferExpr(
-                args[expectation.argumentIndex].expr,
+                lambdaArgExpr,
                 ctx: ctx,
                 locals: &locals,
                 expectedType: expectation.expectedType

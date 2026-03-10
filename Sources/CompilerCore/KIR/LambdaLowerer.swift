@@ -116,8 +116,8 @@ final class LambdaLowerer {
         // For lambdas passed to C HOFs (filter, map, mapIndexed, forEachIndexed, fold, etc.),
         // Runtime expects (closureRaw, ...valueParams, outThrown). Add closure param as first param.
         let lambdaParameters: [KIRParameter]
-        let needsClosureParam: Bool
-        if effectiveParamCount == 1 {
+        let needsClosureParam = sema.bindings.isCollectionHOFLambdaExpr(exprID) && !isSamConversion
+        if needsClosureParam, effectiveParamCount == 1 {
             let closureParam = KIRParameter(
                 symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
                 type: sema.types.intType
@@ -127,8 +127,7 @@ final class LambdaLowerer {
                 type: lambdaParameterTypes[0]
             )
             lambdaParameters = [closureParam, elemParam]
-            needsClosureParam = true
-        } else if effectiveParamCount == 2 {
+        } else if needsClosureParam, effectiveParamCount == 2 {
             // mapIndexed/forEachIndexed/fold/reduce: (closureRaw, param0, param1, outThrown)
             let closureParam = KIRParameter(
                 symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
@@ -143,7 +142,6 @@ final class LambdaLowerer {
                 type: lambdaParameterTypes[1]
             )
             lambdaParameters = [closureParam, param0, param1]
-            needsClosureParam = true
         } else {
             lambdaParameters = (0 ..< effectiveParamCount).map { index in
                 KIRParameter(
@@ -151,7 +149,6 @@ final class LambdaLowerer {
                     type: lambdaParameterTypes[index]
                 )
             }
-            needsClosureParam = false
         }
 
         let scopeSnapshot = driver.ctx.saveScope()
