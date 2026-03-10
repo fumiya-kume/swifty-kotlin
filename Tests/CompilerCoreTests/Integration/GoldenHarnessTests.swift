@@ -32,7 +32,7 @@ final class GoldenHarnessTests: XCTestCase {
             .appendingPathComponent("Sema", isDirectory: true)
             .appendingPathComponent("invoke_operator.kt")
             .path
-        
+
         let ctx = makeCompilationContext(inputs: [sourcePath], moduleName: "GoldenSema", emit: .kirDump)
         try runFrontend(ctx)
         try SemaPhase().run(ctx)

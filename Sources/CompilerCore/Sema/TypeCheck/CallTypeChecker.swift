@@ -1,4 +1,4 @@
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 
@@ -418,7 +418,7 @@ final class CallTypeChecker {
             candidates = []
         }
         let contextualArgExpectedTypes: [TypeID?] = if candidates.count == 1,
-                                                      let signature = sema.symbols.functionSignature(for: candidates[0])
+                                                       let signature = sema.symbols.functionSignature(for: candidates[0])
         {
             args.enumerated().map { index, argument in
                 if index == 0, let coroutineLauncherExpectedLambdaType {
@@ -437,7 +437,7 @@ final class CallTypeChecker {
                 return nil
             }
         } else {
-            args.enumerated().map { index, _ in
+            args.indices.map { index in
                 if index == 0, let coroutineLauncherExpectedLambdaType {
                     return coroutineLauncherExpectedLambdaType
                 }

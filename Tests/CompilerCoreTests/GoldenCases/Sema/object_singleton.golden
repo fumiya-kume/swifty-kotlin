@@ -166,7 +166,7 @@ symbol s164 kind=function fq=kotlin.contracts.contract vis=public flags=inlineFu
 symbol s165 kind=function fq=kotlin.contracts.ContractBuilder.returns vis=public flags=synthetic sig=recv=Class#162 params=[] ret=Class#163 suspend=0 defaults=[] vararg=[]
 symbol s166 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public flags=synthetic sig=recv=Class#163 params=[Boolean] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s167 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s168 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#167 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s168 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#167 params=[] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s169 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
 symbol s170 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
 symbol s171 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
@@ -184,6 +184,6 @@ expr e7 name(n) type=_
 expr e8 int(1) type=Int
 expr e9 localAssign n value=e8 type=Unit ref=s170
 expr e10 name(Counter) type=Class#167 ref=s167
-expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s168 map=[] targs=[]
+expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s168 map=[] targs=[]
 expr e12 name(Counter) type=Class#167 ref=s167
-expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s168 map=[] targs=[]
+expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s168 map=[] targs=[]

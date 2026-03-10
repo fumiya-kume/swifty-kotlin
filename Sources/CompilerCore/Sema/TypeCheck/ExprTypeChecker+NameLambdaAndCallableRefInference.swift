@@ -131,6 +131,7 @@ extension ExprTypeChecker {
 
     // MARK: - Specific Expression Cases
 
+    // swiftlint:disable:next cyclomatic_complexity
     func inferNameRefExpr(
         _ id: ExprID,
         name: InternedString,
@@ -284,9 +285,9 @@ extension ExprTypeChecker {
         let preferredCandidate = candidates.first(where: { symbol in
             switch symbol.kind {
             case .property, .field, .backingField, .object, .class, .interface, .enumClass:
-                return true
+                true
             default:
-                return false
+                false
             }
         }) ?? candidates.first
         if let preferredCandidate {

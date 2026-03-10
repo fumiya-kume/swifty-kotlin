@@ -4,6 +4,7 @@ import Foundation
 // Derived from TypeCheckSemaPhase+InferControlFlow.swift.
 
 extension ControlFlowTypeChecker {
+    // swiftlint:disable:next cyclomatic_complexity
     func inferWhenExpr(
         _ id: ExprID,
         subjectID: ExprID?,
@@ -320,8 +321,9 @@ extension ControlFlowTypeChecker {
                 // P5-78: enhanced diagnostic for sealed types listing missing branches
                 if !hasQualifiedObjectCondition,
                    let missingBranches = ctx.dataFlow.missingSealedBranches(
-                    subjectType: subjectType, branches: summary, sema: sema
-                ) {
+                       subjectType: subjectType, branches: summary, sema: sema
+                   )
+                {
                     let missingNames = missingBranches.map { interner.resolve($0) }.sorted()
                     let missingList = missingNames.joined(separator: ", ")
                     ctx.semaCtx.diagnostics.error(

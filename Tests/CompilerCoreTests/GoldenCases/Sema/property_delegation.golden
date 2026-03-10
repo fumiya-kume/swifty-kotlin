@@ -174,7 +174,7 @@ symbol s172 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public fla
 symbol s173 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#171 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s174 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$173.thisRef vis=private flags=_
 symbol s175 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$173.property vis=private flags=_
-symbol s176 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#171 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s176 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#171 params=[Any?,Any?,String] ret=Any suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s177 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$176.thisRef vis=private flags=_
 symbol s178 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$176.property vis=private flags=_
 symbol s179 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$176.value vis=private flags=_

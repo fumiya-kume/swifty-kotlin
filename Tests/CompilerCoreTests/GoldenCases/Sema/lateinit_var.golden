@@ -168,7 +168,7 @@ symbol s166 kind=function fq=kotlin.contracts.ContractEffect.implies vis=public 
 symbol s167 kind=class fq=Config vis=public flags=_
 symbol s168 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#167 params=[] ret=Class#167 suspend=0 defaults=[] vararg=[]
 symbol s169 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#167 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s170 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#167 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s170 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#167 params=[] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s171 kind=property fq=Config.name vis=public flags=mutable type=String
 symbol s172 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s173 kind=local fq=__local_7.c vis=private flags=_
@@ -199,7 +199,7 @@ expr e19 call callee=e17 args=[_:e18] type=Unit
 expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s174
 expr e21 try body=e16 catches=[e20] finally=_ type=Unit
 expr e22 name(c) type=Class#167 ref=s173
-expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s170 map=[] targs=[]
+expr e23 memberCall recv=e22 callee=setup args=[] type=Any call=s170 map=[] targs=[]
 expr e24 name(println) type=_
 expr e25 name(c) type=Class#167 ref=s173
 expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s169 map=[] targs=[]

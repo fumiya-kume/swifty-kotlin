@@ -110,9 +110,9 @@ extension DataFlowSemaPhase {
         func isCallableLike(_ kind: SymbolKind) -> Bool {
             switch kind {
             case .function, .constructor:
-                return true
+                true
             default:
-                return false
+                false
             }
         }
         if newKind == .property {

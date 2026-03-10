@@ -721,7 +721,7 @@ extension CallTypeChecker {
                                 chosenCallee: chosen,
                                 substitutedTypeArguments: resolved.substitutedTypeArguments
                                     .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                                    .map { $0.value },
+                                    .map(\.value),
                                 parameterMapping: resolved.parameterMapping
                             )
                         )
@@ -1499,7 +1499,7 @@ extension CallTypeChecker {
         if isSuperCall,
            let chosenSym = sema.symbols.symbol(chosen),
            chosenSym.flags.contains(SymbolFlags.abstractType),
-           (chosenSym.kind == SymbolKind.function || chosenSym.kind == SymbolKind.property)
+           chosenSym.kind == SymbolKind.function || chosenSym.kind == SymbolKind.property
         {
             let memberName = interner.resolve(calleeName)
             ctx.semaCtx.diagnostics.error(
@@ -1547,7 +1547,7 @@ extension CallTypeChecker {
                     chosenCallee: chosen,
                     substitutedTypeArguments: mergedSubstitution
                         .sorted(by: { $0.key.rawValue < $1.key.rawValue })
-                        .map { $0.value },
+                        .map(\.value),
                     parameterMapping: resolved.parameterMapping
                 )
             )

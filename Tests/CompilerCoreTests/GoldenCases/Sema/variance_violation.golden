@@ -173,13 +173,13 @@ symbol s171 kind=property fq=golden.sema.Producer.item vis=public flags=_ type=T
 symbol s172 kind=class fq=golden.sema.Consumer vis=public flags=_
 symbol s173 kind=typeParameter fq=golden.sema.Consumer.$class172.T vis=private flags=_
 symbol s174 kind=constructor fq=golden.sema.Consumer.<init> vis=public flags=_ sig=recv=Class#172<T#173> params=[] ret=Class#172<T#173> suspend=0 defaults=[] vararg=[]
-symbol s175 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#172<T#173> params=[T#173] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s175 kind=function fq=golden.sema.Consumer.accept vis=public flags=_ sig=recv=Class#172<T#173> params=[T#173] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s176 kind=valueParameter fq=golden.sema.Consumer.accept.$175.item vis=private flags=_
 symbol s177 kind=function fq=golden.sema.validVariance vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s178 kind=class fq=golden.sema.BadProducer vis=public flags=_
 symbol s179 kind=typeParameter fq=golden.sema.BadProducer.$class178.T vis=private flags=_
 symbol s180 kind=constructor fq=golden.sema.BadProducer.<init> vis=public flags=_ sig=recv=Class#178<T#179> params=[] ret=Class#178<T#179> suspend=0 defaults=[] vararg=[]
-symbol s181 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#178<T#179> params=[T#179] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s181 kind=function fq=golden.sema.BadProducer.consume vis=public flags=_ sig=recv=Class#178<T#179> params=[T#179] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s182 kind=valueParameter fq=golden.sema.BadProducer.consume.$181.item vis=private flags=_
 symbol s183 kind=class fq=golden.sema.BadConsumer vis=public flags=_
 symbol s184 kind=typeParameter fq=golden.sema.BadConsumer.$class183.T vis=private flags=_
@@ -198,6 +198,6 @@ expr e1 int(42) type=Int
 expr e2 call callee=e0 args=[_:e1] type=<error>
 expr e3 localDecl p mutable=0 type=t3 init=e2 type=Unit ref=s187
 expr e4 name(Consumer) type=_
-expr e5 call callee=e4 args=[] type=<error>
+expr e5 call callee=e4 args=[] type=Class#172<Int> call=s174 map=[] targs=[Int]
 expr e6 localDecl c mutable=0 type=t5 init=e5 type=Unit ref=s188
 expr e7 name(null) type=Nothing?

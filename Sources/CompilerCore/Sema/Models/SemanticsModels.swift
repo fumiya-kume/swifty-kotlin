@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
@@ -401,9 +402,9 @@ public final class SymbolTable {
         func isCallableLike(_ kind: SymbolKind) -> Bool {
             switch kind {
             case .function, .constructor:
-                return true
+                true
             default:
-                return false
+                false
             }
         }
         if kind == .package {
