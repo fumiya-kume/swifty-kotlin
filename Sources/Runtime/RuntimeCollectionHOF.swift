@@ -420,7 +420,8 @@ public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (idx, elem) in list.elements.enumerated() {
         var thrown = 0
-        _ = lambda(closureRaw, kk_box_int(idx), elem, &thrown)
+        // Pass index as raw Int (Kotlin primitive); elem stays boxed per ABI.
+        _ = lambda(closureRaw, idx, elem, &thrown)
         if thrown != 0 {
             outThrown?.pointee = thrown
             return 0
@@ -439,7 +440,8 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     mapped.reserveCapacity(list.elements.count)
     for (idx, elem) in list.elements.enumerated() {
         var thrown = 0
-        let result = lambda(closureRaw, kk_box_int(idx), elem, &thrown)
+        // Pass index as raw Int (Kotlin primitive); elem stays boxed per ABI.
+        let result = lambda(closureRaw, idx, elem, &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
         mapped.append(maybeUnbox(result))
     }

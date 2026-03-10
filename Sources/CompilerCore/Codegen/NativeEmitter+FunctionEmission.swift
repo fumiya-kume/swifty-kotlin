@@ -205,7 +205,15 @@ extension NativeEmitter {
             argumentCount: Int,
             appendThrownChannel: Bool
         ) -> LLVMFunction? {
-            if let existing = externalFunctions[calleeName] {
+            // String.length extension: redirect "length" (1 arg = receiver) to kk_string_length.
+            // Lambda bodies may reach codegen with callee "length" when receiver type is not
+            // available during KIR lowering (e.g. mapIndexed { _, v -> v.length }).
+            let effectiveName: String = if calleeName == "length", argumentCount == 1, !appendThrownChannel {
+                "kk_string_length"
+            } else {
+                calleeName
+            }
+            if let existing = externalFunctions[effectiveName] {
                 return existing
             }
             var callParameterTypes = Array(repeating: int64Type, count: argumentCount)
@@ -219,13 +227,13 @@ extension NativeEmitter {
             ) else {
                 return nil
             }
-            let externalValue = bindings.getNamedFunction(module: llvmModule, name: calleeName)
-                ?? bindings.addFunction(module: llvmModule, name: calleeName, functionType: externalType)
+            let externalValue = bindings.getNamedFunction(module: llvmModule, name: effectiveName)
+                ?? bindings.addFunction(module: llvmModule, name: effectiveName, functionType: externalType)
             guard let externalValue else {
                 return nil
             }
             let declared = LLVMFunction(value: externalValue, type: externalType)
-            externalFunctions[calleeName] = declared
+            externalFunctions[effectiveName] = declared
             return declared
         }
 
@@ -796,6 +804,12 @@ extension NativeEmitter {
                     calleeFunction = fallbackInternal.function
                 } else if calleeName.isEmpty {
                     calleeFunction = nil
+                } else if calleeName == "length", argumentValues.count == 1 {
+                    calleeFunction = declareExternalFunction(
+                        named: "kk_string_length",
+                        argumentCount: 1,
+                        appendThrownChannel: false
+                    )
                 } else {
                     calleeFunction = declareExternalFunction(
                         named: calleeName,
@@ -941,6 +955,12 @@ extension NativeEmitter {
                     fallbackInternal.function
                 } else if calleeName.isEmpty {
                     nil
+                } else if calleeName == "length", argumentValues.count == 1 {
+                    declareExternalFunction(
+                        named: "kk_string_length",
+                        argumentCount: 1,
+                        appendThrownChannel: false
+                    )
                 } else {
                     declareExternalFunction(
                         named: calleeName,

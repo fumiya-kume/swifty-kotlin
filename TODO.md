@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-09
+最終更新: 2026-03-10
 
 ## 運用ルール
 
@@ -82,6 +82,7 @@
 - [ ] STDLIB-060: スコープ関数 `let` / `run` / `also` / `apply` を実装する
   - [ ] Sema に `T.let {}` / `T.run {}` / `T.also {}` / `T.apply {}` の generic extension stub を登録する
   - [ ] Lowering で inline 展開し、receiver / `it` バインディングを正しく生成する
+  - [ ] `KotlinCompilationAdvancedTests` の常時 skip されている scope function テストを再有効化する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `"hello".let { it.length }` → `5` が `kotlinc` と一致する
 
@@ -119,7 +120,57 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `buildMap { put("a", 1) }` → `{a=1}` が `kotlinc` と一致する
 
+- [ ] STDLIB-072: `List.mapNotNull {}` / `List.filterNotNull()` のランタイム異常終了を解消する
+  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている `mapNotNull` / `filterNotNull` テストを再有効化する
+  - [ ] codegen / runtime のどちらで exit 11 を起こしているか切り分ける
+  - [ ] diff/golden ケースを追加する
+  - **完了条件**: `listOf(1, 0, 2).mapNotNull { it }` と `listOf("a", null, "b").filterNotNull()` が `kotlinc` と一致し、常時 skip が不要になる
+
+- [ ] STDLIB-073: `associateBy` / `associateWith` / `associate` の誤った key-value 生成を修正する
+  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている associate 系テストを再有効化する
+  - [ ] key と value の構築順序、および Pair 展開の lowering を点検する
+  - [ ] diff/golden ケースを追加する
+  - **完了条件**: `listOf(1, 2, 3).associateBy { it % 2 }` などの出力が `kotlinc` と一致し、常時 skip が不要になる
+
+- [ ] STDLIB-074: `withIndex` / `forEachIndexed` / `mapIndexed` の link failure を解消する
+  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている indexed helper テストを再有効化する
+  - [ ] シンボル解決・runtime 参照・link 入力を点検し `outputUnavailable` を解消する
+  - [ ] diff/golden ケースを追加する
+  - **完了条件**: `listOf("a", "bb").mapIndexed { index, value -> index + value.length }` が `kotlinc` と一致し、常時 skip が不要になる
+
 ---
+
+### 🧩 Frontend / Sema / Lowering の暫定対応解消
+
+- [ ] MPP-001: `expect` / `actual` の nominal/typealias 互換判定を厳密化する
+  - [ ] `same-kind/same-fqName` を無条件許可している暫定判定を廃止する
+  - [ ] 型引数・上限・種別差分を含む互換条件を定義する
+  - [ ] 不一致ケースと曖昧解決ケースの golden を追加する
+  - **完了条件**: nominal/typealias の不正な `actual` が受理されず、正当な組み合わせのみ `expect/actual` link される
+
+- [ ] PROP-001: property accessor のフラットトークン fallback 依存を解消する
+  - [ ] `val x: T get() = expr` 形式を AST 段階で正規ノードとして構築する
+  - [ ] `BuildASTPhase+PropertyParsing` の flat token 再解析 fallback を不要にする
+  - [ ] inline accessor の diff/golden ケースを追加する
+  - **完了条件**: inline accessor が fallback なしで安定して AST 化される
+
+- [ ] TYPE-001: 継承解決時の primitive/built-in 型引数の all-or-nothing fallback を解消する
+  - [ ] `Int` / `String` / `Boolean` などの built-in 型引数を DataFlowSemaPhase でも解決可能にする
+  - [ ] 1 個の型引数解決失敗で supertype edge 全体の型引数を落とす処理を廃止する
+  - [ ] 継承・型別名・generic supertype の golden を追加する
+  - **完了条件**: primitive を含む型引数付き継承が後段任せにならず、DataFlowSemaPhase で一貫した型情報を保持できる
+
+- [ ] GEN-001: class initializer 順序の legacy fallback を解消する
+  - [ ] property initializer と init block の順序情報を常に lowering 入力へ保持する
+  - [ ] `legacy ordering` fallback を削除する
+  - [ ] 初期化順序依存ケースの diff/golden を追加する
+  - **完了条件**: property / init block の実行順序が常に Kotlin 仕様どおりで、legacy fallback が不要になる
+
+- [ ] GEN-002: virtual dispatch の null guard 不可時 direct dispatch fallback を解消する
+  - [ ] callee 解決時に null guard を構築できない原因を切り分ける
+  - [ ] `NativeEmitter+FunctionEmission` の direct dispatch fallback を不要にする
+  - [ ] 例外経路と nullable receiver を含む codegen テストを追加する
+  - **完了条件**: virtual dispatch が null guard 付きで一貫して生成され、fallback 経路に依存しない
 
 ### 📦 Stdlib — Char 拡張
 

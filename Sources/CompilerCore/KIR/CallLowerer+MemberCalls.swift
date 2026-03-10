@@ -1262,12 +1262,20 @@ extension CallLowerer {
         else {
             return
         }
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let calleeText = interner.resolve(calleeName)
         if Self.unresolvedCollectionMemberNames.contains(calleeText) {
             arguments.insert(loweredReceiverID, at: 0)
             return
         }
-        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        // String.length: extension needs receiver even when chosenCallee is nil
+        // (e.g. mapIndexed { _, v -> v.length } where type inference may not bind).
+        // Always prepend receiver for "length" — codegen maps to kk_string_length when
+        // receiver is String; other types would be a type error at use site.
+        if calleeText == "length" {
+            arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
         let isCoroutineHandleReceiver = isCoroutineHandleReceiverType(
             receiverType,
             sema: sema,
@@ -1473,6 +1481,12 @@ extension CallLowerer {
             {
                 return interner.intern(externalLinkName)
             }
+            if interner.resolve(fallback) == "length" {
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                if sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType) {
+                    return interner.intern("kk_string_length")
+                }
+            }
             return fallback
         }
 
@@ -1500,6 +1514,11 @@ extension CallLowerer {
             default:
                 break
             }
+        }
+        // String.length: use kk_string_length when chosenCallee is nil (unresolved call).
+        // Type check may not bind in lambda bodies (e.g. mapIndexed { _, v -> v.length }).
+        if interner.resolve(fallback) == "length" {
+            return interner.intern("kk_string_length")
         }
         return fallback
     }
