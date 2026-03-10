@@ -217,6 +217,21 @@ extension CallTypeChecker {
                sema: sema
            )
         {
+            if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
+               !ctx.visibilityChecker.isAccessible(
+                   memberSymbol,
+                   fromFile: ctx.currentFileID,
+                   enclosingClass: ctx.enclosingClassSymbol
+               )
+            {
+                driver.helpers.emitVisibilityError(
+                    for: memberSymbol,
+                    name: interner.resolve(calleeName),
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
             sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
             sema.bindings.bindExprType(id, type: staticMember.type)
             return staticMember.type
@@ -616,6 +631,9 @@ extension CallTypeChecker {
                     guard let symbol = sema.symbols.symbol(candidate) else {
                         return false
                     }
+                    guard sema.symbols.parentSymbol(for: candidate) == ownerSymbol else {
+                        return false
+                    }
                     switch symbol.kind {
                     case .class, .enumClass, .object:
                         return true
@@ -636,7 +654,8 @@ extension CallTypeChecker {
             }
             if nestedCtorCandidates.isEmpty {
                 if !nestedOwnerSymbols.isEmpty {
-                    nestedCtorCandidates = sema.symbols.lookupByShortName(calleeName).filter { candidate in
+                    let initName = interner.intern("<init>")
+                    nestedCtorCandidates = sema.symbols.lookupByShortName(initName).filter { candidate in
                         guard let symbol = sema.symbols.symbol(candidate),
                               symbol.kind == .constructor
                         else {
@@ -1387,6 +1406,21 @@ extension CallTypeChecker {
                    sema: sema
                )
             {
+                if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
+                   !ctx.visibilityChecker.isAccessible(
+                       memberSymbol,
+                       fromFile: ctx.currentFileID,
+                       enclosingClass: ctx.enclosingClassSymbol
+                   )
+                {
+                    driver.helpers.emitVisibilityError(
+                        for: memberSymbol,
+                        name: interner.resolve(calleeName),
+                        range: range,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
                 sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
@@ -1427,6 +1461,21 @@ extension CallTypeChecker {
                    sema: sema
                )
             {
+                if let memberSymbol = sema.symbols.symbol(staticMember.symbol),
+                   !ctx.visibilityChecker.isAccessible(
+                       memberSymbol,
+                       fromFile: ctx.currentFileID,
+                       enclosingClass: ctx.enclosingClassSymbol
+                   )
+                {
+                    driver.helpers.emitVisibilityError(
+                        for: memberSymbol,
+                        name: interner.resolve(calleeName),
+                        range: range,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
                 sema.bindings.bindIdentifier(id, symbol: staticMember.symbol)
                 sema.bindings.bindExprType(id, type: staticMember.type)
                 return staticMember.type
