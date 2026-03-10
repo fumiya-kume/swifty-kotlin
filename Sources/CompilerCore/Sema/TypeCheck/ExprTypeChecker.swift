@@ -124,8 +124,8 @@ final class ExprTypeChecker {
             sema.bindings.bindExprType(id, type: sema.types.nothingType)
             return sema.types.nothingType
 
-        case let .localDecl(name, isMutable, typeAnnotation, initializer, range):
-            return driver.localDeclChecker.inferLocalDeclExpr(id, name: name, isMutable: isMutable, typeAnnotation: typeAnnotation, initializer: initializer, range: range, ctx: ctx, locals: &locals)
+        case let .localDecl(name, isMutable, typeAnnotation, initializer, isDelegated, range):
+            return driver.localDeclChecker.inferLocalDeclExpr(id, name: name, isMutable: isMutable, typeAnnotation: typeAnnotation, initializer: initializer, isDelegated: isDelegated, range: range, ctx: ctx, locals: &locals)
 
         case let .localAssign(name, value, range):
             return driver.localDeclChecker.inferLocalAssignExpr(id, name: name, value: value, range: range, ctx: ctx, locals: &locals)

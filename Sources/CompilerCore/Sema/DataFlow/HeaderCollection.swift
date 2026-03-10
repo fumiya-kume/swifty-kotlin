@@ -751,7 +751,7 @@ extension DataFlowSemaPhase {
 
     /// Registers type parameters for a nominal type (class or interface) as symbols,
     /// sets their variances and upper bounds, and returns the symbol list and local map.
-    private func registerNominalTypeParameters(
+    func registerNominalTypeParameters(
         _ typeParams: [TypeParamDecl],
         ownerSymbol: SymbolID,
         fqName: [InternedString],

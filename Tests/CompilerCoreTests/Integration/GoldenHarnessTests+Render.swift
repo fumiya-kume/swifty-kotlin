@@ -42,10 +42,11 @@ extension GoldenHarnessTests {
         case let .continueExpr(label, _):
             let labelStr = label.map { "@\(interner.resolve($0))" } ?? ""
             return "continue\(labelStr)"
-        case let .localDecl(name, isMutable, typeAnnotation, initializer, _):
+        case let .localDecl(name, isMutable, typeAnnotation, initializer, isDelegated, _):
             let typeStr = typeAnnotation.map { "t\($0.rawValue)" } ?? "_"
             let initStr = initializer.map { "e\($0.rawValue)" } ?? "_"
-            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)"
+            let delegatedStr = isDelegated ? " delegated=1" : ""
+            return "localDecl \(interner.resolve(name)) mutable=\(isMutable ? 1 : 0) type=\(typeStr) init=\(initStr)\(delegatedStr)"
         case let .localAssign(name, value, _):
             return "localAssign \(interner.resolve(name)) value=e\(value.rawValue)"
         case let .indexedAssign(receiver, indices, value, _):

@@ -202,7 +202,7 @@ final class BuildASTBodyParsingRegressionTests: XCTestCase {
 
             let localInitializers = bodyExprs.compactMap { exprID -> (String, ExprID)? in
                 guard let expr = ast.arena.expr(exprID),
-                      case let .localDecl(name, _, _, initializer, _) = expr,
+                      case let .localDecl(name, _, _, initializer, _, _) = expr,
                       let initializer
                 else {
                     return nil

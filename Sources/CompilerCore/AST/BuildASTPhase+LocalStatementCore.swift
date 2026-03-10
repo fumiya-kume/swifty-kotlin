@@ -168,6 +168,7 @@ extension BuildASTPhase {
             }
 
             var initializerStartIndex: Int?
+            var isDelegated = false
             var assignDepth = BuildASTPhase.BracketDepth()
             var index = statementTokens.startIndex
             while index < statementTokens.endIndex {
@@ -176,6 +177,7 @@ extension BuildASTPhase {
                     if token.kind == .symbol(.assign)
                         || token.kind == .softKeyword(.by)
                     {
+                        isDelegated = token.kind == .softKeyword(.by)
                         initializerStartIndex = statementTokens.index(after: index)
                         break
                     }
@@ -214,6 +216,7 @@ extension BuildASTPhase {
                 isMutable: isMutable,
                 typeAnnotation: typeAnnotation,
                 initializer: initializerExpr,
+                isDelegated: isDelegated,
                 range: range
             ))
         }

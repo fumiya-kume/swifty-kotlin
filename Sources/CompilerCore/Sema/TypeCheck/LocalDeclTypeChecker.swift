@@ -14,6 +14,7 @@ final class LocalDeclTypeChecker {
         isMutable: Bool,
         typeAnnotation: TypeRefID?,
         initializer: ExprID?,
+        isDelegated: Bool,
         range: SourceRange,
         ctx: TypeInferenceContext,
         locals: inout LocalBindings
@@ -43,13 +44,7 @@ final class LocalDeclTypeChecker {
         if let declaredType {
             localType = declaredType
             if let initializerType {
-                if let initializer,
-                   BuildASTPhase.LocalStatementCore.isLocalDelegateFactoryExpr(
-                       initializer,
-                       ast: ast,
-                       interner: interner
-                   )
-                {
+                if isDelegated {
                     // Local delegated properties are currently modeled as local
                     // declarations whose initializer is the delegate factory call.
                     // Preserve the declared property type and skip constraining

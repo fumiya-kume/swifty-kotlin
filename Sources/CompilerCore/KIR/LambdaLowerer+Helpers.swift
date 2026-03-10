@@ -284,7 +284,7 @@ extension LambdaLowerer {
             return check(receiver) || indices.contains(where: check)
         case let .stringTemplate(parts, _):
             return checkStringTemplateParts(parts, check: check)
-        case let .localDecl(_, _, _, initializer, _):
+        case let .localDecl(_, _, _, initializer, _, _):
             return initializer.map(check) ?? false
         case .localAssign, .compoundAssign, .memberAssign, .indexedAssign, .indexedCompoundAssign:
             return checkAssignmentChildren(expr, check: check)
