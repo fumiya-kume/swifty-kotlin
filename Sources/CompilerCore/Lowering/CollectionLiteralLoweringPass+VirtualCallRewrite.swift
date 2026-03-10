@@ -254,6 +254,14 @@ extension CollectionLiteralLoweringPass {
             listExprIDs: &listExprIDs, loweredBody: &loweredBody
         ) { return true }
 
+        if rewriteMapHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
         if rewriteGroupSortFindHOF(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
@@ -277,6 +285,53 @@ extension CollectionLiteralLoweringPass {
         ) { return true }
 
         return false
+    }
+
+    private func rewriteMapHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName else {
+            return false
+        }
+        guard arguments.count == 1, mapExprIDs.contains(receiver.rawValue) else { return false }
+
+        let kkName: InternedString = switch callee {
+        case lookup.mapName: lookup.kkMapMapName
+        case lookup.filterName: lookup.kkMapFilterName
+        case lookup.forEachName: lookup.kkMapForEachName
+        default: callee
+        }
+        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let hofResult = emitHOFCall(
+            kkName: kkName,
+            receiver: receiver,
+            arguments: arguments + [zeroExpr],
+            result: result,
+            origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult,
+            module: module,
+            loweredBody: &loweredBody
+        )
+        if callee == lookup.mapName, let result {
+            listExprIDs.insert(result.rawValue)
+            listExprIDs.insert(hofResult.rawValue)
+        }
+        if callee == lookup.filterName, let result {
+            mapExprIDs.insert(result.rawValue)
+            mapExprIDs.insert(hofResult.rawValue)
+        }
+        return true
     }
 
     private func emitHOFCall(

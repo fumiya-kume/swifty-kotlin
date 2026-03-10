@@ -35,12 +35,6 @@
 
 ### 📦 Stdlib — Map 高階関数
 
-- [ ] STDLIB-040: `Map.forEach {}` / `Map.map {}` / `Map.filter {}` を実装する
-  - [ ] Sema に `Map<K,V>` の `forEach` / `map` / `filter` stub を登録する
-  - [ ] Runtime に `kk_map_forEach` / `kk_map_map` / `kk_map_filter` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `mapOf("a" to 1).forEach { (k, v) -> println("$k=$v") }` → `a=1` が `kotlinc` と一致する
-
 - [ ] STDLIB-041: `Map.mapValues {}` / `Map.mapKeys {}` / `Map.toList()` を実装する
   - [ ] Sema に各 stub を登録する
   - [ ] Runtime に対応ランタイム関数を追加する

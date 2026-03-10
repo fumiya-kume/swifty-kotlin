@@ -947,6 +947,47 @@ extension CollectionLiteralLoweringPass {
                                 }
                                 continue
                             }
+                            if mapExprIDs.contains(receiverID.rawValue),
+                               callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
+                            {
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let kkName: InternedString = switch callee {
+                                case lookup.mapName: lookup.kkMapMapName
+                                case lookup.filterName: lookup.kkMapFilterName
+                                case lookup.forEachName: lookup.kkMapForEachName
+                                default: callee
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if callee == lookup.mapName, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if callee == lookup.filterName, let result {
+                                    mapExprIDs.insert(result.rawValue)
+                                    mapExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
                         }
                     }
 

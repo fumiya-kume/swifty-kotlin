@@ -173,6 +173,13 @@ extension DataFlowSemaPhase {
             keyTypeParamSymbol: mapSymbols.keyTypeParamSymbol,
             valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol
         )
+        registerMapHigherOrderMembers(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            mapInterfaceSymbol: mapSymbols.mapSymbol,
+            keyTypeParamSymbol: mapSymbols.keyTypeParamSymbol,
+            valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol
+        )
     }
 
     func registerLateListIndexedMembers(
@@ -1237,6 +1244,130 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 2
             ),
             for: memberSymbol
+        )
+    }
+
+    private func registerMapHigherOrderMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        mapInterfaceSymbol: SymbolID,
+        keyTypeParamSymbol: SymbolID,
+        valueTypeParamSymbol: SymbolID
+    ) {
+        let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
+        let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
+        let valueType = types.make(.typeParam(TypeParamType(symbol: valueTypeParamSymbol, nullability: .nonNull)))
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mapInterfaceSymbol,
+            args: [.out(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
+        let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+            ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        let pairType = if let pairSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(keyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        let listSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("List")])
+            ?? symbols.lookupByShortName(interner.intern("List")).first
+
+        func registerMember(
+            name: String,
+            externalLinkName: String,
+            parameterTypes: [TypeID],
+            returnType: TypeID,
+            typeParameterSymbols: [SymbolID]
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = mapFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mapInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: parameterTypes,
+                    returnType: returnType,
+                    typeParameterSymbols: typeParameterSymbols,
+                    classTypeParameterCount: 2
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let forEachLambdaType = types.make(.functionType(FunctionType(
+            params: [pairType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMember(
+            name: "forEach",
+            externalLinkName: "kk_map_forEach",
+            parameterTypes: [forEachLambdaType],
+            returnType: types.unitType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+        )
+
+        if let listSymbol {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: mapFQName + [interner.intern("map"), rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let mapLambdaType = types.make(.functionType(FunctionType(
+                params: [pairType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let listRType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            registerMember(
+                name: "map",
+                externalLinkName: "kk_map_map",
+                parameterTypes: [mapLambdaType],
+                returnType: listRType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol]
+            )
+        }
+
+        let filterLambdaType = types.make(.functionType(FunctionType(
+            params: [pairType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMember(
+            name: "filter",
+            externalLinkName: "kk_map_filter",
+            parameterTypes: [filterLambdaType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
         )
     }
 

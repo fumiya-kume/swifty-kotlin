@@ -443,6 +443,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMapHigherOrderHelpersUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val values = mapOf("a" to 1, "b" to 2)
+            values.forEach { (k, v) ->
+                println("$k=$v")
+            }
+            println(values.map { (k, v) -> "$k:${v * 10}" })
+            println(values.filter { (_, v) -> v % 2 == 0 })
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapHigherOrderRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n")
+        }
+    }
+
     func testCodegenListAssociateHelpersUseRuntimeMapBuilders() throws {
         try XCTSkipIf(true, "associateBy/associateWith/associate return wrong key-value pairs")
         let source = """

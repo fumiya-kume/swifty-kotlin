@@ -232,6 +232,9 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let expectedLinks: [(fqName: [InternedString], memberName: String, externalLink: String)] = [
                 (mapFQ, "containsKey", "kk_map_contains_key"),
+                (mapFQ, "forEach", "kk_map_forEach"),
+                (mapFQ, "map", "kk_map_map"),
+                (mapFQ, "filter", "kk_map_filter"),
                 (mapFQ, "toMutableMap", "kk_map_to_mutable_map"),
                 (mutableMapFQ, "put", "kk_mutable_map_put"),
                 (mutableMapFQ, "remove", "kk_mutable_map_remove"),

@@ -560,6 +560,11 @@ public func kk_pair_first(_ pairRaw: Int) -> Int {
     return pairBox.first
 }
 
+@_cdecl("component1")
+public func component1(_ pairRaw: Int) -> Int {
+    kk_pair_first(pairRaw)
+}
+
 /// Returns the second element of a Pair.
 /// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
 /// - Returns: The second element.
@@ -568,6 +573,11 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
     return pairBox.second
+}
+
+@_cdecl("component2")
+public func component2(_ pairRaw: Int) -> Int {
+    kk_pair_second(pairRaw)
 }
 
 /// Converts a Pair to its string representation (e.g. "(1, one)").

@@ -55,6 +55,9 @@ public extension RuntimeABIExterns {
         kk_map_get,
         kk_map_contains_key,
         kk_map_is_empty,
+        kk_map_forEach,
+        kk_map_map,
+        kk_map_filter,
         kk_map_keys,
         kk_map_values,
         kk_map_to_string,
@@ -230,6 +233,24 @@ public extension RuntimeABIExterns {
     static let kk_map_is_empty = ExternDecl(
         name: "kk_map_is_empty",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_forEach = ExternDecl(
+        name: "kk_map_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_map = ExternDecl(
+        name: "kk_map_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_filter = ExternDecl(
+        name: "kk_map_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

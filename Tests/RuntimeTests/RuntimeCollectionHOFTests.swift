@@ -125,6 +125,19 @@ private let sortedByTens: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) 
     value / 10
 }
 
+private let mapEntrySum: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_first(pairRaw) + kk_pair_second(pairRaw)
+}
+
+private let keepEvenValueEntries: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_second(pairRaw) % 2 == 0 ? 1 : 0
+}
+
+private let accumulateEntryScore: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    gHOFState.addSum(kk_pair_first(pairRaw) * 10 + kk_pair_second(pairRaw))
+    return 0
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -219,6 +232,23 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(mapKeys(grouped), [1, 0])
         XCTAssertEqual(listElements(kk_map_get(grouped, 1)), [3, 1, 5])
         XCTAssertEqual(listElements(kk_map_get(grouped, 0)), [4, 2])
+    }
+
+    func testMapForEachFilterAndMapUsePairEntries() {
+        let keys = makeArray([1, 2, 3])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        _ = kk_map_forEach(map, unsafeBitCast(accumulateEntryScore, to: Int.self), 0, nil)
+        XCTAssertEqual(gHOFState.sumSnapshot(), 123)
+
+        let mapped = kk_map_map(map, unsafeBitCast(mapEntrySum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(mapped), [11, 23, 35])
+
+        let filtered = kk_map_filter(map, unsafeBitCast(keepEvenValueEntries, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filtered), [1, 3])
+        XCTAssertEqual(kk_map_get(filtered, 1), 10)
+        XCTAssertEqual(kk_map_get(filtered, 3), 32)
     }
 
     func testBoolAbiForCollectionHelpersReturnsRaw() {

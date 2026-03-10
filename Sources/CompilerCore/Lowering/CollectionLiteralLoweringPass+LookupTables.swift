@@ -84,6 +84,9 @@ struct CollectionLiteralLookupTables {
     let kkMapGetName: InternedString
     let kkMapContainsKeyName: InternedString
     let kkMapIsEmptyName: InternedString
+    let kkMapForEachName: InternedString
+    let kkMapMapName: InternedString
+    let kkMapFilterName: InternedString
     let kkMapToStringName: InternedString
     let kkMapIteratorName: InternedString
     let kkMapIteratorHasNextName: InternedString
@@ -265,6 +268,9 @@ struct CollectionLiteralLookupTables {
         kkMapGetName = interner.intern("kk_map_get")
         kkMapContainsKeyName = interner.intern("kk_map_contains_key")
         kkMapIsEmptyName = interner.intern("kk_map_is_empty")
+        kkMapForEachName = interner.intern("kk_map_forEach")
+        kkMapMapName = interner.intern("kk_map_map")
+        kkMapFilterName = interner.intern("kk_map_filter")
         kkMapToStringName = interner.intern("kk_map_to_string")
         kkMapIteratorName = interner.intern("kk_map_iterator")
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")

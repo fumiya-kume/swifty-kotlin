@@ -28,7 +28,7 @@ extension CallTypeChecker {
         }
 
         // Provide contextual function type for collection HOF lambda inference.
-        let receiverElementType = collectionFallbackElementType(receiverID: receiverID, sema: sema)
+        let receiverElementType = collectionFallbackElementType(receiverID: receiverID, sema: sema, interner: interner)
         if let expectation = collectionFallbackLambdaExpectation(
             memberName: memberName,
             argCount: args.count,
@@ -193,11 +193,39 @@ extension CallTypeChecker {
         return nil
     }
 
-    func collectionFallbackElementType(receiverID: ExprID, sema: SemaModule) -> TypeID {
+    func collectionFallbackElementType(receiverID: ExprID, sema: SemaModule, interner: StringInterner) -> TypeID {
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
-        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-              let firstArg = classType.args.first
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
         else {
+            return sema.types.anyType
+        }
+        let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
+        if (receiverSymbolName == "Map" || receiverSymbolName.contains("Map")), classType.args.count == 2 {
+            let keyType = switch classType.args[0] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.anyType
+            }
+            let valueType = switch classType.args[1] {
+            case let .invariant(type), let .out(type), let .in(type):
+                type
+            case .star:
+                sema.types.anyType
+            }
+            let pairSymbol = sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? sema.symbols.lookupByShortName(interner.intern("Pair")).first
+            guard let pairSymbol else {
+                return sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.invariant(keyType), .invariant(valueType)],
+                nullability: .nonNull
+            )))
+        }
+
+        guard let firstArg = classType.args.first else {
             return sema.types.anyType
         }
         return switch firstArg {
