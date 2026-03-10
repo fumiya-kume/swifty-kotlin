@@ -4,6 +4,8 @@ struct KIRCallableValueInfo {
     let symbol: SymbolID
     let callee: InternedString
     let captureArguments: [KIRExprID]
+    /// True when lambda has closure param for C HOF ABI (filter, map, etc.).
+    let hasClosureParam: Bool
 }
 
 /// Delegate class for KIR lowering: LambdaLowerer.
@@ -111,11 +113,26 @@ final class LambdaLowerer {
             ))
         }
 
-        let lambdaParameters: [KIRParameter] = (0 ..< effectiveParamCount).map { index in
-            KIRParameter(
-                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
-                type: lambdaParameterTypes[index]
+        // For single-param lambdas passed to C HOFs (filter, map, etc.), Runtime expects
+        // (closureRaw, elem, outThrown). Add closure param as first param.
+        let lambdaParameters: [KIRParameter]
+        if effectiveParamCount == 1 {
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
             )
+            let elemParam = KIRParameter(
+                symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0),
+                type: lambdaParameterTypes[0]
+            )
+            lambdaParameters = [closureParam, elemParam]
+        } else {
+            lambdaParameters = (0 ..< effectiveParamCount).map { index in
+                KIRParameter(
+                    symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                    type: lambdaParameterTypes[index]
+                )
+            }
         }
 
         let scopeSnapshot = driver.ctx.saveScope()
@@ -206,7 +223,8 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: captureBindings.map(\.valueExpr)
+            captureArguments: captureBindings.map(\.valueExpr),
+            hasClosureParam: effectiveParamCount == 1
         )
         return lambdaValueExpr
     }

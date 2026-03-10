@@ -103,12 +103,14 @@ final class KIRLoweringContext {
         _ exprID: KIRExprID,
         symbol: SymbolID,
         callee: InternedString,
-        captureArguments: [KIRExprID]
+        captureArguments: [KIRExprID],
+        hasClosureParam: Bool = false
     ) {
         callableValueInfoByExprID[exprID] = KIRCallableValueInfo(
             symbol: symbol,
             callee: callee,
-            captureArguments: captureArguments
+            captureArguments: captureArguments,
+            hasClosureParam: hasClosureParam
         )
     }
 

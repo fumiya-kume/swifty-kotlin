@@ -223,18 +223,18 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
-        XCTAssertEqual(kk_list_contains(source, 2), 1)
-        XCTAssertEqual(kk_list_contains(source, 9), 0)
-        XCTAssertEqual(kk_list_is_empty(source), 0)
-        XCTAssertEqual(kk_list_is_empty(makeList([])), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 9)), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_list_is_empty(source)), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_list_is_empty(makeList([]))), 1)
 
         let keys = makeArray([1, 2])
         let values = makeArray([10, 20])
         let map = kk_map_of(keys, values, 2)
-        XCTAssertEqual(kk_map_contains_key(map, 2), 1)
-        XCTAssertEqual(kk_map_contains_key(map, 9), 0)
-        XCTAssertEqual(kk_map_is_empty(map), 0)
-        XCTAssertEqual(kk_map_is_empty(kk_map_of(0, 0, 0)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_map_contains_key(map, 2)), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_map_contains_key(map, 9)), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_map_is_empty(map)), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_map_is_empty(kk_map_of(0, 0, 0))), 1)
     }
 
     private func makeArray(_ elements: [Int]) -> Int {

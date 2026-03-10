@@ -40,13 +40,14 @@ private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
 }
 
 /// Applies a map transformation to elements using the given function pointer.
+/// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
 private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     mapped.reserveCapacity(elements.count)
     for elem in elements {
         var thrown = 0
-        let result = lambda(elem, &thrown)
+        let result = lambda(0, elem, &thrown)
         if thrown != 0 { return [] }
         mapped.append(maybeUnbox(result))
     }
@@ -54,12 +55,13 @@ private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
 }
 
 /// Applies a filter transformation to elements using the given function pointer.
+/// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
 private func applyFilterStep(_ elements: [Int], fnPtr: Int) -> [Int] {
-    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filtered: [Int] = []
     for elem in elements {
         var thrown = 0
-        let result = predicate(elem, &thrown)
+        let result = predicate(0, elem, &thrown)
         if thrown != 0 { return [] }
         if maybeUnbox(result) != 0 {
             filtered.append(elem)

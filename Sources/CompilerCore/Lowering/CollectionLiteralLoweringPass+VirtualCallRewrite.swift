@@ -359,8 +359,10 @@ extension CollectionLiteralLoweringPass {
         let needsListTag = callee == lookup.mapName
             || callee == lookup.mapNotNullName
             || callee == lookup.flatMapName || callee == lookup.filterName
+        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
-            kkName: kkName, receiver: receiver, arguments: arguments,
+            kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody
@@ -401,8 +403,10 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateName: lookup.kkListAssociateName
         default: callee
         }
+        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
-            kkName: kkName, receiver: receiver, arguments: arguments,
+            kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody

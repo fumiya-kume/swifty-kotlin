@@ -65,13 +65,17 @@ extension BuildKIRRegressionTests {
             }
             XCTAssertNotNil(callSymbol)
             XCTAssertTrue(ctx.interner.resolve(callee).hasPrefix("kk_lambda_"))
-            XCTAssertEqual(arguments.count, 2)
+            XCTAssertEqual(arguments.count, 3, "Single-param lambdas have (capture, closure, elem) for C HOF ABI")
             guard case .intLiteral(40)? = module.arena.expr(arguments[0]) else {
                 XCTFail("Expected first lambda call argument to be captured 'base'.")
                 return
             }
-            guard case .intLiteral(2)? = module.arena.expr(arguments[1]) else {
-                XCTFail("Expected second lambda call argument to be the explicit call argument.")
+            guard case .intLiteral(0)? = module.arena.expr(arguments[1]) else {
+                XCTFail("Expected second lambda call argument to be closure (0) for direct call.")
+                return
+            }
+            guard case .intLiteral(2)? = module.arena.expr(arguments[2]) else {
+                XCTFail("Expected third lambda call argument to be the explicit call argument.")
                 return
             }
 
@@ -87,7 +91,7 @@ extension BuildKIRRegressionTests {
             if let generatedSymbol = callSymbol,
                let generatedFunction = generatedLambdaFunctions.first(where: { $0.symbol == generatedSymbol })
             {
-                XCTAssertEqual(generatedFunction.params.count, 2)
+                XCTAssertEqual(generatedFunction.params.count, 3, "capture + closure + elem")
             }
         }
     }

@@ -451,6 +451,33 @@ extension CollectionLiteralLoweringPass {
 
                     // --- Rewrite collection member calls ---
                     // Member calls are lowered as call(callee=memberName, args=[receiver, ...])
+                    // any()/none()/first()/last() with no predicate: args=[receiver], pass fnPtr=0, closure=0
+                    if callee == lookup.anyName || callee == lookup.noneName || callee == lookup.firstName || callee == lookup.lastName {
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                let kkName: InternedString = switch callee {
+                                case lookup.anyName: lookup.kkListAnyName
+                                case lookup.noneName: lookup.kkListNoneName
+                                case lookup.firstName: lookup.kkListFirstName
+                                case lookup.lastName: lookup.kkListLastName
+                                default: callee
+                                }
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, zeroExpr, zeroExpr],
+                                    result: result,
+                                    canThrow: callee == lookup.firstName || callee == lookup.lastName,
+                                    thrownResult: thrownResult
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
                     if callee == lookup.sizeName || callee == lookup.countName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
@@ -867,10 +894,14 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName
                     {
-                        // args = [receiver, lambdaFnPtr]
+                        // args = [receiver, lambda]; Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
+                        // Insert closureRaw=0 for captureless lambdas between lambda and thrown slot.
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 let kkName: InternedString = switch callee {
                                 case lookup.mapName: lookup.kkListMapName
                                 case lookup.filterName: lookup.kkListFilterName
@@ -892,7 +923,7 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: kkName,
-                                    arguments: arguments,
+                                    arguments: [receiverID, lambdaID, zeroExpr],
                                     result: hofResult,
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
@@ -933,13 +964,16 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- Rewrite additional HOF collection member calls (STDLIB-005) ---
-                    // 1-param lambda HOFs with 2 args: [receiver, lambda]
+                    // 1-param lambda HOFs with 2 args: [receiver, lambda]; Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
                     if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
                         || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
                     {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 let kkName: InternedString = switch callee {
                                 case lookup.groupByName: lookup.kkListGroupByName
                                 case lookup.sortedByName: lookup.kkListSortedByName
@@ -955,7 +989,7 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: kkName,
-                                    arguments: arguments,
+                                    arguments: [receiverID, lambdaID, zeroExpr],
                                     result: hofResult,
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
