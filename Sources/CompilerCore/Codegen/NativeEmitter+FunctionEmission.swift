@@ -769,6 +769,35 @@ extension NativeEmitter {
                     continue
                 }
 
+                if calleeName == "kk_println_float" || calleeName == "kk_println_double"
+                    || calleeName == "kk_println_long" || calleeName == "kk_println_char"
+                    || calleeName == "kk_println_bool"
+                {
+                    let printValue = argumentValues.first ?? zeroValue
+                    if let printFunction = declareExternalFunction(
+                        named: calleeName,
+                        argumentCount: 1,
+                        appendThrownChannel: false
+                    ) {
+                        _ = bindings.buildCall(
+                            builder,
+                            functionType: printFunction.type,
+                            callee: printFunction.value,
+                            arguments: [printValue],
+                            name: "println_\(calleeName)_\(instructionIndex)"
+                        )
+                    }
+                    if usesThrownChannel, let thrownResult {
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, zeroValue)
+                        }
+                    }
+                    storeResult(result, zeroValue)
+                    continue
+                }
+
                 if calleeName == "println" || calleeName == "kk_println_any" {
                     let printValue = argumentValues.first ?? zeroValue
                     if let printFunction = declareExternalFunction(

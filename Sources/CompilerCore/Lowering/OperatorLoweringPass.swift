@@ -283,7 +283,7 @@ final class OperatorLoweringPass: LoweringPass {
 
     private func appendPrimitivePrintlnCall(
         to body: inout [KIRInstruction],
-        symbol: SymbolID?,
+        symbol _: SymbolID?,
         callee: InternedString,
         arguments: [KIRExprID],
         result: KIRExprID?,
@@ -291,10 +291,11 @@ final class OperatorLoweringPass: LoweringPass {
         thrownResult: KIRExprID?,
         isSuperCall: Bool
     ) {
-        // Keep the lowered runtime call side-effect only and synthesize Unit explicitly.
+        // Use symbol: nil so ABILoweringPass does not apply println's Any? signature
+        // and box the argument. Primitive println variants expect raw bits (Int), not boxed values.
         body.append(
             .call(
-                symbol: symbol,
+                symbol: nil,
                 callee: callee,
                 arguments: arguments,
                 result: nil,

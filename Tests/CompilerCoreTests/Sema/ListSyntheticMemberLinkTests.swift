@@ -171,6 +171,47 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
+    /// The synthetic List type uses .out projection; variance relaxation must apply.
+    func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            list.contains(2)
+            list.contains(5)
+            list.isEmpty()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-VAR-OUT", in: ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+            let ast = try XCTUnwrap(ctx.ast)
+            var containsCalls: [ExprID] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr,
+                      ctx.interner.resolve(callee) == "contains"
+                else { continue }
+                containsCalls.append(exprID)
+            }
+            XCTAssertEqual(containsCalls.count, 2)
+            for callID in containsCalls {
+                let binding = sema.bindings.callBinding(for: callID)
+                XCTAssertNotNil(binding?.chosenCallee, "contains should resolve")
+                if let chosen = binding?.chosenCallee {
+                    XCTAssertEqual(
+                        sema.symbols.externalLinkName(for: chosen),
+                        "kk_list_contains",
+                        "contains should resolve to kk_list_contains"
+                    )
+                }
+            }
+        }
+    }
+
     func testSetMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun check(values: Set<Int>) {

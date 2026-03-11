@@ -103,6 +103,21 @@ extension DataFlowSemaPhase {
                 symbols.setExternalLinkName(linkName, for: symbol)
             }
 
+            // P5-112: restore parentSymbol for imported members so collectMemberFunctionCandidates
+            // can find them (parentSymbol(for:) == owner check). Prevents VAR-OUT when metadata
+            // provides Collection.contains / List.contains that would otherwise be invisible to lookup.
+            if record.kind == .function || record.kind == .property || record.kind == .field,
+               record.fqName.count >= 2
+            {
+                let ownerFQName = Array(record.fqName.dropLast())
+                if let ownerSymbol = symbols.lookupAll(fqName: ownerFQName)
+                    .compactMap({ symbols.symbol($0) })
+                    .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
+                {
+                    symbols.setParentSymbol(ownerSymbol, for: symbol)
+                }
+            }
+
             if !record.annotations.isEmpty {
                 symbols.setAnnotations(record.annotations, for: symbol)
             }
