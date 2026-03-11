@@ -60,11 +60,11 @@
   - [x] diff/golden ケースを追加する
   - **完了条件**: `listOf(1, 2, 3).associateBy { it % 2 }` などの出力が `kotlinc` と一致し、常時 skip が不要になる ✓
 
-- [ ] STDLIB-074: `withIndex` / `forEachIndexed` / `mapIndexed` の link failure を解消する
-  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている indexed helper テストを再有効化する
-  - [ ] シンボル解決・runtime 参照・link 入力を点検し `outputUnavailable` を解消する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf("a", "bb").mapIndexed { index, value -> index + value.length }` が `kotlinc` と一致し、常時 skip が不要になる
+- [x] STDLIB-074: `withIndex` / `forEachIndexed` / `mapIndexed` の link failure を解消する
+  - [x] `CodegenBackendIntegrationTests` の indexed helper テストを再有効化する
+  - [x] シンボル解決・runtime 参照・link 入力を点検し `outputUnavailable` を解消する
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `listOf("a", "bb").mapIndexed { index, value -> index + value.length }` が `kotlinc` と一致し、常時 skip が不要になる ✓
 
 ---
 
