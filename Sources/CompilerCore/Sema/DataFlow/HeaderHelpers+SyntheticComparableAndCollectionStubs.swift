@@ -1,10 +1,6 @@
 // swiftlint:disable file_length
 import Foundation
 
-// Collection type stubs (List<E>, MutableList<E>) for kotlin.collections,
-// and Comparable<T> for kotlin.
-// Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
-
 extension DataFlowSemaPhase {
     /// Register `kotlin.Comparable<T>` interface stub with `operator fun compareTo(other: T): Int`.
     func registerSyntheticComparableStub(

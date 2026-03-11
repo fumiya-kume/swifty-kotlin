@@ -8,27 +8,22 @@ import Foundation
 public final class DependencyGraph: Codable {
     // MARK: - Storage
 
-    /// Symbols provided (defined) by each file path.
     private var providedSymbols: [String: Set<String>] = [:]
 
-    /// Symbols depended upon (referenced) by each file path.
     private var dependedSymbols: [String: Set<String>] = [:]
 
     public init() {}
 
     // MARK: - Mutation
 
-    /// Records that `filePath` provides (defines) the given `symbols`.
     public func recordProvided(filePath: String, symbols: Set<String>) {
         providedSymbols[filePath] = symbols
     }
 
-    /// Records that `filePath` depends on (references) the given `symbols`.
     public func recordDepended(filePath: String, symbols: Set<String>) {
         dependedSymbols[filePath] = symbols
     }
 
-    /// Clears all entries for the given file (e.g., before re-recording after recompilation).
     public func clearFile(_ filePath: String) {
         providedSymbols.removeValue(forKey: filePath)
         dependedSymbols.removeValue(forKey: filePath)
@@ -47,7 +42,6 @@ public final class DependencyGraph: Codable {
             return []
         }
 
-        // Collect all symbols whose definitions might have changed.
         var invalidatedSymbols = Set<String>()
         for changed in changedFiles {
             if let provided = providedSymbols[changed] {
@@ -55,7 +49,6 @@ public final class DependencyGraph: Codable {
             }
         }
 
-        // Find files that depend on any invalidated symbol.
         var affected = changedFiles
         var frontier = changedFiles
         var visited = changedFiles
@@ -85,32 +78,27 @@ public final class DependencyGraph: Codable {
         return allFiles.filter { affected.contains($0) }
     }
 
-    /// Returns all file paths tracked in the graph.
     public var trackedFiles: [String] {
         let allKeys = Set(providedSymbols.keys).union(dependedSymbols.keys)
         return allKeys.sorted()
     }
 
-    /// Returns the set of symbols provided by the given file.
     public func provided(by filePath: String) -> Set<String> {
         providedSymbols[filePath] ?? []
     }
 
-    /// Returns the set of symbols depended on by the given file.
     public func depended(by filePath: String) -> Set<String> {
         dependedSymbols[filePath] ?? []
     }
 
     // MARK: - Serialization
 
-    /// Serializes the dependency graph to JSON data.
     public func serialize() throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
         return try encoder.encode(self)
     }
 
-    /// Deserializes a dependency graph from JSON data.
     public static func deserialize(from data: Data) throws -> DependencyGraph {
         let decoder = JSONDecoder()
         return try decoder.decode(DependencyGraph.self, from: data)

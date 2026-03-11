@@ -1,8 +1,5 @@
 import Foundation
 
-// String stdlib extension stubs (STDLIB-006, STDLIB-009) for kotlin.text.
-// Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
-
 extension DataFlowSemaPhase {
     func registerSyntheticStringStubs(
         symbols: SymbolTable,

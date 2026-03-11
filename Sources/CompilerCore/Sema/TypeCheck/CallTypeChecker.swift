@@ -2,7 +2,6 @@
 import Foundation
 
 // swiftlint:disable type_body_length
-/// Handles call expression type inference (function calls, member calls, safe member calls).
 final class CallTypeChecker {
     unowned let driver: TypeCheckDriver
 

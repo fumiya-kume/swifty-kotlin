@@ -1,13 +1,10 @@
 import Foundation
 
-/// Represents a fingerprint of a source file for incremental compilation.
 /// The content hash is the primary comparison key; mtime serves as a fast-path
 /// to avoid re-hashing when the file system reports no modification.
 public struct FileFingerprint: Equatable, Codable {
-    /// Absolute path of the source file.
     public let path: String
 
-    /// SHA-256 hex digest of the file contents.
     public let contentHash: String
 
     /// Last-modified time as nanoseconds since the Unix epoch.
@@ -20,8 +17,6 @@ public struct FileFingerprint: Equatable, Codable {
         self.mtimeNanos = mtimeNanos
     }
 
-    /// Computes a fingerprint for the file at the given path.
-    /// Returns `nil` if the file cannot be read.
     public static func compute(for path: String) -> FileFingerprint? {
         let url = URL(fileURLWithPath: path)
         guard let data = try? Data(contentsOf: url) else {
@@ -30,14 +25,12 @@ public struct FileFingerprint: Equatable, Codable {
         return compute(for: path, contents: data)
     }
 
-    /// Computes a fingerprint from already-loaded file contents.
     public static func compute(for path: String, contents: Data) -> FileFingerprint {
         let hash = sha256Hex(contents)
         let mtimeNanos = fileMtimeNanos(path: path)
         return FileFingerprint(path: path, contentHash: hash, mtimeNanos: mtimeNanos)
     }
 
-    /// Returns `true` when the content hash differs from `other`.
     public func contentChanged(from other: FileFingerprint) -> Bool {
         contentHash != other.contentHash
     }
@@ -105,7 +98,6 @@ public struct FileFingerprint: Equatable, Codable {
             message.append(UInt8((bitLength >> i) & 0xFF))
         }
 
-        // Process each 64-byte block
         let blockCount = message.count / 64
         for blockIndex in 0 ..< blockCount {
             var w = [UInt32](repeating: 0, count: 64)

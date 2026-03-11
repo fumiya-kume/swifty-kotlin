@@ -1,8 +1,5 @@
 import Foundation
 
-// Delegate class for KIR lowering: CallSupportLowerer.
-// Holds an unowned reference to the driver for mutual recursion.
-
 extension CallSupportLowerer {
     func generateDefaultStubFunction(
         originalSymbol: SymbolID,

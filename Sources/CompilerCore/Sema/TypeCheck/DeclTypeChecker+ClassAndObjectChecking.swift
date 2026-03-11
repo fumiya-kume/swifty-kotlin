@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles declaration-level type checking (functions, properties, classes, objects).
-// Derived from TypeCheckSemaPhase.swift (second extension) and TypeCheckSemaPhase+DeclTypeCheck.swift.
-
 extension DeclTypeChecker {
     func typeCheckBoundPropertyDecl(
         _ property: PropertyDecl,

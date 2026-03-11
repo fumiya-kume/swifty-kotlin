@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles control flow expression type inference (for, while, do-while, if, try, when).
-// Derived from TypeCheckSemaPhase+InferControlFlow.swift.
-
 extension ControlFlowTypeChecker {
     func inferWhenExpr(
         _ id: ExprID,

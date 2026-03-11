@@ -1,6 +1,5 @@
 // MARK: - Builder DSL Helpers (STDLIB-002)
 
-/// Extracted from CallTypeChecker to keep file length within SwiftLint limits.
 extension CallTypeChecker {
     private enum BuilderDSLArgumentShape {
         case unary([TypeID])

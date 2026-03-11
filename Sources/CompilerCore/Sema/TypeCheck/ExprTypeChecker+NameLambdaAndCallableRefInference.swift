@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles expression type inference dispatch and specific expression cases.
-// Derived from the previous monolithic type-check phase expression inference extensions.
-
 extension ExprTypeChecker {
     func inferCompoundAssignExpr(
         _ id: ExprID,
@@ -128,8 +125,6 @@ extension ExprTypeChecker {
         sema.bindings.bindExprType(id, type: sema.types.errorType)
         return sema.types.errorType
     }
-
-    // MARK: - Specific Expression Cases
 
     func inferNameRefExpr(
         _ id: ExprID,
@@ -268,8 +263,6 @@ extension ExprTypeChecker {
         return resolvedType
     }
 
-    /// Attempts to resolve `name` as a property on `receiverType` inside a receiver lambda.
-    /// Returns the resolved TypeID and binds the expression, or returns nil if unresolved.
     private func resolveImplicitReceiverMember(
         id: ExprID,
         name: InternedString,
@@ -368,7 +361,6 @@ extension ExprTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
 
-        // Extract label from the lambda literal AST node for labeled lambda support
         let label: InternedString? = if case let .lambdaLiteral(_, _, lbl, _) = ast.arena.expr(id) { lbl } else { nil }
 
         // SAM conversion: when the expected type is a functional interface,
@@ -390,9 +382,7 @@ extension ExprTypeChecker {
         var lambdaLocals = locals
         let outerSymbols = Set(locals.values.map(\.symbol))
 
-        // Implicit `it` parameter: when a no-arrow lambda has zero explicit params
-        // and the expected function type has exactly one parameter, synthesise an
-        // `it` binding so the body can reference it.
+        // Implicit `it` parameter for no-arrow lambdas with single expected param.
         let effectiveParams: [InternedString] = if params.isEmpty,
                                                    let expectedFunctionType,
                                                    expectedFunctionType.params.count == 1
@@ -451,9 +441,7 @@ extension ExprTypeChecker {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
-            // Mark this expression as a SAM conversion so KIR can handle it.
             sema.bindings.markSamConversion(id)
-            // Store the underlying function type for KIR lowering.
             let underlyingFuncType = sema.types.make(.functionType(expectedFunctionType))
             sema.bindings.bindSamUnderlyingFunctionType(id, type: underlyingFuncType)
             sema.bindings.bindExprType(id, type: expectedType)
@@ -632,8 +620,6 @@ extension ExprTypeChecker {
         return fallbackType
     }
 
-    /// Helper: handles `T::class` / `SomeType::class` callable-ref expressions.
-    /// Returns the inferred type if matched, or `nil` to fall through.
     private func inferClassRefExpr(
         _ id: ExprID,
         receiver: ExprID,

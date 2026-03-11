@@ -1,7 +1,5 @@
 import Foundation
 
-/// Forwarding overloads for ControlFlowLowerer that accept KIRLoweringSharedContext
-/// and KIRLoweringEmitContext, delegating to the old-API functions.
 extension ControlFlowLowerer {
     func lowerForExpr(
         _ exprID: ExprID,

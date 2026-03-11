@@ -1,6 +1,5 @@
 import Foundation
 
-/// Stateless utility functions for type checking. No back-reference to the driver needed.
 struct TypeCheckHelpers {
     private func syntheticCoroutineNominalType(
         packageName: [InternedString],

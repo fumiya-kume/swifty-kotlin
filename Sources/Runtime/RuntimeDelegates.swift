@@ -29,11 +29,6 @@ final class RuntimeKPropertyStub {
     }
 }
 
-/// Creates a minimal KProperty<*> stub with name and returnType strings.
-/// - Parameters:
-///   - nameStr: intptr_t pointing to the property name KKString.
-///   - returnTypeStr: intptr_t pointing to the return type signature KKString.
-/// - Returns: Opaque handle (Int) to the `RuntimeKPropertyStub`.
 @_cdecl("kk_kproperty_stub_create")
 public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> Int {
     let stub = RuntimeKPropertyStub(name: nameStr, returnType: returnTypeStr)
@@ -44,9 +39,6 @@ public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> In
     return Int(bitPattern: opaque)
 }
 
-/// Returns the name field of a KProperty stub.
-/// - Parameter handle: Opaque handle returned by `kk_kproperty_stub_create`.
-/// - Returns: The property name intptr_t (KKString pointer), or 0 if invalid.
 @_cdecl("kk_kproperty_stub_name")
 public func kk_kproperty_stub_name(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -61,9 +53,6 @@ public func kk_kproperty_stub_name(_ handle: Int) -> Int {
     return stub.name
 }
 
-/// Returns the returnType field of a KProperty stub.
-/// - Parameter handle: Opaque handle returned by `kk_kproperty_stub_create`.
-/// - Returns: The return type intptr_t (KKString pointer), or 0 if invalid.
 @_cdecl("kk_kproperty_stub_return_type")
 public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -80,11 +69,6 @@ public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
 
 // MARK: - Lazy Delegate (P5-80)
 
-/// Creates a new lazy delegate instance.
-/// - Parameters:
-///   - initFnPtr: Function pointer to the initializer lambda (`() -> T`).
-///   - mode: Thread-safety mode (1 = SYNCHRONIZED, 0 = NONE).
-/// - Returns: Opaque handle (Int) to the `RuntimeLazyBox`.
 @_cdecl("kk_lazy_create")
 public func kk_lazy_create(_ initFnPtr: Int, _ mode: Int) -> Int {
     let safetyMode = LazyThreadSafetyMode(rawValue: mode) ?? .synchronized
@@ -96,9 +80,6 @@ public func kk_lazy_create(_ initFnPtr: Int, _ mode: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
-/// Returns the lazily-initialized value. Initializes on first access.
-/// - Parameter handle: Opaque handle returned by `kk_lazy_create`.
-/// - Returns: The cached or freshly computed value.
 @_cdecl("kk_lazy_get_value")
 public func kk_lazy_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -113,9 +94,6 @@ public func kk_lazy_get_value(_ handle: Int) -> Int {
     return box.getValue()
 }
 
-/// Returns whether the lazy delegate has been initialized.
-/// - Parameter handle: Opaque handle returned by `kk_lazy_create`.
-/// - Returns: 1 if initialized, 0 otherwise.
 @_cdecl("kk_lazy_is_initialized")
 public func kk_lazy_is_initialized(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -132,12 +110,6 @@ public func kk_lazy_is_initialized(_ handle: Int) -> Int {
 
 // MARK: - Observable Delegate (P5-80)
 
-/// Creates an observable delegate instance.
-/// - Parameters:
-///   - initialValue: The initial property value.
-///   - callbackFnPtr: Function pointer to the observer callback
-///     `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> void`.
-/// - Returns: Opaque handle to the `RuntimeObservableBox`.
 @_cdecl("kk_observable_create")
 public func kk_observable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeObservableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
@@ -148,7 +120,6 @@ public func kk_observable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> I
     return Int(bitPattern: opaque)
 }
 
-/// Returns the current value of an observable delegate.
 @_cdecl("kk_observable_get_value")
 public func kk_observable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -163,9 +134,7 @@ public func kk_observable_get_value(_ handle: Int) -> Int {
     return box.currentValue
 }
 
-/// Sets the value of an observable delegate.
 /// Invokes the callback **after** the value is changed (matching `kotlinc` semantics).
-/// Callback signature: `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> void`
 @_cdecl("kk_observable_set_value")
 public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -194,13 +163,6 @@ public func kk_observable_set_value(_ handle: Int, _ newValue: Int) -> Int {
 
 // MARK: - Vetoable Delegate (P5-80)
 
-/// Creates a vetoable delegate instance.
-/// - Parameters:
-///   - initialValue: The initial property value.
-///   - callbackFnPtr: Function pointer to the veto callback
-///     `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> intptr_t`.
-///     Returns non-zero to accept the change, zero to veto.
-/// - Returns: Opaque handle to the `RuntimeVetoableBox`.
 @_cdecl("kk_vetoable_create")
 public func kk_vetoable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int {
     let box = RuntimeVetoableBox(initialValue: initialValue, callbackFnPtr: callbackFnPtr)
@@ -211,7 +173,6 @@ public func kk_vetoable_create(_ initialValue: Int, _ callbackFnPtr: Int) -> Int
     return Int(bitPattern: opaque)
 }
 
-/// Returns the current value of a vetoable delegate.
 @_cdecl("kk_vetoable_get_value")
 public func kk_vetoable_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
@@ -226,10 +187,7 @@ public func kk_vetoable_get_value(_ handle: Int) -> Int {
     return box.currentValue
 }
 
-/// Sets the value of a vetoable delegate.
-/// Invokes the callback **before** the value is changed (matching `kotlinc` semantics).
-/// Callback signature: `(property: intptr_t, oldValue: intptr_t, newValue: intptr_t) -> intptr_t`
-/// Returns non-zero → accept; zero → veto (value unchanged).
+/// Invokes the callback **before** the value is changed; non-zero → accept, zero → veto.
 @_cdecl("kk_vetoable_set_value")
 public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {

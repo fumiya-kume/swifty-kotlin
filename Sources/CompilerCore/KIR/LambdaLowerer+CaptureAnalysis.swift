@@ -1,8 +1,5 @@
 import Foundation
 
-// Delegate class for KIR lowering: LambdaLowerer.
-// Holds an unowned reference to the driver for mutual recursion.
-
 extension LambdaLowerer {
     func canCaptureSymbolForLambda(
         _ symbol: SymbolID,

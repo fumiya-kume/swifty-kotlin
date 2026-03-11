@@ -1,6 +1,5 @@
 import Foundation
 
-/// Handles declaration-level type checking (functions, properties, classes, objects).
 final class DeclTypeChecker {
     unowned let driver: TypeCheckDriver
 

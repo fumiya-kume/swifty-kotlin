@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles call expression type inference (function calls, member calls, safe member calls).
-// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
-
 extension CallTypeChecker {
     func bindCallAndResolveReturnType(
         _ id: ExprID,

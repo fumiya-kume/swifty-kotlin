@@ -1,7 +1,5 @@
 import Foundation
 
-/// Forwarding overloads for CallLowerer that accept KIRLoweringSharedContext
-/// and KIRLoweringEmitContext, delegating to the old-API functions.
 extension CallLowerer {
     func lowerCallExpr(
         _ exprID: ExprID,

@@ -1,7 +1,5 @@
 import Foundation
 
-/// Stateless utility struct for collecting property constant initializers.
-/// No driver reference needed — all methods are pure functions.
 struct ConstantCollector {
     func collectPropertyConstantInitializers(
         ast: ASTModule,

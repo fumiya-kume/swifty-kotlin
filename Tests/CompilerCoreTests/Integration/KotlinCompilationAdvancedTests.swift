@@ -2,11 +2,7 @@
 import Foundation
 import XCTest
 
-/// Tests for advanced Kotlin features: extensions, lambdas, operators,
-/// delegation, destructuring, try/catch, scope functions, collections,
-/// ranges, and complex programs. Also includes object emission tests.
 final class KotlinCompilationAdvancedTests: XCTestCase {
-    /// Verify extension function on Int compiles.
     func testCompile_extension_function() throws {
         try assertKotlinCompilesToKIR("""
         fun Int.isEven(): Boolean = this % 2 == 0
@@ -16,7 +12,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify extension property compiles.
     func testCompile_extension_property() throws {
         try assertKotlinCompilesToKIR("""
         val String.lastChar: Char
@@ -27,7 +22,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify extension function on custom class compiles.
     func testCompile_extension_onCustomClass() throws {
         try assertKotlinCompilesToKIR("""
         class Box(val value: Int)
@@ -39,7 +33,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify basic lambda compiles.
     func testCompile_lambda_basic() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -49,7 +42,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify lambda with implicit it parameter compiles.
     func testCompile_lambda_it() throws {
         try assertKotlinCompilesToKIR("""
         fun applyToTen(f: (Int) -> Int): Int = f(10)
@@ -59,7 +51,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify higher-order function compiles.
     func testCompile_higherOrder_function() throws {
         try assertKotlinCompilesToKIR("""
         fun operate(a: Int, b: Int, op: (Int, Int) -> Int): Int = op(a, b)
@@ -69,7 +60,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify trailing lambda syntax compiles.
     func testCompile_lambda_trailingLambda() throws {
         try assertKotlinCompilesToKIR("""
         fun repeat(times: Int, action: (Int) -> Unit) {
@@ -85,7 +75,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify operator plus overloading compiles.
     func testCompile_operator_plus() throws {
         try assertKotlinCompilesToKIR("""
         data class Vec(val x: Int, val y: Int) {
@@ -97,7 +86,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify Comparable with compareTo operator compiles.
     func testCompile_operator_compareTo() throws {
         try assertKotlinCompilesToKIR("""
         class Weight(val grams: Int) : Comparable<Weight> {
@@ -109,7 +97,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify invoke operator compiles.
     func testCompile_operator_invoke() throws {
         try assertKotlinCompilesToKIR("""
         class Multiplier(val factor: Int) {
@@ -122,7 +109,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify lazy delegation compiles.
     func testCompile_delegate_lazy() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -131,7 +117,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify data class destructuring compiles.
     func testCompile_destructuring_dataClass() throws {
         try assertKotlinCompilesToKIR("""
         data class Point(val x: Int, val y: Int)
@@ -141,7 +126,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify try-catch expression compiles.
     func testCompile_tryCatch_basic() throws {
         try assertKotlinCompilesToKIR("""
         fun safeDivide(a: Int, b: Int): Int {
@@ -155,7 +139,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify try-catch-finally compiles.
     func testCompile_tryCatch_finally() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -171,7 +154,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify throw with Nothing return type compiles.
     func testCompile_throw_nothing() throws {
         try assertKotlinCompilesToKIR("""
         fun fail(msg: String): Nothing {
@@ -186,7 +168,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify let scope function compiles.
     func testCompile_scope_let() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -195,7 +176,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify run scope function compiles.
     func testCompile_scope_run() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -204,7 +184,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify apply scope function compiles.
     func testCompile_scope_apply() throws {
         try assertKotlinCompilesToKIR("""
         class Builder {
@@ -220,7 +199,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify also scope function compiles.
     func testCompile_scope_also() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -229,7 +207,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify listOf compiles.
     func testCompile_collection_listOf() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -238,7 +215,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify arrayOf with index access compiles.
     func testCompile_collection_arrayOf() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -248,7 +224,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify mapOf with to infix compiles.
     func testCompile_collection_mapOf() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -257,7 +232,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify IntRange with in operator compiles.
     func testCompile_range_intRange() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -267,7 +241,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify downTo range compiles.
     func testCompile_range_downTo() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -278,7 +251,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify step range compiles.
     func testCompile_range_step() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -289,7 +261,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify infix function compiles.
     func testCompile_infix_function() throws {
         try assertKotlinCompilesToKIR("""
         infix fun Int.power(exp: Int): Int {
@@ -305,7 +276,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify tailrec function compiles.
     func testCompile_tailrec_function() throws {
         try assertKotlinCompilesToKIR("""
         tailrec fun gcd(a: Int, b: Int): Int {
@@ -316,7 +286,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify top-level properties compile.
     func testCompile_topLevel_property() throws {
         try assertKotlinCompilesToKIR("""
         val PI = 3.14159
@@ -327,7 +296,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify const val compiles.
     func testCompile_constVal() throws {
         try assertKotlinCompilesToKIR("""
         const val MAX_SIZE = 100
@@ -337,7 +305,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify named and default arguments compile.
     func testCompile_namedArguments() throws {
         try assertKotlinCompilesToKIR("""
         fun createUser(name: String, age: Int, active: Boolean = true): String {
@@ -350,7 +317,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify vararg parameter compiles.
     func testCompile_vararg() throws {
         try assertKotlinCompilesToKIR("""
         fun sum(vararg numbers: Int): Int {
@@ -364,7 +330,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify type alias compiles.
     func testCompile_typeAlias() throws {
         try assertKotlinCompilesToKIR("""
         typealias StringList = List<String>
@@ -375,7 +340,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify overloaded functions compile.
     func testCompile_overload() throws {
         try assertKotlinCompilesToKIR("""
         fun display(value: Int): String = "int"
@@ -389,7 +353,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify multi-file compilation works.
     func testCompile_multiFile() throws {
         try withTemporaryFiles(contents: [
             """
@@ -419,7 +382,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         }
     }
 
-    /// Verify generic linked list compiles.
     func testCompile_complex_linkedList() throws {
         try assertKotlinCompilesToKIR("""
         class Node<T>(val value: T, var next: Node<T>?)
@@ -438,7 +400,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify strategy design pattern compiles.
     func testCompile_complex_strategyPattern() throws {
         try assertKotlinCompilesToKIR("""
         interface SortStrategy {
@@ -460,7 +421,6 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
-    /// Verify builder pattern compiles.
     func testCompile_complex_builderPattern() throws {
         try assertKotlinCompilesToKIR("""
         class Config(

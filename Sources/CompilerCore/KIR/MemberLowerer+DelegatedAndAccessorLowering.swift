@@ -1,8 +1,5 @@
 import Foundation
 
-// Delegate class for KIR lowering: MemberLowerer.
-// Holds an unowned reference to the driver for mutual recursion.
-
 extension MemberLowerer {
     func lowerMemberDecls(
         memberFunctions: [DeclID],

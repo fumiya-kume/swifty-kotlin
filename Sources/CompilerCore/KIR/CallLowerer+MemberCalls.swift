@@ -1,8 +1,6 @@
 // swiftlint:disable file_length
 import Foundation
 
-// File splitting is still in progress for this legacy member-call lowering surface.
-
 struct MemberCallReceiver {
     let expr: ExprID
     let loweredID: KIRExprID

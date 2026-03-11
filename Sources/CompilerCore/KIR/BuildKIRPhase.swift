@@ -1,7 +1,5 @@
 import Foundation
 
-/// Thin wrapper that conforms to ``CompilerPhase`` and delegates all
-/// KIR lowering work to ``KIRLoweringDriver``.
 public final class BuildKIRPhase: CompilerPhase {
     public static let name = "BuildKIR"
 

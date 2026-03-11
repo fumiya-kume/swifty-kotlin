@@ -1,6 +1,5 @@
 import Foundation
 
-/// Handles local declaration and assignment type inference.
 final class LocalDeclTypeChecker {
     unowned let driver: TypeCheckDriver
 

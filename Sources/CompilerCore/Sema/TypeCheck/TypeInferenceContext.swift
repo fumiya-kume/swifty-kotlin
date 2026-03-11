@@ -1,6 +1,5 @@
 import Foundation
 
-/// Internal visibility is required for cross-file extension decomposition.
 struct TypeInferenceContext {
     let ast: ASTModule
     let sema: SemaModule
