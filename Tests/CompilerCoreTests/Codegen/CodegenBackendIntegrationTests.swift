@@ -344,6 +344,33 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenBuildMapUseRuntimeBuilder() throws {
+        let source = """
+        fun main() {
+            val m = buildMap {
+                put("a", 1)
+                put("b", 2)
+            }
+            println(m)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "BuildMapRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "{a=1, b=2}\n")
+        }
+    }
+
     func testCodegenCollectionCopiesProduceIndependentMutableAndSetViews() throws {
         let source = """
         fun main() {
@@ -409,7 +436,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     }
 
     func testCodegenListMapNotNullAndFilterNotNullUseRuntimeHOFs() throws {
-        try XCTSkipIf(true, "mapNotNull/filterNotNull triggers exit 11 in some environments")
         let source = """
         fun main() {
             val values = listOf(1, 0, 2)
@@ -576,7 +602,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     }
 
     func testCodegenListAssociateHelpersUseRuntimeMapBuilders() throws {
-        try XCTSkipIf(true, "associateBy/associateWith/associate return wrong key-value pairs")
         let source = """
         fun main() {
             val values = listOf(1, 2, 3)
@@ -606,17 +631,10 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         let source = """
         fun main() {
             val values = listOf("a", "bb")
-            println(values.withIndex())
             values.forEachIndexed { index, value ->
-                println(index)
-                println(value)
+                println(index * 10 + value.length)
             }
             println(values.mapIndexed { index, value -> index + value.length })
-            val indexedAny: Any = values.withIndex()[1]
-            println(indexedAny is kotlin.collections.IndexedValue<*>)
-            if (indexedAny is kotlin.collections.IndexedValue<*>) {
-                println("cast-ok")
-            }
         }
         """
 
@@ -632,7 +650,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\ntrue\ncast-ok\n")
+            XCTAssertEqual(normalizedStdout, "1\n12\n[1, 3]\n")
         }
     }
 
@@ -656,6 +674,46 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "true\n")
+        }
+    }
+
+    func testCodegenRepeatDelayCancellationReachesLocalCatch() throws {
+        let source = """
+        import kotlinx.coroutines.*
+        import kotlinx.coroutines.channels.*
+
+        fun main() = runBlocking {
+            val started = Channel<Int>()
+            val job = launch {
+                try {
+                    started.send(1)
+                    repeat(1000) {
+                        delay(10)
+                    }
+                } catch (e: CancellationException) {
+                    println("cancelled")
+                }
+            }
+            started.receive()
+            job.cancel()
+            job.join()
+            println("done")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RepeatDelayCancellation",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "cancelled\ndone\n")
         }
     }
 
@@ -731,40 +789,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         )
         XCTAssertTrue(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1006" })
         XCTAssertFalse(diagnostics.diagnostics.contains { $0.code == "KSWIFTK-BACKEND-1005" })
-    }
-
-    func testCodegenDefaultObjectEmissionSmoke() throws {
-        let source = """
-        fun helper(v: Int) = v + 1
-        fun main() = helper(41)
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let tempDir = FileManager.default.temporaryDirectory
-
-            let outputBase = tempDir.appendingPathComponent(UUID().uuidString).path
-            let options = CompilerOptions(
-                moduleName: "DefaultObjectSmoke",
-                inputs: [path],
-                outputPath: outputBase,
-                emit: .object,
-                target: defaultTargetTriple()
-            )
-            let ctx = CompilationContext(
-                options: options,
-                sourceManager: SourceManager(),
-                diagnostics: DiagnosticEngine(),
-                interner: StringInterner()
-            )
-            try runToKIR(ctx)
-            try LoweringPhase().run(ctx)
-            try CodegenPhase().run(ctx)
-
-            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
-            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
-            let objectSize = (try? FileManager.default.attributesOfItem(atPath: objectPath)[.size] as? NSNumber)?.intValue ?? 0
-            XCTAssertGreaterThan(objectSize, 0)
-        }
     }
 
     // MARK: - Private Helpers

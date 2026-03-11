@@ -537,13 +537,8 @@ public func kk_list_unzip(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_withIndex")
 public func kk_list_withIndex(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
-    var indexed: [Int] = []
-    indexed.reserveCapacity(elements.count)
-    for (index, element) in elements.enumerated() {
-        indexed.append(runtimeIndexedValueNew(index: index, value: element))
-    }
-    return registerRuntimeObject(RuntimeListBox(elements: indexed))
+    let box = RuntimeIndexingIterableBox(listRaw: listRaw)
+    return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_list_forEachIndexed")

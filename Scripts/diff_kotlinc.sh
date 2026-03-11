@@ -321,6 +321,36 @@ should_skip_case() {
   grep -Eq '^[[:space:]]*//[[:space:]]*(KSWIFTK_DIFF_IGNORE|SKIP-DIFF)\b' "$kt_file"
 }
 
+# Cases that need stdin=EOF (e.g. readLine() returning null)
+needs_stdin_eof() {
+  local kt_file="$1"
+  grep -Eq '^[[:space:]]*//[[:space:]]*DIFF_STDIN_EOF\b' "$kt_file"
+}
+
+# Extract DIFF_LINE_PATTERN regex for lines that may differ (e.g. object identity hash)
+# Format: // DIFF_LINE_PATTERN: <regex>
+get_diff_line_pattern() {
+  local kt_file="$1"
+  grep -E '^[[:space:]]*//[[:space:]]*DIFF_LINE_PATTERN:' "$kt_file" 2>/dev/null | head -1 | sed 's/.*DIFF_LINE_PATTERN:[[:space:]]*//'
+}
+
+# Normalize stdout: replace lines matching pattern with placeholder for diff
+normalize_stdout_for_diff() {
+  local file="$1"
+  local pattern="$2"
+  if [[ -z "$pattern" ]]; then
+    cat "$file"
+  else
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      if echo "$line" | grep -qE "$pattern"; then
+        echo "__DIFF_PATTERN_MATCH__"
+      else
+        echo "$line"
+      fi
+    done < "$file"
+  fi
+}
+
 run_case() {
   local kt_file="$1"
   local artifact_file="${2:-}"
@@ -390,17 +420,29 @@ run_case() {
           ref_run_exit=1
           echo "Missing Main-Class in reference jar manifest." >"$ref_run_stderr"
         else
-          "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -cp "$ref_jar:$KOTLINC_CLASSPATH" "$main_class" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+          if needs_stdin_eof "$kt_file"; then
+            "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -cp "$ref_jar:$KOTLINC_CLASSPATH" "$main_class" < /dev/null >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+          else
+            "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -cp "$ref_jar:$KOTLINC_CLASSPATH" "$main_class" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+          fi
         fi
       else
-        "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+        if needs_stdin_eof "$kt_file"; then
+          "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" < /dev/null >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+        else
+          "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$JAVA_BIN" -jar "$ref_jar" >"$ref_run_stdout" 2>"$ref_run_stderr" || ref_run_exit=$?
+        fi
       fi
     fi
   fi
 
   "$TIMEOUT_CMD" "$COMPILE_TIMEOUT" "$KSWIFTC" "$kt_file" -o "$cand_bin" >"$cand_compile_stdout" 2>"$cand_compile_stderr" || cand_compile_exit=$?
   if [[ $cand_compile_exit -eq 0 ]]; then
-    "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
+    if needs_stdin_eof "$kt_file"; then
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$cand_bin" < /dev/null >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
+    else
+      "$TIMEOUT_CMD" "$RUN_TIMEOUT" "$cand_bin" >"$cand_run_stdout" 2>"$cand_run_stderr" || cand_run_exit=$?
+    fi
   fi
 
   normalize_text <"$ref_compile_stderr" >"$tmp_dir/ref_compile_stderr.norm"
@@ -436,10 +478,21 @@ run_case() {
       ok=0
       echo "  candidate run timed out after ${RUN_TIMEOUT}s"
     fi
-    if ! diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" >/dev/null; then
-      ok=0
-      echo "  stdout mismatch:"
-      diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" || true
+    line_pattern=$(get_diff_line_pattern "$kt_file")
+    if [[ -n "$line_pattern" ]]; then
+      normalize_stdout_for_diff "$tmp_dir/ref_run_stdout.norm" "$line_pattern" > "$tmp_dir/ref_run_stdout.pat"
+      normalize_stdout_for_diff "$tmp_dir/cand_run_stdout.norm" "$line_pattern" > "$tmp_dir/cand_run_stdout.pat"
+      if ! diff -u "$tmp_dir/ref_run_stdout.pat" "$tmp_dir/cand_run_stdout.pat" >/dev/null; then
+        ok=0
+        echo "  stdout mismatch:"
+        diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" || true
+      fi
+    else
+      if ! diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" >/dev/null; then
+        ok=0
+        echo "  stdout mismatch:"
+        diff -u "$tmp_dir/ref_run_stdout.norm" "$tmp_dir/cand_run_stdout.norm" || true
+      fi
     fi
   fi
 

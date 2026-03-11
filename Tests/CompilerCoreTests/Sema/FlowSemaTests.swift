@@ -87,9 +87,6 @@ final class FlowSemaTests: XCTestCase {
             try runSema(ctx)
 
             assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
-            if ctx.diagnostics.diagnostics.contains(where: { $0.code == "KSWIFTK-SEMA-0022" }) {
-                throw XCTSkip("Flow receiver typing for stored variable not yet fully implemented")
-            }
             assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0023", in: ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)

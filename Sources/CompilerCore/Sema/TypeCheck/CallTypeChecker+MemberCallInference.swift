@@ -1239,6 +1239,25 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            if args.isEmpty {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if receiverTypeForCheck == sema.types.charType {
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
+                        sema.types.booleanType
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             // String stdlib: nullable-receiver 0-arg methods (NULL-002)
             // isNullOrEmpty/isNullOrBlank accept String? receiver directly (no safe-call needed).
             if args.isEmpty {
@@ -1666,6 +1685,9 @@ extension CallTypeChecker {
                 case .buildMap: name == "put" && args.count == 2
                 }
                 if isBuilderMember {
+                    _ = args.map { argument in
+                        driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+                    }
                     sema.bindings.bindExprType(id, type: sema.types.unitType)
                     return sema.types.unitType
                 }

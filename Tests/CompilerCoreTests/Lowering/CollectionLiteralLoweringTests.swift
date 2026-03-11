@@ -187,6 +187,77 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "setOf should be rewritten to kk_set_of, got: \(callees)")
     }
 
+    // MARK: - buildList rewriting (STDLIB-070)
+
+    func testBuildListRewrittenToKkBuildList() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("buildList")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("buildList"), "buildList should be rewritten")
+        XCTAssertTrue(callees.contains("kk_build_list"), "buildList should become kk_build_list")
+    }
+
+    func testBuildListCapacityRewrittenToKkBuildListWithCapacity() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let arg0 = arena.appendExpr(.temporary(0))
+        let arg1 = arena.appendExpr(.temporary(1))
+        let result = arena.appendExpr(.temporary(2))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("buildList"),
+                    arguments: [arg0, arg1],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("buildList"), "buildList(capacity) should be rewritten")
+        XCTAssertTrue(
+            callees.contains("kk_build_list_with_capacity"),
+            "buildList(capacity) should become kk_build_list_with_capacity"
+        )
+    }
+
+    // MARK: - buildMap rewriting (STDLIB-071)
+
+    func testBuildMapRewrittenToKkBuildMap() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("buildMap")
+        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("buildMap"), "buildMap should be rewritten")
+        XCTAssertTrue(callees.contains("kk_build_map"), "buildMap should become kk_build_map")
+    }
+
     func testStringSplitResultIsTreatedAsListForPrintlnRewrite() throws {
         let interner = StringInterner()
         let arena = KIRArena()

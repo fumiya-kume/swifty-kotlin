@@ -1,4 +1,3 @@
-// SKIP-DIFF
 interface Greeter {
     fun greet(): String = "Hello"
 }

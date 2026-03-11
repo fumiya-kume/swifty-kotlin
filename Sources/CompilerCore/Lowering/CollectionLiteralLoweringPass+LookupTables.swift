@@ -175,6 +175,7 @@ struct CollectionLiteralLookupTables {
     let buildMapName: InternedString
     let kkBuildStringName: InternedString
     let kkBuildListName: InternedString
+    let kkBuildListWithCapacityName: InternedString
     let kkBuildMapName: InternedString
 
     // Builder member function names (STDLIB-002)
@@ -356,6 +357,7 @@ struct CollectionLiteralLookupTables {
         buildMapName = interner.intern("buildMap")
         kkBuildStringName = interner.intern("kk_build_string")
         kkBuildListName = interner.intern("kk_build_list")
+        kkBuildListWithCapacityName = interner.intern("kk_build_list_with_capacity")
         kkBuildMapName = interner.intern("kk_build_map")
 
         appendName = interner.intern("append")

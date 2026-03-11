@@ -19,6 +19,7 @@ extension CodegenBackendIntegrationTests {
             }
             println(built.x + built.y)
             println("Hello".also { println(it.length) }.length)
+            println(with("Hello") { length })
         }
         """
 
@@ -34,7 +35,7 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "5\n5\n30\n5\n5\n")
+            XCTAssertEqual(normalizedStdout, "5\n5\n30\n5\n5\n5\n")
         }
     }
 }

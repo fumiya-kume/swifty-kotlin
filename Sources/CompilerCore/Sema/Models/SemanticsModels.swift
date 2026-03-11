@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 public struct SymbolID: Hashable, Sendable {
     public let rawValue: Int32
 
@@ -63,7 +64,7 @@ public struct SemanticSymbol: Sendable {
     public let fqName: [InternedString]
     public let declSite: SourceRange?
     public let visibility: Visibility
-    public let flags: SymbolFlags
+    public var flags: SymbolFlags
 }
 
 public struct FunctionSignature: Hashable, Sendable {
@@ -315,6 +316,14 @@ public final class SymbolTable {
             return nil
         }
         return symbolsStorage[index]
+    }
+
+    public func insertFlags(_ flags: SymbolFlags, for symbol: SymbolID) {
+        let index = Int(symbol.rawValue)
+        guard index >= 0, index < symbolsStorage.count else {
+            return
+        }
+        symbolsStorage[index].flags.formUnion(flags)
     }
 
     public func lookup(fqName: [InternedString]) -> SymbolID? {

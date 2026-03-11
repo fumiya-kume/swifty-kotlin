@@ -20,6 +20,9 @@ extension CallLowerer {
         let intType = sema.types.intType
         let boolType = sema.types.booleanType
         let unitType = sema.types.unitType
+        let lessThanCallee = interner.intern("kk_op_lt")
+        let addCallee = interner.intern("kk_op_add")
+        let unboxIntCallee = interner.intern("kk_unbox_int")
 
         let countExpr = driver.lowerExpr(
             args[0].expr,
@@ -30,26 +33,25 @@ extension CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let indexSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
-        let indexExpr = arena.appendExpr(.symbolRef(indexSymbol), type: intType)
-        let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+        let indexExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
         let oneExpr = arena.appendExpr(.intLiteral(1), type: intType)
         let falseExpr = arena.appendExpr(.boolLiteral(false), type: boolType)
-        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        instructions.append(.constValue(result: indexExpr, value: .intLiteral(0)))
         instructions.append(.constValue(result: oneExpr, value: .intLiteral(1)))
         instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
-        instructions.append(.copy(from: zeroExpr, to: indexExpr))
 
         let conditionLabel = driver.ctx.makeLoopLabel()
         let exitLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(conditionLabel))
 
         let conditionExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-        instructions.append(.binary(
-            op: .lessThan,
-            lhs: indexExpr,
-            rhs: countExpr,
-            result: conditionExpr
+        instructions.append(.call(
+            symbol: nil,
+            callee: lessThanCallee,
+            arguments: [indexExpr, countExpr],
+            result: conditionExpr,
+            canThrow: true,
+            thrownResult: nil
         ))
         instructions.append(.jumpIfEqual(lhs: conditionExpr, rhs: falseExpr, target: exitLabel))
 
@@ -101,12 +103,23 @@ extension CallLowerer {
             }
         }
 
+        let nextIndexBoxedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: addCallee,
+            arguments: [indexExpr, oneExpr],
+            result: nextIndexBoxedExpr,
+            canThrow: true,
+            thrownResult: nil
+        ))
         let nextIndexExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
-        instructions.append(.binary(
-            op: .add,
-            lhs: indexExpr,
-            rhs: oneExpr,
-            result: nextIndexExpr
+        instructions.append(.call(
+            symbol: nil,
+            callee: unboxIntCallee,
+            arguments: [nextIndexBoxedExpr],
+            result: nextIndexExpr,
+            canThrow: false,
+            thrownResult: nil
         ))
         instructions.append(.copy(from: nextIndexExpr, to: indexExpr))
         instructions.append(.jump(conditionLabel))

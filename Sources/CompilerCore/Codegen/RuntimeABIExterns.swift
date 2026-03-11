@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J21"
+    public static let specVersion = "J22"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -79,6 +79,48 @@ public enum RuntimeABIExterns {
 
     public static let kk_abort_unreachable = ExternDecl(
         name: "kk_abort_unreachable",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_require = ExternDecl(
+        name: "kk_require",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_check = ExternDecl(
+        name: "kk_check",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_require_lazy = ExternDecl(
+        name: "kk_require_lazy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_check_lazy = ExternDecl(
+        name: "kk_check_lazy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_error = ExternDecl(
+        name: "kk_error",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_todo = ExternDecl(
+        name: "kk_todo",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_todo_noarg = ExternDecl(
+        name: "kk_todo_noarg",
         parameterTypes: ["intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
@@ -300,6 +342,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_char_isDigit = ExternDecl(
+        name: "kk_char_isDigit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isLetter = ExternDecl(
+        name: "kk_char_isLetter",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isLetterOrDigit = ExternDecl(
+        name: "kk_char_isLetterOrDigit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isWhitespace = ExternDecl(
+        name: "kk_char_isWhitespace",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Println
 
     public static let kk_println_any = ExternDecl(
@@ -312,6 +378,20 @@ public enum RuntimeABIExterns {
         name: "kk_println_bool",
         parameterTypes: ["intptr_t"],
         returnType: "void"
+    )
+
+    public static let kk_println_newline = ExternDecl(
+        name: "kk_println_newline",
+        parameterTypes: [],
+        returnType: "void"
+    )
+
+    // MARK: - IO
+
+    public static let kk_readline = ExternDecl(
+        name: "kk_readline",
+        parameterTypes: [],
+        returnType: "intptr_t"
     )
 
     // MARK: - GC
@@ -999,6 +1079,13 @@ public enum RuntimeABIExterns {
             kk_throwable_is_cancellation,
             kk_panic,
             kk_abort_unreachable,
+            kk_require,
+            kk_check,
+            kk_require_lazy,
+            kk_check_lazy,
+            kk_error,
+            kk_todo,
+            kk_todo_noarg,
             // String
             kk_string_from_utf8,
             kk_string_concat,
@@ -1026,6 +1113,10 @@ public enum RuntimeABIExterns {
             kk_string_toDoubleOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
+            kk_char_isDigit,
+            kk_char_isLetter,
+            kk_char_isLetterOrDigit,
+            kk_char_isWhitespace,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
@@ -1039,6 +1130,9 @@ public enum RuntimeABIExterns {
             // Println
             kk_println_any,
             kk_println_bool,
+            kk_println_newline,
+            // IO
+            kk_readline,
             // GC
             kk_register_global_root,
             kk_unregister_global_root,

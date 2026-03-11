@@ -19,11 +19,9 @@ final class RuntimeHelpersTests: IsolatedRuntimeXCTestCase {
         XCTAssertNil(result)
     }
 
-    func testNormalizeNullSentinelPointerReturnsNil() {
-        guard let sentinelPtr = UnsafeMutableRawPointer(bitPattern: runtimeNullSentinelInt) else {
-            // If null sentinel is 0 on this platform, skip.
-            return
-        }
+    func testNormalizeNullSentinelPointerReturnsNil() throws {
+        try XCTSkipIf(runtimeNullSentinelInt == 0, "Null sentinel is 0 on this platform")
+        let sentinelPtr = try XCTUnwrap(UnsafeMutableRawPointer(bitPattern: runtimeNullSentinelInt))
         let result = normalizeNullableRuntimePointer(sentinelPtr)
         XCTAssertNil(result, "Null sentinel should be normalized to nil")
     }

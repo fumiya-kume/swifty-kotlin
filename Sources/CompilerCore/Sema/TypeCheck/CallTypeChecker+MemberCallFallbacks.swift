@@ -161,6 +161,30 @@ extension CallTypeChecker {
             )))
         }
 
+        if memberName == "withIndex",
+           let iterableSymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("collections"),
+               interner.intern("Iterable"),
+           ]),
+           let indexedValueSymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("collections"),
+               interner.intern("IndexedValue"),
+           ])
+        {
+            let indexedValueType = sema.types.make(.classType(ClassType(
+                classSymbol: indexedValueSymbol,
+                args: [.out(receiverElementType)],
+                nullability: .nonNull
+            )))
+            return sema.types.make(.classType(ClassType(
+                classSymbol: iterableSymbol,
+                args: [.out(indexedValueType)],
+                nullability: .nonNull
+            )))
+        }
+
         return sema.types.anyType
     }
 

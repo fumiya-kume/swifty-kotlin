@@ -44,6 +44,7 @@ public protocol KKContinuation {
 
 typealias KKSuspendEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKThunkEntryPoint = @convention(c) (UnsafeMutablePointer<Int>?) -> Int
+typealias KKClosureThunkEntryPoint = @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKDelegateObserverEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 final class RuntimeStringBox {
@@ -179,6 +180,16 @@ final class RuntimeMapBox {
     init(keys: [Int], values: [Int]) {
         self.keys = keys
         self.values = values
+    }
+}
+
+/// Lazy wrapper for `withIndex()` result. Kotlin returns `IndexingIterable` with
+/// default Object.toString() = "kotlin.collections.IndexingIterable@<hex>".
+final class RuntimeIndexingIterableBox {
+    let listRaw: Int
+
+    init(listRaw: Int) {
+        self.listRaw = listRaw
     }
 }
 

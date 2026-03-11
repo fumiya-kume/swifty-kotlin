@@ -34,12 +34,34 @@ final class CallTypeChecker {
         // --- Builder DSL functions (STDLIB-002) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
-        if let calleeName, args.count == 1 {
+        if let calleeName {
             let name = interner.resolve(calleeName)
             if let builderKind = builderDSLKind(for: name),
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
-                let argumentExprID = args[0].expr
+                let lambdaArgumentIndex: Int? = switch builderKind {
+                case .buildString, .buildMap:
+                    args.count == 1 ? 0 : nil
+                case .buildList:
+                    switch args.count {
+                    case 1: 0
+                    case 2: 1
+                    default: nil
+                    }
+                }
+                guard let lambdaArgumentIndex else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                if builderKind == .buildList, args.count == 2 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                let argumentExprID = args[lambdaArgumentIndex].expr
                 guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0002",
@@ -50,12 +72,22 @@ final class CallTypeChecker {
                     return sema.types.errorType
                 }
 
-                let receiverType = builderDSLReceiverType(kind: builderKind, sema: sema, interner: interner)
+                let receiverType = builderDSLReceiverType(
+                    kind: builderKind,
+                    lambdaExprID: argumentExprID,
+                    expectedType: expectedType,
+                    ctx: ctx,
+                    locals: locals,
+                    sema: sema,
+                    interner: interner
+                )
                 let returnType: TypeID = switch builderKind {
                 case .buildString:
                     sema.types.stringType
-                case .buildList, .buildMap:
-                    sema.types.anyType
+                case .buildList:
+                    builderDSLBuildListReturnType(receiverType: receiverType, sema: sema, interner: interner)
+                case .buildMap:
+                    builderDSLBuildMapReturnType(receiverType: receiverType, sema: sema, interner: interner)
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)
@@ -69,13 +101,17 @@ final class CallTypeChecker {
             }
         }
 
-        // --- Scope function: with(receiver, block) (STDLIB-004) ---
+        // --- Scope function: with(receiver, block) (STDLIB-004, STDLIB-061) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
-        // Only intercept when no user-defined function named `with` is in scope.
+        // Intercept when no local or user-defined (non-synthetic) `with` shadows the stdlib helper.
         if let calleeName, args.count == 2,
            interner.resolve(calleeName) == "with",
-           ctx.cachedScopeLookup(calleeName).isEmpty
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
         {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -558,6 +594,12 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            if args.count == 2,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               ["kk_require_lazy", "kk_check_lazy"].contains(externalLinkName)
+            {
+                sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            }
             applyContractEffects(
                 chosen: chosen,
                 args: args,
@@ -728,6 +770,9 @@ final class CallTypeChecker {
             case .buildMap: name == "put" && args.count == 2
             }
             if isBuilderMember {
+                for argument in args {
+                    _ = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+                }
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType
             }
@@ -949,6 +994,18 @@ final class CallTypeChecker {
                     stringResultType = sema.types.stringType
                 }
                 if let resultType = stringResultType {
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
+            if sema.types.isSubtype(nonNullReceiver, sema.types.charType), args.isEmpty {
+                let charResultType: TypeID? = switch name {
+                case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
+                    sema.types.booleanType
+                default:
+                    nil
+                }
+                if let resultType = charResultType {
                     sema.bindings.bindExprType(id, type: resultType)
                     return resultType
                 }

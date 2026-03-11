@@ -181,6 +181,20 @@ public func kk_build_list(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?)
     return registerRuntimeObject(RuntimeListBox(elements: frame.elements))
 }
 
+@_cdecl("kk_build_list_with_capacity")
+public func kk_build_list_with_capacity(
+    _ capacity: Int,
+    _ fnPtr: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    if capacity < 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: capacity must be non-negative.")
+        return 0
+    }
+    return kk_build_list(fnPtr, outThrown)
+}
+
 @_cdecl("kk_builder_map_put")
 public func kk_builder_map_put(_ key: Int, _ value: Int) -> Int {
     runtimeBuilderState.putMapEntry(key: key, value: value)

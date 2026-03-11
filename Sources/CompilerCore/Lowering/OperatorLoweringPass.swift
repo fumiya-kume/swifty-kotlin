@@ -3,6 +3,13 @@ import Foundation
 final class OperatorLoweringPass: LoweringPass {
     static let name = "OperatorLowering"
 
+    private struct PrintlnConversionCallees {
+        let intToFloat: InternedString
+        let intToFloatBits: InternedString
+        let floatToDoubleBits: InternedString
+        let intToDoubleBits: InternedString
+    }
+
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
@@ -27,6 +34,13 @@ final class OperatorLoweringPass: LoweringPass {
     func run(module: KIRModule, ctx: KIRContext) throws {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
+
+        let printlnConversionCallees = PrintlnConversionCallees(
+            intToFloat: ctx.interner.intern("kk_int_to_float"),
+            intToFloatBits: ctx.interner.intern("kk_int_to_float_bits"),
+            floatToDoubleBits: ctx.interner.intern("kk_float_to_double_bits"),
+            intToDoubleBits: ctx.interner.intern("kk_int_to_double_bits")
+        )
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -56,7 +70,9 @@ final class OperatorLoweringPass: LoweringPass {
                            symbol: symbol, callee: callee, arguments: arguments,
                            result: result, canThrow: canThrow, thrownResult: thrownResult,
                            isSuperCall: isSuperCall, arena: module.arena,
-                           ctx: ctx, newBody: &newBody
+                           ctx: ctx, newBody: &newBody,
+                           precedingInstructions: newBody,
+                           conversionCallees: printlnConversionCallees
                        )
                     {
                         continue
@@ -141,11 +157,21 @@ final class OperatorLoweringPass: LoweringPass {
         isSuperCall: Bool,
         arena: KIRArena,
         ctx: KIRContext,
-        newBody: inout [KIRInstruction]
+        newBody: inout [KIRInstruction],
+        precedingInstructions: [KIRInstruction],
+        conversionCallees: PrintlnConversionCallees
     ) -> Bool {
-        guard let types = ctx.sema?.types,
-              let argType = arena.exprType(arguments[0])
-        else { return false }
+        guard let types = ctx.sema?.types else { return false }
+        var argType = arena.exprType(arguments[0])
+        if argType == nil {
+            argType = inferPrintlnArgTypeFromProducingInstruction(
+                exprID: arguments[0],
+                instructions: precedingInstructions,
+                types: types,
+                conversionCallees: conversionCallees
+            )
+        }
+        guard let argType else { return false }
 
         let primitiveCallee: String? = switch types.kind(of: argType) {
         case .primitive(.long, .nonNull): "kk_println_long"
@@ -174,6 +200,50 @@ final class OperatorLoweringPass: LoweringPass {
             return true
         }
         return false
+    }
+
+    /// Infers the semantic type of an expression from the instruction that produces it,
+    /// used when arena.exprType is nil (e.g. for kk_int_to_float result passed to println).
+    private func inferPrintlnArgTypeFromProducingInstruction(
+        exprID: KIRExprID,
+        instructions: [KIRInstruction],
+        types: TypeSystem,
+        conversionCallees: PrintlnConversionCallees
+    ) -> TypeID? {
+        for instruction in instructions.reversed() {
+            switch instruction {
+            case let .call(_, callee, _, result, _, _, _):
+                if result == exprID {
+                    if callee == conversionCallees.intToFloat || callee == conversionCallees.intToFloatBits {
+                        return types.make(.primitive(.float, .nonNull))
+                    }
+                    if callee == conversionCallees.floatToDoubleBits || callee == conversionCallees.intToDoubleBits {
+                        return types.make(.primitive(.double, .nonNull))
+                    }
+                    return nil
+                }
+            case let .copy(from, to):
+                if to == exprID {
+                    return inferPrintlnArgTypeFromProducingInstruction(
+                        exprID: from,
+                        instructions: instructions,
+                        types: types,
+                        conversionCallees: conversionCallees
+                    )
+                }
+            case let .constValue(result: result, value: .floatLiteral):
+                if result == exprID {
+                    return types.make(.primitive(.float, .nonNull))
+                }
+            case let .constValue(result: result, value: .doubleLiteral):
+                if result == exprID {
+                    return types.make(.primitive(.double, .nonNull))
+                }
+            default:
+                break
+            }
+        }
+        return nil
     }
 
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {
@@ -207,7 +277,7 @@ final class OperatorLoweringPass: LoweringPass {
 
     private func appendPrimitivePrintlnCall(
         to body: inout [KIRInstruction],
-        symbol: SymbolID?,
+        symbol _: SymbolID?,
         callee: InternedString,
         arguments: [KIRExprID],
         result: KIRExprID?,
@@ -215,10 +285,11 @@ final class OperatorLoweringPass: LoweringPass {
         thrownResult: KIRExprID?,
         isSuperCall: Bool
     ) {
-        // Keep the lowered runtime call side-effect only and synthesize Unit explicitly.
+        // Use symbol: nil so ABILoweringPass does not apply println's Any? signature
+        // and box the argument. Primitive println variants expect raw bits (Int), not boxed values.
         body.append(
             .call(
-                symbol: symbol,
+                symbol: nil,
                 callee: callee,
                 arguments: arguments,
                 result: nil,

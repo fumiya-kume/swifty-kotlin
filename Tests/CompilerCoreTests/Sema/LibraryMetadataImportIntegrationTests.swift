@@ -447,4 +447,48 @@ final class LibraryMetadataImportIntegrationTests: XCTestCase {
             XCTAssertFalse(ctx.diagnostics.hasError)
         }
     }
+
+    /// Regression: when metadata provides Collection.contains, listOf(...).contains must not emit VAR-OUT.
+    /// Verifies metadata import and synthetic stub interaction for variance relaxation.
+    func testMetadataCollectionContainsDoesNotCauseVarOutWithListOf() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        defer { try? fm.removeItem(at: libDir) }
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtCollectionMeta",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=2
+        interface _ fq=kotlin.collections.Collection schema=v1
+        function _ fq=kotlin.collections.Collection.contains schema=v1 arity=1 suspend=0
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        let source = """
+        fun main() {
+            val list = listOf(1, 2, 3)
+            list.contains(2)
+            list.isEmpty()
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "CollectionMetaApp",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-VAR-OUT", in: ctx)
+            XCTAssertFalse(ctx.diagnostics.hasError)
+        }
+    }
 }

@@ -1,8 +1,6 @@
-// SKIP-DIFF: withIndex() currently lowers to a concrete runtime list for subsequent indexed helpers,
-// so its string form intentionally diverges from Kotlin's default IndexingIterable object rendering.
+// SKIP-DIFF: List.toString() parity pending
 fun main() {
     val values = listOf(10, 20)
-    println(values.withIndex())
-    values.forEachIndexed { index, value -> println(index + value) }
+    values.forEachIndexed { index, value -> println(index * 100 + value) }
     println(values.mapIndexed { index, value -> index + value })
 }

@@ -261,6 +261,16 @@ final class CallLowerer {
         {
             finalArgIDs.insert(implicitReceiver, at: 0)
         }
+        if loweredCallable == nil, let chosen {
+            finalArgIDs = appendClosureArgumentsIfNeeded(
+                finalArgIDs,
+                originalArgs: args,
+                chosenCallee: chosen,
+                sema: sema,
+                arena: arena,
+                instructions: &instructions
+            )
+        }
 
         // Inject callable value captures for coroutine launcher arguments.
         // When a suspend lambda/closure with captures is passed to a launcher
@@ -380,6 +390,36 @@ final class CallLowerer {
             ))
         }
         return result
+    }
+
+    private func appendClosureArgumentsIfNeeded(
+        _ loweredArguments: [KIRExprID],
+        originalArgs: [CallArgument],
+        chosenCallee: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) -> [KIRExprID] {
+        guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
+              ["kk_require_lazy", "kk_check_lazy"].contains(externalLinkName),
+              loweredArguments.count == originalArgs.count,
+              loweredArguments.count == 2
+        else {
+            return loweredArguments
+        }
+
+        var finalArgs = [loweredArguments[0], loweredArguments[1]]
+        if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
+           let callableInfo = driver.ctx.callableValueInfoByExprID[loweredArguments[1]],
+           let closureRaw = callableInfo.captureArguments.first
+        {
+            finalArgs.append(closureRaw)
+        } else {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            finalArgs.append(zeroExpr)
+        }
+        return finalArgs
     }
 
     func appendReifiedTypeTokens(

@@ -141,9 +141,15 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let collectionInterfaceSymbol = registerSyntheticCollectionStub(
+        let iterableInterfaceSymbol = registerSyntheticIterableStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        let collectionInterfaceSymbol = registerSyntheticCollectionStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
         )
 
         let listInterfaceSymbol = registerSyntheticListStub(
@@ -321,7 +327,8 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID
     ) -> SymbolID {
         let collectionName = interner.intern("Collection")
         let collectionFQName = kotlinCollectionsPkg + [collectionName]
@@ -350,7 +357,44 @@ extension DataFlowSemaPhase {
         )
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: collectionInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: collectionInterfaceSymbol)
+        symbols.setDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
         return collectionInterfaceSymbol
+    }
+
+    private func registerSyntheticIterableStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let iterableName = interner.intern("Iterable")
+        let iterableFQName = kotlinCollectionsPkg + [iterableName]
+        let iterableInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: iterableFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: iterableName,
+                fqName: iterableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: iterableInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: iterableInterfaceSymbol)
+        return iterableInterfaceSymbol
     }
 
     func registerLateListIndexedMembers(
@@ -429,6 +473,13 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListContainsAndIsEmptyMembers(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         registerListJoinToStringMember(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
@@ -493,6 +544,72 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerListContainsAndIsEmptyMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let containsName = interner.intern("contains")
+        let containsFQName = listFQName + [containsName]
+        if symbols.lookup(fqName: containsFQName) == nil {
+            let containsSymbol = symbols.define(
+                kind: .function,
+                name: containsName,
+                fqName: containsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: containsSymbol)
+            symbols.setExternalLinkName("kk_list_contains", for: containsSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsSymbol
+            )
+        }
+
+        let isEmptyName = interner.intern("isEmpty")
+        let isEmptyFQName = listFQName + [isEmptyName]
+        if symbols.lookup(fqName: isEmptyFQName) == nil {
+            let isEmptySymbol = symbols.define(
+                kind: .function,
+                name: isEmptyName,
+                fqName: isEmptyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: isEmptySymbol)
+            symbols.setExternalLinkName("kk_list_is_empty", for: isEmptySymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: isEmptySymbol
+            )
+        }
+    }
+
     private func registerListToMutableListMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -522,7 +639,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_to_mutable_list", for: memberSymbol)
@@ -562,7 +679,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_joinToString", for: memberSymbol)
@@ -635,7 +752,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_to_set", for: memberSymbol)
@@ -998,7 +1115,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_add", for: memberSymbol)
@@ -1037,7 +1154,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_removeAt", for: memberSymbol)
@@ -1076,7 +1193,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_clear", for: memberSymbol)
@@ -1138,6 +1255,13 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerSetIsEmptyMember(
+            symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
 
         return setInterfaceSymbol
     }
@@ -1152,6 +1276,48 @@ extension DataFlowSemaPhase {
         typeParamType: TypeID
     ) {
         let memberName = interner.intern("contains")
+        let memberFQName = setFQName + [memberName]
+        if let existing = symbols.lookup(fqName: memberFQName) {
+            symbols.insertFlags([.synthetic, .operatorFunction], for: existing)
+            return
+        }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_contains", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [typeParamType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerSetIsEmptyMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("isEmpty")
         let memberFQName = setFQName + [memberName]
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
@@ -1168,11 +1334,11 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_set_contains", for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_is_empty", for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: [typeParamType],
+                parameterTypes: [],
                 returnType: types.booleanType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
@@ -1902,7 +2068,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        // withIndex(): List<IndexedValue<E>>
+        // withIndex(): Iterable<IndexedValue<E>>
         let indexedValueSymbol = registerSyntheticIndexedValueStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
@@ -1912,12 +2078,13 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
-        let listSymbol = listInterfaceSymbol
-        let listIndexedValueType = types.make(.classType(ClassType(
-            classSymbol: listSymbol,
+        let iterableSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("Iterable")]) ?? listInterfaceSymbol
+        let iterableIndexedValueType = types.make(.classType(ClassType(
+            classSymbol: iterableSymbol,
             args: [.out(indexedValueType)],
             nullability: .nonNull
         )))
+        let listSymbol = listInterfaceSymbol
 
         let withIndexName = interner.intern("withIndex")
         let withIndexFQName = listFQName + [withIndexName]
@@ -1936,7 +2103,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: [],
-                    returnType: listIndexedValueType,
+                    returnType: iterableIndexedValueType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -2042,12 +2209,12 @@ extension DataFlowSemaPhase {
             return existing
         }
         let symbol = symbols.define(
-            kind: .interface,
+            kind: .class,
             name: name,
             fqName: fqName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .dataType]
         )
         let tName = interner.intern("T")
         let tFQName = fqName + [tName]

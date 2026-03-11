@@ -74,18 +74,25 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testExceptionFunctionCount() {
-        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 4)
+        // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
+        // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
+        // kk_error, kk_todo, kk_todo_noarg
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 11)
     }
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 36)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 40)
     }
 
     func testPrintlnFunctionCount() {
-        // kk_println_any, kk_println_bool
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 2)
+        // kk_println_any, kk_println_bool, kk_println_newline
+        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 3)
+    }
+
+    func testIOFunctionCount() {
+        // kk_readline
+        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 1)
     }
 
     func testGCFunctionCount() {
@@ -135,6 +142,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.exceptionFunctions.count
             + RuntimeABISpec.stringFunctions.count
             + RuntimeABISpec.printlnFunctions.count
+            + RuntimeABISpec.ioFunctions.count
             + RuntimeABISpec.gcFunctions.count
             + RuntimeABISpec.coroutineFunctions.count
             + RuntimeABISpec.boxingFunctions.count
