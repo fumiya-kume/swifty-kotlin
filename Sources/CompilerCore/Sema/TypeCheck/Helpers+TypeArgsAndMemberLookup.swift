@@ -1,8 +1,5 @@
 import Foundation
 
-// Stateless utility functions for type checking. No back-reference to the driver needed.
-// Derived from TypeCheckSemaPhase+InferHelpers.swift.
-
 extension TypeCheckHelpers {
     func substituteAliasArg(
         _ arg: TypeArg,

@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles expression type inference dispatch and specific expression cases.
-// Derived from the previous monolithic type-check phase expression inference extensions.
-
 extension ExprTypeChecker {
     func inferCompoundAssignExpr(
         _ id: ExprID,

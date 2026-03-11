@@ -120,20 +120,16 @@ extension KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
-        // Consume 'if'
         _ = consumeToken(into: &children, range: &range)
 
-        // Parse condition '(' ... ')'
         if case .symbol(.lParen) = stream.peek().kind {
             let conditionGroup = parseBalancedGroup(opening: .lParen, closing: .rParen)
             children.append(.node(conditionGroup))
             range.append(arena.node(conditionGroup).range)
         }
 
-        // Parse then-branch
         appendBranchBody(inBlock: inBlock, into: &children, range: &range, stopBeforeElse: true)
 
-        // Parse optional 'else' branch
         if case .keyword(.else) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
             appendBranchBody(inBlock: inBlock, into: &children, range: &range, stopBeforeElse: false)
@@ -147,10 +143,8 @@ extension KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
-        // Consume 'when'
         _ = consumeToken(into: &children, range: &range)
 
-        // Parse optional subject '(' ... ')'
         if case .symbol(.lParen) = stream.peek().kind {
             let subjectGroup = parseBalancedGroup(opening: .lParen, closing: .rParen)
             children.append(.node(subjectGroup))
@@ -172,13 +166,10 @@ extension KotlinParser {
         var children: [SyntaxChild] = []
         var range = RangeAccumulator()
 
-        // Consume 'try'
         _ = consumeToken(into: &children, range: &range)
 
-        // Parse try body
         appendTryBody(inBlock: inBlock, into: &children, range: &range)
 
-        // Parse catch clauses
         while case .keyword(.catch) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
             if case .symbol(.lParen) = stream.peek().kind {
@@ -189,7 +180,6 @@ extension KotlinParser {
             appendTryBody(inBlock: inBlock, into: &children, range: &range)
         }
 
-        // Parse finally clause
         if case .keyword(.finally) = stream.peek().kind {
             _ = consumeToken(into: &children, range: &range)
             appendTryBody(inBlock: inBlock, into: &children, range: &range)

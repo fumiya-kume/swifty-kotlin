@@ -1,8 +1,5 @@
 import Foundation
 
-// Property delegate interface stubs (Lazy<T>, ReadWriteProperty, lazy(), Delegates, etc.).
-// Split from DataFlowSemaPhase+HeaderHelpers.swift to stay within file-length limits.
-
 extension DataFlowSemaPhase {
     func registerSyntheticPropertyInterfaceStubs(
         symbols: SymbolTable,

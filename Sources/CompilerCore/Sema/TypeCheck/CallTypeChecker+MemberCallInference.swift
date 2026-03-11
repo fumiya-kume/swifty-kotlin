@@ -1,10 +1,6 @@
 // swiftlint:disable file_length
 import Foundation
 
-// Handles call expression type inference (function calls, member calls, safe member calls).
-// Derived from TypeCheckSemaPhase+InferCallsAndBinary.swift.
-// File splitting is still in progress for this legacy entry point.
-
 extension CallTypeChecker {
     private func tryBuiltinFlowMemberCall(
         _ id: ExprID,

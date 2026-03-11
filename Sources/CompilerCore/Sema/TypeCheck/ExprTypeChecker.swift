@@ -1,6 +1,5 @@
 import Foundation
 
-/// Handles expression type inference dispatch and specific expression cases.
 final class ExprTypeChecker {
     unowned let driver: TypeCheckDriver
 

@@ -1,6 +1,5 @@
 import Foundation
 
-/// Stateless utility for building file-level scopes during type checking.
 struct TypeCheckScopeBuilder {
     func buildFileScopes(
         ast: ASTModule,

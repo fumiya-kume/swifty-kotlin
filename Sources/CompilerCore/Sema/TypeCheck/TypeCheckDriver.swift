@@ -1,6 +1,5 @@
 import Foundation
 
-/// Shared typealias for local variable bindings used across all type-checking delegates.
 typealias LocalBindings = [InternedString: (type: TypeID, symbol: SymbolID, isMutable: Bool, isInitialized: Bool)]
 
 /// Dispatch hub for type checking. Replaces the monolithic extension-based splitting

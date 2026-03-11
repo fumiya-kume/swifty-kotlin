@@ -104,12 +104,10 @@ public final class LexPhase: CompilerPhase {
         ctx.tokens = allTokens
         ctx.tokensByFile = tokensByFile
 
-        // Populate per-file IR.
         for (fileID, fileTokens) in tokensByFile {
             ctx.fileIRs[fileID] = FileIR(fileID: fileID, tokens: fileTokens)
         }
 
-        // Stabilize diagnostic order after parallel lexing.
         ctx.diagnostics.sortBySourceLocation()
     }
 }
@@ -143,13 +141,11 @@ public final class ParsePhase: CompilerPhase {
             ctx.syntaxTreeRoot = first.2
         }
 
-        // Update per-file IR with parse results.
         for (fileID, cstArena, root) in syntaxTrees {
             ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxArena = cstArena
             ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxRoot = root
         }
 
-        // Stabilize diagnostic order after parallel parsing.
         ctx.diagnostics.sortBySourceLocation()
     }
 }
@@ -475,7 +471,6 @@ public final class BuildASTPhase: CompilerPhase {
             )
         }
 
-        // Compute total token count from per-file data.
         let totalTokenCount: Int = if !ctx.tokensByFile.isEmpty {
             ctx.tokensByFile.reduce(0) { $0 + $1.1.count }
         } else {
@@ -484,7 +479,6 @@ public final class BuildASTPhase: CompilerPhase {
 
         ctx.ast = ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount)
 
-        // Update per-file IR with AST results.
         for file in files {
             ctx.fileIRs[file.fileID, default: FileIR(fileID: file.fileID)].astFile = file
             ctx.fileIRs[file.fileID, default: FileIR(fileID: file.fileID)].astArena = arena

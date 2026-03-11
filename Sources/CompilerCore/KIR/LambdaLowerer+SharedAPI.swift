@@ -1,7 +1,5 @@
 import Foundation
 
-/// Forwarding overloads for LambdaLowerer that accept KIRLoweringSharedContext
-/// and KIRLoweringEmitContext, delegating to the old-API functions.
 extension LambdaLowerer {
     func lowerLambdaLiteralExpr(
         _ exprID: ExprID,

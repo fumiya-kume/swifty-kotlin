@@ -1,8 +1,5 @@
 import Foundation
 
-// Handles local declaration and assignment type inference.
-// Derived from TypeCheckSemaPhase+InferDecls.swift.
-
 extension LocalDeclTypeChecker {
     func inferIndexedCompoundAssignExpr(
         _ id: ExprID,

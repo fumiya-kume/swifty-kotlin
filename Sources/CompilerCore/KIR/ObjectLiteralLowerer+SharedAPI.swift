@@ -1,7 +1,5 @@
 import Foundation
 
-/// Forwarding overload for ObjectLiteralLowerer that accepts KIRLoweringSharedContext
-/// and KIRLoweringEmitContext, delegating to the old-API function.
 extension ObjectLiteralLowerer {
     func lowerObjectLiteralExpr(
         _ exprID: ExprID,

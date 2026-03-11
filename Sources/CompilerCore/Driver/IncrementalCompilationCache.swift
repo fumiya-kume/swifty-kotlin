@@ -11,10 +11,8 @@ import Foundation
 ///     <hash>.kirbin     — serialized per-file frontend results (written/read by other components)
 /// ```
 public final class IncrementalCompilationCache {
-    /// Root directory of the cache.
     public let cachePath: String
 
-    /// Fingerprints from the *previous* successful compilation.
     private var previousFingerprints: [String: FileFingerprint] = [:]
 
     /// Dependency graph from the *previous* successful compilation.
@@ -30,7 +28,6 @@ public final class IncrementalCompilationCache {
 
     // MARK: - Loading previous state
 
-    /// Current supported manifest version. Older/newer versions are ignored.
     private static let supportedManifestVersion = 1
 
     /// Loads the manifest and dependency graph from the cache directory.
@@ -65,7 +62,6 @@ public final class IncrementalCompilationCache {
 
     // MARK: - Change detection
 
-    /// Computes fingerprints for the given input paths and stores them as current.
     public func computeCurrentFingerprints(for paths: [String], sourceManager: SourceManager) {
         for path in paths {
             guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: sourceManager) else {
@@ -75,7 +71,6 @@ public final class IncrementalCompilationCache {
         }
     }
 
-    /// Computes fingerprints directly from path list (without SourceManager).
     public func computeCurrentFingerprints(for paths: [String]) {
         for path in paths {
             guard let fingerprint = computeCurrentFingerprint(for: path, sourceManager: nil) else {
@@ -85,8 +80,6 @@ public final class IncrementalCompilationCache {
         }
     }
 
-    /// Returns the set of files whose content hash has changed since the last build.
-    /// Files that are new (not in previous manifest) are also considered changed.
     public func changedFiles(allPaths: [String]) -> Set<String> {
         var changed = Set<String>()
         let allPathsSet = Set(allPaths)
@@ -145,12 +138,10 @@ public final class IncrementalCompilationCache {
         return Set(recompFiles)
     }
 
-    /// Returns `true` if a previous cache exists.
     public var hasPreviousCache: Bool {
         !previousFingerprints.isEmpty
     }
 
-    /// Returns the previous dependency graph (for querying after load).
     public var dependencyGraph: DependencyGraph? {
         previousDependencyGraph
     }
@@ -193,7 +184,6 @@ public final class IncrementalCompilationCache {
         }
     }
 
-    /// Clears the entire cache directory.
     public func clearCache() {
         try? FileManager.default.removeItem(atPath: cachePath)
         previousFingerprints = [:]
