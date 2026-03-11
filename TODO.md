@@ -54,11 +54,11 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `listOf(1, 0, 2).mapNotNull { it }` と `listOf("a", null, "b").filterNotNull()` が `kotlinc` と一致し、常時 skip が不要になる
 
-- [ ] STDLIB-073: `associateBy` / `associateWith` / `associate` の誤った key-value 生成を修正する
-  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている associate 系テストを再有効化する
-  - [ ] key と value の構築順序、および Pair 展開の lowering を点検する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1, 2, 3).associateBy { it % 2 }` などの出力が `kotlinc` と一致し、常時 skip が不要になる
+- [x] STDLIB-073: `associateBy` / `associateWith` / `associate` の誤った key-value 生成を修正する
+  - [x] `CodegenBackendIntegrationTests` の associate 系テストを再有効化する
+  - [x] key と value の構築順序、および Pair 展開の lowering を点検する
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `listOf(1, 2, 3).associateBy { it % 2 }` などの出力が `kotlinc` と一致し、常時 skip が不要になる ✓
 
 - [ ] STDLIB-074: `withIndex` / `forEachIndexed` / `mapIndexed` の link failure を解消する
   - [ ] `CodegenBackendIntegrationTests` で常時 skip されている indexed helper テストを再有効化する
