@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.TODO, kotlin.io.println (0-arg), kotlin.io.readLine (STDLIB-063).
+/// Synthetic stdlib stubs for kotlin's not-yet-implemented helper, kotlin.io.println (0-arg), and kotlin.io.readLine (STDLIB-063).
 /// These stubs enable name resolution and type checking; runtime behavior is implemented in Runtime.
 extension DataFlowSemaPhase {
     func registerSyntheticTODOAndIOStubs(

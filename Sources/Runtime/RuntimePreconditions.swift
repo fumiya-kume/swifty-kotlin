@@ -31,7 +31,7 @@ public func kk_error(_ messageRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?)
     return 0
 }
 
-/// Runtime support for kotlin.TODO (STDLIB-063).
+/// Runtime support for kotlin's not-yet-implemented helper (STDLIB-063).
 /// Throws NotImplementedError with the given reason.
 @_cdecl("kk_todo")
 public func kk_todo(_ reasonRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {

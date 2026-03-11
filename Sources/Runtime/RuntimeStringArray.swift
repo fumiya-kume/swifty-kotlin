@@ -477,7 +477,7 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("(\(first), \(second))")
         return
     }
-    if let _ = tryCast(raw, to: RuntimeIndexingIterableBox.self) {
+    if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         Swift.print("kotlin.collections.IndexingIterable@\(hex)")
         return
@@ -567,7 +567,7 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         let second = runtimeRenderAnyForPrint(pairBox.second)
         return "(\(first), \(second))"
     }
-    if let _ = tryCast(raw, to: RuntimeIndexingIterableBox.self) {
+    if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         return "kotlin.collections.IndexingIterable@\(hex)"
     }
