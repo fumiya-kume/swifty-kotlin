@@ -477,12 +477,37 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("(\(first), \(second))")
         return
     }
+    if let _ = tryCast(raw, to: RuntimeIndexingIterableBox.self) {
+        let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
+        Swift.print("kotlin.collections.IndexingIterable@\(hex)")
+        return
+    }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
         Swift.print("[\(rendered)]")
         return
     }
     Swift.print("<object \(raw)>")
+}
+
+/// Runtime support for kotlin.io.println() (STDLIB-063).
+/// Prints a newline with no arguments.
+@_cdecl("kk_println_newline")
+public func kk_println_newline() {
+    Swift.print()
+}
+
+/// Runtime support for kotlin.io.readLine() (STDLIB-063).
+/// Reads a line from stdin. Returns null (runtimeNullSentinelInt) on EOF.
+@_cdecl("kk_readline")
+public func kk_readline() -> Int {
+    guard let line = readLine() else {
+        return runtimeNullSentinelInt
+    }
+    let utf8 = Array(line.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
 }
 
 private func runtimeRenderAnyForPrint(_ value: Int) -> String {
@@ -541,6 +566,10 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
         return "(\(first), \(second))"
+    }
+    if let _ = tryCast(raw, to: RuntimeIndexingIterableBox.self) {
+        let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
+        return "kotlin.collections.IndexingIterable@\(hex)"
     }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"

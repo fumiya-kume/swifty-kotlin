@@ -562,7 +562,7 @@ extension NativeEmitter {
 
             case let .constValue(result, value):
                 let constLLVMValue = valueForConstant(value, expressionRawID: result.rawValue)
-                values[result.rawValue] = constLLVMValue
+                storeResult(result, constLLVMValue)
 
                 // Emit DIAutoVariable + dbg.declare for local variable bindings
                 // when debug info is active. We detect local variables by looking
@@ -743,6 +743,31 @@ extension NativeEmitter {
 
                 let calleeName = interner.resolve(callee)
                 let argumentValues = arguments.map(resolveValue)
+
+                if calleeName == "kk_println_newline" {
+                    if let printFunction = declareExternalFunction(
+                        named: "kk_println_newline",
+                        argumentCount: 0,
+                        appendThrownChannel: false
+                    ) {
+                        _ = bindings.buildCall(
+                            builder,
+                            functionType: printFunction.type,
+                            callee: printFunction.value,
+                            arguments: [],
+                            name: "println_newline_\(instructionIndex)"
+                        )
+                    }
+                    if usesThrownChannel, let thrownResult {
+                        if let alloca = copyTargetAllocas[thrownResult.rawValue] {
+                            _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
+                        } else {
+                            storeResult(thrownResult, zeroValue)
+                        }
+                    }
+                    storeResult(result, zeroValue)
+                    continue
+                }
 
                 if calleeName == "println" || calleeName == "kk_println_any" {
                     let printValue = argumentValues.first ?? zeroValue

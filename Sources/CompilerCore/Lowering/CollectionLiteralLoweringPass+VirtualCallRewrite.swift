@@ -570,10 +570,9 @@ extension CollectionLiteralLoweringPass {
                 thrownResult: nil
             ))
             if let result {
-                listExprIDs.insert(result.rawValue)
-                listExprIDs.insert(hofResult.rawValue)
                 loweredBody.append(.copy(from: hofResult, to: result))
             }
+            // withIndex returns IndexingIterable, not List — do not add to listExprIDs
             return true
         }
 

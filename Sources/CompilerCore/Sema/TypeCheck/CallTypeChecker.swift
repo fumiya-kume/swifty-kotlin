@@ -69,13 +69,16 @@ final class CallTypeChecker {
             }
         }
 
-        // --- Scope function: with(receiver, block) (STDLIB-004) ---
+        // --- Scope function: with(receiver, block) (STDLIB-004, STDLIB-061) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
-        // Only intercept when no user-defined function named `with` is in scope.
+        // Intercept when no user-defined (non-synthetic) `with` is in scope.
         if let calleeName, args.count == 2,
            interner.resolve(calleeName) == "with",
-           ctx.cachedScopeLookup(calleeName).isEmpty
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
         {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)

@@ -1,5 +1,4 @@
-// SKIP-DIFF: withIndex() currently lowers to a concrete runtime list for subsequent indexed helpers,
-// so its string form intentionally diverges from Kotlin's default IndexingIterable object rendering.
+// DIFF_LINE_PATTERN: kotlin\.collections\.IndexingIterable@[0-9a-f]+
 fun main() {
     val values = listOf(10, 20)
     println(values.withIndex())

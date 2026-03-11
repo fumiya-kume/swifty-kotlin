@@ -23,7 +23,12 @@ extension CallTypeChecker {
         if locals[calleeName] != nil {
             return false
         }
-        if !ctx.cachedScopeLookup(calleeName).isEmpty {
+        // Use builder DSL handling when no user-defined (non-synthetic) symbol is in scope.
+        // Synthetic stubs (e.g. kotlin.collections.buildList) are allowed.
+        if ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+            guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            return !sym.flags.contains(.synthetic)
+        }) {
             return false
         }
         return true

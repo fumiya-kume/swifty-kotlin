@@ -130,6 +130,42 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_require",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_check",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_error",
+            parameters: [
+                RuntimeABIParameter(name: "message", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_todo",
+            parameters: [
+                RuntimeABIParameter(name: "reason", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [
@@ -469,6 +505,21 @@ public enum RuntimeABISpec {
             ],
             returnType: .void,
             section: "Println"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_println_newline",
+            parameters: [],
+            returnType: .void,
+            section: "Println"
+        ),
+    ]
+
+    public static let ioFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_readline",
+            parameters: [],
+            returnType: .intptr,
+            section: "IO"
         ),
     ]
 
@@ -1431,6 +1482,7 @@ public enum RuntimeABISpec {
             + exceptionFunctions
             + stringFunctions
             + printlnFunctions
+            + ioFunctions
             + gcFunctions
             + coroutineFunctions
             + boxingFunctions

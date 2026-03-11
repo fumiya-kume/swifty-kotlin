@@ -65,6 +65,8 @@ extension ABILoweringPass {
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),
             interner.intern("kk_println_any"),
+            interner.intern("kk_println_newline"),
+            interner.intern("kk_readline"),
             interner.intern("kk_coroutine_suspended"),
             interner.intern("kk_coroutine_continuation_new"),
             interner.intern("kk_coroutine_state_enter"),

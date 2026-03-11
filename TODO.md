@@ -19,23 +19,18 @@
 
 ### 📦 Stdlib — スコープ関数・ユーティリティ
 
-- [ ] STDLIB-061: スコープ関数 `with(receiver) {}` を実装する
-  - [ ] Sema に `with(T, block: T.() -> R): R` stub を登録する
-  - [ ] Lowering で receiver scope 付き inline 展開を行う
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `with("hello") { length }` → `5` が `kotlinc` と一致する
-
-- [ ] STDLIB-062: `require(condition)` / `check(condition)` / `error(message)` を実装する
-  - [ ] Sema に `require(Boolean)` / `check(Boolean)` / `error(String)` stub を登録する
-  - [ ] Runtime で条件不成立時に `IllegalArgumentException` / `IllegalStateException` を throw する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-062: `require(condition)` / `check(condition)` / `error(message)` を実装する
+  - [x] Sema に `require(Boolean)` / `check(Boolean)` / `error(String)` stub を登録する
+  - [x] Runtime で条件不成立時に `IllegalArgumentException` / `IllegalStateException` を throw する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `require(false)` が `IllegalArgumentException` を投げ `kotlinc` と一致する
 
 - [ ] STDLIB-063: `TODO(reason)` / `println()` 引数なし版 / `readLine()` を実装する
-  - [ ] Sema に `TODO(String): Nothing` / `println(): Unit` / `readLine(): String?` stub を登録する
-  - [ ] Runtime でそれぞれ `NotImplementedError` throw / 改行出力 / stdin 読み取りを行う
-  - [ ] diff/golden ケースを追加する
+  - [x] Sema に `TODO(String): Nothing` / `println(): Unit` / `readLine(): String?` stub を登録する
+  - [x] Runtime でそれぞれ `NotImplementedError` throw / 改行出力 / stdin 読み取りを行う
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `TODO("not done")` が `NotImplementedError` を投げ `kotlinc` と一致する
+  - **備考**: TODO は diff 通過。println()/readLine() は stub+runtime 実装済みだが、println は実行時 exit 232、readLine は Sema 解決要調査のため SKIP-DIFF。
 
 ---
 

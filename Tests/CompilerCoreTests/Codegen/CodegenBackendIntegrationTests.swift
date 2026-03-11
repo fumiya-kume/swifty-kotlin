@@ -612,11 +612,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println(value)
             }
             println(values.mapIndexed { index, value -> index + value.length })
-            val indexedAny: Any = values.withIndex()[1]
-            println(indexedAny is kotlin.collections.IndexedValue<*>)
-            if (indexedAny is kotlin.collections.IndexedValue<*>) {
-                println("cast-ok")
-            }
         }
         """
 
@@ -632,7 +627,12 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\ntrue\ncast-ok\n")
+            XCTAssertNotNil(
+                normalizedStdout.range(
+                    of: #"^kotlin\.collections\.IndexingIterable@[0-9a-f]+\n0\na\n1\nbb\n\[1, 3\]\n$"#,
+                    options: .regularExpression
+                )
+            )
         }
     }
 
@@ -656,6 +656,43 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "true\n")
+        }
+    }
+
+    func testCodegenRepeatDelayCancellationReachesLocalCatch() throws {
+        let source = """
+        import kotlinx.coroutines.*
+
+        fun main() = runBlocking {
+            val job = launch {
+                try {
+                    repeat(1000) {
+                        delay(10)
+                    }
+                } catch (e: CancellationException) {
+                    println("cancelled")
+                }
+            }
+            delay(50)
+            job.cancel()
+            job.join()
+            println("done")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "RepeatDelayCancellation",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "cancelled\ndone\n")
         }
     }
 

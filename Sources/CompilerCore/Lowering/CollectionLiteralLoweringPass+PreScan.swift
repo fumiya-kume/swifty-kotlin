@@ -172,12 +172,13 @@ extension CollectionLiteralLoweringPass {
             mapExprIDs.insert(result.rawValue)
         } else if callee == lookup.toListName, mapExprIDs.contains(src) {
             listExprIDs.insert(result.rawValue)
-        } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
+        } else if callee == lookup.takeName || callee == lookup.dropName
             || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName,
             listExprIDs.contains(src)
         {
             listExprIDs.insert(result.rawValue)
         }
+        // withIndex returns IndexingIterable, not List — do not add to listExprIDs
     }
 
     private func handleVirtualCallInstruction(
@@ -222,11 +223,12 @@ extension CollectionLiteralLoweringPass {
                 || callee == lookup.associateWithName || callee == lookup.associateName
             {
                 if let result { mapExprIDs.insert(result.rawValue) }
-            } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
+            } else if callee == lookup.takeName || callee == lookup.dropName
                 || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
             {
                 if let result { listExprIDs.insert(result.rawValue) }
             }
+            // withIndex returns IndexingIterable, not List — do not add to listExprIDs
         }
     }
 

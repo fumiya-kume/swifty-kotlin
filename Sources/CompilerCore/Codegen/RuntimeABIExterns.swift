@@ -83,6 +83,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_require = ExternDecl(
+        name: "kk_require",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_check = ExternDecl(
+        name: "kk_check",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_error = ExternDecl(
+        name: "kk_error",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_todo = ExternDecl(
+        name: "kk_todo",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - String
 
     public static let kk_string_from_utf8 = ExternDecl(
@@ -312,6 +336,20 @@ public enum RuntimeABIExterns {
         name: "kk_println_bool",
         parameterTypes: ["intptr_t"],
         returnType: "void"
+    )
+
+    public static let kk_println_newline = ExternDecl(
+        name: "kk_println_newline",
+        parameterTypes: [],
+        returnType: "void"
+    )
+
+    // MARK: - IO
+
+    public static let kk_readline = ExternDecl(
+        name: "kk_readline",
+        parameterTypes: [],
+        returnType: "intptr_t"
     )
 
     // MARK: - GC
@@ -999,6 +1037,10 @@ public enum RuntimeABIExterns {
             kk_throwable_is_cancellation,
             kk_panic,
             kk_abort_unreachable,
+            kk_require,
+            kk_check,
+            kk_error,
+            kk_todo,
             // String
             kk_string_from_utf8,
             kk_string_concat,
@@ -1039,6 +1081,9 @@ public enum RuntimeABIExterns {
             // Println
             kk_println_any,
             kk_println_bool,
+            kk_println_newline,
+            // IO
+            kk_readline,
             // GC
             kk_register_global_root,
             kk_unregister_global_root,

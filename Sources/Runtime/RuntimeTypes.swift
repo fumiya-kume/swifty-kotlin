@@ -182,6 +182,16 @@ final class RuntimeMapBox {
     }
 }
 
+/// Lazy wrapper for `withIndex()` result. Kotlin returns `IndexingIterable` with
+/// default Object.toString() = "kotlin.collections.IndexingIterable@<hex>".
+final class RuntimeIndexingIterableBox {
+    let listRaw: Int
+
+    init(listRaw: Int) {
+        self.listRaw = listRaw
+    }
+}
+
 /// Iterator box for `List` iteration via `for (x in list)`.
 final class RuntimeListIteratorBox {
     let elements: [Int]
