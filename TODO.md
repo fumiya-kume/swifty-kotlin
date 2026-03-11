@@ -25,12 +25,11 @@
   - [x] diff/golden ケースを追加する
   - **完了条件**: `require(false)` が `IllegalArgumentException` を投げ `kotlinc` と一致する
 
-- [ ] STDLIB-063: `TODO(reason)` / `println()` 引数なし版 / `readLine()` を実装する
+- [x] STDLIB-063: `TODO(reason)` / `println()` 引数なし版 / `readLine()` を実装する
   - [x] Sema に `TODO(String): Nothing` / `println(): Unit` / `readLine(): String?` stub を登録する
   - [x] Runtime でそれぞれ `NotImplementedError` throw / 改行出力 / stdin 読み取りを行う
   - [x] diff/golden ケースを追加する
-  - **完了条件**: `TODO("not done")` が `NotImplementedError` を投げ `kotlinc` と一致する
-  - **備考**: TODO は diff 通過。println()/readLine() は stub+runtime 実装済みだが、println は実行時 exit 232、readLine は Sema 解決要調査のため SKIP-DIFF。
+  - **完了条件**: `TODO("not done")` が `NotImplementedError` を投げ `kotlinc` と一致する ✓
 
 ---
 

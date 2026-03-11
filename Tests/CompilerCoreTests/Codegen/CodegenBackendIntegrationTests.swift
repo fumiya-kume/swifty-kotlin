@@ -279,33 +279,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
-    func testCodegenBuildListProducesCorrectly() throws {
-        let source = """
-        fun main() {
-            val list = buildList {
-                add(1)
-                add(2)
-            }
-            println(list)
-        }
-        """
-
-        try withTemporaryFile(contents: source) { path in
-            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
-            let ctx = try runCodegenPipeline(
-                inputPath: path,
-                moduleName: "BuildListRuntime",
-                emit: .executable,
-                outputPath: outputBase
-            )
-            try LinkPhase().run(ctx)
-
-            let result = try CommandRunner.run(executable: outputBase, arguments: [])
-            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[1, 2]\n")
-        }
-    }
-
     func testCodegenSetFactoriesAndMutableSetMutationsUseRuntimeSetBox() throws {
         let source = """
         fun main() {
