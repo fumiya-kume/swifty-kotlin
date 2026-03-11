@@ -367,6 +367,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
+            "sumOf", "maxOrNull", "minOrNull",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
@@ -639,6 +640,23 @@ extension CallTypeChecker {
                 guard args.isEmpty else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
+                }
+                if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                    let comparableElementType = sema.types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(collectionElementType)],
+                        nullability: .nonNull
+                    )))
+                    if !sema.types.isSubtype(collectionElementType, comparableElementType) {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-BOUND",
+                            "Type argument does not satisfy upper bound constraint.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        let failedType = safeCall ? sema.types.nullableAnyType : sema.types.anyType
+                        sema.bindings.bindExprType(id, type: failedType)
+                        return failedType
+                    }
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
 
@@ -1801,10 +1819,12 @@ extension CallTypeChecker {
            )
         {
             // Check if any parameter uses a write-forbidden type parameter
-            if let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
-                signature: signature,
-                writeForbiddenSymbols: varianceResult.writeForbiddenSymbols
-            ) {
+            if !allowsProjectedReceiverUnsafeVariance(chosen, sema: sema, interner: interner),
+               let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
+                   signature: signature,
+                   writeForbiddenSymbols: varianceResult.writeForbiddenSymbols
+               )
+            {
                 let paramType = sema.types.renderType(signature.parameterTypes[violatingParamIndex])
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-VAR-OUT",

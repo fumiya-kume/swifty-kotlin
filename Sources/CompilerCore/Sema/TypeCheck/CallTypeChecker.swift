@@ -243,12 +243,15 @@ final class CallTypeChecker {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
-            if let chosen = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
+            let chosen = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
                 guard let signature = sema.symbols.functionSignature(for: candidate) else {
                     return false
                 }
-                return signature.parameterTypes == [intType, intType] && signature.returnType == intType
-            }) {
+                return signature.parameterTypes == [intType, intType]
+            })
+            if let chosen,
+               let signature = sema.symbols.functionSignature(for: chosen)
+            {
                 sema.bindings.bindCall(
                     id,
                     binding: CallBinding(
@@ -258,6 +261,9 @@ final class CallTypeChecker {
                     )
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
+                sema.bindings.bindExprType(id, type: signature.returnType)
+                return signature.returnType
             }
             sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
             sema.bindings.bindExprType(id, type: intType)

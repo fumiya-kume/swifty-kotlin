@@ -4,11 +4,11 @@ extension DataFlowSemaPhase {
     func analyzeBody(
         declID: DeclID,
         ast: ASTModule,
-        symbols: SymbolTable,
-        types: TypeSystem,
-        bindings: BindingTable,
+        symbols _: SymbolTable,
+        types _: TypeSystem,
+        bindings _: BindingTable,
         diagnostics: DiagnosticEngine,
-        interner: StringInterner
+        interner _: StringInterner
     ) {
         guard let decl = ast.arena.decl(declID) else { return }
         switch decl {
@@ -25,15 +25,6 @@ extension DataFlowSemaPhase {
                 seenNames.insert(valueParam.name)
             }
 
-            if let symbol = bindings.declSymbols[declID],
-               let signature = symbols.functionSignature(for: symbol),
-               case .expr = funDecl.body
-            {
-                // Bind a synthetic expression type for expression-body functions.
-                let expr = ExprID(rawValue: declID.rawValue)
-                bindings.bindExprType(expr, type: signature.returnType)
-            }
-
             // Validate tailrec: the terminal expression must be a self-recursive call.
             if funDecl.isTailrec {
                 let isTailCall = checkTailRecursiveBody(
@@ -48,19 +39,8 @@ extension DataFlowSemaPhase {
                 }
             }
 
-        case let .propertyDecl(propertyDecl):
-            if let symbol = bindings.declSymbols[declID] {
-                let expr = ExprID(rawValue: declID.rawValue)
-                bindings.bindIdentifier(expr, symbol: symbol)
-                let boundType = resolveTypeRef(
-                    propertyDecl.type,
-                    ast: ast,
-                    symbols: symbols,
-                    types: types,
-                    interner: interner
-                ) ?? types.anyType
-                bindings.bindExprType(expr, type: boundType)
-            }
+        case .propertyDecl:
+            break
 
         case .classDecl, .interfaceDecl, .objectDecl, .typeAliasDecl, .enumEntryDecl:
             break

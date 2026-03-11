@@ -6,13 +6,12 @@ import Foundation
 extension DeclTypeChecker {
     func typeCheckBoundPropertyDecl(
         _ property: PropertyDecl,
-        declID: DeclID,
+        declID _: DeclID,
         symbol: SymbolID,
         ctx: TypeInferenceContext,
         solver: ConstraintSolver,
         diagnostics: DiagnosticEngine
     ) {
-        let sema = ctx.sema
         typeCheckPropertyDecl(
             property,
             symbol: symbol,
@@ -20,12 +19,6 @@ extension DeclTypeChecker {
             solver: solver,
             diagnostics: diagnostics
         )
-        if !property.isSynthesizedPrimaryConstructorProperty {
-            let expr = ExprID(rawValue: declID.rawValue)
-            sema.bindings.bindIdentifier(expr, symbol: symbol)
-            let propertyType = sema.symbols.propertyType(for: symbol) ?? sema.types.nullableAnyType
-            sema.bindings.bindExprType(expr, type: propertyType)
-        }
     }
 
     func typeCheckClassDecl(

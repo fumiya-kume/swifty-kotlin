@@ -77,6 +77,26 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListMaxOrNullAndMinOrNullRequireComparableElements() throws {
+        let source = """
+        class Box
+
+        fun render(values: List<Box>) {
+            values.maxOrNull()
+            values.minOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+            try? SemaPhase().run(ctx)
+
+            let boundDiagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-BOUND" }
+            XCTAssertEqual(boundDiagnostics.count, 2, "Expected bound diagnostics for maxOrNull/minOrNull")
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {
@@ -258,6 +278,71 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     "Expected \(memberName) to have external link \(expectedExternal)"
                 )
             }
+        }
+    }
+
+    func testIndexedAndAggregateListMembersAreInlineSynthetic() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let listFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+            ]
+
+            for memberName in ["sumOf", "forEachIndexed", "mapIndexed"] {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: listFQName + [ctx.interner.intern(memberName)]),
+                    "Expected synthetic List member \(memberName) to be registered"
+                )
+                let flags = try XCTUnwrap(sema.symbols.symbol(symbolID)?.flags)
+                XCTAssertTrue(flags.contains(.inlineFunction), "Expected \(memberName) to be inline")
+                XCTAssertTrue(flags.contains(.synthetic), "Expected \(memberName) to be synthetic")
+            }
+        }
+    }
+
+    func testMapHigherOrderMembersAreInlineAndToListPreservesPairType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let mapFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Map"),
+            ]
+
+            for memberName in ["forEach", "map", "filter", "mapValues", "mapKeys"] {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: mapFQName + [ctx.interner.intern(memberName)]),
+                    "Expected synthetic Map member \(memberName) to be registered"
+                )
+                let flags = try XCTUnwrap(sema.symbols.symbol(symbolID)?.flags)
+                XCTAssertTrue(flags.contains(.inlineFunction), "Expected \(memberName) to be inline")
+            }
+
+            let toListSymbol = try XCTUnwrap(
+                sema.symbols.lookup(fqName: mapFQName + [ctx.interner.intern("toList")])
+            )
+            let toListSignature = try XCTUnwrap(sema.symbols.functionSignature(for: toListSymbol))
+            guard case let .classType(listType) = sema.types.kind(of: toListSignature.returnType) else {
+                return XCTFail("Expected Map.toList to return List<Pair<K, V>>")
+            }
+            let listName = try XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)
+            XCTAssertEqual(ctx.interner.resolve(listName), "List")
+            let firstListArg = try XCTUnwrap(listType.args.first)
+            guard case let .out(pairTypeID) = firstListArg,
+                  case let .classType(pairType) = sema.types.kind(of: pairTypeID)
+            else {
+                return XCTFail("Expected Map.toList element type to be Pair")
+            }
+            let pairName = try XCTUnwrap(sema.symbols.symbol(pairType.classSymbol)?.name)
+            XCTAssertEqual(ctx.interner.resolve(pairName), "Pair")
         }
     }
 }

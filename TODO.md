@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-10
+最終更新: 2026-03-11
 
 ## 運用ルール
 
@@ -17,68 +17,7 @@
 
 ## 未完了バックログ
 
-### 📦 Stdlib — Collection 高階関数（追加分）
-
-- [ ] STDLIB-035: `List.withIndex()` / `List.forEachIndexed {}` / `List.mapIndexed {}` を実装する
-  - [ ] Sema に `withIndex` / `forEachIndexed` / `mapIndexed` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf("a","b").forEachIndexed { i, v -> print("$i:$v ") }` → `0:a 1:b ` が `kotlinc` と一致する
-
-- [ ] STDLIB-036: `List.sumOf {}` / `List.maxOrNull()` / `List.minOrNull()` を実装する
-  - [ ] Sema に `sumOf` / `maxOrNull` / `minOrNull` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1, 2, 3).sumOf { it * 2 }` → `12` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Map 高階関数
-
-- [x] STDLIB-041: `Map.mapValues {}` / `Map.mapKeys {}` / `Map.toList()` を実装する
-  - [x] Sema に各 stub を登録する
-  - [x] Runtime に対応ランタイム関数を追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `mapOf("a" to 1).mapValues { it.value * 2 }` → `{a=2}` が `kotlinc` と一致する
-
-- [ ] STDLIB-042: `Map.keys` / `Map.values` / `Map.entries` プロパティアクセスを実装する
-  - [ ] Sema に `Map<K,V>` の `keys: Set<K>` / `values: Collection<V>` / `entries: Set<Map.Entry<K,V>>` を登録する
-  - [ ] Runtime に `kk_map_keys` / `kk_map_values` / `kk_map_entries` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `mapOf("a" to 1).keys` → `[a]` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — 数値変換・数学
-
-- [ ] STDLIB-050: `Int.toLong()` / `Int.toFloat()` / `Int.toByte()` / `Int.toShort()` を実装する
-  - [ ] Sema に各プリミティブ型間の変換メソッド stub を登録する
-  - [ ] Runtime / Lowering で型変換命令に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `42.toLong()` / `42.toFloat()` が `kotlinc` と同一出力になる
-
-- [ ] STDLIB-051: `maxOf(a, b)` / `minOf(a, b)` トップレベル関数を実装する
-  - [ ] Sema に `kotlin.comparisons.maxOf` / `kotlin.comparisons.minOf` stub を登録する
-  - [ ] Lowering で conditional select に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `maxOf(3, 7)` → `7` が `kotlinc` と一致する
-
-- [ ] STDLIB-052: `kotlin.math` 基本関数（`abs`, `sqrt`, `pow`, `ceil`, `floor`, `round`）を実装する
-  - [ ] Sema に `kotlin.math.*` の synthetic stub を登録する
-  - [ ] Runtime に `kk_math_abs` / `kk_math_sqrt` 等のヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `kotlin.math.abs(-5)` → `5` が `kotlinc` と一致する
-
----
-
 ### 📦 Stdlib — スコープ関数・ユーティリティ
-
-- [ ] STDLIB-060: スコープ関数 `let` / `run` / `also` / `apply` を実装する
-  - [ ] Sema に `T.let {}` / `T.run {}` / `T.also {}` / `T.apply {}` の generic extension stub を登録する
-  - [ ] Lowering で inline 展開し、receiver / `it` バインディングを正しく生成する
-  - [ ] `KotlinCompilationAdvancedTests` の常時 skip されている scope function テストを再有効化する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `"hello".let { it.length }` → `5` が `kotlinc` と一致する
 
 - [ ] STDLIB-061: スコープ関数 `with(receiver) {}` を実装する
   - [ ] Sema に `with(T, block: T.() -> R): R` stub を登録する

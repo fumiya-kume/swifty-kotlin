@@ -26,8 +26,10 @@ extension CallLowerer {
             return nil
         }
 
-        let intType = sema.types.intType
         let boolType = sema.types.booleanType
+        let resultType = sema.bindings.exprType(for: exprID)
+            ?? sema.bindings.exprType(for: args[0].expr)
+            ?? sema.types.intType
         let falseExpr = arena.appendExpr(.boolLiteral(false), type: boolType)
         instructions.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
 
@@ -60,7 +62,7 @@ extension CallLowerer {
 
         let useRightLabel = driver.ctx.makeLoopLabel()
         let endLabel = driver.ctx.makeLoopLabel()
-        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
 
         instructions.append(.jumpIfEqual(lhs: conditionExpr, rhs: falseExpr, target: useRightLabel))
         instructions.append(.copy(from: lhsExpr, to: result))

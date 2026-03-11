@@ -114,6 +114,20 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner
     ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+        if symbols.lookup(fqName: kotlinPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("kotlin"),
+                fqName: kotlinPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        registerSyntheticPairStub(symbols: symbols, types: types, interner: interner)
+
         // Ensure the "kotlin.collections" package exists.
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
         if symbols.lookup(fqName: kotlinCollectionsPkg) == nil {
@@ -188,6 +202,119 @@ extension DataFlowSemaPhase {
             valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol,
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
+    }
+
+    private func registerSyntheticPairStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let pairFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Pair")]
+        let pairName = interner.intern("Pair")
+        let pairSymbol: SymbolID = if let existing = symbols.lookup(fqName: pairFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: pairName,
+                fqName: pairFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let firstName = interner.intern("A")
+        let secondName = interner.intern("B")
+        let firstSymbol = symbols.lookup(fqName: pairFQName + [firstName]) ?? symbols.define(
+            kind: .typeParameter,
+            name: firstName,
+            fqName: pairFQName + [firstName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let secondSymbol = symbols.lookup(fqName: pairFQName + [secondName]) ?? symbols.define(
+            kind: .typeParameter,
+            name: secondName,
+            fqName: pairFQName + [secondName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([firstSymbol, secondSymbol], for: pairSymbol)
+        types.setNominalTypeParameterVariances([.out, .out], for: pairSymbol)
+
+        let firstType = types.make(.typeParam(TypeParamType(symbol: firstSymbol, nullability: .nonNull)))
+        let secondType = types.make(.typeParam(TypeParamType(symbol: secondSymbol, nullability: .nonNull)))
+        let pairType = types.make(.classType(ClassType(
+            classSymbol: pairSymbol,
+            args: [.out(firstType), .out(secondType)],
+            nullability: .nonNull
+        )))
+
+        func registerFunctionMember(
+            name: String,
+            returnType: TypeID,
+            externalLinkName: String,
+            flags: SymbolFlags
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = pairFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: flags
+            )
+            symbols.setParentSymbol(pairSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: pairType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [firstSymbol, secondSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: memberSymbol
+            )
+        }
+
+        func registerPropertyMember(name: String, propertyType: TypeID, externalLinkName: String) {
+            let memberName = interner.intern(name)
+            let memberFQName = pairFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .property,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(pairSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setPropertyType(propertyType, for: memberSymbol)
+        }
+
+        registerFunctionMember(
+            name: "component1",
+            returnType: firstType,
+            externalLinkName: "kk_pair_first",
+            flags: [.synthetic, .operatorFunction]
+        )
+        registerFunctionMember(
+            name: "component2",
+            returnType: secondType,
+            externalLinkName: "kk_pair_second",
+            flags: [.synthetic, .operatorFunction]
+        )
+        registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
+        registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
     }
 
     private func registerSyntheticCollectionStub(
@@ -623,8 +750,45 @@ extension DataFlowSemaPhase {
         }
 
         let nullableElementType = types.makeNullable(listTypeParamType)
-        registerSimpleMember(name: "maxOrNull", returnType: nullableElementType, externalLinkName: "kk_list_maxOrNull")
-        registerSimpleMember(name: "minOrNull", returnType: nullableElementType, externalLinkName: "kk_list_minOrNull")
+        let comparableElementBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(listTypeParamType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
+
+        func registerComparableMember(name: String, externalLinkName: String) {
+            let memberName = interner.intern(name)
+            let memberFQName = listFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: nullableElementType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
+        registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
         let sumOfName = interner.intern("sumOf")
         let sumOfFQName = listFQName + [sumOfName]
@@ -641,7 +805,7 @@ extension DataFlowSemaPhase {
                 fqName: sumOfFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: [.synthetic, .inlineFunction]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_sumOf", for: memberSymbol)
@@ -1346,7 +1510,8 @@ extension DataFlowSemaPhase {
             externalLinkName: String,
             parameterTypes: [TypeID],
             returnType: TypeID,
-            typeParameterSymbols: [SymbolID]
+            typeParameterSymbols: [SymbolID],
+            flags: SymbolFlags = [.synthetic]
         ) {
             let memberName = interner.intern(name)
             let memberFQName = mapFQName + [memberName]
@@ -1357,7 +1522,7 @@ extension DataFlowSemaPhase {
                 fqName: memberFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: flags
             )
             symbols.setParentSymbol(mapInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
@@ -1425,7 +1590,8 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_map_forEach",
             parameterTypes: [forEachLambdaType],
             returnType: types.unitType,
-            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
         )
 
         if let listSymbol {
@@ -1455,7 +1621,8 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_map_map",
                 parameterTypes: [mapLambdaType],
                 returnType: listRType,
-                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol]
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
@@ -1488,7 +1655,8 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_map_mapValues",
                 parameterTypes: [transformType],
                 returnType: mapRType,
-                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol]
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
@@ -1521,7 +1689,8 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_map_mapKeys",
                 parameterTypes: [transformType],
                 returnType: mapRType,
-                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol]
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                flags: [.synthetic, .inlineFunction]
             )
         }
 
@@ -1536,7 +1705,8 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_map_filter",
             parameterTypes: [filterLambdaType],
             returnType: receiverType,
-            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
         )
 
         if let listSymbol {
@@ -1790,7 +1960,7 @@ extension DataFlowSemaPhase {
                 fqName: forEachIndexedFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: [.synthetic, .inlineFunction]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_forEachIndexed", for: memberSymbol)
@@ -1843,7 +2013,7 @@ extension DataFlowSemaPhase {
                 fqName: mapIndexedFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: [.synthetic, .inlineFunction]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_mapIndexed", for: memberSymbol)

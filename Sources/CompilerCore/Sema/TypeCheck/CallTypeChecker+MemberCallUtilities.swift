@@ -1,6 +1,27 @@
 import Foundation
 
 extension CallTypeChecker {
+    func allowsProjectedReceiverUnsafeVariance(
+        _ candidate: SymbolID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        if let externalLinkName = sema.symbols.externalLinkName(for: candidate) {
+            switch externalLinkName {
+            case "kk_set_contains", "kk_map_get", "kk_map_containsKey":
+                return true
+            default:
+                break
+            }
+        }
+
+        guard let symbol = sema.symbols.symbol(candidate) else { return false }
+        let ownerName = symbol.fqName.dropLast().last.map(interner.resolve) ?? ""
+        let memberName = interner.resolve(symbol.name)
+        return (ownerName == "Set" && memberName == "contains")
+            || (ownerName == "Map" && (memberName == "get" || memberName == "containsKey"))
+    }
+
     func makeProjectionViolationDiagnostic(
         candidates: [SymbolID],
         receiverType: TypeID,
@@ -13,6 +34,10 @@ extension CallTypeChecker {
         var hasProjectionCompatibleCandidate = false
 
         for candidate in candidates {
+            if allowsProjectedReceiverUnsafeVariance(candidate, sema: sema, interner: interner) {
+                hasProjectionCompatibleCandidate = true
+                continue
+            }
             guard let signature = sema.symbols.functionSignature(for: candidate),
                   let varianceResult = sema.types.buildVarianceProjectionSubstitutions(
                       receiverType: receiverType,
