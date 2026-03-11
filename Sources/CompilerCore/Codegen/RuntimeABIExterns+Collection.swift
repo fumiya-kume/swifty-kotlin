@@ -62,6 +62,7 @@ public extension RuntimeABIExterns {
         kk_map_mapKeys,
         kk_map_keys,
         kk_map_values,
+        kk_map_entries,
         kk_map_to_string,
         kk_map_toList,
         kk_map_to_mutable_map,
@@ -277,6 +278,12 @@ public extension RuntimeABIExterns {
 
     static let kk_map_values = ExternDecl(
         name: "kk_map_values",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_entries = ExternDecl(
+        name: "kk_map_entries",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

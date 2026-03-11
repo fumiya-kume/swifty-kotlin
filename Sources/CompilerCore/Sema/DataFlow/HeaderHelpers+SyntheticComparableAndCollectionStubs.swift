@@ -127,9 +127,15 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let listInterfaceSymbol = registerSyntheticListStub(
+        let collectionInterfaceSymbol = registerSyntheticCollectionStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        let listInterfaceSymbol = registerSyntheticListStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
         registerSyntheticMutableListStub(
@@ -140,7 +146,8 @@ extension DataFlowSemaPhase {
 
         let setInterfaceSymbol = registerSyntheticSetStub(
             symbols: symbols, types: types, interner: interner,
-            kotlinCollectionsPkg: kotlinCollectionsPkg
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
         registerSyntheticMutableSetStub(
@@ -178,8 +185,45 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             mapInterfaceSymbol: mapSymbols.mapSymbol,
             keyTypeParamSymbol: mapSymbols.keyTypeParamSymbol,
-            valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol
+            valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
+    }
+
+    private func registerSyntheticCollectionStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let collectionName = interner.intern("Collection")
+        let collectionFQName = kotlinCollectionsPkg + [collectionName]
+        let collectionInterfaceSymbol: SymbolID = if let existing = symbols.lookup(fqName: collectionFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: collectionName,
+                fqName: collectionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = collectionFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: collectionInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: collectionInterfaceSymbol)
+        return collectionInterfaceSymbol
     }
 
     func registerLateListIndexedMembers(
@@ -215,7 +259,8 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
     ) -> SymbolID {
         let listName = interner.intern("List")
         let listFQName = kotlinCollectionsPkg + [listName]
@@ -248,6 +293,7 @@ extension DataFlowSemaPhase {
         )))
         types.setNominalTypeParameterSymbols([listTypeParamSymbol], for: listInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: listInterfaceSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: listInterfaceSymbol)
 
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
@@ -886,7 +932,8 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID
     ) -> SymbolID {
         let setName = interner.intern("Set")
         let setFQName = kotlinCollectionsPkg + [setName]
@@ -916,6 +963,9 @@ extension DataFlowSemaPhase {
         let typeParamType = types.make(.typeParam(TypeParamType(
             symbol: typeParamSymbol, nullability: .nonNull
         )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: setInterfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: setInterfaceSymbol)
+        symbols.setDirectSupertypes([collectionInterfaceSymbol], for: setInterfaceSymbol)
 
         registerSetContainsMember(
             symbols: symbols, types: types, interner: interner,
@@ -1254,7 +1304,8 @@ extension DataFlowSemaPhase {
         kotlinCollectionsPkg: [InternedString],
         mapInterfaceSymbol: SymbolID,
         keyTypeParamSymbol: SymbolID,
-        valueTypeParamSymbol: SymbolID
+        valueTypeParamSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
         let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeParamSymbol, nullability: .nonNull)))
@@ -1287,6 +1338,8 @@ extension DataFlowSemaPhase {
 
         let listSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("List")])
             ?? symbols.lookupByShortName(interner.intern("List")).first
+        let setSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [interner.intern("Set")])
+            ?? symbols.lookupByShortName(interner.intern("Set")).first
 
         func registerMember(
             name: String,
@@ -1319,6 +1372,47 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        if let setSymbol {
+            let keysType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(keyType)],
+                nullability: .nonNull
+            )))
+            registerMember(
+                name: "keys",
+                externalLinkName: "kk_map_keys",
+                parameterTypes: [],
+                returnType: keysType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+            )
+
+            let entriesType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(entryType)],
+                nullability: .nonNull
+            )))
+            registerMember(
+                name: "entries",
+                externalLinkName: "kk_map_entries",
+                parameterTypes: [],
+                returnType: entriesType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+            )
+        }
+
+        let valuesType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(valueType)],
+            nullability: .nonNull
+        )))
+        registerMember(
+            name: "values",
+            externalLinkName: "kk_map_values",
+            parameterTypes: [],
+            returnType: valuesType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+        )
 
         let forEachLambdaType = types.make(.functionType(FunctionType(
             params: [entryType],

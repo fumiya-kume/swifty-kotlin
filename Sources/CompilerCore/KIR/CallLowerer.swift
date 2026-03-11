@@ -51,6 +51,19 @@ final class CallLowerer {
             return loweredRepeat
         }
 
+        if let loweredComparison = lowerComparisonSpecialCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredComparison
+        }
+
         // --- Scope function: with(receiver, block) (STDLIB-004) ---
         if let scopeKind = sema.bindings.scopeFunctionKind(for: exprID),
            scopeKind == .scopeWith,

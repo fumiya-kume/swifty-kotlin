@@ -46,6 +46,8 @@ public enum ScopeFunctionKind: Equatable {
 /// Identifies special stdlib calls that need dedicated lowering.
 public enum StdlibSpecialCallKind: Equatable {
     case repeatLoop
+    case maxOfInt
+    case minOfInt
 }
 
 public struct CatchClauseBinding: Equatable {

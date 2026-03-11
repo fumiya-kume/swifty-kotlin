@@ -771,12 +771,14 @@ extension CallTypeChecker {
             }
         }
 
-        // Primitive conversion: toInt(), toUInt(), toLong(), toULong() (TYPE-005)
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
+        // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
@@ -786,6 +788,8 @@ extension CallTypeChecker {
             case "toUInt": (uintType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
             case "toLong": (longType, receiverForCheck == intType || receiverForCheck == uintType || receiverForCheck == longType || receiverForCheck == ulongType)
             case "toULong": (ulongType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
+            case "toFloat": (floatType, receiverForCheck == intType)
+            case "toByte", "toShort": (intType, receiverForCheck == intType)
             default: (sema.types.errorType, false)
             }
             if matches {

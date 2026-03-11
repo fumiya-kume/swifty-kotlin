@@ -1436,9 +1436,11 @@ public enum RuntimeABISpec {
             + boxingFunctions
             + arrayFunctions
             + operatorFunctions
+            + primitiveNumericConversionFunctions
             + rangeFunctions
             + kPropertyStubFunctions + delegateFunctions
             + bitwiseFunctions
+            + mathFunctions
             + collectionFunctions
             + sequenceFunctions
 

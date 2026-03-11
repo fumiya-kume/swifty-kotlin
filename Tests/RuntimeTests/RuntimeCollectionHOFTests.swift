@@ -279,6 +279,26 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(list).map { kk_pair_second($0) }, [32, 21])
     }
 
+    func testMapKeysValuesEntriesProperties() {
+        let keys = makeArray([1, 2, 1])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        XCTAssertEqual(setElements(kk_map_keys(map)), [1, 2])
+        XCTAssertEqual(listElements(kk_map_values(map)), [32, 21])
+
+        let entries = setElements(kk_map_entries(map))
+        XCTAssertEqual(entries.count, 2)
+        XCTAssertEqual(
+            entries.map { kk_pair_first($0) },
+            mapKeys(map)
+        )
+        XCTAssertEqual(
+            entries.map { kk_pair_second($0) },
+            listElements(kk_map_values(map))
+        )
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
@@ -318,6 +338,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         return (0 ..< size).map { index in
             kk_list_get(listRaw, index)
         }
+    }
+
+    private func setElements(_ setRaw: Int) -> [Int] {
+        guard let set = runtimeSetBox(from: setRaw) else {
+            return []
+        }
+        return set.elements
     }
 
     private func mapKeys(_ mapRaw: Int) -> [Int] {

@@ -429,6 +429,17 @@ public func kk_map_values(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: map.values))
 }
 
+@_cdecl("kk_map_entries")
+public func kk_map_entries(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    let entries = zip(map.keys, map.values).map { key, value in
+        kk_pair_new(key, value)
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: entries))
+}
+
 /// Creates an iterator over a map's entries.
 /// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
 /// - Returns: Opaque handle (Int) to a `RuntimeMapIteratorBox`.

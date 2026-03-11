@@ -53,7 +53,11 @@ extension CallTypeChecker {
             sema.bindings.markCollectionExpr(id)
         }
 
-        let resultType = collectionFallbackResultType(memberName: memberName, sema: sema)
+        let resultType = collectionFallbackResultType(
+            memberName: memberName,
+            receiverElementType: receiverElementType,
+            sema: sema
+        )
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -105,7 +109,11 @@ extension CallTypeChecker {
         }
     }
 
-    func collectionFallbackResultType(memberName: String, sema: SemaModule) -> TypeID {
+    func collectionFallbackResultType(
+        memberName: String,
+        receiverElementType: TypeID,
+        sema: SemaModule
+    ) -> TypeID {
         let intReturningMembers: Set = ["size", "indexOf", "count", "sumOf"]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))
@@ -124,11 +132,11 @@ extension CallTypeChecker {
         }
 
         if memberName == "find" {
-            return sema.types.nullableAnyType
+            return sema.types.makeNullable(receiverElementType)
         }
 
         if memberName == "maxOrNull" || memberName == "minOrNull" {
-            return sema.types.nullableAnyType
+            return sema.types.makeNullable(receiverElementType)
         }
 
         return sema.types.anyType

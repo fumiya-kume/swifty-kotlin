@@ -119,6 +119,17 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.bitwiseFunctions.count, 8)
     }
 
+    func testPrimitiveNumericConversionFunctionCount() {
+        // kk_int_to_float, kk_int_to_byte, kk_int_to_short
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 3)
+    }
+
+    func testMathFunctionCount() {
+        // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
+        // kk_math_ceil, kk_math_floor, kk_math_round
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 7)
+    }
+
     func testTotalFunctionCount() {
         let expected = RuntimeABISpec.memoryFunctions.count
             + RuntimeABISpec.exceptionFunctions.count
@@ -130,9 +141,11 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.arrayFunctions.count
             + RuntimeABISpec.operatorFunctions.count
             + RuntimeABISpec.rangeFunctions.count
+            + RuntimeABISpec.primitiveNumericConversionFunctions.count
             + RuntimeABISpec.kPropertyStubFunctions.count
             + RuntimeABISpec.delegateFunctions.count
             + RuntimeABISpec.bitwiseFunctions.count
+            + RuntimeABISpec.mathFunctions.count
             + RuntimeABISpec.collectionFunctions.count
             + RuntimeABISpec.sequenceFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)

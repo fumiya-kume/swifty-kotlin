@@ -531,12 +531,14 @@ extension CallLowerer {
             }
         }
 
-        // Primitive conversion: toInt(), toUInt(), toLong(), toULong() (TYPE-005)
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
+        // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -556,6 +558,9 @@ extension CallLowerer {
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
             case ("toULong", ulongType, ulongType): nil // identity
+            case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
+            case ("toByte", intType, intType): interner.intern("kk_int_to_byte")
+            case ("toShort", intType, intType): interner.intern("kk_int_to_short")
             default: nil
             }
             if let callee = conversionCallee {
