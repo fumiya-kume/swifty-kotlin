@@ -524,7 +524,7 @@ extension DataFlowSemaPhase {
                 fqName: containsFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: [.synthetic, .operatorFunction]
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: containsSymbol)
             symbols.setExternalLinkName("kk_list_contains", for: containsSymbol)
@@ -595,7 +595,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_to_mutable_list", for: memberSymbol)
@@ -635,7 +635,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_joinToString", for: memberSymbol)

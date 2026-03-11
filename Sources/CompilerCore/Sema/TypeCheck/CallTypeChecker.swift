@@ -34,12 +34,34 @@ final class CallTypeChecker {
         // --- Builder DSL functions (STDLIB-002) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
-        if let calleeName, args.count == 1 {
+        if let calleeName {
             let name = interner.resolve(calleeName)
             if let builderKind = builderDSLKind(for: name),
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
-                let argumentExprID = args[0].expr
+                let lambdaArgumentIndex: Int? = switch builderKind {
+                case .buildString, .buildMap:
+                    args.count == 1 ? 0 : nil
+                case .buildList:
+                    switch args.count {
+                    case 1: 0
+                    case 2: 1
+                    default: nil
+                    }
+                }
+                guard let lambdaArgumentIndex else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                if builderKind == .buildList, args.count == 2 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+                }
+                let argumentExprID = args[lambdaArgumentIndex].expr
                 guard isValidBuilderLambdaArgument(argumentExprID, ast: ast) else {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0002",
@@ -572,6 +594,12 @@ final class CallTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
             let returnType = bindCallAndResolveReturnType(id, chosen: chosen, resolved: resolved, sema: sema)
+            if args.count == 2,
+               let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               ["kk_require_lazy", "kk_check_lazy"].contains(externalLinkName)
+            {
+                sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            }
             applyContractEffects(
                 chosen: chosen,
                 args: args,
@@ -970,7 +998,7 @@ final class CallTypeChecker {
                     return resultType
                 }
             }
-            if nonNullReceiver == sema.types.charType, args.isEmpty {
+            if sema.types.isSubtype(nonNullReceiver, sema.types.charType), args.isEmpty {
                 let charResultType: TypeID? = switch name {
                 case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
                     sema.types.booleanType

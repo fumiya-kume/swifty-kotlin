@@ -1685,7 +1685,7 @@ extension CallTypeChecker {
                 case .buildMap: name == "put" && args.count == 2
                 }
                 if isBuilderMember {
-                    let _ = args.map { argument in
+                    _ = args.map { argument in
                         driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
                     }
                     sema.bindings.bindExprType(id, type: sema.types.unitType)

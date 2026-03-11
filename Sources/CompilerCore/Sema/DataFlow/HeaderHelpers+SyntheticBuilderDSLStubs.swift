@@ -57,33 +57,80 @@ extension DataFlowSemaPhase {
     ) {
         let buildListName = interner.intern("buildList")
         let buildListFQName = kotlinCollectionsPkg + [buildListName]
-        let existingBuildList = symbols.lookupAll(fqName: buildListFQName).contains { symbolID in
+        let eName = interner.intern("E")
+        registerSyntheticBuildListOverload(
+            named: buildListName,
+            fqName: buildListFQName,
+            packageFQName: kotlinCollectionsPkg,
+            typeParameterName: eName,
+            extraParameterTypes: [],
+            extraParameterNames: [],
+            externalLinkName: nil,
+            listSymbol: listSymbol,
+            mutableListSymbol: mutableListSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticBuildListOverload(
+            named: buildListName,
+            fqName: buildListFQName,
+            packageFQName: kotlinCollectionsPkg,
+            typeParameterName: eName,
+            extraParameterTypes: [types.intType],
+            extraParameterNames: ["capacity"],
+            externalLinkName: "kk_build_list_with_capacity",
+            listSymbol: listSymbol,
+            mutableListSymbol: mutableListSymbol,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+    }
+
+    private func registerSyntheticBuildListOverload(
+        named buildListName: InternedString,
+        fqName buildListFQName: [InternedString],
+        packageFQName: [InternedString],
+        typeParameterName: InternedString,
+        extraParameterTypes: [TypeID],
+        extraParameterNames: [String],
+        externalLinkName: String?,
+        listSymbol: SymbolID,
+        mutableListSymbol: SymbolID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        guard extraParameterTypes.count == extraParameterNames.count else {
+            return
+        }
+        let parameterCount = extraParameterTypes.count + 1
+        let alreadyDefined = symbols.lookupAll(fqName: buildListFQName).contains { symbolID in
             guard let symbol = symbols.symbol(symbolID),
                   symbol.kind == .function,
                   let signature = symbols.functionSignature(for: symbolID)
             else {
                 return false
             }
-            return signature.parameterTypes.count == 1
+            return signature.receiverType == nil
+                && signature.parameterTypes.count == parameterCount
                 && signature.typeParameterSymbols.count == 1
-                && signature.receiverType == nil
         }
-        if existingBuildList {
+        if alreadyDefined {
             return
         }
 
-        let eName = interner.intern("E")
-        let eFQName = buildListFQName + [eName]
+        let eFQName = buildListFQName + [typeParameterName]
         let eSymbol = symbols.define(
             kind: .typeParameter,
-            name: eName,
+            name: typeParameterName,
             fqName: eFQName,
             declSite: nil,
             visibility: .private,
             flags: []
         )
         let eType = types.make(.typeParam(TypeParamType(symbol: eSymbol, nullability: .nonNull)))
-
         let mutableListOfEType = types.make(.classType(ClassType(
             classSymbol: mutableListSymbol,
             args: [.invariant(eType)],
@@ -94,7 +141,6 @@ extension DataFlowSemaPhase {
             args: [.out(eType)],
             nullability: .nonNull
         )))
-
         let builderActionType = types.make(.functionType(FunctionType(
             receiver: mutableListOfEType,
             params: [],
@@ -102,16 +148,6 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
-
-        let builderActionName = interner.intern("builderAction")
-        let builderActionSymbol = symbols.define(
-            kind: .valueParameter,
-            name: builderActionName,
-            fqName: buildListFQName + [builderActionName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
 
         let buildListSymbol = symbols.define(
             kind: .function,
@@ -121,20 +157,39 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let packageSymbol = symbols.lookup(fqName: kotlinCollectionsPkg) {
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: buildListSymbol)
         }
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: buildListSymbol)
+        }
         symbols.setParentSymbol(buildListSymbol, for: eSymbol)
-        symbols.setParentSymbol(buildListSymbol, for: builderActionSymbol)
+
+        let parameterNames = extraParameterNames + ["builderAction"]
+        var valueParameterSymbols: [SymbolID] = []
+        valueParameterSymbols.reserveCapacity(parameterNames.count)
+        for parameterName in parameterNames {
+            let parameterNameID = interner.intern(parameterName)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterNameID,
+                fqName: buildListFQName + [parameterNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(buildListSymbol, for: parameterSymbol)
+            valueParameterSymbols.append(parameterSymbol)
+        }
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [builderActionType],
+                parameterTypes: extraParameterTypes + [builderActionType],
                 returnType: listOfEType,
                 isSuspend: false,
-                valueParameterSymbols: [builderActionSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false],
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count),
                 typeParameterSymbols: [eSymbol],
                 classTypeParameterCount: 0
             ),

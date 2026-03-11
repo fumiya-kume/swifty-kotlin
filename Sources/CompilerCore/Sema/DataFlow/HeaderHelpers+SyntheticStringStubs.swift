@@ -130,6 +130,7 @@ extension DataFlowSemaPhase {
                 ("other", stringType, false, false),
             ],
             returnType: boolType,
+            flags: [.synthetic, .operatorFunction],
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -460,6 +461,7 @@ extension DataFlowSemaPhase {
         receiverType: TypeID,
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
+        flags: SymbolFlags = [.synthetic],
         packageFQName: [InternedString],
         symbols: SymbolTable,
         interner: StringInterner
@@ -483,7 +485,7 @@ extension DataFlowSemaPhase {
             fqName: functionFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic]
+            flags: flags
         )
         if let packageSymbol = symbols.lookup(fqName: packageFQName) {
             symbols.setParentSymbol(packageSymbol, for: functionSymbol)

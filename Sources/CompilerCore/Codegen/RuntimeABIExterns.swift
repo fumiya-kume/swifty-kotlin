@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J21"
+    public static let specVersion = "J22"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -92,6 +92,18 @@ public enum RuntimeABIExterns {
     public static let kk_check = ExternDecl(
         name: "kk_check",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_require_lazy = ExternDecl(
+        name: "kk_require_lazy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_check_lazy = ExternDecl(
+        name: "kk_check_lazy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -1069,6 +1081,8 @@ public enum RuntimeABIExterns {
             kk_abort_unreachable,
             kk_require,
             kk_check,
+            kk_require_lazy,
+            kk_check_lazy,
             kk_error,
             kk_todo,
             kk_todo_noarg,

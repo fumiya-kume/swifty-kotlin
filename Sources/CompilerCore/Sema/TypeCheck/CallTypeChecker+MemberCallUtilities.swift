@@ -20,13 +20,13 @@ extension CallTypeChecker {
         let ownerFQName = symbol.fqName.dropLast().map(interner.resolve)
         switch (ownerFQName, memberName) {
         case (["kotlin", "collections", "List"], "contains"),
-            (["kotlin", "collections", "List"], "isEmpty"),
-            (["kotlin", "collections", "Set"], "contains"),
-            (["kotlin", "collections", "Set"], "isEmpty"),
-            (["kotlin", "collections", "Collection"], "contains"),
-            (["kotlin", "collections", "Collection"], "isEmpty"),
-            (["kotlin", "collections", "Map"], "get"),
-            (["kotlin", "collections", "Map"], "containsKey"):
+             (["kotlin", "collections", "List"], "isEmpty"),
+             (["kotlin", "collections", "Set"], "contains"),
+             (["kotlin", "collections", "Set"], "isEmpty"),
+             (["kotlin", "collections", "Collection"], "contains"),
+             (["kotlin", "collections", "Collection"], "isEmpty"),
+             (["kotlin", "collections", "Map"], "get"),
+             (["kotlin", "collections", "Map"], "containsKey"):
             return true
         default:
             return false

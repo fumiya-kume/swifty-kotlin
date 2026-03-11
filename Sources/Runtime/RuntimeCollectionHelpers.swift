@@ -295,6 +295,15 @@ func runtimeInvokeCollectionLambda2(
     return fn(closureRaw, lhs, rhs, outThrown)
 }
 
+func runtimeInvokeClosureThunk(
+    fnPtr: Int,
+    closureRaw: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: KKClosureThunkEntryPoint.self)
+    return fn(closureRaw, outThrown)
+}
+
 func runtimeCompareValues(_ lhs: Int, _ rhs: Int) -> Int {
     if lhs == rhs {
         return 0

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Synthetic stdlib top-level functions for kotlin.require, kotlin.check, kotlin.error (STDLIB-062).
+/// Synthetic stdlib top-level functions for kotlin.require, kotlin.check, and kotlin.error (STDLIB-062).
 /// These stubs enable name resolution and type checking; runtime behavior is implemented in Runtime.
 extension DataFlowSemaPhase {
     func registerSyntheticPreconditionStubs(
@@ -12,34 +12,67 @@ extension DataFlowSemaPhase {
         _ = ensureSyntheticPackage(fqName: kotlinPkg, symbols: symbols)
         let packageSymbol = symbols.lookup(fqName: kotlinPkg) ?? .invalid
 
-        registerSyntheticPreconditionFunction(
+        registerSyntheticPreconditionTopLevelFunction(
             named: "require",
             packageFQName: kotlinPkg,
             packageSymbol: packageSymbol,
-            parameterName: "condition",
-            parameterType: types.booleanType,
+            parameters: [(name: "condition", type: types.booleanType)],
             returnType: types.unitType,
             externalLinkName: "kk_require",
             symbols: symbols,
             interner: interner
         )
-        registerSyntheticPreconditionFunction(
+        registerSyntheticPreconditionTopLevelFunction(
+            named: "require",
+            packageFQName: kotlinPkg,
+            packageSymbol: packageSymbol,
+            parameters: [
+                (name: "condition", type: types.booleanType),
+                (name: "lazyMessage", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_require_lazy",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticPreconditionTopLevelFunction(
             named: "check",
             packageFQName: kotlinPkg,
             packageSymbol: packageSymbol,
-            parameterName: "condition",
-            parameterType: types.booleanType,
+            parameters: [(name: "condition", type: types.booleanType)],
             returnType: types.unitType,
             externalLinkName: "kk_check",
             symbols: symbols,
             interner: interner
         )
-        registerSyntheticPreconditionFunction(
+        registerSyntheticPreconditionTopLevelFunction(
+            named: "check",
+            packageFQName: kotlinPkg,
+            packageSymbol: packageSymbol,
+            parameters: [
+                (name: "condition", type: types.booleanType),
+                (name: "lazyMessage", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_check_lazy",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticPreconditionTopLevelFunction(
             named: "error",
             packageFQName: kotlinPkg,
             packageSymbol: packageSymbol,
-            parameterName: "message",
-            parameterType: types.stringType,
+            parameters: [(name: "message", type: types.anyType)],
             returnType: types.nothingType,
             externalLinkName: "kk_error",
             symbols: symbols,
@@ -67,12 +100,11 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticPreconditionFunction(
+    private func registerSyntheticPreconditionTopLevelFunction(
         named name: String,
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
-        parameterName: String,
-        parameterType: TypeID,
+        parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
         symbols: SymbolTable,
@@ -84,7 +116,7 @@ extension DataFlowSemaPhase {
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == [parameterType]
+            return existingSignature.parameterTypes == parameters.map(\.type)
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
@@ -104,25 +136,28 @@ extension DataFlowSemaPhase {
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
 
-        let paramNameID = interner.intern(parameterName)
-        let paramSymbol = symbols.define(
-            kind: .valueParameter,
-            name: paramNameID,
-            fqName: functionFQName + [paramNameID],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+        let valueParameterSymbols = parameters.map { parameter in
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            return parameterSymbol
+        }
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [parameterType],
+                parameterTypes: parameters.map(\.type),
                 returnType: returnType,
                 isSuspend: false,
-                valueParameterSymbols: [paramSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false]
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: functionSymbol
         )

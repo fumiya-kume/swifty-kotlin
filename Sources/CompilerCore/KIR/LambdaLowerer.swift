@@ -117,7 +117,13 @@ final class LambdaLowerer {
         // Runtime expects (closureRaw, ...valueParams, outThrown). Add closure param as first param.
         let lambdaParameters: [KIRParameter]
         let needsClosureParam = sema.bindings.isCollectionHOFLambdaExpr(exprID) && !isSamConversion
-        if needsClosureParam, effectiveParamCount == 1 {
+        if needsClosureParam, effectiveParamCount == 0 {
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
+            )
+            lambdaParameters = [closureParam]
+        } else if needsClosureParam, effectiveParamCount == 1 {
             let closureParam = KIRParameter(
                 symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
                 type: sema.types.intType

@@ -264,7 +264,8 @@ extension CollectionLiteralLoweringPass {
                     if symbol == nil, lookup.builderDSLNames.contains(callee) {
                         let kkCallee: InternedString = switch callee {
                         case lookup.buildStringName: lookup.kkBuildStringName
-                        case lookup.buildListName: lookup.kkBuildListName
+                        case lookup.buildListName:
+                            arguments.count == 2 ? lookup.kkBuildListWithCapacityName : lookup.kkBuildListName
                         case lookup.buildMapName: lookup.kkBuildMapName
                         default: callee
                         }

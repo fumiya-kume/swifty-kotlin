@@ -77,6 +77,7 @@ public extension RuntimeABIExterns {
         kk_pair_to_string,
         kk_build_string,
         kk_build_list,
+        kk_build_list_with_capacity,
         kk_build_map,
         kk_string_builder_append,
         kk_builder_list_add,
@@ -553,6 +554,12 @@ public extension RuntimeABIExterns {
     static let kk_build_list = ExternDecl(
         name: "kk_build_list",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_build_list_with_capacity = ExternDecl(
+        name: "kk_build_list_with_capacity",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

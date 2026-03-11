@@ -130,7 +130,7 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ),
-        !argumentTypes.isEmpty
+            !argumentTypes.isEmpty
         else {
             return sema.types.anyType
         }
@@ -160,7 +160,7 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         ),
-        !argumentPairs.isEmpty
+            !argumentPairs.isEmpty
         else {
             return (sema.types.anyType, sema.types.anyType)
         }
@@ -276,6 +276,7 @@ extension CallTypeChecker {
         }
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     private func collectBuilderDSLArgumentExprs(
         in exprID: ExprID,
         kind: BuilderDSLKind,
@@ -357,21 +358,21 @@ extension CallTypeChecker {
                 collectBuilderDSLArgumentExprs(in: finallyExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
             }
         case let .binary(_, lhs, rhs, _),
-            let .inExpr(lhs, rhs, _),
-            let .notInExpr(lhs, rhs, _):
+             let .inExpr(lhs, rhs, _),
+             let .notInExpr(lhs, rhs, _):
             collectBuilderDSLArgumentExprs(in: lhs, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
             collectBuilderDSLArgumentExprs(in: rhs, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
         case let .unaryExpr(_, operand, _),
-            let .nullAssert(operand, _),
-            let .throwExpr(operand, _),
-            let .returnExpr(operand?, _, _):
+             let .nullAssert(operand, _),
+             let .throwExpr(operand, _),
+             let .returnExpr(operand?, _, _):
             collectBuilderDSLArgumentExprs(in: operand, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
         case let .localDecl(_, _, _, initializer, _, _):
             if let initializer {
                 collectBuilderDSLArgumentExprs(in: initializer, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
             }
         case let .localAssign(_, value, _),
-            let .memberAssign(_, _, value, _):
+             let .memberAssign(_, _, value, _):
             collectBuilderDSLArgumentExprs(in: value, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
         default:
             break
@@ -381,11 +382,11 @@ extension CallTypeChecker {
     private func isMatchingBuilderDSLFunctionName(_ name: String, kind: BuilderDSLKind) -> Bool {
         switch kind {
         case .buildString:
-            return name == "append"
+            name == "append"
         case .buildList:
-            return name == "add"
+            name == "add"
         case .buildMap:
-            return name == "put"
+            name == "put"
         }
     }
 

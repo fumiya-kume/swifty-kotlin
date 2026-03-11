@@ -239,6 +239,29 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testContainsMembersAreMarkedOperatorFunctions() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let listContains = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("contains"),
+            ]))
+            let stringContains = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("text"),
+                ctx.interner.intern("contains"),
+            ]))
+
+            XCTAssertTrue(sema.symbols.symbol(listContains)?.flags.contains(.operatorFunction) == true)
+            XCTAssertTrue(sema.symbols.symbol(stringContains)?.flags.contains(.operatorFunction) == true)
+        }
+    }
+
     func testMutableSetMutationMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableSet<Int>) {
@@ -413,7 +436,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             guard case let .classType(listType) = sema.types.kind(of: buildListType) else {
                 return XCTFail("Expected buildList(...) to produce a class type")
             }
-            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
             guard case let .out(elementType) = try XCTUnwrap(listType.args.first) else {
                 return XCTFail("Expected List element type argument")
             }
@@ -427,7 +450,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             guard case let .classType(receiverType) = sema.types.kind(of: explicitThisType) else {
                 return XCTFail("Expected builder receiver to be a class type")
             }
-            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableList")
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableList")
             guard case let .invariant(receiverElementType) = try XCTUnwrap(receiverType.args.first) else {
                 return XCTFail("Expected MutableList element type argument")
             }
@@ -461,7 +484,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             guard case let .classType(mapType) = sema.types.kind(of: buildMapType) else {
                 return XCTFail("Expected buildMap(...) to produce a class type")
             }
-            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(mapType.classSymbol)?.name)), "Map")
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(mapType.classSymbol)?.name)), "Map")
             guard mapType.args.count >= 2,
                   case let .out(keyType) = mapType.args[0],
                   case let .out(valueType) = mapType.args[1]
@@ -479,7 +502,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             guard case let .classType(receiverType) = sema.types.kind(of: explicitThisType) else {
                 return XCTFail("Expected builder receiver to be a class type")
             }
-            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableMap")
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableMap")
             guard receiverType.args.count >= 2,
                   case let .invariant(receiverKeyType) = receiverType.args[0],
                   case let .invariant(receiverValueType) = receiverType.args[1]
@@ -488,6 +511,40 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             }
             XCTAssertEqual(receiverKeyType, sema.types.stringType)
             XCTAssertEqual(receiverValueType, sema.types.intType)
+        }
+    }
+
+    func testBuildListCapacityOverloadResolves() throws {
+        let source = """
+        fun render(): List<Int> = buildList(4) {
+            add(1)
+            add(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+
+            let buildListCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "buildList"
+            })
+            let buildListType = try XCTUnwrap(sema.bindings.exprType(for: buildListCall))
+            guard case let .classType(listType) = sema.types.kind(of: buildListType) else {
+                return XCTFail("Expected buildList(capacity) to produce a class type")
+            }
+            XCTAssertEqual(try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
+            guard case let .out(elementType) = try XCTUnwrap(listType.args.first) else {
+                return XCTFail("Expected List element type argument")
+            }
+            XCTAssertEqual(elementType, sema.types.intType)
         }
     }
 }
