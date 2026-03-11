@@ -279,6 +279,7 @@ final class CallTypeChecker {
                 expectedType: initExpectedType
             )
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
+            sema.bindings.markCollectionExpr(id)
             sema.bindings.bindExprType(id, type: anyType)
             return anyType
         }
@@ -1037,12 +1038,16 @@ final class CallTypeChecker {
                     return resultType
                 }
             }
-            if sema.types.isSubtype(nonNullReceiver, sema.types.charType), args.isEmpty {
+            if sema.types.isSubtype(nonNullReceiver, sema.types.charType), args.count <= 1 {
                 let charResultType: TypeID? = switch name {
                 case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
-                    sema.types.booleanType
+                    args.isEmpty ? sema.types.booleanType : nil
                 case "uppercase", "lowercase", "titlecase":
-                    sema.types.stringType
+                    args.isEmpty ? sema.types.stringType : nil
+                case "digitToInt":
+                    args.isEmpty ? sema.types.intType : nil
+                case "digitToIntOrNull":
+                    args.isEmpty ? sema.types.makeNullable(sema.types.intType) : nil
                 default:
                     nil
                 }

@@ -58,8 +58,54 @@ public func kk_char_titlecase(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {
         return charRuntimeMakeStringRaw("\u{FFFD}")
     }
-    let upper = String(scalar).uppercased()
-    return charRuntimeMakeStringRaw(upper)
+    let titlecased = scalar.properties.titlecaseMapping
+    return charRuntimeMakeStringRaw(titlecased)
+}
+
+@_cdecl("kk_char_digitToInt")
+public func kk_char_digitToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Char is not a digit")
+        return 0
+    }
+    if let digitValue = charUnicodeDigitValue(scalar) {
+        return digitValue
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Char \(scalar) is not a digit")
+    return 0
+}
+
+@_cdecl("kk_char_digitToIntOrNull")
+public func kk_char_digitToIntOrNull(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value),
+          let digitValue = charUnicodeDigitValue(scalar)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return digitValue
+}
+
+private func charUnicodeDigitValue(_ scalar: UnicodeScalar) -> Int? {
+    // ASCII digits 0-9
+    if scalar.value >= 0x30 && scalar.value <= 0x39 {
+        return Int(scalar.value - 0x30)
+    }
+    // Unicode Nd category decimal digits
+    if CharacterSet.decimalDigits.contains(scalar) {
+        let numericValue = scalar.properties.numericValue
+        if let value = numericValue, value >= 0 && value <= 9 && value == value.rounded() {
+            return Int(value)
+        }
+    }
+    // Latin letters for radix > 10
+    let v = scalar.value
+    if v >= 0x41 && v <= 0x5A { return Int(v - 0x41) + 10 }  // A-Z
+    if v >= 0x61 && v <= 0x7A { return Int(v - 0x61) + 10 }  // a-z
+    // Fullwidth Latin letters
+    if v >= 0xFF21 && v <= 0xFF3A { return Int(v - 0xFF21) + 10 }  // Ａ-Ｚ
+    if v >= 0xFF41 && v <= 0xFF5A { return Int(v - 0xFF41) + 10 }  // ａ-ｚ
+    return nil
 }
 
 private func charRuntimeMakeStringRaw(_ value: String) -> Int {

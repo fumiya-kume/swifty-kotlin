@@ -84,8 +84,14 @@ struct TypeCheckHelpers {
             return nil
         }
         switch interner.resolve(symbol.name) {
-        case "IntArray":
+        case "IntArray", "LongArray":
             return sema.types.intType
+        case "DoubleArray":
+            return sema.types.doubleType
+        case "BooleanArray":
+            return sema.types.booleanType
+        case "CharArray":
+            return sema.types.charType
         default:
             // For generic collection types (e.g. List<String?>, MutableList<Int>),
             // extract the first type argument as the element type.

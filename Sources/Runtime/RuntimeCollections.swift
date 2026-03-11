@@ -579,8 +579,10 @@ public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: I
     guard let array = runtimeArrayBox(from: arrayRaw) else {
         return registerRuntimeObject(RuntimeArrayBox(length: 0))
     }
-    let from = max(0, fromIndex)
-    let to = min(array.elements.count, max(from, toIndex))
+    // Kotlin semantics: validate boundaries
+    let size = array.elements.count
+    let from = max(0, min(fromIndex, size))
+    let to = max(from, min(toIndex, size))
     let count = to - from
     let box = RuntimeArrayBox(length: count)
     for i in 0 ..< count {

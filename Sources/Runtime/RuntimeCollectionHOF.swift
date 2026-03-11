@@ -705,6 +705,8 @@ public func kk_array_forEach(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 @_cdecl("kk_array_any")
 public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(0) }
+    // Zero-arg overload: any() returns true if array is non-empty
+    if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 0 : 1) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in array.elements {
         var thrown = 0
@@ -718,6 +720,8 @@ public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 @_cdecl("kk_array_none")
 public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(1) }
+    // Zero-arg overload: none() returns true if array is empty
+    if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 1 : 0) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in array.elements {
         var thrown = 0
