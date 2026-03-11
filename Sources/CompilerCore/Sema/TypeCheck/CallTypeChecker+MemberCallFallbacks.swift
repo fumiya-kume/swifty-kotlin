@@ -21,8 +21,9 @@ extension CallTypeChecker {
         }
 
         let memberName = interner.resolve(calleeName)
-        guard isSupportedCollectionFallbackMember(memberName),
-              isValidCollectionFallbackArity(memberName, argCount: args.count)
+        let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        guard isSupportedCollectionFallbackMember(memberName, isMapReceiver: isMapReceiver),
+              isValidCollectionFallbackArity(memberName, argCount: args.count, isMapReceiver: isMapReceiver)
         else {
             return nil
         }
@@ -33,6 +34,7 @@ extension CallTypeChecker {
             memberName: memberName,
             argCount: args.count,
             receiverElementType: receiverElementType,
+            isMapReceiver: isMapReceiver,
             sema: sema
         ),
             args.indices.contains(expectation.argumentIndex)
@@ -49,7 +51,7 @@ extension CallTypeChecker {
             )
         }
 
-        if isCollectionReturningMember(memberName) {
+        if isCollectionReturningMember(memberName, isMapReceiver: isMapReceiver) {
             sema.bindings.markCollectionExpr(id)
         }
 
@@ -63,43 +65,51 @@ extension CallTypeChecker {
         return finalType
     }
 
-    func isSupportedCollectionFallbackMember(_ memberName: String) -> Bool {
+    func isSupportedCollectionFallbackMember(_ memberName: String, isMapReceiver: Bool) -> Bool {
         let collectionMembers: Set = [
-            "size", "get", "contains", "containsKey",
+            "size", "get", "contains",
             "isEmpty", "first", "last", "indexOf",
             "count", "iterator",
             "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
             "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
-            "mapValues", "mapKeys",
             "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct",
         ]
+        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys"]
+        if mapOnlyMembers.contains(memberName) {
+            return isMapReceiver
+        }
         return collectionMembers.contains(memberName)
     }
 
-    func isCollectionReturningMember(_ memberName: String) -> Bool {
+    func isCollectionReturningMember(_ memberName: String, isMapReceiver: Bool) -> Bool {
         let collectionReturningMembers: Set = [
             "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
             "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
             "associate", "zip", "toList", "take", "drop", "reversed",
-            "sorted", "distinct", "withIndex", "mapIndexed", "mapValues", "mapKeys",
+            "sorted", "distinct", "withIndex", "mapIndexed",
         ]
+        if memberName == "mapValues" || memberName == "mapKeys" {
+            return isMapReceiver
+        }
         return collectionReturningMembers.contains(memberName)
     }
 
-    func isValidCollectionFallbackArity(_ memberName: String, argCount: Int) -> Bool {
+    func isValidCollectionFallbackArity(_ memberName: String, argCount: Int, isMapReceiver: Bool) -> Bool {
         switch memberName {
         case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct", "withIndex", "maxOrNull", "minOrNull":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
-        case "get", "contains", "containsKey", "indexOf",
+        case "get", "contains", "indexOf",
              "map", "filter", "mapNotNull", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
-             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys":
+             "forEachIndexed", "mapIndexed", "sumOf":
             argCount == 1
+        case "containsKey", "mapValues", "mapKeys":
+            isMapReceiver && argCount == 1
         case "fold":
             argCount == 2
         case "count", "first", "last":
@@ -146,19 +156,24 @@ extension CallTypeChecker {
         memberName: String,
         argCount: Int,
         receiverElementType: TypeID,
+        isMapReceiver: Bool,
         sema: SemaModule
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let boolOneParamMembers: Set = ["filter", "any", "none", "all", "count", "first", "last", "find"]
         let oneParamMembers: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
-            "mapValues", "mapKeys",
         ]
-        if oneParamMembers.contains(memberName), argCount == 1 {
+        if memberName == "mapValues" || memberName == "mapKeys" {
+            guard isMapReceiver, argCount == 1 else {
+                return nil
+            }
+        }
+        if oneParamMembers.contains(memberName) || memberName == "mapValues" || memberName == "mapKeys", argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
                 ? sema.types.make(.primitive(.boolean, .nonNull))
                 : memberName == "sumOf"
-                    ? sema.types.intType
+                ? sema.types.intType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType],
@@ -210,7 +225,7 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
         let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
-        if (receiverSymbolName == "Map" || receiverSymbolName.contains("Map")), classType.args.count == 2 {
+        if receiverSymbolName == "Map" || receiverSymbolName.contains("Map"), classType.args.count == 2 {
             let keyType = switch classType.args[0] {
             case let .invariant(type), let .out(type), let .in(type):
                 type
@@ -276,5 +291,14 @@ extension CallTypeChecker {
         return [
             "List", "MutableList", "Set", "MutableSet", "Map", "MutableMap",
         ].contains(shortName)
+    }
+
+    private func isMapLikeCollectionReceiver(receiverID: ExprID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) else {
+            return false
+        }
+        let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
+        return (receiverSymbolName == "Map" || receiverSymbolName.contains("Map")) && classType.args.count == 2
     }
 }

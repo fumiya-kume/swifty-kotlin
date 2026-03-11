@@ -1,5 +1,7 @@
+// swiftlint:disable file_length
 import Foundation
 
+// swiftlint:disable type_body_length
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
 ///
 /// This file defines the expected C signatures of all runtime functions
@@ -1178,3 +1180,5 @@ public enum RuntimeABIExterns {
         allExterns.first { $0.name == name }
     }
 }
+
+// swiftlint:enable type_body_length

@@ -354,7 +354,7 @@ extension CallLowerer {
         return result
     }
 
-    // swiftlint:disable cyclomatic_complexity
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
@@ -370,7 +370,7 @@ extension CallLowerer {
         prependReceiverForUnresolvedCollectionCall: Bool,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        // swiftlint:enable cyclomatic_complexity
+        // swiftlint:enable cyclomatic_complexity function_body_length
         if let foldedConst = tryFoldConstMemberProperty(
             exprID,
             receiverExpr: receiverExpr,

@@ -1,8 +1,8 @@
 import Foundation
 
-// Synthetic stdlib top-level functions for kotlin.math (STDLIB-052).
-// These stubs are intentionally minimal and only cover the math entry points
-// currently needed by the compiler front-end and runtime.
+/// Synthetic stdlib top-level functions for kotlin.math (STDLIB-052).
+/// These stubs are intentionally minimal and only cover the math entry points
+/// currently needed by the compiler front-end and runtime.
 extension DataFlowSemaPhase {
     func registerSyntheticMathStubs(
         symbols: SymbolTable,

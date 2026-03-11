@@ -1438,7 +1438,7 @@ extension DataFlowSemaPhase {
                 visibility: .private,
                 flags: []
             )
-            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
             let mapLambdaType = types.make(.functionType(FunctionType(
                 params: [entryType],
                 returnType: rType,
@@ -1929,7 +1929,7 @@ extension DataFlowSemaPhase {
             let mName = interner.intern(name)
             let mFQName = fqName + [mName]
             let mSymbol = symbols.define(
-                kind: .function, // For synthetic stub, we treat it as a function/getter
+                kind: .property,
                 name: mName,
                 fqName: mFQName,
                 declSite: nil,
@@ -1938,16 +1938,7 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(symbol, for: mSymbol)
             symbols.setExternalLinkName(externalLinkName, for: mSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: receiverType,
-                    parameterTypes: [],
-                    returnType: ret,
-                    typeParameterSymbols: [tSymbol],
-                    classTypeParameterCount: 1
-                ),
-                for: mSymbol
-            )
+            symbols.setPropertyType(ret, for: mSymbol)
         }
 
         registerComponent(name: "component1", ret: types.intType, externalLinkName: "kk_pair_first")

@@ -367,9 +367,9 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
-            "mapValues", "mapKeys",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -393,7 +393,9 @@ extension CallTypeChecker {
         let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
-        let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+        let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
+        let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
+        let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
 
         // --- Collection higher-order functions (STDLIB-005) ---
@@ -462,7 +464,7 @@ extension CallTypeChecker {
                             args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
                             nullability: .nonNull
                         )))
-                    case "mapValues":
+                    case "mapValues" where isMapReceiver:
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -471,7 +473,8 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                         let keyType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-                                                classType.args.count >= 2 {
+                                                 classType.args.count >= 2
+                        {
                             switch classType.args[0] {
                             case let .invariant(id), let .out(id), let .in(id): id
                             case .star: sema.types.anyType
@@ -484,7 +487,7 @@ extension CallTypeChecker {
                             args: [.invariant(keyType), .invariant(bodyType)],
                             nullability: .nonNull
                         )))
-                    case "mapKeys":
+                    case "mapKeys" where isMapReceiver:
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
                         } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
@@ -493,7 +496,8 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                         let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-                                                  classType.args.count >= 2 {
+                                                   classType.args.count >= 2
+                        {
                             switch classType.args[1] {
                             case let .invariant(id), let .out(id), let .in(id): id
                             case .star: sema.types.anyType
@@ -1998,6 +2002,15 @@ extension CallTypeChecker {
             }
         }
         return sema.types.anyType
+    }
+
+    private func isMapLikeCollectionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType) else {
+            return false
+        }
+        let name = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
+        return (name == "Map" || name.contains("Map")) && classType.args.count == 2
     }
 
     private func makeSyntheticPairType(

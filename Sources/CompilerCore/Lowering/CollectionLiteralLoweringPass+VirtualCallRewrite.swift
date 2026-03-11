@@ -330,7 +330,8 @@ extension CollectionLiteralLoweringPass {
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
-            || callee == lookup.mapValuesName || callee == lookup.mapKeysName || callee == lookup.toListName else {
+            || callee == lookup.mapValuesName || callee == lookup.mapKeysName || callee == lookup.toListName
+        else {
             return false
         }
         guard mapExprIDs.contains(receiver.rawValue) else { return false }

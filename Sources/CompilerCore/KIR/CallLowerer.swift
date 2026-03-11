@@ -9,6 +9,7 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
