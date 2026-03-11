@@ -408,6 +408,7 @@ public func kk_map_iterator_hasNext(_ iterRaw: Int) -> Int {
     return iter.index < iter.keys.count ? 1 : 0
 }
 
+/// Returns the key at the current position, matching the C preamble behavior.
 @_cdecl("kk_map_iterator_next")
 public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeMapIteratorBox(from: iterRaw) else {
