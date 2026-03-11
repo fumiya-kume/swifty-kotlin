@@ -248,7 +248,7 @@ final class CallTypeChecker {
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086) ---
         if let calleeName,
            ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
-               .contains(interner.resolve(calleeName)),
+           .contains(interner.resolve(calleeName)),
            args.count == 2,
            locals[calleeName] == nil
         {

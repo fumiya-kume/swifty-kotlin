@@ -1,6 +1,6 @@
 import Foundation
 
-internal final class RuntimeRangeBox {
+final class RuntimeRangeBox {
     let first: Int
     let last: Int
     let step: Int
@@ -149,7 +149,8 @@ public func kk_range_toList(_ rangeRaw: Int) -> Int {
 
 @_cdecl("kk_range_forEach")
 public func kk_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
-                              _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+                             _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
     guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var current = range.first
@@ -173,7 +174,8 @@ public func kk_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 
 @_cdecl("kk_range_map")
 public func kk_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
-                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+                         _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
     guard let range = runtimeRangeBox(from: rangeRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
@@ -256,7 +258,7 @@ public func kk_kxmini_run_loop(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
 }
 
-internal func runtimeRangeBox(from rawValue: Int) -> RuntimeRangeBox? {
+func runtimeRangeBox(from rawValue: Int) -> RuntimeRangeBox? {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }

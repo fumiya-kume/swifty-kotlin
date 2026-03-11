@@ -88,23 +88,23 @@ public func kk_char_digitToIntOrNull(_ value: Int) -> Int {
 
 private func charUnicodeDigitValue(_ scalar: UnicodeScalar) -> Int? {
     // ASCII digits 0-9
-    if scalar.value >= 0x30 && scalar.value <= 0x39 {
+    if scalar.value >= 0x30, scalar.value <= 0x39 {
         return Int(scalar.value - 0x30)
     }
     // Unicode Nd category decimal digits
     if CharacterSet.decimalDigits.contains(scalar) {
         let numericValue = scalar.properties.numericValue
-        if let value = numericValue, value >= 0 && value <= 9 && value == value.rounded() {
+        if let value = numericValue, value >= 0, value <= 9, value == value.rounded() {
             return Int(value)
         }
     }
     // Latin letters for radix > 10
     let v = scalar.value
-    if v >= 0x41 && v <= 0x5A { return Int(v - 0x41) + 10 }  // A-Z
-    if v >= 0x61 && v <= 0x7A { return Int(v - 0x61) + 10 }  // a-z
+    if v >= 0x41, v <= 0x5A { return Int(v - 0x41) + 10 } // A-Z
+    if v >= 0x61, v <= 0x7A { return Int(v - 0x61) + 10 } // a-z
     // Fullwidth Latin letters
-    if v >= 0xFF21 && v <= 0xFF3A { return Int(v - 0xFF21) + 10 }  // Ａ-Ｚ
-    if v >= 0xFF41 && v <= 0xFF5A { return Int(v - 0xFF41) + 10 }  // ａ-ｚ
+    if v >= 0xFF21, v <= 0xFF3A { return Int(v - 0xFF21) + 10 } // Ａ-Ｚ
+    if v >= 0xFF41, v <= 0xFF5A { return Int(v - 0xFF41) + 10 } // ａ-ｚ
     return nil
 }
 

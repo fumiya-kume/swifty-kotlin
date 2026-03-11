@@ -118,7 +118,7 @@ extension CollectionLiteralLoweringPass {
         // Classify range factory calls
         if let result,
            callee == lookup.kkOpRangeToName || callee == lookup.kkOpRangeUntilName
-            || callee == lookup.kkOpDownToName || callee == lookup.kkOpStepName
+           || callee == lookup.kkOpDownToName || callee == lookup.kkOpStepName
         {
             rangeExprIDs.insert(result.rawValue)
         }
