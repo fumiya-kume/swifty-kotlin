@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J22"
+    public static let specVersion = "J23"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -368,6 +368,24 @@ public enum RuntimeABIExterns {
 
     public static let kk_char_isWhitespace = ExternDecl(
         name: "kk_char_isWhitespace",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_uppercase = ExternDecl(
+        name: "kk_char_uppercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_lowercase = ExternDecl(
+        name: "kk_char_lowercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_titlecase = ExternDecl(
+        name: "kk_char_titlecase",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1124,6 +1142,9 @@ public enum RuntimeABIExterns {
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
             kk_char_isWhitespace,
+            kk_char_uppercase,
+            kk_char_lowercase,
+            kk_char_titlecase,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
