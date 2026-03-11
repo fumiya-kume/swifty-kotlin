@@ -48,11 +48,11 @@
   - [x] diff/golden ケースを追加する
   - **完了条件**: `buildMap { put("a", 1) }` → `{a=1}` が `kotlinc` と一致する ✓
 
-- [ ] STDLIB-072: `List.mapNotNull {}` / `List.filterNotNull()` のランタイム異常終了を解消する
-  - [ ] `CodegenBackendIntegrationTests` で常時 skip されている `mapNotNull` / `filterNotNull` テストを再有効化する
-  - [ ] codegen / runtime のどちらで exit 11 を起こしているか切り分ける
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1, 0, 2).mapNotNull { it }` と `listOf("a", null, "b").filterNotNull()` が `kotlinc` と一致し、常時 skip が不要になる
+- [x] STDLIB-072: `List.mapNotNull {}` / `List.filterNotNull()` のランタイム異常終了を解消する
+  - [x] `CodegenBackendIntegrationTests` の `mapNotNull` / `filterNotNull` テストを再有効化する
+  - [x] codegen / runtime のどちらで exit 11 を起こしているか切り分ける
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `listOf(1, 0, 2).mapNotNull { it }` と `listOf("a", null, "b").filterNotNull()` が `kotlinc` と一致し、常時 skip が不要になる ✓
 
 - [x] STDLIB-073: `associateBy` / `associateWith` / `associate` の誤った key-value 生成を修正する
   - [x] `CodegenBackendIntegrationTests` の associate 系テストを再有効化する
