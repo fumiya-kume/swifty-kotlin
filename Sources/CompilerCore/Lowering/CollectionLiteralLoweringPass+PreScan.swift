@@ -164,6 +164,14 @@ extension CollectionLiteralLoweringPass {
             listExprIDs.contains(src)
         {
             mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.mapName, mapExprIDs.contains(src) {
+            listExprIDs.insert(result.rawValue)
+        } else if callee == lookup.filterName, mapExprIDs.contains(src) {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.mapValuesName || callee == lookup.mapKeysName, mapExprIDs.contains(src) {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.toListName, mapExprIDs.contains(src) {
+            listExprIDs.insert(result.rawValue)
         } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
             || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName,
             listExprIDs.contains(src)
@@ -183,30 +191,40 @@ extension CollectionLiteralLoweringPass {
     ) {
         if callee == lookup.asSequenceName {
             if let result { sequenceExprIDs.insert(result.rawValue) }
-        } else if callee == lookup.kkStringSplitName {
+            return
+        }
+        if callee == lookup.kkStringSplitName {
             if let result { listExprIDs.insert(result.rawValue) }
-        } else if callee == lookup.toListName {
-            if sequenceExprIDs.contains(receiver.rawValue) {
+            return
+        }
+
+        let receiverRaw = receiver.rawValue
+        if sequenceExprIDs.contains(receiverRaw) {
+            if callee == lookup.toListName {
                 if let result { listExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
-            if sequenceExprIDs.contains(receiver.rawValue) {
+            } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
                 if let result { sequenceExprIDs.insert(result.rawValue) }
             }
-        } else if callee == lookup.groupByName || callee == lookup.associateByName
-            || callee == lookup.associateWithName || callee == lookup.associateName
-        {
-            if listExprIDs.contains(receiver.rawValue) {
+            return
+        }
+
+        if mapExprIDs.contains(receiverRaw) {
+            if callee == lookup.mapName || callee == lookup.toListName {
+                if let result { listExprIDs.insert(result.rawValue) }
+            } else if callee == lookup.filterName || callee == lookup.mapValuesName || callee == lookup.mapKeysName {
                 if let result { mapExprIDs.insert(result.rawValue) }
             }
-        } else if callee == lookup.withIndexName {
-            if listExprIDs.contains(receiver.rawValue) {
-                if let result { listExprIDs.insert(result.rawValue) }
-            }
-        } else if callee == lookup.takeName || callee == lookup.dropName
-            || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
-        {
-            if listExprIDs.contains(receiver.rawValue) {
+            return
+        }
+
+        if listExprIDs.contains(receiverRaw) {
+            if callee == lookup.groupByName || callee == lookup.associateByName
+                || callee == lookup.associateWithName || callee == lookup.associateName
+            {
+                if let result { mapExprIDs.insert(result.rawValue) }
+            } else if callee == lookup.withIndexName || callee == lookup.takeName || callee == lookup.dropName
+                || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
+            {
                 if let result { listExprIDs.insert(result.rawValue) }
             }
         }

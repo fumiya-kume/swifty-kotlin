@@ -125,6 +125,27 @@ private let sortedByTens: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) 
     value / 10
 }
 
+private let mapEntrySum: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_first(pairRaw) + kk_pair_second(pairRaw)
+}
+
+private let keepEvenValueEntries: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_second(pairRaw) % 2 == 0 ? 1 : 0
+}
+
+private let accumulateEntryScore: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    gHOFState.addSum(kk_pair_first(pairRaw) * 10 + kk_pair_second(pairRaw))
+    return 0
+}
+
+private let mapEntryValueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_second(pairRaw) * 10
+}
+
+private let mapEntryKeyPlusHundred: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
+    kk_pair_first(pairRaw) + 100
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -221,6 +242,63 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_map_get(grouped, 0)), [4, 2])
     }
 
+    func testMapForEachFilterAndMapUsePairEntries() {
+        let keys = makeArray([1, 2, 3])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        _ = kk_map_forEach(map, unsafeBitCast(accumulateEntryScore, to: Int.self), 0, nil)
+        XCTAssertEqual(gHOFState.sumSnapshot(), 123)
+
+        let mapped = kk_map_map(map, unsafeBitCast(mapEntrySum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(mapped), [11, 23, 35])
+
+        let filtered = kk_map_filter(map, unsafeBitCast(keepEvenValueEntries, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(filtered), [1, 3])
+        XCTAssertEqual(kk_map_get(filtered, 1), 10)
+        XCTAssertEqual(kk_map_get(filtered, 3), 32)
+    }
+
+    func testMapValuesMapKeysAndToListUsePairEntries() {
+        let keys = makeArray([1, 2, 1])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        let mappedValues = kk_map_mapValues(map, unsafeBitCast(mapEntryValueTimesTen, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(mappedValues), [1, 2])
+        XCTAssertEqual(kk_map_get(mappedValues, 1), 320)
+        XCTAssertEqual(kk_map_get(mappedValues, 2), 210)
+
+        let mappedKeys = kk_map_mapKeys(map, unsafeBitCast(mapEntryKeyPlusHundred, to: Int.self), 0, nil)
+        XCTAssertEqual(mapKeys(mappedKeys), [101, 102])
+        XCTAssertEqual(kk_map_get(mappedKeys, 101), 32)
+        XCTAssertEqual(kk_map_get(mappedKeys, 102), 21)
+
+        let list = kk_map_toList(map)
+        XCTAssertEqual(listElements(list).map { kk_pair_first($0) }, [1, 2])
+        XCTAssertEqual(listElements(list).map { kk_pair_second($0) }, [32, 21])
+    }
+
+    func testMapKeysValuesEntriesProperties() {
+        let keys = makeArray([1, 2, 1])
+        let values = makeArray([10, 21, 32])
+        let map = kk_map_of(keys, values, 3)
+
+        XCTAssertEqual(setElements(kk_map_keys(map)), [1, 2])
+        XCTAssertEqual(listElements(kk_map_values(map)), [32, 21])
+
+        let entries = setElements(kk_map_entries(map))
+        XCTAssertEqual(entries.count, 2)
+        XCTAssertEqual(
+            entries.map { kk_pair_first($0) },
+            mapKeys(map)
+        )
+        XCTAssertEqual(
+            entries.map { kk_pair_second($0) },
+            listElements(kk_map_values(map))
+        )
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
@@ -260,6 +338,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         return (0 ..< size).map { index in
             kk_list_get(listRaw, index)
         }
+    }
+
+    private func setElements(_ setRaw: Int) -> [Int] {
+        guard let set = runtimeSetBox(from: setRaw) else {
+            return []
+        }
+        return set.elements
     }
 
     private func mapKeys(_ mapRaw: Int) -> [Int] {

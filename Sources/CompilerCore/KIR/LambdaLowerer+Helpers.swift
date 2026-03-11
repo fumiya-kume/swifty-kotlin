@@ -250,6 +250,15 @@ extension LambdaLowerer {
     /// member accesses (bare name references resolved through implicitReceiverType).
     /// Mirrors `containsImplicitReceiverReference` for comprehensive AST coverage.
     func containsImplicitReceiverMemberAccess(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
+        if let symbolID = sema.bindings.identifierSymbols[exprID],
+           let symbol = sema.symbols.symbol(symbolID),
+           symbol.kind == .property || symbol.kind == .field,
+           let parentID = sema.symbols.parentSymbol(for: symbolID),
+           let parent = sema.symbols.symbol(parentID),
+           parent.kind == .class || parent.kind == .object || parent.kind == .interface
+        {
+            return true
+        }
         if sema.bindings.implicitReceiverMemberNames[exprID] != nil {
             return true
         }

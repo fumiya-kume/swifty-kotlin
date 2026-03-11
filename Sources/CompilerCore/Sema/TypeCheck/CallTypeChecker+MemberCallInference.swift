@@ -367,8 +367,10 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
+            "sumOf", "maxOrNull", "minOrNull",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -392,7 +394,9 @@ extension CallTypeChecker {
         let isFlowHOF = isFlowReceiver && flowHOFNames.contains(interner.resolve(calleeName))
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
-        let isCollectionHOF = collectionHOFNames.contains(interner.resolve(calleeName))
+        let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
+        let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
+        let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
 
         // --- Collection higher-order functions (STDLIB-005) ---
@@ -403,7 +407,8 @@ extension CallTypeChecker {
             let resultType: TypeID
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-                 "count", "first", "last", "find", "associateBy", "associateWith", "associate":
+                 "count", "first", "last", "find", "associateBy", "associateWith", "associate",
+                 "mapValues", "mapKeys":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -458,6 +463,52 @@ extension CallTypeChecker {
                         resultType = sema.types.make(.classType(ClassType(
                             classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
                             args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                            nullability: .nonNull
+                        )))
+                    case "mapValues" where isMapReceiver:
+                        let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            fnType.returnType
+                        } else {
+                            sema.types.anyType
+                        }
+                        let keyType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                                                 classType.args.count >= 2
+                        {
+                            switch classType.args[0] {
+                            case let .invariant(id), let .out(id), let .in(id): id
+                            case .star: sema.types.anyType
+                            }
+                        } else {
+                            sema.types.anyType
+                        }
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            args: [.invariant(keyType), .invariant(bodyType)],
+                            nullability: .nonNull
+                        )))
+                    case "mapKeys" where isMapReceiver:
+                        let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                            sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                            fnType.returnType
+                        } else {
+                            sema.types.anyType
+                        }
+                        let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+                                                   classType.args.count >= 2
+                        {
+                            switch classType.args[1] {
+                            case let .invariant(id), let .out(id), let .in(id): id
+                            case .star: sema.types.anyType
+                            }
+                        } else {
+                            sema.types.anyType
+                        }
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            args: [.invariant(bodyType), .invariant(valueType)],
                             nullability: .nonNull
                         )))
                     case "mapNotNull":
@@ -569,6 +620,45 @@ extension CallTypeChecker {
                         nullability: .nonNull
                     )))
                 }
+
+            case "sumOf":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.intType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
+
+            case "maxOrNull", "minOrNull":
+                guard args.isEmpty else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                    let comparableElementType = sema.types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(collectionElementType)],
+                        nullability: .nonNull
+                    )))
+                    if !sema.types.isSubtype(collectionElementType, comparableElementType) {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-BOUND",
+                            "Type argument does not satisfy upper bound constraint.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        let failedType = safeCall ? sema.types.nullableAnyType : sema.types.anyType
+                        sema.bindings.bindExprType(id, type: failedType)
+                        return failedType
+                    }
+                }
+                resultType = sema.types.makeNullable(collectionElementType)
 
             default:
                 resultType = sema.types.anyType
@@ -703,12 +793,14 @@ extension CallTypeChecker {
             }
         }
 
-        // Primitive conversion: toInt(), toUInt(), toLong(), toULong() (TYPE-005)
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
+        // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
@@ -718,6 +810,8 @@ extension CallTypeChecker {
             case "toUInt": (uintType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
             case "toLong": (longType, receiverForCheck == intType || receiverForCheck == uintType || receiverForCheck == longType || receiverForCheck == ulongType)
             case "toULong": (ulongType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
+            case "toFloat": (floatType, receiverForCheck == intType)
+            case "toByte", "toShort": (intType, receiverForCheck == intType)
             default: (sema.types.errorType, false)
             }
             if matches {
@@ -1725,10 +1819,12 @@ extension CallTypeChecker {
            )
         {
             // Check if any parameter uses a write-forbidden type parameter
-            if let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
-                signature: signature,
-                writeForbiddenSymbols: varianceResult.writeForbiddenSymbols
-            ) {
+            if !allowsProjectedReceiverUnsafeVariance(chosen, sema: sema, interner: interner),
+               let violatingParamIndex = sema.types.checkVarianceViolationInParameters(
+                   signature: signature,
+                   writeForbiddenSymbols: varianceResult.writeForbiddenSymbols
+               )
+            {
                 let paramType = sema.types.renderType(signature.parameterTypes[violatingParamIndex])
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-VAR-OUT",
@@ -1897,6 +1993,19 @@ extension CallTypeChecker {
             case let .invariant(id), let .out(id), let .in(id): id
             case .star: sema.types.anyType
             }
+            let entryFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("Map"),
+                interner.intern("Entry"),
+            ]
+            if let entrySymbol = sema.symbols.lookup(fqName: entryFQName) ?? sema.symbols.lookupByShortName(interner.intern("Entry")).first {
+                return sema.types.make(.classType(ClassType(
+                    classSymbol: entrySymbol,
+                    args: [.out(keyType), .out(valueType)],
+                    nullability: .nonNull
+                )))
+            }
             return makeSyntheticPairType(
                 symbols: sema.symbols,
                 types: sema.types,
@@ -1913,6 +2022,15 @@ extension CallTypeChecker {
             }
         }
         return sema.types.anyType
+    }
+
+    private func isMapLikeCollectionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType) else {
+            return false
+        }
+        let name = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
+        return (name == "Map" || name.contains("Map")) && classType.args.count == 2
     }
 
     private func makeSyntheticPairType(

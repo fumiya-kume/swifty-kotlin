@@ -1,5 +1,7 @@
+// swiftlint:disable file_length
 import Foundation
 
+// swiftlint:disable type_body_length
 /// Canonical C ABI extern declarations for the KSwiftK runtime.
 ///
 /// This file defines the expected C signatures of all runtime functions
@@ -986,182 +988,197 @@ public enum RuntimeABIExterns {
 
     /// All runtime extern declarations, ordered by section.
     /// This is the authoritative list that must match `RuntimeABISpec.allFunctions`.
-    public static let allExterns: [ExternDecl] = [
-        // Memory
-        kk_alloc,
-        kk_gc_collect,
-        kk_write_barrier,
-        // Exception
-        kk_throwable_new,
-        kk_throwable_is_cancellation,
-        kk_panic,
-        kk_abort_unreachable,
-        // String
-        kk_string_from_utf8,
-        kk_string_concat,
-        kk_string_compareTo,
-        kk_compare_any,
-        kk_string_length,
-        kk_string_trim,
-        kk_string_lowercase,
-        kk_string_uppercase,
-        kk_string_trimIndent,
-        kk_string_trimMargin_default,
-        kk_string_trimMargin,
-        kk_string_format,
-        kk_string_isNullOrEmpty,
-        kk_string_isNullOrBlank,
-        kk_string_startsWith,
-        kk_string_endsWith,
-        kk_string_contains_str,
-        kk_string_replace,
-        kk_string_substring,
-        kk_string_split,
-        kk_string_toInt,
-        kk_string_toIntOrNull,
-        kk_string_toDouble,
-        kk_string_toDoubleOrNull,
-        kk_string_indexOf,
-        kk_string_lastIndexOf,
-        kk_string_padStart,
-        kk_string_padEnd,
-        kk_string_repeat,
-        kk_string_reversed,
-        kk_string_toList,
-        kk_string_toCharArray,
-        kk_string_take,
-        kk_string_drop,
-        kk_string_takeLast,
-        kk_string_dropLast,
-        // Println
-        kk_println_any,
-        kk_println_bool,
-        // GC
-        kk_register_global_root,
-        kk_unregister_global_root,
-        kk_register_frame_map,
-        kk_push_frame,
-        kk_pop_frame,
-        kk_register_coroutine_root,
-        kk_unregister_coroutine_root,
-        kk_runtime_heap_object_count,
-        kk_runtime_force_reset,
-        // Coroutine
-        kk_coroutine_suspended,
-        kk_coroutine_continuation_new,
-        kk_coroutine_state_enter,
-        kk_coroutine_state_set_label,
-        kk_coroutine_state_exit,
-        kk_coroutine_state_set_spill,
-        kk_coroutine_state_get_spill,
-        kk_coroutine_state_set_completion,
-        kk_coroutine_state_get_completion,
-        kk_kxmini_run_blocking,
-        kk_kxmini_launch,
-        kk_kxmini_async,
-        kk_kxmini_async_await,
-        kk_kxmini_delay,
-        kk_coroutine_launcher_arg_set,
-        kk_coroutine_launcher_arg_get,
-        kk_kxmini_run_blocking_with_cont,
-        kk_kxmini_launch_with_cont,
-        kk_kxmini_async_with_cont,
-        // Flow (CORO-003)
-        kk_flow_create,
-        kk_flow_emit,
-        kk_flow_collect,
-        kk_flow_retain,
-        kk_flow_release,
-        // Dispatchers / withContext
-        kk_dispatcher_default,
-        kk_dispatcher_io,
-        kk_dispatcher_main,
-        kk_with_context,
-        // Channel
-        kk_channel_create,
-        kk_channel_send,
-        kk_channel_receive,
-        kk_channel_close,
-        // Deferred / awaitAll
-        kk_await_all,
-        // Structured Concurrency (P5-89)
-        kk_coroutine_scope_new,
-        kk_coroutine_scope_cancel,
-        kk_coroutine_scope_wait,
-        kk_coroutine_scope_register_child,
-        kk_job_join,
-        kk_coroutine_scope_run,
-        kk_coroutine_scope_run_with_cont,
-        // Cancellation (CORO-002)
-        kk_coroutine_check_cancellation,
-        kk_is_cancellation_exception,
-        kk_job_cancel,
-        kk_coroutine_cancel,
-        // Boxing
-        kk_box_int,
-        kk_box_bool,
-        kk_lateinit_is_initialized,
-        kk_lateinit_get_or_throw,
-        kk_unbox_int,
-        kk_unbox_bool,
-        kk_box_long,
-        kk_box_float,
-        kk_box_double,
-        kk_box_char,
-        kk_unbox_long,
-        kk_unbox_float,
-        kk_unbox_double,
-        kk_unbox_char,
-        // Array
-        kk_array_new,
-        kk_object_new,
-        kk_object_type_id,
-        kk_array_get,
-        kk_array_get_inbounds,
-        kk_array_set,
-        kk_vararg_spread_concat,
-        // TypeCheck Operators
-        kk_type_register_super,
-        kk_type_register_iface,
-        kk_object_register_itable_method,
-        kk_type_token_simple_name,
-        kk_type_token_qualified_name,
-        kk_op_is,
-        kk_op_cast,
-        kk_op_safe_cast,
-        kk_op_contains,
-        // Range/Progression
-        kk_op_rangeTo,
-        kk_op_rangeUntil,
-        kk_op_downTo,
-        kk_op_step,
-    ] + kPropertyStubExterns + [
-        // Delegate
-        kk_lazy_create,
-        kk_lazy_get_value,
-        kk_lazy_is_initialized,
-        kk_observable_create,
-        kk_observable_get_value,
-        kk_observable_set_value,
-        kk_vetoable_create,
-        kk_vetoable_get_value,
-        kk_vetoable_set_value,
-        kk_custom_delegate_create,
-        kk_custom_delegate_get_value,
-        kk_custom_delegate_set_value,
-        // Bitwise/Shift (P5-103)
-        kk_bitwise_and,
-        kk_bitwise_or,
-        kk_bitwise_xor,
-        kk_op_inv,
-        kk_op_shl,
-        kk_op_shr,
-        kk_op_ushr,
-        kk_int_toString_radix,
-    ] + collectionExterns + sequenceExterns
+    public static let allExterns: [ExternDecl] = {
+        var all: [ExternDecl] = [
+            // Memory
+            kk_alloc,
+            kk_gc_collect,
+            kk_write_barrier,
+            // Exception
+            kk_throwable_new,
+            kk_throwable_is_cancellation,
+            kk_panic,
+            kk_abort_unreachable,
+            // String
+            kk_string_from_utf8,
+            kk_string_concat,
+            kk_string_compareTo,
+            kk_compare_any,
+            kk_string_length,
+            kk_string_trim,
+            kk_string_lowercase,
+            kk_string_uppercase,
+            kk_string_trimIndent,
+            kk_string_trimMargin_default,
+            kk_string_trimMargin,
+            kk_string_format,
+            kk_string_isNullOrEmpty,
+            kk_string_isNullOrBlank,
+            kk_string_startsWith,
+            kk_string_endsWith,
+            kk_string_contains_str,
+            kk_string_replace,
+            kk_string_substring,
+            kk_string_split,
+            kk_string_toInt,
+            kk_string_toIntOrNull,
+            kk_string_toDouble,
+            kk_string_toDoubleOrNull,
+            kk_string_indexOf,
+            kk_string_lastIndexOf,
+            kk_string_padStart,
+            kk_string_padEnd,
+            kk_string_repeat,
+            kk_string_reversed,
+            kk_string_toList,
+            kk_string_toCharArray,
+            kk_string_take,
+            kk_string_drop,
+            kk_string_takeLast,
+            kk_string_dropLast,
+            // Println
+            kk_println_any,
+            kk_println_bool,
+            // GC
+            kk_register_global_root,
+            kk_unregister_global_root,
+            kk_register_frame_map,
+            kk_push_frame,
+            kk_pop_frame,
+            kk_register_coroutine_root,
+            kk_unregister_coroutine_root,
+            kk_runtime_heap_object_count,
+            kk_runtime_force_reset,
+            // Coroutine
+            kk_coroutine_suspended,
+            kk_coroutine_continuation_new,
+            kk_coroutine_state_enter,
+            kk_coroutine_state_set_label,
+            kk_coroutine_state_exit,
+            kk_coroutine_state_set_spill,
+            kk_coroutine_state_get_spill,
+            kk_coroutine_state_set_completion,
+            kk_coroutine_state_get_completion,
+            kk_kxmini_run_blocking,
+            kk_kxmini_launch,
+            kk_kxmini_async,
+            kk_kxmini_async_await,
+            kk_kxmini_delay,
+            kk_coroutine_launcher_arg_set,
+            kk_coroutine_launcher_arg_get,
+            kk_kxmini_run_blocking_with_cont,
+            kk_kxmini_launch_with_cont,
+            kk_kxmini_async_with_cont,
+            // Flow (CORO-003)
+            kk_flow_create,
+            kk_flow_emit,
+            kk_flow_collect,
+            kk_flow_retain,
+            kk_flow_release,
+            // Dispatchers / withContext
+            kk_dispatcher_default,
+            kk_dispatcher_io,
+            kk_dispatcher_main,
+            kk_with_context,
+            // Channel
+            kk_channel_create,
+            kk_channel_send,
+            kk_channel_receive,
+            kk_channel_close,
+            // Deferred / awaitAll
+            kk_await_all,
+            // Structured Concurrency (P5-89)
+            kk_coroutine_scope_new,
+            kk_coroutine_scope_cancel,
+            kk_coroutine_scope_wait,
+            kk_coroutine_scope_register_child,
+            kk_job_join,
+            kk_coroutine_scope_run,
+            kk_coroutine_scope_run_with_cont,
+            // Cancellation (CORO-002)
+            kk_coroutine_check_cancellation,
+            kk_is_cancellation_exception,
+            kk_job_cancel,
+            kk_coroutine_cancel,
+            // Boxing
+            kk_box_int,
+            kk_box_bool,
+            kk_lateinit_is_initialized,
+            kk_lateinit_get_or_throw,
+            kk_unbox_int,
+            kk_unbox_bool,
+            kk_box_long,
+            kk_box_float,
+            kk_box_double,
+            kk_box_char,
+            kk_unbox_long,
+            kk_unbox_float,
+            kk_unbox_double,
+            kk_unbox_char,
+            // Array
+            kk_array_new,
+            kk_object_new,
+            kk_object_type_id,
+            kk_array_get,
+            kk_array_get_inbounds,
+            kk_array_set,
+            kk_vararg_spread_concat,
+            // TypeCheck Operators
+            kk_type_register_super,
+            kk_type_register_iface,
+            kk_object_register_itable_method,
+            kk_type_token_simple_name,
+            kk_type_token_qualified_name,
+            kk_op_is,
+            kk_op_cast,
+            kk_op_safe_cast,
+            kk_op_contains,
+        ]
+        all += primitiveNumericConversionExterns
+        all += [
+            // Range/Progression
+            kk_op_rangeTo,
+            kk_op_rangeUntil,
+            kk_op_downTo,
+            kk_op_step,
+        ]
+        all += kPropertyStubExterns
+        all += [
+            // Delegate
+            kk_lazy_create,
+            kk_lazy_get_value,
+            kk_lazy_is_initialized,
+            kk_observable_create,
+            kk_observable_get_value,
+            kk_observable_set_value,
+            kk_vetoable_create,
+            kk_vetoable_get_value,
+            kk_vetoable_set_value,
+            kk_custom_delegate_create,
+            kk_custom_delegate_get_value,
+            kk_custom_delegate_set_value,
+        ]
+        all += [
+            // Bitwise/Shift (P5-103)
+            kk_bitwise_and,
+            kk_bitwise_or,
+            kk_bitwise_xor,
+            kk_op_inv,
+            kk_op_shl,
+            kk_op_shr,
+            kk_op_ushr,
+            kk_int_toString_radix,
+        ]
+        all += mathExterns
+        all += collectionExterns
+        all += sequenceExterns
+        return all
+    }()
 
     /// Look up an extern declaration by symbol name.
     public static func externDecl(named name: String) -> ExternDecl? {
         allExterns.first { $0.name == name }
     }
 }
+
+// swiftlint:enable type_body_length

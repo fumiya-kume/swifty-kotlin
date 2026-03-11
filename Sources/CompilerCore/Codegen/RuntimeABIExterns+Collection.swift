@@ -42,6 +42,9 @@ public extension RuntimeABIExterns {
         kk_list_withIndex,
         kk_list_forEachIndexed,
         kk_list_mapIndexed,
+        kk_list_sumOf,
+        kk_list_maxOrNull,
+        kk_list_minOrNull,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -52,9 +55,16 @@ public extension RuntimeABIExterns {
         kk_map_get,
         kk_map_contains_key,
         kk_map_is_empty,
+        kk_map_forEach,
+        kk_map_map,
+        kk_map_filter,
+        kk_map_mapValues,
+        kk_map_mapKeys,
         kk_map_keys,
         kk_map_values,
+        kk_map_entries,
         kk_map_to_string,
+        kk_map_toList,
         kk_map_to_mutable_map,
         kk_map_iterator,
         kk_map_iterator_hasNext,
@@ -230,6 +240,36 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_map_forEach = ExternDecl(
+        name: "kk_map_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_map = ExternDecl(
+        name: "kk_map_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_filter = ExternDecl(
+        name: "kk_map_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_mapValues = ExternDecl(
+        name: "kk_map_mapValues",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_mapKeys = ExternDecl(
+        name: "kk_map_mapKeys",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_map_keys = ExternDecl(
         name: "kk_map_keys",
         parameterTypes: ["intptr_t"],
@@ -242,10 +282,22 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_map_entries = ExternDecl(
+        name: "kk_map_entries",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_map_to_string = ExternDecl(
         name: "kk_map_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    static let kk_map_toList = ExternDecl(
+        name: "kk_map_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
     )
 
     static let kk_map_to_mutable_map = ExternDecl(
@@ -415,6 +467,24 @@ public extension RuntimeABIExterns {
     static let kk_list_mapIndexed = ExternDecl(
         name: "kk_list_mapIndexed",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sumOf = ExternDecl(
+        name: "kk_list_sumOf",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOrNull = ExternDecl(
+        name: "kk_list_maxOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOrNull = ExternDecl(
+        name: "kk_list_minOrNull",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

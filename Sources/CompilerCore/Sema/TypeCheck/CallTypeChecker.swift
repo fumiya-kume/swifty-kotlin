@@ -1,6 +1,7 @@
 // swiftlint:disable file_length
 import Foundation
 
+// swiftlint:disable type_body_length
 /// Handles call expression type inference (function calls, member calls, safe member calls).
 final class CallTypeChecker {
     unowned let driver: TypeCheckDriver
@@ -207,6 +208,66 @@ final class CallTypeChecker {
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .repeatLoop)
             sema.bindings.bindExprType(id, type: unitType)
             return unitType
+        }
+
+        if let calleeName,
+           args.count == 2,
+           let specialKind = comparisonSpecialCallKind(for: calleeName, ctx: ctx, locals: locals)
+        {
+            let intType = sema.types.intType
+            let lhsType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            let rhsType = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            driver.emitSubtypeConstraint(
+                left: lhsType,
+                right: intType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            driver.emitSubtypeConstraint(
+                left: rhsType,
+                right: intType,
+                range: ast.arena.exprRange(args[1].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let chosen = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName)).visible.first(where: { candidate in
+                guard let signature = sema.symbols.functionSignature(for: candidate) else {
+                    return false
+                }
+                return signature.parameterTypes == [intType, intType]
+            })
+            if let chosen,
+               let signature = sema.symbols.functionSignature(for: chosen)
+            {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0, 1: 1]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
+                sema.bindings.bindExprType(id, type: signature.returnType)
+                return signature.returnType
+            }
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: specialKind)
+            sema.bindings.bindExprType(id, type: intType)
+            return intType
         }
 
         if let calleeName,
@@ -1186,3 +1247,5 @@ final class CallTypeChecker {
         return !hasConflictingUserDefinedCandidate
     }
 }
+
+// swiftlint:enable type_body_length

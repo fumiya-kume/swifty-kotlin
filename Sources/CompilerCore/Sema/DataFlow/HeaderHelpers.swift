@@ -568,11 +568,14 @@ extension DataFlowSemaPhase {
         )
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticComparisonStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticMathStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
+        registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

@@ -93,7 +93,7 @@ extension CallLowerer {
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
-        "withIndex", "forEachIndexed", "mapIndexed",
+        "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct", "collect",
         "to", // FUNC-002
     ]
@@ -354,7 +354,7 @@ extension CallLowerer {
         return result
     }
 
-    // swiftlint:disable cyclomatic_complexity
+    // swiftlint:disable cyclomatic_complexity function_body_length
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
         _ exprID: ExprID,
@@ -370,7 +370,7 @@ extension CallLowerer {
         prependReceiverForUnresolvedCollectionCall: Bool,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
-        // swiftlint:enable cyclomatic_complexity
+        // swiftlint:enable cyclomatic_complexity function_body_length
         if let foldedConst = tryFoldConstMemberProperty(
             exprID,
             receiverExpr: receiverExpr,
@@ -531,12 +531,14 @@ extension CallLowerer {
             }
         }
 
-        // Primitive conversion: toInt(), toUInt(), toLong(), toULong() (TYPE-005)
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
+        // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -556,6 +558,9 @@ extension CallLowerer {
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
             case ("toULong", ulongType, ulongType): nil // identity
+            case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
+            case ("toByte", intType, intType): interner.intern("kk_int_to_byte")
+            case ("toShort", intType, intType): interner.intern("kk_int_to_short")
             default: nil
             }
             if let callee = conversionCallee {
@@ -960,7 +965,7 @@ extension CallLowerer {
             "any", "none", "all", "fold", "reduce", "groupBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
-            "forEachIndexed", "mapIndexed",
+            "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
         ].contains(interner.resolve(calleeName))
     }
 

@@ -429,6 +429,17 @@ public func kk_map_values(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: map.values))
 }
 
+@_cdecl("kk_map_entries")
+public func kk_map_entries(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    let entries = zip(map.keys, map.values).map { key, value in
+        kk_pair_new(key, value)
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: entries))
+}
+
 /// Creates an iterator over a map's entries.
 /// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
 /// - Returns: Opaque handle (Int) to a `RuntimeMapIteratorBox`.
@@ -560,6 +571,11 @@ public func kk_pair_first(_ pairRaw: Int) -> Int {
     return pairBox.first
 }
 
+@_cdecl("component1")
+public func component1(_ pairRaw: Int) -> Int {
+    kk_pair_first(pairRaw)
+}
+
 /// Returns the second element of a Pair.
 /// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
 /// - Returns: The second element.
@@ -568,6 +584,11 @@ public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
     return pairBox.second
+}
+
+@_cdecl("component2")
+public func component2(_ pairRaw: Int) -> Int {
+    kk_pair_second(pairRaw)
 }
 
 /// Converts a Pair to its string representation (e.g. "(1, one)").

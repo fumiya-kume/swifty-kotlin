@@ -9,6 +9,7 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    // swiftlint:disable:next cyclomatic_complexity
     func lowerCallExpr(
         _ exprID: ExprID,
         calleeExpr: ExprID,
@@ -49,6 +50,19 @@ final class CallLowerer {
             instructions: &instructions
         ) {
             return loweredRepeat
+        }
+
+        if let loweredComparison = lowerComparisonSpecialCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredComparison
         }
 
         // --- Scope function: with(receiver, block) (STDLIB-004) ---

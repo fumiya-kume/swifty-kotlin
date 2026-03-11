@@ -1,5 +1,11 @@
 import Foundation
 
+#if canImport(Darwin)
+    import Darwin
+#elseif canImport(Glibc)
+    import Glibc
+#endif
+
 @_cdecl("kk_any_to_string")
 public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPointer {
     if value == runtimeNullSentinelInt {
@@ -39,6 +45,21 @@ public func kk_int_to_float_bits(_ value: Int) -> Int {
     kk_float_to_bits(Float(value))
 }
 
+@_cdecl("kk_int_to_float")
+public func kk_int_to_float(_ value: Int) -> Int {
+    kk_float_to_bits(Float(value))
+}
+
+@_cdecl("kk_int_to_byte")
+public func kk_int_to_byte(_ value: Int) -> Int {
+    Int(Int8(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_int_to_short")
+public func kk_int_to_short(_ value: Int) -> Int {
+    Int(Int16(truncatingIfNeeded: value))
+}
+
 @_cdecl("kk_int_to_double_bits")
 public func kk_int_to_double_bits(_ value: Int) -> Int {
     kk_double_to_bits(Double(value))
@@ -62,6 +83,46 @@ public func kk_println_float(_ value: Int) {
 @_cdecl("kk_println_double")
 public func kk_println_double(_ value: Int) {
     Swift.print(kk_bits_to_double(value))
+}
+
+@_cdecl("kk_math_abs_int")
+public func kk_math_abs_int(_ value: Int) -> Int {
+    if value == Int.min {
+        return Int.min
+    }
+    return value < 0 ? -value : value
+}
+
+@_cdecl("kk_math_abs")
+public func kk_math_abs(_ value: Int) -> Int {
+    kk_double_to_bits(Swift.abs(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_sqrt")
+public func kk_math_sqrt(_ value: Int) -> Int {
+    kk_double_to_bits(sqrt(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_pow")
+public func kk_math_pow(_ base: Int, _ exp: Int) -> Int {
+    let rawBase = kk_bits_to_double(base)
+    let rawExp = kk_bits_to_double(exp)
+    return kk_double_to_bits(pow(rawBase, rawExp))
+}
+
+@_cdecl("kk_math_ceil")
+public func kk_math_ceil(_ value: Int) -> Int {
+    kk_double_to_bits(ceil(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_floor")
+public func kk_math_floor(_ value: Int) -> Int {
+    kk_double_to_bits(floor(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_round")
+public func kk_math_round(_ value: Int) -> Int {
+    kk_double_to_bits(round(kk_bits_to_double(value)))
 }
 
 @_cdecl("kk_println_char")

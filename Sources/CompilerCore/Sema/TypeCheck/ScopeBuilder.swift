@@ -199,6 +199,7 @@ struct TypeCheckScopeBuilder {
             ["kotlin", "annotation"],
             ["kotlin", "collections"],
             ["kotlin", "comparisons"],
+            ["kotlin", "math"],
             ["kotlin", "io"],
             ["kotlin", "ranges"],
             ["kotlin", "sequences"],

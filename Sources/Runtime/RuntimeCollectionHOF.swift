@@ -1,5 +1,22 @@
 import Foundation
 
+private let indexedValueRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.collections.IndexedValue".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
+private func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
+    let raw = registerRuntimeObject(RuntimePairBox(first: index, second: value))
+    runtimeRegisterObjectType(rawValue: raw, classID: indexedValueRuntimeTypeID)
+    return raw
+}
+
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -74,6 +91,121 @@ public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
         if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     }
     return 0
+}
+
+@_cdecl("kk_map_forEach")
+public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        _ = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_map_map")
+public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    mapped.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeListBox(elements: []))
+        }
+        mapped.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_map_filter")
+public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filteredKeys: [Int] = []
+    var filteredValues: [Int] = []
+    filteredKeys.reserveCapacity(min(map.keys.count, map.values.count))
+    filteredValues.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        if maybeUnbox(result) != 0 {
+            filteredKeys.append(key)
+            filteredValues.append(value)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
+}
+
+@_cdecl("kk_map_mapValues")
+public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedValues: [Int] = []
+    mappedValues.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        mappedValues.append(maybeUnbox(result))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: map.keys, values: mappedValues)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_map_mapKeys")
+public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mappedKeys: [Int] = []
+    mappedKeys.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        }
+        mappedKeys.append(maybeUnbox(result))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: mappedKeys, values: map.values)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_map_toList")
+public func kk_map_toList(_ mapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var pairs: [Int] = []
+    pairs.reserveCapacity(min(map.keys.count, map.values.count))
+    for (key, value) in zip(map.keys, map.values) {
+        pairs.append(kk_pair_new(key, value))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
 }
 
 @_cdecl("kk_list_flatMap")
@@ -409,7 +541,7 @@ public func kk_list_withIndex(_ listRaw: Int) -> Int {
     var indexed: [Int] = []
     indexed.reserveCapacity(elements.count)
     for (index, element) in elements.enumerated() {
-        indexed.append(kk_pair_new(index, element))
+        indexed.append(runtimeIndexedValueNew(index: index, value: element))
     }
     return registerRuntimeObject(RuntimeListBox(elements: indexed))
 }
@@ -446,6 +578,47 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_list_sumOf")
+public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var total = 0
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return 0
+        }
+        total += maybeUnbox(result)
+    }
+    return total
+}
+
+@_cdecl("kk_list_maxOrNull")
+public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in list.elements.dropFirst() where runtimeCompareValues(elem, best) > 0 {
+        best = elem
+    }
+    return best
+}
+
+@_cdecl("kk_list_minOrNull")
+public func kk_list_minOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+        return runtimeNullSentinelInt
+    }
+    var best = first
+    for elem in list.elements.dropFirst() where runtimeCompareValues(elem, best) < 0 {
+        best = elem
+    }
+    return best
 }
 
 @_cdecl("kk_list_take")

@@ -117,6 +117,81 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenCompilesMathTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(abs(-5))
+            println(abs(-5.0))
+            println(sqrt(4.0))
+            println(pow(2.0, 3.0))
+            println(ceil(2.3))
+            println(floor(-2.3))
+            println(round(2.7))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MathTopLevelCalls",
+                emit: .object,
+                outputPath: outputBase
+            )
+            let objectPath = try XCTUnwrap(ctx.generatedObjectPath)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: objectPath))
+        }
+    }
+
+    func testCodegenCompilesIntPrimitiveConversions() throws {
+        let source = """
+        fun main() {
+            println(42.toFloat())
+            println(300.toByte())
+            println(32768.toShort())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "IntPrimitiveConversions",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "42.0\n44\n-32768\n")
+        }
+    }
+
+    func testCodegenCompilesComparisonTopLevelCalls() throws {
+        let source = """
+        fun main() {
+            println(maxOf(3, 7))
+            println(minOf(3, 7))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ComparisonTopLevelCalls",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "7\n3\n")
+        }
+    }
+
     func testCodegenGenericComparableTreatsNaNAsGreaterThanFiniteValues() throws {
         let source = """
         fun <T> pickGreater(a: T, b: T): T where T : Comparable<T> = if (a > b) a else b
@@ -417,6 +492,89 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenListAggregateHelpersUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val list = listOf(3, 1, 2)
+            println(list.sumOf { it * 2 })
+            println(list.maxOrNull())
+            println(list.minOrNull())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ListAggregateRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "12\n3\n1\n")
+        }
+    }
+
+    func testCodegenMapHigherOrderHelpersUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val values = mapOf("a" to 1, "b" to 2)
+            values.forEach { (k, v) ->
+                println("$k=$v")
+            }
+            println(values.map { (k, v) -> "$k:${v * 10}" })
+            println(values.filter { (_, v) -> v % 2 == 0 })
+            println(values.mapValues { it.value * 10 })
+            println(values.mapKeys { it.key + "!" })
+            println(values.toList())
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapHigherOrderRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "a=1\nb=2\n[a:10, b:20]\n{b=2}\n{a=10, b=20}\n{a!=1, b!=2}\n[(a, 1), (b, 2)]\n")
+        }
+    }
+
+    func testCodegenMapPropertyAccessesUseRuntimeHelpers() throws {
+        let source = """
+        fun main() {
+            val values = mapOf("a" to 1, "b" to 2)
+            println(values.keys)
+            println(values.values)
+            println(values.entries)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MapPropertyRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "[a, b]\n[1, 2]\n[(a, 1), (b, 2)]\n")
+        }
+    }
+
     func testCodegenListAssociateHelpersUseRuntimeMapBuilders() throws {
         try XCTSkipIf(true, "associateBy/associateWith/associate return wrong key-value pairs")
         let source = """
@@ -445,7 +603,6 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     }
 
     func testCodegenListIndexedHelpersUseRuntimeHOFs() throws {
-        try XCTSkipIf(true, "withIndex/forEachIndexed/mapIndexed link fails (outputUnavailable) in some environments")
         let source = """
         fun main() {
             val values = listOf("a", "bb")
@@ -455,6 +612,11 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                 println(value)
             }
             println(values.mapIndexed { index, value -> index + value.length })
+            val indexedAny: Any = values.withIndex()[1]
+            println(indexedAny is kotlin.collections.IndexedValue<*>)
+            if (indexedAny is kotlin.collections.IndexedValue<*>) {
+                println("cast-ok")
+            }
         }
         """
 
@@ -470,7 +632,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\n")
+            XCTAssertEqual(normalizedStdout, "[(0, a), (1, bb)]\n0\na\n1\nbb\n[1, 3]\ntrue\ncast-ok\n")
         }
     }
 
