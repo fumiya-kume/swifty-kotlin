@@ -251,6 +251,12 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ctx.interner.intern("List"),
                 ctx.interner.intern("contains"),
             ]))
+            let setContains = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Set"),
+                ctx.interner.intern("contains"),
+            ]))
             let stringContains = try XCTUnwrap(sema.symbols.lookup(fqName: [
                 ctx.interner.intern("kotlin"),
                 ctx.interner.intern("text"),
@@ -258,7 +264,46 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             ]))
 
             XCTAssertTrue(sema.symbols.symbol(listContains)?.flags.contains(.operatorFunction) == true)
+            XCTAssertTrue(sema.symbols.symbol(setContains)?.flags.contains(.operatorFunction) == true)
             XCTAssertTrue(sema.symbols.symbol(stringContains)?.flags.contains(.operatorFunction) == true)
+        }
+    }
+
+    func testWithIndexUsesIterableOfIndexedValueSignature() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let withIndexSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("withIndex"),
+            ]))
+            let indexedValueSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("IndexedValue"),
+            ]))
+            let indexedValueRecord = try XCTUnwrap(sema.symbols.symbol(indexedValueSymbol))
+            XCTAssertEqual(indexedValueRecord.kind, .class)
+            XCTAssertTrue(indexedValueRecord.flags.contains(.dataType))
+
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: withIndexSymbol))
+            guard case let .classType(iterableType) = sema.types.kind(of: signature.returnType) else {
+                return XCTFail("Expected withIndex() to return Iterable<IndexedValue<T>>")
+            }
+            XCTAssertEqual(
+                try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(iterableType.classSymbol)?.name)),
+                "Iterable"
+            )
+            guard case let .out(elementType) = try XCTUnwrap(iterableType.args.first),
+                  case let .classType(indexedValueType) = sema.types.kind(of: elementType)
+            else {
+                return XCTFail("Expected Iterable element type to be IndexedValue")
+            }
+            XCTAssertEqual(indexedValueType.classSymbol, indexedValueSymbol)
         }
     }
 
