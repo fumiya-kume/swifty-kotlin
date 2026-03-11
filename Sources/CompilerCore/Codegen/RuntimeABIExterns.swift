@@ -378,6 +378,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_char_uppercase = ExternDecl(
+        name: "kk_char_uppercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_lowercase = ExternDecl(
+        name: "kk_char_lowercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_titlecase = ExternDecl(
+        name: "kk_char_titlecase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Println
 
     public static let kk_println_any = ExternDecl(

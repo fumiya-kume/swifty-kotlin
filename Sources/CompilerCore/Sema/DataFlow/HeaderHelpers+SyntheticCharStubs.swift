@@ -28,6 +28,23 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let stringMembers: [(name: String, externalLinkName: String)] = [
+            ("uppercase", "kk_char_uppercase"),
+            ("lowercase", "kk_char_lowercase"),
+            ("titlecase", "kk_char_titlecase"),
+        ]
+        for member in stringMembers {
+            registerSyntheticCharExtensionFunction(
+                named: member.name,
+                externalLinkName: member.externalLinkName,
+                receiverType: types.charType,
+                returnType: types.stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticCharExtensionFunction(
             named: "digitToInt",
             externalLinkName: "kk_char_digitToInt",

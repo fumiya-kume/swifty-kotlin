@@ -37,25 +37,35 @@ public func kk_char_isWhitespace(_ value: Int) -> Int {
     return kk_box_bool(scalar.properties.isWhitespace ? 1 : 0)
 }
 
-@_cdecl("kk_char_digitToInt")
-public func kk_char_digitToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    outThrown?.pointee = 0
-    guard let scalar = runtimeUnicodeScalar(value),
-          scalar.value >= 0x30, scalar.value <= 0x39
-    else {
-        let ch = runtimeUnicodeScalar(value).map { String($0) } ?? "?"
-        runtimeSetThrown(outThrown, runtimeAllocateThrowable(message: "IllegalArgumentException: Char \(ch) is not a decimal digit"))
-        return 0
+@_cdecl("kk_char_uppercase")
+public func kk_char_uppercase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return charRuntimeMakeStringRaw("\u{FFFD}")
     }
-    return Int(scalar.value - 0x30)
+    return charRuntimeMakeStringRaw(String(scalar).uppercased())
 }
 
-@_cdecl("kk_char_digitToIntOrNull")
-public func kk_char_digitToIntOrNull(_ value: Int) -> Int {
-    guard let scalar = runtimeUnicodeScalar(value),
-          scalar.value >= 0x30, scalar.value <= 0x39
-    else {
-        return runtimeNullSentinelInt
+@_cdecl("kk_char_lowercase")
+public func kk_char_lowercase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return charRuntimeMakeStringRaw("\u{FFFD}")
     }
-    return Int(scalar.value - 0x30)
+    return charRuntimeMakeStringRaw(String(scalar).lowercased())
+}
+
+@_cdecl("kk_char_titlecase")
+public func kk_char_titlecase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return charRuntimeMakeStringRaw("\u{FFFD}")
+    }
+    let upper = String(scalar).uppercased()
+    return charRuntimeMakeStringRaw(upper)
+}
+
+private func charRuntimeMakeStringRaw(_ value: String) -> Int {
+    Int(bitPattern: value.withCString { cstr in
+        cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
+            kk_string_from_utf8(pointer, Int32(value.utf8.count))
+        }
+    })
 }

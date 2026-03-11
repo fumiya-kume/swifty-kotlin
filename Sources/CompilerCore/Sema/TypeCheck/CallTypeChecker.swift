@@ -1001,6 +1001,8 @@ final class CallTypeChecker {
                 let charResultType: TypeID? = switch name {
                 case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
                     sema.types.booleanType
+                case "uppercase", "lowercase", "titlecase":
+                    sema.types.stringType
                 default:
                     nil
                 }

@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -273,25 +273,16 @@ symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s276 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#275 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
-symbol s279 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-file f0 package=golden.sema
-  decl d3 object Counter sym=s275
-  decl d4 fun useCounter suspend=0 inline=0 sym=s279
-expr e0 string(counter) type=String
-expr e1 int(0) type=Int
-expr e2 name(n) type=_
-expr e3 name(n) type=Int ref=s278
-expr e4 int(1) type=Int
-expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign n value=e5 type=Unit ref=s278
-expr e7 name(n) type=_
-expr e8 int(1) type=Int
-expr e9 localAssign n value=e8 type=Unit ref=s278
-expr e10 name(Counter) type=Class#275 ref=s275
-expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s276 map=[] targs=[]
-expr e12 name(Counter) type=Class#275 ref=s275
-expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s276 map=[] targs=[]
+symbol s275 kind=function fq=charUppercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s276 kind=function fq=charLowercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s277 kind=function fq=charTitlecase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+file f0 package=_
+  decl d0 fun charUppercase suspend=0 inline=0 sym=s275
+  decl d1 fun charLowercase suspend=0 inline=0 sym=s276
+  decl d2 fun charTitlecase suspend=0 inline=0 sym=s277
+expr e0 char(97) type=Char
+expr e1 memberCall recv=e0 callee=uppercase args=[] type=String call=s161 map=[] targs=[]
+expr e2 char(65) type=Char
+expr e3 memberCall recv=e2 callee=lowercase args=[] type=String call=s162 map=[] targs=[]
+expr e4 char(97) type=Char
+expr e5 memberCall recv=e4 callee=titlecase args=[] type=String call=s163 map=[] targs=[]
