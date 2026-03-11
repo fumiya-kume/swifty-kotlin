@@ -233,7 +233,7 @@ public func kk_string_toIntOrNull(_ strRaw: Int) -> Int {
     guard let value = Int32(source) else {
         return runtimeNullSentinelInt
     }
-    return kk_box_int(Int(value))
+    return Int(value)
 }
 
 @_cdecl("kk_string_toDouble")
@@ -287,7 +287,7 @@ public func kk_string_toDoubleOrNull(_ strRaw: Int) -> Int {
     guard let parsed = value else {
         return runtimeNullSentinelInt
     }
-    return kk_box_double(Int(truncatingIfNeeded: parsed.bitPattern))
+    return Int(bitPattern: UInt(truncatingIfNeeded: parsed.bitPattern))
 }
 
 @_cdecl("kk_string_indexOf")
