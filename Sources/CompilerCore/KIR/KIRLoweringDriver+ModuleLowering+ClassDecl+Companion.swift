@@ -37,51 +37,55 @@ extension KIRLoweringDriver {
         var body: KIRLoweringEmitContext = [.beginBlock]
         body.append(.constValue(result: companionReceiverExpr, value: .symbolRef(companionSymbol)))
 
-        // Property initializers run before init blocks, in declaration order.
-        for propertyDeclID in companionDecl.memberProperties {
-            guard let propertyDecl = ast.arena.decl(propertyDeclID),
-                  case let .propertyDecl(property) = propertyDecl,
-                  let propertySymbol = sema.bindings.declSymbols[propertyDeclID]
-            else {
-                continue
-            }
-            // Delegate-specific initialization is handled separately.
-            if property.delegateExpression != nil {
-                continue
-            }
-            guard let initializer = property.initializer else {
-                continue
-            }
-            let initializerValue = lowerExpr(
-                initializer,
-                shared: shared,
-                emit: &body
-            )
-            let targetSymbol = sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
-            let propertyType = sema.symbols.propertyType(for: targetSymbol) ?? sema.types.anyType
-            let targetRef = arena.appendExpr(.symbolRef(targetSymbol), type: propertyType)
-            body.append(.constValue(result: targetRef, value: .symbolRef(targetSymbol)))
-            body.append(.copy(from: initializerValue, to: targetRef))
-        }
-
-        for initBlock in companionDecl.initBlocks {
-            switch initBlock {
-            case let .block(exprIDs, _):
-                for exprID in exprIDs {
+        // Emit property initializers and init blocks in declaration order.
+        for member in companionDecl.classBodyInitOrder {
+            switch member {
+            case let .property(index):
+                guard index < companionDecl.memberProperties.count else { continue }
+                let propertyDeclID = companionDecl.memberProperties[index]
+                guard let propertyDecl = ast.arena.decl(propertyDeclID),
+                      case let .propertyDecl(property) = propertyDecl,
+                      let propertySymbol = sema.bindings.declSymbols[propertyDeclID]
+                else {
+                    continue
+                }
+                if property.delegateExpression != nil {
+                    continue
+                }
+                guard let initializer = property.initializer else {
+                    continue
+                }
+                let initializerValue = lowerExpr(
+                    initializer,
+                    shared: shared,
+                    emit: &body
+                )
+                let targetSymbol = sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+                let propertyType = sema.symbols.propertyType(for: targetSymbol) ?? sema.types.anyType
+                let targetRef = arena.appendExpr(.symbolRef(targetSymbol), type: propertyType)
+                body.append(.constValue(result: targetRef, value: .symbolRef(targetSymbol)))
+                body.append(.copy(from: initializerValue, to: targetRef))
+            case let .initBlock(index):
+                guard index < companionDecl.initBlocks.count else { continue }
+                let initBlock = companionDecl.initBlocks[index]
+                switch initBlock {
+                case let .block(exprIDs, _):
+                    for exprID in exprIDs {
+                        _ = lowerExpr(
+                            exprID,
+                            shared: shared,
+                            emit: &body
+                        )
+                    }
+                case let .expr(exprID, _):
                     _ = lowerExpr(
                         exprID,
                         shared: shared,
                         emit: &body
                     )
+                case .unit:
+                    break
                 }
-            case let .expr(exprID, _):
-                _ = lowerExpr(
-                    exprID,
-                    shared: shared,
-                    emit: &body
-                )
-            case .unit:
-                break
             }
         }
 

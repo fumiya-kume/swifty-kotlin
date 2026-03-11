@@ -48,6 +48,7 @@ public enum StdlibSpecialCallKind: Equatable {
     case repeatLoop
     case maxOfInt
     case minOfInt
+    case arrayConstructor
 }
 
 public struct CatchClauseBinding: Equatable {

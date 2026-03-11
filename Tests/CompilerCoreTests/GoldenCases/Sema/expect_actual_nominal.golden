@@ -273,13 +273,18 @@ symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s276 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s279 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
+symbol s275 kind=class fq=golden.sema.Foo vis=public flags=expectDeclaration
+symbol s276 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
+symbol s277 kind=class fq=golden.sema.Foo vis=public flags=actualDeclaration
+symbol s278 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#277 params=[] ret=Class#277 suspend=0 defaults=[] vararg=[]
+symbol s279 kind=class fq=golden.sema.Bar vis=public flags=expectDeclaration
+symbol s280 kind=typeParameter fq=golden.sema.Bar.$class279.T vis=private flags=_
+symbol s281 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#279<T#280> params=[] ret=Class#279<T#280> suspend=0 defaults=[] vararg=[]
+symbol s282 kind=class fq=golden.sema.Bar vis=public flags=actualDeclaration
+symbol s283 kind=typeParameter fq=golden.sema.Bar.$class282.T vis=private flags=_
+symbol s284 kind=constructor fq=golden.sema.Bar.<init> vis=public flags=_ sig=recv=Class#282<T#283> params=[] ret=Class#282<T#283> suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d2 class Widget sym=s275
-expr e0 string(hello) type=String
-expr e1 name(field) type=Int ref=s279
-expr e2 int(0) type=Int
+  decl d0 class Foo sym=s275
+  decl d1 class Foo sym=s277
+  decl d2 class Bar sym=s279
+  decl d3 class Bar sym=s282

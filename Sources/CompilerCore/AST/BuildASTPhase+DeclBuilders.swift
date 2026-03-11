@@ -198,6 +198,7 @@ extension BuildASTPhase {
             superTypes: declarationSuperTypes(from: nodeID, in: arena, interner: interner, astArena: astArena),
             nestedTypeAliases: declarationNestedTypeAliases(from: nodeID, in: arena, interner: interner, astArena: astArena),
             initBlocks: declarationInitBlocks(from: nodeID, in: arena, interner: interner, astArena: astArena),
+            classBodyInitOrder: declarationClassBodyInitOrder(from: nodeID, in: arena, interner: interner),
             memberFunctions: members.functions,
             memberProperties: members.properties,
             nestedClasses: members.nestedClasses,

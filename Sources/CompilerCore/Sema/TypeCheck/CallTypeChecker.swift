@@ -245,6 +245,43 @@ final class CallTypeChecker {
             return unitType
         }
 
+        // --- Stdlib Array(size) { init } constructor (STDLIB-085) ---
+        if let calleeName,
+           interner.resolve(calleeName) == "Array",
+           args.count == 2,
+           locals[calleeName] == nil
+        {
+            let intType = sema.types.intType
+            let anyType = sema.types.anyType
+            let countType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: intType
+            )
+            driver.emitSubtypeConstraint(
+                left: countType,
+                right: intType,
+                range: ast.arena.exprRange(args[0].expr) ?? range,
+                solver: ConstraintSolver(),
+                sema: sema,
+                diagnostics: ctx.semaCtx.diagnostics
+            )
+            let initExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [intType],
+                returnType: anyType
+            )))
+            _ = driver.inferExpr(
+                args[1].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: initExpectedType
+            )
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
+            sema.bindings.bindExprType(id, type: anyType)
+            return anyType
+        }
+
         if let calleeName,
            args.count == 2,
            let specialKind = comparisonSpecialCallKind(for: calleeName, ctx: ctx, locals: locals)

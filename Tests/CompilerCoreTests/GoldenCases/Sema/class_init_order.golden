@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=test vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -273,13 +273,17 @@ symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s276 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s279 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s275
-expr e0 string(hello) type=String
-expr e1 name(field) type=Int ref=s279
-expr e2 int(0) type=Int
+symbol s275 kind=class fq=test.Foo vis=public flags=_
+symbol s276 kind=constructor fq=test.Foo.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
+symbol s277 kind=property fq=test.Foo.a vis=public flags=_ type=Int
+symbol s278 kind=property fq=test.Foo.b vis=public flags=_ type=Int
+file f0 package=test
+  decl d2 class Foo sym=s275
+expr e0 int(1) type=Int
+expr e1 int(2) type=Int
+expr e2 name(println) type=_
+expr e3 string(init1) type=String
+expr e4 call callee=e2 args=[_:e3] type=Unit call=s262 map=[0->0] targs=[]
+expr e5 name(println) type=_
+expr e6 string(init2) type=String
+expr e7 call callee=e5 args=[_:e6] type=Unit call=s262 map=[0->0] targs=[]

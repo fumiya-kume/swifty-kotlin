@@ -358,7 +358,8 @@ extension BuildASTPhase {
                     tokens.append(token)
                 }
             case let .node(childID):
-                if arena.node(childID).kind == .block {
+                let childKind = arena.node(childID).kind
+                if childKind == .block || childKind == .propertyAccessor {
                     return tokens
                 }
             }

@@ -85,7 +85,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         ast: ASTModule, symbols: SymbolTable, bindings: BindingTable,
         types: TypeSystem, ctx: CompilationContext
     ) {
-        bindInheritanceEdges(ast: ast, symbols: symbols, bindings: bindings, types: types)
+        bindInheritanceEdges(ast: ast, symbols: symbols, bindings: bindings, types: types, interner: ctx.interner)
         validateSealedHierarchy(
             ast: ast, symbols: symbols, bindings: bindings,
             diagnostics: ctx.diagnostics, interner: ctx.interner
@@ -109,6 +109,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         validateExpectActualMatching(
             ast: ast,
             symbols: symbols,
+            types: types,
             diagnostics: ctx.diagnostics,
             interner: ctx.interner
         )

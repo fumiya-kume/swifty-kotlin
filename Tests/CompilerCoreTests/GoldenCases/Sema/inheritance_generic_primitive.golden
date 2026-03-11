@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=test vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -273,13 +273,16 @@ symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s276 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s279 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s275
-expr e0 string(hello) type=String
-expr e1 name(field) type=Int ref=s279
-expr e2 int(0) type=Int
+symbol s275 kind=interface fq=test.Container vis=public flags=_
+symbol s276 kind=typeParameter fq=test.Container.$iface275.T vis=private flags=_
+symbol s277 kind=class fq=test.IntContainer vis=public flags=_
+symbol s278 kind=constructor fq=test.IntContainer.<init> vis=public flags=_ sig=recv=Class#277 params=[] ret=Class#277 suspend=0 defaults=[] vararg=[]
+symbol s279 kind=class fq=test.StringContainer vis=public flags=_
+symbol s280 kind=constructor fq=test.StringContainer.<init> vis=public flags=_ sig=recv=Class#279 params=[] ret=Class#279 suspend=0 defaults=[] vararg=[]
+symbol s281 kind=class fq=test.BoolContainer vis=public flags=_
+symbol s282 kind=constructor fq=test.BoolContainer.<init> vis=public flags=_ sig=recv=Class#281 params=[] ret=Class#281 suspend=0 defaults=[] vararg=[]
+file f0 package=test
+  decl d0 interface Container sym=s275
+  decl d1 class IntContainer sym=s277
+  decl d2 class StringContainer sym=s279
+  decl d3 class BoolContainer sym=s281

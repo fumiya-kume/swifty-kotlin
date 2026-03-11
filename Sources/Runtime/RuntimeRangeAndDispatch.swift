@@ -171,6 +171,11 @@ private func runtimeRangeIteratorBox(from rawValue: Int) -> RuntimeRangeIterator
     return tryCast(pointer, to: RuntimeRangeIteratorBox.self)
 }
 
+@_cdecl("kk_dispatch_error")
+public func kk_dispatch_error() -> Int {
+    fatalError("Virtual dispatch failed: method not found in vtable/itable")
+}
+
 private func runtimeTypeInfo(from receiver: Int) -> UnsafePointer<KTypeInfo>? {
     guard receiver != 0,
           receiver != runtimeNullSentinelInt,

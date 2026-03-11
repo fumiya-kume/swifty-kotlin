@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=test vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -273,13 +273,19 @@ symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s276 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s279 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s275
-expr e0 string(hello) type=String
-expr e1 name(field) type=Int ref=s279
-expr e2 int(0) type=Int
+symbol s275 kind=class fq=test.Rect vis=public flags=_
+symbol s276 kind=constructor fq=test.Rect.<init> vis=public flags=_ sig=recv=Class#275 params=[Int,Int] ret=Class#275 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s277 kind=valueParameter fq=test.Rect.<init>.$276.width vis=private flags=_
+symbol s278 kind=valueParameter fq=test.Rect.<init>.$276.height vis=private flags=_
+symbol s279 kind=property fq=test.Rect.width vis=public flags=_ type=Int
+symbol s280 kind=property fq=test.Rect.height vis=public flags=_ type=Int
+symbol s281 kind=property fq=test.Rect.area vis=public flags=_ type=Int
+symbol s282 kind=property fq=test.Rect.label vis=public flags=mutable type=String
+symbol s283 kind=backingField fq=test.Rect.$backing_label vis=private flags=mutable type=String
+file f0 package=test
+  decl d4 class Rect sym=s275
+expr e0 name(width) type=Int ref=s279
+expr e1 name(height) type=Int ref=s280
+expr e2 binary(multiply) lhs=e0 rhs=e1 type=Int
+expr e3 name(field) type=String ref=s283
+expr e4 string() type=String

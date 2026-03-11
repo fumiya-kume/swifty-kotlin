@@ -228,46 +228,29 @@ extension KIRLoweringDriver {
     /// appear in the class body, matching Kotlin's guaranteed top-to-bottom
     /// initialization semantics.
     ///
-    /// When `classBodyInitOrder` is populated (non-empty) the order recorded
-    /// by the AST builder is used.  For backward-compatibility with AST nodes
-    /// that pre-date this change the method falls back to the legacy
-    /// "all properties first, then all init blocks" ordering.
+    /// The order is driven by `classBodyInitOrder`, which the AST builder
+    /// populates from the declaration-order sequence of properties and
+    /// `init` blocks in the source.
     func emitClassBodyInitializers(
         classDecl: ClassDecl,
         shared: KIRLoweringSharedContext,
         compilationCtx: CompilationContext,
         body: inout KIRLoweringEmitContext
     ) {
-        if !classDecl.classBodyInitOrder.isEmpty {
-            // Declaration-order path
-            for member in classDecl.classBodyInitOrder {
-                switch member {
-                case let .property(index):
-                    guard index < classDecl.memberProperties.count else { continue }
-                    let propDeclID = classDecl.memberProperties[index]
-                    emitPropertyInitializer(
-                        propDeclID: propDeclID,
-                        shared: shared,
-                        compilationCtx: compilationCtx,
-                        body: &body
-                    )
-                case let .initBlock(index):
-                    guard index < classDecl.initBlocks.count else { continue }
-                    emitInitBlock(classDecl.initBlocks[index], shared: shared, body: &body)
-                }
-            }
-        } else {
-            // Fallback: legacy ordering (all properties, then init blocks)
-            for propDeclID in classDecl.memberProperties {
+        for member in classDecl.classBodyInitOrder {
+            switch member {
+            case let .property(index):
+                guard index < classDecl.memberProperties.count else { continue }
+                let propDeclID = classDecl.memberProperties[index]
                 emitPropertyInitializer(
                     propDeclID: propDeclID,
                     shared: shared,
                     compilationCtx: compilationCtx,
                     body: &body
                 )
-            }
-            for initBlock in classDecl.initBlocks {
-                emitInitBlock(initBlock, shared: shared, body: &body)
+            case let .initBlock(index):
+                guard index < classDecl.initBlocks.count else { continue }
+                emitInitBlock(classDecl.initBlocks[index], shared: shared, body: &body)
             }
         }
     }

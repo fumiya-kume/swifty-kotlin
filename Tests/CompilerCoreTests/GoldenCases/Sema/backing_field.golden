@@ -276,7 +276,8 @@ symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags
 symbol s275 kind=class fq=golden.sema.Validated vis=public flags=_
 symbol s276 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
 symbol s277 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
-symbol s278 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
+symbol s278 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
+symbol s279 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
 file f0 package=golden.sema
   decl d2 class Validated sym=s275
 expr e0 int(0) type=Int

@@ -9,6 +9,7 @@ public enum SyntaxKind: Equatable {
     case interfaceDecl
     case funDecl
     case propertyDecl
+    case propertyAccessor
     case typeAliasDecl
     case enumEntry
     case constructorDecl

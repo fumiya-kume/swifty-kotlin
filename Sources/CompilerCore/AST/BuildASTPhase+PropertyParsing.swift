@@ -108,6 +108,21 @@ extension BuildASTPhase {
             return (getter, setter)
         }
 
+        // Check for propertyAccessor nodes (structured inline accessor syntax).
+        // When the parser wraps accessor tokens in .propertyAccessor nodes we
+        // can collect them reliably without flat-token scanning.
+        var accessorTokens: [Token] = []
+        for child in arena.children(of: nodeID) {
+            if case let .node(childID) = child,
+               arena.node(childID).kind == .propertyAccessor
+            {
+                accessorTokens.append(contentsOf: collectTokens(from: childID, in: arena))
+            }
+        }
+        if !accessorTokens.isEmpty {
+            return parseInlineAccessors(from: accessorTokens, nodeRange: arena.node(nodeID).range, interner: interner, astArena: astArena)
+        }
+
         // Fallback: detect inline accessor syntax from flat tokens.
         // Handles `val x: T get() = expr` where get()/set() appear as flat
         // tokens of the property node without a wrapping block.

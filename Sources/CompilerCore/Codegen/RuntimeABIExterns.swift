@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J23"
+    public static let specVersion = "J22"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -122,6 +122,12 @@ public enum RuntimeABIExterns {
     public static let kk_todo_noarg = ExternDecl(
         name: "kk_todo_noarg",
         parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_dispatch_error = ExternDecl(
+        name: "kk_dispatch_error",
+        parameterTypes: [],
         returnType: "intptr_t"
     )
 
@@ -362,36 +368,6 @@ public enum RuntimeABIExterns {
 
     public static let kk_char_isWhitespace = ExternDecl(
         name: "kk_char_isWhitespace",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_char_digitToInt = ExternDecl(
-        name: "kk_char_digitToInt",
-        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_char_digitToIntOrNull = ExternDecl(
-        name: "kk_char_digitToIntOrNull",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_char_uppercase = ExternDecl(
-        name: "kk_char_uppercase",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_char_lowercase = ExternDecl(
-        name: "kk_char_lowercase",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    public static let kk_char_titlecase = ExternDecl(
-        name: "kk_char_titlecase",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1116,6 +1092,7 @@ public enum RuntimeABIExterns {
             kk_error,
             kk_todo,
             kk_todo_noarg,
+            kk_dispatch_error,
             // String
             kk_string_from_utf8,
             kk_string_concat,
@@ -1147,8 +1124,6 @@ public enum RuntimeABIExterns {
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
             kk_char_isWhitespace,
-            kk_char_digitToInt,
-            kk_char_digitToIntOrNull,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
