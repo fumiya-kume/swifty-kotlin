@@ -5,7 +5,6 @@ import XCTest
 // MARK: - Cross-Module ABI Reconciliation (Runtime <-> CompilerCore)
 
 extension ABIMismatchTests {
-    /// Verify that RuntimeABISpec and RuntimeABIExterns have the same function count.
     func testExternCountMatchesSpec() {
         let specNames = RuntimeABISpec.allFunctions.map(\.name)
         let externNames = RuntimeABIExterns.allExterns.map(\.name)
@@ -16,7 +15,6 @@ extension ABIMismatchTests {
         )
     }
 
-    /// Verify that every RuntimeABISpec function has a matching RuntimeABIExterns entry.
     func testEverySpecFunctionHasMatchingExtern() {
         for spec in RuntimeABISpec.allFunctions {
             let externDecl = RuntimeABIExterns.externDecl(named: spec.name)
@@ -27,7 +25,6 @@ extension ABIMismatchTests {
         }
     }
 
-    /// Verify that every RuntimeABIExterns entry has a matching RuntimeABISpec function.
     func testEveryExternHasMatchingSpecFunction() {
         for externDecl in RuntimeABIExterns.allExterns {
             let spec = RuntimeABISpec.allFunctions.first { $0.name == externDecl.name }
@@ -38,7 +35,6 @@ extension ABIMismatchTests {
         }
     }
 
-    /// Verify that function names appear in the same order in both lists.
     func testFunctionOrderMatches() {
         let specNames = RuntimeABISpec.allFunctions.map(\.name)
         let externNames = RuntimeABIExterns.allExterns.map(\.name)
@@ -49,7 +45,6 @@ extension ABIMismatchTests {
         )
     }
 
-    /// The core ABI mismatch detection: verify return types match.
     func testReturnTypesMatch() {
         for spec in RuntimeABISpec.allFunctions {
             guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {
@@ -65,7 +60,6 @@ extension ABIMismatchTests {
         }
     }
 
-    /// The core ABI mismatch detection: verify parameter types match.
     func testParameterTypesMatch() {
         for spec in RuntimeABISpec.allFunctions {
             guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {
@@ -81,7 +75,6 @@ extension ABIMismatchTests {
         }
     }
 
-    /// Verify parameter count match for each function.
     func testParameterCountsMatch() {
         for spec in RuntimeABISpec.allFunctions {
             guard let externDecl = RuntimeABIExterns.externDecl(named: spec.name) else {

@@ -2,10 +2,7 @@
 import Foundation
 import XCTest
 
-/// Tests for Kotlin OOP features: classes, data classes, enum classes, sealed classes,
-/// objects, companion objects, interfaces, generics, nullable types, and type casting.
 final class KotlinCompilationOOPTests: XCTestCase {
-    /// Verify basic class with primary constructor compiles.
     func testCompile_class_basic() throws {
         try assertKotlinCompilesToKIR("""
         class Person(val name: String, val age: Int)
@@ -15,7 +12,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify class with methods compiles.
     func testCompile_class_withMethods() throws {
         try assertKotlinCompilesToKIR("""
         class Counter(var count: Int) {
@@ -32,7 +28,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify class inheritance with override compiles.
     func testCompile_class_inheritance() throws {
         try assertKotlinCompilesToKIR("""
         open class Animal(val name: String) {
@@ -48,7 +43,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify abstract class with concrete subclass compiles.
     func testCompile_class_abstractClass() throws {
         try assertKotlinCompilesToKIR("""
         abstract class Shape {
@@ -64,7 +58,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify secondary constructor compiles.
     func testCompile_class_secondaryConstructor() throws {
         try assertKotlinCompilesToKIR("""
         class Point(val x: Int, val y: Int) {
@@ -76,7 +69,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify init block compiles.
     func testCompile_class_initBlock() throws {
         try assertKotlinCompilesToKIR("""
         class Greeter(val name: String) {
@@ -91,7 +83,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify data class compiles.
     func testCompile_dataClass_basic() throws {
         try assertKotlinCompilesToKIR("""
         data class Point(val x: Int, val y: Int)
@@ -102,7 +93,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify data class copy compiles.
     func testCompile_dataClass_copy() throws {
         try assertKotlinCompilesToKIR("""
         data class User(val name: String, val age: Int)
@@ -113,7 +103,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify basic enum class compiles.
     func testCompile_enum_basic() throws {
         try assertKotlinCompilesToKIR("""
         enum class Direction {
@@ -125,7 +114,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify enum class with properties compiles.
     func testCompile_enum_withProperties() throws {
         try assertKotlinCompilesToKIR("""
         enum class Color(val rgb: Int) {
@@ -139,7 +127,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify sealed class with when pattern matching compiles.
     func testCompile_sealed_class() throws {
         try assertKotlinCompilesToKIR("""
         sealed class Result {
@@ -158,7 +145,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify sealed interface with data class subtypes compiles.
     func testCompile_sealed_interface() throws {
         try assertKotlinCompilesToKIR("""
         sealed interface Expr
@@ -175,7 +161,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify object singleton compiles.
     func testCompile_object_singleton() throws {
         try assertKotlinCompilesToKIR("""
         object Logger {
@@ -202,7 +187,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify basic interface implementation compiles.
     func testCompile_interface_basic() throws {
         try assertKotlinCompilesToKIR("""
         interface Drawable {
@@ -218,7 +202,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify interface with default method compiles.
     func testCompile_interface_defaultMethod() throws {
         try assertKotlinCompilesToKIR("""
         interface Greeter {
@@ -238,7 +221,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify diamond inheritance with explicit override compiles.
     func testCompile_interface_multipleInheritance() throws {
         try assertKotlinCompilesToKIR("""
         interface A {
@@ -257,7 +239,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify generic function compiles.
     func testCompile_generics_function() throws {
         try assertKotlinCompilesToKIR("""
         fun <T> identity(x: T): T = x
@@ -268,7 +249,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify generic class compiles.
     func testCompile_generics_class() throws {
         try assertKotlinCompilesToKIR("""
         class Box<T>(val value: T) {
@@ -281,7 +261,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify generic upper bound compiles.
     func testCompile_generics_upperBound() throws {
         try assertKotlinCompilesToKIR("""
         fun <T : Comparable<T>> maxOf(a: T, b: T): T {
@@ -291,7 +270,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify nullable type declaration compiles.
     func testCompile_nullable_declaration() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -301,7 +279,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify safe call operator compiles.
     func testCompile_nullable_safeCall() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -311,7 +288,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify elvis operator compiles.
     func testCompile_nullable_elvisOperator() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -321,7 +297,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify not-null assertion compiles.
     func testCompile_nullable_notNullAssertion() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -331,7 +306,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify is type check compiles.
     func testCompile_typeCheck_is() throws {
         try assertKotlinCompilesToKIR("""
         fun check(x: Any): String {
@@ -341,7 +315,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify unsafe cast compiles.
     func testCompile_typeCast_as() throws {
         try assertKotlinCompilesToKIR("""
         fun castToString(x: Any): String {
@@ -351,7 +324,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         """)
     }
 
-    /// Verify safe cast compiles.
     func testCompile_typeCast_safeAs() throws {
         let code = """
         fun tryCast(x: Any): String? {
@@ -362,7 +334,6 @@ final class KotlinCompilationOOPTests: XCTestCase {
         try assertKotlinCompilesToKIR(code)
     }
 
-    /// Verify smart cast after is check compiles.
     func testCompile_smartCast() throws {
         try assertKotlinCompilesToKIR("""
         fun length(x: Any): Int {

@@ -2,7 +2,6 @@ import Foundation
 
 // MARK: - Sequence Functions (STDLIB-003)
 
-/// Helper to extract a `RuntimeSequenceBox` from an opaque handle.
 private func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -16,7 +15,6 @@ private func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
     return tryCast(ptr, to: RuntimeSequenceBox.self)
 }
 
-/// Helper to extract a `RuntimeSequenceBuilderBox` from an opaque handle.
 private func runtimeSequenceBuilderBox(from rawValue: Int) -> RuntimeSequenceBuilderBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil

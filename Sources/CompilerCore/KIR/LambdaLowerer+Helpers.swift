@@ -1,8 +1,5 @@
 import Foundation
 
-// Helper methods for LambdaLowerer: symbol naming, type resolution,
-// capture analysis, and callable-reference target resolution.
-
 extension LambdaLowerer {
     func syntheticLambdaName(for exprID: ExprID, interner: StringInterner) -> InternedString {
         interner.intern("kk_lambda_\(exprID.rawValue)")

@@ -2,10 +2,7 @@
 import Foundation
 import XCTest
 
-/// Tests for basic Kotlin language features: functions, variables, strings,
-/// control flow, numeric types, and boolean logic.
 final class KotlinCompilationBasicTests: XCTestCase {
-    /// Verify expression-body function compiles.
     func testCompile_function_expressionBody() throws {
         try assertKotlinCompilesToKIR("""
         fun add(a: Int, b: Int) = a + b
@@ -13,7 +10,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify block-body function with local val compiles.
     func testCompile_function_blockBody() throws {
         try assertKotlinCompilesToKIR("""
         fun greet(name: String): String {
@@ -24,7 +20,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify Unit-returning function compiles.
     func testCompile_function_unitReturn() throws {
         try assertKotlinCompilesToKIR("""
         fun doNothing() {
@@ -33,7 +28,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify function with multiple parameters compiles.
     func testCompile_function_multipleParameters() throws {
         try assertKotlinCompilesToKIR("""
         fun compute(a: Int, b: Int, c: Int): Int {
@@ -43,7 +37,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify recursive function compiles.
     func testCompile_function_recursion() throws {
         try assertKotlinCompilesToKIR("""
         fun factorial(n: Int): Int {
@@ -54,7 +47,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify val and var declarations compile.
     func testCompile_variable_valAndVar() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -65,7 +57,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify type inference for various literal types compiles.
     func testCompile_variable_typeInference() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -77,7 +68,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify explicit type annotations compile.
     func testCompile_variable_explicitTypes() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -89,7 +79,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify string concatenation compiles.
     func testCompile_string_concatenation() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -100,7 +89,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify simple string template compiles.
     func testCompile_string_template() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -111,7 +99,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify string template with expression compiles.
     func testCompile_string_templateExpression() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -122,7 +109,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify raw string with trimMargin compiles.
     func testCompile_string_rawString() throws {
         try assertKotlinCompilesToKIR(#"""
         fun main() {
@@ -134,7 +120,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """#)
     }
 
-    /// Verify if-else statement compiles.
     func testCompile_controlFlow_ifElse() throws {
         try assertKotlinCompilesToKIR("""
         fun max(a: Int, b: Int): Int {
@@ -144,7 +129,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify chained if-else expression compiles.
     func testCompile_controlFlow_ifExpression() throws {
         try assertKotlinCompilesToKIR("""
         fun classify(n: Int) = if (n > 0) "positive" else if (n < 0) "negative" else "zero"
@@ -152,7 +136,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify when statement with else compiles.
     func testCompile_controlFlow_whenStatement() throws {
         try assertKotlinCompilesToKIR("""
         fun describe(x: Int): String {
@@ -167,7 +150,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify when with multiple conditions per branch compiles.
     func testCompile_controlFlow_whenMultiCondition() throws {
         try assertKotlinCompilesToKIR("""
         fun isWeekend(day: String): Boolean {
@@ -180,7 +162,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify when without argument compiles.
     func testCompile_controlFlow_whenWithoutArg() throws {
         try assertKotlinCompilesToKIR("""
         fun classify(n: Int): String {
@@ -194,7 +175,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify for loop over range compiles.
     func testCompile_controlFlow_forLoop() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -206,7 +186,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify while loop compiles.
     func testCompile_controlFlow_whileLoop() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -220,7 +199,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify do-while loop compiles.
     func testCompile_controlFlow_doWhileLoop() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -232,7 +210,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify labeled break compiles.
     func testCompile_controlFlow_labeledBreak() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -249,7 +226,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify labeled continue compiles.
     func testCompile_controlFlow_labeledContinue() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -264,7 +240,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify all numeric types compile.
     func testCompile_numericTypes() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -278,7 +253,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify bitwise operators compile.
     func testCompile_bitwiseOperators() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -292,7 +266,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify Char arithmetic compiles.
     func testCompile_charArithmetic() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
@@ -303,7 +276,6 @@ final class KotlinCompilationBasicTests: XCTestCase {
         """)
     }
 
-    /// Verify boolean operators compile.
     func testCompile_booleanLogic() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
