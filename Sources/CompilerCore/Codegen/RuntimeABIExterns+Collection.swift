@@ -348,7 +348,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Array conversion functions (STDLIB-087)
+    /// Array conversion functions (STDLIB-087)
     static let kk_array_toList = ExternDecl(
         name: "kk_array_toList",
         parameterTypes: ["intptr_t"],
@@ -367,7 +367,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Array higher-order functions (STDLIB-088)
+    /// Array higher-order functions (STDLIB-088)
     static let kk_array_map = ExternDecl(
         name: "kk_array_map",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -398,7 +398,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Array utility functions (STDLIB-089)
+    /// Array utility functions (STDLIB-089)
     static let kk_array_copyOf = ExternDecl(
         name: "kk_array_copyOf",
         parameterTypes: ["intptr_t"],
