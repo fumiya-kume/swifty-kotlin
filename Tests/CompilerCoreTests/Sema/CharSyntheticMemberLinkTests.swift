@@ -28,6 +28,8 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             "isLetter": "kk_char_isLetter",
             "isLetterOrDigit": "kk_char_isLetterOrDigit",
             "isWhitespace": "kk_char_isWhitespace",
+            "digitToInt": "kk_char_digitToInt",
+            "digitToIntOrNull": "kk_char_digitToIntOrNull",
         ]
 
         for (member, expectedLink) in expected {
@@ -57,6 +59,8 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
             ch.isLetter()
             ch.isLetterOrDigit()
             ch.isWhitespace()
+            ch.digitToInt()
+            ch.digitToIntOrNull()
         }
         """
 
@@ -72,6 +76,8 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
                 "isLetter": "kk_char_isLetter",
                 "isLetterOrDigit": "kk_char_isLetterOrDigit",
                 "isWhitespace": "kk_char_isWhitespace",
+                "digitToInt": "kk_char_digitToInt",
+                "digitToIntOrNull": "kk_char_digitToIntOrNull",
             ]
 
             for (memberName, externalLinkName) in expectedLinks {

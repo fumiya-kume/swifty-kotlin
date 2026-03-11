@@ -27,6 +27,26 @@ extension DataFlowSemaPhase {
                 interner: interner
             )
         }
+
+        registerSyntheticCharExtensionFunction(
+            named: "digitToInt",
+            externalLinkName: "kk_char_digitToInt",
+            receiverType: types.charType,
+            returnType: types.intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticCharExtensionFunction(
+            named: "digitToIntOrNull",
+            externalLinkName: "kk_char_digitToIntOrNull",
+            receiverType: types.charType,
+            returnType: types.make(.primitive(.int, .nullable)),
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackageForCharStubs(

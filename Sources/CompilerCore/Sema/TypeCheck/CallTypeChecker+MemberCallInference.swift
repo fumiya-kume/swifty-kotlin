@@ -1244,6 +1244,10 @@ extension CallTypeChecker {
                     let resultType: TypeID? = switch calleeStr {
                     case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
                         sema.types.booleanType
+                    case "digitToInt":
+                        sema.types.intType
+                    case "digitToIntOrNull":
+                        sema.types.make(.primitive(.int, .nullable))
                     default:
                         nil
                     }
