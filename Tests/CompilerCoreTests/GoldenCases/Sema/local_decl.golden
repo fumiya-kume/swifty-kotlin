@@ -242,65 +242,66 @@ symbol s240 kind=function fq=kotlin.check vis=public flags=synthetic sig=recv=_ 
 symbol s241 kind=valueParameter fq=kotlin.check.condition vis=private flags=synthetic
 symbol s242 kind=function fq=kotlin.error vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
 symbol s243 kind=valueParameter fq=kotlin.error.message vis=private flags=synthetic
-symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
-symbol s245 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
-symbol s246 kind=package fq=kotlin.io vis=public flags=synthetic
-symbol s247 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s249 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s250 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s251 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
-symbol s252 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s253 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s254 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=T#252 suspend=0 defaults=[] vararg=[]
-symbol s255 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s256 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#252
-symbol s257 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#251<out T#22>> suspend=0 defaults=[] vararg=[]
-symbol s258 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s259 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s260 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#259] ret=Class#21<out T#259> suspend=0 defaults=[] vararg=[]
-symbol s261 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s262 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s263 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s264 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s265 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s266 kind=local fq=__local_1.x vis=private flags=_
-symbol s267 kind=local fq=__local_6.y vis=private flags=_
-symbol s268 kind=local fq=__local_11.z vis=private flags=mutable
-symbol s269 kind=local fq=__local_18.a vis=private flags=_
-symbol s270 kind=local fq=__local_25.b vis=private flags=mutable
+symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[] ret=Nothing suspend=0 defaults=[] vararg=[]
+symbol s245 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
+symbol s246 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
+symbol s247 kind=package fq=kotlin.io vis=public flags=synthetic
+symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s249 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s250 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
+symbol s251 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s252 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
+symbol s253 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s254 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s255 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=T#253 suspend=0 defaults=[] vararg=[]
+symbol s256 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s257 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#253
+symbol s258 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#252<out T#22>> suspend=0 defaults=[] vararg=[]
+symbol s259 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s260 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s261 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#260] ret=Class#21<out T#260> suspend=0 defaults=[] vararg=[]
+symbol s262 kind=function fq=typedLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s263 kind=function fq=inferredLocal vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s264 kind=function fq=mutableTyped vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s265 kind=function fq=deferredValInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s266 kind=function fq=useBeforeInit vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s267 kind=local fq=__local_1.x vis=private flags=_
+symbol s268 kind=local fq=__local_6.y vis=private flags=_
+symbol s269 kind=local fq=__local_11.z vis=private flags=mutable
+symbol s270 kind=local fq=__local_18.a vis=private flags=_
+symbol s271 kind=local fq=__local_25.b vis=private flags=mutable
 file f0 package=_
-  decl d0 fun typedLocal suspend=0 inline=0 sym=s261
-  decl d1 fun inferredLocal suspend=0 inline=0 sym=s262
-  decl d2 fun mutableTyped suspend=0 inline=0 sym=s263
-  decl d3 fun deferredValInit suspend=0 inline=0 sym=s264
-  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s265
+  decl d0 fun typedLocal suspend=0 inline=0 sym=s262
+  decl d1 fun inferredLocal suspend=0 inline=0 sym=s263
+  decl d2 fun mutableTyped suspend=0 inline=0 sym=s264
+  decl d3 fun deferredValInit suspend=0 inline=0 sym=s265
+  decl d4 fun useBeforeInit suspend=0 inline=0 sym=s266
 expr e0 int(10) type=Int
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s266
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s267
 expr e2 name(println) type=_
-expr e3 name(x) type=Int ref=s266
-expr e4 call callee=e2 args=[_:e3] type=Unit call=s248 map=[0->0] targs=[]
+expr e3 name(x) type=Int ref=s267
+expr e4 call callee=e2 args=[_:e3] type=Unit call=s249 map=[0->0] targs=[]
 expr e5 int(20) type=Int
-expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s267
+expr e6 localDecl y mutable=0 type=_ init=e5 type=Unit ref=s268
 expr e7 name(println) type=_
-expr e8 name(y) type=Int ref=s267
-expr e9 call callee=e7 args=[_:e8] type=Unit call=s248 map=[0->0] targs=[]
+expr e8 name(y) type=Int ref=s268
+expr e9 call callee=e7 args=[_:e8] type=Unit call=s249 map=[0->0] targs=[]
 expr e10 int(30) type=Int
-expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s268
+expr e11 localDecl z mutable=1 type=t1 init=e10 type=Unit ref=s269
 expr e12 name(z) type=_
 expr e13 int(40) type=Int
-expr e14 localAssign z value=e13 type=Unit ref=s268
+expr e14 localAssign z value=e13 type=Unit ref=s269
 expr e15 name(println) type=_
-expr e16 name(z) type=Int ref=s268
-expr e17 call callee=e15 args=[_:e16] type=Unit call=s248 map=[0->0] targs=[]
-expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s269
+expr e16 name(z) type=Int ref=s269
+expr e17 call callee=e15 args=[_:e16] type=Unit call=s249 map=[0->0] targs=[]
+expr e18 localDecl a mutable=0 type=t2 init=_ type=Unit ref=s270
 expr e19 name(a) type=_
 expr e20 int(5) type=Int
-expr e21 localAssign a value=e20 type=Unit ref=s269
+expr e21 localAssign a value=e20 type=Unit ref=s270
 expr e22 name(println) type=_
-expr e23 name(a) type=Int ref=s269
-expr e24 call callee=e22 args=[_:e23] type=Unit call=s248 map=[0->0] targs=[]
-expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s270
+expr e23 name(a) type=Int ref=s270
+expr e24 call callee=e22 args=[_:e23] type=Unit call=s249 map=[0->0] targs=[]
+expr e25 localDecl b mutable=1 type=t3 init=_ type=Unit ref=s271
 expr e26 name(println) type=_
-expr e27 name(b) type=Int ref=s270
-expr e28 call callee=e26 args=[_:e27] type=Unit call=s248 map=[0->0] targs=[]
+expr e27 name(b) type=Int ref=s271
+expr e28 call callee=e26 args=[_:e27] type=Unit call=s249 map=[0->0] targs=[]

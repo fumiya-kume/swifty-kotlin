@@ -242,53 +242,54 @@ symbol s240 kind=function fq=kotlin.check vis=public flags=synthetic sig=recv=_ 
 symbol s241 kind=valueParameter fq=kotlin.check.condition vis=private flags=synthetic
 symbol s242 kind=function fq=kotlin.error vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
 symbol s243 kind=valueParameter fq=kotlin.error.message vis=private flags=synthetic
-symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
-symbol s245 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
-symbol s246 kind=package fq=kotlin.io vis=public flags=synthetic
-symbol s247 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s249 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s250 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s251 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
-symbol s252 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s253 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s254 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=T#252 suspend=0 defaults=[] vararg=[]
-symbol s255 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s256 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#252
-symbol s257 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#251<out T#22>> suspend=0 defaults=[] vararg=[]
-symbol s258 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s259 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s260 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#259] ret=Class#21<out T#259> suspend=0 defaults=[] vararg=[]
-symbol s261 kind=class fq=golden.sema.Animal vis=public flags=openType
-symbol s262 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#261 params=[] ret=Class#261 suspend=0 defaults=[] vararg=[]
-symbol s263 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s264 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#263 params=[] ret=Class#263 suspend=0 defaults=[] vararg=[]
-symbol s265 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#266] ret=T#266 suspend=0 defaults=[0] vararg=[0] bounds=[Class#261]
-symbol s266 kind=typeParameter fq=golden.sema.accept.$265.T vis=private flags=_
-symbol s267 kind=valueParameter fq=golden.sema.accept.$265.x vis=private flags=_
-symbol s268 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=Class#261 suspend=0 defaults=[] vararg=[]
-symbol s269 kind=function fq=golden.sema.unbounded vis=public flags=_ sig=recv=_ params=[T#270] ret=T#270 suspend=0 defaults=[0] vararg=[0]
-symbol s270 kind=typeParameter fq=golden.sema.unbounded.$269.T vis=private flags=_
-symbol s271 kind=valueParameter fq=golden.sema.unbounded.$269.x vis=private flags=_
-symbol s272 kind=function fq=golden.sema.callUnbounded vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s273 kind=function fq=golden.sema.acceptWhere vis=public flags=_ sig=recv=_ params=[T#274] ret=T#274 suspend=0 defaults=[0] vararg=[0] bounds=[Class#261]
-symbol s274 kind=typeParameter fq=golden.sema.acceptWhere.$273.T vis=private flags=_
-symbol s275 kind=valueParameter fq=golden.sema.acceptWhere.$273.x vis=private flags=_
+symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[] ret=Nothing suspend=0 defaults=[] vararg=[]
+symbol s245 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
+symbol s246 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
+symbol s247 kind=package fq=kotlin.io vis=public flags=synthetic
+symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s249 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s250 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
+symbol s251 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s252 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
+symbol s253 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s254 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s255 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=T#253 suspend=0 defaults=[] vararg=[]
+symbol s256 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s257 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#253
+symbol s258 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#252<out T#22>> suspend=0 defaults=[] vararg=[]
+symbol s259 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s260 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s261 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#260] ret=Class#21<out T#260> suspend=0 defaults=[] vararg=[]
+symbol s262 kind=class fq=golden.sema.Animal vis=public flags=openType
+symbol s263 kind=constructor fq=golden.sema.Animal.<init> vis=public flags=_ sig=recv=Class#262 params=[] ret=Class#262 suspend=0 defaults=[] vararg=[]
+symbol s264 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s265 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#264 params=[] ret=Class#264 suspend=0 defaults=[] vararg=[]
+symbol s266 kind=function fq=golden.sema.accept vis=public flags=_ sig=recv=_ params=[T#267] ret=T#267 suspend=0 defaults=[0] vararg=[0] bounds=[Class#262]
+symbol s267 kind=typeParameter fq=golden.sema.accept.$266.T vis=private flags=_
+symbol s268 kind=valueParameter fq=golden.sema.accept.$266.x vis=private flags=_
+symbol s269 kind=function fq=golden.sema.callValid vis=public flags=_ sig=recv=_ params=[] ret=Class#262 suspend=0 defaults=[] vararg=[]
+symbol s270 kind=function fq=golden.sema.unbounded vis=public flags=_ sig=recv=_ params=[T#271] ret=T#271 suspend=0 defaults=[0] vararg=[0]
+symbol s271 kind=typeParameter fq=golden.sema.unbounded.$270.T vis=private flags=_
+symbol s272 kind=valueParameter fq=golden.sema.unbounded.$270.x vis=private flags=_
+symbol s273 kind=function fq=golden.sema.callUnbounded vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s274 kind=function fq=golden.sema.acceptWhere vis=public flags=_ sig=recv=_ params=[T#275] ret=T#275 suspend=0 defaults=[0] vararg=[0] bounds=[Class#262]
+symbol s275 kind=typeParameter fq=golden.sema.acceptWhere.$274.T vis=private flags=_
+symbol s276 kind=valueParameter fq=golden.sema.acceptWhere.$274.x vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Animal sym=s261
-  decl d1 class Dog sym=s263
-  decl d2 fun accept suspend=0 inline=0 sym=s265
-  decl d3 fun callValid suspend=0 inline=0 sym=s268
-  decl d4 fun unbounded suspend=0 inline=0 sym=s269
-  decl d5 fun callUnbounded suspend=0 inline=0 sym=s272
-  decl d6 fun acceptWhere suspend=0 inline=0 sym=s273
-expr e0 name(x) type=T#266 ref=s267
+  decl d0 class Animal sym=s262
+  decl d1 class Dog sym=s264
+  decl d2 fun accept suspend=0 inline=0 sym=s266
+  decl d3 fun callValid suspend=0 inline=0 sym=s269
+  decl d4 fun unbounded suspend=0 inline=0 sym=s270
+  decl d5 fun callUnbounded suspend=0 inline=0 sym=s273
+  decl d6 fun acceptWhere suspend=0 inline=0 sym=s274
+expr e0 name(x) type=T#267 ref=s268
 expr e1 name(accept) type=_
 expr e2 name(Dog) type=_
-expr e3 call callee=e2 args=[] type=Class#263 call=s264 map=[] targs=[]
-expr e4 call callee=e1 args=[_:e3] type=Class#263 call=s265 map=[0->0] targs=[Class#263]
-expr e5 name(x) type=T#270 ref=s271
+expr e3 call callee=e2 args=[] type=Class#264 call=s265 map=[] targs=[]
+expr e4 call callee=e1 args=[_:e3] type=Class#264 call=s266 map=[0->0] targs=[Class#264]
+expr e5 name(x) type=T#271 ref=s272
 expr e6 name(unbounded) type=_
 expr e7 int(42) type=Int
-expr e8 call callee=e6 args=[_:e7] type=Int call=s269 map=[0->0] targs=[Int]
-expr e9 name(x) type=T#274 ref=s275
+expr e8 call callee=e6 args=[_:e7] type=Int call=s270 map=[0->0] targs=[Int]
+expr e9 name(x) type=T#275 ref=s276

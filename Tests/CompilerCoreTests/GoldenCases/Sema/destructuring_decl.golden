@@ -242,63 +242,64 @@ symbol s240 kind=function fq=kotlin.check vis=public flags=synthetic sig=recv=_ 
 symbol s241 kind=valueParameter fq=kotlin.check.condition vis=private flags=synthetic
 symbol s242 kind=function fq=kotlin.error vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
 symbol s243 kind=valueParameter fq=kotlin.error.message vis=private flags=synthetic
-symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
-symbol s245 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
-symbol s246 kind=package fq=kotlin.io vis=public flags=synthetic
-symbol s247 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s249 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s250 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s251 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
-symbol s252 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s253 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s254 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#251<out T#252> params=[] ret=T#252 suspend=0 defaults=[] vararg=[]
-symbol s255 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s256 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#252
-symbol s257 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#251<out T#22>> suspend=0 defaults=[] vararg=[]
-symbol s258 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s259 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s260 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#259] ret=Class#21<out T#259> suspend=0 defaults=[] vararg=[]
-symbol s261 kind=class fq=Point vis=public flags=dataType
-symbol s262 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#261 params=[Int,Int] ret=Class#261 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s263 kind=valueParameter fq=Point.<init>.$262.x vis=private flags=_
-symbol s264 kind=valueParameter fq=Point.<init>.$262.y vis=private flags=_
-symbol s265 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#261 params=[Int,Int] ret=Class#261 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s266 kind=valueParameter fq=Point.copy.$265.x vis=private flags=_
-symbol s267 kind=valueParameter fq=Point.copy.$265.y vis=private flags=_
-symbol s268 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s269 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s270 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s271 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s272 kind=local fq=__local_4.p vis=private flags=_
-symbol s273 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
-symbol s274 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
-symbol s275 kind=local fq=__local_17.p vis=private flags=_
-symbol s276 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
+symbol s244 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[] ret=Nothing suspend=0 defaults=[] vararg=[]
+symbol s245 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
+symbol s246 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
+symbol s247 kind=package fq=kotlin.io vis=public flags=synthetic
+symbol s248 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s249 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s250 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
+symbol s251 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s252 kind=interface fq=kotlin.collections.IndexedValue vis=public flags=synthetic
+symbol s253 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s254 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s255 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#252<out T#253> params=[] ret=T#253 suspend=0 defaults=[] vararg=[]
+symbol s256 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s257 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#253
+symbol s258 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#21<out T#22> params=[] ret=Class#21<out Class#252<out T#22>> suspend=0 defaults=[] vararg=[]
+symbol s259 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s260 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s261 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#21<out T#22> params=[(Int, T#22) -> T#260] ret=Class#21<out T#260> suspend=0 defaults=[] vararg=[]
+symbol s262 kind=class fq=Point vis=public flags=dataType
+symbol s263 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#262 params=[Int,Int] ret=Class#262 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s264 kind=valueParameter fq=Point.<init>.$263.x vis=private flags=_
+symbol s265 kind=valueParameter fq=Point.<init>.$263.y vis=private flags=_
+symbol s266 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#262 params=[Int,Int] ret=Class#262 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s267 kind=valueParameter fq=Point.copy.$266.x vis=private flags=_
+symbol s268 kind=valueParameter fq=Point.copy.$266.y vis=private flags=_
+symbol s269 kind=property fq=Point.x vis=public flags=_ type=Int
+symbol s270 kind=property fq=Point.y vis=public flags=_ type=Int
+symbol s271 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s272 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s273 kind=local fq=__local_4.p vis=private flags=_
+symbol s274 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
+symbol s275 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
+symbol s276 kind=local fq=__local_17.p vis=private flags=_
+symbol s277 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
 file f0 package=_
-  decl d2 class Point sym=s261
-  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s270
-  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s271
+  decl d2 class Point sym=s262
+  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s271
+  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s272
 expr e0 name(Point) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#261 call=s262 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s272
-expr e5 name(p) type=Class#261 ref=s272
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#262 call=s263 map=[0->0,1->1] targs=[]
+expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s273
+expr e5 name(p) type=Class#262 ref=s273
 expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
 expr e7 name(println) type=_
-expr e8 name(a) type=Any ref=s273
-expr e9 call callee=e7 args=[_:e8] type=Unit call=s248 map=[0->0] targs=[]
+expr e8 name(a) type=Any ref=s274
+expr e9 call callee=e7 args=[_:e8] type=Unit call=s249 map=[0->0] targs=[]
 expr e10 name(println) type=_
-expr e11 name(b) type=Any ref=s274
-expr e12 call callee=e10 args=[_:e11] type=Unit call=s248 map=[0->0] targs=[]
+expr e11 name(b) type=Any ref=s275
+expr e12 call callee=e10 args=[_:e11] type=Unit call=s249 map=[0->0] targs=[]
 expr e13 name(Point) type=_
 expr e14 int(3) type=Int
 expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#261 call=s262 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s275
-expr e18 name(p) type=Class#261 ref=s275
+expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#262 call=s263 map=[0->0,1->1] targs=[]
+expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s276
+expr e18 name(p) type=Class#262 ref=s276
 expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
 expr e20 name(println) type=_
-expr e21 name(second) type=Any ref=s276
-expr e22 call callee=e20 args=[_:e21] type=Unit call=s248 map=[0->0] targs=[]
+expr e21 name(second) type=Any ref=s277
+expr e22 call callee=e20 args=[_:e21] type=Unit call=s249 map=[0->0] targs=[]

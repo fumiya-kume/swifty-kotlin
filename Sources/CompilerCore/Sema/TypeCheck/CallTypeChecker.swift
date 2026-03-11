@@ -50,7 +50,15 @@ final class CallTypeChecker {
                     return sema.types.errorType
                 }
 
-                let receiverType = builderDSLReceiverType(kind: builderKind, sema: sema, interner: interner)
+                let receiverType = builderDSLReceiverType(
+                    kind: builderKind,
+                    lambdaExprID: argumentExprID,
+                    expectedType: expectedType,
+                    ctx: ctx,
+                    locals: locals,
+                    sema: sema,
+                    interner: interner
+                )
                 let returnType: TypeID = switch builderKind {
                 case .buildString:
                     sema.types.stringType
@@ -734,6 +742,9 @@ final class CallTypeChecker {
             case .buildMap: name == "put" && args.count == 2
             }
             if isBuilderMember {
+                for argument in args {
+                    _ = driver.inferExpr(argument.expr, ctx: ctx, locals: &locals)
+                }
                 sema.bindings.bindExprType(id, type: sema.types.unitType)
                 return sema.types.unitType
             }

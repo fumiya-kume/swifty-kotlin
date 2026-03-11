@@ -2,6 +2,11 @@
 
 /// Extracted from CallTypeChecker to keep file length within SwiftLint limits.
 extension CallTypeChecker {
+    private enum BuilderDSLArgumentShape {
+        case unary([TypeID])
+        case keyed([(key: TypeID, value: TypeID)])
+    }
+
     func builderDSLKind(for name: String) -> BuilderDSLKind? {
         switch name {
         case "buildString":
@@ -45,6 +50,10 @@ extension CallTypeChecker {
 
     func builderDSLReceiverType(
         kind: BuilderDSLKind,
+        lambdaExprID: ExprID,
+        expectedType: TypeID?,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
@@ -52,6 +61,14 @@ extension CallTypeChecker {
         case .buildString:
             return ensureSyntheticStringBuilderType(sema: sema, interner: interner)
         case .buildList:
+            let elementType = builderDSLListElementType(
+                lambdaExprID: lambdaExprID,
+                expectedType: expectedType,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: interner
+            )
             let mutableListFQName: [InternedString] = [
                 interner.intern("kotlin"),
                 interner.intern("collections"),
@@ -62,10 +79,18 @@ extension CallTypeChecker {
             }
             return sema.types.make(.classType(ClassType(
                 classSymbol: mutableListSymbol,
-                args: [.invariant(sema.types.anyType)],
+                args: [.invariant(elementType)],
                 nullability: .nonNull
             )))
         case .buildMap:
+            let (keyType, valueType) = builderDSLMapElementTypes(
+                lambdaExprID: lambdaExprID,
+                expectedType: expectedType,
+                ctx: ctx,
+                locals: locals,
+                sema: sema,
+                interner: interner
+            )
             let mutableMapFQName: [InternedString] = [
                 interner.intern("kotlin"),
                 interner.intern("collections"),
@@ -76,9 +101,291 @@ extension CallTypeChecker {
             }
             return sema.types.make(.classType(ClassType(
                 classSymbol: mutableMapSymbol,
-                args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                args: [.invariant(keyType), .invariant(valueType)],
                 nullability: .nonNull
             )))
+        }
+    }
+
+    private func builderDSLListElementType(
+        lambdaExprID: ExprID,
+        expectedType: TypeID?,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        if let expectedElementType = builderDSLExpectedListElementType(
+            expectedType,
+            sema: sema,
+            interner: interner
+        ) {
+            return expectedElementType
+        }
+        guard case let .unary(argumentTypes) = builderDSLArgumentShape(
+            kind: .buildList,
+            lambdaExprID: lambdaExprID,
+            ctx: ctx,
+            locals: locals,
+            sema: sema,
+            interner: interner
+        ),
+        !argumentTypes.isEmpty
+        else {
+            return sema.types.anyType
+        }
+        return sema.types.lub(argumentTypes)
+    }
+
+    private func builderDSLMapElementTypes(
+        lambdaExprID: ExprID,
+        expectedType: TypeID?,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (TypeID, TypeID) {
+        if let expectedTypes = builderDSLExpectedMapElementTypes(
+            expectedType,
+            sema: sema,
+            interner: interner
+        ) {
+            return expectedTypes
+        }
+        guard case let .keyed(argumentPairs) = builderDSLArgumentShape(
+            kind: .buildMap,
+            lambdaExprID: lambdaExprID,
+            ctx: ctx,
+            locals: locals,
+            sema: sema,
+            interner: interner
+        ),
+        !argumentPairs.isEmpty
+        else {
+            return (sema.types.anyType, sema.types.anyType)
+        }
+        let keyTypes = argumentPairs.map(\.key)
+        let valueTypes = argumentPairs.map(\.value)
+        return (sema.types.lub(keyTypes), sema.types.lub(valueTypes))
+    }
+
+    private func builderDSLExpectedListElementType(
+        _ expectedType: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let expectedType else {
+            return nil
+        }
+        let candidates: Set<[String]> = [
+            ["kotlin", "collections", "List"],
+            ["kotlin", "collections", "MutableList"],
+        ]
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              candidates.contains(symbol.fqName.map(interner.resolve)),
+              let firstArg = classType.args.first
+        else {
+            return nil
+        }
+        switch firstArg {
+        case let .invariant(type), let .out(type), let .in(type):
+            return type
+        case .star:
+            return sema.types.anyType
+        }
+    }
+
+    private func builderDSLExpectedMapElementTypes(
+        _ expectedType: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (TypeID, TypeID)? {
+        guard let expectedType else {
+            return nil
+        }
+        let candidates: Set<[String]> = [
+            ["kotlin", "collections", "Map"],
+            ["kotlin", "collections", "MutableMap"],
+        ]
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              candidates.contains(symbol.fqName.map(interner.resolve)),
+              classType.args.count >= 2
+        else {
+            return nil
+        }
+
+        let keyType: TypeID = switch classType.args[0] {
+        case let .invariant(type), let .out(type), let .in(type):
+            type
+        case .star:
+            sema.types.anyType
+        }
+        let valueType: TypeID = switch classType.args[1] {
+        case let .invariant(type), let .out(type), let .in(type):
+            type
+        case .star:
+            sema.types.anyType
+        }
+        return (keyType, valueType)
+    }
+
+    private func builderDSLArgumentShape(
+        kind: BuilderDSLKind,
+        lambdaExprID: ExprID,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> BuilderDSLArgumentShape {
+        guard case let .lambdaLiteral(_, bodyExprID, _, _) = ctx.ast.arena.expr(lambdaExprID) else {
+            return kind == .buildMap ? .keyed([]) : .unary([])
+        }
+        var unaryArgumentExprs: [ExprID] = []
+        var keyedArgumentExprs: [(ExprID, ExprID)] = []
+        collectBuilderDSLArgumentExprs(
+            in: bodyExprID,
+            kind: kind,
+            ast: ctx.ast,
+            interner: interner,
+            unary: &unaryArgumentExprs,
+            keyed: &keyedArgumentExprs
+        )
+
+        var previewLocals = locals
+        switch kind {
+        case .buildString:
+            return .unary([])
+        case .buildList:
+            let argumentTypes = unaryArgumentExprs.compactMap { exprID -> TypeID? in
+                let inferredType = driver.inferExpr(exprID, ctx: ctx, locals: &previewLocals)
+                return inferredType == sema.types.errorType ? nil : inferredType
+            }
+            return .unary(argumentTypes)
+        case .buildMap:
+            let pairs = keyedArgumentExprs.compactMap { keyExprID, valueExprID -> (TypeID, TypeID)? in
+                let keyType = driver.inferExpr(keyExprID, ctx: ctx, locals: &previewLocals)
+                let valueType = driver.inferExpr(valueExprID, ctx: ctx, locals: &previewLocals)
+                guard keyType != sema.types.errorType, valueType != sema.types.errorType else {
+                    return nil
+                }
+                return (keyType, valueType)
+            }
+            return .keyed(pairs)
+        }
+    }
+
+    private func collectBuilderDSLArgumentExprs(
+        in exprID: ExprID,
+        kind: BuilderDSLKind,
+        ast: ASTModule,
+        interner: StringInterner,
+        unary: inout [ExprID],
+        keyed: inout [(ExprID, ExprID)]
+    ) {
+        guard let expr = ast.arena.expr(exprID) else {
+            return
+        }
+
+        switch expr {
+        case let .call(callee, _, args, _):
+            if case let .nameRef(name, _) = ast.arena.expr(callee),
+               isMatchingBuilderDSLFunctionName(interner.resolve(name), kind: kind)
+            {
+                if kind == .buildList, let first = args.first {
+                    unary.append(first.expr)
+                } else if kind == .buildMap, args.count >= 2 {
+                    keyed.append((args[0].expr, args[1].expr))
+                }
+            }
+            collectBuilderDSLArgumentExprs(in: callee, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            for argument in args {
+                collectBuilderDSLArgumentExprs(in: argument.expr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .memberCall(receiver, callee, _, args, _):
+            if isMatchingBuilderDSLFunctionName(interner.resolve(callee), kind: kind),
+               case .thisRef = ast.arena.expr(receiver)
+            {
+                if kind == .buildList, let first = args.first {
+                    unary.append(first.expr)
+                } else if kind == .buildMap, args.count >= 2 {
+                    keyed.append((args[0].expr, args[1].expr))
+                }
+            }
+            collectBuilderDSLArgumentExprs(in: receiver, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            for argument in args {
+                collectBuilderDSLArgumentExprs(in: argument.expr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .safeMemberCall(receiver, _, _, args, _):
+            collectBuilderDSLArgumentExprs(in: receiver, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            for argument in args {
+                collectBuilderDSLArgumentExprs(in: argument.expr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .blockExpr(statements, trailingExpr, _):
+            for statement in statements {
+                collectBuilderDSLArgumentExprs(in: statement, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+            if let trailingExpr {
+                collectBuilderDSLArgumentExprs(in: trailingExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .ifExpr(condition, thenExpr, elseExpr, _):
+            collectBuilderDSLArgumentExprs(in: condition, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            collectBuilderDSLArgumentExprs(in: thenExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            if let elseExpr {
+                collectBuilderDSLArgumentExprs(in: elseExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .whenExpr(subject, branches, elseExpr, _):
+            if let subject {
+                collectBuilderDSLArgumentExprs(in: subject, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+            for branch in branches {
+                for condition in branch.conditions {
+                    collectBuilderDSLArgumentExprs(in: condition, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+                }
+                collectBuilderDSLArgumentExprs(in: branch.body, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+            if let elseExpr {
+                collectBuilderDSLArgumentExprs(in: elseExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .tryExpr(body, catchClauses, finallyExpr, _):
+            collectBuilderDSLArgumentExprs(in: body, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            for catchClause in catchClauses {
+                collectBuilderDSLArgumentExprs(in: catchClause.body, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+            if let finallyExpr {
+                collectBuilderDSLArgumentExprs(in: finallyExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .binary(_, lhs, rhs, _),
+            let .inExpr(lhs, rhs, _),
+            let .notInExpr(lhs, rhs, _):
+            collectBuilderDSLArgumentExprs(in: lhs, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            collectBuilderDSLArgumentExprs(in: rhs, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+        case let .unaryExpr(_, operand, _),
+            let .nullAssert(operand, _),
+            let .throwExpr(operand, _),
+            let .returnExpr(operand?, _, _):
+            collectBuilderDSLArgumentExprs(in: operand, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+        case let .localDecl(_, _, _, initializer, _, _):
+            if let initializer {
+                collectBuilderDSLArgumentExprs(in: initializer, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+            }
+        case let .localAssign(_, value, _),
+            let .memberAssign(_, _, value, _):
+            collectBuilderDSLArgumentExprs(in: value, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+        default:
+            break
+        }
+    }
+
+    private func isMatchingBuilderDSLFunctionName(_ name: String, kind: BuilderDSLKind) -> Bool {
+        switch kind {
+        case .buildString:
+            return name == "append"
+        case .buildList:
+            return name == "add"
+        case .buildMap:
+            return name == "put"
         }
     }
 

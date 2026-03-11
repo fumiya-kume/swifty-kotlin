@@ -386,4 +386,108 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(ctx.interner.resolve(pairName), "Pair")
         }
     }
+
+    func testBuildListInfersElementTypeFromBuilderCalls() throws {
+        let source = """
+        fun render(): List<Int> = buildList {
+            this.add(1)
+            add(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+
+            let buildListCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "buildList"
+            })
+            let buildListType = try XCTUnwrap(sema.bindings.exprType(for: buildListCall))
+            guard case let .classType(listType) = sema.types.kind(of: buildListType) else {
+                return XCTFail("Expected buildList(...) to produce a class type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(listType.classSymbol)?.name)), "List")
+            guard case let .out(elementType) = try XCTUnwrap(listType.args.first) else {
+                return XCTFail("Expected List element type argument")
+            }
+            XCTAssertEqual(elementType, sema.types.intType)
+
+            let explicitThis = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .thisRef = expr { return true }
+                return false
+            })
+            let explicitThisType = try XCTUnwrap(sema.bindings.exprType(for: explicitThis))
+            guard case let .classType(receiverType) = sema.types.kind(of: explicitThisType) else {
+                return XCTFail("Expected builder receiver to be a class type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableList")
+            guard case let .invariant(receiverElementType) = try XCTUnwrap(receiverType.args.first) else {
+                return XCTFail("Expected MutableList element type argument")
+            }
+            XCTAssertEqual(receiverElementType, sema.types.intType)
+        }
+    }
+
+    func testBuildMapInfersKeyAndValueTypesFromBuilderCalls() throws {
+        let source = """
+        fun render(): Map<String, Int> = buildMap {
+            this.put("a", 1)
+            put("b", 2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+
+            let buildMapCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "buildMap"
+            })
+            let buildMapType = try XCTUnwrap(sema.bindings.exprType(for: buildMapCall))
+            guard case let .classType(mapType) = sema.types.kind(of: buildMapType) else {
+                return XCTFail("Expected buildMap(...) to produce a class type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(mapType.classSymbol)?.name)), "Map")
+            guard mapType.args.count >= 2,
+                  case let .out(keyType) = mapType.args[0],
+                  case let .out(valueType) = mapType.args[1]
+            else {
+                return XCTFail("Expected Map key/value type arguments")
+            }
+            XCTAssertEqual(keyType, sema.types.stringType)
+            XCTAssertEqual(valueType, sema.types.intType)
+
+            let explicitThis = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                if case .thisRef = expr { return true }
+                return false
+            })
+            let explicitThisType = try XCTUnwrap(sema.bindings.exprType(for: explicitThis))
+            guard case let .classType(receiverType) = sema.types.kind(of: explicitThisType) else {
+                return XCTFail("Expected builder receiver to be a class type")
+            }
+            XCTAssertEqual(ctx.interner.resolve(try XCTUnwrap(sema.symbols.symbol(receiverType.classSymbol)?.name)), "MutableMap")
+            guard receiverType.args.count >= 2,
+                  case let .invariant(receiverKeyType) = receiverType.args[0],
+                  case let .invariant(receiverValueType) = receiverType.args[1]
+            else {
+                return XCTFail("Expected MutableMap key/value type arguments")
+            }
+            XCTAssertEqual(receiverKeyType, sema.types.stringType)
+            XCTAssertEqual(receiverValueType, sema.types.intType)
+        }
+    }
 }
