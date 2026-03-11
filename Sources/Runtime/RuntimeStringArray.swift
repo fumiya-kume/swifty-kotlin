@@ -505,6 +505,12 @@ public func kk_readline() -> Int {
         return runtimeNullSentinelInt
     }
     let utf8 = Array(line.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
     return utf8.withUnsafeBufferPointer { buf in
         Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
     }

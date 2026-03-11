@@ -57,7 +57,18 @@ extension DataFlowSemaPhase {
     ) {
         let buildListName = interner.intern("buildList")
         let buildListFQName = kotlinCollectionsPkg + [buildListName]
-        if symbols.lookup(fqName: buildListFQName) != nil {
+        let existingBuildList = symbols.lookupAll(fqName: buildListFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes.count == 1
+                && signature.typeParameterSymbols.count == 1
+                && signature.receiverType == nil
+        }
+        if existingBuildList {
             return
         }
 
@@ -141,7 +152,18 @@ extension DataFlowSemaPhase {
     ) {
         let buildMapName = interner.intern("buildMap")
         let buildMapFQName = kotlinCollectionsPkg + [buildMapName]
-        if symbols.lookup(fqName: buildMapFQName) != nil {
+        let existingBuildMap = symbols.lookupAll(fqName: buildMapFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes.count == 1
+                && signature.typeParameterSymbols.count == 2
+                && signature.receiverType == nil
+        }
+        if existingBuildMap {
             return
         }
 

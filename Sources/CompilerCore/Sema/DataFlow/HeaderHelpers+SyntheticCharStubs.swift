@@ -34,8 +34,10 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) -> [InternedString] {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
-        if symbols.lookup(fqName: kotlinPkg) == nil {
-            _ = symbols.define(
+        let kotlinPackageSymbol: SymbolID = if let existing = symbols.lookup(fqName: kotlinPkg) {
+            existing
+        } else {
+            symbols.define(
                 kind: .package,
                 name: interner.intern("kotlin"),
                 fqName: kotlinPkg,
@@ -46,8 +48,12 @@ extension DataFlowSemaPhase {
         }
 
         let kotlinTextPkg = kotlinPkg + [interner.intern("text")]
-        if symbols.lookup(fqName: kotlinTextPkg) == nil {
-            _ = symbols.define(
+        if let existing = symbols.lookup(fqName: kotlinTextPkg) {
+            if symbols.parentSymbol(for: existing) == nil {
+                symbols.setParentSymbol(kotlinPackageSymbol, for: existing)
+            }
+        } else {
+            let kotlinTextSymbol = symbols.define(
                 kind: .package,
                 name: interner.intern("text"),
                 fqName: kotlinTextPkg,
@@ -55,6 +61,7 @@ extension DataFlowSemaPhase {
                 visibility: .public,
                 flags: [.synthetic]
             )
+            symbols.setParentSymbol(kotlinPackageSymbol, for: kotlinTextSymbol)
         }
         return kotlinTextPkg
     }

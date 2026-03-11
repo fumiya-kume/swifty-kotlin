@@ -359,10 +359,12 @@ extension DataFlowSemaPhase {
         }
 
         let ownerFQName = Array(record.fqName.dropLast())
-        guard let ownerSymbol = symbols.lookupAll(fqName: ownerFQName)
-            .compactMap({ symbols.symbol($0) })
-            .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
-        else {
+        let ownerCandidates = symbols.lookupAll(fqName: ownerFQName).compactMap { symbols.symbol($0) }
+        if let packageOwner = ownerCandidates.first(where: { $0.kind == .package }) {
+            symbols.setParentSymbol(packageOwner.id, for: symbol)
+            return
+        }
+        guard let ownerSymbol = ownerCandidates.first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id else {
             return
         }
         symbols.setParentSymbol(ownerSymbol, for: symbol)

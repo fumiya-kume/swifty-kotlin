@@ -10,7 +10,9 @@ extension CodegenBackendIntegrationTests {
                 add(1)
                 add(2)
             }
-            println(list)
+            println(list.size)
+            println(list.get(0))
+            println(list.get(1))
         }
         """
 
@@ -26,7 +28,7 @@ extension CodegenBackendIntegrationTests {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "[1, 2]\n")
+            XCTAssertEqual(normalizedStdout, "2\n1\n2\n")
         }
     }
 
@@ -78,6 +80,33 @@ extension CodegenBackendIntegrationTests {
             )
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "null\n")
+        }
+    }
+
+    func testCodegenReadLineEmptyLineReturnsEmptyString() throws {
+        let source = """
+        fun main() {
+            val line = readLine()
+            println(line)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "ReadLineEmptyLine",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(
+                executable: "/bin/sh",
+                arguments: ["-c", "printf '\\n' | \"$1\"", "sh", outputBase]
+            )
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "\n")
         }
     }
 }

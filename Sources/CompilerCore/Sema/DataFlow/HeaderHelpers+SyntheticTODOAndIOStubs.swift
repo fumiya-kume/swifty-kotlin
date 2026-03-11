@@ -16,8 +16,18 @@ extension DataFlowSemaPhase {
             named: "TODO",
             packageFQName: kotlinPkg,
             packageSymbol: packageSymbol,
-            parameterName: "reason",
-            parameterType: types.stringType,
+            parameters: [],
+            returnType: types.nothingType,
+            externalLinkName: "kk_todo_noarg",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticPreconditionFunction(
+            named: "TODO",
+            packageFQName: kotlinPkg,
+            packageSymbol: packageSymbol,
+            parameters: [(name: "reason", type: types.stringType)],
             returnType: types.nothingType,
             externalLinkName: "kk_todo",
             symbols: symbols,
@@ -101,8 +111,7 @@ extension DataFlowSemaPhase {
         named name: String,
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
-        parameterName: String,
-        parameterType: TypeID,
+        parameters: [(name: String, type: TypeID)],
         returnType: TypeID,
         externalLinkName: String,
         symbols: SymbolTable,
@@ -114,7 +123,7 @@ extension DataFlowSemaPhase {
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.parameterTypes == [parameterType]
+            return existingSignature.parameterTypes == parameters.map(\.type)
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
@@ -134,25 +143,29 @@ extension DataFlowSemaPhase {
         }
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
 
-        let paramNameID = interner.intern(parameterName)
-        let paramSymbol = symbols.define(
-            kind: .valueParameter,
-            name: paramNameID,
-            fqName: functionFQName + [paramNameID],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let paramNameID = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [parameterType],
+                parameterTypes: parameters.map(\.type),
                 returnType: returnType,
                 isSuspend: false,
-                valueParameterSymbols: [paramSymbol],
-                valueParameterHasDefaultValues: [false],
-                valueParameterIsVararg: [false]
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
             ),
             for: functionSymbol
         )

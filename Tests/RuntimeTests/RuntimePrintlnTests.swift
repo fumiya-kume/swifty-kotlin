@@ -53,4 +53,11 @@ final class RuntimePrintlnTests: IsolatedRuntimeXCTestCase {
         let output = capturePrintln { kk_println_char(0x41) }
         XCTAssertEqual(output, "A")
     }
+
+    func testTodoNoArgUsesDefaultMessage() {
+        var thrown = 0
+        _ = kk_todo_noarg(&thrown)
+        let rendered = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertEqual(rendered, "Throwable(NotImplementedError: An operation is not implemented.)")
+    }
 }

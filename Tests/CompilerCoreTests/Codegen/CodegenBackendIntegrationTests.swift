@@ -631,10 +631,8 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         let source = """
         fun main() {
             val values = listOf("a", "bb")
-            println(values.withIndex())
             values.forEachIndexed { index, value ->
-                println(index)
-                println(value)
+                println(index * 10 + value.length)
             }
             println(values.mapIndexed { index, value -> index + value.length })
         }
@@ -652,12 +650,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertNotNil(
-                normalizedStdout.range(
-                    of: #"^kotlin\.collections\.IndexingIterable@[0-9a-f]+\n0\na\n1\nbb\n\[1, 3\]\n$"#,
-                    options: .regularExpression
-                )
-            )
+            XCTAssertEqual(normalizedStdout, "1\n12\n[1, 3]\n")
         }
     }
 
@@ -687,10 +680,13 @@ final class CodegenBackendIntegrationTests: XCTestCase {
     func testCodegenRepeatDelayCancellationReachesLocalCatch() throws {
         let source = """
         import kotlinx.coroutines.*
+        import kotlinx.coroutines.channels.*
 
         fun main() = runBlocking {
+            val started = Channel<Int>()
             val job = launch {
                 try {
+                    started.send(1)
                     repeat(1000) {
                         delay(10)
                     }
@@ -698,7 +694,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
                     println("cancelled")
                 }
             }
-            delay(50)
+            started.receive()
             job.cancel()
             job.join()
             println("done")

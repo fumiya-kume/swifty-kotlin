@@ -40,3 +40,8 @@ public func kk_todo(_ reasonRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -
     outThrown?.pointee = runtimeAllocateThrowable(message: "NotImplementedError: \(reason)")
     return 0
 }
+
+@_cdecl("kk_todo_noarg")
+public func kk_todo_noarg(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    kk_todo(runtimeNullSentinelInt, outThrown)
+}

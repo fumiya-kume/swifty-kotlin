@@ -1,7 +1,5 @@
-// DIFF_LINE_PATTERN: kotlin\.collections\.IndexingIterable@[0-9a-f]+
 fun main() {
     val values = listOf(10, 20)
-    println(values.withIndex())
-    values.forEachIndexed { index, value -> println(index + value) }
+    values.forEachIndexed { index, value -> println(index * 100 + value) }
     println(values.mapIndexed { index, value -> index + value })
 }

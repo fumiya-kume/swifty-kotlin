@@ -107,6 +107,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_todo_noarg = ExternDecl(
+        name: "kk_todo_noarg",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - String
 
     public static let kk_string_from_utf8 = ExternDecl(
@@ -1065,6 +1071,7 @@ public enum RuntimeABIExterns {
             kk_check,
             kk_error,
             kk_todo,
+            kk_todo_noarg,
             // String
             kk_string_from_utf8,
             kk_string_concat,

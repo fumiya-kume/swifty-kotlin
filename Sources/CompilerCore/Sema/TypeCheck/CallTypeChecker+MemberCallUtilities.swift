@@ -16,12 +16,21 @@ extension CallTypeChecker {
         }
 
         guard let symbol = sema.symbols.symbol(candidate) else { return false }
-        let ownerName = symbol.fqName.dropLast().last.map(interner.resolve) ?? ""
         let memberName = interner.resolve(symbol.name)
-        return (ownerName == "List" && (memberName == "contains" || memberName == "isEmpty"))
-            || (ownerName == "Set" && (memberName == "contains" || memberName == "isEmpty"))
-            || (ownerName == "Collection" && (memberName == "contains" || memberName == "isEmpty"))
-            || (ownerName == "Map" && (memberName == "get" || memberName == "containsKey"))
+        let ownerFQName = symbol.fqName.dropLast().map(interner.resolve)
+        switch (ownerFQName, memberName) {
+        case (["kotlin", "collections", "List"], "contains"),
+            (["kotlin", "collections", "List"], "isEmpty"),
+            (["kotlin", "collections", "Set"], "contains"),
+            (["kotlin", "collections", "Set"], "isEmpty"),
+            (["kotlin", "collections", "Collection"], "contains"),
+            (["kotlin", "collections", "Collection"], "isEmpty"),
+            (["kotlin", "collections", "Map"], "get"),
+            (["kotlin", "collections", "Map"], "containsKey"):
+            return true
+        default:
+            return false
+        }
     }
 
     func makeProjectionViolationDiagnostic(

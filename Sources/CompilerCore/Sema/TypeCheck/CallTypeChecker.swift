@@ -74,9 +74,10 @@ final class CallTypeChecker {
         // --- Scope function: with(receiver, block) (STDLIB-004, STDLIB-061) ---
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
-        // Intercept when no user-defined (non-synthetic) `with` is in scope.
+        // Intercept when no local or user-defined (non-synthetic) `with` shadows the stdlib helper.
         if let calleeName, args.count == 2,
            interner.resolve(calleeName) == "with",
+           locals[calleeName] == nil,
            !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
                guard let sym = ctx.cachedSymbol(candidate) else { return false }
                return !sym.flags.contains(.synthetic)

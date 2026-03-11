@@ -166,6 +166,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_todo_noarg",
+            parameters: [
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [

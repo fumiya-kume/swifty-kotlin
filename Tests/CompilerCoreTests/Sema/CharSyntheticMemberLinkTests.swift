@@ -39,6 +39,17 @@ final class CharSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testKotlinTextPackageIsParentedUnderKotlinPackage() throws {
+        let (sema, interner) = try makeSema()
+
+        let kotlinSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [interner.intern("kotlin")]))
+        let kotlinTextSymbol = try XCTUnwrap(
+            sema.symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("text")])
+        )
+
+        XCTAssertEqual(sema.symbols.parentSymbol(for: kotlinTextSymbol), kotlinSymbol)
+    }
+
     func testCharPredicateMembersResolveInCallExpressions() throws {
         let source = """
         fun probe(ch: Char) {
