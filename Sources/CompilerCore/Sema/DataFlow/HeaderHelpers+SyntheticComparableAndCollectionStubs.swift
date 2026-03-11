@@ -429,6 +429,13 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListContainsAndIsEmptyMembers(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         registerListJoinToStringMember(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
@@ -491,6 +498,72 @@ extension DataFlowSemaPhase {
             ),
             for: listGetSymbol
         )
+    }
+
+    private func registerListContainsAndIsEmptyMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let containsName = interner.intern("contains")
+        let containsFQName = listFQName + [containsName]
+        if symbols.lookup(fqName: containsFQName) == nil {
+            let containsSymbol = symbols.define(
+                kind: .function,
+                name: containsName,
+                fqName: containsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: containsSymbol)
+            symbols.setExternalLinkName("kk_list_contains", for: containsSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsSymbol
+            )
+        }
+
+        let isEmptyName = interner.intern("isEmpty")
+        let isEmptyFQName = listFQName + [isEmptyName]
+        if symbols.lookup(fqName: isEmptyFQName) == nil {
+            let isEmptySymbol = symbols.define(
+                kind: .function,
+                name: isEmptyName,
+                fqName: isEmptyFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: isEmptySymbol)
+            symbols.setExternalLinkName("kk_list_is_empty", for: isEmptySymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: isEmptySymbol
+            )
+        }
     }
 
     private func registerListToMutableListMember(
@@ -1138,6 +1211,13 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerSetIsEmptyMember(
+            symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
 
         return setInterfaceSymbol
     }
@@ -1173,6 +1253,45 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [typeParamType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerSetIsEmptyMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("isEmpty")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_is_empty", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
                 returnType: types.booleanType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1

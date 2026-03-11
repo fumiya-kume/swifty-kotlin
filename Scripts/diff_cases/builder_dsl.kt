@@ -11,4 +11,10 @@ fun main() {
         add(3)
     }
     println(list)
+
+    val map = buildMap {
+        put("a", 1)
+        put("b", 2)
+    }
+    println(map)
 }

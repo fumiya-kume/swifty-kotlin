@@ -42,11 +42,11 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `buildList { add(1); add(2) }` → `[1, 2]` が `kotlinc` と一致する
 
-- [ ] STDLIB-071: `buildMap {}` を stdlib DSL として実装する
-  - [ ] Sema に `buildMap(builderAction: MutableMap<K,V>.() -> Unit): Map<K,V>` stub を登録する
-  - [ ] Lowering で MutableMap 生成 + builder lambda 実行 + immutable 化に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `buildMap { put("a", 1) }` → `{a=1}` が `kotlinc` と一致する
+- [x] STDLIB-071: `buildMap {}` を stdlib DSL として実装する
+  - [x] Sema に `buildMap(builderAction: MutableMap<K,V>.() -> Unit): Map<K,V>` stub を登録する
+  - [x] Lowering で MutableMap 生成 + builder lambda 実行 + immutable 化に展開する（既存実装を利用）
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `buildMap { put("a", 1) }` → `{a=1}` が `kotlinc` と一致する ✓
 
 - [ ] STDLIB-072: `List.mapNotNull {}` / `List.filterNotNull()` のランタイム異常終了を解消する
   - [ ] `CodegenBackendIntegrationTests` で常時 skip されている `mapNotNull` / `filterNotNull` テストを再有効化する

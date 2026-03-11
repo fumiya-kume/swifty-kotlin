@@ -11,6 +11,7 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
@@ -33,7 +34,7 @@ extension CollectionLiteralLoweringPass {
         if rewriteCollectionPropertyVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, lookup: lookup,
-            listExprIDs: listExprIDs, mapExprIDs: mapExprIDs,
+            listExprIDs: listExprIDs, setExprIDs: setExprIDs, mapExprIDs: mapExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -724,7 +725,7 @@ extension CollectionLiteralLoweringPass {
         return false
     }
 
-    // MARK: - Collection property operations (size, isEmpty)
+    // MARK: - Collection property operations (size, contains, isEmpty)
 
     private func rewriteCollectionPropertyVirtualCall(
         callee: InternedString,
@@ -733,6 +734,7 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: Set<Int32>,
+        setExprIDs: Set<Int32>,
         mapExprIDs: Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -741,6 +743,17 @@ extension CollectionLiteralLoweringPass {
                 loweredBody.append(.call(
                     symbol: nil,
                     callee: lookup.kkListSizeName,
+                    arguments: [receiver],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return true
+            }
+            if setExprIDs.contains(receiver.rawValue) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkSetSizeName,
                     arguments: [receiver],
                     result: result,
                     canThrow: false,
@@ -761,11 +774,47 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
+        if callee == lookup.containsName, arguments.count == 1 {
+            if listExprIDs.contains(receiver.rawValue) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkListContainsName,
+                    arguments: [receiver] + arguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return true
+            }
+            if setExprIDs.contains(receiver.rawValue) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkSetContainsName,
+                    arguments: [receiver] + arguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return true
+            }
+        }
+
         if callee == lookup.isEmptyName, arguments.isEmpty {
             if listExprIDs.contains(receiver.rawValue) {
                 loweredBody.append(.call(
                     symbol: nil,
                     callee: lookup.kkListIsEmptyName,
+                    arguments: [receiver],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return true
+            }
+            if setExprIDs.contains(receiver.rawValue) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkSetIsEmptyName,
                     arguments: [receiver],
                     result: result,
                     canThrow: false,

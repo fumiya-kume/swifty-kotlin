@@ -54,8 +54,10 @@ final class CallTypeChecker {
                 let returnType: TypeID = switch builderKind {
                 case .buildString:
                     sema.types.stringType
-                case .buildList, .buildMap:
-                    sema.types.anyType
+                case .buildList:
+                    builderDSLBuildListReturnType(receiverType: receiverType, sema: sema, interner: interner)
+                case .buildMap:
+                    builderDSLBuildMapReturnType(receiverType: receiverType, sema: sema, interner: interner)
                 }
                 // Infer the lambda argument with the builder receiver as implicit `this`.
                 var builderCtx = ctx.with(implicitReceiverType: receiverType)

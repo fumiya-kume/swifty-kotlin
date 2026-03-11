@@ -28,6 +28,11 @@ final class OperatorLoweringPass: LoweringPass {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
 
+        let kkIntToFloatName = ctx.interner.intern("kk_int_to_float")
+        let kkIntToFloatBitsName = ctx.interner.intern("kk_int_to_float_bits")
+        let kkFloatToDoubleBitsName = ctx.interner.intern("kk_float_to_double_bits")
+        let kkIntToDoubleBitsName = ctx.interner.intern("kk_int_to_double_bits")
+
         module.arena.transformFunctions { function in
             var updated = function
             var newBody: [KIRInstruction] = []
@@ -56,7 +61,12 @@ final class OperatorLoweringPass: LoweringPass {
                            symbol: symbol, callee: callee, arguments: arguments,
                            result: result, canThrow: canThrow, thrownResult: thrownResult,
                            isSuperCall: isSuperCall, arena: module.arena,
-                           ctx: ctx, newBody: &newBody
+                           ctx: ctx, newBody: &newBody,
+                           precedingInstructions: newBody,
+                           kkIntToFloatName: kkIntToFloatName,
+                           kkIntToFloatBitsName: kkIntToFloatBitsName,
+                           kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
+                           kkIntToDoubleBitsName: kkIntToDoubleBitsName
                        )
                     {
                         continue
@@ -141,11 +151,27 @@ final class OperatorLoweringPass: LoweringPass {
         isSuperCall: Bool,
         arena: KIRArena,
         ctx: KIRContext,
-        newBody: inout [KIRInstruction]
+        newBody: inout [KIRInstruction],
+        precedingInstructions: [KIRInstruction],
+        kkIntToFloatName: InternedString,
+        kkIntToFloatBitsName: InternedString,
+        kkFloatToDoubleBitsName: InternedString,
+        kkIntToDoubleBitsName: InternedString
     ) -> Bool {
-        guard let types = ctx.sema?.types,
-              let argType = arena.exprType(arguments[0])
-        else { return false }
+        guard let types = ctx.sema?.types else { return false }
+        var argType = arena.exprType(arguments[0])
+        if argType == nil {
+            argType = inferPrintlnArgTypeFromProducingInstruction(
+                exprID: arguments[0],
+                instructions: precedingInstructions,
+                types: types,
+                kkIntToFloatName: kkIntToFloatName,
+                kkIntToFloatBitsName: kkIntToFloatBitsName,
+                kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
+                kkIntToDoubleBitsName: kkIntToDoubleBitsName
+            )
+        }
+        guard let argType else { return false }
 
         let primitiveCallee: String? = switch types.kind(of: argType) {
         case .primitive(.long, .nonNull): "kk_println_long"
@@ -174,6 +200,56 @@ final class OperatorLoweringPass: LoweringPass {
             return true
         }
         return false
+    }
+
+    /// Infers the semantic type of an expression from the instruction that produces it,
+    /// used when arena.exprType is nil (e.g. for kk_int_to_float result passed to println).
+    private func inferPrintlnArgTypeFromProducingInstruction(
+        exprID: KIRExprID,
+        instructions: [KIRInstruction],
+        types: TypeSystem,
+        kkIntToFloatName: InternedString,
+        kkIntToFloatBitsName: InternedString,
+        kkFloatToDoubleBitsName: InternedString,
+        kkIntToDoubleBitsName: InternedString
+    ) -> TypeID? {
+        for instruction in instructions.reversed() {
+            switch instruction {
+            case let .call(_, callee, _, result, _, _, _):
+                if result == exprID {
+                    if callee == kkIntToFloatName || callee == kkIntToFloatBitsName {
+                        return types.make(.primitive(.float, .nonNull))
+                    }
+                    if callee == kkFloatToDoubleBitsName || callee == kkIntToDoubleBitsName {
+                        return types.make(.primitive(.double, .nonNull))
+                    }
+                    return nil
+                }
+            case let .copy(from, to):
+                if to == exprID {
+                    return inferPrintlnArgTypeFromProducingInstruction(
+                        exprID: from,
+                        instructions: instructions,
+                        types: types,
+                        kkIntToFloatName: kkIntToFloatName,
+                        kkIntToFloatBitsName: kkIntToFloatBitsName,
+                        kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
+                        kkIntToDoubleBitsName: kkIntToDoubleBitsName
+                    )
+                }
+            case let .constValue(result: result, value: .floatLiteral):
+                if result == exprID {
+                    return types.make(.primitive(.float, .nonNull))
+                }
+            case let .constValue(result: result, value: .doubleLiteral):
+                if result == exprID {
+                    return types.make(.primitive(.double, .nonNull))
+                }
+            default:
+                break
+            }
+        }
+        return nil
     }
 
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {

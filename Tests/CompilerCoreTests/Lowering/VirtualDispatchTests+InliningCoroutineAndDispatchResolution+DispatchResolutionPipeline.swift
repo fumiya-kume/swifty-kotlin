@@ -64,8 +64,7 @@ extension VirtualDispatchTests {
             do {
                 try runToKIR(ctx)
             } catch {
-                // If frontend can't handle this, skip
-                return
+                throw XCTSkip("Frontend failed: \(error)")
             }
 
             let module = try XCTUnwrap(ctx.kir)

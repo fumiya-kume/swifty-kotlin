@@ -1508,6 +1508,7 @@ extension CollectionLiteralLoweringPass {
                         module: module,
                         lookup: lookup,
                         listExprIDs: &listExprIDs,
+                        setExprIDs: &setExprIDs,
                         mapExprIDs: &mapExprIDs,
                         sequenceExprIDs: &sequenceExprIDs,
                         loweredBody: &loweredBody

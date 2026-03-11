@@ -199,6 +199,17 @@ final class KotlinCompilationStringCollectionTests: XCTestCase {
         """)
     }
 
+    func testCompile_collection_buildMap() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            val m = buildMap {
+                put("a", 1)
+                put("b", 2)
+            }
+        }
+        """)
+    }
+
     func testCompile_collection_listConversions() throws {
         try assertKotlinCompilesToKIR("""
         fun main() {
