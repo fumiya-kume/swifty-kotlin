@@ -50,6 +50,19 @@ final class CallLowerer {
             return loweredRepeat
         }
 
+        if let loweredArrayConstructor = lowerArrayConstructorCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredArrayConstructor
+        }
+
         if let loweredComparison = lowerComparisonSpecialCallExpr(
             exprID,
             args: args,

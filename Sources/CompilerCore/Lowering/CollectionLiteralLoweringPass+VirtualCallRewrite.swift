@@ -17,6 +17,7 @@ extension CollectionLiteralLoweringPass {
         listExprIDs: inout Set<Int32>,
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -42,6 +43,15 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, lookup: lookup,
             listExprIDs: listExprIDs, setExprIDs: setExprIDs, mapExprIDs: mapExprIDs,
+            arrayExprIDs: arrayExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
+        if rewriteArrayVirtualCall(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -642,6 +652,170 @@ extension CollectionLiteralLoweringPass {
             if let result {
                 loweredBody.append(.copy(from: hofResult, to: result))
             }
+            return true
+        }
+
+        return false
+    }
+
+    // MARK: - Array virtual call operations (STDLIB-087/088/089)
+
+    private func rewriteArrayVirtualCall(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard arrayExprIDs.contains(receiver.rawValue) else { return false }
+
+        // toList on array → kk_array_toList (result is List)
+        if callee == lookup.toListName, arguments.isEmpty {
+            let toListResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayToListName,
+                arguments: [receiver],
+                result: toListResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(toListResult.rawValue)
+                loweredBody.append(.copy(from: toListResult, to: result))
+            }
+            return true
+        }
+
+        // toMutableList on array → kk_array_toMutableList (result is MutableList)
+        if callee == lookup.toMutableListName, arguments.isEmpty {
+            let toMutableListResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayToMutableListName,
+                arguments: [receiver],
+                result: toMutableListResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(toMutableListResult.rawValue)
+                loweredBody.append(.copy(from: toMutableListResult, to: result))
+            }
+            return true
+        }
+
+        // map/filter on array → kk_array_map/kk_array_filter (result is List)
+        if callee == lookup.mapName || callee == lookup.filterName, arguments.count == 1 {
+            let kkName = callee == lookup.mapName
+                ? lookup.kkArrayMapName : lookup.kkArrayFilterName
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        // forEach on array → kk_array_forEach
+        if callee == lookup.forEachName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkArrayForEachName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        // any/none on array → kk_array_any/kk_array_none
+        if callee == lookup.anyName || callee == lookup.noneName, arguments.count == 1 {
+            let kkName = callee == lookup.anyName
+                ? lookup.kkArrayAnyName : lookup.kkArrayNoneName
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        // copyOf on array → kk_array_copyOf (result is Array)
+        if callee == lookup.copyOfName, arguments.isEmpty {
+            let copyResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayCopyOfName,
+                arguments: [receiver],
+                result: copyResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(copyResult.rawValue)
+                loweredBody.append(.copy(from: copyResult, to: result))
+            }
+            return true
+        }
+
+        // copyOfRange on array → kk_array_copyOfRange (result is Array)
+        if callee == lookup.copyOfRangeName, arguments.count == 2 {
+            let copyResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayCopyOfRangeName,
+                arguments: [receiver] + arguments,
+                result: copyResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(copyResult.rawValue)
+                loweredBody.append(.copy(from: copyResult, to: result))
+            }
+            return true
+        }
+
+        // fill on array → kk_array_fill
+        if callee == lookup.fillName, arguments.count == 1 {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayFillName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
             return true
         }
 

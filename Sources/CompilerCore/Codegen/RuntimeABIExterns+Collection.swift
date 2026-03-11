@@ -71,6 +71,17 @@ public extension RuntimeABIExterns {
         kk_map_iterator_next,
         kk_array_of,
         kk_array_size,
+        kk_array_toList,
+        kk_array_toMutableList,
+        kk_list_toTypedArray,
+        kk_array_map,
+        kk_array_filter,
+        kk_array_forEach,
+        kk_array_any,
+        kk_array_none,
+        kk_array_copyOf,
+        kk_array_copyOfRange,
+        kk_array_fill,
         kk_pair_new,
         kk_pair_first,
         kk_pair_second,
@@ -334,6 +345,75 @@ public extension RuntimeABIExterns {
     static let kk_array_size = ExternDecl(
         name: "kk_array_size",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Array conversion functions (STDLIB-087)
+    static let kk_array_toList = ExternDecl(
+        name: "kk_array_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_toMutableList = ExternDecl(
+        name: "kk_array_toMutableList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_toTypedArray = ExternDecl(
+        name: "kk_list_toTypedArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Array higher-order functions (STDLIB-088)
+    static let kk_array_map = ExternDecl(
+        name: "kk_array_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_filter = ExternDecl(
+        name: "kk_array_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_forEach = ExternDecl(
+        name: "kk_array_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_any = ExternDecl(
+        name: "kk_array_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_none = ExternDecl(
+        name: "kk_array_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // Array utility functions (STDLIB-089)
+    static let kk_array_copyOf = ExternDecl(
+        name: "kk_array_copyOf",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_copyOfRange = ExternDecl(
+        name: "kk_array_copyOfRange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_fill = ExternDecl(
+        name: "kk_array_fill",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

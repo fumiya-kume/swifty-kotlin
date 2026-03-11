@@ -885,6 +885,135 @@ extension CollectionLiteralLoweringPass {
                             }
                             continue
                         }
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            let toListResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayToListName,
+                                arguments: [receiverID],
+                                result: toListResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(toListResult.rawValue)
+                                loweredBody.append(.copy(from: toListResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // toMutableList() on array → kk_array_toMutableList (STDLIB-087)
+                    if callee == lookup.toMutableListName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            let toMutableListResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayToMutableListName,
+                                arguments: [receiverID],
+                                result: toMutableListResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(toMutableListResult.rawValue)
+                                loweredBody.append(.copy(from: toMutableListResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // toTypedArray() on list → kk_list_toTypedArray (STDLIB-087)
+                    if callee == lookup.toTypedArrayName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let toArrayResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListToTypedArrayName,
+                                arguments: [receiverID],
+                                result: toArrayResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(toArrayResult.rawValue)
+                                loweredBody.append(.copy(from: toArrayResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // copyOf / copyOfRange / fill on array (STDLIB-089)
+                    if callee == lookup.copyOfName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            let copyResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayCopyOfName,
+                                arguments: [receiverID],
+                                result: copyResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(copyResult.rawValue)
+                                loweredBody.append(.copy(from: copyResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    if callee == lookup.copyOfRangeName, arguments.count == 3 {
+                        let receiverID = arguments[0]
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            let copyResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayCopyOfRangeName,
+                                arguments: arguments,
+                                result: copyResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                arrayExprIDs.insert(result.rawValue)
+                                arrayExprIDs.insert(copyResult.rawValue)
+                                loweredBody.append(.copy(from: copyResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    if callee == lookup.fillName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayFillName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // sequence { ... } builder → kk_sequence_builder_build
@@ -1510,6 +1639,7 @@ extension CollectionLiteralLoweringPass {
                         listExprIDs: &listExprIDs,
                         setExprIDs: &setExprIDs,
                         mapExprIDs: &mapExprIDs,
+                        arrayExprIDs: &arrayExprIDs,
                         sequenceExprIDs: &sequenceExprIDs,
                         loweredBody: &loweredBody
                     ) {

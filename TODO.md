@@ -73,34 +73,34 @@
 
 ### 📦 Stdlib — Array 操作
 
-- [ ] STDLIB-085: `Array<T>` コンストラクタ `Array(size) { init }` を実装する
-  - [ ] Sema に `Array(Int, init: (Int) -> T)` の constructor stub を登録する
-  - [ ] Lowering / Runtime で配列を初期化ラムダで生成する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-085: `Array<T>` コンストラクタ `Array(size) { init }` を実装する
+  - [x] Sema に `Array(Int, init: (Int) -> T)` の constructor stub を登録する
+  - [x] Lowering / Runtime で配列を初期化ラムダで生成する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `Array(3) { it * 2 }` → `[0, 2, 4]` が `kotlinc` と一致する
 
-- [ ] STDLIB-086: `IntArray` / `LongArray` / `DoubleArray` / `BooleanArray` などプリミティブ配列型を実装する
-  - [ ] Sema に `IntArray(size)` / `intArrayOf(vararg Int)` 等の stub を登録する
-  - [ ] Runtime に対応するプリミティブ配列ボックスを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-086: `IntArray` / `LongArray` / `DoubleArray` / `BooleanArray` などプリミティブ配列型を実装する
+  - [x] Sema に `IntArray(size)` / `intArrayOf(vararg Int)` 等の stub を登録する
+  - [x] Runtime に対応するプリミティブ配列ボックスを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `intArrayOf(1, 2, 3).size` → `3` が `kotlinc` と一致する
 
-- [ ] STDLIB-087: `Array.toList()` / `Array.toMutableList()` / `List.toTypedArray()` を実装する
-  - [ ] Sema に配列⇔リスト変換 stub を登録する
-  - [ ] Runtime に変換ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-087: `Array.toList()` / `Array.toMutableList()` / `List.toTypedArray()` を実装する
+  - [x] Sema に配列⇔リスト変換 stub を登録する
+  - [x] Runtime に変換ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `arrayOf(1, 2, 3).toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-088: `Array.map {}` / `Array.filter {}` / `Array.forEach {}` を実装する
-  - [ ] Sema に `Array<T>` の HOF stub (`map`, `filter`, `forEach`, `any`, `none`) を登録する
-  - [ ] Runtime に `kk_array_map` / `kk_array_filter` / `kk_array_forEach` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-088: `Array.map {}` / `Array.filter {}` / `Array.forEach {}` を実装する
+  - [x] Sema に `Array<T>` の HOF stub (`map`, `filter`, `forEach`, `any`, `none`) を登録する
+  - [x] Runtime に `kk_array_map` / `kk_array_filter` / `kk_array_forEach` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `arrayOf(1, 2, 3).map { it * 2 }` → `[2, 4, 6]` が `kotlinc` と一致する
 
-- [ ] STDLIB-089: `Array.copyOf()` / `Array.copyOfRange(from, to)` / `Array.fill(value)` を実装する
-  - [ ] Sema に `copyOf` / `copyOfRange` / `fill` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-089: `Array.copyOf()` / `Array.copyOfRange(from, to)` / `Array.fill(value)` を実装する
+  - [x] Sema に `copyOf` / `copyOfRange` / `fill` stub を登録する
+  - [x] Runtime に対応ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `arrayOf(1,2,3).copyOfRange(0, 2).toList()` → `[1, 2]` が `kotlinc` と一致する
 
 ---

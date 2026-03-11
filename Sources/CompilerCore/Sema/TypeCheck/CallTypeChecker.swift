@@ -245,9 +245,10 @@ final class CallTypeChecker {
             return unitType
         }
 
-        // --- Stdlib Array(size) { init } constructor (STDLIB-085) ---
+        // --- Stdlib Array(size) { init } constructor (STDLIB-085/086) ---
         if let calleeName,
-           interner.resolve(calleeName) == "Array",
+           ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
+               .contains(interner.resolve(calleeName)),
            args.count == 2,
            locals[calleeName] == nil
         {
@@ -647,6 +648,7 @@ final class CallTypeChecker {
                 switch interner.resolve(calleeName) {
                 case "listOf", "mutableListOf", "emptyList",
                      "arrayOf", "intArrayOf", "longArrayOf",
+                     "doubleArrayOf", "booleanArrayOf", "charArrayOf",
                      "mapOf", "mutableMapOf", "emptyMap",
                      "setOf", "mutableSetOf", "emptySet",
                      "listOfNotNull":
@@ -819,6 +821,7 @@ final class CallTypeChecker {
             switch name {
             case "listOf", "mutableListOf", "emptyList",
                  "arrayOf", "intArrayOf", "longArrayOf",
+                 "doubleArrayOf", "booleanArrayOf", "charArrayOf",
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull":

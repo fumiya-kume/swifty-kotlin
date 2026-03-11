@@ -337,4 +337,173 @@ extension CallTypeChecker {
         let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
         return (receiverSymbolName == "Map" || receiverSymbolName.contains("Map")) && classType.args.count == 2
     }
+
+    // MARK: - Array member fallback (STDLIB-087/088/089)
+
+    func tryArrayMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+
+        guard !isClassNameReceiver,
+              isArrayLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        else {
+            return nil
+        }
+
+        let memberName = interner.resolve(calleeName)
+        guard isSupportedArrayMember(memberName),
+              isValidArrayMemberArity(memberName, argCount: args.count)
+        else {
+            return nil
+        }
+
+        // Provide contextual function type for array HOF lambda inference.
+        let receiverElementType = sema.types.anyType
+        if let expectation = arrayMemberLambdaExpectation(
+            memberName: memberName,
+            argCount: args.count,
+            receiverElementType: receiverElementType,
+            sema: sema
+        ),
+            args.indices.contains(expectation.argumentIndex)
+        {
+            let lambdaArgExpr = args[expectation.argumentIndex].expr
+            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
+            }
+            _ = driver.inferExpr(
+                lambdaArgExpr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectation.expectedType
+            )
+        }
+
+        // Mark result as collection if it returns a List
+        if isArrayMemberReturningCollection(memberName) {
+            sema.bindings.markCollectionExpr(id)
+        }
+
+        let resultType = arrayMemberResultType(memberName: memberName, sema: sema)
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
+    private func isSupportedArrayMember(_ memberName: String) -> Bool {
+        let arrayMembers: Set = [
+            "toList", "toMutableList",
+            "map", "filter", "forEach", "any", "none",
+            "copyOf", "copyOfRange", "fill",
+            "size", "get", "contains", "isEmpty",
+        ]
+        return arrayMembers.contains(memberName)
+    }
+
+    private func isValidArrayMemberArity(_ memberName: String, argCount: Int) -> Bool {
+        switch memberName {
+        case "toList", "toMutableList", "copyOf", "size", "isEmpty":
+            argCount == 0
+        case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
+            argCount == 1
+        case "copyOfRange":
+            argCount == 2
+        default:
+            true
+        }
+    }
+
+    private func isArrayMemberReturningCollection(_ memberName: String) -> Bool {
+        ["toList", "toMutableList", "map", "filter"].contains(memberName)
+    }
+
+    private func arrayMemberResultType(memberName: String, sema: SemaModule) -> TypeID {
+        switch memberName {
+        case "size":
+            sema.types.intType
+        case "isEmpty", "contains", "any", "none":
+            sema.types.booleanType
+        case "forEach", "fill":
+            sema.types.unitType
+        default:
+            sema.types.anyType
+        }
+    }
+
+    private func arrayMemberLambdaExpectation(
+        memberName: String,
+        argCount: Int,
+        receiverElementType: TypeID,
+        sema: SemaModule
+    ) -> (argumentIndex: Int, expectedType: TypeID)? {
+        let boolPredicateMembers: Set = ["filter", "any", "none"]
+        let oneParamMembers: Set = ["map", "filter", "forEach", "any", "none"]
+        guard oneParamMembers.contains(memberName), argCount == 1 else {
+            return nil
+        }
+        let lambdaReturnType = boolPredicateMembers.contains(memberName)
+            ? sema.types.booleanType
+            : memberName == "forEach" ? sema.types.unitType : sema.types.anyType
+        let expectedType = sema.types.make(.functionType(FunctionType(
+            params: [receiverElementType],
+            returnType: lambdaReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        return (argumentIndex: 0, expectedType: expectedType)
+    }
+
+    func isArrayLikeReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        if sema.bindings.isCollectionExpr(receiverID) {
+            let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+            if isArrayLikeType(receiverType, sema: sema, interner: interner) {
+                return true
+            }
+            // Also check if it's marked as collection but actually an array
+            // (e.g. arrayOf() results are marked as collection)
+            if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+               let symbol = sema.symbols.symbol(classType.classSymbol)
+            {
+                let shortName = interner.resolve(symbol.name)
+                let arrayNames: Set = ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
+                if arrayNames.contains(shortName) {
+                    return true
+                }
+            }
+            // For arrayOf() results: the type is erased to Any, but marked as
+            // collection. We use a heuristic: if the receiver is a collection
+            // and the member is an array-only member, accept it.
+            return true
+        }
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        return isArrayLikeType(receiverType, sema: sema, interner: interner)
+    }
+
+    private func isArrayLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let shortName = interner.resolve(symbol.name)
+        let arrayNames: Set = ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
+        return arrayNames.contains(shortName)
+    }
 }

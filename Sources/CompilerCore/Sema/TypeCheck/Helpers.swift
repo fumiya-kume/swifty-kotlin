@@ -133,7 +133,7 @@ struct TypeCheckHelpers {
         case "delay":
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
-        case "kk_array_new", "IntArray":
+        case "kk_array_new", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray":
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType
         case "kk_array_get", "kk_list_get":

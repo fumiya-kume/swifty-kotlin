@@ -9,6 +9,9 @@ struct CollectionLiteralLookupTables {
     let arrayOfName: InternedString
     let intArrayOfName: InternedString
     let longArrayOfName: InternedString
+    let doubleArrayOfName: InternedString
+    let booleanArrayOfName: InternedString
+    let charArrayOfName: InternedString
     let mapOfName: InternedString
     let mutableMapOfName: InternedString
     let emptyMapName: InternedString
@@ -99,6 +102,19 @@ struct CollectionLiteralLookupTables {
     let kkArrayNewName: InternedString
     let kkArraySetName: InternedString
 
+    // Array conversion / HOF / utility ABI names (STDLIB-087/088/089)
+    let kkArrayToListName: InternedString
+    let kkArrayToMutableListName: InternedString
+    let kkListToTypedArrayName: InternedString
+    let kkArrayMapName: InternedString
+    let kkArrayFilterName: InternedString
+    let kkArrayForEachName: InternedString
+    let kkArrayAnyName: InternedString
+    let kkArrayNoneName: InternedString
+    let kkArrayCopyOfName: InternedString
+    let kkArrayCopyOfRangeName: InternedString
+    let kkArrayFillName: InternedString
+
     // Range iterator names (emitted by ForLoweringPass)
     let kkRangeIteratorName: InternedString
     let kkRangeHasNextName: InternedString
@@ -150,6 +166,13 @@ struct CollectionLiteralLookupTables {
     let distinctName: InternedString
     let firstName: InternedString
     let lastName: InternedString
+
+    // Array member names (STDLIB-087/088/089)
+    let toMutableListName: InternedString
+    let toTypedArrayName: InternedString
+    let copyOfName: InternedString
+    let copyOfRangeName: InternedString
+    let fillName: InternedString
 
     // Sequence member names (STDLIB-003)
     let asSequenceName: InternedString
@@ -203,6 +226,9 @@ struct CollectionLiteralLookupTables {
         arrayOfName = interner.intern("arrayOf")
         intArrayOfName = interner.intern("intArrayOf")
         longArrayOfName = interner.intern("longArrayOf")
+        doubleArrayOfName = interner.intern("doubleArrayOf")
+        booleanArrayOfName = interner.intern("booleanArrayOf")
+        charArrayOfName = interner.intern("charArrayOf")
         mapOfName = interner.intern("mapOf")
         mutableMapOfName = interner.intern("mutableMapOf")
         emptyMapName = interner.intern("emptyMap")
@@ -289,6 +315,18 @@ struct CollectionLiteralLookupTables {
         kkArrayNewName = interner.intern("kk_array_new")
         kkArraySetName = interner.intern("kk_array_set")
 
+        kkArrayToListName = interner.intern("kk_array_toList")
+        kkArrayToMutableListName = interner.intern("kk_array_toMutableList")
+        kkListToTypedArrayName = interner.intern("kk_list_toTypedArray")
+        kkArrayMapName = interner.intern("kk_array_map")
+        kkArrayFilterName = interner.intern("kk_array_filter")
+        kkArrayForEachName = interner.intern("kk_array_forEach")
+        kkArrayAnyName = interner.intern("kk_array_any")
+        kkArrayNoneName = interner.intern("kk_array_none")
+        kkArrayCopyOfName = interner.intern("kk_array_copyOf")
+        kkArrayCopyOfRangeName = interner.intern("kk_array_copyOfRange")
+        kkArrayFillName = interner.intern("kk_array_fill")
+
         kkRangeIteratorName = interner.intern("kk_range_iterator")
         kkRangeHasNextName = interner.intern("kk_range_hasNext")
         kkRangeNextName = interner.intern("kk_range_next")
@@ -337,6 +375,12 @@ struct CollectionLiteralLookupTables {
         firstName = interner.intern("first")
         lastName = interner.intern("last")
 
+        toMutableListName = interner.intern("toMutableList")
+        toTypedArrayName = interner.intern("toTypedArray")
+        copyOfName = interner.intern("copyOf")
+        copyOfRangeName = interner.intern("copyOfRange")
+        fillName = interner.intern("fill")
+
         asSequenceName = interner.intern("asSequence")
         toListName = interner.intern("toList")
         takeName = interner.intern("take")
@@ -372,7 +416,7 @@ struct CollectionLiteralLookupTables {
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
-        arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName]
+        arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildMapName]
     }
 }

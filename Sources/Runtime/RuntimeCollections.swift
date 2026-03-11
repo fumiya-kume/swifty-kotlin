@@ -529,3 +529,71 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
         kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
     }
 }
+
+// MARK: - Array conversion functions (STDLIB-087)
+
+@_cdecl("kk_array_toList")
+public func kk_array_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+@_cdecl("kk_array_toMutableList")
+public func kk_array_toMutableList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+@_cdecl("kk_list_toTypedArray")
+public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = elem
+    }
+    return registerRuntimeObject(box)
+}
+
+// MARK: - Array utility functions (STDLIB-089)
+
+@_cdecl("kk_array_copyOf")
+public func kk_array_copyOf(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let box = RuntimeArrayBox(length: array.elements.count)
+    for (i, elem) in array.elements.enumerated() {
+        box.elements[i] = elem
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_copyOfRange")
+public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let from = max(0, fromIndex)
+    let to = min(array.elements.count, max(from, toIndex))
+    let count = to - from
+    let box = RuntimeArrayBox(length: count)
+    for i in 0 ..< count {
+        box.elements[i] = array.elements[from + i]
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_fill")
+public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else { return 0 }
+    for i in 0 ..< array.elements.count {
+        array.elements[i] = value
+    }
+    return 0
+}

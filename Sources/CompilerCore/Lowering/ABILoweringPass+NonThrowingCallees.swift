@@ -177,6 +177,14 @@ extension ABILoweringPass {
             interner.intern("kk_list_joinToString"),
             interner.intern("kk_list_to_set"),
             interner.intern("kk_list_filterNotNull"),
+            interner.intern("kk_list_toTypedArray"),
+            interner.intern("kk_array_toList"),
+            interner.intern("kk_array_toMutableList"),
+            interner.intern("kk_array_copyOf"),
+            interner.intern("kk_array_copyOfRange"),
+            interner.intern("kk_array_fill"),
+            // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
+            // — the lambda argument can throw.
             interner.intern("kk_set_of"),
             interner.intern("kk_set_size"),
             interner.intern("kk_set_contains"),

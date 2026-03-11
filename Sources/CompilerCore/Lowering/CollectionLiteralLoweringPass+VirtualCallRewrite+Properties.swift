@@ -12,6 +12,7 @@ extension CollectionLiteralLoweringPass {
         listExprIDs: Set<Int32>,
         setExprIDs: Set<Int32>,
         mapExprIDs: Set<Int32>,
+        arrayExprIDs: Set<Int32> = [],
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         if callee == lookup.sizeName || callee == lookup.countName, arguments.isEmpty {
@@ -41,6 +42,17 @@ extension CollectionLiteralLoweringPass {
                 loweredBody.append(.call(
                     symbol: nil,
                     callee: lookup.kkMapSizeName,
+                    arguments: [receiver],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return true
+            }
+            if arrayExprIDs.contains(receiver.rawValue) {
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkArraySizeName,
                     arguments: [receiver],
                     result: result,
                     canThrow: false,
