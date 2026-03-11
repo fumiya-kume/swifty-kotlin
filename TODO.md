@@ -101,10 +101,10 @@
 
 ### 📦 Stdlib — Char 拡張
 
-- [ ] STDLIB-080: `Char.isDigit()` / `Char.isLetter()` / `Char.isWhitespace()` を実装する
-  - [ ] Sema に `Char` の member stub (`isDigit`, `isLetter`, `isLetterOrDigit`, `isWhitespace`) を登録する
-  - [ ] Runtime に `kk_char_isDigit` / `kk_char_isLetter` / `kk_char_isWhitespace` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-080: `Char.isDigit()` / `Char.isLetter()` / `Char.isWhitespace()` を実装する
+  - [x] Sema に `Char` の member stub (`isDigit`, `isLetter`, `isLetterOrDigit`, `isWhitespace`) を登録する
+  - [x] Runtime に `kk_char_isDigit` / `kk_char_isLetter` / `kk_char_isWhitespace` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `'A'.isLetter()` → `true`, `'1'.isDigit()` → `true` が `kotlinc` と一致する
 
 - [ ] STDLIB-081: `Char.uppercase()` / `Char.lowercase()` / `Char.titlecase()` を実装する

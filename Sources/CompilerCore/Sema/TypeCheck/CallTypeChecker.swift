@@ -958,6 +958,18 @@ final class CallTypeChecker {
                     return resultType
                 }
             }
+            if nonNullReceiver == sema.types.charType, args.isEmpty {
+                let charResultType: TypeID? = switch name {
+                case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
+                    sema.types.booleanType
+                default:
+                    nil
+                }
+                if let resultType = charResultType {
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
 
             // General member function lookup via implicit receiver
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(

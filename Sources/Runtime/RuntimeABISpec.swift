@@ -398,6 +398,38 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_char_isDigit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isLetter",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isLetterOrDigit",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_isWhitespace",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_padStart",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),

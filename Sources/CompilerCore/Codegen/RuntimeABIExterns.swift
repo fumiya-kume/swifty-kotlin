@@ -324,6 +324,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_char_isDigit = ExternDecl(
+        name: "kk_char_isDigit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isLetter = ExternDecl(
+        name: "kk_char_isLetter",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isLetterOrDigit = ExternDecl(
+        name: "kk_char_isLetterOrDigit",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isWhitespace = ExternDecl(
+        name: "kk_char_isWhitespace",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Println
 
     public static let kk_println_any = ExternDecl(
@@ -1068,6 +1092,10 @@ public enum RuntimeABIExterns {
             kk_string_toDoubleOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
+            kk_char_isDigit,
+            kk_char_isLetter,
+            kk_char_isLetterOrDigit,
+            kk_char_isWhitespace,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
