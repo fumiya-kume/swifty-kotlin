@@ -17,56 +17,6 @@
 
 ## 未完了バックログ
 
-### 📦 Stdlib — スコープ関数・ユーティリティ
-
-- [x] STDLIB-062: `require(condition)` / `check(condition)` / `error(message)` を実装する
-  - [x] Sema に `require(Boolean)` / `check(Boolean)` / `error(String)` stub を登録する
-  - [x] Runtime で条件不成立時に `IllegalArgumentException` / `IllegalStateException` を throw する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `require(false)` が `IllegalArgumentException` を投げ `kotlinc` と一致する
-
-- [x] STDLIB-063: `TODO(reason)` / `println()` 引数なし版 / `readLine()` を実装する
-  - [x] Sema に `TODO(String): Nothing` / `println(): Unit` / `readLine(): String?` stub を登録する
-  - [x] Runtime でそれぞれ `NotImplementedError` throw / 改行出力 / stdin 読み取りを行う
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `TODO("not done")` が `NotImplementedError` を投げ `kotlinc` と一致する ✓
-
----
-
-### 📦 Stdlib — buildList / buildMap / buildString (DSL)
-
-- [x] STDLIB-070: `buildList {}` を stdlib DSL として実装する
-  - [x] Sema に `buildList(builderAction: MutableList<E>.() -> Unit): List<E>` stub を登録する
-  - [x] Lowering で MutableList 生成 + builder lambda 実行 + immutable 化に展開する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `buildList { add(1); add(2) }` → `[1, 2]` が `kotlinc` と一致する ✓
-
-- [x] STDLIB-071: `buildMap {}` を stdlib DSL として実装する
-  - [x] Sema に `buildMap(builderAction: MutableMap<K,V>.() -> Unit): Map<K,V>` stub を登録する
-  - [x] Lowering で MutableMap 生成 + builder lambda 実行 + immutable 化に展開する（既存実装を利用）
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `buildMap { put("a", 1) }` → `{a=1}` が `kotlinc` と一致する ✓
-
-- [x] STDLIB-072: `List.mapNotNull {}` / `List.filterNotNull()` のランタイム異常終了を解消する
-  - [x] `CodegenBackendIntegrationTests` の `mapNotNull` / `filterNotNull` テストを再有効化する
-  - [x] codegen / runtime のどちらで exit 11 を起こしているか切り分ける
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1, 0, 2).mapNotNull { it }` と `listOf("a", null, "b").filterNotNull()` が `kotlinc` と一致し、常時 skip が不要になる ✓
-
-- [x] STDLIB-073: `associateBy` / `associateWith` / `associate` の誤った key-value 生成を修正する
-  - [x] `CodegenBackendIntegrationTests` の associate 系テストを再有効化する
-  - [x] key と value の構築順序、および Pair 展開の lowering を点検する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1, 2, 3).associateBy { it % 2 }` などの出力が `kotlinc` と一致し、常時 skip が不要になる ✓
-
-- [x] STDLIB-074: `withIndex` / `forEachIndexed` / `mapIndexed` の link failure を解消する
-  - [x] `CodegenBackendIntegrationTests` の indexed helper テストを再有効化する
-  - [x] シンボル解決・runtime 参照・link 入力を点検し `outputUnavailable` を解消する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `listOf("a", "bb").mapIndexed { index, value -> index + value.length }` が `kotlinc` と一致し、常時 skip が不要になる ✓
-
----
-
 ### 🧩 Frontend / Sema / Lowering の暫定対応解消
 
 - [ ] MPP-001: `expect` / `actual` の nominal/typealias 互換判定を厳密化する
@@ -100,12 +50,6 @@
   - **完了条件**: virtual dispatch が null guard 付きで一貫して生成され、fallback 経路に依存しない
 
 ### 📦 Stdlib — Char 拡張
-
-- [x] STDLIB-080: `Char.isDigit()` / `Char.isLetter()` / `Char.isWhitespace()` を実装する
-  - [x] Sema に `Char` の member stub (`isDigit`, `isLetter`, `isLetterOrDigit`, `isWhitespace`) を登録する
-  - [x] Runtime に `kk_char_isDigit` / `kk_char_isLetter` / `kk_char_isWhitespace` を追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `'A'.isLetter()` → `true`, `'1'.isDigit()` → `true` が `kotlinc` と一致する
 
 - [ ] STDLIB-081: `Char.uppercase()` / `Char.lowercase()` / `Char.titlecase()` を実装する
   - [ ] Sema に `Char.uppercase(): String` / `Char.lowercase(): String` stub を登録する
