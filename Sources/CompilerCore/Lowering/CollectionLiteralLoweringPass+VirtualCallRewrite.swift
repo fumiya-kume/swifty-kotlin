@@ -1,6 +1,11 @@
 import Foundation
 
 extension CollectionLiteralLoweringPass {
+    struct VirtualCallRewriteContext {
+        let module: KIRModule
+        let lookup: CollectionLiteralLookupTables
+    }
+
     func rewriteVirtualCallInstruction(
         callee: InternedString,
         receiver: KIRExprID,
@@ -8,14 +13,16 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         origCanThrow: Bool,
         origThrownResult: KIRExprID?,
-        module: KIRModule,
-        lookup: CollectionLiteralLookupTables,
+        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        let module = context.module
+        let lookup = context.lookup
+
         if rewriteSequenceVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, module: module, lookup: lookup,
@@ -720,119 +727,6 @@ extension CollectionLiteralLoweringPass {
                 loweredBody: &loweredBody
             )
             return true
-        }
-
-        return false
-    }
-
-    // MARK: - Collection property operations (size, contains, isEmpty)
-
-    private func rewriteCollectionPropertyVirtualCall(
-        callee: InternedString,
-        receiver: KIRExprID,
-        arguments: [KIRExprID],
-        result: KIRExprID?,
-        lookup: CollectionLiteralLookupTables,
-        listExprIDs: Set<Int32>,
-        setExprIDs: Set<Int32>,
-        mapExprIDs: Set<Int32>,
-        loweredBody: inout [KIRInstruction]
-    ) -> Bool {
-        if callee == lookup.sizeName || callee == lookup.countName, arguments.isEmpty {
-            if listExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkListSizeName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-            if setExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkSetSizeName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-            if mapExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkMapSizeName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-        }
-
-        if callee == lookup.containsName, arguments.count == 1 {
-            if listExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkListContainsName,
-                    arguments: [receiver] + arguments,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-            if setExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkSetContainsName,
-                    arguments: [receiver] + arguments,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-        }
-
-        if callee == lookup.isEmptyName, arguments.isEmpty {
-            if listExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkListIsEmptyName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-            if setExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkSetIsEmptyName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
-            if mapExprIDs.contains(receiver.rawValue) {
-                loweredBody.append(.call(
-                    symbol: nil,
-                    callee: lookup.kkMapIsEmptyName,
-                    arguments: [receiver],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return true
-            }
         }
 
         return false

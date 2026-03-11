@@ -3,6 +3,13 @@ import Foundation
 final class OperatorLoweringPass: LoweringPass {
     static let name = "OperatorLowering"
 
+    private struct PrintlnConversionCallees {
+        let intToFloat: InternedString
+        let intToFloatBits: InternedString
+        let floatToDoubleBits: InternedString
+        let intToDoubleBits: InternedString
+    }
+
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
@@ -28,10 +35,12 @@ final class OperatorLoweringPass: LoweringPass {
         let printlnCallee = ctx.interner.intern("println")
         let kkPrintlnAnyCallee = ctx.interner.intern("kk_println_any")
 
-        let kkIntToFloatName = ctx.interner.intern("kk_int_to_float")
-        let kkIntToFloatBitsName = ctx.interner.intern("kk_int_to_float_bits")
-        let kkFloatToDoubleBitsName = ctx.interner.intern("kk_float_to_double_bits")
-        let kkIntToDoubleBitsName = ctx.interner.intern("kk_int_to_double_bits")
+        let printlnConversionCallees = PrintlnConversionCallees(
+            intToFloat: ctx.interner.intern("kk_int_to_float"),
+            intToFloatBits: ctx.interner.intern("kk_int_to_float_bits"),
+            floatToDoubleBits: ctx.interner.intern("kk_float_to_double_bits"),
+            intToDoubleBits: ctx.interner.intern("kk_int_to_double_bits")
+        )
 
         module.arena.transformFunctions { function in
             var updated = function
@@ -63,10 +72,7 @@ final class OperatorLoweringPass: LoweringPass {
                            isSuperCall: isSuperCall, arena: module.arena,
                            ctx: ctx, newBody: &newBody,
                            precedingInstructions: newBody,
-                           kkIntToFloatName: kkIntToFloatName,
-                           kkIntToFloatBitsName: kkIntToFloatBitsName,
-                           kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
-                           kkIntToDoubleBitsName: kkIntToDoubleBitsName
+                           conversionCallees: printlnConversionCallees
                        )
                     {
                         continue
@@ -153,10 +159,7 @@ final class OperatorLoweringPass: LoweringPass {
         ctx: KIRContext,
         newBody: inout [KIRInstruction],
         precedingInstructions: [KIRInstruction],
-        kkIntToFloatName: InternedString,
-        kkIntToFloatBitsName: InternedString,
-        kkFloatToDoubleBitsName: InternedString,
-        kkIntToDoubleBitsName: InternedString
+        conversionCallees: PrintlnConversionCallees
     ) -> Bool {
         guard let types = ctx.sema?.types else { return false }
         var argType = arena.exprType(arguments[0])
@@ -165,10 +168,7 @@ final class OperatorLoweringPass: LoweringPass {
                 exprID: arguments[0],
                 instructions: precedingInstructions,
                 types: types,
-                kkIntToFloatName: kkIntToFloatName,
-                kkIntToFloatBitsName: kkIntToFloatBitsName,
-                kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
-                kkIntToDoubleBitsName: kkIntToDoubleBitsName
+                conversionCallees: conversionCallees
             )
         }
         guard let argType else { return false }
@@ -208,19 +208,16 @@ final class OperatorLoweringPass: LoweringPass {
         exprID: KIRExprID,
         instructions: [KIRInstruction],
         types: TypeSystem,
-        kkIntToFloatName: InternedString,
-        kkIntToFloatBitsName: InternedString,
-        kkFloatToDoubleBitsName: InternedString,
-        kkIntToDoubleBitsName: InternedString
+        conversionCallees: PrintlnConversionCallees
     ) -> TypeID? {
         for instruction in instructions.reversed() {
             switch instruction {
             case let .call(_, callee, _, result, _, _, _):
                 if result == exprID {
-                    if callee == kkIntToFloatName || callee == kkIntToFloatBitsName {
+                    if callee == conversionCallees.intToFloat || callee == conversionCallees.intToFloatBits {
                         return types.make(.primitive(.float, .nonNull))
                     }
-                    if callee == kkFloatToDoubleBitsName || callee == kkIntToDoubleBitsName {
+                    if callee == conversionCallees.floatToDoubleBits || callee == conversionCallees.intToDoubleBits {
                         return types.make(.primitive(.double, .nonNull))
                     }
                     return nil
@@ -231,10 +228,7 @@ final class OperatorLoweringPass: LoweringPass {
                         exprID: from,
                         instructions: instructions,
                         types: types,
-                        kkIntToFloatName: kkIntToFloatName,
-                        kkIntToFloatBitsName: kkIntToFloatBitsName,
-                        kkFloatToDoubleBitsName: kkFloatToDoubleBitsName,
-                        kkIntToDoubleBitsName: kkIntToDoubleBitsName
+                        conversionCallees: conversionCallees
                     )
                 }
             case let .constValue(result: result, value: .floatLiteral):

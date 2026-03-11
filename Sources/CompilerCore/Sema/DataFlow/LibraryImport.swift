@@ -96,139 +96,16 @@ extension DataFlowSemaPhase {
         }
 
         for binding in importedBindings {
-            let record = binding.record
-            let symbol = binding.symbol
-
-            if let linkName = record.externalLinkName, !linkName.isEmpty {
-                symbols.setExternalLinkName(linkName, for: symbol)
-            }
-
-            // P5-112: restore parentSymbol for imported members so collectMemberFunctionCandidates
-            // can find them (parentSymbol(for:) == owner check). Prevents VAR-OUT when metadata
-            // provides Collection.contains / List.contains that would otherwise be invisible to lookup.
-            if record.kind == .function || record.kind == .property || record.kind == .field,
-               record.fqName.count >= 2
-            {
-                let ownerFQName = Array(record.fqName.dropLast())
-                if let ownerSymbol = symbols.lookupAll(fqName: ownerFQName)
-                    .compactMap({ symbols.symbol($0) })
-                    .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
-                {
-                    symbols.setParentSymbol(ownerSymbol, for: symbol)
-                }
-            }
-
-            if !record.annotations.isEmpty {
-                symbols.setAnnotations(record.annotations, for: symbol)
-            }
-
-            if record.kind == .function {
-                let signature = importedFunctionSignature(
-                    record: record,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    metadataPath: binding.metadataPath,
-                    cache: cache
-                )
-                symbols.setFunctionSignature(signature, for: symbol)
-                if record.isInline,
-                   !record.mangledName.isEmpty,
-                   let inlineDir = binding.inlineKIRDir
-                {
-                    let inlinePath = URL(fileURLWithPath: inlineDir)
-                        .appendingPathComponent(record.mangledName + ".kirbin")
-                        .path
-                    if let inlineFunction = parseImportedInlineFunction(
-                        path: inlinePath,
-                        importedSymbol: symbol,
-                        parameterCount: max(0, signature.parameterTypes.count),
-                        types: types,
-                        interner: interner,
-                        diagnostics: diagnostics
-                    ) {
-                        importedInlineFunctions[symbol] = inlineFunction
-                    }
-                }
-            } else if record.kind == .property || record.kind == .field {
-                let propertyType = importedPropertyType(
-                    record: record,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    metadataPath: binding.metadataPath,
-                    cache: cache
-                )
-                symbols.setPropertyType(propertyType, for: symbol)
-            }
-
-            // P5-75: restore value class underlying type from metadata
-            if record.isValueClass {
-                if let vSig = record.valueClassUnderlyingTypeSig {
-                    let underlyingType = importedValueClassUnderlyingType(
-                        signature: vSig,
-                        symbols: symbols,
-                        types: types,
-                        diagnostics: diagnostics,
-                        interner: interner,
-                        metadataPath: binding.metadataPath,
-                        ownerFQName: record.fqName
-                    )
-                    if let underlyingType {
-                        symbols.setValueClassUnderlyingType(underlyingType, for: symbol)
-                    }
-                } else {
-                    diagnostics.warning(
-                        "KSWIFTK-LIB-0007",
-                        "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature"
-                            + " in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
-                        range: nil
-                    )
-                }
-            }
-
-            if record.kind == .typeAlias {
-                let underlyingType = importedTypeAliasUnderlyingType(
-                    record: record,
-                    symbols: symbols,
-                    types: types,
-                    diagnostics: diagnostics,
-                    interner: interner,
-                    metadataPath: binding.metadataPath,
-                    cache: cache
-                )
-                if let underlyingType {
-                    symbols.setTypeAliasUnderlyingType(underlyingType, for: symbol)
-                    let syntheticParams = collectSyntheticTypeParameters(underlyingType, types: types)
-                    if !syntheticParams.isEmpty {
-                        symbols.setTypeAliasTypeParameters(syntheticParams, for: symbol)
-                    }
-                }
-            }
-
-            if isNominalLayoutTargetSymbol(record.kind) {
-                let hasLayoutHint =
-                    record.declaredFieldCount != nil ||
-                    record.declaredInstanceSizeWords != nil ||
-                    record.declaredVtableSize != nil ||
-                    record.declaredItableSize != nil
-                if hasLayoutHint {
-                    symbols.setNominalLayoutHint(
-                        NominalLayoutHint(
-                            declaredFieldCount: record.declaredFieldCount,
-                            declaredInstanceSizeWords: record.declaredInstanceSizeWords,
-                            declaredVtableSize: record.declaredVtableSize,
-                            declaredItableSize: record.declaredItableSize
-                        ),
-                        for: symbol
-                    )
-                }
-                if let superFQName = record.superFQName, !superFQName.isEmpty {
-                    pendingSupertypeEdges.append((subtype: symbol, superFQName: superFQName))
-                }
-            }
+            applyImportedBinding(
+                binding,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                importedInlineFunctions: &importedInlineFunctions,
+                pendingSupertypeEdges: &pendingSupertypeEdges,
+                cache: cache
+            )
         }
 
         var syntheticPackagePaths: Set<[InternedString]> = []
@@ -417,5 +294,259 @@ extension DataFlowSemaPhase {
 
     func renderFQName(_ fqName: [InternedString], interner: StringInterner) -> String {
         fqName.map { interner.resolve($0) }.joined(separator: ".")
+    }
+
+    private func applyImportedBinding(
+        _ binding: ImportedLibraryBinding,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        importedInlineFunctions: inout [SymbolID: KIRFunction],
+        pendingSupertypeEdges: inout [(subtype: SymbolID, superFQName: [InternedString])],
+        cache: LibraryMetadataCache?
+    ) {
+        let record = binding.record
+        let symbol = binding.symbol
+
+        applyImportedBindingMetadata(record, symbol: symbol, symbols: symbols)
+
+        if !record.annotations.isEmpty {
+            symbols.setAnnotations(record.annotations, for: symbol)
+        }
+
+        applyImportedCallableMetadata(
+            binding,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner,
+            importedInlineFunctions: &importedInlineFunctions,
+            cache: cache
+        )
+        applyImportedValueClassMetadata(binding, symbols: symbols, types: types, diagnostics: diagnostics, interner: interner)
+        applyImportedTypeAliasMetadata(
+            binding,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner,
+            cache: cache
+        )
+        applyImportedNominalMetadata(binding, symbols: symbols, pendingSupertypeEdges: &pendingSupertypeEdges)
+    }
+
+    private func applyImportedBindingMetadata(
+        _ record: ImportedLibrarySymbolRecord,
+        symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        if let linkName = record.externalLinkName, !linkName.isEmpty {
+            symbols.setExternalLinkName(linkName, for: symbol)
+        }
+        restoreImportedParentSymbol(record, symbol: symbol, symbols: symbols)
+    }
+
+    private func restoreImportedParentSymbol(
+        _ record: ImportedLibrarySymbolRecord,
+        symbol: SymbolID,
+        symbols: SymbolTable
+    ) {
+        guard record.kind == .function || record.kind == .property || record.kind == .field,
+              record.fqName.count >= 2
+        else {
+            return
+        }
+
+        let ownerFQName = Array(record.fqName.dropLast())
+        guard let ownerSymbol = symbols.lookupAll(fqName: ownerFQName)
+            .compactMap({ symbols.symbol($0) })
+            .first(where: { isNominalLayoutTargetSymbol($0.kind) })?.id
+        else {
+            return
+        }
+        symbols.setParentSymbol(ownerSymbol, for: symbol)
+    }
+
+    private func applyImportedCallableMetadata(
+        _ binding: ImportedLibraryBinding,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        importedInlineFunctions: inout [SymbolID: KIRFunction],
+        cache: LibraryMetadataCache?
+    ) {
+        let record = binding.record
+        let symbol = binding.symbol
+
+        if record.kind == .function {
+            let signature = importedFunctionSignature(
+                record: record,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                metadataPath: binding.metadataPath,
+                cache: cache
+            )
+            symbols.setFunctionSignature(signature, for: symbol)
+            importInlineFunctionIfNeeded(
+                binding,
+                symbol: symbol,
+                signature: signature,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                importedInlineFunctions: &importedInlineFunctions
+            )
+            return
+        }
+
+        guard record.kind == .property || record.kind == .field else {
+            return
+        }
+        let propertyType = importedPropertyType(
+            record: record,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner,
+            metadataPath: binding.metadataPath,
+            cache: cache
+        )
+        symbols.setPropertyType(propertyType, for: symbol)
+    }
+
+    private func importInlineFunctionIfNeeded(
+        _ binding: ImportedLibraryBinding,
+        symbol: SymbolID,
+        signature: FunctionSignature,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        importedInlineFunctions: inout [SymbolID: KIRFunction]
+    ) {
+        let record = binding.record
+        guard record.isInline,
+              !record.mangledName.isEmpty,
+              let inlineDir = binding.inlineKIRDir
+        else {
+            return
+        }
+
+        let inlinePath = URL(fileURLWithPath: inlineDir)
+            .appendingPathComponent(record.mangledName + ".kirbin")
+            .path
+        guard let inlineFunction = parseImportedInlineFunction(
+            path: inlinePath,
+            importedSymbol: symbol,
+            parameterCount: max(0, signature.parameterTypes.count),
+            types: types,
+            interner: interner,
+            diagnostics: diagnostics
+        ) else {
+            return
+        }
+        importedInlineFunctions[symbol] = inlineFunction
+    }
+
+    private func applyImportedValueClassMetadata(
+        _ binding: ImportedLibraryBinding,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner
+    ) {
+        let record = binding.record
+        guard record.isValueClass else {
+            return
+        }
+
+        if let signature = record.valueClassUnderlyingTypeSig {
+            let underlyingType = importedValueClassUnderlyingType(
+                signature: signature,
+                symbols: symbols,
+                types: types,
+                diagnostics: diagnostics,
+                interner: interner,
+                metadataPath: binding.metadataPath,
+                ownerFQName: record.fqName
+            )
+            if let underlyingType {
+                symbols.setValueClassUnderlyingType(underlyingType, for: binding.symbol)
+            }
+            return
+        }
+
+        diagnostics.warning(
+            "KSWIFTK-LIB-0007",
+            "Value class '\(renderFQName(record.fqName, interner: interner))' has no underlying type signature"
+                + " in library metadata at '\(binding.metadataPath)'. Boxing elision will be skipped for this type.",
+            range: nil
+        )
+    }
+
+    private func applyImportedTypeAliasMetadata(
+        _ binding: ImportedLibraryBinding,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        diagnostics: DiagnosticEngine,
+        interner: StringInterner,
+        cache: LibraryMetadataCache?
+    ) {
+        let record = binding.record
+        guard record.kind == .typeAlias else {
+            return
+        }
+
+        let underlyingType = importedTypeAliasUnderlyingType(
+            record: record,
+            symbols: symbols,
+            types: types,
+            diagnostics: diagnostics,
+            interner: interner,
+            metadataPath: binding.metadataPath,
+            cache: cache
+        )
+        guard let underlyingType else {
+            return
+        }
+        symbols.setTypeAliasUnderlyingType(underlyingType, for: binding.symbol)
+        let syntheticParams = collectSyntheticTypeParameters(underlyingType, types: types)
+        if !syntheticParams.isEmpty {
+            symbols.setTypeAliasTypeParameters(syntheticParams, for: binding.symbol)
+        }
+    }
+
+    private func applyImportedNominalMetadata(
+        _ binding: ImportedLibraryBinding,
+        symbols: SymbolTable,
+        pendingSupertypeEdges: inout [(subtype: SymbolID, superFQName: [InternedString])]
+    ) {
+        let record = binding.record
+        guard isNominalLayoutTargetSymbol(record.kind) else {
+            return
+        }
+
+        let hasLayoutHint =
+            record.declaredFieldCount != nil ||
+            record.declaredInstanceSizeWords != nil ||
+            record.declaredVtableSize != nil ||
+            record.declaredItableSize != nil
+        if hasLayoutHint {
+            symbols.setNominalLayoutHint(
+                NominalLayoutHint(
+                    declaredFieldCount: record.declaredFieldCount,
+                    declaredInstanceSizeWords: record.declaredInstanceSizeWords,
+                    declaredVtableSize: record.declaredVtableSize,
+                    declaredItableSize: record.declaredItableSize
+                ),
+                for: binding.symbol
+            )
+        }
+        if let superFQName = record.superFQName, !superFQName.isEmpty {
+            pendingSupertypeEdges.append((subtype: binding.symbol, superFQName: superFQName))
+        }
     }
 }
