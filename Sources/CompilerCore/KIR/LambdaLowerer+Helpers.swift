@@ -248,7 +248,7 @@ extension LambdaLowerer {
 
     /// STDLIB-004: Check if an expression tree contains any implicit receiver
     /// member accesses (bare name references resolved through implicitReceiverType).
-    /// Mirrors `containsImplicitReceiverReference` for comprehensive AST coverage.
+    /// Mirrors `containsImplicitReceiverReference` for all AST node types.
     func containsImplicitReceiverMemberAccess(in exprID: ExprID, ast: ASTModule, sema: SemaModule) -> Bool {
         if let symbolID = sema.bindings.identifierSymbols[exprID],
            let symbol = sema.symbols.symbol(symbolID),

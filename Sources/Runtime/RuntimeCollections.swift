@@ -30,11 +30,6 @@ func runtimeNormalizeMapEntries(keys: [Int], values: [Int]) -> ([Int], [Int]) {
 
 // MARK: - List Functions (STDLIB-001)
 
-/// Creates a new immutable list from an array of elements.
-/// - Parameters:
-///   - arrayRaw: intptr_t handle to a RuntimeArrayBox containing the elements.
-///   - count: Number of elements in the array.
-/// - Returns: Opaque handle (Int) to a `RuntimeListBox`.
 @_cdecl("kk_list_of")
 public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     var elements: [Int] = []
@@ -44,9 +39,6 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
-/// Returns the size of a list.
-/// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: The number of elements in the list.
 @_cdecl("kk_list_size")
 public func kk_list_size(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -55,11 +47,6 @@ public func kk_list_size(_ listRaw: Int) -> Int {
     return list.elements.count
 }
 
-/// Returns the element at the given index in a list.
-/// - Parameters:
-///   - listRaw: Opaque handle to a `RuntimeListBox`.
-///   - index: Zero-based index of the element.
-/// - Returns: The element at the given index.
 @_cdecl("kk_list_get")
 public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -71,11 +58,6 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements[index]
 }
 
-/// Checks if a list contains the given element.
-/// - Parameters:
-///   - listRaw: Opaque handle to a `RuntimeListBox`.
-///   - element: The element to search for.
-/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_contains")
 public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -84,9 +66,6 @@ public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {
     return kk_box_bool(list.elements.contains(where: { runtimeValuesEqual($0, element) }) ? 1 : 0)
 }
 
-/// Checks if a list is empty.
-/// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_list_is_empty")
 public func kk_list_is_empty(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -95,9 +74,6 @@ public func kk_list_is_empty(_ listRaw: Int) -> Int {
     return kk_box_bool(list.elements.isEmpty ? 1 : 0)
 }
 
-/// Creates an iterator over a list.
-/// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: Opaque handle (Int) to a `RuntimeListIteratorBox`.
 @_cdecl("kk_list_iterator")
 public func kk_list_iterator(_ listRaw: Int) -> Int {
     let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
@@ -113,9 +89,6 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
-/// Checks if a list iterator has more elements.
-/// - Parameter iterRaw: Opaque handle to a `RuntimeListIteratorBox`.
-/// - Returns: 1 if there are more elements, 0 otherwise.
 @_cdecl("kk_list_iterator_hasNext")
 public func kk_list_iterator_hasNext(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
@@ -124,9 +97,6 @@ public func kk_list_iterator_hasNext(_ iterRaw: Int) -> Int {
     return iter.index < iter.elements.count ? 1 : 0
 }
 
-/// Returns the next element from a list iterator.
-/// - Parameter iterRaw: Opaque handle to a `RuntimeListIteratorBox`.
-/// - Returns: The next element.
 @_cdecl("kk_list_iterator_next")
 public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
@@ -140,9 +110,6 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
     return value
 }
 
-/// Converts a list to its string representation (e.g. "[1, 2, 3]").
-/// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: Opaque handle (Int) to a `RuntimeStringBox` containing the string.
 @_cdecl("kk_list_to_string")
 public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -302,12 +269,6 @@ public func kk_mutable_set_remove(_ setRaw: Int, _ elem: Int) -> Int {
 
 // MARK: - Map Functions (STDLIB-001)
 
-/// Creates a new immutable map from parallel key and value arrays.
-/// - Parameters:
-///   - keysArrayRaw: intptr_t handle to a RuntimeArrayBox containing the keys.
-///   - valuesArrayRaw: intptr_t handle to a RuntimeArrayBox containing the values.
-///   - count: Number of key-value pairs.
-/// - Returns: Opaque handle (Int) to a `RuntimeMapBox`.
 @_cdecl("kk_map_of")
 public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) -> Int {
     var keys: [Int] = []
@@ -361,9 +322,6 @@ public func kk_mutable_map_remove(_ mapRaw: Int, _ key: Int) -> Int {
     return map.values.remove(at: index)
 }
 
-/// Returns the size of a map.
-/// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: The number of key-value pairs in the map.
 @_cdecl("kk_map_size")
 public func kk_map_size(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
@@ -372,11 +330,6 @@ public func kk_map_size(_ mapRaw: Int) -> Int {
     return map.keys.count
 }
 
-/// Returns the value associated with the given key in a map.
-/// - Parameters:
-///   - mapRaw: Opaque handle to a `RuntimeMapBox`.
-///   - key: The key to look up.
-/// - Returns: The associated value, or the null sentinel if not found.
 @_cdecl("kk_map_get")
 public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
@@ -389,11 +342,6 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
-/// Checks if a map contains the given key.
-/// - Parameters:
-///   - mapRaw: Opaque handle to a `RuntimeMapBox`.
-///   - key: The key to search for.
-/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_contains_key")
 public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
@@ -402,9 +350,6 @@ public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     return kk_box_bool(map.keys.contains(where: { runtimeValuesEqual($0, key) }) ? 1 : 0)
 }
 
-/// Checks if a map is empty.
-/// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: Boxed boolean handle via `kk_box_bool`.
 @_cdecl("kk_map_is_empty")
 public func kk_map_is_empty(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
@@ -440,9 +385,6 @@ public func kk_map_entries(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: entries))
 }
 
-/// Creates an iterator over a map's entries.
-/// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: Opaque handle (Int) to a `RuntimeMapIteratorBox`.
 @_cdecl("kk_map_iterator")
 public func kk_map_iterator(_ mapRaw: Int) -> Int {
     let (keys, values): ([Int], [Int]) = if let map = runtimeMapBox(from: mapRaw) {
@@ -458,9 +400,6 @@ public func kk_map_iterator(_ mapRaw: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
-/// Checks if a map iterator has more entries.
-/// - Parameter iterRaw: Opaque handle to a `RuntimeMapIteratorBox`.
-/// - Returns: 1 if there are more entries, 0 otherwise.
 @_cdecl("kk_map_iterator_hasNext")
 public func kk_map_iterator_hasNext(_ iterRaw: Int) -> Int {
     guard let iter = runtimeMapIteratorBox(from: iterRaw) else {
@@ -469,10 +408,6 @@ public func kk_map_iterator_hasNext(_ iterRaw: Int) -> Int {
     return iter.index < iter.keys.count ? 1 : 0
 }
 
-/// Returns the next entry from a map iterator.
-/// Returns the key at the current position, matching the C preamble behavior.
-/// - Parameter iterRaw: Opaque handle to a `RuntimeMapIteratorBox`.
-/// - Returns: The next entry key.
 @_cdecl("kk_map_iterator_next")
 public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
     guard let iter = runtimeMapIteratorBox(from: iterRaw) else {
@@ -486,9 +421,6 @@ public func kk_map_iterator_next(_ iterRaw: Int) -> Int {
     return key
 }
 
-/// Converts a map to its string representation (e.g. "{1=a, 2=b}").
-/// - Parameter mapRaw: Opaque handle to a `RuntimeMapBox`.
-/// - Returns: Opaque handle (Int) to a `RuntimeStringBox` containing the string.
 @_cdecl("kk_map_to_string")
 public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     guard let map = runtimeMapBox(from: mapRaw) else {
@@ -533,9 +465,6 @@ public func kk_array_of(_ arrayRaw: Int, _: Int) -> Int {
     arrayRaw
 }
 
-/// Returns the size of an array.
-/// - Parameter arrayRaw: Opaque handle to a `RuntimeArrayBox`.
-/// - Returns: The number of elements in the array.
 @_cdecl("kk_array_size")
 public func kk_array_size(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
@@ -546,11 +475,6 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
 
 // MARK: - Pair Functions (FUNC-002)
 
-/// Creates a new Pair from two elements.
-/// - Parameters:
-///   - first: The first element of the pair.
-///   - second: The second element of the pair.
-/// - Returns: Opaque handle (Int) to a `RuntimeArrayBox` containing 2 elements.
 @_cdecl("kk_pair_new")
 public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
     let box = RuntimePairBox(first: first, second: second)
@@ -561,9 +485,6 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
     return Int(bitPattern: opaque)
 }
 
-/// Returns the first element of a Pair.
-/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
-/// - Returns: The first element.
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
@@ -576,9 +497,6 @@ public func component1(_ pairRaw: Int) -> Int {
     kk_pair_first(pairRaw)
 }
 
-/// Returns the second element of a Pair.
-/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
-/// - Returns: The second element.
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
@@ -591,9 +509,6 @@ public func component2(_ pairRaw: Int) -> Int {
     kk_pair_second(pairRaw)
 }
 
-/// Converts a Pair to its string representation (e.g. "(1, one)").
-/// - Parameter pairRaw: Opaque handle to a Pair (2-element RuntimeArrayBox).
-/// - Returns: Opaque handle to a RuntimeStringBox containing the string.
 @_cdecl("kk_pair_to_string")
 public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),

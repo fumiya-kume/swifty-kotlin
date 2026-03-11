@@ -1,6 +1,5 @@
 import Foundation
 
-/// Represents a fingerprint of a source file for incremental compilation.
 /// The content hash is the primary comparison key; mtime serves as a fast-path
 /// to avoid re-hashing when the file system reports no modification.
 public struct FileFingerprint: Equatable, Codable {

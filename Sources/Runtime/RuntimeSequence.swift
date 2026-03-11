@@ -105,9 +105,6 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
 
 // MARK: - Sequence Factory Functions
 
-/// Creates a Sequence from a List (asSequence).
-/// - Parameter listRaw: Opaque handle to a `RuntimeListBox`.
-/// - Returns: Opaque handle to a `RuntimeSequenceBox`.
 @_cdecl("kk_sequence_from_list")
 public func kk_sequence_from_list(_ listRaw: Int) -> Int {
     let elements = if let list = runtimeListBox(from: listRaw) {
@@ -121,11 +118,6 @@ public func kk_sequence_from_list(_ listRaw: Int) -> Int {
 
 // MARK: - Sequence Intermediate Operations (Lazy)
 
-/// Appends a map transformation step to a Sequence (lazy).
-/// - Parameters:
-///   - seqRaw: Opaque handle to a `RuntimeSequenceBox`.
-///   - fnPtr: Function pointer for the map transformation.
-/// - Returns: Opaque handle to a new `RuntimeSequenceBox` with the map step appended.
 @_cdecl("kk_sequence_map")
 public func kk_sequence_map(_ seqRaw: Int, _ fnPtr: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -138,11 +130,6 @@ public func kk_sequence_map(_ seqRaw: Int, _ fnPtr: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
-/// Appends a filter transformation step to a Sequence (lazy).
-/// - Parameters:
-///   - seqRaw: Opaque handle to a `RuntimeSequenceBox`.
-///   - fnPtr: Function pointer for the filter predicate.
-/// - Returns: Opaque handle to a new `RuntimeSequenceBox` with the filter step appended.
 @_cdecl("kk_sequence_filter")
 public func kk_sequence_filter(_ seqRaw: Int, _ fnPtr: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -155,11 +142,6 @@ public func kk_sequence_filter(_ seqRaw: Int, _ fnPtr: Int) -> Int {
     return registerRuntimeObject(newSeq)
 }
 
-/// Appends a take(n) step to a Sequence (lazy).
-/// - Parameters:
-///   - seqRaw: Opaque handle to a `RuntimeSequenceBox`.
-///   - count: Maximum number of elements to take.
-/// - Returns: Opaque handle to a new `RuntimeSequenceBox` with the take step appended.
 @_cdecl("kk_sequence_take")
 public func kk_sequence_take(_ seqRaw: Int, _ count: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -174,9 +156,6 @@ public func kk_sequence_take(_ seqRaw: Int, _ count: Int) -> Int {
 
 // MARK: - Sequence Terminal Operations
 
-/// Terminal operation: evaluates the lazy sequence chain and returns a List.
-/// - Parameter seqRaw: Opaque handle to a `RuntimeSequenceBox`.
-/// - Returns: Opaque handle to a `RuntimeListBox` containing the evaluated elements.
 @_cdecl("kk_sequence_to_list")
 public func kk_sequence_to_list(_ seqRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
@@ -190,19 +169,12 @@ public func kk_sequence_to_list(_ seqRaw: Int) -> Int {
 
 // MARK: - Sequence Builder (sequence { yield(x) })
 
-/// Creates a new sequence builder.
-/// - Returns: Opaque handle to a `RuntimeSequenceBuilderBox`.
 @_cdecl("kk_sequence_builder_create")
 public func kk_sequence_builder_create() -> Int {
     let builder = RuntimeSequenceBuilderBox()
     return registerRuntimeObject(builder)
 }
 
-/// Yields a value into a sequence builder.
-/// - Parameters:
-///   - builderRaw: Opaque handle to a `RuntimeSequenceBuilderBox`.
-///   - value: The value to yield.
-/// - Returns: 0 (void-like return for ABI consistency).
 @_cdecl("kk_sequence_builder_yield")
 public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
     guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
@@ -212,18 +184,11 @@ public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
     return 0
 }
 
-/// Builds a Sequence from the builder's accumulated elements.
-/// Executes the builder block (function pointer) first, then wraps
-/// the yielded elements into a RuntimeSequenceBox.
-/// - Parameters:
-///   - fnPtr: Function pointer of the builder block `(builderHandle) -> Unit`.
-/// - Returns: Opaque handle to a `RuntimeSequenceBox`.
 @_cdecl("kk_sequence_builder_build")
 public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     let builder = RuntimeSequenceBuilderBox()
     let builderHandle = registerRuntimeObject(builder)
 
-    // Call the builder block with the builder handle
     let builderBlock = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     _ = builderBlock(builderHandle, &thrown)

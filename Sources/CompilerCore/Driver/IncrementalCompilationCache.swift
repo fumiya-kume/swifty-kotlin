@@ -166,7 +166,6 @@ public final class IncrementalCompilationCache {
                 try fm.createDirectory(atPath: cachePath, withIntermediateDirectories: true)
             }
 
-            // Save manifest
             let fingerprints = currentFingerprints.values.sorted(by: { $0.path < $1.path })
             let manifest = CacheManifest(
                 version: 1,
@@ -180,7 +179,6 @@ public final class IncrementalCompilationCache {
                 options: .atomic
             )
 
-            // Save dependency graph
             let depsData = try dependencyGraph.serialize()
             try depsData.write(
                 to: URL(fileURLWithPath: cachePath + "/deps.json"),

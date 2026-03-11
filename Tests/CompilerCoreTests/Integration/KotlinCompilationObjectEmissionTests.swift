@@ -2,17 +2,13 @@
 import Foundation
 import XCTest
 
-/// Tests that verify Kotlin programs compile through the LLVM backend
-/// and produce valid native object files (.o).
 final class KotlinCompilationObjectEmissionTests: XCTestCase {
-    /// Verify minimal main compiles to object file.
     func testCompileToObject_minimalMain() throws {
         try assertKotlinCompilesToObject("""
         fun main() = 0
         """, moduleName: "ObjMinimal")
     }
 
-    /// Verify function calls compile to object file.
     func testCompileToObject_functionCalls() throws {
         try assertKotlinCompilesToObject("""
         fun add(a: Int, b: Int): Int = a + b
@@ -24,7 +20,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjFunctions")
     }
 
-    /// Verify class hierarchy compiles to object file.
     func testCompileToObject_classHierarchy() throws {
         try assertKotlinCompilesToObject("""
         open class Base(val id: Int) {
@@ -40,7 +35,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjClasses")
     }
 
-    /// Verify control flow with when and for compiles to object file.
     func testCompileToObject_controlFlow() throws {
         try assertKotlinCompilesToObject("""
         fun fizzbuzz(n: Int): String {
@@ -59,7 +53,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjControl")
     }
 
-    /// Verify lambda and higher-order function compile to object file.
     func testCompileToObject_lambdaAndHigherOrder() throws {
         try assertKotlinCompilesToObject("""
         fun transform(x: Int, f: (Int) -> Int): Int = f(x)
@@ -70,7 +63,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjLambda")
     }
 
-    /// Verify generic class compiles to object file.
     func testCompileToObject_generics() throws {
         try assertKotlinCompilesToObject("""
         class Pair<A, B>(val first: A, val second: B) {
@@ -83,7 +75,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjGenerics")
     }
 
-    /// Verify nullable types compile to object file.
     func testCompileToObject_nullable() throws {
         try assertKotlinCompilesToObject("""
         fun safeLength(s: String?): Int {
@@ -96,7 +87,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjNullable")
     }
 
-    /// Verify interface polymorphism compiles to object file.
     func testCompileToObject_interfacePolymorphism() throws {
         try assertKotlinCompilesToObject("""
         interface Printable {
@@ -116,7 +106,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjInterface")
     }
 
-    /// Verify complex program with data class and collection compiles to object file.
     func testCompileToObject_complexProgram() throws {
         try assertKotlinCompilesToObject("""
         data class Student(val name: String, val grade: Int)
@@ -142,7 +131,6 @@ final class KotlinCompilationObjectEmissionTests: XCTestCase {
         """, moduleName: "ObjComplex")
     }
 
-    /// Verify exhaustive when on enum compiles to object file.
     func testCompileToObject_whenExhaustive() throws {
         try assertKotlinCompilesToObject("""
         enum class Season { SPRING, SUMMER, AUTUMN, WINTER }
