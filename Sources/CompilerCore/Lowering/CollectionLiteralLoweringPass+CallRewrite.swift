@@ -20,6 +20,7 @@ extension CollectionLiteralLoweringPass {
             var mapExprIDs: Set<Int32> = []
             var arrayExprIDs: Set<Int32> = []
             var sequenceExprIDs: Set<Int32> = []
+            var rangeExprIDs: Set<Int32> = []
 
             collectInitialCollectionExprIDs(
                 function: function,
@@ -28,7 +29,8 @@ extension CollectionLiteralLoweringPass {
                 setExprIDs: &setExprIDs,
                 mapExprIDs: &mapExprIDs,
                 arrayExprIDs: &arrayExprIDs,
-                sequenceExprIDs: &sequenceExprIDs
+                sequenceExprIDs: &sequenceExprIDs,
+                rangeExprIDs: &rangeExprIDs
             )
 
             // Phase 2: Rewrite instructions
@@ -1641,6 +1643,7 @@ extension CollectionLiteralLoweringPass {
                         mapExprIDs: &mapExprIDs,
                         arrayExprIDs: &arrayExprIDs,
                         sequenceExprIDs: &sequenceExprIDs,
+                        rangeExprIDs: &rangeExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
@@ -1663,6 +1666,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if sequenceExprIDs.contains(from.rawValue) {
                         sequenceExprIDs.insert(to.rawValue)
+                    }
+                    if rangeExprIDs.contains(from.rawValue) {
+                        rangeExprIDs.insert(to.rawValue)
                     }
                     if listIteratorExprIDs.contains(from.rawValue) {
                         listIteratorExprIDs.insert(to.rawValue)

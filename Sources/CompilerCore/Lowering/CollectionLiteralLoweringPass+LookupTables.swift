@@ -120,6 +120,20 @@ struct CollectionLiteralLookupTables {
     let kkRangeHasNextName: InternedString
     let kkRangeNextName: InternedString
 
+    // Range factory / member ABI names (STDLIB-090/091/092/093)
+    let kkOpRangeToName: InternedString
+    let kkOpRangeUntilName: InternedString
+    let kkOpDownToName: InternedString
+    let kkOpStepName: InternedString
+    let kkRangeFirstName: InternedString
+    let kkRangeLastName: InternedString
+    let kkRangeCountName: InternedString
+    let kkRangeToListName: InternedString
+    let kkRangeForEachName: InternedString
+    let kkRangeMapName: InternedString
+    let kkRangeReversedName: InternedString
+    let kkOpContainsName: InternedString
+
     // Member names
     let sizeName: InternedString
     let getName: InternedString
@@ -330,6 +344,19 @@ struct CollectionLiteralLookupTables {
         kkRangeIteratorName = interner.intern("kk_range_iterator")
         kkRangeHasNextName = interner.intern("kk_range_hasNext")
         kkRangeNextName = interner.intern("kk_range_next")
+
+        kkOpRangeToName = interner.intern("kk_op_rangeTo")
+        kkOpRangeUntilName = interner.intern("kk_op_rangeUntil")
+        kkOpDownToName = interner.intern("kk_op_downTo")
+        kkOpStepName = interner.intern("kk_op_step")
+        kkRangeFirstName = interner.intern("kk_range_first")
+        kkRangeLastName = interner.intern("kk_range_last")
+        kkRangeCountName = interner.intern("kk_range_count")
+        kkRangeToListName = interner.intern("kk_range_toList")
+        kkRangeForEachName = interner.intern("kk_range_forEach")
+        kkRangeMapName = interner.intern("kk_range_map")
+        kkRangeReversedName = interner.intern("kk_range_reversed")
+        kkOpContainsName = interner.intern("kk_op_contains")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")

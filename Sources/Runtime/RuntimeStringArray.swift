@@ -200,6 +200,18 @@ public func kk_op_safe_cast(_ value: Int, _ typeToken: Int) -> Int {
 
 @_cdecl("kk_op_contains")
 public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
+    // Range check first
+    if let range = runtimeRangeBox(from: container) {
+        if range.step > 0 {
+            guard element >= range.first && element <= range.last else { return 0 }
+            return (element - range.first) % range.step == 0 ? 1 : 0
+        } else if range.step < 0 {
+            guard element <= range.first && element >= range.last else { return 0 }
+            return (range.first - element) % (-range.step) == 0 ? 1 : 0
+        }
+        return 0
+    }
+    // Array check
     guard let array = runtimeArrayBox(from: container) else {
         return 0
     }

@@ -964,6 +964,50 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - IntRange members (STDLIB-090/091/092/093)
+
+    public static let kk_range_first = ExternDecl(
+        name: "kk_range_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_last = ExternDecl(
+        name: "kk_range_last",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_count = ExternDecl(
+        name: "kk_range_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_toList = ExternDecl(
+        name: "kk_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_forEach = ExternDecl(
+        name: "kk_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_map = ExternDecl(
+        name: "kk_range_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_reversed = ExternDecl(
+        name: "kk_range_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Delegate
 
     public static let kk_lazy_create = ExternDecl(
@@ -1263,6 +1307,14 @@ public enum RuntimeABIExterns {
             kk_op_rangeUntil,
             kk_op_downTo,
             kk_op_step,
+            // IntRange members (STDLIB-090/091/092/093)
+            kk_range_first,
+            kk_range_last,
+            kk_range_count,
+            kk_range_toList,
+            kk_range_forEach,
+            kk_range_map,
+            kk_range_reversed,
         ]
         all += kPropertyStubExterns
         all += [

@@ -19,6 +19,7 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
+        rangeExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -52,6 +53,14 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
+        if rewriteRangeVirtualCall(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            rangeExprIDs: &rangeExprIDs, listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -900,6 +909,115 @@ extension CollectionLiteralLoweringPass {
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
             )
+            return true
+        }
+
+        return false
+    }
+
+    // MARK: - IntRange operations (STDLIB-090/091/092/093)
+
+    private func rewriteRangeVirtualCall(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        rangeExprIDs: inout Set<Int32>,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard rangeExprIDs.contains(receiver.rawValue) else { return false }
+
+        // first / last / count — simple property access (STDLIB-092)
+        if callee == lookup.firstName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeFirstName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+        if callee == lookup.lastName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeLastName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+        if callee == lookup.countName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeCountName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
+        // contains — delegate to kk_op_contains (STDLIB-090)
+        if callee == lookup.containsName, arguments.count == 1 {
+            let kkContainsName = lookup.kkOpContainsName
+            loweredBody.append(.call(
+                symbol: nil, callee: kkContainsName,
+                arguments: [receiver, arguments[0]], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+
+        // toList — returns a List (STDLIB-091)
+        if callee == lookup.toListName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeToListName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // forEach — HOF (STDLIB-091)
+        if callee == lookup.forEachName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkRangeForEachName, receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        // map — HOF returning List (STDLIB-091)
+        if callee == lookup.mapName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkRangeMapName, receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            listExprIDs.insert(hofResult.rawValue)
+            if let result { listExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // reversed — returns a range (STDLIB-093)
+        if callee == lookup.reversedName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeReversedName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            if let result { rangeExprIDs.insert(result.rawValue) }
             return true
         }
 

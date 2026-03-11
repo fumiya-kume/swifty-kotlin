@@ -62,7 +62,8 @@ extension CollectionLiteralLoweringPass {
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
-        sequenceExprIDs: inout Set<Int32>
+        sequenceExprIDs: inout Set<Int32>,
+        rangeExprIDs: inout Set<Int32>
     ) {
         for instruction in function.body {
             switch instruction {
@@ -72,21 +73,24 @@ extension CollectionLiteralLoweringPass {
                     lookup: lookup, listExprIDs: &listExprIDs,
                     setExprIDs: &setExprIDs,
                     mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
-                    sequenceExprIDs: &sequenceExprIDs
+                    sequenceExprIDs: &sequenceExprIDs,
+                    rangeExprIDs: &rangeExprIDs
                 )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                 handleVirtualCallInstruction(
                     callee: callee, receiver: receiver, result: result,
                     lookup: lookup, listExprIDs: &listExprIDs,
                     mapExprIDs: &mapExprIDs,
-                    sequenceExprIDs: &sequenceExprIDs
+                    sequenceExprIDs: &sequenceExprIDs,
+                    rangeExprIDs: &rangeExprIDs
                 )
             case let .copy(from, to):
                 handleCopyInstruction(
                     from: from, to: to,
                     listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
                     setExprIDs: &setExprIDs,
-                    arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs
+                    arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
+                    rangeExprIDs: &rangeExprIDs
                 )
             default:
                 break
@@ -103,13 +107,21 @@ extension CollectionLiteralLoweringPass {
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
-        sequenceExprIDs: inout Set<Int32>
+        sequenceExprIDs: inout Set<Int32>,
+        rangeExprIDs: inout Set<Int32>
     ) {
         classifyFactoryCall(
             callee: callee, result: result, lookup: lookup,
             listExprIDs: &listExprIDs, setExprIDs: &setExprIDs,
             mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs
         )
+        // Classify range factory calls
+        if let result,
+           callee == lookup.kkOpRangeToName || callee == lookup.kkOpRangeUntilName
+            || callee == lookup.kkOpDownToName || callee == lookup.kkOpStepName
+        {
+            rangeExprIDs.insert(result.rawValue)
+        }
         propagateCollectionOperation(
             callee: callee, arguments: arguments, result: result, lookup: lookup,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
@@ -188,7 +200,8 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
-        sequenceExprIDs: inout Set<Int32>
+        sequenceExprIDs: inout Set<Int32>,
+        rangeExprIDs: inout Set<Int32>
     ) {
         if callee == lookup.asSequenceName {
             if let result { sequenceExprIDs.insert(result.rawValue) }
@@ -230,6 +243,15 @@ extension CollectionLiteralLoweringPass {
             }
             // withIndex returns IndexingIterable, not List — do not add to listExprIDs
         }
+
+        // Track range member calls that return ranges
+        if rangeExprIDs.contains(receiverRaw) {
+            if callee == lookup.reversedName {
+                if let result { rangeExprIDs.insert(result.rawValue) }
+            } else if callee == lookup.toListName || callee == lookup.mapName {
+                if let result { listExprIDs.insert(result.rawValue) }
+            }
+        }
     }
 
     private func handleCopyInstruction(
@@ -239,7 +261,8 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         setExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
-        sequenceExprIDs: inout Set<Int32>
+        sequenceExprIDs: inout Set<Int32>,
+        rangeExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
             listExprIDs.insert(to.rawValue)
@@ -255,6 +278,9 @@ extension CollectionLiteralLoweringPass {
         }
         if sequenceExprIDs.contains(from.rawValue) {
             sequenceExprIDs.insert(to.rawValue)
+        }
+        if rangeExprIDs.contains(from.rawValue) {
+            rangeExprIDs.insert(to.rawValue)
         }
     }
 }
