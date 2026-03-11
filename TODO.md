@@ -36,11 +36,11 @@
 
 ### 📦 Stdlib — buildList / buildMap / buildString (DSL)
 
-- [ ] STDLIB-070: `buildList {}` を stdlib DSL として実装する
-  - [ ] Sema に `buildList(builderAction: MutableList<E>.() -> Unit): List<E>` stub を登録する
-  - [ ] Lowering で MutableList 生成 + builder lambda 実行 + immutable 化に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `buildList { add(1); add(2) }` → `[1, 2]` が `kotlinc` と一致する
+- [x] STDLIB-070: `buildList {}` を stdlib DSL として実装する
+  - [x] Sema に `buildList(builderAction: MutableList<E>.() -> Unit): List<E>` stub を登録する
+  - [x] Lowering で MutableList 生成 + builder lambda 実行 + immutable 化に展開する
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `buildList { add(1); add(2) }` → `[1, 2]` が `kotlinc` と一致する ✓
 
 - [x] STDLIB-071: `buildMap {}` を stdlib DSL として実装する
   - [x] Sema に `buildMap(builderAction: MutableMap<K,V>.() -> Unit): Map<K,V>` stub を登録する
