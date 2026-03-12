@@ -124,6 +124,8 @@ public extension RuntimeABIExterns {
         kk_mutable_list_add,
         kk_mutable_list_removeAt,
         kk_mutable_list_clear,
+        kk_mutable_list_shuffle,
+        kk_mutable_list_reverse,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_builder_map_put,
@@ -900,6 +902,18 @@ public extension RuntimeABIExterns {
     static let kk_mutable_map_put = ExternDecl(
         name: "kk_mutable_map_put",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_shuffle = ExternDecl(
+        name: "kk_mutable_list_shuffle",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_reverse = ExternDecl(
+        name: "kk_mutable_list_reverse",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
