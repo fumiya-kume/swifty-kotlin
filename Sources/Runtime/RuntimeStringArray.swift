@@ -15,6 +15,78 @@ public func kk_throwable_is_cancellation(_ throwableRaw: Int) -> Int {
     kk_is_cancellation_exception(throwableRaw)
 }
 
+@_cdecl("kk_throwable_message")
+public func kk_throwable_message(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let message: String
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        message = throwable.message
+    } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+        message = cancellation.message
+    } else {
+        return runtimeNullSentinelInt
+    }
+    let box = RuntimeStringBox(message)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_throwable_cause")
+public func kk_throwable_cause(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return runtimeNullSentinelInt
+    }
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        return throwable.cause == 0 ? runtimeNullSentinelInt : throwable.cause
+    }
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_throwable_stackTraceToString")
+public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        let box = RuntimeStringBox("")
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: opaque))
+        }
+        return Int(bitPattern: opaque)
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        let box = RuntimeStringBox("")
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: opaque))
+        }
+        return Int(bitPattern: opaque)
+    }
+    let message: String
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        message = throwable.message
+    } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+        message = cancellation.message
+    } else {
+        message = ""
+    }
+    let box = RuntimeStringBox(message)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))

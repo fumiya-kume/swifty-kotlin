@@ -57,9 +57,11 @@ final class RuntimeStringBox {
 
 final class RuntimeThrowableBox {
     let message: String
+    let cause: Int
 
-    init(message: String) {
+    init(message: String, cause: Int = 0) {
         self.message = message
+        self.cause = cause
     }
 }
 

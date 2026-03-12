@@ -202,6 +202,30 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_message",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_cause",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_throwable_stackTraceToString",
+            parameters: [
+                RuntimeABIParameter(name: "throwableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
     ]
 
     public static let stringFunctions: [RuntimeABIFunctionSpec] = [

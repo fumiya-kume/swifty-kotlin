@@ -85,8 +85,8 @@ func runtimeIsAssignable(sourceTypeID: Int64, targetTypeID: Int64) -> Bool {
     }
 }
 
-func runtimeAllocateThrowable(message: String) -> Int {
-    let throwable = RuntimeThrowableBox(message: message)
+func runtimeAllocateThrowable(message: String, cause: Int = 0) -> Int {
+    let throwable = RuntimeThrowableBox(message: message, cause: cause)
     let ptr = UnsafeMutableRawPointer(Unmanaged.passRetained(throwable).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: ptr))

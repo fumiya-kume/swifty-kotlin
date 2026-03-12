@@ -356,15 +356,107 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s359 kind=valueParameter fq=golden.sema.add.$358.other vis=private flags=_
-symbol s360 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s358 kind=function fq=golden.sema.catchIllegalArgument vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s359 kind=function fq=golden.sema.catchIllegalState vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s360 kind=function fq=golden.sema.catchIndexOutOfBounds vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s361 kind=function fq=golden.sema.catchUnsupportedOperation vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s362 kind=function fq=golden.sema.catchNoSuchElement vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s363 kind=function fq=golden.sema.catchArithmetic vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s364 kind=function fq=golden.sema.catchClassCast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s365 kind=function fq=golden.sema.throwableProperties vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s366 kind=local fq=__try_7_catch_0.e vis=internal flags=_ type=Any
+symbol s367 kind=local fq=__try_15_catch_0.e vis=internal flags=_ type=Any
+symbol s368 kind=local fq=__try_23_catch_0.e vis=internal flags=_ type=Any
+symbol s369 kind=local fq=__try_31_catch_0.e vis=internal flags=_ type=Any
+symbol s370 kind=local fq=__try_39_catch_0.e vis=internal flags=_ type=Any
+symbol s371 kind=local fq=__try_47_catch_0.e vis=internal flags=_ type=Any
+symbol s372 kind=local fq=__try_55_catch_0.e vis=internal flags=_ type=Any
+symbol s373 kind=local fq=__try_74_catch_0.e vis=internal flags=_ type=Any
+symbol s374 kind=local fq=__local_63.msg vis=private flags=_
+symbol s375 kind=local fq=__local_66.cause vis=private flags=_
+symbol s376 kind=local fq=__local_69.trace vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun add suspend=0 inline=0 sym=s358
-  decl d1 fun useInfix suspend=0 inline=0 sym=s360
-expr e0 this type=Int
-expr e1 name(other) type=Int ref=s359
-expr e2 binary(add) lhs=e0 rhs=e1 type=Int
-expr e3 int(1) type=Int
-expr e4 int(2) type=Int
-expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s358 map=[0->0] targs=[]
+  decl d0 fun catchIllegalArgument suspend=0 inline=0 sym=s358
+  decl d1 fun catchIllegalState suspend=0 inline=0 sym=s359
+  decl d2 fun catchIndexOutOfBounds suspend=0 inline=0 sym=s360
+  decl d3 fun catchUnsupportedOperation suspend=0 inline=0 sym=s361
+  decl d4 fun catchNoSuchElement suspend=0 inline=0 sym=s362
+  decl d5 fun catchArithmetic suspend=0 inline=0 sym=s363
+  decl d6 fun catchClassCast suspend=0 inline=0 sym=s364
+  decl d7 fun throwableProperties suspend=0 inline=0 sym=s365
+expr e0 name(IllegalArgumentException) type=_
+expr e1 string(bad) type=String
+expr e2 call callee=e0 args=[_:e1] type=Class#231 call=s253 map=[0->0] targs=[]
+expr e3 throw value=e2 type=Nothing
+expr e4 blockExpr stmts=[] trailing=e3 type=Nothing
+expr e5 string(caught) type=String
+expr e6 blockExpr stmts=[] trailing=e5 type=String ref=s366
+expr e7 try body=e4 catches=[e6] finally=_ type=String
+expr e8 name(IllegalStateException) type=_
+expr e9 string(bad state) type=String
+expr e10 call callee=e8 args=[_:e9] type=Class#232 call=s256 map=[0->0] targs=[]
+expr e11 throw value=e10 type=Nothing
+expr e12 blockExpr stmts=[] trailing=e11 type=Nothing
+expr e13 string(caught) type=String
+expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s367
+expr e15 try body=e12 catches=[e14] finally=_ type=String
+expr e16 name(IndexOutOfBoundsException) type=_
+expr e17 string(index 5) type=String
+expr e18 call callee=e16 args=[_:e17] type=Class#233 call=s259 map=[0->0] targs=[]
+expr e19 throw value=e18 type=Nothing
+expr e20 blockExpr stmts=[] trailing=e19 type=Nothing
+expr e21 string(caught) type=String
+expr e22 blockExpr stmts=[] trailing=e21 type=String ref=s368
+expr e23 try body=e20 catches=[e22] finally=_ type=String
+expr e24 name(UnsupportedOperationException) type=_
+expr e25 string(not supported) type=String
+expr e26 call callee=e24 args=[_:e25] type=Class#234 call=s262 map=[0->0] targs=[]
+expr e27 throw value=e26 type=Nothing
+expr e28 blockExpr stmts=[] trailing=e27 type=Nothing
+expr e29 string(caught) type=String
+expr e30 blockExpr stmts=[] trailing=e29 type=String ref=s369
+expr e31 try body=e28 catches=[e30] finally=_ type=String
+expr e32 name(NoSuchElementException) type=_
+expr e33 string(empty) type=String
+expr e34 call callee=e32 args=[_:e33] type=Class#235 call=s265 map=[0->0] targs=[]
+expr e35 throw value=e34 type=Nothing
+expr e36 blockExpr stmts=[] trailing=e35 type=Nothing
+expr e37 string(caught) type=String
+expr e38 blockExpr stmts=[] trailing=e37 type=String ref=s370
+expr e39 try body=e36 catches=[e38] finally=_ type=String
+expr e40 name(ArithmeticException) type=_
+expr e41 string(div by zero) type=String
+expr e42 call callee=e40 args=[_:e41] type=Class#236 call=s268 map=[0->0] targs=[]
+expr e43 throw value=e42 type=Nothing
+expr e44 blockExpr stmts=[] trailing=e43 type=Nothing
+expr e45 string(caught) type=String
+expr e46 blockExpr stmts=[] trailing=e45 type=String ref=s371
+expr e47 try body=e44 catches=[e46] finally=_ type=String
+expr e48 name(ClassCastException) type=_
+expr e49 string(bad cast) type=String
+expr e50 call callee=e48 args=[_:e49] type=Class#237 call=s271 map=[0->0] targs=[]
+expr e51 throw value=e50 type=Nothing
+expr e52 blockExpr stmts=[] trailing=e51 type=Nothing
+expr e53 string(caught) type=String
+expr e54 blockExpr stmts=[] trailing=e53 type=String ref=s372
+expr e55 try body=e52 catches=[e54] finally=_ type=String
+expr e56 name(RuntimeException) type=_
+expr e57 string(test) type=String
+expr e58 call callee=e56 args=[_:e57] type=Class#226 call=s240 map=[0->0] targs=[]
+expr e59 throw value=e58 type=Nothing
+expr e60 blockExpr stmts=[] trailing=e59 type=Nothing
+expr e61 name(e) type=Any ref=s373
+expr e62 memberCall recv=e61 callee=message args=[] type=<error>
+expr e63 localDecl msg mutable=0 type=t8 init=e62 type=Unit ref=s374
+expr e64 name(e) type=Any ref=s373
+expr e65 memberCall recv=e64 callee=cause args=[] type=<error>
+expr e66 localDecl cause mutable=0 type=t9 init=e65 type=Unit ref=s375
+expr e67 name(e) type=Any ref=s373
+expr e68 memberCall recv=e67 callee=stackTraceToString args=[] type=<error>
+expr e69 localDecl trace mutable=0 type=t10 init=e68 type=Unit ref=s376
+expr e70 name(msg) type=String? ref=s374
+expr e71 string(null) type=String
+expr e72 binary(elvis) lhs=e70 rhs=e71 type=String
+expr e73 blockExpr stmts=[e63,e66,e69] trailing=e72 type=String ref=s373
+expr e74 try body=e60 catches=[e73] finally=_ type=String
+expr e75 return value=e74 type=Nothing

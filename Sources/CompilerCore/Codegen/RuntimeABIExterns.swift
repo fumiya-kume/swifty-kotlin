@@ -131,6 +131,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_throwable_message = ExternDecl(
+        name: "kk_throwable_message",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_cause = ExternDecl(
+        name: "kk_throwable_cause",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_stackTraceToString = ExternDecl(
+        name: "kk_throwable_stackTraceToString",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - String
 
     public static let kk_string_from_utf8 = ExternDecl(
@@ -1315,6 +1333,9 @@ public enum RuntimeABIExterns {
             kk_todo,
             kk_todo_noarg,
             kk_dispatch_error,
+            kk_throwable_message,
+            kk_throwable_cause,
+            kk_throwable_stackTraceToString,
             // String
             kk_string_from_utf8,
             kk_string_concat,
