@@ -80,7 +80,6 @@ public extension RuntimeABISpec {
             name: "kk_sequence_of",
             parameters: [
                 RuntimeABIParameter(name: "arrayRaw", type: .intptr),
-                RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"

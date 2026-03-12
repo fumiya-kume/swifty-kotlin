@@ -162,11 +162,11 @@ public func kk_sequence_from_list(_ listRaw: Int) -> Int {
 }
 
 @_cdecl("kk_sequence_of")
-public func kk_sequence_of(_ arrayRaw: Int, _ count: Int) -> Int {
-    var elements: [Int] = []
-    if count > 0, let arr = runtimeArrayBox(from: arrayRaw) {
-        elements = Array(arr.elements.prefix(count))
+public func kk_sequence_of(_ arrayRaw: Int) -> Int {
+    guard let arr = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_of expected RuntimeArrayBox")
     }
+    let elements = Array(arr.elements)
     let seq = RuntimeSequenceBox(steps: [.source(elements: elements)])
     return registerRuntimeObject(seq)
 }

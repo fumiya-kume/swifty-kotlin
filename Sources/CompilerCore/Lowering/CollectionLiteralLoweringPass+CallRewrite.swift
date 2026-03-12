@@ -271,12 +271,21 @@ extension CollectionLiteralLoweringPass {
                         if count == 0 {
                             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                            let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                            let emptyArrayExpr = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayNewName,
+                                arguments: [zeroExpr],
+                                result: emptyArrayExpr,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceOfName,
-                                arguments: [nullExpr, zeroExpr],
+                                arguments: [emptyArrayExpr],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
@@ -313,7 +322,7 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceOfName,
-                                arguments: [arrayExpr, countExpr],
+                                arguments: [arrayExpr],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil

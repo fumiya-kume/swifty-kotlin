@@ -70,7 +70,7 @@ public extension RuntimeABIExterns {
     // STDLIB-097: Factory functions
     static let kk_sequence_of = ExternDecl(
         name: "kk_sequence_of",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
