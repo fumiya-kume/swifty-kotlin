@@ -56,6 +56,8 @@ public enum StdlibSpecialCallKind: Equatable {
     case minOfInt
     case arrayConstructor
     case measureTimeMillis
+    case enumValues
+    case enumValueOf
 }
 
 public struct CatchClauseBinding: Equatable {

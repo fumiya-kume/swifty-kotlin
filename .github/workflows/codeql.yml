@@ -1,7 +1,6 @@
 # CodeQL Advanced Setup - Swift only
 # java-kotlin and c-cpp are excluded: .kt files are test fixtures, C/C++ is minimal (llvm_shim.h).
 # See: https://docs.github.com/en/code-security/code-scanning/troubleshooting-code-scanning/automatic-build-failed
-
 name: "CodeQL Advanced"
 
 on:

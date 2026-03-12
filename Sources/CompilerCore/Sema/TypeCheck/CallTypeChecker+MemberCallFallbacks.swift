@@ -220,10 +220,21 @@ extension CallTypeChecker {
             return nil
         }
 
-        let memberName = interner.resolve(calleeName)
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
-        guard isSupportedCollectionFallbackMember(memberName, isMapReceiver: isMapReceiver),
-              isValidCollectionFallbackArity(memberName, argCount: args.count, isMapReceiver: isMapReceiver)
+        let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        guard isSupportedCollectionFallbackMember(
+            calleeName,
+            isMapReceiver: isMapReceiver,
+            isMutableMapReceiver: isMutableMapReceiver,
+            interner: interner
+        ),
+        isValidCollectionFallbackArity(
+            calleeName,
+            argCount: args.count,
+            isMapReceiver: isMapReceiver,
+            isMutableMapReceiver: isMutableMapReceiver,
+            interner: interner
+        )
         else {
             return nil
         }
@@ -231,10 +242,12 @@ extension CallTypeChecker {
         // Provide contextual function type for collection HOF lambda inference.
         let receiverElementType = collectionFallbackElementType(receiverID: receiverID, sema: sema, interner: interner)
         if let expectation = collectionFallbackLambdaExpectation(
-            memberName: memberName,
+            memberName: calleeName,
             argCount: args.count,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
+            isMutableMapReceiver: isMutableMapReceiver,
+            interner: interner,
             sema: sema
         ),
             args.indices.contains(expectation.argumentIndex)
@@ -251,12 +264,12 @@ extension CallTypeChecker {
             )
         }
 
-        if isCollectionReturningMember(memberName, isMapReceiver: isMapReceiver) {
+        if isCollectionReturningMember(calleeName, isMapReceiver: isMapReceiver, interner: interner) {
             sema.bindings.markCollectionExpr(id)
         }
 
         let resultType = collectionFallbackResultType(
-            memberName: memberName,
+            memberName: calleeName,
             receiverElementType: receiverElementType,
             sema: sema,
             interner: interner
@@ -266,101 +279,188 @@ extension CallTypeChecker {
         return finalType
     }
 
-    func isSupportedCollectionFallbackMember(_ memberName: String, isMapReceiver: Bool) -> Bool {
+    func isSupportedCollectionFallbackMember(
+        _ memberName: InternedString,
+        isMapReceiver: Bool,
+        isMutableMapReceiver: Bool,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         let collectionMembers: Set = [
-            "size", "get", "contains",
-            "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
-            "count", "iterator",
-            "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
-            "any", "none", "all",
-            "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
-            "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
-            "asSequence", "toList", "toTypedArray", "take", "drop", "reversed", "sorted", "distinct", "flatten",
-            "chunked", "windowed",
-            "sortedDescending", "sortedByDescending", "sortedWith", "partition",
-            "filterIsInstance",
+            knownNames.size,
+            knownNames.isEmpty,
+            interner.intern("get"),
+            interner.intern("contains"),
+            interner.intern("first"),
+            interner.intern("last"),
+            interner.intern("indexOf"),
+            interner.intern("lastIndexOf"),
+            interner.intern("indexOfFirst"),
+            interner.intern("indexOfLast"),
+            interner.intern("count"),
+            interner.intern("iterator"),
+            interner.intern("map"),
+            interner.intern("filter"),
+            interner.intern("mapNotNull"),
+            interner.intern("filterNotNull"),
+            interner.intern("forEach"),
+            interner.intern("flatMap"),
+            interner.intern("any"),
+            interner.intern("none"),
+            interner.intern("all"),
+            interner.intern("fold"),
+            interner.intern("reduce"),
+            interner.intern("groupBy"),
+            interner.intern("sortedBy"),
+            interner.intern("find"),
+            interner.intern("associateBy"),
+            interner.intern("associateWith"),
+            interner.intern("associate"),
+            interner.intern("zip"),
+            interner.intern("unzip"),
+            interner.intern("withIndex"),
+            interner.intern("forEachIndexed"),
+            interner.intern("mapIndexed"),
+            interner.intern("sumOf"),
+            interner.intern("maxOrNull"),
+            interner.intern("minOrNull"),
+            interner.intern("asSequence"),
+            interner.intern("toList"),
+            interner.intern("toTypedArray"),
+            interner.intern("take"),
+            interner.intern("drop"),
+            interner.intern("reversed"),
+            interner.intern("sorted"),
+            interner.intern("distinct"),
+            interner.intern("flatten"),
+            interner.intern("chunked"),
+            interner.intern("windowed"),
+            interner.intern("sortedDescending"),
+            interner.intern("sortedByDescending"),
+            interner.intern("sortedWith"),
+            interner.intern("partition"),
+            interner.intern("filterIsInstance"),
         ]
-        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse", "plus", "minus"]
+        let mapOnlyMembers: Set = [
+            interner.intern("containsKey"),
+            interner.intern("mapValues"),
+            interner.intern("mapKeys"),
+            knownNames.getOrDefault,
+            knownNames.getOrElse,
+            interner.intern("plus"),
+            interner.intern("minus"),
+        ]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
+        }
+        if memberName == knownNames.getOrPut {
+            return isMutableMapReceiver
         }
         return collectionMembers.contains(memberName)
     }
 
-    func isCollectionReturningMember(_ memberName: String, isMapReceiver: Bool) -> Bool {
+    func isCollectionReturningMember(
+        _ memberName: InternedString,
+        isMapReceiver: Bool,
+        interner: StringInterner
+    ) -> Bool {
         let collectionReturningMembers: Set = [
-            "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
-            "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
-            "associate", "zip", "toList", "toTypedArray", "take", "drop", "reversed",
-            "sorted", "distinct", "flatten", "chunked", "windowed", "withIndex", "mapIndexed",
-            "sortedDescending", "sortedByDescending", "sortedWith",
-            "filterIsInstance",
+            interner.intern("asSequence"), interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
+            interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("associateBy"), interner.intern("associateWith"),
+            interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"),
+            interner.intern("sorted"), interner.intern("distinct"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
+            interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
+            interner.intern("filterIsInstance"),
         ]
-        if memberName == "mapValues" || memberName == "mapKeys" || memberName == "plus" || memberName == "minus" {
+        if memberName == interner.intern("mapValues") ||
+            memberName == interner.intern("mapKeys") ||
+            memberName == interner.intern("plus") ||
+            memberName == interner.intern("minus")
+        {
             return isMapReceiver
         }
         return collectionReturningMembers.contains(memberName)
     }
 
-    func isValidCollectionFallbackArity(_ memberName: String, argCount: Int, isMapReceiver: Bool) -> Bool {
+    func isValidCollectionFallbackArity(
+        _ memberName: InternedString,
+        argCount: Int,
+        isMapReceiver: Bool,
+        isMutableMapReceiver: Bool,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         switch memberName {
-        case "size", "isEmpty", "iterator", "asSequence", "toList", "toTypedArray", "reversed", "sorted", "distinct", "flatten", "withIndex", "maxOrNull", "minOrNull",
-             "sortedDescending", "filterIsInstance":
-            argCount == 0
-        case "filterNotNull", "unzip":
-            argCount == 0
-        case "get", "contains", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
-             "map", "filter", "mapNotNull", "forEach", "flatMap",
-             "any", "none", "all",
-             "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
-             "forEachIndexed", "mapIndexed", "sumOf", "chunked",
-             "sortedByDescending", "sortedWith", "partition":
-            argCount == 1
-        case "containsKey", "mapValues", "mapKeys":
-            isMapReceiver && argCount == 1
-        case "getOrDefault":
-            isMapReceiver && argCount == 2
-        case "getOrElse":
-            isMapReceiver && argCount == 1
-        case "plus", "minus":
-            isMapReceiver && argCount == 1
-        case "fold", "windowed":
-            argCount == 2
-        case "count", "first", "last":
-            argCount == 0 || argCount == 1
+        case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
+             interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
+             interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
+             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"):
+            return argCount == 0
+        case interner.intern("filterNotNull"), interner.intern("unzip"):
+            return argCount == 0
+        case interner.intern("get"), interner.intern("contains"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
+             interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
+             interner.intern("any"), interner.intern("none"), interner.intern("all"),
+             interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
+             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
+             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
+            return argCount == 1
+        case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
+            return isMapReceiver && argCount == 1
+        case knownNames.getOrDefault:
+            return isMapReceiver && argCount == 2
+        case knownNames.getOrElse:
+            return isMapReceiver && argCount == 1
+        case knownNames.getOrPut:
+            return isMutableMapReceiver && argCount == 2
+        case interner.intern("plus"), interner.intern("minus"):
+            return isMapReceiver && argCount == 1
+        case interner.intern("fold"), interner.intern("windowed"):
+            return argCount == 2
+        case interner.intern("count"), interner.intern("first"), interner.intern("last"):
+            return argCount == 0 || argCount == 1
         default:
-            true
+            return true
         }
     }
 
     func collectionFallbackResultType(
-        memberName: String,
+        memberName: InternedString,
         receiverElementType: TypeID,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
-        let intReturningMembers: Set = ["size", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast", "count", "sumOf"]
+        let knownNames = KnownCompilerNames(interner: interner)
+        let intReturningMembers: Set = [
+            interner.intern("size"),
+            interner.intern("indexOf"),
+            interner.intern("lastIndexOf"),
+            interner.intern("indexOfFirst"),
+            interner.intern("indexOfLast"),
+            interner.intern("count"),
+            interner.intern("sumOf"),
+        ]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))
         }
 
         let boolReturningMembers: Set = [
-            "isEmpty", "contains", "containsKey",
-            "any", "none", "all",
+            knownNames.isEmpty, interner.intern("contains"), interner.intern("containsKey"),
+            interner.intern("any"), interner.intern("none"), interner.intern("all")
         ]
         if boolReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.boolean, .nonNull))
         }
 
-        if memberName == "forEach" || memberName == "forEachIndexed" {
+        if memberName == interner.intern("forEach") || memberName == interner.intern("forEachIndexed") {
             return sema.types.unitType
         }
 
-        if memberName == "find" {
+        if memberName == interner.intern("find") {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        if memberName == "plus" || memberName == "minus" {
+        if memberName == interner.intern("plus") || memberName == interner.intern("minus") {
             // plus/minus return the same Map type as the receiver.
             // receiverElementType for maps is Map.Entry<K,V>, so reconstruct Map<K,V>.
             if case let .classType(entryType) = sema.types.kind(of: receiverElementType),
@@ -383,7 +483,7 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == "getOrDefault" || memberName == "getOrElse" {
+        if memberName == knownNames.getOrDefault || memberName == knownNames.getOrElse || memberName == knownNames.getOrPut {
             if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                classType.args.count >= 2
             {
@@ -395,11 +495,11 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == "maxOrNull" || memberName == "minOrNull" {
+        if memberName == interner.intern("maxOrNull") || memberName == interner.intern("minOrNull") {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        if memberName == "toList",
+        if memberName == interner.intern("toList"),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
             return sema.types.make(.classType(ClassType(
@@ -409,7 +509,7 @@ extension CallTypeChecker {
             )))
         }
 
-        if memberName == "withIndex",
+        if memberName == interner.intern("withIndex"),
            let iterableSymbol = sema.symbols.lookup(fqName: [
                interner.intern("kotlin"),
                interner.intern("collections"),
@@ -437,27 +537,61 @@ extension CallTypeChecker {
     }
 
     func collectionFallbackLambdaExpectation(
-        memberName: String,
+        memberName: InternedString,
         argCount: Int,
         receiverElementType: TypeID,
         isMapReceiver: Bool,
+        isMutableMapReceiver: Bool,
+        interner: StringInterner,
         sema: SemaModule
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
-        let boolOneParamMembers: Set = ["filter", "any", "none", "all", "count", "first", "last", "find", "indexOfFirst", "indexOfLast", "partition"]
-        let oneParamMembers: Set = [
-            "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
-            "sortedByDescending", "partition",
+        let mapValues = interner.intern("mapValues")
+        let mapKeys = interner.intern("mapKeys")
+        let boolOneParamMembers: Set = [
+            interner.intern("filter"),
+            interner.intern("any"),
+            interner.intern("none"),
+            interner.intern("all"),
+            interner.intern("count"),
+            interner.intern("first"),
+            interner.intern("last"),
+            interner.intern("find"),
+            interner.intern("indexOfFirst"),
+            interner.intern("indexOfLast"),
+            interner.intern("partition"),
         ]
-        if memberName == "mapValues" || memberName == "mapKeys" {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let oneParamMembers: Set = [
+            interner.intern("map"),
+            interner.intern("filter"),
+            interner.intern("mapNotNull"),
+            interner.intern("forEach"),
+            interner.intern("flatMap"),
+            interner.intern("any"),
+            interner.intern("none"),
+            interner.intern("all"),
+            interner.intern("groupBy"),
+            interner.intern("sortedBy"),
+            interner.intern("count"),
+            interner.intern("first"),
+            interner.intern("last"),
+            interner.intern("find"),
+            interner.intern("associateBy"),
+            interner.intern("associateWith"),
+            interner.intern("associate"),
+            interner.intern("sumOf"),
+            interner.intern("sortedByDescending"),
+            interner.intern("partition"),
+        ]
+        if memberName == mapValues || memberName == mapKeys {
             guard isMapReceiver, argCount == 1 else {
                 return nil
             }
         }
-        if oneParamMembers.contains(memberName) || memberName == "mapValues" || memberName == "mapKeys", argCount == 1 {
+        if oneParamMembers.contains(memberName) || memberName == mapValues || memberName == mapKeys, argCount == 1 {
             let lambdaReturnType = boolOneParamMembers.contains(memberName)
                 ? sema.types.make(.primitive(.boolean, .nonNull))
-                : memberName == "sumOf"
+                : memberName == interner.intern("sumOf")
                 ? sema.types.intType
                 : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
@@ -469,8 +603,8 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == "forEachIndexed" || memberName == "mapIndexed", argCount == 1 {
-            let lambdaReturnType = memberName == "forEachIndexed" ? sema.types.unitType : sema.types.anyType
+        if memberName == interner.intern("forEachIndexed") || memberName == interner.intern("mapIndexed"), argCount == 1 {
+            let lambdaReturnType = memberName == interner.intern("forEachIndexed") ? sema.types.unitType : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType, receiverElementType],
                 returnType: lambdaReturnType,
@@ -480,7 +614,7 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == "fold", argCount == 2 {
+        if memberName == interner.intern("fold"), argCount == 2 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
@@ -490,7 +624,7 @@ extension CallTypeChecker {
             return (argumentIndex: 1, expectedType: expectedType)
         }
 
-        if memberName == "reduce", argCount == 1 {
+        if memberName == interner.intern("reduce"), argCount == 1 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
@@ -500,7 +634,7 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == "sortedWith", argCount == 1 {
+        if memberName == interner.intern("sortedWith"), argCount == 1 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType, receiverElementType],
                 returnType: sema.types.intType,
@@ -510,7 +644,27 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == "getOrElse", isMapReceiver, argCount == 1 {
+        if memberName == knownNames.getOrPut, isMutableMapReceiver, argCount == 2 {
+            let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: receiverElementType),
+                                       classType.args.count >= 2
+            {
+                switch classType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: valueType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        if memberName == knownNames.getOrElse, isMapReceiver, argCount == 1 {
             let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                                        classType.args.count >= 2
             {
@@ -618,6 +772,21 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
+    }
+
+    private func isMutableMapCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMutableMapSymbol(symbol) && classType.args.count == 2
     }
 
     // MARK: - Array member fallback (STDLIB-087/088/089)
