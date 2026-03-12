@@ -271,6 +271,7 @@ extension CallTypeChecker {
         let resultType = collectionFallbackResultType(
             memberName: calleeName,
             receiverElementType: receiverElementType,
+            isMapReceiver: isMapReceiver,
             sema: sema,
             interner: interner
         )
@@ -341,12 +342,16 @@ extension CallTypeChecker {
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
         ]
+        let collectionSpecificMembers: Set = [
+            interner.intern("getOrNull"),
+            interner.intern("elementAtOrNull"),
+            knownNames.getOrElse,
+        ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
             knownNames.getOrDefault,
-            knownNames.getOrElse,
         ]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
@@ -354,7 +359,7 @@ extension CallTypeChecker {
         if memberName == knownNames.getOrPut {
             return isMutableMapReceiver
         }
-        return collectionMembers.contains(memberName)
+        return collectionMembers.contains(memberName) || collectionSpecificMembers.contains(memberName)
     }
 
     func isCollectionReturningMember(
@@ -392,7 +397,8 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
-        case interner.intern("get"), interner.intern("contains"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
+        case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
+             interner.intern("contains"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
@@ -404,7 +410,7 @@ extension CallTypeChecker {
         case knownNames.getOrDefault:
             return isMapReceiver && argCount == 2
         case knownNames.getOrElse:
-            return isMapReceiver && argCount == 1
+            return isMapReceiver ? argCount == 1 : argCount == 2
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
         case interner.intern("fold"), interner.intern("windowed"):
@@ -419,6 +425,7 @@ extension CallTypeChecker {
     func collectionFallbackResultType(
         memberName: InternedString,
         receiverElementType: TypeID,
+        isMapReceiver: Bool,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
@@ -450,6 +457,14 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("find") {
             return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == interner.intern("getOrNull") || memberName == interner.intern("elementAtOrNull") {
+            return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == knownNames.getOrElse, !isMapReceiver {
+            return receiverElementType
         }
 
         if memberName == knownNames.getOrDefault || memberName == knownNames.getOrElse || memberName == knownNames.getOrPut {
@@ -651,6 +666,17 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // List.getOrElse(index, { default }) — lambda takes Int (index), returns element type
+        if memberName == knownNames.getOrElse, !isMapReceiver, argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType],
+                returnType: receiverElementType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         return nil

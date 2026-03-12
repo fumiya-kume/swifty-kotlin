@@ -1063,6 +1063,95 @@ extension DataFlowSemaPhase {
         registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
         registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
 
+
+        // getOrNull / elementAtOrNull / getOrElse (STDLIB-212)
+        do {
+            let getOrNullName = interner.intern("getOrNull")
+            let getOrNullFQName = listFQName + [getOrNullName]
+            if symbols.lookup(fqName: getOrNullFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: getOrNullName,
+                    fqName: getOrNullFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_getOrNull", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType],
+                        returnType: nullableElementType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            let elementAtOrNullName = interner.intern("elementAtOrNull")
+            let elementAtOrNullFQName = listFQName + [elementAtOrNullName]
+            if symbols.lookup(fqName: elementAtOrNullFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: elementAtOrNullName,
+                    fqName: elementAtOrNullFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_elementAtOrNull", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType],
+                        returnType: nullableElementType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            let getOrElseLambdaType = types.make(.functionType(FunctionType(
+                params: [types.intType],
+                returnType: listTypeParamType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let getOrElseName = interner.intern("getOrElse")
+            let getOrElseFQName = listFQName + [getOrElseName]
+            if symbols.lookup(fqName: getOrElseFQName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: getOrElseName,
+                    fqName: getOrElseFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName("kk_list_getOrElse", for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [types.intType, getOrElseLambdaType],
+                        returnType: listTypeParamType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
+
+        // firstOrNull / lastOrNull no-predicate (STDLIB-210)
+        registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
+        registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
+
         // indexOf / lastIndexOf (non-HOF, element argument)
         let indexOfName = interner.intern("indexOf")
         let indexOfFQName = listFQName + [indexOfName]
