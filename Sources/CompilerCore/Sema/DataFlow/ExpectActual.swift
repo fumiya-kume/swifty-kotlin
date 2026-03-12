@@ -85,8 +85,13 @@ extension DataFlowSemaPhase {
             let expectTPs = types.nominalTypeParameterSymbols(for: expect.id)
             let actualTPs = types.nominalTypeParameterSymbols(for: actual.id)
             guard expectTPs.count == actualTPs.count else { return false }
-            // Check each type parameter's upper bounds match
-            for (eTP, aTP) in zip(expectTPs, actualTPs) {
+            // Check each type parameter's variance and upper bounds match
+            let expectVariances = types.nominalTypeParameterVariances(for: expect.id)
+            let actualVariances = types.nominalTypeParameterVariances(for: actual.id)
+            for (index, (eTP, aTP)) in zip(expectTPs, actualTPs).enumerated() {
+                let eVar = index < expectVariances.count ? expectVariances[index] : TypeVariance.invariant
+                let aVar = index < actualVariances.count ? actualVariances[index] : TypeVariance.invariant
+                guard eVar == aVar else { return false }
                 guard symbols.typeParameterUpperBounds(for: eTP) == symbols.typeParameterUpperBounds(for: aTP) else {
                     return false
                 }

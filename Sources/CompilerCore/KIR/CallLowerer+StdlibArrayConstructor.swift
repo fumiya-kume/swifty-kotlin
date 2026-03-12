@@ -117,7 +117,7 @@ extension CallLowerer {
                     callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments + [indexExpr],
                     result: actionResult,
-                    canThrow: false,
+                    canThrow: true,
                     thrownResult: nil
                 ))
                 lambdaResultExpr = actionResult
