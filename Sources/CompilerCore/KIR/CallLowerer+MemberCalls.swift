@@ -83,7 +83,7 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
-        "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
+        "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
         "putAll",
         "maxByOrNull", "minByOrNull",
         "plus", "minus",
@@ -2810,6 +2810,8 @@ extension CallLowerer {
             return interner.intern("kk_map_all")
         case "none":
             return interner.intern("kk_map_none")
+        case "getValue":
+            return interner.intern("kk_map_getValue")
         case "getOrDefault":
             return interner.intern("kk_map_getOrDefault")
         case "getOrElse":

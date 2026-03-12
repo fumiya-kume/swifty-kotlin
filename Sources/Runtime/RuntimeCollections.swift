@@ -687,6 +687,24 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_map_getValue")
+public func kk_map_getValue(_ mapRaw: Int, _ key: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
+        return 0
+    }
+    for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+        guard idx < map.values.count else {
+            outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
+            return 0
+        }
+        return map.values[idx]
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: Key is not in the map.")
+    return 0
+}
+
 @_cdecl("kk_map_getOrDefault")
 public func kk_map_getOrDefault(_ mapRaw: Int, _ key: Int, _ defaultValue: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {

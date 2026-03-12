@@ -460,6 +460,7 @@ extension CallTypeChecker {
             interner.intern("containsKey"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
+            knownNames.getValue,
             knownNames.getOrDefault,
             interner.intern("maxByOrNull"),
             interner.intern("minByOrNull"),
@@ -544,6 +545,8 @@ extension CallTypeChecker {
         case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return isMapReceiver && argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
+            return isMapReceiver && argCount == 1
+        case knownNames.getValue:
             return isMapReceiver && argCount == 1
         case knownNames.getOrDefault:
             return isMapReceiver && argCount == 2
@@ -659,7 +662,8 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == knownNames.getOrDefault
+        if memberName == knownNames.getValue
+            || memberName == knownNames.getOrDefault
             || memberName == knownNames.getOrPut
             || (memberName == knownNames.getOrElse && isMapReceiver)
         {
