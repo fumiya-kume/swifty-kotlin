@@ -246,6 +246,16 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertTrue(thrownOutput.contains("NumberFormatException"))
     }
 
+    func testStringToIntRadixThrowsOnInvalidRadix() {
+        var thrown = 0
+
+        _ = kk_string_toInt_radix(rawFromRuntimeString("10"), 1, &thrown)
+
+        XCTAssertNotEqual(thrown, 0)
+        let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertTrue(thrownOutput.contains("IllegalArgumentException"))
+    }
+
     func testStringToDoubleParsesSpecialValuesAndThrowsOnInvalidInput() {
         var thrown = 0
         let parsed = kk_string_toDouble(rawFromRuntimeString("  -Infinity "), &thrown)

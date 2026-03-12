@@ -419,8 +419,14 @@ public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int
 public func kk_string_toInt_radix(_ strRaw: Int, _ radix: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     let source = runtimeStringFromRaw(strRaw) ?? ""
-    let clampedRadix = max(2, min(36, radix))
-    guard let value = Int32(source, radix: clampedRadix) else {
+    guard (2...36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return 0
+    }
+    guard let value = Int32(source, radix: radix) else {
         runtimeSetThrown(
             outThrown,
             message: "NumberFormatException: For input string: \"\(source)\""
