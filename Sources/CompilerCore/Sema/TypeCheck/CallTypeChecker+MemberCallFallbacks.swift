@@ -280,7 +280,7 @@ extension CallTypeChecker {
             "sortedDescending", "sortedByDescending", "sortedWith", "partition",
             "filterIsInstance",
         ]
-        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys"]
+        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse"]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
@@ -318,6 +318,10 @@ extension CallTypeChecker {
             argCount == 1
         case "containsKey", "mapValues", "mapKeys":
             isMapReceiver && argCount == 1
+        case "getOrDefault":
+            isMapReceiver && argCount == 2
+        case "getOrElse":
+            isMapReceiver && argCount == 1
         case "fold", "windowed":
             argCount == 2
         case "count", "first", "last":
@@ -352,6 +356,19 @@ extension CallTypeChecker {
 
         if memberName == "find" {
             return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == "getOrDefault" || memberName == "getOrElse" {
+            if case let .classType(classType) = sema.types.kind(of: receiverElementType),
+               classType.args.count >= 2
+            {
+                let valueType = switch classType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+                return valueType
+            }
+            return sema.types.anyType
         }
 
         if memberName == "maxOrNull" || memberName == "minOrNull" {
@@ -463,6 +480,26 @@ extension CallTypeChecker {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType, receiverElementType],
                 returnType: sema.types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == "getOrElse", isMapReceiver, argCount == 1 {
+            let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: receiverElementType),
+                                       classType.args.count >= 2
+            {
+                switch classType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: valueType,
                 isSuspend: false,
                 nullability: .nonNull
             )))

@@ -153,6 +153,21 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
 }
 
+@_cdecl("kk_map_getOrElse")
+public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let map = runtimeMapBox(from: mapRaw) {
+        for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+            if idx < map.values.count { return map.values[idx] }
+            break
+        }
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    return result
+}
+
 @_cdecl("kk_map_mapValues")
 public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {

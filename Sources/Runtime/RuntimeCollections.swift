@@ -368,6 +368,18 @@ public func kk_map_get(_ mapRaw: Int, _ key: Int) -> Int {
     return runtimeNullSentinelInt
 }
 
+@_cdecl("kk_map_getOrDefault")
+public func kk_map_getOrDefault(_ mapRaw: Int, _ key: Int, _ defaultValue: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return defaultValue
+    }
+    for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+        guard idx < map.values.count else { return defaultValue }
+        return map.values[idx]
+    }
+    return defaultValue
+}
+
 @_cdecl("kk_map_contains_key")
 public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {

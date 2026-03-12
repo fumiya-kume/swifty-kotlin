@@ -78,6 +78,8 @@ public extension RuntimeABIExterns {
         kk_map_forEach,
         kk_map_map,
         kk_map_filter,
+        kk_map_getOrDefault,
+        kk_map_getOrElse,
         kk_map_mapValues,
         kk_map_mapKeys,
         kk_map_keys,
@@ -320,6 +322,18 @@ public extension RuntimeABIExterns {
     static let kk_map_filter = ExternDecl(
         name: "kk_map_filter",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_getOrDefault = ExternDecl(
+        name: "kk_map_getOrDefault",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_getOrElse = ExternDecl(
+        name: "kk_map_getOrElse",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
