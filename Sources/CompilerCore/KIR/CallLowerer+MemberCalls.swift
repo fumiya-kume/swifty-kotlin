@@ -83,7 +83,7 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
-        "getOrDefault", "getOrElse", "getOrPut",
+        "getOrDefault", "getOrElse", "getOrPut", "putAll",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -2491,6 +2491,11 @@ extension CallLowerer {
                 return nil
             }
             return interner.intern("kk_mutable_map_getOrPut")
+        case "putAll":
+            guard knownNames.isMutableMapSymbol(symbol) else {
+                return nil
+            }
+            return interner.intern("kk_mutable_map_putAll")
         default:
             return nil
         }

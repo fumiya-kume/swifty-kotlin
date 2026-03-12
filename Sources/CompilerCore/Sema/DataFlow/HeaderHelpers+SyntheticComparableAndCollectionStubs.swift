@@ -2416,6 +2416,7 @@ extension DataFlowSemaPhase {
             ("put", [keyType, valueType], types.makeNullable(valueType), "kk_mutable_map_put", [.synthetic]),
             ("remove", [keyType], types.makeNullable(valueType), "kk_mutable_map_remove", [.synthetic]),
             ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
+            ("putAll", [types.make(.classType(ClassType(classSymbol: mapInterfaceSymbol, args: [.invariant(keyType), .invariant(valueType)], nullability: .nonNull)))], types.unitType, "kk_mutable_map_putAll", [.synthetic]),
         ]
 
         for member in members {

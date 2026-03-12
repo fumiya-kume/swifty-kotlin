@@ -267,6 +267,7 @@ extension ABILoweringPass {
             interner.intern("kk_system_currentTimeMillis"),
             interner.intern("kk_mutable_map_put"),
             interner.intern("kk_mutable_map_remove"),
+            interner.intern("kk_mutable_map_putAll"),
             interner.intern("kk_list_zip"),
             interner.intern("kk_list_unzip"),
             interner.intern("kk_list_withIndex"),
