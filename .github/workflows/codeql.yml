@@ -1,0 +1,60 @@
+# CodeQL Advanced Setup - Swift only
+# java-kotlin and c-cpp are excluded: .kt files are test fixtures, C/C++ is minimal (llvm_shim.h).
+# See: https://docs.github.com/en/code-security/code-scanning/troubleshooting-code-scanning/automatic-build-failed
+
+name: "CodeQL Advanced"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  schedule:
+    - cron: '45 8 * * 0'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  analyze:
+    name: Analyze (swift)
+    runs-on: macos-15
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "6.2"
+
+      - name: Install LLVM
+        run: brew install llvm
+
+      - name: Configure LLVM paths
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "C_INCLUDE_PATH=${LLVM_PREFIX}/include" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=${LLVM_PREFIX}/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "${LLVM_PREFIX}/bin" >> "$GITHUB_PATH"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: swift
+          build-mode: manual
+
+      - name: Build (manual)
+        run: swift build -Xswiftc -swift-version -Xswiftc 6
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:swift"
