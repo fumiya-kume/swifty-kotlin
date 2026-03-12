@@ -299,6 +299,22 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         )
     }
 
+    func testMapPlusNormalizesMismatchedEntriesBeforeUpdate() {
+        let corruptedMap = registerRuntimeObject(RuntimeMapBox(keys: [1, 2, 3], values: [10, 20]))
+        let updated = kk_map_plus(corruptedMap, kk_pair_new(3, 99))
+
+        XCTAssertEqual(mapKeys(updated), [1, 2, 3])
+        XCTAssertEqual(listElements(kk_map_values(updated)), [10, 20, 99])
+    }
+
+    func testMapMinusNormalizesMismatchedEntriesBeforeRemoval() {
+        let corruptedMap = registerRuntimeObject(RuntimeMapBox(keys: [1, 2, 3], values: [10, 20]))
+        let updated = kk_map_minus(corruptedMap, 2)
+
+        XCTAssertEqual(mapKeys(updated), [1])
+        XCTAssertEqual(listElements(kk_map_values(updated)), [10])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)

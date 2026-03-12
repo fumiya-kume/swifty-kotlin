@@ -486,8 +486,7 @@ public func kk_map_plus(_ mapRaw: Int, _ pairRaw: Int) -> Int {
     var keys: [Int] = []
     var values: [Int] = []
     if let map = runtimeMapBox(from: mapRaw) {
-        keys = Array(map.keys)
-        values = Array(map.values)
+        (keys, values) = runtimeNormalizeMapEntries(keys: map.keys, values: map.values)
     }
     if let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
        let pairBox = tryCast(pointer, to: RuntimePairBox.self)
@@ -509,13 +508,14 @@ public func kk_map_minus(_ mapRaw: Int, _ key: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
         return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
     }
+    let (normalizedKeys, normalizedValues) = runtimeNormalizeMapEntries(keys: map.keys, values: map.values)
     var keys: [Int] = []
     var values: [Int] = []
-    for (idx, mapKey) in map.keys.enumerated() {
+    for (idx, mapKey) in normalizedKeys.enumerated() {
         if !runtimeValuesEqual(mapKey, key) {
             keys.append(mapKey)
-            if idx < map.values.count {
-                values.append(map.values[idx])
+            if idx < normalizedValues.count {
+                values.append(normalizedValues[idx])
             }
         }
     }
