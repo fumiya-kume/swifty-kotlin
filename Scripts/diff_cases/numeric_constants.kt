@@ -1,0 +1,16 @@
+fun main() {
+    println(Int.MAX_VALUE)
+    println(Int.MIN_VALUE)
+    println(Long.MAX_VALUE)
+    println(Long.MIN_VALUE)
+    println(Short.MAX_VALUE)
+    println(Short.MIN_VALUE)
+    println(Byte.MAX_VALUE)
+    println(Byte.MIN_VALUE)
+    println(Double.NaN)
+    println(Double.POSITIVE_INFINITY)
+    println(Double.NEGATIVE_INFINITY)
+    println(Float.NaN)
+    println(Float.POSITIVE_INFINITY)
+    println(Float.NEGATIVE_INFINITY)
+}

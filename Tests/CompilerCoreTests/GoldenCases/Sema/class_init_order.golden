@@ -356,12 +356,20 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=test.Foo vis=public flags=_
-symbol s359 kind=constructor fq=test.Foo.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=property fq=test.Foo.a vis=public flags=_ type=Int
-symbol s361 kind=property fq=test.Foo.b vis=public flags=_ type=Int
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=test.Foo vis=public flags=_
+symbol s367 kind=constructor fq=test.Foo.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=property fq=test.Foo.a vis=public flags=_ type=Int
+symbol s369 kind=property fq=test.Foo.b vis=public flags=_ type=Int
 file f0 package=test
-  decl d2 class Foo sym=s358
+  decl d2 class Foo sym=s366
 expr e0 int(1) type=Int
 expr e1 int(2) type=Int
 expr e2 name(println) type=_

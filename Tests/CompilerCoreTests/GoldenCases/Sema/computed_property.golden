@@ -356,16 +356,24 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s361 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s362 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.Widget vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
+symbol s369 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
+symbol s370 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
 file f0 package=golden.sema
-  decl d2 class Widget sym=s358
+  decl d2 class Widget sym=s366
 expr e0 string(hello) type=String
 expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-40361
-expr e3 localAssign field value=e2 type=Unit ref=s362
-expr e4 name(field) type=Int ref=s362
+expr e2 name(value) type=Int ref=s-40369
+expr e3 localAssign field value=e2 type=Unit ref=s370
+expr e4 name(field) type=Int ref=s370
 expr e5 int(0) type=Int

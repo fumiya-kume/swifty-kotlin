@@ -356,21 +356,29 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=property fq=golden.sema.name vis=public flags=mutable type=String
-symbol s359 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=property fq=golden.sema.name vis=public flags=mutable type=String
+symbol s367 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property name var=1 sym=s358
-  decl d1 fun main suspend=0 inline=0 sym=s359
+  decl d0 property name var=1 sym=s366
+  decl d1 fun main suspend=0 inline=0 sym=s367
 expr e0 name(Delegates) type=Class#8 ref=s8
 expr e1 string(initial) type=String
 expr e2 memberCall recv=e0 callee=observable args=[_:e1] type=Class#4 call=s9 map=[0->0] targs=[]
 expr e3 name(prop) type=_
 expr e4 name(println) type=_
-expr e5 name(name) type=String ref=s358
+expr e5 name(name) type=String ref=s366
 expr e6 call callee=e4 args=[_:e5] type=Unit call=s337 map=[0->0] targs=[]
 expr e7 name(name) type=_
 expr e8 string(updated) type=String
-expr e9 localAssign name value=e8 type=Unit ref=s358
+expr e9 localAssign name value=e8 type=Unit ref=s366
 expr e10 name(println) type=_
-expr e11 name(name) type=String ref=s358
+expr e11 name(name) type=String ref=s366
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s337 map=[0->0] targs=[]

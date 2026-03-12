@@ -511,6 +511,48 @@ extension CallLowerer {
             }
         }
 
+        // Int.coerceIn(min, max) (STDLIB-150)
+        if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_int_coerceIn"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Int.coerceAtLeast(min) / Int.coerceAtMost(max) (STDLIB-150)
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let longType = sema.types.make(.primitive(.long, .nonNull))
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                    let runtimeName = calleeStr == "coerceAtLeast" ? "kk_int_coerceAtLeast" : "kk_int_coerceAtMost"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeName),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
            args.count == 1
@@ -540,6 +582,7 @@ extension CallLowerer {
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -548,20 +591,33 @@ extension CallLowerer {
             let conversionCallee: InternedString? = switch (calleeStr, nonNullReceiverType, nonNullResultType) {
             case ("toInt", uintType, intType): interner.intern("kk_uint_to_int")
             case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
+            case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
+            case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
             case ("toInt", intType, intType), ("toInt", longType, intType): nil // identity
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
             case ("toLong", intType, longType): interner.intern("kk_int_to_long")
             case ("toLong", uintType, longType): interner.intern("kk_uint_to_long")
+            case ("toLong", doubleType, longType): interner.intern("kk_double_to_long")
+            case ("toLong", floatType, longType): interner.intern("kk_float_to_long")
             case ("toLong", longType, longType), ("toLong", ulongType, longType): nil // identity
             case ("toULong", intType, ulongType): interner.intern("kk_int_to_ulong")
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
             case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
+            case ("toFloat", longType, floatType): interner.intern("kk_long_to_float")
+            case ("toFloat", doubleType, floatType): interner.intern("kk_double_to_float")
+            case ("toFloat", floatType, floatType): nil // identity
+            case ("toDouble", intType, doubleType): interner.intern("kk_int_to_double_bits")
+            case ("toDouble", longType, doubleType): interner.intern("kk_long_to_double")
+            case ("toDouble", floatType, doubleType): interner.intern("kk_float_to_double_bits")
+            case ("toDouble", doubleType, doubleType): nil // identity
             case ("toByte", intType, intType): interner.intern("kk_int_to_byte")
+            case ("toByte", longType, intType): interner.intern("kk_long_to_byte")
             case ("toShort", intType, intType): interner.intern("kk_int_to_short")
+            case ("toShort", longType, intType): interner.intern("kk_long_to_short")
             default: nil
             }
             if let callee = conversionCallee {
@@ -575,9 +631,9 @@ extension CallLowerer {
                 ))
                 return result
             }
-            if ["toInt", "toUInt", "toLong", "toULong"].contains(calleeStr),
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType,
-               nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+               nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
@@ -636,16 +692,15 @@ extension CallLowerer {
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
             let nonNullResultType = sema.types.makeNonNullable(resultType)
             // Extract element type from List<R>
-            let elementType: TypeID
-            if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
-               let firstArg = classType.args.first
+            let elementType: TypeID = if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
+                                         let firstArg = classType.args.first
             {
-                elementType = switch firstArg {
+                switch firstArg {
                 case let .invariant(t), let .out(t), let .in(t): t
                 case .star: sema.types.anyType
                 }
             } else {
-                elementType = sema.types.anyType
+                sema.types.anyType
             }
             let encodedToken = RuntimeTypeCheckToken.encode(type: elementType, sema: sema, interner: interner)
             let intType = sema.types.make(.primitive(.int, .nonNull))
@@ -812,6 +867,17 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
                 let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "toInt" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toInt_radix"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "substring" {
                     let hasEndExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
                     instructions.append(.constValue(result: hasEndExpr, value: .intLiteral(0)))

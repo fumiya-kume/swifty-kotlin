@@ -356,25 +356,33 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=interface fq=golden.sema.Greeter vis=public flags=_
-symbol s359 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#358 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s360 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
-symbol s361 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#360 params=[] ret=Class#360 suspend=0 defaults=[] vararg=[]
-symbol s362 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#360 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s363 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
-symbol s364 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#363 params=[] ret=Class#363 suspend=0 defaults=[] vararg=[]
-symbol s365 kind=interface fq=golden.sema.Animal vis=public flags=_
-symbol s366 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#365 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s367 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#365 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s368 kind=class fq=golden.sema.Dog vis=public flags=_
-symbol s369 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#368 params=[] ret=Class#368 suspend=0 defaults=[] vararg=[]
-symbol s370 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#368 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=interface fq=golden.sema.Greeter vis=public flags=_
+symbol s367 kind=function fq=golden.sema.Greeter.greet vis=public flags=_ sig=recv=Class#366 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s368 kind=class fq=golden.sema.FormalGreeter vis=public flags=_
+symbol s369 kind=constructor fq=golden.sema.FormalGreeter.<init> vis=public flags=_ sig=recv=Class#368 params=[] ret=Class#368 suspend=0 defaults=[] vararg=[]
+symbol s370 kind=function fq=golden.sema.FormalGreeter.greet vis=public flags=overrideMember sig=recv=Class#368 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s371 kind=class fq=golden.sema.DefaultGreeter vis=public flags=_
+symbol s372 kind=constructor fq=golden.sema.DefaultGreeter.<init> vis=public flags=_ sig=recv=Class#371 params=[] ret=Class#371 suspend=0 defaults=[] vararg=[]
+symbol s373 kind=interface fq=golden.sema.Animal vis=public flags=_
+symbol s374 kind=function fq=golden.sema.Animal.name vis=public flags=abstractType sig=recv=Class#373 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s375 kind=function fq=golden.sema.Animal.sound vis=public flags=_ sig=recv=Class#373 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s376 kind=class fq=golden.sema.Dog vis=public flags=_
+symbol s377 kind=constructor fq=golden.sema.Dog.<init> vis=public flags=_ sig=recv=Class#376 params=[] ret=Class#376 suspend=0 defaults=[] vararg=[]
+symbol s378 kind=function fq=golden.sema.Dog.name vis=public flags=overrideMember sig=recv=Class#376 params=[] ret=String suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d1 interface Greeter sym=s358
-  decl d3 class FormalGreeter sym=s360
-  decl d4 class DefaultGreeter sym=s363
-  decl d7 interface Animal sym=s365
-  decl d9 class Dog sym=s368
+  decl d1 interface Greeter sym=s366
+  decl d3 class FormalGreeter sym=s368
+  decl d4 class DefaultGreeter sym=s371
+  decl d7 interface Animal sym=s373
+  decl d9 class Dog sym=s376
 expr e0 string(Hello) type=String
 expr e1 string(Good day) type=String
 expr e2 string(...) type=String

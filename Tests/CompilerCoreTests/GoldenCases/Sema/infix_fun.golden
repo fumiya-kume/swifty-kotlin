@@ -356,15 +356,23 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s359 kind=valueParameter fq=golden.sema.add.$358.other vis=private flags=_
-symbol s360 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.add vis=public flags=_ sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s367 kind=valueParameter fq=golden.sema.add.$366.other vis=private flags=_
+symbol s368 kind=function fq=golden.sema.useInfix vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun add suspend=0 inline=0 sym=s358
-  decl d1 fun useInfix suspend=0 inline=0 sym=s360
+  decl d0 fun add suspend=0 inline=0 sym=s366
+  decl d1 fun useInfix suspend=0 inline=0 sym=s368
 expr e0 this type=Int
-expr e1 name(other) type=Int ref=s359
+expr e1 name(other) type=Int ref=s367
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 int(1) type=Int
 expr e4 int(2) type=Int
-expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s358 map=[0->0] targs=[]
+expr e5 memberCall recv=e3 callee=add args=[_:e4] type=Int call=s366 map=[0->0] targs=[]

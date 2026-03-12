@@ -356,41 +356,49 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.useTrim vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s359 kind=function fq=golden.sema.useSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#23<String> suspend=0 defaults=[] vararg=[]
-symbol s360 kind=function fq=golden.sema.useReplace vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s361 kind=function fq=golden.sema.useStartsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s362 kind=function fq=golden.sema.useEndsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s363 kind=function fq=golden.sema.useContains vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s364 kind=function fq=golden.sema.useToInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s365 kind=function fq=golden.sema.useToDouble vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
-symbol s366 kind=function fq=golden.sema.useFormat vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s367 kind=function fq=golden.sema.useSubstring1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s368 kind=function fq=golden.sema.useSubstring2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s369 kind=function fq=golden.sema.useLowercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s370 kind=function fq=golden.sema.useUppercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s371 kind=function fq=golden.sema.useToIntOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s372 kind=function fq=golden.sema.useToIntOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
-symbol s373 kind=function fq=golden.sema.useToDoubleOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
-symbol s374 kind=function fq=golden.sema.useToDoubleOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.useTrim vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s367 kind=function fq=golden.sema.useSplit vis=public flags=_ sig=recv=_ params=[] ret=Class#23<String> suspend=0 defaults=[] vararg=[]
+symbol s368 kind=function fq=golden.sema.useReplace vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s369 kind=function fq=golden.sema.useStartsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s370 kind=function fq=golden.sema.useEndsWith vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s371 kind=function fq=golden.sema.useContains vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s372 kind=function fq=golden.sema.useToInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s373 kind=function fq=golden.sema.useToDouble vis=public flags=_ sig=recv=_ params=[] ret=Double suspend=0 defaults=[] vararg=[]
+symbol s374 kind=function fq=golden.sema.useFormat vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s375 kind=function fq=golden.sema.useSubstring1 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s376 kind=function fq=golden.sema.useSubstring2 vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s377 kind=function fq=golden.sema.useLowercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s378 kind=function fq=golden.sema.useUppercase vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s379 kind=function fq=golden.sema.useToIntOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s380 kind=function fq=golden.sema.useToIntOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Int? suspend=0 defaults=[] vararg=[]
+symbol s381 kind=function fq=golden.sema.useToDoubleOrNullValid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
+symbol s382 kind=function fq=golden.sema.useToDoubleOrNullInvalid vis=public flags=_ sig=recv=_ params=[] ret=Double? suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 fun useTrim suspend=0 inline=0 sym=s358
-  decl d1 fun useSplit suspend=0 inline=0 sym=s359
-  decl d2 fun useReplace suspend=0 inline=0 sym=s360
-  decl d3 fun useStartsWith suspend=0 inline=0 sym=s361
-  decl d4 fun useEndsWith suspend=0 inline=0 sym=s362
-  decl d5 fun useContains suspend=0 inline=0 sym=s363
-  decl d6 fun useToInt suspend=0 inline=0 sym=s364
-  decl d7 fun useToDouble suspend=0 inline=0 sym=s365
-  decl d8 fun useFormat suspend=0 inline=0 sym=s366
-  decl d9 fun useSubstring1 suspend=0 inline=0 sym=s367
-  decl d10 fun useSubstring2 suspend=0 inline=0 sym=s368
-  decl d11 fun useLowercase suspend=0 inline=0 sym=s369
-  decl d12 fun useUppercase suspend=0 inline=0 sym=s370
-  decl d13 fun useToIntOrNullValid suspend=0 inline=0 sym=s371
-  decl d14 fun useToIntOrNullInvalid suspend=0 inline=0 sym=s372
-  decl d15 fun useToDoubleOrNullValid suspend=0 inline=0 sym=s373
-  decl d16 fun useToDoubleOrNullInvalid suspend=0 inline=0 sym=s374
+  decl d0 fun useTrim suspend=0 inline=0 sym=s366
+  decl d1 fun useSplit suspend=0 inline=0 sym=s367
+  decl d2 fun useReplace suspend=0 inline=0 sym=s368
+  decl d3 fun useStartsWith suspend=0 inline=0 sym=s369
+  decl d4 fun useEndsWith suspend=0 inline=0 sym=s370
+  decl d5 fun useContains suspend=0 inline=0 sym=s371
+  decl d6 fun useToInt suspend=0 inline=0 sym=s372
+  decl d7 fun useToDouble suspend=0 inline=0 sym=s373
+  decl d8 fun useFormat suspend=0 inline=0 sym=s374
+  decl d9 fun useSubstring1 suspend=0 inline=0 sym=s375
+  decl d10 fun useSubstring2 suspend=0 inline=0 sym=s376
+  decl d11 fun useLowercase suspend=0 inline=0 sym=s377
+  decl d12 fun useUppercase suspend=0 inline=0 sym=s378
+  decl d13 fun useToIntOrNullValid suspend=0 inline=0 sym=s379
+  decl d14 fun useToIntOrNullInvalid suspend=0 inline=0 sym=s380
+  decl d15 fun useToDoubleOrNullValid suspend=0 inline=0 sym=s381
+  decl d16 fun useToDoubleOrNullInvalid suspend=0 inline=0 sym=s382
 expr e0 string(  hi  ) type=String
 expr e1 memberCall recv=e0 callee=trim args=[] type=String call=s117 map=[] targs=[]
 expr e2 string(1,2,3) type=String

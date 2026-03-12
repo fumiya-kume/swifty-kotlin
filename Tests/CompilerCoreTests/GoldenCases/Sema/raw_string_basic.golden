@@ -356,22 +356,30 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s359 kind=local fq=__local_1.s vis=private flags=_
-symbol s360 kind=local fq=__local_7.multi vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s367 kind=local fq=__local_1.s vis=private flags=_
+symbol s368 kind=local fq=__local_7.multi vis=private flags=_
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s358
+  decl d0 fun main suspend=0 inline=0 sym=s366
 expr e0 string(hello world) type=String
-expr e1 localDecl s mutable=0 type=_ init=e0 type=Unit ref=s359
+expr e1 localDecl s mutable=0 type=_ init=e0 type=Unit ref=s367
 expr e2 name(println) type=_
-expr e3 name(s) type=String ref=s359
+expr e3 name(s) type=String ref=s367
 expr e4 call callee=e2 args=[_:e3] type=Unit call=s337 map=[0->0] targs=[]
 expr e5 string(
         line1
         line2
     ) type=String
 expr e6 memberCall recv=e5 callee=trimIndent args=[] type=String call=s141 map=[] targs=[]
-expr e7 localDecl multi mutable=0 type=_ init=e6 type=Unit ref=s360
+expr e7 localDecl multi mutable=0 type=_ init=e6 type=Unit ref=s368
 expr e8 name(println) type=_
-expr e9 name(multi) type=String ref=s360
+expr e9 name(multi) type=String ref=s368
 expr e10 call callee=e8 args=[_:e9] type=Unit call=s337 map=[0->0] targs=[]

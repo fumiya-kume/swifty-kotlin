@@ -356,52 +356,60 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.E vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.E.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=class fq=golden.sema.Box vis=public flags=_
-symbol s361 kind=typeParameter fq=golden.sema.Box.$class360.T vis=private flags=_
-symbol s362 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#360<T#361> params=[] ret=Class#360<T#361> suspend=0 defaults=[] vararg=[]
-symbol s363 kind=function fq=golden.sema.Box.get vis=public flags=_ sig=recv=Class#360<T#361> params=[] ret=T#361 suspend=0 defaults=[] vararg=[]
-symbol s364 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#360<T#361> params=[T#361] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s365 kind=valueParameter fq=golden.sema.Box.set.$364.v vis=private flags=_
-symbol s366 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#360<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
-symbol s367 kind=valueParameter fq=golden.sema.readOnly.$366.box vis=private flags=_
-symbol s368 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#360<out Any>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s369 kind=valueParameter fq=golden.sema.writeBlocked.$368.box vis=private flags=_
-symbol s370 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ params=[Class#360<in Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s371 kind=valueParameter fq=golden.sema.writeOnly.$370.box vis=private flags=_
-symbol s372 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ params=[Class#360<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s373 kind=valueParameter fq=golden.sema.starRead.$372.box vis=private flags=_
-symbol s374 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#360<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s375 kind=valueParameter fq=golden.sema.starReadInferred.$374.box vis=private flags=_
-symbol s376 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#360<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s377 kind=valueParameter fq=golden.sema.starWrite.$376.box vis=private flags=_
-symbol s378 kind=local fq=__local_15.x vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.E vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.E.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=class fq=golden.sema.Box vis=public flags=_
+symbol s369 kind=typeParameter fq=golden.sema.Box.$class368.T vis=private flags=_
+symbol s370 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#368<T#369> params=[] ret=Class#368<T#369> suspend=0 defaults=[] vararg=[]
+symbol s371 kind=function fq=golden.sema.Box.get vis=public flags=_ sig=recv=Class#368<T#369> params=[] ret=T#369 suspend=0 defaults=[] vararg=[]
+symbol s372 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#368<T#369> params=[T#369] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s373 kind=valueParameter fq=golden.sema.Box.set.$372.v vis=private flags=_
+symbol s374 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#368<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s375 kind=valueParameter fq=golden.sema.readOnly.$374.box vis=private flags=_
+symbol s376 kind=function fq=golden.sema.writeBlocked vis=public flags=_ sig=recv=_ params=[Class#368<out Any>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s377 kind=valueParameter fq=golden.sema.writeBlocked.$376.box vis=private flags=_
+symbol s378 kind=function fq=golden.sema.writeOnly vis=public flags=_ sig=recv=_ params=[Class#368<in Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s379 kind=valueParameter fq=golden.sema.writeOnly.$378.box vis=private flags=_
+symbol s380 kind=function fq=golden.sema.starRead vis=public flags=_ sig=recv=_ params=[Class#368<*>] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s381 kind=valueParameter fq=golden.sema.starRead.$380.box vis=private flags=_
+symbol s382 kind=function fq=golden.sema.starReadInferred vis=public flags=_ sig=recv=_ params=[Class#368<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s383 kind=valueParameter fq=golden.sema.starReadInferred.$382.box vis=private flags=_
+symbol s384 kind=function fq=golden.sema.starWrite vis=public flags=_ sig=recv=_ params=[Class#368<*>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s385 kind=valueParameter fq=golden.sema.starWrite.$384.box vis=private flags=_
+symbol s386 kind=local fq=__local_15.x vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class E sym=s358
-  decl d3 class Box sym=s360
-  decl d4 fun readOnly suspend=0 inline=0 sym=s366
-  decl d5 fun writeBlocked suspend=0 inline=0 sym=s368
-  decl d6 fun writeOnly suspend=0 inline=0 sym=s370
-  decl d7 fun starRead suspend=0 inline=0 sym=s372
-  decl d8 fun starReadInferred suspend=0 inline=0 sym=s374
-  decl d9 fun starWrite suspend=0 inline=0 sym=s376
+  decl d0 class E sym=s366
+  decl d3 class Box sym=s368
+  decl d4 fun readOnly suspend=0 inline=0 sym=s374
+  decl d5 fun writeBlocked suspend=0 inline=0 sym=s376
+  decl d6 fun writeOnly suspend=0 inline=0 sym=s378
+  decl d7 fun starRead suspend=0 inline=0 sym=s380
+  decl d8 fun starReadInferred suspend=0 inline=0 sym=s382
+  decl d9 fun starWrite suspend=0 inline=0 sym=s384
 expr e0 name(E) type=_
-expr e1 call callee=e0 args=[] type=Class#358 call=s359 map=[] targs=[]
+expr e1 call callee=e0 args=[] type=Class#366 call=s367 map=[] targs=[]
 expr e2 throw value=e1 type=Nothing
-expr e3 name(box) type=Class#360<out Any> ref=s367
-expr e4 memberCall recv=e3 callee=get args=[] type=Any call=s363 map=[] targs=[Any]
-expr e5 name(box) type=Class#360<out Any> ref=s369
+expr e3 name(box) type=Class#368<out Any> ref=s375
+expr e4 memberCall recv=e3 callee=get args=[] type=Any call=s371 map=[] targs=[Any]
+expr e5 name(box) type=Class#368<out Any> ref=s377
 expr e6 int(42) type=Int
 expr e7 memberCall recv=e5 callee=set args=[_:e6] type=<error>
-expr e8 name(box) type=Class#360<in Int> ref=s371
+expr e8 name(box) type=Class#368<in Int> ref=s379
 expr e9 int(42) type=Int
-expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Any call=s364 map=[0->0] targs=[Any?]
-expr e11 name(box) type=Class#360<*> ref=s373
-expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s363 map=[] targs=[Any?]
-expr e13 name(box) type=Class#360<*> ref=s375
-expr e14 memberCall recv=e13 callee=get args=[] type=Any? call=s363 map=[] targs=[Any?]
-expr e15 localDecl x mutable=0 type=_ init=e14 type=Unit ref=s378
-expr e16 name(box) type=Class#360<*> ref=s377
+expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Any call=s372 map=[0->0] targs=[Any?]
+expr e11 name(box) type=Class#368<*> ref=s381
+expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s371 map=[] targs=[Any?]
+expr e13 name(box) type=Class#368<*> ref=s383
+expr e14 memberCall recv=e13 callee=get args=[] type=Any? call=s371 map=[] targs=[Any?]
+expr e15 localDecl x mutable=0 type=_ init=e14 type=Unit ref=s386
+expr e16 name(box) type=Class#368<*> ref=s385
 expr e17 int(42) type=Int
 expr e18 memberCall recv=e16 callee=set args=[_:e17] type=<error>

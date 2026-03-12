@@ -356,29 +356,37 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s359 kind=valueParameter fq=checkIn.$358.x vis=private flags=_
-symbol s360 kind=valueParameter fq=checkIn.$358.y vis=private flags=_
-symbol s361 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s362 kind=valueParameter fq=checkNotIn.$361.x vis=private flags=_
-symbol s363 kind=valueParameter fq=checkNotIn.$361.y vis=private flags=_
-symbol s364 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s365 kind=valueParameter fq=rangeUntilExpr.$364.n vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=checkIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s367 kind=valueParameter fq=checkIn.$366.x vis=private flags=_
+symbol s368 kind=valueParameter fq=checkIn.$366.y vis=private flags=_
+symbol s369 kind=function fq=checkNotIn vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Boolean suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s370 kind=valueParameter fq=checkNotIn.$369.x vis=private flags=_
+symbol s371 kind=valueParameter fq=checkNotIn.$369.y vis=private flags=_
+symbol s372 kind=function fq=rangeUntilExpr vis=public flags=_ sig=recv=_ params=[Int] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s373 kind=valueParameter fq=rangeUntilExpr.$372.n vis=private flags=_
 file f0 package=_
-  decl d0 fun checkIn suspend=0 inline=0 sym=s358
-  decl d1 fun checkNotIn suspend=0 inline=0 sym=s361
-  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s364
-expr e0 name(x) type=Int ref=s359
+  decl d0 fun checkIn suspend=0 inline=0 sym=s366
+  decl d1 fun checkNotIn suspend=0 inline=0 sym=s369
+  decl d2 fun rangeUntilExpr suspend=0 inline=0 sym=s372
+expr e0 name(x) type=Int ref=s367
 expr e1 int(1) type=Int
 expr e2 int(10) type=Int
 expr e3 binary(rangeTo) lhs=e1 rhs=e2 type=Int
 expr e4 inExpr lhs=e0 rhs=e3 type=Boolean
-expr e5 name(x) type=Int ref=s362
+expr e5 name(x) type=Int ref=s370
 expr e6 int(1) type=Int
 expr e7 int(10) type=Int
 expr e8 binary(rangeTo) lhs=e6 rhs=e7 type=Int
 expr e9 notInExpr lhs=e5 rhs=e8 type=Boolean
-expr e10 name(n) type=Int ref=s365
+expr e10 name(n) type=Int ref=s373
 expr e11 int(0) type=Int
 expr e12 int(10) type=Int
 expr e13 binary(rangeUntil) lhs=e11 rhs=e12 type=Int

@@ -356,31 +356,39 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.throwOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s359 kind=valueParameter fq=golden.sema.throwOrValue.$358.flag vis=private flags=_
-symbol s360 kind=function fq=golden.sema.returnOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s361 kind=valueParameter fq=golden.sema.returnOrValue.$360.flag vis=private flags=_
-symbol s362 kind=local fq=__local_7.x vis=private flags=_
-symbol s363 kind=local fq=__local_16.y vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.throwOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s367 kind=valueParameter fq=golden.sema.throwOrValue.$366.flag vis=private flags=_
+symbol s368 kind=function fq=golden.sema.returnOrValue vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s369 kind=valueParameter fq=golden.sema.returnOrValue.$368.flag vis=private flags=_
+symbol s370 kind=local fq=__local_7.x vis=private flags=_
+symbol s371 kind=local fq=__local_16.y vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun throwOrValue suspend=0 inline=0 sym=s358
-  decl d1 fun returnOrValue suspend=0 inline=0 sym=s360
-expr e0 name(flag) type=Boolean ref=s359
+  decl d0 fun throwOrValue suspend=0 inline=0 sym=s366
+  decl d1 fun returnOrValue suspend=0 inline=0 sym=s368
+expr e0 name(flag) type=Boolean ref=s367
 expr e1 string(ok) type=String
 expr e2 name(IllegalArgumentException) type=_
 expr e3 string(fail) type=String
 expr e4 call callee=e2 args=[_:e3] type=Class#231 call=s253 map=[0->0] targs=[]
 expr e5 throw value=e4 type=Nothing
 expr e6 if cond=e0 then=e1 else=e5 type=String
-expr e7 localDecl x mutable=0 type=t2 init=e6 type=Unit ref=s362
-expr e8 name(x) type=String ref=s362
+expr e7 localDecl x mutable=0 type=t2 init=e6 type=Unit ref=s370
+expr e8 name(x) type=String ref=s370
 expr e9 return value=e8 type=Nothing
-expr e10 name(flag) type=Boolean ref=s361
+expr e10 name(flag) type=Boolean ref=s369
 expr e11 int(42) type=Int
 expr e12 int(1) type=Int
 expr e13 unary(unaryMinus) operand=e12 type=Int
 expr e14 return value=e13 type=Nothing
 expr e15 if cond=e10 then=e11 else=e14 type=Int
-expr e16 localDecl y mutable=0 type=t5 init=e15 type=Unit ref=s363
-expr e17 name(y) type=Int ref=s363
+expr e16 localDecl y mutable=0 type=t5 init=e15 type=Unit ref=s371
+expr e17 name(y) type=Int ref=s371
 expr e18 return value=e17 type=Nothing

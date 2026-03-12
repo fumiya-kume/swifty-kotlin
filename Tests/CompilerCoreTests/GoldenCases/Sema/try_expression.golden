@@ -356,47 +356,55 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.Handled vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.Handled.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=class fq=golden.sema.Unhandled vis=public flags=_
-symbol s361 kind=constructor fq=golden.sema.Unhandled.<init> vis=public flags=_ sig=recv=Class#360 params=[] ret=Class#360 suspend=0 defaults=[] vararg=[]
-symbol s362 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s363 kind=valueParameter fq=golden.sema.tryCatchExpr.$362.flag vis=private flags=_
-symbol s364 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s365 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s366 kind=function fq=golden.sema.tryCatchFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s367 kind=function fq=golden.sema.tryCompletionCriteria vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s368 kind=function fq=golden.sema.tryFinallyIgnoresValue vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s369 kind=function fq=golden.sema.tryMultiCatchJoin vis=public flags=_ sig=recv=_ params=[Int] ret=Any? suspend=0 defaults=[0] vararg=[0]
-symbol s370 kind=valueParameter fq=golden.sema.tryMultiCatchJoin.$369.flag vis=private flags=_
-symbol s371 kind=function fq=golden.sema.tryPartialCatchRethrow vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s372 kind=valueParameter fq=golden.sema.tryPartialCatchRethrow.$371.flag vis=private flags=_
-symbol s373 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
-symbol s374 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
-symbol s375 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Any
-symbol s376 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Any
-symbol s377 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Any
-symbol s378 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Any
-symbol s379 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Any
-symbol s380 kind=local fq=__local_33.x vis=private flags=_
-symbol s381 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Any
-symbol s382 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Any
-symbol s383 kind=local fq=__local_62.x vis=private flags=mutable
-symbol s384 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Any
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.Handled vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.Handled.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=class fq=golden.sema.Unhandled vis=public flags=_
+symbol s369 kind=constructor fq=golden.sema.Unhandled.<init> vis=public flags=_ sig=recv=Class#368 params=[] ret=Class#368 suspend=0 defaults=[] vararg=[]
+symbol s370 kind=function fq=golden.sema.tryCatchExpr vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s371 kind=valueParameter fq=golden.sema.tryCatchExpr.$370.flag vis=private flags=_
+symbol s372 kind=function fq=golden.sema.tryMultiCatch vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s373 kind=function fq=golden.sema.tryFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s374 kind=function fq=golden.sema.tryCatchFinally vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s375 kind=function fq=golden.sema.tryCompletionCriteria vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s376 kind=function fq=golden.sema.tryFinallyIgnoresValue vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s377 kind=function fq=golden.sema.tryMultiCatchJoin vis=public flags=_ sig=recv=_ params=[Int] ret=Any? suspend=0 defaults=[0] vararg=[0]
+symbol s378 kind=valueParameter fq=golden.sema.tryMultiCatchJoin.$377.flag vis=private flags=_
+symbol s379 kind=function fq=golden.sema.tryPartialCatchRethrow vis=public flags=_ sig=recv=_ params=[Boolean] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s380 kind=valueParameter fq=golden.sema.tryPartialCatchRethrow.$379.flag vis=private flags=_
+symbol s381 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
+symbol s382 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
+symbol s383 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Any
+symbol s384 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Any
+symbol s385 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Any
+symbol s386 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Any
+symbol s387 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Any
+symbol s388 kind=local fq=__local_33.x vis=private flags=_
+symbol s389 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Any
+symbol s390 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Any
+symbol s391 kind=local fq=__local_62.x vis=private flags=mutable
+symbol s392 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Any
 file f0 package=golden.sema
-  decl d0 class Handled sym=s358
-  decl d1 class Unhandled sym=s360
-  decl d2 fun tryCatchExpr suspend=0 inline=0 sym=s362
-  decl d3 fun tryMultiCatch suspend=0 inline=0 sym=s364
-  decl d4 fun tryFinally suspend=0 inline=0 sym=s365
-  decl d5 fun tryCatchFinally suspend=0 inline=0 sym=s366
-  decl d6 fun tryCompletionCriteria suspend=0 inline=0 sym=s367
-  decl d7 fun tryFinallyIgnoresValue suspend=0 inline=0 sym=s368
-  decl d8 fun tryMultiCatchJoin suspend=0 inline=0 sym=s369
-  decl d9 fun tryPartialCatchRethrow suspend=0 inline=0 sym=s371
-  decl d10 property propTryCatch var=0 sym=s373
-  decl d11 property propTryFinally var=0 sym=s374
-expr e0 name(flag) type=Boolean ref=s363
+  decl d0 class Handled sym=s366
+  decl d1 class Unhandled sym=s368
+  decl d2 fun tryCatchExpr suspend=0 inline=0 sym=s370
+  decl d3 fun tryMultiCatch suspend=0 inline=0 sym=s372
+  decl d4 fun tryFinally suspend=0 inline=0 sym=s373
+  decl d5 fun tryCatchFinally suspend=0 inline=0 sym=s374
+  decl d6 fun tryCompletionCriteria suspend=0 inline=0 sym=s375
+  decl d7 fun tryFinallyIgnoresValue suspend=0 inline=0 sym=s376
+  decl d8 fun tryMultiCatchJoin suspend=0 inline=0 sym=s377
+  decl d9 fun tryPartialCatchRethrow suspend=0 inline=0 sym=s379
+  decl d10 property propTryCatch var=0 sym=s381
+  decl d11 property propTryFinally var=0 sym=s382
+expr e0 name(flag) type=Boolean ref=s371
 expr e1 string(ok) type=String
 expr e2 name(Exception) type=_
 expr e3 string(fail) type=String
@@ -405,14 +413,14 @@ expr e5 throw value=e4 type=Nothing
 expr e6 if cond=e0 then=e1 else=e5 type=String
 expr e7 blockExpr stmts=[] trailing=e6 type=String
 expr e8 string(error) type=String
-expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s375
+expr e9 blockExpr stmts=[] trailing=e8 type=String ref=s383
 expr e10 try body=e7 catches=[e9] finally=_ type=String
 expr e11 string(ok) type=String
 expr e12 blockExpr stmts=[] trailing=e11 type=String
 expr e13 string(arg) type=String
-expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s376
+expr e14 blockExpr stmts=[] trailing=e13 type=String ref=s384
 expr e15 string(other) type=String
-expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s377
+expr e16 blockExpr stmts=[] trailing=e15 type=String ref=s385
 expr e17 try body=e12 catches=[e14,e16] finally=_ type=String
 expr e18 string(result) type=String
 expr e19 blockExpr stmts=[] trailing=e18 type=String
@@ -421,57 +429,57 @@ expr e21 try body=e19 catches=[] finally=e20 type=String
 expr e22 string(ok) type=String
 expr e23 blockExpr stmts=[] trailing=e22 type=String
 expr e24 string(err) type=String
-expr e25 blockExpr stmts=[] trailing=e24 type=String ref=s378
+expr e25 blockExpr stmts=[] trailing=e24 type=String ref=s386
 expr e26 blockExpr stmts=[] trailing=_ type=Unit
 expr e27 try body=e23 catches=[e25] finally=e26 type=String
 expr e28 string(ok) type=String
 expr e29 blockExpr stmts=[] trailing=e28 type=String
 expr e30 string(err) type=String
-expr e31 blockExpr stmts=[] trailing=e30 type=String ref=s379
+expr e31 blockExpr stmts=[] trailing=e30 type=String ref=s387
 expr e32 try body=e29 catches=[e31] finally=_ type=String
-expr e33 localDecl x mutable=0 type=t6 init=e32 type=Unit ref=s380
-expr e34 name(x) type=String ref=s380
+expr e33 localDecl x mutable=0 type=t6 init=e32 type=Unit ref=s388
+expr e34 name(x) type=String ref=s388
 expr e35 return value=e34 type=Nothing
 expr e36 string(ok) type=String
 expr e37 blockExpr stmts=[] trailing=e36 type=String
 expr e38 int(123) type=Int
 expr e39 blockExpr stmts=[] trailing=e38 type=Int
 expr e40 try body=e37 catches=[] finally=e39 type=String
-expr e41 name(flag) type=Int ref=s370
+expr e41 name(flag) type=Int ref=s378
 expr e42 int(0) type=Int
 expr e43 binary(equal) lhs=e41 rhs=e42 type=Boolean
 expr e44 string(ok) type=String
-expr e45 name(flag) type=Int ref=s370
+expr e45 name(flag) type=Int ref=s378
 expr e46 int(1) type=Int
 expr e47 binary(equal) lhs=e45 rhs=e46 type=Boolean
 expr e48 name(Handled) type=_
-expr e49 call callee=e48 args=[] type=Class#358 call=s359 map=[] targs=[]
+expr e49 call callee=e48 args=[] type=Class#366 call=s367 map=[] targs=[]
 expr e50 throw value=e49 type=Nothing
 expr e51 name(Unhandled) type=_
-expr e52 call callee=e51 args=[] type=Class#360 call=s361 map=[] targs=[]
+expr e52 call callee=e51 args=[] type=Class#368 call=s369 map=[] targs=[]
 expr e53 throw value=e52 type=Nothing
 expr e54 if cond=e47 then=e50 else=e53 type=Nothing
 expr e55 if cond=e43 then=e44 else=e54 type=String
 expr e56 blockExpr stmts=[] trailing=e55 type=String
 expr e57 string(handled) type=String
-expr e58 blockExpr stmts=[] trailing=e57 type=String ref=s381
+expr e58 blockExpr stmts=[] trailing=e57 type=String ref=s389
 expr e59 int(7) type=Int
-expr e60 blockExpr stmts=[] trailing=e59 type=Int ref=s382
+expr e60 blockExpr stmts=[] trailing=e59 type=Int ref=s390
 expr e61 try body=e56 catches=[e58,e60] finally=_ type=Any?
-expr e62 localDecl x mutable=1 type=t12 init=_ type=Unit ref=s383
-expr e63 name(flag) type=Boolean ref=s372
+expr e62 localDecl x mutable=1 type=t12 init=_ type=Unit ref=s391
+expr e63 name(flag) type=Boolean ref=s380
 expr e64 name(Handled) type=_
-expr e65 call callee=e64 args=[] type=Class#358 call=s359 map=[] targs=[]
+expr e65 call callee=e64 args=[] type=Class#366 call=s367 map=[] targs=[]
 expr e66 throw value=e65 type=Nothing
 expr e67 name(Unhandled) type=_
-expr e68 call callee=e67 args=[] type=Class#360 call=s361 map=[] targs=[]
+expr e68 call callee=e67 args=[] type=Class#368 call=s369 map=[] targs=[]
 expr e69 throw value=e68 type=Nothing
 expr e70 if cond=e63 then=e66 else=e69 type=Nothing
 expr e71 blockExpr stmts=[] trailing=e70 type=Nothing
 expr e72 name(x) type=_
 expr e73 int(7) type=Int
-expr e74 localAssign x value=e73 type=Unit ref=s383
-expr e75 blockExpr stmts=[e74] trailing=_ type=Unit ref=s384
+expr e74 localAssign x value=e73 type=Unit ref=s391
+expr e75 blockExpr stmts=[e74] trailing=_ type=Unit ref=s392
 expr e76 try body=e71 catches=[e75] finally=_ type=Unit
-expr e77 name(x) type=Int ref=s383
+expr e77 name(x) type=Int ref=s391
 expr e78 return value=e77 type=Nothing

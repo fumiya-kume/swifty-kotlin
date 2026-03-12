@@ -356,19 +356,27 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.ResourceDelegate vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.ResourceDelegate.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=function fq=golden.sema.ResourceDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#358 params=[Any?,<error>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s361 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$360.thisRef vis=private flags=_
-symbol s362 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$360.property vis=private flags=_
-symbol s363 kind=function fq=golden.sema.ResourceDelegate.provideDelegate vis=public flags=operatorFunction sig=recv=Class#358 params=[Any?,<error>] ret=Class#358 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s364 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$363.thisRef vis=private flags=_
-symbol s365 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$363.property vis=private flags=_
-symbol s366 kind=property fq=golden.sema.resource vis=public flags=_ type=String
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.ResourceDelegate vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.ResourceDelegate.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=function fq=golden.sema.ResourceDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#366 params=[Any?,<error>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s369 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$368.thisRef vis=private flags=_
+symbol s370 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$368.property vis=private flags=_
+symbol s371 kind=function fq=golden.sema.ResourceDelegate.provideDelegate vis=public flags=operatorFunction sig=recv=Class#366 params=[Any?,<error>] ret=Class#366 suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s372 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$371.thisRef vis=private flags=_
+symbol s373 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$371.property vis=private flags=_
+symbol s374 kind=property fq=golden.sema.resource vis=public flags=_ type=String
 file f0 package=golden.sema
-  decl d2 class ResourceDelegate sym=s358
-  decl d3 property resource var=0 sym=s366
+  decl d2 class ResourceDelegate sym=s366
+  decl d3 property resource var=0 sym=s374
 expr e0 string(value) type=String
-expr e1 this type=Class#358
+expr e1 this type=Class#366
 expr e2 name(ResourceDelegate) type=_
-expr e3 call callee=e2 args=[] type=Class#358 call=s359 map=[] targs=[]
+expr e3 call callee=e2 args=[] type=Class#366 call=s367 map=[] targs=[]

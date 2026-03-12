@@ -356,29 +356,37 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
-symbol s359 kind=valueParameter fq=choose.$358.flag vis=private flags=_
-symbol s360 kind=valueParameter fq=choose.$358.left vis=private flags=_
-symbol s361 kind=valueParameter fq=choose.$358.right vis=private flags=_
-symbol s362 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s363 kind=valueParameter fq=useWhen.$362.v vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=choose vis=public flags=_ sig=recv=_ params=[Boolean,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s367 kind=valueParameter fq=choose.$366.flag vis=private flags=_
+symbol s368 kind=valueParameter fq=choose.$366.left vis=private flags=_
+symbol s369 kind=valueParameter fq=choose.$366.right vis=private flags=_
+symbol s370 kind=function fq=useWhen vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s371 kind=valueParameter fq=useWhen.$370.v vis=private flags=_
 file f0 package=_
-  decl d0 fun choose suspend=0 inline=0 sym=s358
-  decl d1 fun useWhen suspend=0 inline=0 sym=s362
-expr e0 name(flag) type=Boolean ref=s359
-expr e1 name(left) type=Int ref=s360
-expr e2 name(right) type=Int ref=s361
+  decl d0 fun choose suspend=0 inline=0 sym=s366
+  decl d1 fun useWhen suspend=0 inline=0 sym=s370
+expr e0 name(flag) type=Boolean ref=s367
+expr e1 name(left) type=Int ref=s368
+expr e2 name(right) type=Int ref=s369
 expr e3 if cond=e0 then=e1 else=e2 type=Int
-expr e4 name(v) type=Int ref=s363
+expr e4 name(v) type=Int ref=s371
 expr e5 int(1) type=Int
 expr e6 name(choose) type=_
 expr e7 bool(true) type=Boolean
-expr e8 name(v) type=Int ref=s363
+expr e8 name(v) type=Int ref=s371
 expr e9 int(0) type=Int
-expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s358 map=[0->0,1->1,2->2] targs=[]
+expr e10 call callee=e6 args=[_:e7,_:e8,_:e9] type=Int call=s366 map=[0->0,1->1,2->2] targs=[]
 expr e11 name(choose) type=_
 expr e12 bool(false) type=Boolean
 expr e13 int(0) type=Int
-expr e14 name(v) type=Int ref=s363
-expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s358 map=[0->0,1->1,2->2] targs=[]
+expr e14 name(v) type=Int ref=s371
+expr e15 call callee=e11 args=[_:e12,_:e13,_:e14] type=Int call=s366 map=[0->0,1->1,2->2] targs=[]
 expr e16 when subject=e4 branches=[e5->e10] else=e15 type=Int

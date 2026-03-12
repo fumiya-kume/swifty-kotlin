@@ -356,54 +356,62 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.Adder vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#358 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s361 kind=valueParameter fq=golden.sema.Adder.invoke.$360.x vis=private flags=_
-symbol s362 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#358
-symbol s363 kind=object fq=golden.sema.Incrementer vis=public flags=_
-symbol s364 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#363 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s365 kind=valueParameter fq=golden.sema.Incrementer.invoke.$364.x vis=private flags=_
-symbol s366 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s367 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s368 kind=local fq=__local_12.adder vis=private flags=_
-symbol s369 kind=local fq=__local_16.localResult vis=private flags=_
-symbol s370 kind=local fq=__local_20.topLevelResult vis=private flags=_
-symbol s371 kind=local fq=__local_24.objectResult vis=private flags=_
-symbol s372 kind=local fq=__local_29.exprResult vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.Adder vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.Adder.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=function fq=golden.sema.Adder.invoke vis=public flags=operatorFunction sig=recv=Class#366 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s369 kind=valueParameter fq=golden.sema.Adder.invoke.$368.x vis=private flags=_
+symbol s370 kind=property fq=golden.sema.globalAdder vis=public flags=_ type=Class#366
+symbol s371 kind=object fq=golden.sema.Incrementer vis=public flags=_
+symbol s372 kind=function fq=golden.sema.Incrementer.invoke vis=public flags=operatorFunction sig=recv=Class#371 params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s373 kind=valueParameter fq=golden.sema.Incrementer.invoke.$372.x vis=private flags=_
+symbol s374 kind=function fq=golden.sema.makeAdder vis=public flags=_ sig=recv=_ params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s375 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s376 kind=local fq=__local_12.adder vis=private flags=_
+symbol s377 kind=local fq=__local_16.localResult vis=private flags=_
+symbol s378 kind=local fq=__local_20.topLevelResult vis=private flags=_
+symbol s379 kind=local fq=__local_24.objectResult vis=private flags=_
+symbol s380 kind=local fq=__local_29.exprResult vis=private flags=_
 file f0 package=golden.sema
-  decl d1 class Adder sym=s358
-  decl d2 property globalAdder var=0 sym=s362
-  decl d4 object Incrementer sym=s363
-  decl d5 fun makeAdder suspend=0 inline=0 sym=s366
-  decl d6 fun main suspend=0 inline=0 sym=s367
-expr e0 name(x) type=Int ref=s361
+  decl d1 class Adder sym=s366
+  decl d2 property globalAdder var=0 sym=s370
+  decl d4 object Incrementer sym=s371
+  decl d5 fun makeAdder suspend=0 inline=0 sym=s374
+  decl d6 fun main suspend=0 inline=0 sym=s375
+expr e0 name(x) type=Int ref=s369
 expr e1 int(1) type=Int
 expr e2 binary(add) lhs=e0 rhs=e1 type=Int
 expr e3 name(Adder) type=_
-expr e4 call callee=e3 args=[] type=Class#358 call=s359 map=[] targs=[]
-expr e5 name(x) type=Int ref=s365
+expr e4 call callee=e3 args=[] type=Class#366 call=s367 map=[] targs=[]
+expr e5 name(x) type=Int ref=s373
 expr e6 int(2) type=Int
 expr e7 binary(add) lhs=e5 rhs=e6 type=Int
 expr e8 name(Adder) type=_
-expr e9 call callee=e8 args=[] type=Class#358 call=s359 map=[] targs=[]
+expr e9 call callee=e8 args=[] type=Class#366 call=s367 map=[] targs=[]
 expr e10 name(Adder) type=_
-expr e11 call callee=e10 args=[] type=Class#358 call=s359 map=[] targs=[]
-expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s368
-expr e13 name(adder) type=Class#358 ref=s368
+expr e11 call callee=e10 args=[] type=Class#366 call=s367 map=[] targs=[]
+expr e12 localDecl adder mutable=0 type=_ init=e11 type=Unit ref=s376
+expr e13 name(adder) type=Class#366 ref=s376
 expr e14 int(5) type=Int
-expr e15 call callee=e13 args=[_:e14] type=Int call=s360 map=[0->0] targs=[]
-expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s369
-expr e17 name(globalAdder) type=Class#358 ref=s362
+expr e15 call callee=e13 args=[_:e14] type=Int call=s368 map=[0->0] targs=[]
+expr e16 localDecl localResult mutable=0 type=t6 init=e15 type=Unit ref=s377
+expr e17 name(globalAdder) type=Class#366 ref=s370
 expr e18 int(6) type=Int
-expr e19 call callee=e17 args=[_:e18] type=Int call=s360 map=[0->0] targs=[]
-expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s370
-expr e21 name(Incrementer) type=Class#363 ref=s363
+expr e19 call callee=e17 args=[_:e18] type=Int call=s368 map=[0->0] targs=[]
+expr e20 localDecl topLevelResult mutable=0 type=t7 init=e19 type=Unit ref=s378
+expr e21 name(Incrementer) type=Class#371 ref=s371
 expr e22 int(7) type=Int
-expr e23 call callee=e21 args=[_:e22] type=Int call=s364 map=[0->0] targs=[]
-expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s371
+expr e23 call callee=e21 args=[_:e22] type=Int call=s372 map=[0->0] targs=[]
+expr e24 localDecl objectResult mutable=0 type=t8 init=e23 type=Unit ref=s379
 expr e25 name(makeAdder) type=_
-expr e26 call callee=e25 args=[] type=Class#358 call=s366 map=[] targs=[]
+expr e26 call callee=e25 args=[] type=Class#366 call=s374 map=[] targs=[]
 expr e27 int(8) type=Int
-expr e28 call callee=e26 args=[_:e27] type=Int call=s360 map=[0->0] targs=[]
-expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s372
+expr e28 call callee=e26 args=[_:e27] type=Int call=s368 map=[0->0] targs=[]
+expr e29 localDecl exprResult mutable=0 type=t9 init=e28 type=Unit ref=s380

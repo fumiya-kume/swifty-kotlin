@@ -582,6 +582,7 @@ extension DataFlowSemaPhase {
         registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

@@ -356,16 +356,24 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=guardChain vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s359 kind=valueParameter fq=guardChain.$358.x vis=private flags=_
-symbol s360 kind=valueParameter fq=guardChain.$358.y vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=guardChain vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s367 kind=valueParameter fq=guardChain.$366.x vis=private flags=_
+symbol s368 kind=valueParameter fq=guardChain.$366.y vis=private flags=_
 file f0 package=_
-  decl d0 fun guardChain suspend=0 inline=0 sym=s358
-expr e0 name(x) type=Int ref=s359
+  decl d0 fun guardChain suspend=0 inline=0 sym=s366
+expr e0 name(x) type=Int ref=s367
 expr e1 int(0) type=Int
 expr e2 binary(greaterThan) lhs=e0 rhs=e1 type=Boolean
 expr e3 int(1) type=Int
-expr e4 name(y) type=Int ref=s360
+expr e4 name(y) type=Int ref=s368
 expr e5 int(0) type=Int
 expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
 expr e7 int(2) type=Int

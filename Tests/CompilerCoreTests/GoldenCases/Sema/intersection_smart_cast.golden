@@ -356,35 +356,43 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=interface fq=golden.sema.A vis=public flags=_
-symbol s359 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#358 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s360 kind=interface fq=golden.sema.B vis=public flags=_
-symbol s361 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#360 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s362 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s363 kind=valueParameter fq=golden.sema.intersect.$362.x vis=private flags=_
-symbol s364 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s365 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#366 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s366 kind=typeParameter fq=golden.sema.directValue.$365.T vis=private flags=_
-symbol s367 kind=valueParameter fq=golden.sema.directValue.$365.x vis=private flags=_
-symbol s368 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#369 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
-symbol s369 kind=typeParameter fq=golden.sema.safeValue.$368.T vis=private flags=_
-symbol s370 kind=valueParameter fq=golden.sema.safeValue.$368.x vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=interface fq=golden.sema.A vis=public flags=_
+symbol s367 kind=function fq=golden.sema.A.a vis=public flags=abstractType sig=recv=Class#366 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s368 kind=interface fq=golden.sema.B vis=public flags=_
+symbol s369 kind=function fq=golden.sema.B.b vis=public flags=abstractType sig=recv=Class#368 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s370 kind=function fq=golden.sema.intersect vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s371 kind=valueParameter fq=golden.sema.intersect.$370.x vis=private flags=_
+symbol s372 kind=function fq=golden.sema.idTag vis=public flags=_ sig=recv=Any params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s373 kind=function fq=golden.sema.directValue vis=public flags=_ sig=recv=_ params=[T#374 & Any] ret=Int suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s374 kind=typeParameter fq=golden.sema.directValue.$373.T vis=private flags=_
+symbol s375 kind=valueParameter fq=golden.sema.directValue.$373.x vis=private flags=_
+symbol s376 kind=function fq=golden.sema.safeValue vis=public flags=_ sig=recv=_ params=[T#377 & Any] ret=Int? suspend=0 defaults=[0] vararg=[0] bounds=[Any?]
+symbol s377 kind=typeParameter fq=golden.sema.safeValue.$376.T vis=private flags=_
+symbol s378 kind=valueParameter fq=golden.sema.safeValue.$376.x vis=private flags=_
 file f0 package=golden.sema
-  decl d1 interface A sym=s358
-  decl d3 interface B sym=s360
-  decl d4 fun intersect suspend=0 inline=0 sym=s362
-  decl d5 fun idTag suspend=0 inline=0 sym=s364
-  decl d6 fun directValue suspend=0 inline=0 sym=s365
-  decl d7 fun safeValue suspend=0 inline=0 sym=s368
-expr e0 name(x) type=Any ref=s363
+  decl d1 interface A sym=s366
+  decl d3 interface B sym=s368
+  decl d4 fun intersect suspend=0 inline=0 sym=s370
+  decl d5 fun idTag suspend=0 inline=0 sym=s372
+  decl d6 fun directValue suspend=0 inline=0 sym=s373
+  decl d7 fun safeValue suspend=0 inline=0 sym=s376
+expr e0 name(x) type=Any ref=s371
 expr e1 isCheck expr=e0 type=t4 type=Boolean
-expr e2 name(x) type=Class#358 ref=s363
+expr e2 name(x) type=Class#366 ref=s371
 expr e3 isCheck expr=e2 type=t5 type=Boolean
 expr e4 binary(logicalAnd) lhs=e1 rhs=e3 type=Boolean
-expr e5 name(x) type=Class#358 & Class#360 ref=s363
-expr e6 memberCall recv=e5 callee=a args=[] type=String call=s359 map=[] targs=[]
-expr e7 name(x) type=Class#358 & Class#360 ref=s363
-expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s361 map=[] targs=[]
+expr e5 name(x) type=Class#366 & Class#368 ref=s371
+expr e6 memberCall recv=e5 callee=a args=[] type=String call=s367 map=[] targs=[]
+expr e7 name(x) type=Class#366 & Class#368 ref=s371
+expr e8 memberCall recv=e7 callee=b args=[] type=Int call=s369 map=[] targs=[]
 expr e9 memberCall recv=e8 callee=toString args=[] type=String
 expr e10 binary(add) lhs=e6 rhs=e9 type=String
 expr e11 return value=e10 type=Nothing
@@ -393,7 +401,7 @@ expr e13 if cond=e4 then=e12 else=_ type=Unit
 expr e14 string(unknown) type=String
 expr e15 return value=e14 type=Nothing
 expr e16 int(7) type=Int
-expr e17 name(x) type=T#366 & Any ref=s367
-expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s364 map=[] targs=[]
-expr e19 name(x) type=T#369 & Any ref=s370
-expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s364 map=[] targs=[]
+expr e17 name(x) type=T#374 & Any ref=s375
+expr e18 memberCall recv=e17 callee=idTag args=[] type=Int call=s372 map=[] targs=[]
+expr e19 name(x) type=T#377 & Any ref=s378
+expr e20 safeMemberCall recv=e19 callee=idTag args=[] type=Int? call=s372 map=[] targs=[]

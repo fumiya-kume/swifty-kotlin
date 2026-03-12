@@ -356,22 +356,30 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.Validated vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
-symbol s361 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
-symbol s362 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.Validated vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
+symbol s369 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
+symbol s370 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
 file f0 package=golden.sema
-  decl d2 class Validated sym=s358
+  decl d2 class Validated sym=s366
 expr e0 name(field) type=_
-expr e1 name(v) type=Int ref=s-40360
+expr e1 name(v) type=Int ref=s-40368
 expr e2 int(0) type=Int
 expr e3 binary(lessThan) lhs=e1 rhs=e2 type=Boolean
 expr e4 int(0) type=Int
-expr e5 name(v) type=Int ref=s-40360
+expr e5 name(v) type=Int ref=s-40368
 expr e6 if cond=e3 then=e4 else=e5 type=Int
-expr e7 localAssign field value=e6 type=Unit ref=s361
+expr e7 localAssign field value=e6 type=Unit ref=s369
 expr e8 int(0) type=Int
-expr e9 name(value) type=Int ref=s360
+expr e9 name(value) type=Int ref=s368
 expr e10 int(2) type=Int
 expr e11 binary(multiply) lhs=e9 rhs=e10 type=Int

@@ -356,23 +356,31 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=Animal vis=public flags=sealedType
-symbol s359 kind=constructor fq=Animal.<init> vis=protected flags=_ sig=recv=Class#358 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s360 kind=class fq=Dog vis=public flags=_
-symbol s361 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#360 params=[] ret=Class#360 suspend=0 defaults=[] vararg=[]
-symbol s362 kind=class fq=Cat vis=public flags=_
-symbol s363 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#362 params=[] ret=Class#362 suspend=0 defaults=[] vararg=[]
-symbol s364 kind=class fq=Bird vis=public flags=_
-symbol s365 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#364 params=[] ret=Class#364 suspend=0 defaults=[] vararg=[]
-symbol s366 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#358] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s367 kind=valueParameter fq=describeAnimal.$366.a vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=Animal vis=public flags=sealedType
+symbol s367 kind=constructor fq=Animal.<init> vis=protected flags=_ sig=recv=Class#366 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s368 kind=class fq=Dog vis=public flags=_
+symbol s369 kind=constructor fq=Dog.<init> vis=public flags=_ sig=recv=Class#368 params=[] ret=Class#368 suspend=0 defaults=[] vararg=[]
+symbol s370 kind=class fq=Cat vis=public flags=_
+symbol s371 kind=constructor fq=Cat.<init> vis=public flags=_ sig=recv=Class#370 params=[] ret=Class#370 suspend=0 defaults=[] vararg=[]
+symbol s372 kind=class fq=Bird vis=public flags=_
+symbol s373 kind=constructor fq=Bird.<init> vis=public flags=_ sig=recv=Class#372 params=[] ret=Class#372 suspend=0 defaults=[] vararg=[]
+symbol s374 kind=function fq=describeAnimal vis=public flags=_ sig=recv=_ params=[Class#366] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s375 kind=valueParameter fq=describeAnimal.$374.a vis=private flags=_
 file f0 package=_
-  decl d0 class Animal sym=s358
-  decl d1 class Dog sym=s360
-  decl d2 class Cat sym=s362
-  decl d3 class Bird sym=s364
-  decl d4 fun describeAnimal suspend=0 inline=0 sym=s366
-expr e0 name(a) type=Class#358 ref=s367
+  decl d0 class Animal sym=s366
+  decl d1 class Dog sym=s368
+  decl d2 class Cat sym=s370
+  decl d3 class Bird sym=s372
+  decl d4 fun describeAnimal suspend=0 inline=0 sym=s374
+expr e0 name(a) type=Class#366 ref=s375
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(dog) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

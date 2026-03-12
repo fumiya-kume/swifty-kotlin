@@ -356,26 +356,34 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=class fq=golden.sema.Foo vis=public flags=_
-symbol s359 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#358 params=[Int] ret=Class#358 suspend=0 defaults=[0] vararg=[0]
-symbol s360 kind=valueParameter fq=golden.sema.Foo.<init>.$359.x vis=private flags=_
-symbol s361 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
-symbol s362 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
-symbol s363 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#362 params=[] ret=Class#358 suspend=0 defaults=[] vararg=[]
-symbol s364 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
-symbol s365 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s366 kind=local fq=__local_6.f vis=private flags=_
-symbol s367 kind=local fq=__local_9.m vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=class fq=golden.sema.Foo vis=public flags=_
+symbol s367 kind=constructor fq=golden.sema.Foo.<init> vis=public flags=_ sig=recv=Class#366 params=[Int] ret=Class#366 suspend=0 defaults=[0] vararg=[0]
+symbol s368 kind=valueParameter fq=golden.sema.Foo.<init>.$367.x vis=private flags=_
+symbol s369 kind=property fq=golden.sema.Foo.x vis=public flags=_ type=Int
+symbol s370 kind=object fq=golden.sema.Foo.Companion vis=public flags=_
+symbol s371 kind=function fq=golden.sema.Foo.Companion.create vis=public flags=_ sig=recv=Class#370 params=[] ret=Class#366 suspend=0 defaults=[] vararg=[]
+symbol s372 kind=property fq=golden.sema.Foo.Companion.MAX_COUNT vis=public flags=constValue type=Int
+symbol s373 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s374 kind=local fq=__local_6.f vis=private flags=_
+symbol s375 kind=local fq=__local_9.m vis=private flags=_
 file f0 package=golden.sema
-  decl d4 class Foo sym=s358
-  decl d5 fun main suspend=0 inline=0 sym=s365
+  decl d4 class Foo sym=s366
+  decl d5 fun main suspend=0 inline=0 sym=s373
 expr e0 int(100) type=Int
 expr e1 name(Foo) type=_
 expr e2 int(0) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Class#358 call=s359 map=[0->0] targs=[]
-expr e4 name(Foo) type=Class#362 ref=s358
-expr e5 memberCall recv=e4 callee=create args=[] type=Class#358 call=s363 map=[] targs=[]
-expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s366
-expr e7 name(Foo) type=Class#362 ref=s358
-expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s364
-expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s367
+expr e3 call callee=e1 args=[_:e2] type=Class#366 call=s367 map=[0->0] targs=[]
+expr e4 name(Foo) type=Class#370 ref=s366
+expr e5 memberCall recv=e4 callee=create args=[] type=Class#366 call=s371 map=[] targs=[]
+expr e6 localDecl f mutable=0 type=t3 init=e5 type=Unit ref=s374
+expr e7 name(Foo) type=Class#370 ref=s366
+expr e8 memberCall recv=e7 callee=MAX_COUNT args=[] type=Int ref=s372
+expr e9 localDecl m mutable=0 type=t4 init=e8 type=Unit ref=s375

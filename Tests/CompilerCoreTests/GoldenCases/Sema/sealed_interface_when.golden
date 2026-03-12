@@ -356,22 +356,30 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=interface fq=Expr vis=public flags=sealedType
-symbol s359 kind=class fq=Literal vis=public flags=_
-symbol s360 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#359 params=[] ret=Class#359 suspend=0 defaults=[] vararg=[]
-symbol s361 kind=class fq=Add vis=public flags=_
-symbol s362 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#361 params=[] ret=Class#361 suspend=0 defaults=[] vararg=[]
-symbol s363 kind=class fq=Multiply vis=public flags=_
-symbol s364 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#363 params=[] ret=Class#363 suspend=0 defaults=[] vararg=[]
-symbol s365 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#358] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s366 kind=valueParameter fq=eval.$365.e vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=interface fq=Expr vis=public flags=sealedType
+symbol s367 kind=class fq=Literal vis=public flags=_
+symbol s368 kind=constructor fq=Literal.<init> vis=public flags=_ sig=recv=Class#367 params=[] ret=Class#367 suspend=0 defaults=[] vararg=[]
+symbol s369 kind=class fq=Add vis=public flags=_
+symbol s370 kind=constructor fq=Add.<init> vis=public flags=_ sig=recv=Class#369 params=[] ret=Class#369 suspend=0 defaults=[] vararg=[]
+symbol s371 kind=class fq=Multiply vis=public flags=_
+symbol s372 kind=constructor fq=Multiply.<init> vis=public flags=_ sig=recv=Class#371 params=[] ret=Class#371 suspend=0 defaults=[] vararg=[]
+symbol s373 kind=function fq=eval vis=public flags=_ sig=recv=_ params=[Class#366] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s374 kind=valueParameter fq=eval.$373.e vis=private flags=_
 file f0 package=_
-  decl d0 interface Expr sym=s358
-  decl d1 class Literal sym=s359
-  decl d2 class Add sym=s361
-  decl d3 class Multiply sym=s363
-  decl d4 fun eval suspend=0 inline=0 sym=s365
-expr e0 name(e) type=Class#358 ref=s366
+  decl d0 interface Expr sym=s366
+  decl d1 class Literal sym=s367
+  decl d2 class Add sym=s369
+  decl d3 class Multiply sym=s371
+  decl d4 fun eval suspend=0 inline=0 sym=s373
+expr e0 name(e) type=Class#366 ref=s374
 expr e1 isCheck expr=e0 type=t5 type=Boolean
 expr e2 string(literal) type=String
 expr e3 isCheck expr=e0 type=t6 type=Boolean

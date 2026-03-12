@@ -356,25 +356,33 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
-symbol s359 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
-symbol s360 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
-symbol s361 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
-symbol s362 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
-symbol s363 kind=object fq=golden.sema.Constants vis=public flags=_
-symbol s364 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
-symbol s365 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
-symbol s366 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s367 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=property fq=golden.sema.MAX vis=public flags=constValue type=Int
+symbol s367 kind=property fq=golden.sema.NAME vis=public flags=constValue type=String
+symbol s368 kind=property fq=golden.sema.FLAG vis=public flags=constValue type=Boolean
+symbol s369 kind=property fq=golden.sema.RATE vis=public flags=constValue type=Double
+symbol s370 kind=property fq=golden.sema.NEG vis=public flags=constValue type=Int
+symbol s371 kind=object fq=golden.sema.Constants vis=public flags=_
+symbol s372 kind=property fq=golden.sema.Constants.LIMIT vis=public flags=constValue type=Int
+symbol s373 kind=property fq=golden.sema.Constants.LABEL vis=public flags=constValue type=String
+symbol s374 kind=function fq=golden.sema.useConst vis=public flags=_ sig=recv=_ params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
+symbol s375 kind=function fq=golden.sema.useNegConst vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d0 property MAX var=0 sym=s358
-  decl d1 property NAME var=0 sym=s359
-  decl d2 property FLAG var=0 sym=s360
-  decl d3 property RATE var=0 sym=s361
-  decl d4 property NEG var=0 sym=s362
-  decl d7 object Constants sym=s363
-  decl d8 fun useConst suspend=0 inline=0 sym=s366
-  decl d9 fun useNegConst suspend=0 inline=0 sym=s367
+  decl d0 property MAX var=0 sym=s366
+  decl d1 property NAME var=0 sym=s367
+  decl d2 property FLAG var=0 sym=s368
+  decl d3 property RATE var=0 sym=s369
+  decl d4 property NEG var=0 sym=s370
+  decl d7 object Constants sym=s371
+  decl d8 fun useConst suspend=0 inline=0 sym=s374
+  decl d9 fun useNegConst suspend=0 inline=0 sym=s375
 expr e0 int(100) type=Int
 expr e1 string(hello) type=String
 expr e2 bool(true) type=Boolean
@@ -383,7 +391,7 @@ expr e4 int(42) type=Int
 expr e5 unary(unaryMinus) operand=e4 type=Int
 expr e6 int(200) type=Int
 expr e7 string(world) type=String
-expr e8 name(MAX) type=Int ref=s358
+expr e8 name(MAX) type=Int ref=s366
 expr e9 int(50) type=Int
 expr e10 binary(greaterThan) lhs=e8 rhs=e9 type=Boolean
-expr e11 name(NEG) type=Int ref=s362
+expr e11 name(NEG) type=Int ref=s370

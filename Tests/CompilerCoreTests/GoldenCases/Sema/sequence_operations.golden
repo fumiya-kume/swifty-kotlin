@@ -356,23 +356,31 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s359 kind=local fq=__local_5.s vis=private flags=_
-symbol s360 kind=local fq=__local_24.fm vis=private flags=_
-symbol s361 kind=local fq=__local_28.d vis=private flags=_
-symbol s362 kind=local fq=__local_31.u vis=private flags=_
-symbol s363 kind=local fq=__local_39.z vis=private flags=_
-symbol s364 kind=local fq=__local_50.g vis=private flags=_
-symbol s365 kind=local fq=__local_55.r vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s367 kind=local fq=__local_5.s vis=private flags=_
+symbol s368 kind=local fq=__local_24.fm vis=private flags=_
+symbol s369 kind=local fq=__local_28.d vis=private flags=_
+symbol s370 kind=local fq=__local_31.u vis=private flags=_
+symbol s371 kind=local fq=__local_39.z vis=private flags=_
+symbol s372 kind=local fq=__local_50.g vis=private flags=_
+symbol s373 kind=local fq=__local_55.r vis=private flags=_
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s358
+  decl d0 fun main suspend=0 inline=0 sym=s366
 expr e0 name(sequenceOf) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
 expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Any call=s343 map=[0->0,1->0,2->0] targs=[]
-expr e5 localDecl s mutable=0 type=_ init=e4 type=Unit ref=s359
-expr e6 name(s) type=Any ref=s359
+expr e5 localDecl s mutable=0 type=_ init=e4 type=Unit ref=s367
+expr e6 name(s) type=Any ref=s367
 expr e7 name(println) type=_
 expr e8 name(it) type=_
 expr e9 call callee=e7 args=[_:e8] type=_
@@ -381,7 +389,7 @@ expr e11 name(it) type=Any ref=s-1003328
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s337 map=[0->0] targs=[]
 expr e13 lambda params=[] body=e12 type=(Any) -> Unit
 expr e14 memberCall recv=e6 callee=forEach args=[_:e13] type=Unit
-expr e15 name(s) type=Any ref=s359
+expr e15 name(s) type=Any ref=s367
 expr e16 name(sequenceOf) type=_
 expr e17 name(it) type=_
 expr e18 call callee=e16 args=[_:e17] type=_
@@ -390,22 +398,22 @@ expr e20 name(it) type=Any ref=s-1005632
 expr e21 call callee=e19 args=[_:e20] type=Any call=s343 map=[0->0] targs=[]
 expr e22 lambda params=[] body=e21 type=(Any) -> Any
 expr e23 memberCall recv=e15 callee=flatMap args=[_:e22] type=Class#23<Any>
-expr e24 localDecl fm mutable=0 type=_ init=e23 type=Unit ref=s360
-expr e25 name(s) type=Any ref=s359
+expr e24 localDecl fm mutable=0 type=_ init=e23 type=Unit ref=s368
+expr e25 name(s) type=Any ref=s367
 expr e26 int(1) type=Int
 expr e27 memberCall recv=e25 callee=drop args=[_:e26] type=Any
-expr e28 localDecl d mutable=0 type=_ init=e27 type=Unit ref=s361
-expr e29 name(s) type=Any ref=s359
+expr e28 localDecl d mutable=0 type=_ init=e27 type=Unit ref=s369
+expr e29 name(s) type=Any ref=s367
 expr e30 memberCall recv=e29 callee=distinct args=[] type=Any
-expr e31 localDecl u mutable=0 type=_ init=e30 type=Unit ref=s362
-expr e32 name(s) type=Any ref=s359
+expr e31 localDecl u mutable=0 type=_ init=e30 type=Unit ref=s370
+expr e32 name(s) type=Any ref=s367
 expr e33 name(sequenceOf) type=_
 expr e34 int(4) type=Int
 expr e35 int(5) type=Int
 expr e36 int(6) type=Int
 expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=Any call=s343 map=[0->0,1->0,2->0] targs=[]
 expr e38 memberCall recv=e32 callee=zip args=[_:e37] type=Any
-expr e39 localDecl z mutable=0 type=_ init=e38 type=Unit ref=s363
+expr e39 localDecl z mutable=0 type=_ init=e38 type=Unit ref=s371
 expr e40 name(generateSequence) type=_
 expr e41 int(1) type=Int
 expr e42 name(it) type=_
@@ -416,9 +424,9 @@ expr e46 int(1) type=Int
 expr e47 binary(add) lhs=e45 rhs=e46 type=Int
 expr e48 lambda params=[] body=e47 type=() -> Int
 expr e49 call callee=e40 args=[_:e41,_:e48] type=Any call=s345 map=[0->0,1->1] targs=[]
-expr e50 localDecl g mutable=0 type=_ init=e49 type=Unit ref=s364
-expr e51 name(g) type=Any ref=s364
+expr e50 localDecl g mutable=0 type=_ init=e49 type=Unit ref=s372
+expr e51 name(g) type=Any ref=s372
 expr e52 int(3) type=Int
 expr e53 memberCall recv=e51 callee=take args=[_:e52] type=<error>
 expr e54 memberCall recv=e53 callee=toList args=[] type=Class#23<out Char> call=s152 map=[] targs=[]
-expr e55 localDecl r mutable=0 type=_ init=e54 type=Unit ref=s365
+expr e55 localDecl r mutable=0 type=_ init=e54 type=Unit ref=s373

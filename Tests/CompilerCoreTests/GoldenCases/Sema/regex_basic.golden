@@ -356,32 +356,40 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s359 kind=local fq=__local_3.regex vis=private flags=_
-symbol s360 kind=local fq=__local_17.found vis=private flags=_
-symbol s361 kind=local fq=__local_39.r vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s367 kind=local fq=__local_3.regex vis=private flags=_
+symbol s368 kind=local fq=__local_17.found vis=private flags=_
+symbol s369 kind=local fq=__local_39.r vis=private flags=_
 file f0 package=_
-  decl d0 fun main suspend=0 inline=0 sym=s358
+  decl d0 fun main suspend=0 inline=0 sym=s366
 expr e0 name(Regex) type=Class#168 ref=s168
 expr e1 string([a-z]+) type=String
 expr e2 call callee=e0 args=[_:e1] type=<error>
-expr e3 localDecl regex mutable=0 type=_ init=e2 type=Unit ref=s359
+expr e3 localDecl regex mutable=0 type=_ init=e2 type=Unit ref=s367
 expr e4 name(println) type=_
 expr e5 string(hello) type=String
-expr e6 name(regex) type=<error> ref=s359
+expr e6 name(regex) type=<error> ref=s367
 expr e7 memberCall recv=e5 callee=matches args=[_:e6] type=Boolean call=s169 map=[0->0] targs=[]
 expr e8 call callee=e4 args=[_:e7] type=Unit call=s337 map=[0->0] targs=[]
 expr e9 name(println) type=_
 expr e10 string(hello) type=String
-expr e11 name(regex) type=<error> ref=s359
+expr e11 name(regex) type=<error> ref=s367
 expr e12 memberCall recv=e10 callee=contains args=[_:e11] type=<error>
 expr e13 call callee=e9 args=[_:e12] type=Unit call=s337 map=[0->0] targs=[]
-expr e14 name(regex) type=<error> ref=s359
+expr e14 name(regex) type=<error> ref=s367
 expr e15 string(abc123) type=String
 expr e16 memberCall recv=e14 callee=find args=[_:e15] type=Class#323? call=s325 map=[0->0] targs=[]
-expr e17 localDecl found mutable=0 type=_ init=e16 type=Unit ref=s360
+expr e17 localDecl found mutable=0 type=_ init=e16 type=Unit ref=s368
 expr e18 name(println) type=_
-expr e19 name(found) type=Class#323? ref=s360
+expr e19 name(found) type=Class#323? ref=s368
 expr e20 safeMemberCall recv=e19 callee=value args=[] type=String? call=s330 map=[] targs=[]
 expr e21 call callee=e18 args=[_:e20] type=Unit call=s337 map=[0->0] targs=[]
 expr e22 name(println) type=_
@@ -401,8 +409,8 @@ expr e35 memberCall recv=e31 callee=split args=[_:e34] type=<error>
 expr e36 call callee=e30 args=[_:e35] type=Unit call=s337 map=[0->0] targs=[]
 expr e37 string(test) type=String
 expr e38 memberCall recv=e37 callee=toRegex args=[] type=Class#168 call=s178 map=[] targs=[]
-expr e39 localDecl r mutable=0 type=_ init=e38 type=Unit ref=s361
+expr e39 localDecl r mutable=0 type=_ init=e38 type=Unit ref=s369
 expr e40 name(println) type=_
-expr e41 name(r) type=Class#168 ref=s361
+expr e41 name(r) type=Class#168 ref=s369
 expr e42 memberCall recv=e41 callee=pattern args=[] type=String call=s329 map=[] targs=[]
 expr e43 call callee=e40 args=[_:e42] type=Unit call=s337 map=[0->0] targs=[]

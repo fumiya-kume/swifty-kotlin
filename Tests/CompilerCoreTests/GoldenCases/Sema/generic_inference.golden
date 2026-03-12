@@ -356,26 +356,34 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.id vis=public flags=_ sig=recv=_ params=[T#359] ret=T#359 suspend=0 defaults=[0] vararg=[0]
-symbol s359 kind=typeParameter fq=golden.sema.id.$358.T vis=private flags=_
-symbol s360 kind=valueParameter fq=golden.sema.id.$358.x vis=private flags=_
-symbol s361 kind=function fq=golden.sema.useInference vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s362 kind=local fq=__local_4.a vis=private flags=_
-symbol s363 kind=local fq=__local_8.b vis=private flags=_
-symbol s364 kind=local fq=__local_12.c vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.id vis=public flags=_ sig=recv=_ params=[T#367] ret=T#367 suspend=0 defaults=[0] vararg=[0]
+symbol s367 kind=typeParameter fq=golden.sema.id.$366.T vis=private flags=_
+symbol s368 kind=valueParameter fq=golden.sema.id.$366.x vis=private flags=_
+symbol s369 kind=function fq=golden.sema.useInference vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s370 kind=local fq=__local_4.a vis=private flags=_
+symbol s371 kind=local fq=__local_8.b vis=private flags=_
+symbol s372 kind=local fq=__local_12.c vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun id suspend=0 inline=0 sym=s358
-  decl d1 fun useInference suspend=0 inline=0 sym=s361
-expr e0 name(x) type=T#359 ref=s360
+  decl d0 fun id suspend=0 inline=0 sym=s366
+  decl d1 fun useInference suspend=0 inline=0 sym=s369
+expr e0 name(x) type=T#367 ref=s368
 expr e1 name(id) type=_
 expr e2 int(42) type=Int
-expr e3 call callee=e1 args=[_:e2] type=Int call=s358 map=[0->0] targs=[Int]
-expr e4 localDecl a mutable=0 type=t2 init=e3 type=Unit ref=s362
+expr e3 call callee=e1 args=[_:e2] type=Int call=s366 map=[0->0] targs=[Int]
+expr e4 localDecl a mutable=0 type=t2 init=e3 type=Unit ref=s370
 expr e5 name(id) type=_
 expr e6 string(hello) type=String
-expr e7 call callee=e5 args=[_:e6] type=String call=s358 map=[0->0] targs=[String]
-expr e8 localDecl b mutable=0 type=t3 init=e7 type=Unit ref=s363
+expr e7 call callee=e5 args=[_:e6] type=String call=s366 map=[0->0] targs=[String]
+expr e8 localDecl b mutable=0 type=t3 init=e7 type=Unit ref=s371
 expr e9 name(id) type=_
 expr e10 bool(true) type=Boolean
-expr e11 call callee=e9 args=[_:e10] type=Boolean call=s358 map=[0->0] targs=[Boolean]
-expr e12 localDecl c mutable=0 type=t4 init=e11 type=Unit ref=s364
+expr e11 call callee=e9 args=[_:e10] type=Boolean call=s366 map=[0->0] targs=[Boolean]
+expr e12 localDecl c mutable=0 type=t4 init=e11 type=Unit ref=s372

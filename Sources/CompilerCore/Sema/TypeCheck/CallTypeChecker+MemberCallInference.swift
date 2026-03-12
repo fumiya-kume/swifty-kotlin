@@ -192,6 +192,22 @@ extension CallTypeChecker {
             }
         }
 
+        // Numeric companion constants: Int.MAX_VALUE, Double.NaN, etc. (STDLIB-153)
+        if args.isEmpty,
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),
+           locals[receiverName] == nil
+        {
+            let receiverStr = interner.resolve(receiverName)
+            let memberStr = interner.resolve(calleeName)
+            if let (constantType, constantValue) = numericCompanionConstant(
+                typeName: receiverStr, memberName: memberStr, sema: sema
+            ) {
+                sema.bindings.bindConstExprValue(id, value: constantValue)
+                sema.bindings.bindExprType(id, type: constantType)
+                return constantType
+            }
+        }
+
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
 
         if args.isEmpty,
@@ -873,6 +889,39 @@ extension CallTypeChecker {
             return finalType
         }
 
+        // Int.coerceIn(min, max) (STDLIB-150)
+        if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if receiverForCheck == intType || receiverForCheck == longType {
+                _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck) }
+                let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
+        // Int.coerceAtLeast(min) / Int.coerceAtMost(max) (STDLIB-150)
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let longType = sema.types.make(.primitive(.long, .nonNull))
+                let receiverForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if receiverForCheck == intType || receiverForCheck == longType {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
         // Primitive member function: Int/Long.toString() / toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
            args.count <= 1
@@ -893,24 +942,26 @@ extension CallTypeChecker {
         }
 
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
-        // toFloat(), toByte(), toShort() (TYPE-005)
+        // toFloat(), toDouble(), toByte(), toShort() (TYPE-005, STDLIB-151)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverForCheck = safeCall
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
             let calleeStr = interner.resolve(calleeName)
             let (targetType, matches): (TypeID, Bool) = switch calleeStr {
-            case "toInt": (intType, receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == intType || receiverForCheck == longType)
+            case "toInt": (intType, receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == floatType || receiverForCheck == doubleType)
             case "toUInt": (uintType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
-            case "toLong": (longType, receiverForCheck == intType || receiverForCheck == uintType || receiverForCheck == longType || receiverForCheck == ulongType)
+            case "toLong": (longType, receiverForCheck == intType || receiverForCheck == uintType || receiverForCheck == longType || receiverForCheck == ulongType || receiverForCheck == floatType || receiverForCheck == doubleType)
             case "toULong": (ulongType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
-            case "toFloat": (floatType, receiverForCheck == intType)
-            case "toByte", "toShort": (intType, receiverForCheck == intType)
+            case "toFloat": (floatType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == doubleType || receiverForCheck == floatType)
+            case "toDouble": (doubleType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == floatType || receiverForCheck == doubleType)
+            case "toByte", "toShort": (intType, receiverForCheck == intType || receiverForCheck == longType)
             default: (sema.types.errorType, false)
             }
             if matches {
@@ -1474,6 +1525,8 @@ extension CallTypeChecker {
                     let resultType: TypeID? = switch calleeStr {
                     case "repeat", "drop", "take", "takeLast", "dropLast":
                         sema.types.stringType
+                    case "toInt":
+                        sema.types.intType
                     case "get":
                         sema.types.make(.primitive(.char, .nonNull))
                     default:
@@ -2283,5 +2336,46 @@ extension CallTypeChecker {
             args: [.invariant(firstType), .invariant(secondType)],
             nullability: .nonNull
         )))
+    }
+
+    // MARK: - Numeric companion constants (STDLIB-153)
+
+    private func numericCompanionConstant(
+        typeName: String,
+        memberName: String,
+        sema: SemaModule
+    ) -> (TypeID, KIRExprKind)? {
+        let types = sema.types
+        switch (typeName, memberName) {
+        // Int (32-bit in Kotlin)
+        case ("Int", "MAX_VALUE"): return (types.intType, .intLiteral(Int64(Int32.max)))
+        case ("Int", "MIN_VALUE"): return (types.intType, .intLiteral(Int64(Int32.min)))
+        case ("Int", "SIZE_BITS"): return (types.intType, .intLiteral(32))
+        case ("Int", "SIZE_BYTES"): return (types.intType, .intLiteral(4))
+        // Long (64-bit)
+        case ("Long", "MAX_VALUE"): return (types.longType, .longLiteral(Int64.max))
+        case ("Long", "MIN_VALUE"): return (types.longType, .longLiteral(Int64.min))
+        case ("Long", "SIZE_BITS"): return (types.intType, .intLiteral(64))
+        case ("Long", "SIZE_BYTES"): return (types.intType, .intLiteral(8))
+        // Short
+        case ("Short", "MAX_VALUE"): return (types.intType, .intLiteral(Int64(Int16.max)))
+        case ("Short", "MIN_VALUE"): return (types.intType, .intLiteral(Int64(Int16.min)))
+        // Byte
+        case ("Byte", "MAX_VALUE"): return (types.intType, .intLiteral(Int64(Int8.max)))
+        case ("Byte", "MIN_VALUE"): return (types.intType, .intLiteral(Int64(Int8.min)))
+        // Float
+        case ("Float", "MAX_VALUE"): return (types.floatType, .floatLiteral(Double(Float.greatestFiniteMagnitude)))
+        case ("Float", "MIN_VALUE"): return (types.floatType, .floatLiteral(Double(Float.leastNonzeroMagnitude)))
+        case ("Float", "NaN"): return (types.floatType, .floatLiteral(Double(Float.nan)))
+        case ("Float", "POSITIVE_INFINITY"): return (types.floatType, .floatLiteral(Double(Float.infinity)))
+        case ("Float", "NEGATIVE_INFINITY"): return (types.floatType, .floatLiteral(Double(-Float.infinity)))
+        // Double
+        case ("Double", "MAX_VALUE"): return (types.doubleType, .doubleLiteral(Double.greatestFiniteMagnitude))
+        case ("Double", "MIN_VALUE"): return (types.doubleType, .doubleLiteral(Double.leastNonzeroMagnitude))
+        case ("Double", "NaN"): return (types.doubleType, .doubleLiteral(Double.nan))
+        case ("Double", "POSITIVE_INFINITY"): return (types.doubleType, .doubleLiteral(Double.infinity))
+        case ("Double", "NEGATIVE_INFINITY"): return (types.doubleType, .doubleLiteral(-Double.infinity))
+        default: return nil
+        }
     }
 }

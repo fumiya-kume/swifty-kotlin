@@ -356,103 +356,111 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s359 kind=local fq=__local_1.x vis=private flags=_
-symbol s360 kind=local fq=__local_3.y vis=private flags=_
-symbol s361 kind=local fq=__local_6.a vis=private flags=_
-symbol s362 kind=local fq=__local_9.b vis=private flags=_
-symbol s363 kind=local fq=__local_12.c vis=private flags=_
-symbol s364 kind=local fq=__local_15.d vis=private flags=_
-symbol s365 kind=local fq=__local_18.e vis=private flags=_
-symbol s366 kind=local fq=__local_22.f vis=private flags=_
-symbol s367 kind=local fq=__local_26.g vis=private flags=_
-symbol s368 kind=local fq=__local_30.i vis=private flags=_
-symbol s369 kind=local fq=__local_34.j vis=private flags=_
-symbol s370 kind=local fq=__local_38.k vis=private flags=_
-symbol s371 kind=local fq=__local_42.l vis=private flags=_
-symbol s372 kind=local fq=__local_46.m vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s367 kind=local fq=__local_1.x vis=private flags=_
+symbol s368 kind=local fq=__local_3.y vis=private flags=_
+symbol s369 kind=local fq=__local_6.a vis=private flags=_
+symbol s370 kind=local fq=__local_9.b vis=private flags=_
+symbol s371 kind=local fq=__local_12.c vis=private flags=_
+symbol s372 kind=local fq=__local_15.d vis=private flags=_
+symbol s373 kind=local fq=__local_18.e vis=private flags=_
+symbol s374 kind=local fq=__local_22.f vis=private flags=_
+symbol s375 kind=local fq=__local_26.g vis=private flags=_
+symbol s376 kind=local fq=__local_30.i vis=private flags=_
+symbol s377 kind=local fq=__local_34.j vis=private flags=_
+symbol s378 kind=local fq=__local_38.k vis=private flags=_
+symbol s379 kind=local fq=__local_42.l vis=private flags=_
+symbol s380 kind=local fq=__local_46.m vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun main suspend=0 inline=0 sym=s358
+  decl d0 fun main suspend=0 inline=0 sym=s366
 expr e0 uint(42) type=UInt
-expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s359
+expr e1 localDecl x mutable=0 type=t0 init=e0 type=Unit ref=s367
 expr e2 ulong(42) type=ULong
-expr e3 localDecl y mutable=0 type=t1 init=e2 type=Unit ref=s360
-expr e4 name(x) type=UInt ref=s359
+expr e3 localDecl y mutable=0 type=t1 init=e2 type=Unit ref=s368
+expr e4 name(x) type=UInt ref=s367
 expr e5 memberCall recv=e4 callee=toInt args=[] type=Int
-expr e6 localDecl a mutable=0 type=_ init=e5 type=Unit ref=s361
-expr e7 name(x) type=UInt ref=s359
+expr e6 localDecl a mutable=0 type=_ init=e5 type=Unit ref=s369
+expr e7 name(x) type=UInt ref=s367
 expr e8 memberCall recv=e7 callee=toUInt args=[] type=UInt
-expr e9 localDecl b mutable=0 type=_ init=e8 type=Unit ref=s362
-expr e10 name(x) type=UInt ref=s359
+expr e9 localDecl b mutable=0 type=_ init=e8 type=Unit ref=s370
+expr e10 name(x) type=UInt ref=s367
 expr e11 memberCall recv=e10 callee=toLong args=[] type=Long
-expr e12 localDecl c mutable=0 type=_ init=e11 type=Unit ref=s363
-expr e13 name(x) type=UInt ref=s359
+expr e12 localDecl c mutable=0 type=_ init=e11 type=Unit ref=s371
+expr e13 name(x) type=UInt ref=s367
 expr e14 memberCall recv=e13 callee=toULong args=[] type=ULong
-expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s364
-expr e16 name(y) type=ULong ref=s360
+expr e15 localDecl d mutable=0 type=_ init=e14 type=Unit ref=s372
+expr e16 name(y) type=ULong ref=s368
 expr e17 memberCall recv=e16 callee=toInt args=[] type=Int
-expr e18 localDecl e mutable=0 type=_ init=e17 type=Unit ref=s365
+expr e18 localDecl e mutable=0 type=_ init=e17 type=Unit ref=s373
 expr e19 uint(100) type=UInt
 expr e20 uint(3) type=UInt
 expr e21 binary(divide) lhs=e19 rhs=e20 type=UInt
-expr e22 localDecl f mutable=0 type=_ init=e21 type=Unit ref=s366
+expr e22 localDecl f mutable=0 type=_ init=e21 type=Unit ref=s374
 expr e23 uint(100) type=UInt
 expr e24 uint(3) type=UInt
 expr e25 binary(modulo) lhs=e23 rhs=e24 type=UInt
-expr e26 localDecl g mutable=0 type=_ init=e25 type=Unit ref=s367
+expr e26 localDecl g mutable=0 type=_ init=e25 type=Unit ref=s375
 expr e27 uint(255) type=UInt
 expr e28 uint(15) type=UInt
 expr e29 memberCall recv=e27 callee=and args=[_:e28] type=UInt
-expr e30 localDecl i mutable=0 type=_ init=e29 type=Unit ref=s368
+expr e30 localDecl i mutable=0 type=_ init=e29 type=Unit ref=s376
 expr e31 uint(240) type=UInt
 expr e32 uint(15) type=UInt
 expr e33 memberCall recv=e31 callee=or args=[_:e32] type=UInt
-expr e34 localDecl j mutable=0 type=_ init=e33 type=Unit ref=s369
+expr e34 localDecl j mutable=0 type=_ init=e33 type=Unit ref=s377
 expr e35 uint(255) type=UInt
 expr e36 uint(15) type=UInt
 expr e37 memberCall recv=e35 callee=xor args=[_:e36] type=UInt
-expr e38 localDecl k mutable=0 type=_ init=e37 type=Unit ref=s370
+expr e38 localDecl k mutable=0 type=_ init=e37 type=Unit ref=s378
 expr e39 uint(255) type=UInt
 expr e40 int(2) type=Int
 expr e41 memberCall recv=e39 callee=shl args=[_:e40] type=UInt
-expr e42 localDecl l mutable=0 type=_ init=e41 type=Unit ref=s371
+expr e42 localDecl l mutable=0 type=_ init=e41 type=Unit ref=s379
 expr e43 uint(240) type=UInt
 expr e44 int(2) type=Int
 expr e45 memberCall recv=e43 callee=shr args=[_:e44] type=UInt
-expr e46 localDecl m mutable=0 type=_ init=e45 type=Unit ref=s372
+expr e46 localDecl m mutable=0 type=_ init=e45 type=Unit ref=s380
 expr e47 name(println) type=_
-expr e48 name(a) type=Int ref=s361
+expr e48 name(a) type=Int ref=s369
 expr e49 call callee=e47 args=[_:e48] type=Unit call=s337 map=[0->0] targs=[]
 expr e50 name(println) type=_
-expr e51 name(b) type=UInt ref=s362
+expr e51 name(b) type=UInt ref=s370
 expr e52 call callee=e50 args=[_:e51] type=Unit call=s337 map=[0->0] targs=[]
 expr e53 name(println) type=_
-expr e54 name(c) type=Long ref=s363
+expr e54 name(c) type=Long ref=s371
 expr e55 call callee=e53 args=[_:e54] type=Unit call=s337 map=[0->0] targs=[]
 expr e56 name(println) type=_
-expr e57 name(d) type=ULong ref=s364
+expr e57 name(d) type=ULong ref=s372
 expr e58 call callee=e56 args=[_:e57] type=Unit call=s337 map=[0->0] targs=[]
 expr e59 name(println) type=_
-expr e60 name(e) type=Int ref=s365
+expr e60 name(e) type=Int ref=s373
 expr e61 call callee=e59 args=[_:e60] type=Unit call=s337 map=[0->0] targs=[]
 expr e62 name(println) type=_
-expr e63 name(f) type=UInt ref=s366
+expr e63 name(f) type=UInt ref=s374
 expr e64 call callee=e62 args=[_:e63] type=Unit call=s337 map=[0->0] targs=[]
 expr e65 name(println) type=_
-expr e66 name(g) type=UInt ref=s367
+expr e66 name(g) type=UInt ref=s375
 expr e67 call callee=e65 args=[_:e66] type=Unit call=s337 map=[0->0] targs=[]
 expr e68 name(println) type=_
-expr e69 name(i) type=UInt ref=s368
+expr e69 name(i) type=UInt ref=s376
 expr e70 call callee=e68 args=[_:e69] type=Unit call=s337 map=[0->0] targs=[]
 expr e71 name(println) type=_
-expr e72 name(j) type=UInt ref=s369
+expr e72 name(j) type=UInt ref=s377
 expr e73 call callee=e71 args=[_:e72] type=Unit call=s337 map=[0->0] targs=[]
 expr e74 name(println) type=_
-expr e75 name(k) type=UInt ref=s370
+expr e75 name(k) type=UInt ref=s378
 expr e76 call callee=e74 args=[_:e75] type=Unit call=s337 map=[0->0] targs=[]
 expr e77 name(println) type=_
-expr e78 name(l) type=UInt ref=s371
+expr e78 name(l) type=UInt ref=s379
 expr e79 call callee=e77 args=[_:e78] type=Unit call=s337 map=[0->0] targs=[]
 expr e80 name(println) type=_
-expr e81 name(m) type=UInt ref=s372
+expr e81 name(m) type=UInt ref=s380
 expr e82 call callee=e80 args=[_:e81] type=Unit call=s337 map=[0->0] targs=[]

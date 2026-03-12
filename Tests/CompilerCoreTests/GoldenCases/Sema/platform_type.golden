@@ -356,14 +356,22 @@ symbol s354 kind=function fq=kotlin.collections.List.withIndex vis=public flags=
 symbol s355 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s356 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
 symbol s357 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#356] ret=Class#23<out T#356> suspend=0 defaults=[] vararg=[]
-symbol s358 kind=function fq=golden.sema.usePlatformType vis=public flags=_ sig=recv=_ params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s359 kind=valueParameter fq=golden.sema.usePlatformType.$358.v vis=private flags=_
-symbol s360 kind=local fq=__local_2.len vis=private flags=_
+symbol s358 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s359 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s360 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s361 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s362 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s363 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s364 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s365 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s366 kind=function fq=golden.sema.usePlatformType vis=public flags=_ sig=recv=_ params=[String] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s367 kind=valueParameter fq=golden.sema.usePlatformType.$366.v vis=private flags=_
+symbol s368 kind=local fq=__local_2.len vis=private flags=_
 file f0 package=golden.sema
-  decl d0 fun usePlatformType suspend=0 inline=0 sym=s358
-expr e0 name(v) type=String ref=s359
+  decl d0 fun usePlatformType suspend=0 inline=0 sym=s366
+expr e0 name(v) type=String ref=s367
 expr e1 memberCall recv=e0 callee=length args=[] type=Int call=s116 map=[] targs=[]
-expr e2 localDecl len mutable=0 type=t1 init=e1 type=Unit ref=s360
+expr e2 localDecl len mutable=0 type=t1 init=e1 type=Unit ref=s368
 expr e3 name(println) type=_
-expr e4 name(len) type=Int ref=s360
+expr e4 name(len) type=Int ref=s368
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s337 map=[0->0] targs=[]

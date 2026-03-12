@@ -279,6 +279,20 @@ extension ABILoweringPass {
             interner.intern("kk_regex_pattern"),
             interner.intern("kk_match_result_value"),
             interner.intern("kk_match_result_groupValues"),
+            // Reverse numeric conversions (STDLIB-151)
+            interner.intern("kk_double_to_int"),
+            interner.intern("kk_float_to_int"),
+            interner.intern("kk_double_to_long"),
+            interner.intern("kk_float_to_long"),
+            interner.intern("kk_long_to_float"),
+            interner.intern("kk_long_to_double"),
+            interner.intern("kk_double_to_float"),
+            interner.intern("kk_long_to_byte"),
+            interner.intern("kk_long_to_short"),
+            // Numeric coercion (STDLIB-150)
+            interner.intern("kk_int_coerceIn"),
+            interner.intern("kk_int_coerceAtLeast"),
+            interner.intern("kk_int_coerceAtMost"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

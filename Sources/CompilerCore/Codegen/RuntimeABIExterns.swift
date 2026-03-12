@@ -336,6 +336,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_toInt_radix = ExternDecl(
+        name: "kk_string_toInt_radix",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_toIntOrNull = ExternDecl(
         name: "kk_string_toIntOrNull",
         parameterTypes: ["intptr_t"],
@@ -366,14 +372,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-140
+    /// STDLIB-140
     public static let kk_string_get = ExternDecl(
         name: "kk_string_get",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
-    // STDLIB-141
+    /// STDLIB-141
     public static let kk_string_compareTo_member = ExternDecl(
         name: "kk_string_compareTo_member",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -386,7 +392,7 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-142
+    /// STDLIB-142
     public static let kk_string_toBoolean = ExternDecl(
         name: "kk_string_toBoolean",
         parameterTypes: ["intptr_t"],
@@ -399,14 +405,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-143
+    /// STDLIB-143
     public static let kk_string_lines = ExternDecl(
         name: "kk_string_lines",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    // STDLIB-144
+    /// STDLIB-144
     public static let kk_string_trimStart = ExternDecl(
         name: "kk_string_trimStart",
         parameterTypes: ["intptr_t"],
@@ -419,7 +425,7 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-145
+    /// STDLIB-145
     public static let kk_string_toByteArray = ExternDecl(
         name: "kk_string_toByteArray",
         parameterTypes: ["intptr_t"],
@@ -1358,6 +1364,7 @@ public enum RuntimeABIExterns {
             kk_string_substring,
             kk_string_split,
             kk_string_toInt,
+            kk_string_toInt_radix,
             kk_string_toIntOrNull,
             kk_string_toDouble,
             kk_string_toDoubleOrNull,

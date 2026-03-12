@@ -82,7 +82,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 54)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 55)
     }
 
     func testRegexFunctionCount() {
@@ -135,8 +135,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        // kk_int_to_float, kk_int_to_byte, kk_int_to_short
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 3)
+        // 12 conversion functions + 3 coercion functions = 15
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 15)
     }
 
     func testMathFunctionCount() {
