@@ -68,11 +68,11 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `Random.nextInt(1, 10)` が 1〜9 の範囲の値を返す
 
-- [ ] STDLIB-166: `List.shuffled()` / `List.random()` / `List.randomOrNull()` を実装する
-  - [ ] Sema に `List<T>.shuffled(): List<T>` / `List<T>.random(): T` / `List<T>.randomOrNull(): T?` stub を登録する
-  - [ ] Runtime に `kk_list_shuffled` / `kk_list_random` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1,2,3).shuffled().size` → `3` が `kotlinc` と一致する
+- [x] STDLIB-166: `List.shuffled()` / `List.random()` / `List.randomOrNull()` を実装する
+  - [x] Sema に `List<T>.shuffled(): List<T>` / `List<T>.random(): T` / `List<T>.randomOrNull(): T?` stub を登録する
+  - [x] Runtime に `kk_list_shuffled` / `kk_list_random` / `kk_list_randomOrNull` を追加する
+  - [x] diff/golden ケースを追加する
+  - **完了条件**: `listOf(1,2,3).shuffled().size` → `3` が `kotlinc` と一致する ✓
 
 ---
 

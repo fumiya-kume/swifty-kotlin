@@ -1214,6 +1214,40 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
+        if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_replaceFirst"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: replaceRange(range, replacement) (STDLIB-188)
+        if args.count == 2, interner.resolve(calleeName) == "replaceRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_replaceRange"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: replace(old, new) (STDLIB-006)
         if args.count == 2, interner.resolve(calleeName) == "replace" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType

@@ -325,6 +325,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_equalsIgnoreCase = ExternDecl(
+        name: "kk_string_equalsIgnoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_first = ExternDecl(
         name: "kk_string_first",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
@@ -429,6 +435,18 @@ public enum RuntimeABIExterns {
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceFirst = ExternDecl(
+        name: "kk_string_replaceFirst",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceRange = ExternDecl(
+        name: "kk_string_replaceRange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -1519,6 +1537,8 @@ public enum RuntimeABIExterns {
             kk_string_endsWith,
             kk_string_contains_str,
             kk_string_replace,
+            kk_string_replaceFirst,
+            kk_string_replaceRange,
             kk_string_substring,
             kk_string_split,
             kk_string_toInt,
@@ -1579,6 +1599,7 @@ public enum RuntimeABIExterns {
             kk_string_prependIndent,
             kk_string_replaceIndent_default,
             kk_string_replaceIndent,
+            kk_string_equalsIgnoreCase,
             // Print / Println
             kk_print_any,
             kk_println_any,

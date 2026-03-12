@@ -684,6 +684,51 @@ public func kk_string_equalsIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreC
     return kk_box_bool(cmp == 0 ? 1 : 0)
 }
 
+// MARK: - STDLIB-188: replaceFirst / replaceRange
+
+@_cdecl("kk_string_replaceFirst")
+public func kk_string_replaceFirst(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let oldValue = runtimeStringFromRaw(oldRaw) ?? ""
+    let newValue = runtimeStringFromRaw(newRaw) ?? ""
+    guard let range = source.range(of: oldValue) else {
+        return runtimeMakeStringRaw(source)
+    }
+    var result = source
+    result.replaceSubrange(range, with: newValue)
+    return runtimeMakeStringRaw(result)
+}
+
+@_cdecl("kk_string_replaceRange")
+public func kk_string_replaceRange(
+    _ strRaw: Int,
+    _ rangeRaw: Int,
+    _ replacementRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        runtimeSetThrown(outThrown, message: "Invalid range for replaceRange")
+        return 0
+    }
+    let first = range.first
+    let last = range.last
+    let length = scalars.count
+    if first < 0 || first > length || last < -1 || last >= length || first > last + 1 {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: start=\(first), end=\(last + 1), length=\(length)"
+        )
+        return 0
+    }
+    let endIndex = last + 1
+    let replacement = runtimeStringFromRaw(replacementRaw) ?? ""
+    let before = runtimeStringFromScalars(scalars[0 ..< first])
+    let after = runtimeStringFromScalars(scalars[endIndex...])
+    return runtimeMakeStringRaw(before + replacement + after)
+}
+
 @_cdecl("kk_compare_any")
 public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     if lhsRaw == rhsRaw {

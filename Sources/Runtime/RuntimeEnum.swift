@@ -5,6 +5,9 @@ import Foundation
 
 @_cdecl("kk_string_equals")
 public func kk_string_equals(_ aRaw: Int, _ bRaw: Int) -> Int {
+    if bRaw == runtimeNullSentinelInt {
+        return 0
+    }
     let a = extractString(from: UnsafeMutableRawPointer(bitPattern: aRaw)) ?? ""
     let b = extractString(from: UnsafeMutableRawPointer(bitPattern: bRaw)) ?? ""
     return a == b ? 1 : 0

@@ -858,6 +858,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-188: replaceFirst / replaceRange ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceFirst",
+            externalLinkName: "kk_string_replaceFirst",
+            receiverType: stringType,
+            parameters: [
+                ("oldValue", stringType, false, false),
+                ("newValue", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceRange",
+            externalLinkName: "kk_string_replaceRange",
+            receiverType: stringType,
+            parameters: [
+                ("range", intType, false, false),
+                ("replacement", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
 
         registerSyntheticStringExtensionFunction(

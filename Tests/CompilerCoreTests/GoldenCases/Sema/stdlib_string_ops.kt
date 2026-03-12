@@ -65,3 +65,9 @@ fun useFirstOrNull(): Char? = "".firstOrNull()
 fun usePrependIndent(): String = "abc\ndef".prependIndent("  ")
 
 fun useReplaceIndent(): String = "  abc\n  def".replaceIndent("")
+
+fun useEqualsIgnoreCase(): Boolean = "abc".equals("ABC", ignoreCase = true)
+
+fun useReplaceFirst(): String = "abcabc".replaceFirst("abc", "X")
+
+fun useReplaceRange(): String = "hello".replaceRange(0..2, "HE")

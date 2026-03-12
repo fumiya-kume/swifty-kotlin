@@ -11,6 +11,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             values.reversed()
             values.sorted()
             values.distinct()
+            values.shuffled()
         }
         """
 
@@ -27,6 +28,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 "reversed": "kk_list_reversed",
                 "sorted": "kk_list_sorted",
                 "distinct": "kk_list_distinct",
+                "shuffled": "kk_list_shuffled",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {

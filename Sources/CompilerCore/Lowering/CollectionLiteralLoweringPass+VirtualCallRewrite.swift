@@ -248,6 +248,26 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.shuffledName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListShuffledName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
         if callee == lookup.flattenName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil

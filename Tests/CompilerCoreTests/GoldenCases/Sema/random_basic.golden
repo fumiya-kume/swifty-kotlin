@@ -467,86 +467,29 @@ symbol s465 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|s
 symbol s466 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
 symbol s467 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
 symbol s468 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#466 suspend=0 defaults=[0] vararg=[0]
-symbol s469 kind=function fq=render vis=public flags=_ sig=recv=_ params=[Any,Any] ret=Unit suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s470 kind=valueParameter fq=render.$469.values vis=private flags=_
-symbol s471 kind=valueParameter fq=render.$469.Int vis=private flags=_
-symbol s472 kind=local fq=__destructuring_9.key vis=private flags=_ type=Any
-symbol s473 kind=local fq=__destructuring_9.value vis=private flags=_ type=Any
-symbol s474 kind=local fq=__destructuring_24.key vis=private flags=_ type=Any
-symbol s475 kind=local fq=__destructuring_24.value vis=private flags=_ type=Any
-symbol s476 kind=local fq=__destructuring_38.value vis=private flags=_ type=Any
+symbol s469 kind=function fq=useRandom vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s470 kind=local fq=__local_2.a vis=private flags=_
+symbol s471 kind=local fq=__local_6.b vis=private flags=_
+symbol s472 kind=local fq=__local_11.c vis=private flags=_
+symbol s473 kind=local fq=__local_14.d vis=private flags=_
+symbol s474 kind=local fq=__local_17.e vis=private flags=_
 file f0 package=_
-  decl d0 fun render suspend=0 inline=0 sym=s469
-expr e0 name(values) type=Any ref=s470
-expr e1 name(println) type=_
-expr e2 name(key) type=Any ref=s472
-expr e3 call callee=e1 args=[_:e2] type=Unit call=s423 map=[0->0] targs=[]
-expr e4 name(println) type=_
-expr e5 name(value) type=Any ref=s473
-expr e6 call callee=e4 args=[_:e5] type=Unit call=s423 map=[0->0] targs=[]
-expr e7 blockExpr stmts=[e3] trailing=e6 type=Unit
-expr e8 name(__destructured_0) type=Any ref=s-1002816
-expr e9 destructuringDecl names=[key,value] mutable=0 init=e8 type=Unit
-expr e10 blockExpr stmts=[e9] trailing=e7 type=Unit
-expr e11 lambda params=[__destructured_0] body=e10 type=(Any) -> Unit
-expr e12 memberCall recv=e0 callee=forEach args=[_:e11] type=<error>
-expr e13 name(println) type=_
-expr e14 name(values) type=Any ref=s470
-expr e15 name(key) type=_
-expr e16 memberCall recv=e15 callee=length args=[] type=_
-expr e17 name(value) type=_
-expr e18 binary(add) lhs=e16 rhs=e17 type=_
-expr e19 name(key) type=Any ref=s474
-expr e20 memberCall recv=e19 callee=length args=[] type=<error>
-expr e21 name(value) type=Any ref=s475
-expr e22 binary(add) lhs=e20 rhs=e21 type=Int
-expr e23 name(__destructured_0) type=Any ref=s-1006656
-expr e24 destructuringDecl names=[key,value] mutable=0 init=e23 type=Unit
-expr e25 blockExpr stmts=[e24] trailing=e22 type=Int
-expr e26 lambda params=[__destructured_0] body=e25 type=(Any) -> Int
-expr e27 memberCall recv=e14 callee=map args=[_:e26] type=<error>
-expr e28 call callee=e13 args=[_:e27] type=Unit call=s423 map=[0->0] targs=[]
-expr e29 name(println) type=_
-expr e30 name(values) type=Any ref=s470
-expr e31 name(value) type=_
-expr e32 int(1) type=_
-expr e33 binary(greaterThan) lhs=e31 rhs=e32 type=_
-expr e34 name(value) type=Any ref=s476
-expr e35 int(1) type=Int
-expr e36 binary(greaterThan) lhs=e34 rhs=e35 type=Boolean
-expr e37 name(__destructured_0) type=Any ref=s-1010240
-expr e38 destructuringDecl names=[_,value] mutable=0 init=e37 type=Unit
-expr e39 blockExpr stmts=[e38] trailing=e36 type=Boolean
-expr e40 lambda params=[__destructured_0] body=e39 type=(Any) -> Boolean
-expr e41 memberCall recv=e30 callee=filter args=[_:e40] type=<error>
-expr e42 call callee=e29 args=[_:e41] type=Unit call=s423 map=[0->0] targs=[]
-expr e43 name(println) type=_
-expr e44 name(values) type=Any ref=s470
-expr e45 name(it) type=_
-expr e46 memberCall recv=e45 callee=value args=[] type=_
-expr e47 int(2) type=_
-expr e48 binary(multiply) lhs=e46 rhs=e47 type=_
-expr e49 name(it) type=<error>
-expr e50 memberCall recv=e49 callee=value args=[] type=<error>
-expr e51 int(2) type=Int
-expr e52 binary(multiply) lhs=e50 rhs=e51 type=Int
-expr e53 lambda params=[] body=e52 type=() -> Int
-expr e54 memberCall recv=e44 callee=mapValues args=[_:e53] type=<error>
-expr e55 call callee=e43 args=[_:e54] type=Unit call=s423 map=[0->0] targs=[]
-expr e56 name(println) type=_
-expr e57 name(values) type=Any ref=s470
-expr e58 name(it) type=_
-expr e59 memberCall recv=e58 callee=key args=[] type=_
-expr e60 string(!) type=_
-expr e61 binary(add) lhs=e59 rhs=e60 type=_
-expr e62 name(it) type=<error>
-expr e63 memberCall recv=e62 callee=key args=[] type=<error>
-expr e64 string(!) type=String
-expr e65 binary(add) lhs=e63 rhs=e64 type=String
-expr e66 lambda params=[] body=e65 type=() -> String
-expr e67 memberCall recv=e57 callee=mapKeys args=[_:e66] type=<error>
-expr e68 call callee=e56 args=[_:e67] type=Unit call=s423 map=[0->0] targs=[]
-expr e69 name(println) type=_
-expr e70 name(values) type=Any ref=s470
-expr e71 memberCall recv=e70 callee=toList args=[] type=<error>
-expr e72 call callee=e69 args=[_:e71] type=Unit call=s423 map=[0->0] targs=[]
+  decl d0 fun useRandom suspend=0 inline=0 sym=s469
+expr e0 name(Random) type=Class#295 ref=s295
+expr e1 memberCall recv=e0 callee=nextInt args=[] type=Int call=s296 map=[] targs=[]
+expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s470
+expr e3 name(Random) type=Class#295 ref=s295
+expr e4 int(10) type=Int
+expr e5 memberCall recv=e3 callee=nextInt args=[_:e4] type=Int call=s297 map=[0->0] targs=[]
+expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s471
+expr e7 name(Random) type=Class#295 ref=s295
+expr e8 int(1) type=Int
+expr e9 int(10) type=Int
+expr e10 memberCall recv=e7 callee=nextInt args=[_:e8,_:e9] type=Int call=s299 map=[0->0,1->1] targs=[]
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s472
+expr e12 name(Random) type=Class#295 ref=s295
+expr e13 memberCall recv=e12 callee=nextDouble args=[] type=Double call=s301 map=[] targs=[]
+expr e14 localDecl d mutable=0 type=_ init=e13 type=Unit ref=s473
+expr e15 name(Random) type=Class#295 ref=s295
+expr e16 memberCall recv=e15 callee=nextBoolean args=[] type=Boolean call=s302 map=[] targs=[]
+expr e17 localDecl e mutable=0 type=_ init=e16 type=Unit ref=s474
