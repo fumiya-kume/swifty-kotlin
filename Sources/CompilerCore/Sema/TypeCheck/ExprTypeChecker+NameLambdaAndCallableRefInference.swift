@@ -280,7 +280,6 @@ extension ExprTypeChecker {
         let resolvedName = interner.resolve(name)
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
         var implicitMemberType: TypeID?
-
         if sema.types.isSubtype(nonNullReceiver, sema.types.stringType), resolvedName == "length" {
             implicitMemberType = sema.types.intType
         }

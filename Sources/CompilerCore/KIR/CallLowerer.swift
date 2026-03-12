@@ -172,41 +172,18 @@ final class CallLowerer {
             )
         }
         let knownNames = KnownCompilerNames(interner: interner)
-        if sourceCalleeName == interner.intern("toList"),
-           args.count == 1,
-           sema.bindings.isCollectionExpr(args[0].expr)
-        {
-            let argumentType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
-            let nonNullArgumentType = sema.types.makeNonNullable(argumentType)
-            let runtimeCallee: InternedString? = if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
-                                                    let symbol = sema.symbols.symbol(classType.classSymbol)
-            {
-                switch symbol.name {
-                case knownNames.list, knownNames.mutableList:
-                    nil
-                case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
-                    interner.intern("kk_range_toList")
-                case knownNames.string:
-                    interner.intern("kk_string_toList")
-                default:
-                    interner.intern("kk_sequence_to_list")
-                }
-            } else {
-                interner.intern("kk_sequence_to_list")
-            }
-            if let runtimeCallee {
-                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: runtimeCallee,
-                    arguments: loweredArgIDs,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                return result
-            }
-            return loweredArgIDs[0]
+        if let loweredToList = tryLowerCollectionToListCall(
+            sourceCalleeName: sourceCalleeName,
+            args: args,
+            loweredArgIDs: loweredArgIDs,
+            boundType: boundType,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            knownNames: knownNames,
+            instructions: &instructions
+        ) {
+            return loweredToList
         }
         if args.count == 1,
            let loweredNumericConversion = lowerTopLevelNumericConversionCall(
@@ -455,6 +432,58 @@ final class CallLowerer {
                 thrownResult: nil
             ))
         }
+        return result
+    }
+
+    private func tryLowerCollectionToListCall(
+        sourceCalleeName: InternedString,
+        args: [CallArgument],
+        loweredArgIDs: [KIRExprID],
+        boundType: TypeID?,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        knownNames: KnownCompilerNames,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard sourceCalleeName == interner.intern("toList"),
+              args.count == 1,
+              sema.bindings.isCollectionExpr(args[0].expr)
+        else {
+            return nil
+        }
+
+        let argumentType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+        let nonNullArgumentType = sema.types.makeNonNullable(argumentType)
+        let runtimeCallee: InternedString? = if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
+                                                let symbol = sema.symbols.symbol(classType.classSymbol)
+        {
+            switch symbol.name {
+            case knownNames.list, knownNames.mutableList:
+                nil
+            case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
+                interner.intern("kk_range_toList")
+            case knownNames.string:
+                interner.intern("kk_string_toList")
+            default:
+                interner.intern("kk_sequence_to_list")
+            }
+        } else {
+            interner.intern("kk_sequence_to_list")
+        }
+        guard let runtimeCallee else {
+            return loweredArgIDs[0]
+        }
+
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: runtimeCallee,
+            arguments: loweredArgIDs,
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
         return result
     }
 
