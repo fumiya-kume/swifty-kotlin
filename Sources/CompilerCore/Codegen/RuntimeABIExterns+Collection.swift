@@ -29,6 +29,9 @@ public extension RuntimeABIExterns {
         kk_set_union,
         kk_set_subtract,
         kk_set_to_string,
+        kk_set_intersect,
+        kk_set_union,
+        kk_set_subtract,
         kk_list_map,
         kk_list_filter,
         kk_list_mapNotNull,
@@ -162,6 +165,10 @@ public extension RuntimeABIExterns {
         kk_mutable_list_set,
         kk_mutable_list_shuffle,
         kk_mutable_list_reverse,
+        kk_set_map,
+        kk_set_filter,
+        kk_set_forEach,
+        kk_set_toList,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_mutable_set_clear,
@@ -345,6 +352,50 @@ public extension RuntimeABIExterns {
         name: "kk_set_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    /// Set operations (STDLIB-266)
+    static let kk_set_intersect = ExternDecl(
+        name: "kk_set_intersect",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_union = ExternDecl(
+        name: "kk_set_union",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_subtract = ExternDecl(
+        name: "kk_set_subtract",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Set higher-order functions (STDLIB-268)
+    static let kk_set_map = ExternDecl(
+        name: "kk_set_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_filter = ExternDecl(
+        name: "kk_set_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_forEach = ExternDecl(
+        name: "kk_set_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_toList = ExternDecl(
+        name: "kk_set_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
     )
 
     static let kk_list_associateBy = ExternDecl(
