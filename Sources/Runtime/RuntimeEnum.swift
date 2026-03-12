@@ -22,3 +22,15 @@ public func kk_enum_valueOf_throw(_ nameRaw: Int, _ outThrown: UnsafeMutablePoin
     )
     return 0
 }
+
+/// Creates a List of enum ordinals [0, 1, ..., count-1] for enumValues<T>().
+/// Each element is a boxed Int (ordinal). Used by enumValues<Color>().map { it.name } etc.
+@_cdecl("kk_enum_make_values_array")
+public func kk_enum_make_values_array(_ count: Int) -> Int {
+    var elements: [Int] = []
+    elements.reserveCapacity(max(0, count))
+    for i in 0 ..< count {
+        elements.append(kk_box_int(i))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}

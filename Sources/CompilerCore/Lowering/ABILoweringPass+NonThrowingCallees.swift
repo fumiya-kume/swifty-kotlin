@@ -43,6 +43,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_compareTo_member"),
             interner.intern("kk_string_compareToIgnoreCase"),
             interner.intern("kk_string_equals"),
+            interner.intern("kk_enum_make_values_array"),
             interner.intern("kk_string_toBoolean"),
             interner.intern("kk_string_lines"),
             interner.intern("kk_string_trimStart"),
