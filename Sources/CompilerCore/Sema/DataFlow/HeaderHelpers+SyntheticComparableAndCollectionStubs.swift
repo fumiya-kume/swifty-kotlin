@@ -2245,6 +2245,24 @@ extension DataFlowSemaPhase {
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
         )
 
+        registerMember(
+            name: "plus",
+            externalLinkName: "kk_map_plus",
+            parameterTypes: [pairType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .operatorFunction]
+        )
+
+        registerMember(
+            name: "minus",
+            externalLinkName: "kk_map_minus",
+            parameterTypes: [keyType],
+            returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .operatorFunction]
+        )
+
         let getOrElseLambdaType = types.make(.functionType(FunctionType(
             params: [],
             returnType: valueType,

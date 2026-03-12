@@ -280,7 +280,7 @@ extension CallTypeChecker {
             "sortedDescending", "sortedByDescending", "sortedWith", "partition",
             "filterIsInstance",
         ]
-        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse"]
+        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse", "plus", "minus"]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
@@ -296,7 +296,7 @@ extension CallTypeChecker {
             "sortedDescending", "sortedByDescending", "sortedWith",
             "filterIsInstance",
         ]
-        if memberName == "mapValues" || memberName == "mapKeys" {
+        if memberName == "mapValues" || memberName == "mapKeys" || memberName == "plus" || memberName == "minus" {
             return isMapReceiver
         }
         return collectionReturningMembers.contains(memberName)
@@ -321,6 +321,8 @@ extension CallTypeChecker {
         case "getOrDefault":
             isMapReceiver && argCount == 2
         case "getOrElse":
+            isMapReceiver && argCount == 1
+        case "plus", "minus":
             isMapReceiver && argCount == 1
         case "fold", "windowed":
             argCount == 2
@@ -356,6 +358,29 @@ extension CallTypeChecker {
 
         if memberName == "find" {
             return sema.types.makeNullable(receiverElementType)
+        }
+
+        if memberName == "plus" || memberName == "minus" {
+            // plus/minus return the same Map type as the receiver.
+            // receiverElementType for maps is Map.Entry<K,V>, so reconstruct Map<K,V>.
+            if case let .classType(entryType) = sema.types.kind(of: receiverElementType),
+               entryType.args.count >= 2
+            {
+                let keyArg = entryType.args[0]
+                let valueArg = entryType.args[1]
+                if let mapSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Map"),
+                ]) {
+                    return sema.types.make(.classType(ClassType(
+                        classSymbol: mapSymbol,
+                        args: [keyArg, valueArg],
+                        nullability: .nonNull
+                    )))
+                }
+            }
+            return sema.types.anyType
         }
 
         if memberName == "getOrDefault" || memberName == "getOrElse" {

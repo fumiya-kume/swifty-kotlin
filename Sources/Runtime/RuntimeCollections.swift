@@ -481,6 +481,47 @@ public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
+@_cdecl("kk_map_plus")
+public func kk_map_plus(_ mapRaw: Int, _ pairRaw: Int) -> Int {
+    var keys: [Int] = []
+    var values: [Int] = []
+    if let map = runtimeMapBox(from: mapRaw) {
+        keys = Array(map.keys)
+        values = Array(map.values)
+    }
+    if let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+       let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    {
+        let key = pairBox.first
+        let value = pairBox.second
+        if let index = keys.firstIndex(where: { runtimeValuesEqual($0, key) }) {
+            values[index] = value
+        } else {
+            keys.append(key)
+            values.append(value)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
+@_cdecl("kk_map_minus")
+public func kk_map_minus(_ mapRaw: Int, _ key: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    var keys: [Int] = []
+    var values: [Int] = []
+    for (idx, mapKey) in map.keys.enumerated() {
+        if !runtimeValuesEqual(mapKey, key) {
+            keys.append(mapKey)
+            if idx < map.values.count {
+                values.append(map.values[idx])
+            }
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
 @_cdecl("kk_map_to_mutable_map")
 public func kk_map_to_mutable_map(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
