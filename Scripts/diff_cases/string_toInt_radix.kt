@@ -3,5 +3,5 @@ fun main() {
     println("1010".toInt(2))
     println("77".toInt(8))
     println("42".toInt(10))
-    println("255".toString(16))
+    println(255.toString(16))
 }

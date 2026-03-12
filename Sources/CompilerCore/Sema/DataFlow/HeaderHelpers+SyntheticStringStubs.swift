@@ -10,6 +10,7 @@ extension DataFlowSemaPhase {
         let stringType = types.stringType
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let intType = types.intType
+        let longType = types.make(.primitive(.long, .nonNull))
         let charType = types.make(.primitive(.char, .nonNull))
         let nullableIntType = types.make(.primitive(.int, .nullable))
         let nullableDoubleType = types.make(.primitive(.double, .nullable))
@@ -144,6 +145,20 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // String.toInt(radix: Int) (STDLIB-152)
+        registerSyntheticStringExtensionFunction(
+            named: "toInt",
+            externalLinkName: "kk_string_toInt_radix",
+            receiverType: stringType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "toIntOrNull",
             externalLinkName: "kk_string_toIntOrNull",
@@ -210,6 +225,32 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [
                 ("args", types.nullableAnyType, false, true),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Int.toString(radix: Int) / Long.toString(radix: Int) (STDLIB-152)
+        registerSyntheticStringExtensionFunction(
+            named: "toString",
+            externalLinkName: "kk_int_toString_radix",
+            receiverType: intType,
+            parameters: [
+                ("radix", intType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "toString",
+            externalLinkName: "kk_int_toString_radix",
+            receiverType: longType,
+            parameters: [
+                ("radix", intType, false, false),
             ],
             returnType: stringType,
             packageFQName: kotlinTextPkg,

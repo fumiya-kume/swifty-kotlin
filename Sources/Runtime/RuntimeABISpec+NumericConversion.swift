@@ -59,6 +59,14 @@ public extension RuntimeABISpec {
             section: "NumericConversion"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_long_to_int",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_long_to_float",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),

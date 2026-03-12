@@ -216,6 +216,11 @@ public func kk_float_to_long(_ value: Int) -> Int {
     return Int(Int64(f))
 }
 
+@_cdecl("kk_long_to_int")
+public func kk_long_to_int(_ value: Int) -> Int {
+    Int(Int32(truncatingIfNeeded: value))
+}
+
 @_cdecl("kk_long_to_float")
 public func kk_long_to_float(_ value: Int) -> Int {
     kk_float_to_bits(Float(value))

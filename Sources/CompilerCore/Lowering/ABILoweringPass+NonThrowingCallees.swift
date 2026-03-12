@@ -294,6 +294,7 @@ extension ABILoweringPass {
             interner.intern("kk_float_to_int"),
             interner.intern("kk_double_to_long"),
             interner.intern("kk_float_to_long"),
+            interner.intern("kk_long_to_int"),
             interner.intern("kk_long_to_float"),
             interner.intern("kk_long_to_double"),
             interner.intern("kk_double_to_float"),

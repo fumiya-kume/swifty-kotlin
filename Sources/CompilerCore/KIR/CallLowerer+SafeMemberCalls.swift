@@ -212,7 +212,8 @@ extension CallLowerer {
             case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
             case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
             case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
-            case ("toInt", intType, intType), ("toInt", longType, intType): nil // identity
+            case ("toInt", longType, intType): interner.intern("kk_long_to_int")
+            case ("toInt", intType, intType): nil // identity
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
@@ -251,8 +252,7 @@ extension CallLowerer {
                 return result
             }
             let isRepresentationPreservingConversion =
-                (calleeStr == "toInt" && nonNullReceiverType == longType && nonNullResultType == intType)
-                || (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
+                (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
                 || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
                 || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),

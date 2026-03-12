@@ -135,8 +135,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        // 12 conversion functions + 3 coercion functions = 15
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 15)
+        // 13 conversion functions + 3 coercion functions = 16 (STDLIB-151: kk_long_to_int)
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 16)
     }
 
     func testMathFunctionCount() {

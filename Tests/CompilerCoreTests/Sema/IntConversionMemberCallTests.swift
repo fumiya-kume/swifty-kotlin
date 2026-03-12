@@ -43,4 +43,39 @@ final class IntConversionMemberCallTests: XCTestCase {
             }
         }
     }
+
+    func testLongAndDoubleToIntNarrowingConversionInfersIntType() throws {
+        let source = """
+        fun sample(l: Long, d: Double) {
+            l.toInt()
+            d.toInt()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            var toIntCallExprIDs: [ExprID] = []
+            for index in ast.arena.exprs.indices {
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID) else { continue }
+                guard case let .memberCall(_, callee, _, _, _) = expr else { continue }
+                if ctx.interner.resolve(callee) == "toInt" {
+                    toIntCallExprIDs.append(exprID)
+                }
+            }
+            XCTAssertEqual(toIntCallExprIDs.count, 2, "Expected two toInt() calls")
+            for exprID in toIntCallExprIDs {
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[exprID],
+                    sema.types.intType,
+                    "Long.toInt() and Double.toInt() should infer Int return type"
+                )
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -386,19 +386,66 @@ symbol s384 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthe
 symbol s385 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
 symbol s386 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
 symbol s387 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
-symbol s388 kind=class fq=golden.sema.ResourceDelegate vis=public flags=_
-symbol s389 kind=constructor fq=golden.sema.ResourceDelegate.<init> vis=public flags=_ sig=recv=Class#388 params=[] ret=Class#388 suspend=0 defaults=[] vararg=[]
-symbol s390 kind=function fq=golden.sema.ResourceDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#388 params=[Any?,<error>] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s391 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$390.thisRef vis=private flags=_
-symbol s392 kind=valueParameter fq=golden.sema.ResourceDelegate.getValue.$390.property vis=private flags=_
-symbol s393 kind=function fq=golden.sema.ResourceDelegate.provideDelegate vis=public flags=operatorFunction sig=recv=Class#388 params=[Any?,<error>] ret=Class#388 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s394 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$393.thisRef vis=private flags=_
-symbol s395 kind=valueParameter fq=golden.sema.ResourceDelegate.provideDelegate.$393.property vis=private flags=_
-symbol s396 kind=property fq=golden.sema.resource vis=public flags=_ type=String
-file f0 package=golden.sema
-  decl d2 class ResourceDelegate sym=s388
-  decl d3 property resource var=0 sym=s396
-expr e0 string(value) type=String
-expr e1 this type=Class#388
-expr e2 name(ResourceDelegate) type=_
-expr e3 call callee=e2 args=[] type=Class#388 call=s389 map=[] targs=[]
+symbol s388 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s389 kind=local fq=__local_1.d vis=private flags=_
+symbol s390 kind=local fq=__local_4.di vis=private flags=_
+symbol s391 kind=local fq=__local_7.dl vis=private flags=_
+symbol s392 kind=local fq=__local_10.df vis=private flags=_
+symbol s393 kind=local fq=__local_12.f vis=private flags=_
+symbol s394 kind=local fq=__local_15.fi vis=private flags=_
+symbol s395 kind=local fq=__local_18.fl vis=private flags=_
+symbol s396 kind=local fq=__local_21.fd vis=private flags=_
+symbol s397 kind=local fq=__local_23.l vis=private flags=_
+symbol s398 kind=local fq=__local_26.lf vis=private flags=_
+symbol s399 kind=local fq=__local_29.ld vis=private flags=_
+symbol s400 kind=local fq=__local_32.li vis=private flags=_
+symbol s401 kind=local fq=__local_35.lb vis=private flags=_
+symbol s402 kind=local fq=__local_38.ls vis=private flags=_
+symbol s403 kind=local fq=__local_40.i vis=private flags=_
+symbol s404 kind=local fq=__local_43.id vis=private flags=_
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s388
+expr e0 double(3.14) type=Double
+expr e1 localDecl d mutable=0 type=_ init=e0 type=Unit ref=s389
+expr e2 name(d) type=Double ref=s389
+expr e3 memberCall recv=e2 callee=toInt args=[] type=Int
+expr e4 localDecl di mutable=0 type=_ init=e3 type=Unit ref=s390
+expr e5 name(d) type=Double ref=s389
+expr e6 memberCall recv=e5 callee=toLong args=[] type=Long
+expr e7 localDecl dl mutable=0 type=_ init=e6 type=Unit ref=s391
+expr e8 name(d) type=Double ref=s389
+expr e9 memberCall recv=e8 callee=toFloat args=[] type=Float
+expr e10 localDecl df mutable=0 type=_ init=e9 type=Unit ref=s392
+expr e11 float(2.5) type=Float
+expr e12 localDecl f mutable=0 type=_ init=e11 type=Unit ref=s393
+expr e13 name(f) type=Float ref=s393
+expr e14 memberCall recv=e13 callee=toInt args=[] type=Int
+expr e15 localDecl fi mutable=0 type=_ init=e14 type=Unit ref=s394
+expr e16 name(f) type=Float ref=s393
+expr e17 memberCall recv=e16 callee=toLong args=[] type=Long
+expr e18 localDecl fl mutable=0 type=_ init=e17 type=Unit ref=s395
+expr e19 name(f) type=Float ref=s393
+expr e20 memberCall recv=e19 callee=toDouble args=[] type=Double
+expr e21 localDecl fd mutable=0 type=_ init=e20 type=Unit ref=s396
+expr e22 long(42) type=Long
+expr e23 localDecl l mutable=0 type=_ init=e22 type=Unit ref=s397
+expr e24 name(l) type=Long ref=s397
+expr e25 memberCall recv=e24 callee=toFloat args=[] type=Float
+expr e26 localDecl lf mutable=0 type=_ init=e25 type=Unit ref=s398
+expr e27 name(l) type=Long ref=s397
+expr e28 memberCall recv=e27 callee=toDouble args=[] type=Double
+expr e29 localDecl ld mutable=0 type=_ init=e28 type=Unit ref=s399
+expr e30 name(l) type=Long ref=s397
+expr e31 memberCall recv=e30 callee=toInt args=[] type=Int
+expr e32 localDecl li mutable=0 type=_ init=e31 type=Unit ref=s400
+expr e33 name(l) type=Long ref=s397
+expr e34 memberCall recv=e33 callee=toByte args=[] type=Int
+expr e35 localDecl lb mutable=0 type=_ init=e34 type=Unit ref=s401
+expr e36 name(l) type=Long ref=s397
+expr e37 memberCall recv=e36 callee=toShort args=[] type=Int
+expr e38 localDecl ls mutable=0 type=_ init=e37 type=Unit ref=s402
+expr e39 int(100) type=Int
+expr e40 localDecl i mutable=0 type=_ init=e39 type=Unit ref=s403
+expr e41 name(i) type=Int ref=s403
+expr e42 memberCall recv=e41 callee=toDouble args=[] type=Double
+expr e43 localDecl id mutable=0 type=_ init=e42 type=Unit ref=s404

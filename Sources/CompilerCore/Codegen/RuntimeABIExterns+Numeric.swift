@@ -9,6 +9,7 @@ public extension RuntimeABIExterns {
         kk_float_to_int,
         kk_double_to_long,
         kk_float_to_long,
+        kk_long_to_int,
         kk_long_to_float,
         kk_long_to_double,
         kk_double_to_float,
@@ -57,6 +58,12 @@ public extension RuntimeABIExterns {
 
     static let kk_float_to_long = ExternDecl(
         name: "kk_float_to_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_long_to_int = ExternDecl(
+        name: "kk_long_to_int",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
