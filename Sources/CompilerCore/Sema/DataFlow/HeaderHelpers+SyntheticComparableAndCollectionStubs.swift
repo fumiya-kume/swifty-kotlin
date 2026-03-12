@@ -815,6 +815,10 @@ extension DataFlowSemaPhase {
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
+        registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
+        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked")
+        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed")
+        registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
     }
 
     private func registerListAggregateMembers(
@@ -903,6 +907,115 @@ extension DataFlowSemaPhase {
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
+        // indexOf / lastIndexOf (non-HOF, element argument)
+        let indexOfName = interner.intern("indexOf")
+        let indexOfFQName = listFQName + [indexOfName]
+        if symbols.lookup(fqName: indexOfFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfName,
+                fqName: indexOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let lastIndexOfName = interner.intern("lastIndexOf")
+        let lastIndexOfFQName = listFQName + [lastIndexOfName]
+        if symbols.lookup(fqName: lastIndexOfFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: lastIndexOfName,
+                fqName: lastIndexOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_lastIndexOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // indexOfFirst / indexOfLast (HOF, predicate lambda)
+        let predicateType = types.make(.functionType(FunctionType(
+            params: [listTypeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let indexOfFirstName = interner.intern("indexOfFirst")
+        let indexOfFirstFQName = listFQName + [indexOfFirstName]
+        if symbols.lookup(fqName: indexOfFirstFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfFirstName,
+                fqName: indexOfFirstFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOfFirst", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let indexOfLastName = interner.intern("indexOfLast")
+        let indexOfLastFQName = listFQName + [indexOfLastName]
+        if symbols.lookup(fqName: indexOfLastFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfLastName,
+                fqName: indexOfLastFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOfLast", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         let sumOfName = interner.intern("sumOf")
         let sumOfFQName = listFQName + [sumOfName]
         if symbols.lookup(fqName: sumOfFQName) == nil {
@@ -927,6 +1040,103 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [transformType],
                     returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // sortedByDescending (HOF, selector lambda)
+        let sortedByDescendingName = interner.intern("sortedByDescending")
+        let sortedByDescendingFQName = listFQName + [sortedByDescendingName]
+        if symbols.lookup(fqName: sortedByDescendingFQName) == nil {
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sortedByDescendingName,
+                fqName: sortedByDescendingFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_sortedByDescending", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [selectorType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // sortedWith (HOF, comparator lambda with 2 args)
+        let sortedWithName = interner.intern("sortedWith")
+        let sortedWithFQName = listFQName + [sortedWithName]
+        if symbols.lookup(fqName: sortedWithFQName) == nil {
+            let comparatorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType, listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sortedWithName,
+                fqName: sortedWithFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_sortedWith", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [comparatorType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // partition (HOF, predicate lambda)
+        let partitionName = interner.intern("partition")
+        let partitionFQName = listFQName + [partitionName]
+        if symbols.lookup(fqName: partitionFQName) == nil {
+            let predicateType2 = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.booleanType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: partitionName,
+                fqName: partitionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_partition", for: memberSymbol)
+            // Return type is Pair<List<T>, List<T>> — use Any for now, refined by inference
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType2],
+                    returnType: types.anyType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),

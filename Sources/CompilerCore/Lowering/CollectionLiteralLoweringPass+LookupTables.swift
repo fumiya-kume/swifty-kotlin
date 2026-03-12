@@ -72,6 +72,17 @@ struct CollectionLiteralLookupTables {
     let kkListReversedName: InternedString
     let kkListSortedName: InternedString
     let kkListDistinctName: InternedString
+    let kkListFlattenName: InternedString
+    let kkListIndexOfName: InternedString
+    let kkListLastIndexOfName: InternedString
+    let kkListIndexOfFirstName: InternedString
+    let kkListIndexOfLastName: InternedString
+    let kkListChunkedName: InternedString
+    let kkListWindowedName: InternedString
+    let kkListSortedDescendingName: InternedString
+    let kkListSortedByDescendingName: InternedString
+    let kkListSortedWithName: InternedString
+    let kkListPartitionName: InternedString
 
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
@@ -187,8 +198,19 @@ struct CollectionLiteralLookupTables {
     let reversedName: InternedString
     let sortedName: InternedString
     let distinctName: InternedString
+    let flattenName: InternedString
     let firstName: InternedString
     let lastName: InternedString
+    let indexOfName: InternedString
+    let lastIndexOfName: InternedString
+    let indexOfFirstName: InternedString
+    let indexOfLastName: InternedString
+    let chunkedName: InternedString
+    let windowedName: InternedString
+    let sortedDescendingName: InternedString
+    let sortedByDescendingName: InternedString
+    let sortedWithName: InternedString
+    let partitionName: InternedString
 
     // Array member names (STDLIB-087/088/089)
     let toMutableListName: InternedString
@@ -313,6 +335,17 @@ struct CollectionLiteralLookupTables {
         kkListReversedName = interner.intern("kk_list_reversed")
         kkListSortedName = interner.intern("kk_list_sorted")
         kkListDistinctName = interner.intern("kk_list_distinct")
+        kkListFlattenName = interner.intern("kk_list_flatten")
+        kkListIndexOfName = interner.intern("kk_list_indexOf")
+        kkListLastIndexOfName = interner.intern("kk_list_lastIndexOf")
+        kkListIndexOfFirstName = interner.intern("kk_list_indexOfFirst")
+        kkListIndexOfLastName = interner.intern("kk_list_indexOfLast")
+        kkListChunkedName = interner.intern("kk_list_chunked")
+        kkListWindowedName = interner.intern("kk_list_windowed")
+        kkListSortedDescendingName = interner.intern("kk_list_sortedDescending")
+        kkListSortedByDescendingName = interner.intern("kk_list_sortedByDescending")
+        kkListSortedWithName = interner.intern("kk_list_sortedWith")
+        kkListPartitionName = interner.intern("kk_list_partition")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")
@@ -420,8 +453,19 @@ struct CollectionLiteralLookupTables {
         reversedName = interner.intern("reversed")
         sortedName = interner.intern("sorted")
         distinctName = interner.intern("distinct")
+        flattenName = interner.intern("flatten")
         firstName = interner.intern("first")
         lastName = interner.intern("last")
+        indexOfName = interner.intern("indexOf")
+        lastIndexOfName = interner.intern("lastIndexOf")
+        indexOfFirstName = interner.intern("indexOfFirst")
+        indexOfLastName = interner.intern("indexOfLast")
+        chunkedName = interner.intern("chunked")
+        windowedName = interner.intern("windowed")
+        sortedDescendingName = interner.intern("sortedDescending")
+        sortedByDescendingName = interner.intern("sortedByDescending")
+        sortedWithName = interner.intern("sortedWith")
+        partitionName = interner.intern("partition")
 
         toMutableListName = interner.intern("toMutableList")
         toTypedArrayName = interner.intern("toTypedArray")

@@ -86,14 +86,15 @@ extension CallLowerer {
 
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsKey",
-        "isEmpty", "first", "last", "indexOf",
+        "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "asSequence", "toList", "toMutableList", "toTypedArray",
-        "take", "drop", "reversed", "sorted", "distinct", "collect",
+        "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -630,6 +631,37 @@ extension CallLowerer {
             }
         }
 
+        // filterIsInstance<R>() — encode type token from result type (STDLIB-114)
+        if args.isEmpty, interner.resolve(calleeName) == "filterIsInstance" {
+            let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let nonNullResultType = sema.types.makeNonNullable(resultType)
+            // Extract element type from List<R>
+            let elementType: TypeID
+            if case let .classType(classType) = sema.types.kind(of: nonNullResultType),
+               let firstArg = classType.args.first
+            {
+                elementType = switch firstArg {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                elementType = sema.types.anyType
+            }
+            let encodedToken = RuntimeTypeCheckToken.encode(type: elementType, sema: sema, interner: interner)
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_list_filterIsInstance"),
+                arguments: [loweredReceiverID, tokenExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
         // String stdlib: nullable-receiver 0-arg methods (NULL-002)
         // isNullOrEmpty/isNullOrBlank pass the raw (potentially null) receiver pointer to C runtime.
         if args.isEmpty {
@@ -997,6 +1029,8 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
+            "indexOfFirst", "indexOfLast",
+            "sortedByDescending", "sortedWith", "partition",
         ].contains(interner.resolve(calleeName))
     }
 

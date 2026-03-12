@@ -69,13 +69,16 @@ extension CallTypeChecker {
     func isSupportedCollectionFallbackMember(_ memberName: String, isMapReceiver: Bool) -> Bool {
         let collectionMembers: Set = [
             "size", "get", "contains",
-            "isEmpty", "first", "last", "indexOf",
+            "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
             "count", "iterator",
             "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
             "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
-            "asSequence", "toList", "toTypedArray", "take", "drop", "reversed", "sorted", "distinct",
+            "asSequence", "toList", "toTypedArray", "take", "drop", "reversed", "sorted", "distinct", "flatten",
+            "chunked", "windowed",
+            "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+            "filterIsInstance",
         ]
         let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys"]
         if mapOnlyMembers.contains(memberName) {
@@ -89,7 +92,9 @@ extension CallTypeChecker {
             "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
             "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
             "associate", "zip", "toList", "toTypedArray", "take", "drop", "reversed",
-            "sorted", "distinct", "withIndex", "mapIndexed",
+            "sorted", "distinct", "flatten", "chunked", "windowed", "withIndex", "mapIndexed",
+            "sortedDescending", "sortedByDescending", "sortedWith",
+            "filterIsInstance",
         ]
         if memberName == "mapValues" || memberName == "mapKeys" {
             return isMapReceiver
@@ -99,19 +104,21 @@ extension CallTypeChecker {
 
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int, isMapReceiver: Bool) -> Bool {
         switch memberName {
-        case "size", "isEmpty", "iterator", "asSequence", "toList", "toTypedArray", "reversed", "sorted", "distinct", "withIndex", "maxOrNull", "minOrNull":
+        case "size", "isEmpty", "iterator", "asSequence", "toList", "toTypedArray", "reversed", "sorted", "distinct", "flatten", "withIndex", "maxOrNull", "minOrNull",
+             "sortedDescending", "filterIsInstance":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
-        case "get", "contains", "indexOf",
+        case "get", "contains", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
              "map", "filter", "mapNotNull", "forEach", "flatMap",
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
-             "forEachIndexed", "mapIndexed", "sumOf":
+             "forEachIndexed", "mapIndexed", "sumOf", "chunked",
+             "sortedByDescending", "sortedWith", "partition":
             argCount == 1
         case "containsKey", "mapValues", "mapKeys":
             isMapReceiver && argCount == 1
-        case "fold":
+        case "fold", "windowed":
             argCount == 2
         case "count", "first", "last":
             argCount == 0 || argCount == 1
@@ -126,7 +133,7 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
-        let intReturningMembers: Set = ["size", "indexOf", "count", "sumOf"]
+        let intReturningMembers: Set = ["size", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast", "count", "sumOf"]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))
         }
@@ -195,10 +202,11 @@ extension CallTypeChecker {
         isMapReceiver: Bool,
         sema: SemaModule
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
-        let boolOneParamMembers: Set = ["filter", "any", "none", "all", "count", "first", "last", "find"]
+        let boolOneParamMembers: Set = ["filter", "any", "none", "all", "count", "first", "last", "find", "indexOfFirst", "indexOfLast", "partition"]
         let oneParamMembers: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
+            "sortedByDescending", "partition",
         ]
         if memberName == "mapValues" || memberName == "mapKeys" {
             guard isMapReceiver, argCount == 1 else {
@@ -245,6 +253,16 @@ extension CallTypeChecker {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == "sortedWith", argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType, receiverElementType],
+                returnType: sema.types.intType,
                 isSuspend: false,
                 nullability: .nonNull
             )))

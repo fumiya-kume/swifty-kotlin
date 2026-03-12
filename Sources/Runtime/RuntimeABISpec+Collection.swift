@@ -699,6 +699,73 @@ public extension RuntimeABISpec {
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, sortedSpec, distinctSpec,
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_flatten",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_indexOf",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_lastIndexOf",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                hofSpec("kk_list_indexOfFirst"),
+                hofSpec("kk_list_indexOfLast"),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_filterIsInstance",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "typeToken", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_chunked",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "size", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_windowed",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "size", type: .intptr),
+                        RuntimeABIParameter(name: "step", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_sortedDescending",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                hofSpec("kk_list_sortedByDescending"),
+                hofSpec("kk_list_sortedWith"),
+                hofSpec("kk_list_partition"),
             ]
     }()
 }

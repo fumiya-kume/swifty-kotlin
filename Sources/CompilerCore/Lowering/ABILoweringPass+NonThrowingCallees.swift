@@ -225,6 +225,13 @@ extension ABILoweringPass {
             interner.intern("kk_list_reversed"),
             interner.intern("kk_list_sorted"),
             interner.intern("kk_list_distinct"),
+            interner.intern("kk_list_flatten"),
+            interner.intern("kk_list_chunked"),
+            interner.intern("kk_list_windowed"),
+            interner.intern("kk_list_indexOf"),
+            interner.intern("kk_list_lastIndexOf"),
+            interner.intern("kk_list_sortedDescending"),
+            interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_array_of"),
             interner.intern("kk_array_size"),
             // Bitwise/shift (P5-103)

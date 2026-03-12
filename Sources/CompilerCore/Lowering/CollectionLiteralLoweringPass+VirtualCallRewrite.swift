@@ -247,6 +247,86 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.flattenName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListFlattenName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.chunkedName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListChunkedName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.windowedName, arguments.count == 2, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWindowedName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.sortedDescendingName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListSortedDescendingName,
+                arguments: [receiver],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
         if callee == lookup.toListName, arguments.isEmpty {
             if sequenceExprIDs.contains(receiver.rawValue) {
                 if let result {
@@ -552,6 +632,7 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
+            || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
         else {
             return false
         }
@@ -560,6 +641,8 @@ extension CollectionLiteralLoweringPass {
         let kkName: InternedString = switch callee {
         case lookup.groupByName: lookup.kkListGroupByName
         case lookup.sortedByName: lookup.kkListSortedByName
+        case lookup.sortedByDescendingName: lookup.kkListSortedByDescendingName
+        case lookup.sortedWithName: lookup.kkListSortedWithName
         case lookup.findName: lookup.kkListFindName
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
@@ -574,7 +657,9 @@ extension CollectionLiteralLoweringPass {
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody
         )
-        if callee == lookup.sortedByName, let result {
+        if callee == lookup.sortedByName || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName,
+           let result
+        {
             listExprIDs.insert(result.rawValue)
             listExprIDs.insert(hofResult.rawValue)
         }
@@ -926,6 +1011,42 @@ extension CollectionLiteralLoweringPass {
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             _ = emitHOFCall(
                 kkName: lookup.kkListReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        if callee == lookup.indexOfFirstName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListIndexOfFirstName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        if callee == lookup.indexOfLastName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListIndexOfLastName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        if callee == lookup.partitionName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListPartitionName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody

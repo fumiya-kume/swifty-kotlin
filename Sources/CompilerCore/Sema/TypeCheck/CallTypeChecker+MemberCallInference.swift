@@ -364,6 +364,8 @@ extension CallTypeChecker {
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "sumOf", "maxOrNull", "minOrNull",
+            "indexOfFirst", "indexOfLast",
+            "sortedByDescending", "sortedWith", "partition",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
@@ -394,6 +396,25 @@ extension CallTypeChecker {
         let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
+
+        // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
+        if interner.resolve(calleeName) == "filterIsInstance",
+           args.isEmpty,
+           isCollectionReceiver
+        {
+            let filterType = explicitTypeArgs.first ?? sema.types.anyType
+            if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                let resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.invariant(filterType)],
+                    nullability: .nonNull
+                )))
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
 
         // --- Collection higher-order functions (STDLIB-005) ---
         if isCollectionHOF {
@@ -582,7 +603,7 @@ extension CallTypeChecker {
                     nullability: .nonNull
                 )))
 
-            case "sortedBy":
+            case "sortedBy", "sortedByDescending":
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
                     returnType: sema.types.anyType
@@ -592,6 +613,67 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = receiverType
+
+            case "sortedWith":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: sema.types.intType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = receiverType
+
+            case "partition":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.booleanType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                // Pair<List<T>, List<T>>
+                if let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first,
+                   let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                {
+                    let listType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.invariant(collectionElementType)],
+                        nullability: .nonNull
+                    )))
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: pairSymbol,
+                        args: [.invariant(listType), .invariant(listType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
+
+            case "indexOfFirst", "indexOfLast":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.booleanType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
 
             case "forEachIndexed", "mapIndexed":
                 guard args.count == 1 else {

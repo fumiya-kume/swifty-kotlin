@@ -50,6 +50,18 @@ public extension RuntimeABIExterns {
         kk_list_reversed,
         kk_list_sorted,
         kk_list_distinct,
+        kk_list_flatten,
+        kk_list_indexOf,
+        kk_list_lastIndexOf,
+        kk_list_indexOfFirst,
+        kk_list_indexOfLast,
+        kk_list_filterIsInstance,
+        kk_list_chunked,
+        kk_list_windowed,
+        kk_list_sortedDescending,
+        kk_list_sortedByDescending,
+        kk_list_sortedWith,
+        kk_list_partition,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -596,6 +608,78 @@ public extension RuntimeABIExterns {
     static let kk_list_distinct = ExternDecl(
         name: "kk_list_distinct",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_flatten = ExternDecl(
+        name: "kk_list_flatten",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOf = ExternDecl(
+        name: "kk_list_indexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_lastIndexOf = ExternDecl(
+        name: "kk_list_lastIndexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOfFirst = ExternDecl(
+        name: "kk_list_indexOfFirst",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOfLast = ExternDecl(
+        name: "kk_list_indexOfLast",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_filterIsInstance = ExternDecl(
+        name: "kk_list_filterIsInstance",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_chunked = ExternDecl(
+        name: "kk_list_chunked",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_windowed = ExternDecl(
+        name: "kk_list_windowed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedDescending = ExternDecl(
+        name: "kk_list_sortedDescending",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedByDescending = ExternDecl(
+        name: "kk_list_sortedByDescending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedWith = ExternDecl(
+        name: "kk_list_sortedWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_partition = ExternDecl(
+        name: "kk_list_partition",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

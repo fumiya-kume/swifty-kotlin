@@ -87,6 +87,30 @@ extension CollectionLiteralLoweringPass {
             }
         }
 
+        if callee == lookup.indexOfName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListIndexOfName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        if callee == lookup.lastIndexOfName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListLastIndexOfName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
         if callee == lookup.isEmptyName, arguments.isEmpty {
             if listExprIDs.contains(receiver.rawValue) {
                 loweredBody.append(.call(
