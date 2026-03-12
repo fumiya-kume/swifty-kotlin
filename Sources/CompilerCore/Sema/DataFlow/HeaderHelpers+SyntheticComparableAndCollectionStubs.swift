@@ -915,6 +915,51 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerListToMapMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        mapInterfaceSymbol: SymbolID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toMap")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let mapType = types.make(.classType(ClassType(
+            classSymbol: mapInterfaceSymbol,
+            args: [.out(types.anyType), .out(types.anyType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_toMap", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mapType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     private func registerListTransformMembers(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1337,6 +1382,17 @@ extension DataFlowSemaPhase {
             listTypeParamType: listTypeParamType,
             setInterfaceSymbol: setInterfaceSymbol
         )
+        if let mapInterfaceSymbol = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Map")]
+        ) {
+            registerListToMapMember(
+                symbols: symbols, types: types, interner: interner,
+                listInterfaceSymbol: listInterfaceSymbol,
+                listTypeParamSymbol: listTypeParamSymbol,
+                listTypeParamType: listTypeParamType,
+                mapInterfaceSymbol: mapInterfaceSymbol
+            )
+        }
     }
 
     /// Register `kotlin.collections.MutableList<E>` interface stub with `operator fun set(index: Int, element: E): E`.

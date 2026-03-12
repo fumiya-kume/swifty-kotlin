@@ -182,6 +182,33 @@ public func kk_list_joinToString(
     }
 }
 
+// MARK: - List toMap (STDLIB-200)
+
+@_cdecl("kk_list_toMap")
+public func kk_list_toMap(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    var keys: [Int] = []
+    var values: [Int] = []
+    for element in list.elements {
+        if let pointer = UnsafeMutableRawPointer(bitPattern: element),
+           let pair = tryCast(pointer, to: RuntimePairBox.self) {
+            var found = false
+            for (idx, existingKey) in keys.enumerated() where runtimeValuesEqual(existingKey, pair.first) {
+                values[idx] = pair.second
+                found = true
+                break
+            }
+            if !found {
+                keys.append(pair.first)
+                values.append(pair.second)
+            }
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
 @_cdecl("kk_list_to_set")
 public func kk_list_to_set(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
