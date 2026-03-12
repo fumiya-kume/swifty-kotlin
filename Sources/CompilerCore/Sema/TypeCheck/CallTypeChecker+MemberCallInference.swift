@@ -373,6 +373,46 @@ extension CallTypeChecker {
             }
         }
 
+        // --- takeIf / takeUnless (STDLIB-160) ---
+        // T.takeIf((T) -> Boolean): T? / T.takeUnless((T) -> Boolean): T?
+        // Inline-expanded by CallLowerer; no runtime call.
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            let takeKind: TakeIfTakeUnlessKind? = switch calleeStr {
+            case "takeIf": .takeIf
+            case "takeUnless": .takeUnless
+            default: nil
+            }
+            let hasUserDefinedMember = if takeKind != nil {
+                !driver.helpers.collectMemberFunctionCandidates(
+                    named: calleeName,
+                    receiverType: receiverType,
+                    sema: sema
+                ).isEmpty
+            } else {
+                false
+            }
+            if let takeKind, !hasUserDefinedMember {
+                let nonNullReceiverType = safeCall
+                    ? sema.types.makeNonNullable(receiverType)
+                    : receiverType
+                let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [nonNullReceiverType],
+                    returnType: boolType
+                )))
+                _ = driver.inferExpr(
+                    args[0].expr, ctx: ctx, locals: &locals,
+                    expectedType: lambdaExpectedType
+                )
+                let nullableReceiverType = sema.types.makeNullable(nonNullReceiverType)
+                let finalType = nullableReceiverType
+                sema.bindings.markTakeIfTakeUnlessExpr(id, kind: takeKind)
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // Defer inference of lambda arguments for collection HOFs so that the
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
@@ -1595,6 +1635,12 @@ extension CallTypeChecker {
                         listCharType
                     case "toBoolean", "toBooleanStrict":
                         sema.types.make(.primitive(.boolean, .nonNull))
+                    case "isEmpty", "isNotEmpty", "isBlank", "isNotBlank":
+                        sema.types.make(.primitive(.boolean, .nonNull))
+                    case "first", "last", "single":
+                        sema.types.make(.primitive(.char, .nonNull))
+                    case "firstOrNull", "lastOrNull":
+                        sema.types.make(.primitive(.char, .nullable))
                     case "lines":
                         makeSyntheticListType(
                             symbols: sema.symbols,
@@ -1650,6 +1696,10 @@ extension CallTypeChecker {
                         sema.types.anyType
                     case "indexOf", "lastIndexOf", "compareTo":
                         sema.types.make(.primitive(.int, .nonNull))
+                    case "removePrefix", "removeSuffix", "removeSurrounding":
+                        sema.types.stringType
+                    case "substringBefore", "substringAfter", "substringBeforeLast", "substringAfterLast":
+                        sema.types.stringType
                     default:
                         nil
                     }
@@ -1672,6 +1722,37 @@ extension CallTypeChecker {
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
+                }
+            }
+            // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
+            if args.count == 2 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.stringType),
+                   sema.types.isSubtype(arg1Type, sema.types.stringType),
+                   interner.resolve(calleeName) == "removeSurrounding"
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
                 }
             }
             if args.count == 1 {

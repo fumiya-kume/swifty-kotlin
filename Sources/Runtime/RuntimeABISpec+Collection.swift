@@ -859,6 +859,31 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let shuffledSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_shuffled",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let randomSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_random",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let randomOrNullSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_randomOrNull",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         return before.map { hofSpec($0) }
             + [filterNotNullSpec, foldSpec]
             + genericAfter.map { hofSpec($0) }
@@ -867,6 +892,7 @@ public extension RuntimeABISpec {
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, sortedSpec, distinctSpec,
+                shuffledSpec, randomSpec, randomOrNullSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_flatten",
                     parameters: [

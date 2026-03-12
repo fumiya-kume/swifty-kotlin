@@ -655,6 +655,31 @@ public func kk_list_distinct(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+@_cdecl("kk_list_shuffled")
+public func kk_list_shuffled(_ listRaw: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let shuffled = elements.shuffled()
+    return registerRuntimeObject(RuntimeListBox(elements: shuffled))
+}
+
+@_cdecl("kk_list_random")
+public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: List is empty.")
+        return 0
+    }
+    return list.elements.randomElement()!
+}
+
+@_cdecl("kk_list_randomOrNull")
+public func kk_list_randomOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let element = list.elements.randomElement() else {
+        return runtimeNullSentinelInt
+    }
+    return element
+}
+
 @_cdecl("kk_list_flatten")
 public func kk_list_flatten(_ listRaw: Int) -> Int {
     let elements = runtimeListBox(from: listRaw)?.elements ?? []

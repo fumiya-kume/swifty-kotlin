@@ -148,6 +148,21 @@ extension CallLowerer {
             }
         }
 
+        // --- takeIf / takeUnless (STDLIB-160) ---
+        if let takeResult = tryTakeIfTakeUnlessLowering(
+            exprID,
+            receiverExpr: receiverExpr,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return takeResult
+        }
+
         // --- Scope functions: let, run, apply, also (STDLIB-004) ---
         if let scopeResult = tryScopeFunctionLowering(
             exprID,
@@ -213,6 +228,45 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return lateinitStatus
+        }
+
+        // --- takeIf / takeUnless with safe call (STDLIB-160) ---
+        if sema.bindings.takeIfTakeUnlessKind(for: exprID) != nil {
+            let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            let loweredReceiver = driver.lowerExpr(
+                receiverExpr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let nonNullLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            instructions.append(.jumpIfNotNull(value: loweredReceiver, target: nonNullLabel))
+            let nullVal = arena.appendExpr(.unit, type: boundType)
+            instructions.append(.constValue(result: nullVal, value: .null))
+            instructions.append(.copy(from: nullVal, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(nonNullLabel))
+            if let takeResult = tryTakeIfTakeUnlessLowering(
+                exprID,
+                receiverExpr: receiverExpr,
+                args: args,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions,
+                precomputedReceiver: loweredReceiver
+            ) {
+                instructions.append(.copy(from: takeResult, to: result))
+            }
+            instructions.append(.label(endLabel))
+            return result
         }
 
         // --- Scope functions with safe call: ?.let, ?.run, etc. (STDLIB-004) ---
@@ -971,6 +1025,34 @@ extension CallLowerer {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_lines"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "first" || calleeStr == "last" || calleeStr == "single" {
+                    let thrownExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: thrownExpr, value: .intLiteral(0)))
+                    let kkName = calleeStr == "first" ? "kk_string_first"
+                        : calleeStr == "last" ? "kk_string_last"
+                        : "kk_string_single"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(kkName),
+                        arguments: [loweredReceiverID, thrownExpr],
+                        result: result,
+                        canThrow: true,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "firstOrNull" || calleeStr == "lastOrNull" {
+                    let kkName = calleeStr == "firstOrNull" ? "kk_string_firstOrNull" : "kk_string_lastOrNull"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(kkName),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: false,
@@ -1961,12 +2043,13 @@ extension CallLowerer {
             instructions.append(inst)
             return
         }
+        let canThrow = loweredCallee == interner.intern("kk_list_random")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
             arguments: finalArguments,
             result: result,
-            canThrow: false,
+            canThrow: canThrow,
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
@@ -2395,6 +2478,98 @@ extension CallLowerer {
             canThrow: false,
             thrownResult: nil
         ))
+        return result
+    }
+
+    // MARK: - takeIf / takeUnless Lowering (STDLIB-160)
+
+    /// Attempts to lower a takeIf / takeUnless extension call.
+    /// Returns nil if the expression is not a takeIf/takeUnless call.
+    func tryTakeIfTakeUnlessLowering(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction],
+        precomputedReceiver: KIRExprID? = nil
+    ) -> KIRExprID? {
+        guard let takeKind = sema.bindings.takeIfTakeUnlessKind(for: exprID),
+              args.count == 1
+        else { return nil }
+
+        let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+
+        let loweredReceiverID = precomputedReceiver ?? driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        // Lower lambda: predicate(receiver) -> Boolean (like scopeLet: lambda takes `it`)
+        let loweredLambdaID = driver.lowerExpr(
+            args[0].expr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+
+        guard let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] else {
+            return nil
+        }
+
+        let predicateResult = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: boolType
+        )
+        let callArgs: [KIRExprID]
+        if info.hasClosureParam {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            callArgs = info.captureArguments + [zeroExpr, loweredReceiverID]
+        } else {
+            callArgs = info.captureArguments + [loweredReceiverID]
+        }
+        instructions.append(.call(
+            symbol: info.symbol,
+            callee: info.callee,
+            arguments: callArgs,
+            result: predicateResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let result = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: boundType
+        )
+        let useReceiverLabel = driver.ctx.makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
+
+        let testValue: Bool = takeKind == .takeIf
+        let testExpr = arena.appendExpr(.boolLiteral(testValue), type: boolType)
+        instructions.append(.constValue(result: testExpr, value: .boolLiteral(testValue)))
+
+        // takeIf: jump to useReceiver when predicate == true
+        // takeUnless: jump to useReceiver when predicate == false
+        instructions.append(.jumpIfEqual(lhs: predicateResult, rhs: testExpr, target: useReceiverLabel))
+
+        // Predicate failed: write null to result
+        let nullVal = arena.appendExpr(.unit, type: boundType)
+        instructions.append(.constValue(result: nullVal, value: .null))
+        instructions.append(.copy(from: nullVal, to: result))
+        instructions.append(.jump(endLabel))
+
+        // Predicate passed: copy receiver to result
+        instructions.append(.label(useReceiverLabel))
+        instructions.append(.copy(from: loweredReceiverID, to: result))
+        instructions.append(.label(endLabel))
+
         return result
     }
 

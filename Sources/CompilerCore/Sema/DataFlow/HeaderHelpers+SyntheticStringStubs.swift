@@ -14,6 +14,7 @@ extension DataFlowSemaPhase {
         let charType = types.make(.primitive(.char, .nonNull))
         let nullableIntType = types.make(.primitive(.int, .nullable))
         let nullableDoubleType = types.make(.primitive(.double, .nullable))
+        let nullableCharType = types.make(.primitive(.char, .nullable))
         let doubleType = types.doubleType
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
         let listCharType = makeListType(
@@ -445,6 +446,115 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-185: removePrefix / removeSuffix / removeSurrounding ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "removePrefix",
+            externalLinkName: "kk_string_removePrefix",
+            receiverType: stringType,
+            parameters: [
+                ("prefix", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSuffix",
+            externalLinkName: "kk_string_removeSuffix",
+            receiverType: stringType,
+            parameters: [
+                ("suffix", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "removeSurrounding",
+            externalLinkName: "kk_string_removeSurrounding_pair",
+            receiverType: stringType,
+            parameters: [
+                ("prefix", stringType, false, false),
+                ("suffix", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "substringBefore",
+            externalLinkName: "kk_string_substringBefore",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "substringAfter",
+            externalLinkName: "kk_string_substringAfter",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "substringBeforeLast",
+            externalLinkName: "kk_string_substringBeforeLast",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "substringAfterLast",
+            externalLinkName: "kk_string_substringAfterLast",
+            receiverType: stringType,
+            parameters: [
+                ("delimiter", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-100/102/103: Regex-related String extensions ---
 
         let regexSymbol = ensureClassSymbol(
@@ -559,6 +669,109 @@ extension DataFlowSemaPhase {
                 ("ignoreCase", boolType, false, false),
             ],
             returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "isEmpty",
+            externalLinkName: "kk_string_isEmpty",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "isNotEmpty",
+            externalLinkName: "kk_string_isNotEmpty",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "isBlank",
+            externalLinkName: "kk_string_isBlank",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "isNotBlank",
+            externalLinkName: "kk_string_isNotBlank",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-190: first / last / single / firstOrNull / lastOrNull ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "first",
+            externalLinkName: "kk_string_first",
+            receiverType: stringType,
+            parameters: [],
+            returnType: charType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "last",
+            externalLinkName: "kk_string_last",
+            receiverType: stringType,
+            parameters: [],
+            returnType: charType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "single",
+            externalLinkName: "kk_string_single",
+            receiverType: stringType,
+            parameters: [],
+            returnType: charType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "firstOrNull",
+            externalLinkName: "kk_string_firstOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lastOrNull",
+            externalLinkName: "kk_string_lastOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

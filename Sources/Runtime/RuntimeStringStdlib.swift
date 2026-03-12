@@ -155,6 +155,64 @@ public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< nRaw]))
 }
 
+// MARK: - STDLIB-185: removePrefix / removeSuffix / removeSurrounding
+
+@_cdecl("kk_string_removePrefix")
+public func kk_string_removePrefix(_ strRaw: Int, _ prefixRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    guard source.hasPrefix(prefix) else {
+        return runtimeMakeStringRaw(source)
+    }
+    return runtimeMakeStringRaw(String(source.dropFirst(prefix.count)))
+}
+
+@_cdecl("kk_string_removeSuffix")
+public func kk_string_removeSuffix(_ strRaw: Int, _ suffixRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    guard source.hasSuffix(suffix) else {
+        return runtimeMakeStringRaw(source)
+    }
+    return runtimeMakeStringRaw(String(source.dropLast(suffix.count)))
+}
+
+@_cdecl("kk_string_removeSurrounding")
+public func kk_string_removeSurrounding(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let delimiter = runtimeStringFromRaw(delimiterRaw) ?? ""
+    guard !delimiter.isEmpty,
+          source.hasPrefix(delimiter),
+          source.hasSuffix(delimiter),
+          source.count >= delimiter.count * 2
+    else {
+        return runtimeMakeStringRaw(source)
+    }
+    let start = source.index(source.startIndex, offsetBy: delimiter.count)
+    let end = source.index(source.endIndex, offsetBy: -delimiter.count)
+    return runtimeMakeStringRaw(String(source[start ..< end]))
+}
+
+@_cdecl("kk_string_removeSurrounding_pair")
+public func kk_string_removeSurrounding_pair(
+    _ strRaw: Int,
+    _ prefixRaw: Int,
+    _ suffixRaw: Int
+) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    guard source.hasPrefix(prefix),
+          source.hasSuffix(suffix),
+          source.count >= prefix.count + suffix.count
+    else {
+        return runtimeMakeStringRaw(source)
+    }
+    let start = source.index(source.startIndex, offsetBy: prefix.count)
+    let end = source.index(source.endIndex, offsetBy: -suffix.count)
+    return runtimeMakeStringRaw(String(source[start ..< end]))
+}
+
 @_cdecl("kk_string_takeLast")
 public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int) -> Int {
     let scalars = runtimeStringScalars(strRaw)
@@ -325,6 +383,134 @@ public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return -1
 }
 
+// MARK: - STDLIB-190: first / last / single / firstOrNull / lastOrNull
+
+@_cdecl("kk_string_first")
+public func kk_string_first(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let first = scalars.first else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    return kk_box_char(Int(first.value))
+}
+
+@_cdecl("kk_string_last")
+public func kk_string_last(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let last = scalars.last else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    return kk_box_char(Int(last.value))
+}
+
+@_cdecl("kk_string_single")
+public func kk_string_single(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard scalars.count == 1 else {
+        let msg = scalars.isEmpty
+            ? "Char sequence is empty."
+            : "Char sequence has more than one element."
+        runtimeSetThrown(outThrown, message: msg)
+        return 0
+    }
+    return kk_box_char(Int(scalars[0].value))
+}
+
+@_cdecl("kk_string_firstOrNull")
+public func kk_string_firstOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard let first = scalars.first else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(first.value))
+}
+
+@_cdecl("kk_string_lastOrNull")
+public func kk_string_lastOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard let last = scalars.last else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(last.value))
+}
+
+// MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
+
+@_cdecl("kk_string_isEmpty")
+public func kk_string_isEmpty(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNotEmpty")
+public func kk_string_isNotEmpty(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.isEmpty ? 0 : 1)
+}
+
+@_cdecl("kk_string_isBlank")
+public func kk_string_isBlank(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNotBlank")
+public func kk_string_isNotBlank(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1)
+}
+
+// MARK: - STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast
+
+@_cdecl("kk_string_substringBefore")
+public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_indexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+}
+
+@_cdecl("kk_string_substringAfter")
+public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_indexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    let delimScalars = runtimeStringScalars(delimiterRaw)
+    let start = idx + delimScalars.count
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
+@_cdecl("kk_string_substringBeforeLast")
+public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+}
+
+@_cdecl("kk_string_substringAfterLast")
+public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    let delimScalars = runtimeStringScalars(delimiterRaw)
+    let start = idx + delimScalars.count
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
 @_cdecl("kk_string_lastIndexOf")
 public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)
@@ -456,6 +642,35 @@ public func kk_string_trimMargin(_ strRaw: Int, _ marginPrefixRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
     let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
     return runtimeMakeStringRaw(runtimeTrimMargin(source, marginPrefix: marginPrefix))
+}
+
+// MARK: - STDLIB-191: prependIndent / replaceIndent
+
+private let runtimeDefaultPrependIndentRaw = runtimeMakeStringRaw(" ")
+private let runtimeDefaultReplaceIndentRaw = runtimeMakeStringRaw("")
+
+@_cdecl("kk_string_prependIndent_default")
+public func kk_string_prependIndent_default(_ strRaw: Int) -> Int {
+    kk_string_prependIndent(strRaw, runtimeDefaultPrependIndentRaw)
+}
+
+@_cdecl("kk_string_replaceIndent_default")
+public func kk_string_replaceIndent_default(_ strRaw: Int) -> Int {
+    kk_string_replaceIndent(strRaw, runtimeDefaultReplaceIndentRaw)
+}
+
+@_cdecl("kk_string_prependIndent")
+public func kk_string_prependIndent(_ strRaw: Int, _ indentRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let indent = runtimeStringFromRaw(indentRaw) ?? " "
+    return runtimeMakeStringRaw(runtimePrependIndent(source, indent: indent))
+}
+
+@_cdecl("kk_string_replaceIndent")
+public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let newIndent = runtimeStringFromRaw(newIndentRaw) ?? ""
+    return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
 @_cdecl("kk_compare_any")
@@ -630,6 +845,28 @@ private func runtimeTrimMargin(_ source: String, marginPrefix: String) -> String
             return line
         }
         return String(trimmedLeading.dropFirst(marginPrefix.count))
+    }.joined(separator: "\n")
+}
+
+private func runtimePrependIndent(_ source: String, indent: String) -> String {
+    let lines = runtimeNormalizedMultilineString(source)
+    return lines.map { indent + $0 }.joined(separator: "\n")
+}
+
+private func runtimeReplaceIndent(_ source: String, newIndent: String) -> String {
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    let minimumIndent = lines
+        .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        .map(runtimeLeadingIndentCount)
+        .min() ?? 0
+    return lines.map { line in
+        guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return ""
+        }
+        return newIndent + String(line.dropFirst(minimumIndent))
     }.joined(separator: "\n")
 }
 

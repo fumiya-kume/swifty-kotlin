@@ -143,6 +143,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
         // kk_math_ceil, kk_math_floor, kk_math_round
         XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 7)
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
     }
 
     func testTotalFunctionCount() {
@@ -164,6 +165,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.delegateFunctions,
             RuntimeABISpec.bitwiseFunctions,
             RuntimeABISpec.mathFunctions,
+            RuntimeABISpec.randomFunctions,
             RuntimeABISpec.collectionFunctions,
             RuntimeABISpec.sequenceFunctions,
             RuntimeABISpec.regexFunctions,

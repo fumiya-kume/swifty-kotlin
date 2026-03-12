@@ -104,28 +104,6 @@
 
 ---
 
-### 📦 Stdlib — Comparator / compareBy
-
-- [ ] STDLIB-175: `Comparator<T>` インターフェースと `compareBy {}` / `compareByDescending {}` を実装する
-  - [ ] Sema に `Comparator<T>` 関数型インターフェースと `compareBy` / `compareByDescending` トップレベル関数を登録する
-  - [ ] Runtime で Comparator ベースのソート呼び出しをサポートする
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf("bb","a","ccc").sortedWith(compareBy { it.length })` → `[a, bb, ccc]` が `kotlinc` と一致する
-
-- [ ] STDLIB-176: `Comparator.thenBy {}` / `Comparator.thenByDescending {}` / `Comparator.reversed()` を実装する
-  - [ ] Sema に `Comparator<T>.thenBy` / `thenByDescending` / `reversed` member stub を登録する
-  - [ ] Runtime で chained comparator を実装する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `compareBy<String> { it.length }.thenBy { it }` で長さ→辞書順のソートが動作する
-
-- [ ] STDLIB-177: `naturalOrder<T>()` / `reverseOrder<T>()` トップレベル関数を実装する
-  - [ ] Sema に `naturalOrder<T: Comparable<T>>(): Comparator<T>` / `reverseOrder<T>()` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(3,1,2).sortedWith(reverseOrder())` → `[3, 2, 1]` が `kotlinc` と一致する
-
----
-
 ### 📦 Stdlib — Destructuring（componentN）
 
 - [ ] STDLIB-183: `List` の `component1()` 〜 `component5()` destructuring を実装する
@@ -796,6 +774,112 @@
   - [ ] Runtime に `kk_regex_replace_lambda` を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `Regex("[0-9]+").replace("a1b2") { "X" }` → `"aXbX"` が `kotlinc` と一致する
+
+---
+
+### 🛡️ Type Safety — Sema / Runtime 境界
+
+- [ ] TYPE-101: Collection HOF 推論で `Any` に潰れている戻り型を generic 保持に置き換える
+  - [ ] `CallTypeChecker+MemberCallInference.swift` の `flatMap` / `associateBy` / `associateWith` / `associate` / `mapIndexed` / `groupBy` の戻り型推論を棚卸しする
+  - [ ] ラムダ戻り型 `R`、key 型 `K`、value 型 `V` を `Any` にフォールバックせず `TypeID` として保持する共通ヘルパーを導入する
+  - [ ] `flatMap` を `List<R>`、`associateBy` を `Map<K, T>`、`associateWith` を `Map<T, V>`、`associate` を `Map<K, V>` として推論できるようにする
+  - [ ] `mapIndexed` を `List<R>`、`groupBy` を `Map<K, List<T>>` として推論できるようにする
+  - [ ] `Any` に落ちたことで通ってしまっていた不正プログラムの negative golden を追加する
+  - [ ] 正常系の diff/golden ケースを追加する
+  - **完了条件**: `listOf(1).mapIndexed { _, x -> "$x" }` の型が `List<String>` になり、`associateBy` / `flatMap` / `groupBy` でも `kotlinc` と同等の型推論結果になる
+
+- [ ] TYPE-102: synthetic collection stub の暫定 `Any` 戻り型を実型ベースに置き換える
+  - [ ] `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift` の `partition` / `mapIndexed` など、コメントで「use Any for now」としている箇所を一覧化する
+  - [ ] synthetic stub 側で関数型 type parameter `R`、`Pair<List<T>, List<T>>`、`Map<K, V>` を表現するための builder を追加する
+  - [ ] fallback 推論に依存せず、stub 定義だけで Kotlin 標準ライブラリ署名を再現できるようにする
+  - [ ] `lookupByShortName(...).first!` に依存する箇所を、診断可能な lookup helper に寄せる
+  - [ ] 対応した stub の golden 署名を更新し、既存ケースとの差分を固定する
+  - **完了条件**: synthetic stub のダンプで `partition` が `Pair<List<T>, List<T>>`、`mapIndexed` が `List<R>` として表現され、後段の推論特例が不要になる
+
+- [ ] TYPE-103: `arrayOf()` 系の「型を `Any` に erase してヒューリスティックで補う」処理を廃止する
+  - [ ] `CallTypeChecker+MemberCallFallbacks.swift` の array-like 判定で `Any` を特別扱いしている分岐を調査する
+  - [ ] `arrayOf` / primitive array constructor の戻り型を header / body 解析の両方で正しく保持する
+  - [ ] receiver が collection 扱いであることを別フラグに頼らず、型そのものから判断できるようにする
+  - [ ] `Any` receiver に array 専用メンバーが誤って解決されない negative ケースを追加する
+  - [ ] diff/golden ケースを追加する
+  - **完了条件**: `arrayOf(1, 2).get(0)` などは引き続き通り、`Any` に erase された receiver への配列専用メンバー解決は発生しない
+
+- [ ] TYPE-104: library manifest 読み込みの `[String: Any]` 辞書運用を typed manifest decode に置き換える
+  - [ ] `LibraryDiscovery.swift` と `LinkPhase.swift` で個別に JSON を `[String: Any]` として解釈している箇所を共通化対象として整理する
+  - [ ] `manifest.json` 用の `Decodable` struct を定義し、`formatVersion` / `moduleName` / `target` / `metadata` / `objects` / `inlineKIRDir` を型付きで保持する
+  - [ ] 現在の schema validation と path validation を typed manifest ベースへ移植する
+  - [ ] decode failure と field mismatch を既存の `KSWIFTK-LIB-*` 診断コードへ対応付ける
+  - [ ] `LinkPhase` の object path 解決も同じ manifest 型を使うように寄せる
+  - [ ] manifest の異常系 fixture と golden を追加する
+  - **完了条件**: manifest 読み込みで `as? [String: Any]` が消え、schema 不整合が typed decode + 既存診断で一貫して報告される
+
+- [ ] TYPE-105: property delegate lowering の force unwrap を前提条件付き API に置き換える
+  - [ ] `KIRLoweringDriver+ModuleLowering+PropertyDecl.swift` の `delegateExpression!` 利用箇所を `guard let` か専用 helper に置き換える
+  - [ ] delegate 付き property であることを表す小さな内部モデルまたは引数型を導入し、呼び出し側で前提を確定させる
+  - [ ] 不整合 AST が来た場合に crash ではなくコンパイラ診断または内部エラー文脈付き failure を返す方針を決めて実装する
+  - [ ] delegate lowering 回りの回帰テストを追加する
+  - **完了条件**: `delegateExpression!` が消え、delegate 前提違反時の失敗モードが追跡可能になる
+
+- [ ] TYPE-106: symbol lookup の `first!` / force unwrap を診断可能な helper に置き換える
+  - [ ] Sema / KIR で `lookupByShortName(...).first!` を使っている箇所を棚卸しし、stdlib symbol 前提のパターンを分類する
+  - [ ] 「存在しない場合は compiler bug」「ユーザー入力起因なら診断」のどちらかを明示する helper を追加する
+  - [ ] `List` / `Map` / `Pair` などの標準シンボル参照を helper 経由へ移行する
+  - [ ] helper 導入後も既存診断文言が崩れないことを確認するテストを追加する
+  - **完了条件**: 主要な type inference / stub 生成コードから `first!` が消え、失敗理由が追える
+
+- [ ] TYPE-107: runtime comparator / collection HOF の生 `Int` 関数ポインタ運用を型付き ABI wrapper で局所化する
+  - [ ] `RuntimeComparator.swift` / `RuntimeCollectionHOF.swift` / `RuntimeSequence.swift` の `unsafeBitCast` 利用をシグネチャ別に分類する
+  - [ ] comparator selector、comparator lambda、collection unary/binary lambda ごとの wrapper typealias / decode helper を定義する
+  - [ ] `closureRaw` と `fnPtr` の妥当性確認を共通 helper に集約し、失敗時の戻り値ポリシーを統一する
+  - [ ] ABI spec / extern 宣言 / runtime 実装のシグネチャ差異を検出するテストを追加する
+  - [ ] comparator 系の正常系と ABI mismatch 系テストを拡充する
+  - **完了条件**: `unsafeBitCast` は wrapper helper の内部に閉じ込められ、各 runtime 関数本体では生シグネチャを直接扱わない
+
+- [ ] TYPE-108: type safety 回帰を継続検知するテスト束を追加する
+  - [ ] `mapIndexed` / `flatMap` / `associate*` / `groupBy` / `partition` の推論結果を固定する golden ケースを追加する
+  - [ ] array erase heuristic が再導入されていないことを確認する negative ケースを追加する
+  - [ ] typed manifest decode の異常系 fixture を追加する
+  - [ ] delegate lowering 前提違反と runtime ABI mismatch の回帰テストを追加する
+  - [ ] `Scripts/test_case_registry.json` に今回の TYPE タスク用テンプレートを登録する
+  - **完了条件**: 今回洗い出した型安全性の穴に対応する回帰テストが一通り揃い、再発を CI で検知できる
+
+- [ ] TYPE-109: runtime type check の文字列ベース型判定を型付き表現へ置き換える
+  - [ ] `RuntimeTypeCheckToken.swift` と `ControlFlowLowerer+ThrowCatchAndWhen.swift` で `"Any"` などの型名文字列に依存している箇所を棚卸しする
+  - [ ] builtin type / nominal type / unknown type を表す内部 enum または typed descriptor を導入する
+  - [ ] `encodeBuiltinTypeName(_:)` と `simpleName(of:)` を、文字列 switch のまま外へ漏らさず typed API の内部実装へ閉じ込める
+  - [ ] catch / `is` / `!is` / reified token 経路が同じ typed descriptor を使うように揃える
+  - [ ] 型 alias や未解決 nominal 型で名前一致だけで誤判定しないことを確認するテストを追加する
+  - **完了条件**: runtime type check の主要分岐から型名文字列比較が消え、型判定が `TypeID` / symbol ベースで一貫する
+
+- [ ] TYPE-110: unresolved 型を `Any` に落とす制御フロー型推論を診断主導に置き換える
+  - [ ] `ControlFlowLowerer+ThrowCatchAndWhen.swift` の unknown type → `Any` fallback を調査し、どの経路がユーザー入力起因か分類する
+  - [ ] `catch` 節、`when is` 条件、destructuring 推論で unresolved component/type を `Any` 扱いせず、`invalid` または専用エラー経路へ寄せる
+  - [ ] `ControlFlowTypeChecker+DestructuringInference.swift` の `componentType = anyType` fallback を見直す
+  - [ ] 誤って広い `catch` や destructuring が通ってしまう negative golden を追加する
+  - **完了条件**: 未解決型や `componentN` 解決失敗が `Any` に吸収されず、診断として表面化する
+
+- [ ] TYPE-111: object literal / callable reference / lambda 文脈推論の `anyType` 退避を縮小する
+  - [ ] `ExprTypeChecker+ObjectLiteralInference.swift` と `ExprTypeChecker+NameLambdaAndCallableRefInference.swift` の `?? sema.types.anyType` を棚卸しする
+  - [ ] 文脈型が取れないケースと本当に `Any` が正しいケースを分離し、前者は未解決状態を保持できるようにする
+  - [ ] callable reference のパラメータ型・戻り型が取れない場合に、後段の解決へ渡す placeholder type を `Any` 以外で表現する
+  - [ ] object literal の supertype 解決失敗時に過剰に `Any` object と見なさないようにする
+  - [ ] diff/golden と negative ケースを追加する
+  - **完了条件**: object literal / callable reference / lambda 推論で `Any` への早すぎる退避が減り、型エラー位置が `kotlinc` に近づく
+
+- [ ] TYPE-112: internal JSON export を typed report に置き換える
+  - [ ] `PhaseTimer.exportJSON()` の `[[String: Any]]` を `Codable` な report struct 配列へ置き換える
+  - [ ] 既存呼び出し側が必要とする JSON shape を確認し、外部互換を保つ encoder 層を追加する
+  - [ ] sub-phase も含めて key typo や数値型揺れが起きないようにする
+  - [ ] export 形式の snapshot テストを追加する
+  - **完了条件**: timing report の内部表現から `[String: Any]` が消え、JSON 出力が typed model 経由で生成される
+
+- [ ] TYPE-113: coroutine / flow まわりの `Any` 型消去ポイントを棚卸しして縮小する
+  - [ ] `Sema/TypeCheck/Helpers.swift` の `Flow<T>` を `nullableAnyType` に erase している箇所と、その依存先を洗い出す
+  - [ ] `CallTypeChecker.swift` / `MemberCallInference.swift` / coroutine lowering で continuation や collector/emitter の型を `Any` に落としている箇所を分類する
+  - [ ] 「現状必要な ABI 上の erase」と「Sema 内でも不要に erase している箇所」を切り分ける
+  - [ ] まずは Sema 内で保持可能な generic 情報を残す最小変更を設計する
+  - [ ] 代表ケースの golden と runtime 回帰テストを追加する
+  - **完了条件**: coroutine / flow 系で不要な `Any` / `Any?` 退避が減り、少なくとも Sema レイヤでは要素型 `T` を追跡できる範囲が広がる
 
 ## 🧪 テストケース一括管理
 

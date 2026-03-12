@@ -909,6 +909,7 @@ extension DataFlowSemaPhase {
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
+        registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
         registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked")
         registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed")
@@ -1000,6 +1001,10 @@ extension DataFlowSemaPhase {
 
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
+
+        // random / randomOrNull (STDLIB-166)
+        registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
+        registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
 
         // indexOf / lastIndexOf (non-HOF, element argument)
         let indexOfName = interner.intern("indexOf")

@@ -73,6 +73,9 @@ struct CollectionLiteralLookupTables {
     let kkListReversedName: InternedString
     let kkListSortedName: InternedString
     let kkListDistinctName: InternedString
+    let kkListShuffledName: InternedString
+    let kkListRandomName: InternedString
+    let kkListRandomOrNullName: InternedString
     let kkListFlattenName: InternedString
     let kkListIndexOfName: InternedString
     let kkListLastIndexOfName: InternedString
@@ -209,6 +212,7 @@ struct CollectionLiteralLookupTables {
     let reversedName: InternedString
     let sortedName: InternedString
     let distinctName: InternedString
+    let shuffledName: InternedString
     let flattenName: InternedString
     let firstName: InternedString
     let lastName: InternedString
@@ -350,6 +354,9 @@ struct CollectionLiteralLookupTables {
         kkListReversedName = interner.intern("kk_list_reversed")
         kkListSortedName = interner.intern("kk_list_sorted")
         kkListDistinctName = interner.intern("kk_list_distinct")
+        kkListShuffledName = interner.intern("kk_list_shuffled")
+        kkListRandomName = interner.intern("kk_list_random")
+        kkListRandomOrNullName = interner.intern("kk_list_randomOrNull")
         kkListFlattenName = interner.intern("kk_list_flatten")
         kkListIndexOfName = interner.intern("kk_list_indexOf")
         kkListLastIndexOfName = interner.intern("kk_list_lastIndexOf")
@@ -477,6 +484,7 @@ struct CollectionLiteralLookupTables {
         reversedName = interner.intern("reversed")
         sortedName = interner.intern("sorted")
         distinctName = interner.intern("distinct")
+        shuffledName = interner.intern("shuffled")
         flattenName = interner.intern("flatten")
         firstName = interner.intern("first")
         lastName = interner.intern("last")

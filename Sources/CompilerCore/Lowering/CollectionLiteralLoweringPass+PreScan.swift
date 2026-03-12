@@ -193,7 +193,11 @@ extension CollectionLiteralLoweringPass {
         } else if callee == lookup.toListName, mapExprIDs.contains(src) {
             listExprIDs.insert(result.rawValue)
         } else if callee == lookup.takeName || callee == lookup.dropName
-            || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName,
+            || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
+            || callee == lookup.shuffledName
+            || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
+            || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
+            || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName,
             listExprIDs.contains(src)
         {
             listExprIDs.insert(result.rawValue)
@@ -249,6 +253,10 @@ extension CollectionLiteralLoweringPass {
                 if let result { mapExprIDs.insert(result.rawValue) }
             } else if callee == lookup.takeName || callee == lookup.dropName
                 || callee == lookup.reversedName || callee == lookup.sortedName || callee == lookup.distinctName
+                || callee == lookup.shuffledName
+                || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
+                || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
+                || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName
             {
                 if let result { listExprIDs.insert(result.rawValue) }
             }

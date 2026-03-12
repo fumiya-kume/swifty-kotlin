@@ -859,6 +859,10 @@ public final class BindingTable {
     public private(set) var scopeFunctionExprIDs: Set<ExprID> = []
     /// Maps scope function call expression IDs to their kind.
     public private(set) var scopeFunctionKinds: [ExprID: ScopeFunctionKind] = [:]
+    /// Tracks takeIf / takeUnless extension calls (STDLIB-160).
+    public private(set) var takeIfTakeUnlessExprIDs: Set<ExprID> = []
+    /// Maps takeIf/takeUnless call expression IDs to their kind.
+    public private(set) var takeIfTakeUnlessKinds: [ExprID: TakeIfTakeUnlessKind] = [:]
     /// Tracks lambda literals that need the collection HOF closure parameter ABI.
     public private(set) var collectionHOFLambdaExprIDs: Set<ExprID> = []
     /// Tracks stdlib calls that require dedicated lowering.
@@ -1110,6 +1114,22 @@ public final class BindingTable {
     /// Retrieve the scope function kind for a scope function call expression.
     public func scopeFunctionKind(for expr: ExprID) -> ScopeFunctionKind? {
         scopeFunctionKinds[expr]
+    }
+
+    /// Mark a call expression as a takeIf / takeUnless extension call (STDLIB-160).
+    public func markTakeIfTakeUnlessExpr(_ expr: ExprID, kind: TakeIfTakeUnlessKind) {
+        takeIfTakeUnlessExprIDs.insert(expr)
+        takeIfTakeUnlessKinds[expr] = kind
+    }
+
+    /// Whether the given expression is a takeIf / takeUnless call.
+    public func isTakeIfTakeUnlessExpr(_ expr: ExprID) -> Bool {
+        takeIfTakeUnlessExprIDs.contains(expr)
+    }
+
+    /// Retrieve the takeIf/takeUnless kind for a marked call expression.
+    public func takeIfTakeUnlessKind(for expr: ExprID) -> TakeIfTakeUnlessKind? {
+        takeIfTakeUnlessKinds[expr]
     }
 
     /// Mark a lambda literal as requiring collection HOF closure ABI lowering.
