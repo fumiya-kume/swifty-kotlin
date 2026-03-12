@@ -280,7 +280,7 @@ extension CallTypeChecker {
             "sortedDescending", "sortedByDescending", "sortedWith", "partition",
             "filterIsInstance",
         ]
-        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse"]
+        let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse", "getOrPut"]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
@@ -322,6 +322,8 @@ extension CallTypeChecker {
             isMapReceiver && argCount == 2
         case "getOrElse":
             isMapReceiver && argCount == 1
+        case "getOrPut":
+            isMapReceiver && argCount == 2
         case "fold", "windowed":
             argCount == 2
         case "count", "first", "last":
@@ -358,7 +360,7 @@ extension CallTypeChecker {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        if memberName == "getOrDefault" || memberName == "getOrElse" {
+        if memberName == "getOrDefault" || memberName == "getOrElse" || memberName == "getOrPut" {
             if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                classType.args.count >= 2
             {
@@ -483,6 +485,26 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == "getOrPut", isMapReceiver, argCount == 2 {
+            let valueType: TypeID = if case let .classType(classType) = sema.types.kind(of: receiverElementType),
+                                       classType.args.count >= 2
+            {
+                switch classType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): t
+                case .star: sema.types.anyType
+                }
+            } else {
+                sema.types.anyType
+            }
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: valueType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         if memberName == "getOrElse", isMapReceiver, argCount == 1 {
