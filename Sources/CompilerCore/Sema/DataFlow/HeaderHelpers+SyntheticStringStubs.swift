@@ -403,6 +403,80 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-100/102/103: Regex-related String extensions ---
+
+        let regexSymbol = ensureClassSymbol(
+            named: "Regex", in: kotlinTextPkg,
+            symbols: symbols, interner: interner
+        )
+        let regexType = types.make(.classType(ClassType(
+            classSymbol: regexSymbol, args: [], nullability: .nonNull
+        )))
+
+        registerSyntheticStringExtensionFunction(
+            named: "matches",
+            externalLinkName: "kk_string_matches_regex",
+            receiverType: stringType,
+            parameters: [
+                ("regex", regexType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "contains",
+            externalLinkName: "kk_string_contains_regex",
+            receiverType: stringType,
+            parameters: [
+                ("regex", regexType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replace",
+            externalLinkName: "kk_string_replace_regex",
+            receiverType: stringType,
+            parameters: [
+                ("regex", regexType, false, false),
+                ("replacement", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "split",
+            externalLinkName: "kk_string_split_regex",
+            receiverType: stringType,
+            parameters: [
+                ("regex", regexType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toRegex",
+            externalLinkName: "kk_string_toRegex",
+            receiverType: stringType,
+            parameters: [],
+            returnType: regexType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

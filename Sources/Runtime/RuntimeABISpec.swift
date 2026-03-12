@@ -1569,6 +1569,105 @@ public enum RuntimeABISpec {
         ),
     ]
 
+    /// Regex (STDLIB-100/101/102/103)
+    public static let regexFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_create",
+            parameters: [
+                RuntimeABIParameter(name: "pattern", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_matches_regex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "regex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_contains_regex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "regex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_find",
+            parameters: [
+                RuntimeABIParameter(name: "regex", type: .intptr),
+                RuntimeABIParameter(name: "input", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_findAll",
+            parameters: [
+                RuntimeABIParameter(name: "regex", type: .intptr),
+                RuntimeABIParameter(name: "input", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_replace_regex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "regex", type: .intptr),
+                RuntimeABIParameter(name: "replacement", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_split_regex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "regex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toRegex",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_pattern",
+            parameters: [
+                RuntimeABIParameter(name: "regex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_value",
+            parameters: [
+                RuntimeABIParameter(name: "matchResult", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_groupValues",
+            parameters: [
+                RuntimeABIParameter(name: "matchResult", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+    ]
+
     public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
             + exceptionFunctions
@@ -1587,6 +1686,7 @@ public enum RuntimeABISpec {
             + mathFunctions
             + collectionFunctions
             + sequenceFunctions
+            + regexFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

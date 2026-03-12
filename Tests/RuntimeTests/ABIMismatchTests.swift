@@ -82,7 +82,15 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 40)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 43)
+    }
+
+    func testRegexFunctionCount() {
+        // kk_regex_create, kk_string_matches_regex, kk_string_contains_regex,
+        // kk_regex_find, kk_regex_findAll, kk_string_replace_regex,
+        // kk_string_split_regex, kk_string_toRegex, kk_regex_pattern,
+        // kk_match_result_value, kk_match_result_groupValues
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 11)
     }
 
     func testPrintlnFunctionCount() {
@@ -156,6 +164,7 @@ final class ABIMismatchTests: XCTestCase {
             + RuntimeABISpec.mathFunctions.count
             + RuntimeABISpec.collectionFunctions.count
             + RuntimeABISpec.sequenceFunctions.count
+            + RuntimeABISpec.regexFunctions.count
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 

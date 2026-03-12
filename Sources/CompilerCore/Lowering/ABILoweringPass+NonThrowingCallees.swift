@@ -253,6 +253,18 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_drop"),
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),
+            // Regex (STDLIB-100/101/102/103)
+            interner.intern("kk_regex_create"),
+            interner.intern("kk_string_matches_regex"),
+            interner.intern("kk_string_contains_regex"),
+            interner.intern("kk_regex_find"),
+            interner.intern("kk_regex_findAll"),
+            interner.intern("kk_string_replace_regex"),
+            interner.intern("kk_string_split_regex"),
+            interner.intern("kk_string_toRegex"),
+            interner.intern("kk_regex_pattern"),
+            interner.intern("kk_match_result_value"),
+            interner.intern("kk_match_result_groupValues"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

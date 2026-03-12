@@ -1150,6 +1150,88 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    // MARK: - Regex (STDLIB-100/101/102/103)
+
+    public static let kk_regex_create = ExternDecl(
+        name: "kk_regex_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_matches_regex = ExternDecl(
+        name: "kk_string_matches_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_contains_regex = ExternDecl(
+        name: "kk_string_contains_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_find = ExternDecl(
+        name: "kk_regex_find",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_findAll = ExternDecl(
+        name: "kk_regex_findAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replace_regex = ExternDecl(
+        name: "kk_string_replace_regex",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_split_regex = ExternDecl(
+        name: "kk_string_split_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toRegex = ExternDecl(
+        name: "kk_string_toRegex",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_pattern = ExternDecl(
+        name: "kk_regex_pattern",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_value = ExternDecl(
+        name: "kk_match_result_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_groupValues = ExternDecl(
+        name: "kk_match_result_groupValues",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let regexExterns: [ExternDecl] = [
+        kk_regex_create,
+        kk_string_matches_regex,
+        kk_string_contains_regex,
+        kk_regex_find,
+        kk_regex_findAll,
+        kk_string_replace_regex,
+        kk_string_split_regex,
+        kk_string_toRegex,
+        kk_regex_pattern,
+        kk_match_result_value,
+        kk_match_result_groupValues,
+    ]
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -1367,6 +1449,7 @@ public enum RuntimeABIExterns {
         all += mathExterns
         all += collectionExterns
         all += sequenceExterns
+        all += regexExterns
         return all
     }()
 
