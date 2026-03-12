@@ -87,6 +87,8 @@ public extension RuntimeABIExterns {
         kk_map_entries,
         kk_map_to_string,
         kk_map_toList,
+        kk_map_plus,
+        kk_map_minus,
         kk_map_to_mutable_map,
         kk_map_iterator,
         kk_map_iterator_hasNext,
@@ -377,6 +379,18 @@ public extension RuntimeABIExterns {
     static let kk_map_toList = ExternDecl(
         name: "kk_map_toList",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_plus = ExternDecl(
+        name: "kk_map_plus",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_minus = ExternDecl(
+        name: "kk_map_minus",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
