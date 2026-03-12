@@ -17,15 +17,6 @@
 
 ## 未完了バックログ
 
-### 🧩 Frontend / Sema / Lowering の暫定対応解消
-
-- [ ] GEN-001: ObjectDecl initializer 順序の legacy fallback を解消する
-  - ClassDecl 側は `classBodyInitOrder` 必須化済み（既存実装済み）
-  - [ ] ObjectDecl の `emitObjectBodyInitializers` から legacy fallback を削除する
-  - **完了条件**: ObjectDecl でも legacy fallback が不要になり、常に宣言順で初期化される
-
----
-
 ### 📦 Stdlib — Pair / Triple
 
 - [ ] STDLIB-120: `Triple<A, B, C>` 型を実装する

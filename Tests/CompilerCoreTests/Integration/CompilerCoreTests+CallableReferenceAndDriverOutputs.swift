@@ -160,9 +160,11 @@ extension CompilerCoreTests {
         let extensionSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
             symbol.kind == .function && ctx.interner.resolve(symbol.name) == "incByOne"
         })?.id)
-        let seedSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-            symbol.kind == .valueParameter && ctx.interner.resolve(symbol.name) == "seed"
-        })?.id)
+        let capturedSymbols = try XCTUnwrap(sema.bindings.captureSymbolsByExpr[callableRefExprID])
+        XCTAssertEqual(capturedSymbols.count, 1)
+        let seedSymbol = capturedSymbols[0]
+        let seedName = sema.symbols.symbol(seedSymbol).map { ctx.interner.resolve($0.name) }
+        XCTAssertEqual(seedName, "seed")
 
         XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(extensionSymbol))
         XCTAssertEqual(sema.bindings.captureSymbolsByExpr[callableRefExprID], [seedSymbol])

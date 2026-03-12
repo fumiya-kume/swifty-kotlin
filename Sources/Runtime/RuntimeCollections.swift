@@ -530,6 +530,74 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
+// MARK: - Triple Functions (STDLIB-120)
+
+@_cdecl("kk_triple_new")
+public func kk_triple_new(_ first: Int, _ second: Int, _ third: Int) -> Int {
+    let box = RuntimeTripleBox(first: first, second: second, third: third)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_triple_first")
+public func kk_triple_first(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.first
+}
+
+@_cdecl("kk_triple_second")
+public func kk_triple_second(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.second
+}
+
+@_cdecl("kk_triple_third")
+public func kk_triple_third(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.third
+}
+
+@_cdecl("kk_triple_to_string")
+public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        let str = "(null, null, null)"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let firstStr = runtimeElementToString(tripleBox.first)
+    let secondStr = runtimeElementToString(tripleBox.second)
+    let thirdStr = runtimeElementToString(tripleBox.third)
+    let str = "(\(firstStr), \(secondStr), \(thirdStr))"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
+// MARK: - Pair/Triple toList (STDLIB-121)
+
+@_cdecl("kk_pair_toList")
+public func kk_pair_toList(_ pairRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    return registerRuntimeObject(RuntimeListBox(elements: [pairBox.first, pairBox.second]))
+}
+
+@_cdecl("kk_triple_toList")
+public func kk_triple_toList(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    return registerRuntimeObject(RuntimeListBox(elements: [tripleBox.first, tripleBox.second, tripleBox.third]))
+}
+
 // MARK: - Array conversion functions (STDLIB-087)
 
 @_cdecl("kk_array_toList")

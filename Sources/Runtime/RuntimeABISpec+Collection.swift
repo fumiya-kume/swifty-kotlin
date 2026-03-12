@@ -480,6 +480,65 @@ public extension RuntimeABISpec {
             returnType: .opaquePointer,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_pair_toList",
+            parameters: [
+                RuntimeABIParameter(name: "pairRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // Triple (STDLIB-120)
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_new",
+            parameters: [
+                RuntimeABIParameter(name: "first", type: .intptr),
+                RuntimeABIParameter(name: "second", type: .intptr),
+                RuntimeABIParameter(name: "third", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_first",
+            parameters: [
+                RuntimeABIParameter(name: "tripleRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_second",
+            parameters: [
+                RuntimeABIParameter(name: "tripleRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_third",
+            parameters: [
+                RuntimeABIParameter(name: "tripleRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "tripleRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_triple_toList",
+            parameters: [
+                RuntimeABIParameter(name: "tripleRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // Builder DSL (STDLIB-002)
         RuntimeABIFunctionSpec(
             name: "kk_build_string",

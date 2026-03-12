@@ -241,6 +241,10 @@ struct CollectionLiteralLookupTables {
     let kkPairFirstName: InternedString
     let kkPairSecondName: InternedString
 
+    // Triple (STDLIB-120)
+    let tripleName: InternedString
+    let kkTripleNewName: InternedString
+
     // Builder DSL names (STDLIB-002)
     let buildStringName: InternedString
     let buildListName: InternedString
@@ -490,6 +494,9 @@ struct CollectionLiteralLookupTables {
         kkPairNewName = interner.intern("kk_pair_new")
         kkPairFirstName = interner.intern("kk_pair_first")
         kkPairSecondName = interner.intern("kk_pair_second")
+
+        tripleName = interner.intern("Triple")
+        kkTripleNewName = interner.intern("kk_triple_new")
 
         buildStringName = interner.intern("buildString")
         buildListName = interner.intern("buildList")

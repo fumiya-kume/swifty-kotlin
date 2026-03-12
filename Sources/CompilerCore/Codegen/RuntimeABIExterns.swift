@@ -520,6 +520,26 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_readln = ExternDecl(
+        name: "kk_readln",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - System
+
+    public static let kk_system_exitProcess = ExternDecl(
+        name: "kk_system_exitProcess",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_system_currentTimeMillis = ExternDecl(
+        name: "kk_system_currentTimeMillis",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
     // MARK: - GC
 
     public static let kk_register_global_root = ExternDecl(
@@ -1405,6 +1425,10 @@ public enum RuntimeABIExterns {
             kk_println_newline,
             // IO
             kk_readline,
+            kk_readln,
+            // System
+            kk_system_exitProcess,
+            kk_system_currentTimeMillis,
             // GC
             kk_register_global_root,
             kk_unregister_global_root,

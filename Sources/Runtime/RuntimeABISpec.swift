@@ -756,6 +756,31 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "IO"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_readln",
+            parameters: [
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "IO"
+        ),
+    ]
+
+    public static let systemFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_system_exitProcess",
+            parameters: [
+                RuntimeABIParameter(name: "status", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "System"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_system_currentTimeMillis",
+            parameters: [],
+            returnType: .intptr,
+            section: "System"
+        ),
     ]
 
     public static let gcFunctions: [RuntimeABIFunctionSpec] = [
@@ -1879,6 +1904,7 @@ public enum RuntimeABISpec {
             + stringFunctions
             + printlnFunctions
             + ioFunctions
+            + systemFunctions
             + gcFunctions
             + coroutineFunctions
             + boxingFunctions

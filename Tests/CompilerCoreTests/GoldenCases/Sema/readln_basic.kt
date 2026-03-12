@@ -1,0 +1,1 @@
+fun useReadln(): String = readln()

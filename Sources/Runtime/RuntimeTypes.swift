@@ -103,6 +103,18 @@ final class RuntimePairBox {
     }
 }
 
+final class RuntimeTripleBox {
+    let first: Int
+    let second: Int
+    let third: Int
+
+    init(first: Int, second: Int, third: Int) {
+        self.first = first
+        self.second = second
+        self.third = third
+    }
+}
+
 final class RuntimeIntBox {
     let value: Int
 

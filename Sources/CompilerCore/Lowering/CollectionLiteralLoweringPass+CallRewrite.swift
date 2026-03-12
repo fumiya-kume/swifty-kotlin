@@ -406,6 +406,19 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite Triple(a, b, c) → kk_triple_new (STDLIB-120) ---
+                    if callee == lookup.tripleName, arguments.count == 3 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkTripleNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite arrayOf → kk_array_of ---
                     if lookup.arrayOfFactoryNames.contains(callee) {
                         let count = arguments.count

@@ -98,6 +98,13 @@ public extension RuntimeABIExterns {
         kk_pair_first,
         kk_pair_second,
         kk_pair_to_string,
+        kk_pair_toList,
+        kk_triple_new,
+        kk_triple_first,
+        kk_triple_second,
+        kk_triple_third,
+        kk_triple_to_string,
+        kk_triple_toList,
         kk_build_string,
         kk_build_list,
         kk_build_list_with_capacity,
@@ -706,6 +713,49 @@ public extension RuntimeABIExterns {
         name: "kk_pair_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    static let kk_pair_toList = ExternDecl(
+        name: "kk_pair_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Triple (STDLIB-120)
+    static let kk_triple_new = ExternDecl(
+        name: "kk_triple_new",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_first = ExternDecl(
+        name: "kk_triple_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_second = ExternDecl(
+        name: "kk_triple_second",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_third = ExternDecl(
+        name: "kk_triple_third",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_to_string = ExternDecl(
+        name: "kk_triple_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
+    )
+
+    static let kk_triple_toList = ExternDecl(
+        name: "kk_triple_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
     )
 
     /// Builder DSL (STDLIB-002)

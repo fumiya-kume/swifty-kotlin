@@ -50,6 +50,19 @@ final class CallLowerer {
             return loweredRepeat
         }
 
+        if let loweredMeasureTime = lowerMeasureTimeMillisCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredMeasureTime
+        }
+
         if let loweredArrayConstructor = lowerArrayConstructorCallExpr(
             exprID,
             args: args,

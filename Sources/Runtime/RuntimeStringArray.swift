@@ -561,6 +561,13 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("(\(first), \(second))")
         return
     }
+    if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
+        let first = runtimeRenderAnyForPrint(tripleBox.first)
+        let second = runtimeRenderAnyForPrint(tripleBox.second)
+        let third = runtimeRenderAnyForPrint(tripleBox.third)
+        Swift.print("(\(first), \(second), \(third))")
+        return
+    }
     if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         Swift.print("kotlin.collections.IndexingIterable@\(hex)")
@@ -594,6 +601,26 @@ public func kk_println_newline() {
 public func kk_readline() -> Int {
     guard let line = readLine() else {
         return runtimeNullSentinelInt
+    }
+    let utf8 = Array(line.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Runtime support for kotlin.io.readln() (STDLIB-130).
+@_cdecl("kk_readln")
+public func kk_readln(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let line = readLine() else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ReadAfterEOFException")
+        return 0
     }
     let utf8 = Array(line.utf8)
     if utf8.isEmpty {
@@ -663,6 +690,12 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
         return "(\(first), \(second))"
+    }
+    if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
+        let first = runtimeRenderAnyForPrint(tripleBox.first)
+        let second = runtimeRenderAnyForPrint(tripleBox.second)
+        let third = runtimeRenderAnyForPrint(tripleBox.third)
+        return "(\(first), \(second), \(third))"
     }
     if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)

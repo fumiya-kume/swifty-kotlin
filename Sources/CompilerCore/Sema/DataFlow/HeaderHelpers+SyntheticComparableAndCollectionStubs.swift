@@ -123,6 +123,7 @@ extension DataFlowSemaPhase {
         }
 
         registerSyntheticPairStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticTripleStub(symbols: symbols, types: types, interner: interner)
 
         // Ensure the "kotlin.collections" package exists.
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
@@ -317,6 +318,99 @@ extension DataFlowSemaPhase {
         )
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
+
+        registerFunctionMember(
+            name: "toList",
+            returnType: types.anyType,
+            externalLinkName: "kk_pair_toList",
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticTripleStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let tripleFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Triple")]
+        let tripleName = interner.intern("Triple")
+        let tripleSymbol: SymbolID = if let existing = symbols.lookup(fqName: tripleFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class, name: tripleName, fqName: tripleFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+
+        let aName = interner.intern("A")
+        let bName = interner.intern("B")
+        let cName = interner.intern("C")
+        let aSymbol = symbols.lookup(fqName: tripleFQName + [aName]) ?? symbols.define(
+            kind: .typeParameter, name: aName, fqName: tripleFQName + [aName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        let bSymbol = symbols.lookup(fqName: tripleFQName + [bName]) ?? symbols.define(
+            kind: .typeParameter, name: bName, fqName: tripleFQName + [bName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        let cSymbol = symbols.lookup(fqName: tripleFQName + [cName]) ?? symbols.define(
+            kind: .typeParameter, name: cName, fqName: tripleFQName + [cName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        types.setNominalTypeParameterSymbols([aSymbol, bSymbol, cSymbol], for: tripleSymbol)
+        types.setNominalTypeParameterVariances([.out, .out, .out], for: tripleSymbol)
+
+        let aType = types.make(.typeParam(TypeParamType(symbol: aSymbol, nullability: .nonNull)))
+        let bType = types.make(.typeParam(TypeParamType(symbol: bSymbol, nullability: .nonNull)))
+        let cType = types.make(.typeParam(TypeParamType(symbol: cSymbol, nullability: .nonNull)))
+        let tripleType = types.make(.classType(ClassType(
+            classSymbol: tripleSymbol,
+            args: [.out(aType), .out(bType), .out(cType)],
+            nullability: .nonNull
+        )))
+
+        func registerFunctionMember(
+            name: String, returnType: TypeID, externalLinkName: String, flags: SymbolFlags
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = tripleFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function, name: memberName, fqName: memberFQName,
+                declSite: nil, visibility: .public, flags: flags
+            )
+            symbols.setParentSymbol(tripleSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: tripleType, parameterTypes: [], returnType: returnType,
+                    typeParameterSymbols: [aSymbol, bSymbol, cSymbol], classTypeParameterCount: 3
+                ),
+                for: memberSymbol
+            )
+        }
+
+        func registerPropertyMember(name: String, propertyType: TypeID, externalLinkName: String) {
+            let memberName = interner.intern(name)
+            let memberFQName = tripleFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .property, name: memberName, fqName: memberFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(tripleSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setPropertyType(propertyType, for: memberSymbol)
+        }
+
+        registerFunctionMember(name: "component1", returnType: aType, externalLinkName: "kk_triple_first", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component2", returnType: bType, externalLinkName: "kk_triple_second", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component3", returnType: cType, externalLinkName: "kk_triple_third", flags: [.synthetic, .operatorFunction])
+        registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
+        registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
+        registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
+        registerFunctionMember(name: "toList", returnType: types.anyType, externalLinkName: "kk_triple_toList", flags: [.synthetic])
     }
 
     private func registerSyntheticCollectionStub(

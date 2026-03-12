@@ -75,6 +75,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticTopLevelFunction(
+            named: "readln",
+            packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: types.stringType,
+            externalLinkName: "kk_readln",
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- Sequence factory functions (STDLIB-097) ---
         let kotlinSequencesPkg = ensureSyntheticPackage(
             path: [interner.intern("kotlin"), interner.intern("sequences")],
@@ -100,6 +110,32 @@ extension DataFlowSemaPhase {
             ],
             returnType: types.anyType,
             externalLinkName: "kk_sequence_generate",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- kotlin.system package functions (STDLIB-131/132) ---
+        let kotlinSystemPkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin"), interner.intern("system")],
+            symbols: symbols
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "exitProcess",
+            packageFQName: kotlinSystemPkg,
+            parameters: [(name: "status", type: types.intType)],
+            returnType: types.nothingType,
+            externalLinkName: "kk_system_exitProcess",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "measureTimeMillis",
+            packageFQName: kotlinSystemPkg,
+            parameters: [(name: "block", type: types.anyType)],
+            returnType: types.longType,
+            externalLinkName: "kk_system_measureTimeMillis",
             symbols: symbols,
             interner: interner
         )
