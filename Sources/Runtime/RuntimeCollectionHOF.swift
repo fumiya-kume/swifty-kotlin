@@ -700,8 +700,8 @@ public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
 @_cdecl("kk_list_indexOf")
 public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return -1 }
-    for (index, elem) in list.elements.enumerated() {
-        if runtimeCompareValues(elem, element) == 0 { return index }
+    for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
+        return index
     }
     return -1
 }
@@ -710,8 +710,8 @@ public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
 public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { return -1 }
     var lastIdx = -1
-    for (index, elem) in list.elements.enumerated() {
-        if runtimeCompareValues(elem, element) == 0 { lastIdx = index }
+    for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
+        lastIdx = index
     }
     return lastIdx
 }
@@ -749,10 +749,8 @@ public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
     let elements = runtimeListBox(from: listRaw)?.elements ?? []
     var result: [Int] = []
-    for elem in elements {
-        if kk_op_is(elem, typeToken) != 0 {
-            result.append(elem)
-        }
+    for elem in elements where kk_op_is(elem, typeToken) != 0 {
+        result.append(elem)
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }

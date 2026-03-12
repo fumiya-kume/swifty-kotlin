@@ -23,6 +23,40 @@ extension NativeEmitter {
             bindings.buildICmpNotEqual(state.builder, lhs: value, rhs: state.zeroValue, name: name)
         }
 
+        func buildComparisonOperation(
+            _ operation: (LLVMCAPIBindings.LLVMBuilderRef, LLVMCAPIBindings.LLVMValueRef, LLVMCAPIBindings.LLVMValueRef, String) -> LLVMCAPIBindings.LLVMValueRef?,
+            name: String
+        ) -> LLVMCAPIBindings.LLVMValueRef? {
+            if let compared = operation(state.builder, lhs, rhs, name) {
+                return bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "\(name)64_\(instructionIndex)")
+            }
+            return nil
+        }
+
+        func buildLogicalAnd() -> LLVMCAPIBindings.LLVMValueRef? {
+            if let lhsBool = boolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
+               let rhsBool = boolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
+               let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "and_lhs64_\(instructionIndex)"),
+               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)")
+            {
+                return bindings.buildMul(state.builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
+            }
+            return nil
+        }
+
+        func buildLogicalOr() -> LLVMCAPIBindings.LLVMValueRef? {
+            if let lhsBool = boolCondition(from: lhs, name: "or_lhs_\(instructionIndex)"),
+               let rhsBool = boolCondition(from: rhs, name: "or_rhs_\(instructionIndex)"),
+               let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "or_lhs64_\(instructionIndex)"),
+               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "or_rhs64_\(instructionIndex)"),
+               let sum = bindings.buildAdd(state.builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
+               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)")
+            {
+                return bindings.buildZExt(state.builder, value: nonZero, type: state.int64Type, name: "or64_\(instructionIndex)")
+            }
+            return nil
+        }
+
         let lowered: LLVMCAPIBindings.LLVMValueRef?
         switch calleeName {
         case "kk_op_add":
@@ -46,88 +80,29 @@ extension NativeEmitter {
         case "kk_op_urem":
             lowered = bindings.buildURem(state.builder, lhs: lhs, rhs: rhs, name: "urem_\(instructionIndex)")
         case "kk_op_eq":
-            if let compared = bindings.buildICmpEqual(state.builder, lhs: lhs, rhs: rhs, name: "eq_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "eq64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpEqual, name: "eq")
         case "kk_op_ne":
-            if let compared = bindings.buildICmpNotEqual(state.builder, lhs: lhs, rhs: rhs, name: "ne_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ne64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpNotEqual, name: "ne")
         case "kk_op_lt":
-            if let compared = bindings.buildICmpSignedLessThan(state.builder, lhs: lhs, rhs: rhs, name: "lt_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "lt64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpSignedLessThan, name: "lt")
         case "kk_op_le":
-            if let compared = bindings.buildICmpSignedLessOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "le_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "le64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpSignedLessOrEqual, name: "le")
         case "kk_op_gt":
-            if let compared = bindings.buildICmpSignedGreaterThan(state.builder, lhs: lhs, rhs: rhs, name: "gt_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "gt64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpSignedGreaterThan, name: "gt")
         case "kk_op_ge":
-            if let compared = bindings.buildICmpSignedGreaterOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "ge_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ge64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpSignedGreaterOrEqual, name: "ge")
         case "kk_op_ult":
-            if let compared = bindings.buildICmpUnsignedLessThan(state.builder, lhs: lhs, rhs: rhs, name: "ult_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ult64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpUnsignedLessThan, name: "ult")
         case "kk_op_ule":
-            if let compared = bindings.buildICmpUnsignedLessOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "ule_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ule64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpUnsignedLessOrEqual, name: "ule")
         case "kk_op_ugt":
-            if let compared = bindings.buildICmpUnsignedGreaterThan(state.builder, lhs: lhs, rhs: rhs, name: "ugt_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "ugt64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpUnsignedGreaterThan, name: "ugt")
         case "kk_op_uge":
-            if let compared = bindings.buildICmpUnsignedGreaterOrEqual(state.builder, lhs: lhs, rhs: rhs, name: "uge_\(instructionIndex)") {
-                lowered = bindings.buildZExt(state.builder, value: compared, type: state.int64Type, name: "uge64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildComparisonOperation(bindings.buildICmpUnsignedGreaterOrEqual, name: "uge")
         case "kk_op_and":
-            if let lhsBool = boolCondition(from: lhs, name: "and_lhs_\(instructionIndex)"),
-               let rhsBool = boolCondition(from: rhs, name: "and_rhs_\(instructionIndex)"),
-               let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "and_lhs64_\(instructionIndex)"),
-               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "and_rhs64_\(instructionIndex)")
-            {
-                lowered = bindings.buildMul(state.builder, lhs: lhsInt, rhs: rhsInt, name: "and64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
+            lowered = buildLogicalAnd()
         case "kk_op_or":
-            if let lhsBool = boolCondition(from: lhs, name: "or_lhs_\(instructionIndex)"),
-               let rhsBool = boolCondition(from: rhs, name: "or_rhs_\(instructionIndex)"),
-               let lhsInt = bindings.buildZExt(state.builder, value: lhsBool, type: state.int64Type, name: "or_lhs64_\(instructionIndex)"),
-               let rhsInt = bindings.buildZExt(state.builder, value: rhsBool, type: state.int64Type, name: "or_rhs64_\(instructionIndex)"),
-               let sum = bindings.buildAdd(state.builder, lhs: lhsInt, rhs: rhsInt, name: "or_sum_\(instructionIndex)"),
-               let nonZero = bindings.buildICmpNotEqual(state.builder, lhs: sum, rhs: state.zeroValue, name: "or_nonzero_\(instructionIndex)")
-            {
-                lowered = bindings.buildZExt(state.builder, value: nonZero, type: state.int64Type, name: "or64_\(instructionIndex)")
-            } else {
-                lowered = nil
-            }
-        // Bitwise/shift operations (P5-103)
+            lowered = buildLogicalOr()
         case "kk_bitwise_and":
             lowered = bindings.buildAnd(state.builder, lhs: lhs, rhs: rhs, name: "bitand_\(instructionIndex)")
         case "kk_bitwise_or":
@@ -143,7 +118,6 @@ extension NativeEmitter {
         case "kk_op_inv":
             lowered = bindings.buildNot(state.builder, value: lhs, name: "inv_\(instructionIndex)")
         case "kk_op_elvis":
-            // Elvis operator: return lhs if non-null (not KK_NULL_SENTINEL), otherwise rhs.
             let sentinel = bindings.constInt(state.int64Type, value: UInt64(bitPattern: Int64.min), signExtend: true) ?? state.zeroValue
             if let isNull = bindings.buildICmpEqual(state.builder, lhs: lhs, rhs: sentinel, name: "elvis_isnull_\(instructionIndex)") {
                 lowered = bindings.buildSelect(state.builder, condition: isNull, thenValue: rhs, elseValue: lhs, name: "elvis_\(instructionIndex)")

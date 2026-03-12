@@ -81,8 +81,25 @@ public func kk_regex_create(_ patternRaw: Int) -> Int {
     let pattern = regexStringFromRaw(patternRaw) ?? ""
     guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
         // Return a regex that matches nothing on invalid pattern
-        let fallback = try! NSRegularExpression(pattern: "(?!)", options: [])
-        return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+        do {
+            let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+        } catch {
+            // If even the fallback fails, return an empty regex
+            do {
+                let emptyRegex = try NSRegularExpression(pattern: "", options: [])
+                return registerRuntimeObject(RuntimeRegexBox(regex: emptyRegex, pattern: pattern))
+            } catch {
+                // Last resort: create a regex that matches an empty string
+                do {
+                    let lastResort = try NSRegularExpression(pattern: "^$", options: [])
+                    return registerRuntimeObject(RuntimeRegexBox(regex: lastResort, pattern: pattern))
+                } catch {
+                    // This should never happen, but handle gracefully
+                    fatalError("Failed to create any NSRegularExpression instance")
+                }
+            }
+        }
     }
     return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
 }
