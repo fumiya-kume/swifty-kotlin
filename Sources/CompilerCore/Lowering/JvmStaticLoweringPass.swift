@@ -136,10 +136,10 @@ final class JvmStaticLoweringPass: LoweringPass {
         if !wrappersByOriginal.isEmpty {
             arena.transformFunctions { function in
                 var updated = function
-                updated.body = rewriteCalls(
+                updated.replaceBody(rewriteCalls(
                     in: function.body,
                     wrappersByOriginal: wrappersByOriginal
-                )
+                ))
                 return updated
             }
             for decl in newDecls {

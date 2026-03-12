@@ -43,11 +43,19 @@ public enum ScopeFunctionKind: Equatable {
     case scopeAlso
 }
 
+/// Identifies takeIf / takeUnless extension calls (STDLIB-160).
+public enum TakeIfTakeUnlessKind: Equatable {
+    case takeIf
+    case takeUnless
+}
+
 /// Identifies special stdlib calls that need dedicated lowering.
 public enum StdlibSpecialCallKind: Equatable {
     case repeatLoop
     case maxOfInt
     case minOfInt
+    case arrayConstructor
+    case measureTimeMillis
 }
 
 public struct CatchClauseBinding: Equatable {

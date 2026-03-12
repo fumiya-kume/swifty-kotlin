@@ -349,6 +349,15 @@ extension DataFlowSemaPhase {
                     symbols.setPropertyType(classType, for: entrySymbol)
                     scope.insert(entrySymbol)
                 }
+                collectSyntheticEnumEntryProperties(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    enumType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner
+                )
             }
             if declaration.flags.contains(.dataType) {
                 collectSyntheticDataClassCopy(
@@ -389,12 +398,44 @@ extension DataFlowSemaPhase {
                     companionDeclID: companionDeclID,
                     ownerFQName: fqName,
                     ownerSymbol: symbol,
+                    ownerType: classType,
                     ast: ast,
                     symbols: symbols,
                     types: types,
                     bindings: bindings,
                     scope: classScope,
                     diagnostics: diagnostics,
+                    interner: interner
+                )
+            } else if declaration.kind == .enumClass {
+                // Synthesize implicit companion for enum classes (valueOf, entries)
+                let companionName = interner.intern("Companion")
+                let companionFQName = fqName + [companionName]
+                let companionSymbol = symbols.define(
+                    kind: .object,
+                    name: companionName,
+                    fqName: companionFQName,
+                    declSite: classDecl.range,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(symbol, for: companionSymbol)
+                symbols.setCompanionObjectSymbol(companionSymbol, for: symbol)
+                classScope.insert(companionSymbol)
+                let companionType = types.make(.classType(ClassType(classSymbol: companionSymbol, args: [], nullability: .nonNull)))
+                let companionScope = ClassMemberScope(
+                    parent: classScope,
+                    symbols: symbols,
+                    ownerSymbol: companionSymbol,
+                    thisType: companionType
+                )
+                collectSyntheticEnumCompanionMembers(
+                    companionSymbol: companionSymbol,
+                    companionFQName: companionFQName,
+                    enumType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: companionScope,
                     interner: interner
                 )
             }
@@ -459,6 +500,7 @@ extension DataFlowSemaPhase {
                     companionDeclID: companionDeclID,
                     ownerFQName: fqName,
                     ownerSymbol: symbol,
+                    ownerType: interfaceType,
                     ast: ast,
                     symbols: symbols,
                     types: types,

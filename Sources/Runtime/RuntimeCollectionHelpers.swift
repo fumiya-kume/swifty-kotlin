@@ -50,6 +50,19 @@ func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     return tryCast(ptr, to: RuntimeListIteratorBox.self)
 }
 
+func runtimeStringIteratorBox(from rawValue: Int) -> RuntimeStringIteratorBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeStringIteratorBox.self)
+}
+
 func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -222,6 +235,12 @@ func runtimeElementToString(_ elem: Int) -> String {
         let first = runtimeElementToString(pairBox.first)
         let second = runtimeElementToString(pairBox.second)
         return "(\(first), \(second))"
+    }
+    if let tripleBox = tryCast(ptr, to: RuntimeTripleBox.self) {
+        let first = runtimeElementToString(tripleBox.first)
+        let second = runtimeElementToString(tripleBox.second)
+        let third = runtimeElementToString(tripleBox.third)
+        return "(\(first), \(second), \(third))"
     }
     if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }

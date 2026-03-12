@@ -82,7 +82,7 @@ final class OperatorLoweringPass: LoweringPass {
                     newBody.append(instruction)
                 }
             }
-            updated.body = newBody
+            updated.replaceBody(newBody)
             return updated
         }
         module.recordLowering(Self.name)

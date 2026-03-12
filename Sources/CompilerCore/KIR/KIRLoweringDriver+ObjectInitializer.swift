@@ -3,10 +3,11 @@ import Foundation
 extension KIRLoweringDriver {
     /// Synthesise an initializer function for a top-level `object` declaration.
     ///
-    /// The generated function runs property initializers first (in declaration order),
-    /// then init blocks -- matching Kotlin's guaranteed initialization order for object
-    /// singletons.  The function is registered via `registerCompanionInitializer` so
-    /// that it is called once during module initialization (injected into `main`).
+    /// The generated function emits property initializers and init blocks in
+    /// declaration order using `classBodyInitOrder`, matching Kotlin's
+    /// guaranteed top-to-bottom initialization semantics.  The function is
+    /// registered via `registerCompanionInitializer` so that it is called once
+    /// during module initialization (injected into `main`).
     func synthesizeObjectInitializer(
         _ objectDecl: ObjectDecl,
         objectSymbol: SymbolID,
@@ -30,14 +31,12 @@ extension KIRLoweringDriver {
             classSymbol: objectSymbol, args: [], nullability: .nonNull
         )))
         let objectReceiverExpr = arena.appendExpr(.symbolRef(objectSymbol), type: objectType)
-        ctx.currentImplicitReceiverSymbol = objectSymbol
-        ctx.currentImplicitReceiverExprID = objectReceiverExpr
+        ctx.setImplicitReceiver(symbol: objectSymbol, exprID: objectReceiverExpr)
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         body.append(.constValue(result: objectReceiverExpr, value: .symbolRef(objectSymbol)))
 
-        emitObjectPropertyInitializers(objectDecl, shared: shared, body: &body)
-        emitObjectInitBlocks(objectDecl, shared: shared, body: &body)
+        emitObjectBodyInitializers(objectDecl, shared: shared, body: &body)
 
         body.append(.returnUnit)
         body.append(.endBlock)
@@ -54,14 +53,13 @@ extension KIRLoweringDriver {
 
         var declIDs: [KIRDeclID] = [initDeclID]
         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
-        ctx.currentImplicitReceiverExprID = nil
-        ctx.currentImplicitReceiverSymbol = nil
+        ctx.clearImplicitReceiver()
         return declIDs
     }
 
     // MARK: - Helpers
 
-    private func emitObjectPropertyInitializers(
+    private func emitObjectBodyInitializers(
         _ objectDecl: ObjectDecl,
         shared: KIRLoweringSharedContext,
         body: inout KIRLoweringEmitContext
@@ -70,37 +68,36 @@ extension KIRLoweringDriver {
         let sema = shared.sema
         let arena = shared.arena
 
-        for propertyDeclID in objectDecl.memberProperties {
-            guard let propertyDecl = ast.arena.decl(propertyDeclID),
-                  case let .propertyDecl(property) = propertyDecl,
-                  let propertySymbol = sema.bindings.declSymbols[propertyDeclID]
-            else { continue }
-            if property.delegateExpression != nil { continue }
-            guard let initializer = property.initializer else { continue }
-            let initializerValue = lowerExpr(initializer, shared: shared, emit: &body)
-            let targetSymbol = sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
-            let propertyType = sema.symbols.propertyType(for: targetSymbol) ?? sema.types.anyType
-            let targetRef = arena.appendExpr(.symbolRef(targetSymbol), type: propertyType)
-            body.append(.constValue(result: targetRef, value: .symbolRef(targetSymbol)))
-            body.append(.copy(from: initializerValue, to: targetRef))
-        }
-    }
-
-    private func emitObjectInitBlocks(
-        _ objectDecl: ObjectDecl,
-        shared: KIRLoweringSharedContext,
-        body: inout KIRLoweringEmitContext
-    ) {
-        for initBlock in objectDecl.initBlocks {
-            switch initBlock {
-            case let .block(exprIDs, _):
-                for exprID in exprIDs {
+        for member in objectDecl.classBodyInitOrder {
+            switch member {
+            case let .property(index):
+                guard index < objectDecl.memberProperties.count else { continue }
+                let propertyDeclID = objectDecl.memberProperties[index]
+                guard let propertyDecl = ast.arena.decl(propertyDeclID),
+                      case let .propertyDecl(property) = propertyDecl,
+                      let propertySymbol = sema.bindings.declSymbols[propertyDeclID]
+                else { continue }
+                if property.delegateExpression != nil { continue }
+                guard let initializer = property.initializer else { continue }
+                let initializerValue = lowerExpr(initializer, shared: shared, emit: &body)
+                let targetSymbol = sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
+                let propertyType = sema.symbols.propertyType(for: targetSymbol) ?? sema.types.anyType
+                let targetRef = arena.appendExpr(.symbolRef(targetSymbol), type: propertyType)
+                body.append(.constValue(result: targetRef, value: .symbolRef(targetSymbol)))
+                body.append(.copy(from: initializerValue, to: targetRef))
+            case let .initBlock(index):
+                guard index < objectDecl.initBlocks.count else { continue }
+                let initBlock = objectDecl.initBlocks[index]
+                switch initBlock {
+                case let .block(exprIDs, _):
+                    for exprID in exprIDs {
+                        _ = lowerExpr(exprID, shared: shared, emit: &body)
+                    }
+                case let .expr(exprID, _):
                     _ = lowerExpr(exprID, shared: shared, emit: &body)
+                case .unit:
+                    break
                 }
-            case let .expr(exprID, _):
-                _ = lowerExpr(exprID, shared: shared, emit: &body)
-            case .unit:
-                break
             }
         }
     }

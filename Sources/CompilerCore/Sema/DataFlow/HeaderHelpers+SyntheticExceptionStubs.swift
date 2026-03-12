@@ -49,6 +49,48 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let illegalArgumentSymbol = ensureClassSymbol(
+            named: "IllegalArgumentException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let illegalStateSymbol = ensureClassSymbol(
+            named: "IllegalStateException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let indexOutOfBoundsSymbol = ensureClassSymbol(
+            named: "IndexOutOfBoundsException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let unsupportedOperationSymbol = ensureClassSymbol(
+            named: "UnsupportedOperationException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let noSuchElementSymbol = ensureClassSymbol(
+            named: "NoSuchElementException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let arithmeticSymbol = ensureClassSymbol(
+            named: "ArithmeticException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let classCastSymbol = ensureClassSymbol(
+            named: "ClassCastException",
+            in: kotlinPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         symbols.setDirectSupertypes([throwableSymbol], for: exceptionSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
@@ -56,6 +98,13 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: numberFormatSymbol)
         symbols.setDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: unsupportedOperationSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
+        symbols.setDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
 
         for symbol in [
             throwableSymbol,
@@ -65,6 +114,13 @@ extension DataFlowSemaPhase {
             nullPointerSymbol,
             numberFormatSymbol,
             cancellationSymbol,
+            illegalArgumentSymbol,
+            illegalStateSymbol,
+            indexOutOfBoundsSymbol,
+            unsupportedOperationSymbol,
+            noSuchElementSymbol,
+            arithmeticSymbol,
+            classCastSymbol,
         ] {
             let type = types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
             symbols.setPropertyType(type, for: symbol)
@@ -118,6 +174,93 @@ extension DataFlowSemaPhase {
             interner: interner,
             includeMessageOverload: true
         )
+        for exSymbol in [
+            illegalArgumentSymbol,
+            illegalStateSymbol,
+            indexOutOfBoundsSymbol,
+            unsupportedOperationSymbol,
+            noSuchElementSymbol,
+            arithmeticSymbol,
+            classCastSymbol,
+        ] {
+            registerSyntheticExceptionConstructors(
+                ownerSymbol: exSymbol,
+                ownerType: types.make(.classType(ClassType(classSymbol: exSymbol, args: [], nullability: .nonNull))),
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                includeMessageOverload: true
+            )
+        }
+
+        // MARK: - Throwable member properties (STDLIB-127)
+
+        let throwableFQName = kotlinPkg + [interner.intern("Throwable")]
+
+        // message: String?
+        let messageName = interner.intern("message")
+        let messageFQName = throwableFQName + [messageName]
+        if symbols.lookup(fqName: messageFQName) == nil {
+            let messagePropSymbol = symbols.define(
+                kind: .property,
+                name: messageName,
+                fqName: messageFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(throwableSymbol, for: messagePropSymbol)
+            symbols.setExternalLinkName("kk_throwable_message", for: messagePropSymbol)
+            let nullableStringType = types.makeNullable(types.stringType)
+            symbols.setPropertyType(nullableStringType, for: messagePropSymbol)
+        }
+
+        // cause: Throwable?
+        let causeName = interner.intern("cause")
+        let causeFQName = throwableFQName + [causeName]
+        if symbols.lookup(fqName: causeFQName) == nil {
+            let causePropSymbol = symbols.define(
+                kind: .property,
+                name: causeName,
+                fqName: causeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(throwableSymbol, for: causePropSymbol)
+            symbols.setExternalLinkName("kk_throwable_cause", for: causePropSymbol)
+            let nullableThrowableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol, args: [], nullability: .nullable
+            )))
+            symbols.setPropertyType(nullableThrowableType, for: causePropSymbol)
+        }
+
+        // stackTraceToString(): String
+        let stackTraceName = interner.intern("stackTraceToString")
+        let stackTraceFQName = throwableFQName + [stackTraceName]
+        if symbols.lookup(fqName: stackTraceFQName) == nil {
+            let stackTraceSymbol = symbols.define(
+                kind: .function,
+                name: stackTraceName,
+                fqName: stackTraceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(throwableSymbol, for: stackTraceSymbol)
+            symbols.setExternalLinkName("kk_throwable_stackTraceToString", for: stackTraceSymbol)
+            let throwableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol, args: [], nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: throwableType,
+                    parameterTypes: [],
+                    returnType: types.stringType
+                ),
+                for: stackTraceSymbol
+            )
+        }
     }
 
     private func registerSyntheticExceptionConstructors(
@@ -180,6 +323,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName("kk_throwable_new", for: ctorSymbol)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {

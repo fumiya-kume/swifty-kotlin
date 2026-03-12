@@ -21,6 +21,6 @@ public final class BuildKIRPhase: CompilerPhase {
                 range: nil
             )
         }
-        ctx.kir = module
+        ctx.storeKIR(module)
     }
 }

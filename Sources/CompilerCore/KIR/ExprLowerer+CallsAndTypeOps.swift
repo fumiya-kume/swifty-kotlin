@@ -81,7 +81,7 @@ extension ExprLowerer {
         for typeName: InternedString,
         sema: SemaModule
     ) -> SymbolID? {
-        guard let currentFunctionSymbol = driver.ctx.currentFunctionSymbol,
+        guard let currentFunctionSymbol = driver.ctx.activeFunctionSymbol(),
               let signature = sema.symbols.functionSignature(for: currentFunctionSymbol)
         else {
             return nil

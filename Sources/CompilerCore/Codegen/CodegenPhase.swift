@@ -41,7 +41,7 @@ public final class CodegenPhase: CompilerPhase {
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
-                ctx.generatedLLVMIRPath = path
+                ctx.storeGeneratedLLVMIRPath(path)
 
             case .object:
                 let path = outputPath(base: ctx.options.outputPath, defaultExtension: "o")
@@ -53,7 +53,7 @@ public final class CodegenPhase: CompilerPhase {
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
-                ctx.generatedObjectPath = path
+                ctx.storeGeneratedObjectPath(path)
 
             case .executable:
                 let path = executableObjectPath(base: ctx.options.outputPath)
@@ -65,7 +65,7 @@ public final class CodegenPhase: CompilerPhase {
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID
                 )
-                ctx.generatedObjectPath = path
+                ctx.storeGeneratedObjectPath(path)
 
             case .library:
                 try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
@@ -127,7 +127,7 @@ public final class CodegenPhase: CompilerPhase {
             sourceManager: ctx.sourceManager,
             fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
         )
-        ctx.generatedObjectPath = objectPath
+        ctx.storeGeneratedObjectPath(objectPath)
 
         try emitInlineKIRArtifacts(module: module, outputDir: inlineDir, ctx: ctx)
 
@@ -291,6 +291,8 @@ public final class CodegenPhase: CompilerPhase {
             "stringB64:\(base64Encode(interner.resolve(text)))"
         case let .symbolRef(symbol):
             "symbol:\(symbol.rawValue)"
+        case let .externSymbolAddress(name):
+            "extern:\(name)"
         case let .temporary(raw):
             "temp:\(raw)"
         case .null:

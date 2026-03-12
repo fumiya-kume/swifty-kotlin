@@ -5,7 +5,8 @@ extension DataFlowSemaPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) {
         for file in ast.sortedFiles {
             for declID in file.topLevelDecls {
@@ -15,7 +16,8 @@ extension DataFlowSemaPhase {
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
-                    types: types
+                    types: types,
+                    interner: interner
                 )
             }
         }
@@ -27,7 +29,8 @@ extension DataFlowSemaPhase {
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) {
         guard let symbol = bindings.declSymbols[declID],
               let decl = ast.arena.decl(declID)
@@ -60,7 +63,8 @@ extension DataFlowSemaPhase {
                 currentPackage: currentPackage,
                 ast: ast,
                 symbols: symbols,
-                types: types
+                types: types,
+                interner: interner
             ) {
                 superSymbols.append(resolved.symbol)
                 if !resolved.typeArgs.isEmpty {
@@ -80,7 +84,8 @@ extension DataFlowSemaPhase {
                 ast: ast,
                 symbols: symbols,
                 bindings: bindings,
-                types: types
+                types: types,
+                interner: interner
             )
         }
     }
@@ -95,7 +100,8 @@ extension DataFlowSemaPhase {
         currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) -> ResolvedSupertype? {
         guard let typeRef = ast.arena.typeRef(typeRefID) else {
             return nil
@@ -128,7 +134,8 @@ extension DataFlowSemaPhase {
                     currentPackage: currentPackage,
                     ast: ast,
                     symbols: symbols,
-                    types: types
+                    types: types,
+                    interner: interner
                 )
                 return ResolvedSupertype(symbol: symbol, typeArgs: resolvedArgs)
             }
@@ -141,7 +148,8 @@ extension DataFlowSemaPhase {
         currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) -> [TypeArg] {
         // Use all-or-nothing semantics: if any type arg fails to resolve,
         // return an empty array to preserve positional integrity.
@@ -150,17 +158,17 @@ extension DataFlowSemaPhase {
         for argRef in argRefs {
             switch argRef {
             case let .invariant(innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) else {
                     return []
                 }
                 result.append(.invariant(resolved))
             case let .out(innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) else {
                     return []
                 }
                 result.append(.out(resolved))
             case let .in(innerRef):
-                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) else {
+                guard let resolved = resolveTypeRefForInheritance(innerRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) else {
                     return []
                 }
                 result.append(.in(resolved))
@@ -176,7 +184,8 @@ extension DataFlowSemaPhase {
         currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) -> TypeID? {
         guard let typeRef = ast.arena.typeRef(typeRefID) else {
             return nil
@@ -197,23 +206,25 @@ extension DataFlowSemaPhase {
                     .compactMap({ symbols.symbol($0) })
                     .first(where: { isNominalTypeSymbol($0.kind) })
                 {
-                    let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types)
+                    let resolvedArgs = resolveTypeArgRefsForInheritance(argRefs, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner)
                     return types.make(.classType(ClassType(classSymbol: nominalSymbol.id, args: resolvedArgs, nullability: nullability)))
                 }
             }
-            // Note: Primitive/built-in types (e.g., Int, String, Boolean) cannot be resolved here
-            // because DataFlowSemaPhase does not have access to StringInterner. When a type arg
-            // references a primitive, resolution fails and the all-or-nothing fallback in
-            // resolveTypeArgRefsForInheritance drops all type args for that supertype edge.
-            // This is a known limitation; the full TypeCheckSemaPhase resolves these correctly later.
+            // Resolve built-in/primitive type names that don't have symbol table entries
+            if path.count == 1 {
+                let name = interner.resolve(path[0])
+                if let builtinType = resolveBuiltinTypeNameForInheritance(name, nullability: nullability, types: types) {
+                    return builtinType
+                }
+            }
             return nil
         case let .functionType(paramRefIDs, returnRefID, isSuspend, nullable):
             return resolveFunctionTypeForInheritance(
                 paramRefIDs: paramRefIDs, returnRefID: returnRefID, isSuspend: isSuspend, nullable: nullable,
-                currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+                currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
             )
         case let .intersection(partRefs):
-            let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types) }
+            let partTypes = partRefs.compactMap { resolveTypeRefForInheritance($0, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner) }
             guard partTypes.count == partRefs.count else { return nil }
             return types.make(.intersection(partTypes))
         }
@@ -227,22 +238,45 @@ extension DataFlowSemaPhase {
         currentPackage: [InternedString],
         ast: ASTModule,
         symbols: SymbolTable,
-        types: TypeSystem
+        types: TypeSystem,
+        interner: StringInterner
     ) -> TypeID? {
         let nullability: Nullability = nullable ? .nullable : .nonNull
         var paramTypes: [TypeID] = []
         for paramRef in paramRefIDs {
             guard let paramType = resolveTypeRefForInheritance(
-                paramRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+                paramRef, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
             ) else { return nil }
             paramTypes.append(paramType)
         }
         guard let returnType = resolveTypeRefForInheritance(
-            returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types
+            returnRefID, currentPackage: currentPackage, ast: ast, symbols: symbols, types: types, interner: interner
         ) else { return nil }
         return types.make(.functionType(FunctionType(
             params: paramTypes, returnType: returnType, isSuspend: isSuspend, nullability: nullability
         )))
+    }
+
+    private func resolveBuiltinTypeNameForInheritance(_ name: String, nullability: Nullability, types: TypeSystem) -> TypeID? {
+        switch name {
+        case "Byte": types.make(.primitive(.int, nullability))
+        case "Short": types.make(.primitive(.int, nullability))
+        case "Int": types.make(.primitive(.int, nullability))
+        case "Long": types.make(.primitive(.long, nullability))
+        case "Float": types.make(.primitive(.float, nullability))
+        case "Double": types.make(.primitive(.double, nullability))
+        case "Char": types.make(.primitive(.char, nullability))
+        case "Boolean": types.make(.primitive(.boolean, nullability))
+        case "String": types.make(.primitive(.string, nullability))
+        case "UInt": types.make(.primitive(.uint, nullability))
+        case "ULong": types.make(.primitive(.ulong, nullability))
+        case "UByte": types.make(.primitive(.ubyte, nullability))
+        case "UShort": types.make(.primitive(.ushort, nullability))
+        case "Any": types.withNullability(nullability, for: types.anyType)
+        case "Unit": nullability == .nullable ? types.nullableAnyType : types.unitType
+        case "Nothing": types.withNullability(nullability, for: types.nothingType)
+        default: nil
+        }
     }
 
     func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {
@@ -302,7 +336,8 @@ extension DataFlowSemaPhase {
                         currentPackage: file.packageFQName,
                         ast: ast,
                         symbols: symbols,
-                        types: types
+                        types: types,
+                        interner: interner
                     ) else {
                         continue
                     }

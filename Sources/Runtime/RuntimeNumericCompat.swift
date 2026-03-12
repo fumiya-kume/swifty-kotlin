@@ -11,6 +11,9 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
     if value == runtimeNullSentinelInt {
         return runtimeMakeStringPointer("null")
     }
+    if tag == 2 {
+        return runtimeMakeStringPointer(value != 0 ? "true" : "false")
+    }
     if tag == 3,
        let pointer = UnsafeMutableRawPointer(bitPattern: value),
        extractString(from: pointer) != nil
@@ -77,12 +80,14 @@ public func kk_println_long(_ value: Int) {
 
 @_cdecl("kk_println_float")
 public func kk_println_float(_ value: Int) {
-    Swift.print(kk_bits_to_float(value))
+    let rendered = runtimeFormatFloatingPoint(kk_bits_to_float(value))
+    Swift.print(rendered)
 }
 
 @_cdecl("kk_println_double")
 public func kk_println_double(_ value: Int) {
-    Swift.print(kk_bits_to_double(value))
+    let rendered = runtimeFormatFloatingPoint(kk_bits_to_double(value))
+    Swift.print(rendered)
 }
 
 @_cdecl("kk_math_abs_int")
@@ -176,6 +181,89 @@ public func kk_op_shr(_ lhs: Int, _ rhs: Int) -> Int {
 public func kk_op_ushr(_ lhs: Int, _ rhs: Int) -> Int {
     let shift = runtimeNormalizedShift(rhs)
     return Int(bitPattern: UInt(bitPattern: lhs) >> shift)
+}
+
+@_cdecl("kk_double_to_int")
+public func kk_double_to_int(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d.isNaN { return 0 }
+    if d >= Double(Int32.max) { return Int(Int32.max) }
+    if d <= Double(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(d))
+}
+
+@_cdecl("kk_float_to_int")
+public func kk_float_to_int(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f.isNaN { return 0 }
+    if f >= Float(Int32.max) { return Int(Int32.max) }
+    if f <= Float(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(f))
+}
+
+@_cdecl("kk_double_to_long")
+public func kk_double_to_long(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d.isNaN { return 0 }
+    if d >= Double(Int64.max) { return Int(Int64.max) }
+    if d <= Double(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(d))
+}
+
+@_cdecl("kk_float_to_long")
+public func kk_float_to_long(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f.isNaN { return 0 }
+    if f >= Float(Int64.max) { return Int(Int64.max) }
+    if f <= Float(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(f))
+}
+
+@_cdecl("kk_long_to_int")
+public func kk_long_to_int(_ value: Int) -> Int {
+    Int(Int32(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_long_to_float")
+public func kk_long_to_float(_ value: Int) -> Int {
+    kk_float_to_bits(Float(value))
+}
+
+@_cdecl("kk_long_to_double")
+public func kk_long_to_double(_ value: Int) -> Int {
+    kk_double_to_bits(Double(value))
+}
+
+@_cdecl("kk_double_to_float")
+public func kk_double_to_float(_ value: Int) -> Int {
+    kk_float_to_bits(Float(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_long_to_byte")
+public func kk_long_to_byte(_ value: Int) -> Int {
+    Int(Int8(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_long_to_short")
+public func kk_long_to_short(_ value: Int) -> Int {
+    Int(Int16(truncatingIfNeeded: value))
+}
+
+@_cdecl("kk_int_coerceIn")
+public func kk_int_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    if value < minimum { return minimum }
+    if value > maximum { return maximum }
+    return value
+}
+
+@_cdecl("kk_int_coerceAtLeast")
+public func kk_int_coerceAtLeast(_ value: Int, _ minimum: Int) -> Int {
+    value < minimum ? minimum : value
+}
+
+@_cdecl("kk_int_coerceAtMost")
+public func kk_int_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
+    value > maximum ? maximum : value
 }
 
 @_cdecl("kk_uint_to_int")

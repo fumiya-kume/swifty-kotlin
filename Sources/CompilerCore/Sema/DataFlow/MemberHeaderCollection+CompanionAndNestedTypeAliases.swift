@@ -5,6 +5,7 @@ extension DataFlowSemaPhase {
         companionDeclID: DeclID,
         ownerFQName: [InternedString],
         ownerSymbol: SymbolID,
+        ownerType: TypeID?,
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -81,6 +82,19 @@ extension DataFlowSemaPhase {
             diagnostics: diagnostics,
             interner: interner
         )
+        if symbols.symbol(ownerSymbol)?.kind == .enumClass,
+           let ownerType
+        {
+            collectSyntheticEnumCompanionMembers(
+                companionSymbol: companionSymbol,
+                companionFQName: companionFQName,
+                enumType: ownerType,
+                symbols: symbols,
+                types: types,
+                scope: companionScope,
+                interner: interner
+            )
+        }
     }
 
     func collectNestedTypeAliases(

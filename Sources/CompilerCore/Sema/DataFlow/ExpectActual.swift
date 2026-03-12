@@ -8,6 +8,7 @@ extension DataFlowSemaPhase {
     func validateExpectActualMatching(
         ast _: ASTModule,
         symbols: SymbolTable,
+        types: TypeSystem,
         diagnostics: DiagnosticEngine,
         interner: StringInterner
     ) {
@@ -24,7 +25,7 @@ extension DataFlowSemaPhase {
                 .sorted(by: { $0.id.rawValue < $1.id.rawValue })
 
             let compatibleCandidates = candidates.filter { actual in
-                areExpectActualCompatible(expect: expectSym, actual: actual, symbols: symbols)
+                areExpectActualCompatible(expect: expectSym, actual: actual, symbols: symbols, types: types)
             }
 
             let rendered = expectSym.fqName
@@ -56,7 +57,8 @@ extension DataFlowSemaPhase {
     private func areExpectActualCompatible(
         expect: SemanticSymbol,
         actual: SemanticSymbol,
-        symbols: SymbolTable
+        symbols: SymbolTable,
+        types: TypeSystem
     ) -> Bool {
         switch expect.kind {
         case .function, .constructor:
@@ -78,9 +80,33 @@ extension DataFlowSemaPhase {
             }
             return expectType == actualType
 
-        case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias, .package, .typeParameter:
-            // For now, treat same-kind/same-fqName as compatible for nominal/typealias.
+        case .class, .interface, .object, .enumClass, .annotationClass:
+            // Check type parameter count matches
+            let expectTPs = types.nominalTypeParameterSymbols(for: expect.id)
+            let actualTPs = types.nominalTypeParameterSymbols(for: actual.id)
+            guard expectTPs.count == actualTPs.count else { return false }
+            // Check each type parameter's variance and upper bounds match
+            let expectVariances = types.nominalTypeParameterVariances(for: expect.id)
+            let actualVariances = types.nominalTypeParameterVariances(for: actual.id)
+            for (index, (eTP, aTP)) in zip(expectTPs, actualTPs).enumerated() {
+                let eVar = index < expectVariances.count ? expectVariances[index] : TypeVariance.invariant
+                let aVar = index < actualVariances.count ? actualVariances[index] : TypeVariance.invariant
+                guard eVar == aVar else { return false }
+                guard symbols.typeParameterUpperBounds(for: eTP) == symbols.typeParameterUpperBounds(for: aTP) else {
+                    return false
+                }
+            }
             return true
+
+        case .typeAlias:
+            // Check underlying types match
+            return symbols.typeAliasUnderlyingType(for: expect.id) == symbols.typeAliasUnderlyingType(for: actual.id)
+
+        case .package:
+            return true
+
+        case .typeParameter:
+            return false
 
         case .backingField, .valueParameter, .local, .label:
             // These symbol kinds are not meaningful as expect/actual declarations.

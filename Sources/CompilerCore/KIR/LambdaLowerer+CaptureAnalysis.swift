@@ -12,11 +12,11 @@ extension LambdaLowerer {
         }) {
             return false
         }
-        if driver.ctx.localValuesBySymbol[symbol] != nil {
+        if driver.ctx.localValue(for: symbol) != nil {
             return true
         }
-        if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           driver.ctx.currentImplicitReceiverExprID != nil
+        if symbol == driver.ctx.activeImplicitReceiverSymbol(),
+           driver.ctx.activeImplicitReceiverExprID() != nil
         {
             return true
         }

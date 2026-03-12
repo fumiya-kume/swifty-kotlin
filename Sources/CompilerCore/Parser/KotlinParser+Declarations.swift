@@ -216,9 +216,11 @@ extension KotlinParser {
             parseTail(inBlock: false, into: &children, range: &range)
             // In Kotlin, `get()`/`set()` accessors on the next line are part of
             // the property declaration.  After parseTail stops at a newline,
-            // absorb trailing accessor lines so the AST builder can extract them.
+            // absorb trailing accessor lines into dedicated propertyAccessor
+            // nodes so the AST builder can extract them without flat-token
+            // re-parsing.
             while isPropertyAccessorStart(stream.peek()) {
-                parseTail(inBlock: false, into: &children, range: &range)
+                parsePropertyAccessor(into: &children, range: &range)
             }
         }
 
@@ -226,6 +228,24 @@ extension KotlinParser {
             kind: .propertyDecl,
             range: range.value ?? invalidRange, children
         )
+    }
+
+    /// Parse a single property accessor (`get() = expr` or `set(value) { ... }`)
+    /// into a dedicated `.propertyAccessor` CST node.
+    private func parsePropertyAccessor(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        var accessorChildren: [SyntaxChild] = []
+        var accessorRange = RangeAccumulator()
+
+        parseTail(inBlock: false, into: &accessorChildren, range: &accessorRange)
+
+        let accessorNodeRange = accessorRange.value ?? invalidRange
+        let nodeID = arena.appendNode(
+            kind: .propertyAccessor,
+            range: accessorNodeRange,
+            accessorChildren
+        )
+        children.append(.node(nodeID))
+        range.append(accessorNodeRange)
     }
 
     func parseTypeAliasDeclaration(

@@ -12,7 +12,7 @@ import Foundation
 /// The build-time ABI reconciliation tests (in RuntimeTests) verify that
 /// these declarations match the Runtime module's `RuntimeABISpec`.
 public enum RuntimeABIExterns {
-    public static let specVersion = "J22"
+    public static let specVersion = "J23"
 
     /// A single extern function declaration for the C preamble.
     public struct ExternDecl: Equatable, Sendable {
@@ -122,6 +122,30 @@ public enum RuntimeABIExterns {
     public static let kk_todo_noarg = ExternDecl(
         name: "kk_todo_noarg",
         parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_dispatch_error = ExternDecl(
+        name: "kk_dispatch_error",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_message = ExternDecl(
+        name: "kk_throwable_message",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_cause = ExternDecl(
+        name: "kk_throwable_cause",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_throwable_stackTraceToString = ExternDecl(
+        name: "kk_throwable_stackTraceToString",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -253,6 +277,192 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_removePrefix = ExternDecl(
+        name: "kk_string_removePrefix",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_removeSuffix = ExternDecl(
+        name: "kk_string_removeSuffix",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_removeSurrounding = ExternDecl(
+        name: "kk_string_removeSurrounding",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_removeSurrounding_pair = ExternDecl(
+        name: "kk_string_removeSurrounding_pair",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_prependIndent_default = ExternDecl(
+        name: "kk_string_prependIndent_default",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_prependIndent = ExternDecl(
+        name: "kk_string_prependIndent",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceIndent_default = ExternDecl(
+        name: "kk_string_replaceIndent_default",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceIndent = ExternDecl(
+        name: "kk_string_replaceIndent",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_equalsIgnoreCase = ExternDecl(
+        name: "kk_string_equalsIgnoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_first = ExternDecl(
+        name: "kk_string_first",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_last = ExternDecl(
+        name: "kk_string_last",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_single = ExternDecl(
+        name: "kk_string_single",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_firstOrNull = ExternDecl(
+        name: "kk_string_firstOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_lastOrNull = ExternDecl(
+        name: "kk_string_lastOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterator = ExternDecl(
+        name: "kk_string_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterator_hasNext = ExternDecl(
+        name: "kk_string_iterator_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterator_next = ExternDecl(
+        name: "kk_string_iterator_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_filter = ExternDecl(
+        name: "kk_string_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_map = ExternDecl(
+        name: "kk_string_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_count = ExternDecl(
+        name: "kk_string_count",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_any = ExternDecl(
+        name: "kk_string_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_all = ExternDecl(
+        name: "kk_string_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_none = ExternDecl(
+        name: "kk_string_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_isEmpty = ExternDecl(
+        name: "kk_string_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_isNotEmpty = ExternDecl(
+        name: "kk_string_isNotEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_isBlank = ExternDecl(
+        name: "kk_string_isBlank",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_isNotBlank = ExternDecl(
+        name: "kk_string_isNotBlank",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_substringBefore = ExternDecl(
+        name: "kk_string_substringBefore",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_substringAfter = ExternDecl(
+        name: "kk_string_substringAfter",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_substringBeforeLast = ExternDecl(
+        name: "kk_string_substringBeforeLast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_substringAfterLast = ExternDecl(
+        name: "kk_string_substringAfterLast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_format = ExternDecl(
         name: "kk_string_format",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -279,6 +489,18 @@ public enum RuntimeABIExterns {
     public static let kk_string_replace = ExternDecl(
         name: "kk_string_replace",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceFirst = ExternDecl(
+        name: "kk_string_replaceFirst",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceRange = ExternDecl(
+        name: "kk_string_replaceRange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -312,6 +534,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_toInt_radix = ExternDecl(
+        name: "kk_string_toInt_radix",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_toIntOrNull = ExternDecl(
         name: "kk_string_toIntOrNull",
         parameterTypes: ["intptr_t"],
@@ -342,6 +570,78 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-140
+    public static let kk_string_get = ExternDecl(
+        name: "kk_string_get",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-141
+    public static let kk_string_compareTo_member = ExternDecl(
+        name: "kk_string_compareTo_member",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_compareToIgnoreCase = ExternDecl(
+        name: "kk_string_compareToIgnoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_equals = ExternDecl(
+        name: "kk_string_equals",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_enum_valueOf_throw = ExternDecl(
+        name: "kk_enum_valueOf_throw",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-142
+    public static let kk_string_toBoolean = ExternDecl(
+        name: "kk_string_toBoolean",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toBooleanStrict = ExternDecl(
+        name: "kk_string_toBooleanStrict",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-143
+    public static let kk_string_lines = ExternDecl(
+        name: "kk_string_lines",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-144
+    public static let kk_string_trimStart = ExternDecl(
+        name: "kk_string_trimStart",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_trimEnd = ExternDecl(
+        name: "kk_string_trimEnd",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-145
+    public static let kk_string_toByteArray = ExternDecl(
+        name: "kk_string_toByteArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -366,7 +666,43 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // MARK: - Println
+    public static let kk_char_uppercase = ExternDecl(
+        name: "kk_char_uppercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_lowercase = ExternDecl(
+        name: "kk_char_lowercase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_titlecase = ExternDecl(
+        name: "kk_char_titlecase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_digitToInt = ExternDecl(
+        name: "kk_char_digitToInt",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_digitToIntOrNull = ExternDecl(
+        name: "kk_char_digitToIntOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - Print / Println
+
+    public static let kk_print_any = ExternDecl(
+        name: "kk_print_any",
+        parameterTypes: ["void * _Nullable"],
+        returnType: "void"
+    )
 
     public static let kk_println_any = ExternDecl(
         name: "kk_println_any",
@@ -390,6 +726,26 @@ public enum RuntimeABIExterns {
 
     public static let kk_readline = ExternDecl(
         name: "kk_readline",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_readln = ExternDecl(
+        name: "kk_readln",
+        parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - System
+
+    public static let kk_system_exitProcess = ExternDecl(
+        name: "kk_system_exitProcess",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_system_currentTimeMillis = ExternDecl(
+        name: "kk_system_currentTimeMillis",
         parameterTypes: [],
         returnType: "intptr_t"
     )
@@ -940,6 +1296,50 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - IntRange members (STDLIB-090/091/092/093)
+
+    public static let kk_range_first = ExternDecl(
+        name: "kk_range_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_last = ExternDecl(
+        name: "kk_range_last",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_count = ExternDecl(
+        name: "kk_range_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_toList = ExternDecl(
+        name: "kk_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_forEach = ExternDecl(
+        name: "kk_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_map = ExternDecl(
+        name: "kk_range_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_reversed = ExternDecl(
+        name: "kk_range_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Delegate
 
     public static let kk_lazy_create = ExternDecl(
@@ -1064,6 +1464,88 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    // MARK: - Regex (STDLIB-100/101/102/103)
+
+    public static let kk_regex_create = ExternDecl(
+        name: "kk_regex_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_matches_regex = ExternDecl(
+        name: "kk_string_matches_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_contains_regex = ExternDecl(
+        name: "kk_string_contains_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_find = ExternDecl(
+        name: "kk_regex_find",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_findAll = ExternDecl(
+        name: "kk_regex_findAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replace_regex = ExternDecl(
+        name: "kk_string_replace_regex",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_split_regex = ExternDecl(
+        name: "kk_string_split_regex",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toRegex = ExternDecl(
+        name: "kk_string_toRegex",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_regex_pattern = ExternDecl(
+        name: "kk_regex_pattern",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_value = ExternDecl(
+        name: "kk_match_result_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_match_result_groupValues = ExternDecl(
+        name: "kk_match_result_groupValues",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let regexExterns: [ExternDecl] = [
+        kk_regex_create,
+        kk_string_matches_regex,
+        kk_string_contains_regex,
+        kk_regex_find,
+        kk_regex_findAll,
+        kk_string_replace_regex,
+        kk_string_split_regex,
+        kk_string_toRegex,
+        kk_regex_pattern,
+        kk_match_result_value,
+        kk_match_result_groupValues,
+    ]
+
     // MARK: - All Functions (canonical list)
 
     /// All runtime extern declarations, ordered by section.
@@ -1086,6 +1568,10 @@ public enum RuntimeABIExterns {
             kk_error,
             kk_todo,
             kk_todo_noarg,
+            kk_dispatch_error,
+            kk_throwable_message,
+            kk_throwable_cause,
+            kk_throwable_stackTraceToString,
             // String
             kk_string_from_utf8,
             kk_string_concat,
@@ -1105,34 +1591,89 @@ public enum RuntimeABIExterns {
             kk_string_endsWith,
             kk_string_contains_str,
             kk_string_replace,
+            kk_string_replaceFirst,
+            kk_string_replaceRange,
             kk_string_substring,
             kk_string_split,
             kk_string_toInt,
+            kk_string_toInt_radix,
             kk_string_toIntOrNull,
             kk_string_toDouble,
             kk_string_toDoubleOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
+            kk_string_get,
+            kk_string_compareTo_member,
+            kk_string_compareToIgnoreCase,
+            kk_string_equals,
+            kk_enum_valueOf_throw,
+            kk_string_toBoolean,
+            kk_string_toBooleanStrict,
+            kk_string_lines,
+            kk_string_trimStart,
+            kk_string_trimEnd,
+            kk_string_toByteArray,
             kk_char_isDigit,
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
             kk_char_isWhitespace,
+            kk_char_uppercase,
+            kk_char_lowercase,
+            kk_char_titlecase,
+            kk_char_digitToInt,
+            kk_char_digitToIntOrNull,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
             kk_string_reversed,
             kk_string_toList,
             kk_string_toCharArray,
+            kk_string_iterator,
+            kk_string_iterator_hasNext,
+            kk_string_iterator_next,
+            kk_string_filter,
+            kk_string_map,
+            kk_string_count,
+            kk_string_any,
+            kk_string_all,
+            kk_string_none,
             kk_string_take,
             kk_string_drop,
             kk_string_takeLast,
             kk_string_dropLast,
-            // Println
+            kk_string_removePrefix,
+            kk_string_removeSuffix,
+            kk_string_removeSurrounding,
+            kk_string_removeSurrounding_pair,
+            kk_string_prependIndent_default,
+            kk_string_prependIndent,
+            kk_string_replaceIndent_default,
+            kk_string_replaceIndent,
+            kk_string_equalsIgnoreCase,
+            kk_string_first,
+            kk_string_last,
+            kk_string_single,
+            kk_string_firstOrNull,
+            kk_string_lastOrNull,
+            kk_string_isEmpty,
+            kk_string_isNotEmpty,
+            kk_string_isBlank,
+            kk_string_isNotBlank,
+            kk_string_substringBefore,
+            kk_string_substringAfter,
+            kk_string_substringBeforeLast,
+            kk_string_substringAfterLast,
+            // Print / Println
+            kk_print_any,
             kk_println_any,
             kk_println_bool,
             kk_println_newline,
             // IO
             kk_readline,
+            kk_readln,
+            // System
+            kk_system_exitProcess,
+            kk_system_currentTimeMillis,
             // GC
             kk_register_global_root,
             kk_unregister_global_root,
@@ -1235,6 +1776,14 @@ public enum RuntimeABIExterns {
             kk_op_rangeUntil,
             kk_op_downTo,
             kk_op_step,
+            // IntRange members (STDLIB-090/091/092/093)
+            kk_range_first,
+            kk_range_last,
+            kk_range_count,
+            kk_range_toList,
+            kk_range_forEach,
+            kk_range_map,
+            kk_range_reversed,
         ]
         all += kPropertyStubExterns
         all += [
@@ -1264,8 +1813,11 @@ public enum RuntimeABIExterns {
             kk_int_toString_radix,
         ]
         all += mathExterns
+        all += randomExterns
         all += collectionExterns
         all += sequenceExterns
+        all += regexExterns
+        all += comparatorExterns
         return all
     }()
 

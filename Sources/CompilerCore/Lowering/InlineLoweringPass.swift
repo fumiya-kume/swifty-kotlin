@@ -106,9 +106,9 @@ final class InlineLoweringPass: LoweringPass {
             }
         }
 
-        updated.body = loweredBody
+        updated.replaceBody(loweredBody)
         if updated.body.isEmpty {
-            updated.body = [.returnUnit]
+            updated.replaceBody([.returnUnit])
         }
         return updated
     }

@@ -33,3 +33,41 @@ fun useToIntOrNullInvalid(): Int? = "abc".toIntOrNull()
 fun useToDoubleOrNullValid(): Double? = " 3.14 ".toDoubleOrNull()
 
 fun useToDoubleOrNullInvalid(): Double? = "abc".toDoubleOrNull()
+
+fun useRemovePrefix(): String = "hello".removePrefix("he")
+
+fun useRemoveSuffix(): String = "hello".removeSuffix("lo")
+
+fun useRemoveSurrounding1(): String = "[hello]".removeSurrounding("[", "]")
+
+fun useRemoveSurrounding2(): String = "**foo**".removeSurrounding("*")
+
+fun useSubstringBefore(): String = "hello.world.kt".substringBefore(".")
+
+fun useSubstringAfter(): String = "hello.world.kt".substringAfter(".")
+
+fun useSubstringBeforeLast(): String = "hello.world.kt".substringBeforeLast(".")
+
+fun useSubstringAfterLast(): String = "hello.world.kt".substringAfterLast(".")
+
+fun useIsEmpty(): Boolean = "".isEmpty()
+
+fun useIsNotEmpty(): Boolean = "x".isNotEmpty()
+
+fun useIsBlank(): Boolean = "  ".isBlank()
+
+fun useIsNotBlank(): Boolean = "x".isNotBlank()
+
+fun useFirst(): Char = "hello".first()
+
+fun useFirstOrNull(): Char? = "".firstOrNull()
+
+fun usePrependIndent(): String = "abc\ndef".prependIndent("  ")
+
+fun useReplaceIndent(): String = "  abc\n  def".replaceIndent("")
+
+fun useEqualsIgnoreCase(): Boolean = "abc".equals("ABC", ignoreCase = true)
+
+fun useReplaceFirst(): String = "abcabc".replaceFirst("abc", "X")
+
+fun useReplaceRange(): String = "hello".replaceRange(0..2, "HE")

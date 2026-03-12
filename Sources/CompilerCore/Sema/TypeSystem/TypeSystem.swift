@@ -9,6 +9,9 @@ public final class TypeSystem {
     /// The symbol ID of the synthetic `kotlin.Comparable` interface, set during registration.
     public internal(set) var comparableInterfaceSymbol: SymbolID?
 
+    /// Symbol table reference for SAM (fun interface) subtyping. Set during DataFlowSemaPhase.
+    public weak var symbolTable: SymbolTable?
+
     public let errorType: TypeID
     public let unitType: TypeID
     public let nothingType: TypeID

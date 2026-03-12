@@ -154,13 +154,54 @@ extension CallLowerer {
             }
         }
 
-        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(), toFloat(), toByte(), toShort() (TYPE-005)
+        // Numeric coercion: Int/Long.coerceIn/coerceAtLeast/coerceAtMost (STDLIB-150)
+        if args.count == 2, interner.resolve(effectiveCalleeName) == "coerceIn" {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_int_coerceIn"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+        if args.count == 1 {
+            let calleeStr = interner.resolve(effectiveCalleeName)
+            if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let longType = sema.types.make(.primitive(.long, .nonNull))
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if nonNullReceiverType == intType || nonNullReceiverType == longType {
+                    let runtimeName = calleeStr == "coerceAtLeast" ? "kk_int_coerceAtLeast" : "kk_int_coerceAtMost"
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeName),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        // Primitive conversion: toInt(), toUInt(), toLong(), toULong(), toFloat(), toDouble(), toByte(), toShort() (TYPE-005, STDLIB-151)
         if args.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let uintType = sema.types.make(.primitive(.uint, .nonNull))
             let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
             let floatType = sema.types.make(.primitive(.float, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
@@ -169,20 +210,34 @@ extension CallLowerer {
             let conversionCallee: InternedString? = switch (calleeStr, nonNullReceiverType, nonNullResultType) {
             case ("toInt", uintType, intType): interner.intern("kk_uint_to_int")
             case ("toInt", ulongType, intType): interner.intern("kk_ulong_to_int")
-            case ("toInt", intType, intType), ("toInt", longType, intType): nil
+            case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
+            case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
+            case ("toInt", longType, intType): interner.intern("kk_long_to_int")
+            case ("toInt", intType, intType): nil // identity
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
-            case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil
+            case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
             case ("toLong", intType, longType): interner.intern("kk_int_to_long")
             case ("toLong", uintType, longType): interner.intern("kk_uint_to_long")
-            case ("toLong", longType, longType), ("toLong", ulongType, longType): nil
+            case ("toLong", doubleType, longType): interner.intern("kk_double_to_long")
+            case ("toLong", floatType, longType): interner.intern("kk_float_to_long")
+            case ("toLong", longType, longType), ("toLong", ulongType, longType): nil // identity
             case ("toULong", intType, ulongType): interner.intern("kk_int_to_ulong")
             case ("toULong", longType, ulongType): interner.intern("kk_long_to_ulong")
             case ("toULong", uintType, ulongType): interner.intern("kk_uint_to_ulong")
-            case ("toULong", ulongType, ulongType): nil
+            case ("toULong", ulongType, ulongType): nil // identity
             case ("toFloat", intType, floatType): interner.intern("kk_int_to_float")
+            case ("toFloat", longType, floatType): interner.intern("kk_long_to_float")
+            case ("toFloat", doubleType, floatType): interner.intern("kk_double_to_float")
+            case ("toFloat", floatType, floatType): nil // identity
+            case ("toDouble", intType, doubleType): interner.intern("kk_int_to_double_bits")
+            case ("toDouble", longType, doubleType): interner.intern("kk_long_to_double")
+            case ("toDouble", floatType, doubleType): interner.intern("kk_float_to_double_bits")
+            case ("toDouble", doubleType, doubleType): nil // identity
             case ("toByte", intType, intType): interner.intern("kk_int_to_byte")
+            case ("toByte", longType, intType): interner.intern("kk_long_to_byte")
             case ("toShort", intType, intType): interner.intern("kk_int_to_short")
+            case ("toShort", longType, intType): interner.intern("kk_long_to_short")
             default: nil
             }
             if let callee = conversionCallee {
@@ -196,9 +251,13 @@ extension CallLowerer {
                 ))
                 return result
             }
-            if ["toInt", "toUInt", "toLong", "toULong"].contains(calleeStr),
-               nonNullReceiverType == nonNullResultType,
-               nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+            let isRepresentationPreservingConversion =
+                (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
+                    || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
+                    || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
+               nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
+               nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result

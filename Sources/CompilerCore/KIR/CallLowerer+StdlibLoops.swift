@@ -64,8 +64,8 @@ extension CallLowerer {
                 lambdaExprID: args[1].expr,
                 paramIndex: 0
             )
-            let previousLocalValue = driver.ctx.localValuesBySymbol[lambdaParamSymbol]
-            driver.ctx.localValuesBySymbol[lambdaParamSymbol] = indexExpr
+            let previousLocalValue = driver.ctx.localValue(for: lambdaParamSymbol)
+            driver.ctx.setLocalValue(indexExpr, for: lambdaParamSymbol)
             _ = driver.lowerExpr(
                 bodyExpr,
                 ast: ast,
@@ -76,9 +76,9 @@ extension CallLowerer {
                 instructions: &instructions
             )
             if let previousLocalValue {
-                driver.ctx.localValuesBySymbol[lambdaParamSymbol] = previousLocalValue
+                driver.ctx.setLocalValue(previousLocalValue, for: lambdaParamSymbol)
             } else {
-                driver.ctx.localValuesBySymbol.removeValue(forKey: lambdaParamSymbol)
+                driver.ctx.clearLocalValue(for: lambdaParamSymbol)
             }
         } else {
             let actionExpr = driver.lowerExpr(
@@ -90,7 +90,7 @@ extension CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callableInfo = driver.ctx.callableValueInfoByExprID[actionExpr] {
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
                 instructions.append(.call(
                     symbol: callableInfo.symbol,
@@ -128,5 +128,71 @@ extension CallLowerer {
         let unitExpr = arena.appendExpr(.unit, type: unitType)
         instructions.append(.constValue(result: unitExpr, value: .unit))
         return unitExpr
+    }
+
+    func lowerMeasureTimeMillisCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .measureTimeMillis,
+              args.count == 1
+        else {
+            return nil
+        }
+
+        let longType = sema.types.longType
+        let currentTimeCallee = interner.intern("kk_system_currentTimeMillis")
+        let subCallee = interner.intern("kk_op_sub")
+
+        let startTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: currentTimeCallee, arguments: [],
+            result: startTimeExpr, canThrow: false, thrownResult: nil
+        ))
+
+        if let actionExprNode = ast.arena.expr(args[0].expr),
+           case let .lambdaLiteral(_, bodyExpr, _, _) = actionExprNode
+        {
+            _ = driver.lowerExpr(
+                bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        } else {
+            let actionExpr = driver.lowerExpr(
+                args[0].expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
+                let unitType = sema.types.unitType
+                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
+                instructions.append(.call(
+                    symbol: callableInfo.symbol, callee: callableInfo.callee,
+                    arguments: callableInfo.captureArguments,
+                    result: actionResult, canThrow: false, thrownResult: nil
+                ))
+            }
+        }
+
+        let endTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: currentTimeCallee, arguments: [],
+            result: endTimeExpr, canThrow: false, thrownResult: nil
+        ))
+
+        let resultExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
+            result: resultExpr, canThrow: false, thrownResult: nil
+        ))
+
+        return resultExpr
     }
 }

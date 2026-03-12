@@ -47,17 +47,17 @@ extension KIRLoweringDriver {
             var updated = function
 
             if function.name == mainName, !allTopLevelInitInstructions.isEmpty {
-                updated.body = injectTopLevelInits(
+                updated.replaceBody(injectTopLevelInits(
                     body: function.body, inits: allTopLevelInitInstructions
-                )
+                ))
             }
 
             if !delegateStorageSymbolByPropertySymbol.isEmpty {
-                updated.body = rewriteDelegateAccesses(
+                updated.replaceBody(rewriteDelegateAccesses(
                     body: updated.body, arena: arena, sema: sema,
                     storageMap: delegateStorageSymbolByPropertySymbol,
                     kindMap: delegateKindByPropertySymbol, names: names, interner: interner
-                )
+                ))
             }
 
             return updated
@@ -556,7 +556,7 @@ extension KIRLoweringDriver {
         for param in params {
             let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            ctx.localValuesBySymbol[param.symbol] = paramExpr
+            ctx.setLocalValue(paramExpr, for: param.symbol)
         }
 
         switch delegateBody {
@@ -583,7 +583,7 @@ extension KIRLoweringDriver {
             returnType: sema.types.anyType, body: lambdaBody,
             isSuspend: false, isInline: false
         )))
-        ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
+        ctx.appendGeneratedCallableDecl(lambdaDecl)
 
         let lambdaRefExpr = arena.appendExpr(.symbolRef(lambdaSymbol), type: sema.types.anyType)
         instructions.append(.constValue(result: lambdaRefExpr, value: .symbolRef(lambdaSymbol)))

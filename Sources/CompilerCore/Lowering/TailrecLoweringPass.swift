@@ -42,21 +42,21 @@ final class TailrecLoweringPass: LoweringPass {
                 name: function.name
             )
             var updated = function
-            updated.body = rewriteTailCalls(
+            updated.replaceBody(rewriteTailCalls(
                 body: function.body,
                 functionIdentity: functionIdentity,
                 params: function.params,
                 loopLabel: loopLabel,
                 arena: module.arena
-            )
+            ))
             // Reset instructionLocations to match the new body length.
             // The rewrite changes instruction count, so the old parallel
             // array is stale.  Use the function-level sourceRange as a
             // conservative location for every synthesised instruction.
-            updated.instructionLocations = Array(
+            updated.replaceInstructionLocations(Array(
                 repeating: function.sourceRange,
                 count: updated.body.count
-            )
+            ))
             return updated
         }
 

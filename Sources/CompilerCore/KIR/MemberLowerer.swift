@@ -253,7 +253,7 @@ final class MemberLowerer {
         else { return }
         driver.ctx.resetScopeForFunction()
         driver.ctx.beginCallableLoweringScope()
-        driver.ctx.currentFunctionSymbol = symbol
+        driver.ctx.setCurrentFunctionSymbol(symbol)
 
         let signature = sema.symbols.functionSignature(for: symbol)
         var params: [KIRParameter] = []
@@ -261,8 +261,10 @@ final class MemberLowerer {
             if let receiverType = signature.receiverType {
                 let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: symbol)
                 params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-                driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-                driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                driver.ctx.setImplicitReceiver(
+                    symbol: receiverSymbol,
+                    exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                )
             }
             params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
                 KIRParameter(symbol: pair.0, type: pair.1)
@@ -313,7 +315,7 @@ final class MemberLowerer {
         )))
         directMembers.append(kirID)
         allDecls.append(kirID)
-        if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol], let sig = signature {
+        if let defaults = driver.ctx.defaultArguments(for: symbol), let sig = signature {
             let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
                 originalSymbol: symbol, originalName: function.name, signature: sig,
                 defaultExpressions: defaults, ast: ast, sema: sema, arena: arena,
@@ -322,9 +324,8 @@ final class MemberLowerer {
             allDecls.append(stubID)
         }
         allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
-        driver.ctx.currentImplicitReceiverExprID = nil
-        driver.ctx.currentImplicitReceiverSymbol = nil
-        driver.ctx.currentFunctionSymbol = nil
+        driver.ctx.clearImplicitReceiver()
+        driver.ctx.setCurrentFunctionSymbol(nil)
     }
 
     /// Synthesise a getter or setter function for a delegated property.
@@ -405,17 +406,15 @@ final class MemberLowerer {
         body: inout [KIRInstruction],
         arena: KIRArena
     ) {
-        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-        {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSymbol)))
-            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverExpr
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
+            driver.ctx.setLocalValue(receiverBinding.exprID, for: receiverBinding.symbol)
         }
 
-        for param in params where param.symbol != driver.ctx.currentImplicitReceiverSymbol {
+        for param in params where param.symbol != driver.ctx.activeImplicitReceiverSymbol() {
             let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            driver.ctx.localValuesBySymbol[param.symbol] = paramExpr
+            driver.ctx.setLocalValue(paramExpr, for: param.symbol)
         }
     }
 }

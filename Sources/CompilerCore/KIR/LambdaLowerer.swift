@@ -166,26 +166,24 @@ final class LambdaLowerer {
         for capture in functionCaptureBindings {
             let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
             lambdaBody.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-            driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
+            driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
             if capture.capturedSymbol == savedReceiverSymbol {
-                driver.ctx.currentImplicitReceiverExprID = captureExpr
-                driver.ctx.currentImplicitReceiverSymbol = capture.param.symbol
+                driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
             }
         }
         for lambdaParam in lambdaParameters {
             let paramExpr = arena.appendExpr(.symbolRef(lambdaParam.symbol), type: lambdaParam.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(lambdaParam.symbol)))
-            driver.ctx.localValuesBySymbol[lambdaParam.symbol] = paramExpr
+            driver.ctx.setLocalValue(paramExpr, for: lambdaParam.symbol)
         }
         if usesClosureRawCapture,
            let closureCapture = captureBindings.first,
            let closureParam = lambdaParameters.first,
-           let closureExpr = driver.ctx.localValuesBySymbol[closureParam.symbol]
+           let closureExpr = driver.ctx.localValue(for: closureParam.symbol)
         {
-            driver.ctx.localValuesBySymbol[closureCapture.capturedSymbol] = closureExpr
+            driver.ctx.setLocalValue(closureExpr, for: closureCapture.capturedSymbol)
             if closureCapture.capturedSymbol == savedReceiverSymbol {
-                driver.ctx.currentImplicitReceiverExprID = closureExpr
-                driver.ctx.currentImplicitReceiverSymbol = closureParam.symbol
+                driver.ctx.setImplicitReceiver(symbol: closureParam.symbol, exprID: closureExpr)
             }
         }
         // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
@@ -196,7 +194,7 @@ final class LambdaLowerer {
         }
         let valueParamStart = needsClosureParam ? 1 : 0
         for (i, paramName) in effectiveParamNames.enumerated() where valueParamStart + i < lambdaParameters.count {
-            driver.ctx.lambdaParamNameToSymbol[paramName] = lambdaParameters[valueParamStart + i].symbol
+            driver.ctx.registerLambdaParam(symbol: lambdaParameters[valueParamStart + i].symbol, forName: paramName)
         }
 
         let loweredBody = driver.lowerExpr(
@@ -224,7 +222,7 @@ final class LambdaLowerer {
                 )
             )
         )
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
+        driver.ctx.appendGeneratedCallableDecl(lambdaDecl)
 
         if isSamConversion,
            let boundType,
@@ -383,17 +381,16 @@ final class LambdaLowerer {
         )
 
         let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: wrapperSymbol)))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+        driver.ctx.appendGeneratedCallableDecl(nominalDeclID)
 
         let scopeSnapshot = driver.ctx.saveScope()
         driver.ctx.resetScopeForFunction()
         driver.ctx.beginCallableLoweringScope()
-        driver.ctx.currentFunctionSymbol = methodSymbol
+        driver.ctx.setCurrentFunctionSymbol(methodSymbol)
 
         let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: methodSymbol)
         let receiverExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: wrapperType)
-        driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-        driver.ctx.currentImplicitReceiverExprID = receiverExpr
+        driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverExpr)
 
         let methodParams = [KIRParameter(symbol: receiverSymbol, type: wrapperType)]
             + zip(methodParamSymbols, samMethod.signature.parameterTypes).map { KIRParameter(symbol: $0.0, type: $0.1) }
@@ -451,7 +448,7 @@ final class LambdaLowerer {
             isSuspend: samMethod.signature.isSuspend,
             isInline: false
         )))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(methodDeclID)
+        driver.ctx.appendGeneratedCallableDecl(methodDeclID)
         driver.ctx.restoreScope(scopeSnapshot)
 
         let slotCount = Int64(max(2 + captureFieldSymbols.count, 1))
@@ -649,7 +646,7 @@ final class LambdaLowerer {
                     )
                 )
             )
-            driver.ctx.pendingGeneratedCallableDeclIDs.append(fallbackDecl)
+            driver.ctx.appendGeneratedCallableDecl(fallbackDecl)
         }
 
         let callableType = boundType ?? typeForSymbolReference(callableSymbol, sema: sema)

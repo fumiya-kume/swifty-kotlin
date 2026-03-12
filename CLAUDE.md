@@ -32,12 +32,6 @@ bash Scripts/diff_kotlinc.sh Scripts/diff_cases/hello.kt  # Single case
 bash Scripts/diff_kotlinc.sh Scripts/diff_cases             # All cases
 ```
 
-### Coverage
-
-```bash
-COVERAGE_THRESHOLD=80 Scripts/check_coverage.sh  # CI enforces 80% line coverage
-```
-
 ## Architecture
 
 The compiler follows a sequential multi-phase pipeline defined in `Sources/CompilerCore/Driver/Driver.swift`:

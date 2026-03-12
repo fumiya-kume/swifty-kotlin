@@ -1,6 +1,6 @@
 import Foundation
 
-private final class RuntimeRangeBox {
+final class RuntimeRangeBox {
     let first: Int
     let last: Int
     let step: Int
@@ -97,6 +97,119 @@ public func kk_range_next(_ iterRaw: Int) -> Int {
     return current
 }
 
+// MARK: - IntRange properties (STDLIB-092)
+
+@_cdecl("kk_range_first")
+public func kk_range_first(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    return range.first
+}
+
+@_cdecl("kk_range_last")
+public func kk_range_last(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    return range.last
+}
+
+@_cdecl("kk_range_count")
+public func kk_range_count(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    if range.step > 0 {
+        guard range.first <= range.last else { return 0 }
+        return (range.last - range.first) / range.step + 1
+    } else if range.step < 0 {
+        guard range.first >= range.last else { return 0 }
+        return (range.first - range.last) / (-range.step) + 1
+    }
+    return 0
+}
+
+// MARK: - IntRange HOFs (STDLIB-091)
+
+@_cdecl("kk_range_toList")
+public func kk_range_toList(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var elements: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            elements.append(current)
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_range_forEach")
+public func kk_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                             _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            var thrown = 0
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            var thrown = 0
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_range_map")
+public func kk_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                         _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            var thrown = 0
+            let result = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+            mapped.append(result)
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            var thrown = 0
+            let result = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+            mapped.append(result)
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+// MARK: - IntRange reversed (STDLIB-093)
+
+@_cdecl("kk_range_reversed")
+public func kk_range_reversed(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return rangeRaw }
+    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: -range.step))
+}
+
 @_cdecl("kk_vtable_lookup")
 public func kk_vtable_lookup(_ receiver: Int, _ slot: Int) -> Int {
     guard slot >= 0,
@@ -145,7 +258,7 @@ public func kk_kxmini_run_loop(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
 }
 
-private func runtimeRangeBox(from rawValue: Int) -> RuntimeRangeBox? {
+func runtimeRangeBox(from rawValue: Int) -> RuntimeRangeBox? {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
@@ -169,6 +282,11 @@ private func runtimeRangeIteratorBox(from rawValue: Int) -> RuntimeRangeIterator
         return nil
     }
     return tryCast(pointer, to: RuntimeRangeIteratorBox.self)
+}
+
+@_cdecl("kk_dispatch_error")
+public func kk_dispatch_error() -> Int {
+    fatalError("KSWIFTK-RT-0001: Virtual dispatch failed: method not found in vtable/itable")
 }
 
 private func runtimeTypeInfo(from receiver: Int) -> UnsafePointer<KTypeInfo>? {

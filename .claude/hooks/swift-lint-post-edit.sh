@@ -1,5 +1,5 @@
 #!/bin/bash
-# PostToolUse hook: Run SwiftFormat + SwiftLint after editing .swift files
+# PostToolUse hook: Run SwiftFormat + SwiftLint lint checks after editing .swift files
 # Receives tool input/output as JSON on stdin
 
 set -euo pipefail
@@ -25,15 +25,11 @@ fi
 
 ERRORS=""
 
-# Run SwiftFormat (auto-fix in place)
-FORMAT_OUTPUT=$(swiftformat "$FILE_PATH" 2>&1) || true
-# Check if swiftformat actually changed the file
-FORMAT_CHANGES=$(echo "$FORMAT_OUTPUT" | grep -v '^$' | grep -v 'Running SwiftFormat' | grep -v 'Reading config' | grep -v 'SwiftFormat completed' | grep -v '0/[0-9]* files formatted' || true)
-if echo "$FORMAT_OUTPUT" | grep -qE '[1-9][0-9]*/[0-9]+ files formatted'; then
-    ERRORS+="[SwiftFormat] Auto-fixed formatting in $REL_PATH. The file has been updated."$'\n'
-fi
-if [[ -n "$FORMAT_CHANGES" ]]; then
-    ERRORS+="[SwiftFormat] $FORMAT_CHANGES"$'\n'
+# Run SwiftFormat (lint mode, no auto-fix)
+FORMAT_OUTPUT=$(swiftformat --lint "$FILE_PATH" 2>&1) || true
+FORMAT_ISSUES=$(echo "$FORMAT_OUTPUT" | grep -v '^$' | grep -v 'Running SwiftFormat' || true)
+if [[ -n "$FORMAT_ISSUES" ]]; then
+    ERRORS+="[SwiftFormat] $REL_PATH:"$'\n'"$FORMAT_ISSUES"$'\n'
 fi
 
 # Run SwiftLint with baseline

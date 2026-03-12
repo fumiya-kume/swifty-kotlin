@@ -8,7 +8,8 @@ extension CallTypeChecker {
     ) -> Bool {
         if let externalLinkName = sema.symbols.externalLinkName(for: candidate) {
             switch externalLinkName {
-            case "kk_list_contains", "kk_set_contains", "kk_map_get", "kk_map_contains_key":
+            case "kk_list_contains", "kk_list_indexOf", "kk_list_lastIndexOf",
+                 "kk_set_contains", "kk_map_get", "kk_map_contains_key":
                 return true
             default:
                 break
@@ -20,6 +21,8 @@ extension CallTypeChecker {
         let ownerFQName = symbol.fqName.dropLast().map(interner.resolve)
         switch (ownerFQName, memberName) {
         case (["kotlin", "collections", "List"], "contains"),
+             (["kotlin", "collections", "List"], "indexOf"),
+             (["kotlin", "collections", "List"], "lastIndexOf"),
              (["kotlin", "collections", "List"], "isEmpty"),
              (["kotlin", "collections", "Set"], "contains"),
              (["kotlin", "collections", "Set"], "isEmpty"),

@@ -58,6 +58,32 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
     return list.elements[index]
 }
 
+// STDLIB-183: List destructuring component1() ~ component5()
+@_cdecl("kk_list_component1")
+public func kk_list_component1(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 0)
+}
+
+@_cdecl("kk_list_component2")
+public func kk_list_component2(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 1)
+}
+
+@_cdecl("kk_list_component3")
+public func kk_list_component3(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 2)
+}
+
+@_cdecl("kk_list_component4")
+public func kk_list_component4(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 3)
+}
+
+@_cdecl("kk_list_component5")
+public func kk_list_component5(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 4)
+}
+
 @_cdecl("kk_list_contains")
 public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -528,4 +554,142 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     return utf8.withUnsafeBufferPointer { buf in
         kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
     }
+}
+
+// MARK: - Triple Functions (STDLIB-120)
+
+@_cdecl("kk_triple_new")
+public func kk_triple_new(_ first: Int, _ second: Int, _ third: Int) -> Int {
+    let box = RuntimeTripleBox(first: first, second: second, third: third)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_triple_first")
+public func kk_triple_first(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.first
+}
+
+@_cdecl("kk_triple_second")
+public func kk_triple_second(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.second
+}
+
+@_cdecl("kk_triple_third")
+public func kk_triple_third(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+    return tripleBox.third
+}
+
+@_cdecl("kk_triple_to_string")
+public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        let str = "(null, null, null)"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let firstStr = runtimeElementToString(tripleBox.first)
+    let secondStr = runtimeElementToString(tripleBox.second)
+    let thirdStr = runtimeElementToString(tripleBox.third)
+    let str = "(\(firstStr), \(secondStr), \(thirdStr))"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
+// MARK: - Pair/Triple toList (STDLIB-121)
+
+@_cdecl("kk_pair_toList")
+public func kk_pair_toList(_ pairRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    return registerRuntimeObject(RuntimeListBox(elements: [pairBox.first, pairBox.second]))
+}
+
+@_cdecl("kk_triple_toList")
+public func kk_triple_toList(_ tripleRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    return registerRuntimeObject(RuntimeListBox(elements: [tripleBox.first, tripleBox.second, tripleBox.third]))
+}
+
+// MARK: - Array conversion functions (STDLIB-087)
+
+@_cdecl("kk_array_toList")
+public func kk_array_toList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+@_cdecl("kk_array_toMutableList")
+public func kk_array_toMutableList(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
+}
+
+@_cdecl("kk_list_toTypedArray")
+public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let box = RuntimeArrayBox(length: list.elements.count)
+    for (i, elem) in list.elements.enumerated() {
+        box.elements[i] = elem
+    }
+    return registerRuntimeObject(box)
+}
+
+// MARK: - Array utility functions (STDLIB-089)
+
+@_cdecl("kk_array_copyOf")
+public func kk_array_copyOf(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    let box = RuntimeArrayBox(length: array.elements.count)
+    for (i, elem) in array.elements.enumerated() {
+        box.elements[i] = elem
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_copyOfRange")
+public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+    }
+    // Kotlin semantics: validate boundaries
+    let size = array.elements.count
+    let from = max(0, min(fromIndex, size))
+    let to = max(from, min(toIndex, size))
+    let count = to - from
+    let box = RuntimeArrayBox(length: count)
+    for i in 0 ..< count {
+        box.elements[i] = array.elements[from + i]
+    }
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_array_fill")
+public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else { return 0 }
+    for i in 0 ..< array.elements.count {
+        array.elements[i] = value
+    }
+    return 0
 }

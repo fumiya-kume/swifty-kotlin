@@ -57,9 +57,11 @@ final class RuntimeStringBox {
 
 final class RuntimeThrowableBox {
     let message: String
+    let cause: Int
 
-    init(message: String) {
+    init(message: String, cause: Int = 0) {
         self.message = message
+        self.cause = cause
     }
 }
 
@@ -98,6 +100,18 @@ final class RuntimePairBox {
     init(first: Int, second: Int) {
         self.first = first
         self.second = second
+    }
+}
+
+final class RuntimeTripleBox {
+    let first: Int
+    let second: Int
+    let third: Int
+
+    init(first: Int, second: Int, third: Int) {
+        self.first = first
+        self.second = second
+        self.third = third
     }
 }
 
@@ -204,6 +218,17 @@ final class RuntimeListIteratorBox {
     }
 }
 
+/// Iterator box for `String` iteration via `for (c in str)` (STDLIB-189).
+final class RuntimeStringIteratorBox {
+    let charRaws: [Int]
+    var index: Int
+
+    init(charRaws: [Int]) {
+        self.charRaws = charRaws
+        index = 0
+    }
+}
+
 /// Iterator box for `Map` iteration via `for (entry in map)`.
 final class RuntimeMapIteratorBox {
     let keys: [Int]
@@ -224,10 +249,14 @@ final class RuntimeMapIteratorBox {
 /// for map/filter transformations. Lazy semantics: no evaluation until terminal.
 enum SequenceStepKind {
     case source(elements: [Int])
-    case mapStep(fnPtr: Int)
-    case filterStep(fnPtr: Int)
+    case mapStep(fnPtr: Int, closureRaw: Int)
+    case filterStep(fnPtr: Int, closureRaw: Int)
     case takeStep(count: Int)
     case builder(elements: [Int])
+    case generator(seed: Int, fnPtr: Int, closureRaw: Int)
+    case dropStep(count: Int)
+    case distinctStep
+    case zipStep(otherElements: [Int])
 }
 
 /// Runtime box for `Sequence<T>`.

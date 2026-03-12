@@ -139,7 +139,137 @@ public func kk_string_toList(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_toCharArray")
 public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    return runtimeMakeListRaw(charRaws)
+    return runtimeMakeArrayRaw(charRaws)
+}
+
+// MARK: - STDLIB-189: String iterator and HOF (filter, map, count, any, all, none)
+
+@_cdecl("kk_string_iterator")
+public func kk_string_iterator(_ strRaw: Int) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let box = RuntimeStringIteratorBox(charRaws: charRaws)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_string_iterator_hasNext")
+public func kk_string_iterator_hasNext(_ iterRaw: Int) -> Int {
+    guard let iter = runtimeStringIteratorBox(from: iterRaw) else { return 0 }
+    return iter.index < iter.charRaws.count ? 1 : 0
+}
+
+@_cdecl("kk_string_iterator_next")
+public func kk_string_iterator_next(_ iterRaw: Int) -> Int {
+    guard let iter = runtimeStringIteratorBox(from: iterRaw) else { return 0 }
+    guard iter.index < iter.charRaws.count else { return 0 }
+    let value = iter.charRaws[iter.index]
+    iter.index += 1
+    return value
+}
+
+@_cdecl("kk_string_filter")
+public func kk_string_filter(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "") }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        if maybeUnbox(result) != 0 { filtered.append(charRaw) }
+    }
+    let scalars = filtered.compactMap { runtimeUnicodeScalarFromRaw($0) }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars))
+}
+
+@_cdecl("kk_string_map")
+public func kk_string_map(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    guard fnPtr != 0 else { return strRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [UnicodeScalar] = []
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+        let mappedChar = maybeUnbox(result)
+        if let scalar = runtimeUnicodeScalarFromRaw(mappedChar) {
+            mapped.append(scalar)
+        }
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(mapped))
+}
+
+@_cdecl("kk_string_count")
+public func kk_string_count(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    if fnPtr == 0 { return charRaws.count }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { count += 1 }
+    }
+    return count
+}
+
+@_cdecl("kk_string_any")
+public func kk_string_any(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    if fnPtr == 0 { return charRaws.isEmpty ? 0 : 1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { return 1 }
+    }
+    return 0
+}
+
+@_cdecl("kk_string_all")
+public func kk_string_all(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) == 0 { return 0 }
+    }
+    return 1
+}
+
+@_cdecl("kk_string_none")
+public func kk_string_none(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    if fnPtr == 0 { return charRaws.isEmpty ? 1 : 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for charRaw in charRaws {
+        var thrown = 0
+        let result = lambda(closureRaw, charRaw, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { return 0 }
+    }
+    return 1
 }
 
 @_cdecl("kk_string_take")
@@ -153,6 +283,64 @@ public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
         return runtimeMakeStringRaw(source)
     }
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< nRaw]))
+}
+
+// MARK: - STDLIB-185: removePrefix / removeSuffix / removeSurrounding
+
+@_cdecl("kk_string_removePrefix")
+public func kk_string_removePrefix(_ strRaw: Int, _ prefixRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    guard source.hasPrefix(prefix) else {
+        return runtimeMakeStringRaw(source)
+    }
+    return runtimeMakeStringRaw(String(source.dropFirst(prefix.count)))
+}
+
+@_cdecl("kk_string_removeSuffix")
+public func kk_string_removeSuffix(_ strRaw: Int, _ suffixRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    guard source.hasSuffix(suffix) else {
+        return runtimeMakeStringRaw(source)
+    }
+    return runtimeMakeStringRaw(String(source.dropLast(suffix.count)))
+}
+
+@_cdecl("kk_string_removeSurrounding")
+public func kk_string_removeSurrounding(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let delimiter = runtimeStringFromRaw(delimiterRaw) ?? ""
+    guard !delimiter.isEmpty,
+          source.hasPrefix(delimiter),
+          source.hasSuffix(delimiter),
+          source.count >= delimiter.count * 2
+    else {
+        return runtimeMakeStringRaw(source)
+    }
+    let start = source.index(source.startIndex, offsetBy: delimiter.count)
+    let end = source.index(source.endIndex, offsetBy: -delimiter.count)
+    return runtimeMakeStringRaw(String(source[start ..< end]))
+}
+
+@_cdecl("kk_string_removeSurrounding_pair")
+public func kk_string_removeSurrounding_pair(
+    _ strRaw: Int,
+    _ prefixRaw: Int,
+    _ suffixRaw: Int
+) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    guard source.hasPrefix(prefix),
+          source.hasSuffix(suffix),
+          source.count >= prefix.count + suffix.count
+    else {
+        return runtimeMakeStringRaw(source)
+    }
+    let start = source.index(source.startIndex, offsetBy: prefix.count)
+    let end = source.index(source.endIndex, offsetBy: -suffix.count)
+    return runtimeMakeStringRaw(String(source[start ..< end]))
 }
 
 @_cdecl("kk_string_takeLast")
@@ -218,6 +406,27 @@ public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int
     outThrown?.pointee = 0
     let source = runtimeStringFromRaw(strRaw) ?? ""
     guard let value = Int32(source) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toInt_radix")
+public func kk_string_toInt_radix(_ strRaw: Int, _ radix: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    guard (2 ... 36).contains(radix) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: radix \(radix) was not in valid range 2..36"
+        )
+        return 0
+    }
+    guard let value = Int32(source, radix: radix) else {
         runtimeSetThrown(
             outThrown,
             message: "NumberFormatException: For input string: \"\(source)\""
@@ -310,6 +519,134 @@ public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return -1
 }
 
+// MARK: - STDLIB-190: first / last / single / firstOrNull / lastOrNull
+
+@_cdecl("kk_string_first")
+public func kk_string_first(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let first = scalars.first else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    return kk_box_char(Int(first.value))
+}
+
+@_cdecl("kk_string_last")
+public func kk_string_last(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let last = scalars.last else {
+        runtimeSetThrown(outThrown, message: "Char sequence is empty.")
+        return 0
+    }
+    return kk_box_char(Int(last.value))
+}
+
+@_cdecl("kk_string_single")
+public func kk_string_single(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard scalars.count == 1 else {
+        let msg = scalars.isEmpty
+            ? "Char sequence is empty."
+            : "Char sequence has more than one element."
+        runtimeSetThrown(outThrown, message: msg)
+        return 0
+    }
+    return kk_box_char(Int(scalars[0].value))
+}
+
+@_cdecl("kk_string_firstOrNull")
+public func kk_string_firstOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard let first = scalars.first else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(first.value))
+}
+
+@_cdecl("kk_string_lastOrNull")
+public func kk_string_lastOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard let last = scalars.last else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(last.value))
+}
+
+// MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
+
+@_cdecl("kk_string_isEmpty")
+public func kk_string_isEmpty(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNotEmpty")
+public func kk_string_isNotEmpty(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.isEmpty ? 0 : 1)
+}
+
+@_cdecl("kk_string_isBlank")
+public func kk_string_isBlank(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_string_isNotBlank")
+public func kk_string_isNotBlank(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1)
+}
+
+// MARK: - STDLIB-186: substringBefore / substringAfter / substringBeforeLast / substringAfterLast
+
+@_cdecl("kk_string_substringBefore")
+public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_indexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+}
+
+@_cdecl("kk_string_substringAfter")
+public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_indexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    let delimScalars = runtimeStringScalars(delimiterRaw)
+    let start = idx + delimScalars.count
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
+@_cdecl("kk_string_substringBeforeLast")
+public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
+}
+
+@_cdecl("kk_string_substringAfterLast")
+public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
+    let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
+    if idx < 0 {
+        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+    }
+    let scalars = runtimeStringScalars(strRaw)
+    let delimScalars = runtimeStringScalars(delimiterRaw)
+    let start = idx + delimScalars.count
+    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[start...]))
+}
+
 @_cdecl("kk_string_lastIndexOf")
 public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)
@@ -329,6 +666,93 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
         lastIndex = offset
     }
     return lastIndex
+}
+
+@_cdecl("kk_string_get")
+public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard indexRaw >= 0, indexRaw < scalars.count else {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: index=\(indexRaw), length=\(scalars.count)"
+        )
+        return 0
+    }
+    return Int(scalars[indexRaw].value)
+}
+
+@_cdecl("kk_string_compareTo_member")
+public func kk_string_compareTo_member(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    return runtimeCompareStrings(lhs, rhs)
+}
+
+@_cdecl("kk_string_compareToIgnoreCase")
+public func kk_string_compareToIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    if ignoreCaseRaw == 0 {
+        return runtimeCompareStrings(lhs, rhs)
+    }
+    let comparison = lhs.caseInsensitiveCompare(rhs)
+    switch comparison {
+    case .orderedAscending:
+        return -1
+    case .orderedDescending:
+        return 1
+    case .orderedSame:
+        return 0
+    }
+}
+
+@_cdecl("kk_string_toBoolean")
+public func kk_string_toBoolean(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.caseInsensitiveCompare("true") == .orderedSame ? 1 : 0)
+}
+
+@_cdecl("kk_string_toBooleanStrict")
+public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    switch source {
+    case "true":
+        return kk_box_bool(1)
+    case "false":
+        return kk_box_bool(0)
+    default:
+        runtimeSetThrown(
+            outThrown,
+            message: "The string doesn't represent a boolean value: \(source)"
+        )
+        return 0
+    }
+}
+
+@_cdecl("kk_string_lines")
+public func kk_string_lines(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringListRaw(runtimeNormalizedMultilineString(source))
+}
+
+@_cdecl("kk_string_trimStart")
+public func kk_string_trimStart(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringRaw(String(source.drop { $0.isWhitespace }))
+}
+
+@_cdecl("kk_string_trimEnd")
+public func kk_string_trimEnd(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringRaw(String(source.reversed().drop { $0.isWhitespace }.reversed()))
+}
+
+@_cdecl("kk_string_toByteArray")
+public func kk_string_toByteArray(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeListRaw(source.utf8.map(Int.init))
 }
 
 @_cdecl("kk_string_format")
@@ -354,6 +778,91 @@ public func kk_string_trimMargin(_ strRaw: Int, _ marginPrefixRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
     let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
     return runtimeMakeStringRaw(runtimeTrimMargin(source, marginPrefix: marginPrefix))
+}
+
+// MARK: - STDLIB-191: prependIndent / replaceIndent
+
+private let runtimeDefaultPrependIndentRaw = runtimeMakeStringRaw(" ")
+private let runtimeDefaultReplaceIndentRaw = runtimeMakeStringRaw("")
+
+@_cdecl("kk_string_prependIndent_default")
+public func kk_string_prependIndent_default(_ strRaw: Int) -> Int {
+    kk_string_prependIndent(strRaw, runtimeDefaultPrependIndentRaw)
+}
+
+@_cdecl("kk_string_replaceIndent_default")
+public func kk_string_replaceIndent_default(_ strRaw: Int) -> Int {
+    kk_string_replaceIndent(strRaw, runtimeDefaultReplaceIndentRaw)
+}
+
+@_cdecl("kk_string_prependIndent")
+public func kk_string_prependIndent(_ strRaw: Int, _ indentRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let indent = runtimeStringFromRaw(indentRaw) ?? " "
+    return runtimeMakeStringRaw(runtimePrependIndent(source, indent: indent))
+}
+
+@_cdecl("kk_string_replaceIndent")
+public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let newIndent = runtimeStringFromRaw(newIndentRaw) ?? ""
+    return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
+}
+
+// MARK: - STDLIB-192: equals(other, ignoreCase)
+
+@_cdecl("kk_string_equalsIgnoreCase")
+public func kk_string_equalsIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    if otherRaw == runtimeNullSentinelInt {
+        return kk_box_bool(0)
+    }
+    let cmp = kk_string_compareToIgnoreCase(strRaw, otherRaw, ignoreCaseRaw)
+    return kk_box_bool(cmp == 0 ? 1 : 0)
+}
+
+// MARK: - STDLIB-188: replaceFirst / replaceRange
+
+@_cdecl("kk_string_replaceFirst")
+public func kk_string_replaceFirst(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let oldValue = runtimeStringFromRaw(oldRaw) ?? ""
+    let newValue = runtimeStringFromRaw(newRaw) ?? ""
+    guard let range = source.range(of: oldValue) else {
+        return runtimeMakeStringRaw(source)
+    }
+    var result = source
+    result.replaceSubrange(range, with: newValue)
+    return runtimeMakeStringRaw(result)
+}
+
+@_cdecl("kk_string_replaceRange")
+public func kk_string_replaceRange(
+    _ strRaw: Int,
+    _ rangeRaw: Int,
+    _ replacementRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        runtimeSetThrown(outThrown, message: "Invalid range for replaceRange")
+        return 0
+    }
+    let first = range.first
+    let last = range.last
+    let length = scalars.count
+    if first < 0 || first > length || last < -1 || last >= length || first > last + 1 {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: start=\(first), end=\(last + 1), length=\(length)"
+        )
+        return 0
+    }
+    let endIndex = last + 1
+    let replacement = runtimeStringFromRaw(replacementRaw) ?? ""
+    let before = runtimeStringFromScalars(scalars[0 ..< first])
+    let after = runtimeStringFromScalars(scalars[endIndex...])
+    return runtimeMakeStringRaw(before + replacement + after)
 }
 
 @_cdecl("kk_compare_any")
@@ -464,10 +973,16 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
 }
 
 private func runtimeCompareStrings(_ lhs: String, _ rhs: String) -> Int {
-    if lhs == rhs {
-        return 0
+    let lhsScalars = Array(lhs.unicodeScalars)
+    let rhsScalars = Array(rhs.unicodeScalars)
+    let sharedCount = Swift.min(lhsScalars.count, rhsScalars.count)
+    for index in 0 ..< sharedCount {
+        let difference = Int(lhsScalars[index].value) - Int(rhsScalars[index].value)
+        if difference != 0 {
+            return difference
+        }
     }
-    return lhs < rhs ? -1 : 1
+    return lhsScalars.count - rhsScalars.count
 }
 
 private func runtimeNormalizedMultilineString(_ source: String) -> [String] {
@@ -525,6 +1040,28 @@ private func runtimeTrimMargin(_ source: String, marginPrefix: String) -> String
     }.joined(separator: "\n")
 }
 
+private func runtimePrependIndent(_ source: String, indent: String) -> String {
+    let lines = runtimeNormalizedMultilineString(source)
+    return lines.map { indent + $0 }.joined(separator: "\n")
+}
+
+private func runtimeReplaceIndent(_ source: String, newIndent: String) -> String {
+    let lines = Array(runtimeTrimBlankEdges(runtimeNormalizedMultilineString(source)))
+    guard !lines.isEmpty else {
+        return ""
+    }
+    let minimumIndent = lines
+        .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        .map(runtimeLeadingIndentCount)
+        .min() ?? 0
+    return lines.map { line in
+        guard !line.trimmingCharacters(in: .whitespaces).isEmpty else {
+            return ""
+        }
+        return newIndent + String(line.dropFirst(minimumIndent))
+    }.joined(separator: "\n")
+}
+
 private func runtimeStringFromRaw(_ raw: Int) -> String? {
     if raw == runtimeNullSentinelInt {
         return nil
@@ -562,6 +1099,18 @@ private func runtimeMakeStringRaw(_ value: String) -> Int {
 
 private func runtimeMakeListRaw(_ values: [Int]) -> Int {
     let box = RuntimeListBox(elements: values)
+    let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: pointer))
+    }
+    return Int(bitPattern: pointer)
+}
+
+private func runtimeMakeArrayRaw(_ values: [Int]) -> Int {
+    let box = RuntimeArrayBox(length: values.count)
+    for (index, value) in values.enumerated() {
+        box.elements[index] = value
+    }
     let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: pointer))

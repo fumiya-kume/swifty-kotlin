@@ -7,6 +7,7 @@ extension NativeEmitter {
         let zeroValue: LLVMCAPIBindings.LLVMValueRef
     }
 
+    // swiftlint:disable cyclomatic_complexity
     func lowerBuiltinCall(
         calleeName: String,
         argumentValues: [LLVMCAPIBindings.LLVMValueRef],
@@ -127,7 +128,6 @@ extension NativeEmitter {
             } else {
                 lowered = nil
             }
-        // Bitwise/shift operations (P5-103)
         case "kk_bitwise_and":
             lowered = bindings.buildAnd(state.builder, lhs: lhs, rhs: rhs, name: "bitand_\(instructionIndex)")
         case "kk_bitwise_or":
@@ -143,7 +143,6 @@ extension NativeEmitter {
         case "kk_op_inv":
             lowered = bindings.buildNot(state.builder, value: lhs, name: "inv_\(instructionIndex)")
         case "kk_op_elvis":
-            // Elvis operator: return lhs if non-null (not KK_NULL_SENTINEL), otherwise rhs.
             let sentinel = bindings.constInt(state.int64Type, value: UInt64(bitPattern: Int64.min), signExtend: true) ?? state.zeroValue
             if let isNull = bindings.buildICmpEqual(state.builder, lhs: lhs, rhs: sentinel, name: "elvis_isnull_\(instructionIndex)") {
                 lowered = bindings.buildSelect(state.builder, condition: isNull, thenValue: rhs, elseValue: lhs, name: "elvis_\(instructionIndex)")
@@ -156,6 +155,8 @@ extension NativeEmitter {
         return (true, lowered)
     }
 
+    // swiftlint:enable cyclomatic_complexity
+
     func emitConstantValue(
         _ expression: KIRExprKind,
         expressionRawID: Int32?,
@@ -164,7 +165,8 @@ extension NativeEmitter {
         internalFunctions: [SymbolID: LLVMFunction],
         globalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         generatedStringLiteralCount: inout Int32,
-        declareExternalFunction: (String, Int, Bool) -> LLVMFunction?
+        declareExternalFunction: (String, Int, Bool) -> LLVMFunction?,
+        interner: StringInterner
     ) -> LLVMCAPIBindings.LLVMValueRef {
         switch expression {
         case let .intLiteral(number):
@@ -228,6 +230,17 @@ extension NativeEmitter {
                 arguments: [pointerAsInt, lengthValue],
                 name: "str_from_utf8_\(literalID)"
             ) ?? state.zeroValue
+        case let .externSymbolAddress(symbolName):
+            let symbolStr = interner.resolve(symbolName)
+            if let externFn = declareExternalFunction(symbolStr, 4, false) {
+                return bindings.buildPtrToInt(
+                    state.builder,
+                    value: externFn.value,
+                    type: state.int64Type,
+                    name: "extern_addr_\(symbolStr)"
+                ) ?? state.zeroValue
+            }
+            return state.zeroValue
         case let .symbolRef(symbol):
             if let parameter = parameterValues[symbol] {
                 return parameter

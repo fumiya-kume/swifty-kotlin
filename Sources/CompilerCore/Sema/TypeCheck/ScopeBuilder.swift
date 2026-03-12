@@ -179,6 +179,14 @@ struct TypeCheckScopeBuilder {
             else {
                 continue
             }
+            // Skip extension functions (those with a receiverType) — they are
+            // resolved via member-call inference, not top-level scope lookup.
+            if symbol.kind == .function,
+               let sig = sema.symbols.functionSignature(for: symbol.id),
+               sig.receiverType != nil
+            {
+                continue
+            }
             let candidatePackage: [InternedString] = if symbol.fqName.count == 1 {
                 []
             } else {
@@ -203,6 +211,7 @@ struct TypeCheckScopeBuilder {
             ["kotlin", "ranges"],
             ["kotlin", "sequences"],
             ["kotlin", "text"],
+            ["kotlin", "system"],
         ]
         return packages.map { segments in
             segments.map { interner.intern($0) }

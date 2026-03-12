@@ -12,6 +12,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
 
         let symbols = SymbolTable()
         let types = TypeSystem()
+        types.symbolTable = symbols
         let bindings = BindingTable()
         let sema = SemaModule(
             symbols: symbols, types: types,
@@ -28,7 +29,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         runValidationPasses(ast: ast, symbols: symbols, bindings: bindings, types: types, ctx: ctx)
         runBodyAnalysis(ast: ast, symbols: symbols, types: types, bindings: bindings, ctx: ctx)
 
-        ctx.sema = sema
+        ctx.storeSema(sema)
     }
 
     private func buildFileScopes(
@@ -85,7 +86,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         ast: ASTModule, symbols: SymbolTable, bindings: BindingTable,
         types: TypeSystem, ctx: CompilationContext
     ) {
-        bindInheritanceEdges(ast: ast, symbols: symbols, bindings: bindings, types: types)
+        bindInheritanceEdges(ast: ast, symbols: symbols, bindings: bindings, types: types, interner: ctx.interner)
         validateSealedHierarchy(
             ast: ast, symbols: symbols, bindings: bindings,
             diagnostics: ctx.diagnostics, interner: ctx.interner
@@ -109,6 +110,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         validateExpectActualMatching(
             ast: ast,
             symbols: symbols,
+            types: types,
             diagnostics: ctx.diagnostics,
             interner: ctx.interner
         )

@@ -181,8 +181,8 @@ extension ExprLowerer {
             let nullID = interner.intern("null")
             let thisID = interner.intern("this")
             // Resolve lambda param by name (handles collection HOF fallback where identifierSymbols may be unbound).
-            if let paramSymbol = driver.ctx.lambdaParamNameToSymbol[name],
-               let localValue = driver.ctx.localValuesBySymbol[paramSymbol]
+            if let paramSymbol = driver.ctx.lambdaParamSymbol(named: name),
+               let localValue = driver.ctx.localValue(for: paramSymbol)
             {
                 return localValue
             }
@@ -192,14 +192,14 @@ extension ExprLowerer {
                 return id
             }
             if name == thisID,
-               let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+               let receiverExprID = driver.ctx.activeImplicitReceiverExprID()
             {
                 return receiverExprID
             }
             // STDLIB-004: Implicit receiver member access (e.g. `length` inside
             // `run { length }` resolves as `this.length`).
             if let memberName = sema.bindings.implicitReceiverMemberNames[exprID],
-               let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+               let receiverExprID = driver.ctx.activeImplicitReceiverExprID()
             {
                 let receiverType = arena.exprType(receiverExprID) ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -303,13 +303,13 @@ extension ExprLowerer {
 
                 // General fallback: try to find a getter symbol for the property
                 if let symbol = sema.bindings.identifierSymbols[exprID],
-                   let localValue = driver.ctx.localValuesBySymbol[symbol]
+                   let localValue = driver.ctx.localValue(for: symbol)
                 {
                     return localValue
                 }
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
-                if let localValue = driver.ctx.localValuesBySymbol[symbol] {
+                if let localValue = driver.ctx.localValue(for: symbol) {
                     return localValue
                 }
                 // Inline constant initializers only for immutable (val) properties.
@@ -327,7 +327,7 @@ extension ExprLowerer {
                 // the property symbol as a standalone value.
                 if let sym = sema.symbols.symbol(symbol),
                    sym.kind == .property || sym.kind == .field,
-                   let receiverExprID = driver.ctx.currentImplicitReceiverExprID,
+                   let receiverExprID = driver.ctx.activeImplicitReceiverExprID(),
                    let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                    let ownerKind = sema.symbols.symbol(ownerSymbol)?.kind,
                    ownerKind == .class || ownerKind == .interface,
@@ -431,9 +431,9 @@ extension ExprLowerer {
 
         case let .breakExpr(label, _):
             let targetLabel: Int32? = if let label {
-                driver.ctx.loopControlStack.last(where: { $0.name == label })?.breakLabel
+                driver.ctx.breakLabel(for: label)
             } else {
-                driver.ctx.loopControlStack.last?.breakLabel
+                driver.ctx.breakLabel(for: nil)
             }
             if let targetLabel {
                 instructions.append(.jump(targetLabel))
@@ -444,9 +444,9 @@ extension ExprLowerer {
 
         case let .continueExpr(label, _):
             let targetLabel: Int32? = if let label {
-                driver.ctx.loopControlStack.last(where: { $0.name == label })?.continueLabel
+                driver.ctx.continueLabel(for: label)
             } else {
-                driver.ctx.loopControlStack.last?.continueLabel
+                driver.ctx.continueLabel(for: nil)
             }
             if let targetLabel {
                 instructions.append(.jump(targetLabel))
@@ -470,7 +470,7 @@ extension ExprLowerer {
                 }
                 let funRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 instructions.append(.constValue(result: funRef, value: .symbolRef(symbol)))
-                driver.ctx.localValuesBySymbol[symbol] = funRef
+                driver.ctx.setLocalValue(funRef, for: symbol)
 
                 let localFunCalleeName = driver.lambdaLowerer.callableTargetName(for: symbol, sema: sema, interner: interner)
 
@@ -520,9 +520,9 @@ extension ExprLowerer {
                 var captureSymbols = referencedSymbols.filter { sym in
                     if localFunParamSymbols.contains(sym) { return false }
                     if sym == symbol { return false }
-                    if driver.ctx.localValuesBySymbol[sym] != nil { return true }
-                    if sym == driver.ctx.currentImplicitReceiverSymbol,
-                       driver.ctx.currentImplicitReceiverExprID != nil { return true }
+                    if driver.ctx.localValue(for: sym) != nil { return true }
+                    if sym == driver.ctx.activeImplicitReceiverSymbol(),
+                       driver.ctx.activeImplicitReceiverExprID() != nil { return true }
                     guard let semanticSymbol = sema.symbols.symbol(sym) else { return false }
                     return semanticSymbol.kind == .valueParameter
                 }
@@ -530,8 +530,8 @@ extension ExprLowerer {
                 // Implicit receiver (this/super) is not collected by
                 // collectBoundIdentifierSymbols, so check separately —
                 // mirrors the post-filter in lexicalCaptureSymbolsForLambda.
-                if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
-                   driver.ctx.currentImplicitReceiverExprID != nil,
+                if let receiverSymbol = driver.ctx.activeImplicitReceiverSymbol(),
+                   driver.ctx.activeImplicitReceiverExprID() != nil,
                    !captureSymbols.contains(receiverSymbol)
                 {
                     let needsReceiver = captureBodyExprIDs.contains { bodyExprID in
@@ -546,18 +546,18 @@ extension ExprLowerer {
                 // its own captures, also capture those dependencies so call
                 // sites inside the body can forward correct capture arguments.
                 // Build a deterministic reverse map (KIRExprID → SymbolID) from
-                // driver.ctx.localValuesBySymbol so we avoid nondeterministic Dictionary
+                // current local bindings so we avoid nondeterministic Dictionary
                 // iteration with first(where:).
                 var exprIDToSymbol: [KIRExprID: SymbolID] = [:]
-                for (sym, expr) in driver.ctx.localValuesBySymbol {
+                for (sym, expr) in driver.ctx.allLocalValues() {
                     exprIDToSymbol[expr] = sym
                 }
                 var transitiveChanged = true
                 while transitiveChanged {
                     transitiveChanged = false
                     for sym in captureSymbols {
-                        guard let outerExpr = driver.ctx.localValuesBySymbol[sym],
-                              let callableInfo = driver.ctx.callableValueInfoByExprID[outerExpr]
+                        guard let outerExpr = driver.ctx.localValue(for: sym),
+                              let callableInfo = driver.ctx.callableValueInfo(for: outerExpr)
                         else {
                             continue
                         }
@@ -567,8 +567,8 @@ extension ExprLowerer {
                                 transitiveSym = found
                             } else if case let .symbolRef(argSym) = arena.expr(captureArg) {
                                 transitiveSym = argSym
-                            } else if captureArg == driver.ctx.currentImplicitReceiverExprID {
-                                transitiveSym = driver.ctx.currentImplicitReceiverSymbol
+                            } else if captureArg == driver.ctx.activeImplicitReceiverExprID() {
+                                transitiveSym = driver.ctx.activeImplicitReceiverSymbol()
                             }
                             if let transitiveSym, !captureSymbols.contains(transitiveSym) {
                                 captureSymbols.append(transitiveSym)
@@ -620,17 +620,16 @@ extension ExprLowerer {
                 for capture in captureBindings {
                     let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
                     localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-                    driver.ctx.localValuesBySymbol[capture.capturedSymbol] = captureExpr
+                    driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
                     if capture.capturedSymbol == savedReceiverSymbol {
-                        driver.ctx.currentImplicitReceiverExprID = captureExpr
-                        driver.ctx.currentImplicitReceiverSymbol = capture.param.symbol
+                        driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
                     }
                 }
 
                 for param in localFunValueParamList {
                     let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
                     localFunBodyInstructions.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-                    driver.ctx.localValuesBySymbol[param.symbol] = paramExpr
+                    driver.ctx.setLocalValue(paramExpr, for: param.symbol)
                 }
 
                 // Propagate callable value info for captured callables so that
@@ -640,13 +639,13 @@ extension ExprLowerer {
                 // intLiteral, etc.) without needing reverse lookups.
                 var outerExprToBodyExpr: [KIRExprID: KIRExprID] = [:]
                 for capture in captureBindings {
-                    if let bodyExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol] {
+                    if let bodyExpr = driver.ctx.localValue(for: capture.capturedSymbol) {
                         outerExprToBodyExpr[capture.valueExpr] = bodyExpr
                     }
                 }
                 for capture in captureBindings {
-                    if let outerCallableInfo = driver.ctx.callableValueInfoByExprID[capture.valueExpr],
-                       let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol]
+                    if let outerCallableInfo = driver.ctx.callableValueInfo(for: capture.valueExpr),
+                       let bodyCallableExpr = driver.ctx.localValue(for: capture.capturedSymbol)
                     {
                         var remappedArgs: [KIRExprID] = []
                         var mappingFailed = false
@@ -654,7 +653,7 @@ extension ExprLowerer {
                             if let bodyArgExpr = outerExprToBodyExpr[argExpr] {
                                 remappedArgs.append(bodyArgExpr)
                             } else if case let .symbolRef(argSym) = arena.expr(argExpr),
-                                      let bodyArgExpr = driver.ctx.localValuesBySymbol[argSym]
+                                      let bodyArgExpr = driver.ctx.localValue(for: argSym)
                             {
                                 remappedArgs.append(bodyArgExpr)
                             } else {
@@ -680,9 +679,9 @@ extension ExprLowerer {
                 // (not the outer values) since we're in the body's scope.
                 let bodyFunRef = arena.appendExpr(.symbolRef(symbol), type: funType)
                 localFunBodyInstructions.append(.constValue(result: bodyFunRef, value: .symbolRef(symbol)))
-                driver.ctx.localValuesBySymbol[symbol] = bodyFunRef
+                driver.ctx.setLocalValue(bodyFunRef, for: symbol)
                 let recursiveCaptureArguments: [KIRExprID] = captureBindings.map { binding in
-                    guard let value = driver.ctx.localValuesBySymbol[binding.capturedSymbol] else {
+                    guard let value = driver.ctx.localValue(for: binding.capturedSymbol) else {
                         preconditionFailure("BuildKIRPhase: missing capture binding for recursive local function '\(symbol)'")
                     }
                     return value
@@ -785,7 +784,7 @@ extension ExprLowerer {
                         )
                     )
                 )
-                driver.ctx.pendingGeneratedCallableDeclIDs.append(localFunDeclID)
+                driver.ctx.appendGeneratedCallableDecl(localFunDeclID)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -803,7 +802,7 @@ extension ExprLowerer {
                     instructions: &instructions
                 )
                 if let symbol = sema.bindings.identifierSymbols[exprID] {
-                    driver.ctx.localValuesBySymbol[symbol] = initializerID
+                    driver.ctx.setLocalValue(initializerID, for: symbol)
                 }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
@@ -835,7 +834,7 @@ extension ExprLowerer {
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     instructions.append(.copy(from: valueID, to: globalRef))
-                } else if let receiverExprID = driver.ctx.currentImplicitReceiverExprID,
+                } else if let receiverExprID = driver.ctx.activeImplicitReceiverExprID(),
                           let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                           let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
                               sema.symbols.backingFieldSymbol(for: symbol) ?? symbol
@@ -852,12 +851,12 @@ extension ExprLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    if let storageID = driver.ctx.localValuesBySymbol[symbol] {
+                    if let storageID = driver.ctx.localValue(for: symbol) {
                         // Mutable local already has storage: emit a copy so the C variable
                         // is updated in place, preserving the value across loop iterations.
                         instructions.append(.copy(from: valueID, to: storageID))
                     } else {
-                        driver.ctx.localValuesBySymbol[symbol] = valueID
+                        driver.ctx.setLocalValue(valueID, for: symbol)
                     }
                 }
             }
@@ -1187,7 +1186,7 @@ extension ExprLowerer {
                     instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
                     instructions.append(.copy(from: resultID, to: globalRef))
                 } else {
-                    if let storageID = driver.ctx.localValuesBySymbol[symbol] {
+                    if let storageID = driver.ctx.localValue(for: symbol) {
                         // Compute lhs op rhs and update storage in place so the value
                         // persists across loop iterations.
                         let resultType = arena.exprType(storageID) ?? sema.types.intType
@@ -1202,7 +1201,7 @@ extension ExprLowerer {
                         let resultType = arena.exprType(lhsID) ?? sema.types.intType
                         let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
                         instructions.append(.binary(op: kirOp, lhs: lhsID, rhs: rhsID, result: resultID))
-                        driver.ctx.localValuesBySymbol[symbol] = resultID
+                        driver.ctx.setLocalValue(resultID, for: symbol)
                     }
                 }
             }
@@ -1336,7 +1335,7 @@ extension ExprLowerer {
             return unit
 
         case .superRef:
-            if let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+            if let receiverExprID = driver.ctx.activeImplicitReceiverExprID() {
                 return receiverExprID
             }
             let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
@@ -1344,7 +1343,7 @@ extension ExprLowerer {
             return unit
 
         case .thisRef:
-            if let receiverExprID = driver.ctx.currentImplicitReceiverExprID {
+            if let receiverExprID = driver.ctx.activeImplicitReceiverExprID() {
                 return receiverExprID
             }
             let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.errorType)
@@ -1401,6 +1400,8 @@ extension ExprLowerer {
                 initializer, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
             )
+            let rhsType = sema.bindings.exprTypes[initializer] ?? sema.types.anyType
+            let nonNullRhsType = sema.types.makeNonNullable(rhsType)
             for (index, name) in names.enumerated() {
                 guard let name else {
                     // Underscore — skip
@@ -1408,6 +1409,21 @@ extension ExprLowerer {
                 }
                 let componentIndex = index + 1
                 let componentName = interner.intern("component\(componentIndex)")
+
+                // Resolve componentN to externalLinkName when available (Pair, Triple, List, etc.)
+                let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
+                    named: componentName,
+                    receiverType: nonNullRhsType,
+                    sema: sema
+                )
+                let calleeName: InternedString = if let chosen = memberCandidates.first,
+                                                    let linkName = sema.symbols.externalLinkName(for: chosen),
+                                                    !linkName.isEmpty
+                {
+                    interner.intern(linkName)
+                } else {
+                    componentName
+                }
 
                 // Look up the symbol defined by Sema for this variable first,
                 // so we can use its per-component type (not the expression-level Unit type)
@@ -1419,7 +1435,7 @@ extension ExprLowerer {
                 let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
                 instructions.append(.call(
                     symbol: nil,
-                    callee: componentName,
+                    callee: calleeName,
                     arguments: [rhsID],
                     result: componentResult,
                     canThrow: false,
@@ -1428,7 +1444,7 @@ extension ExprLowerer {
 
                 // Bind the destructured variable to the component result
                 if let symbol = candidates.first {
-                    driver.ctx.localValuesBySymbol[symbol] = componentResult
+                    driver.ctx.setLocalValue(componentResult, for: symbol)
                 }
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)

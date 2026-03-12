@@ -201,7 +201,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                 finalBody.append(instruction)
             }
 
-            updated.body = finalBody
+            updated.replaceBody(finalBody)
             return updated
         }
         module.recordLowering(Self.name)

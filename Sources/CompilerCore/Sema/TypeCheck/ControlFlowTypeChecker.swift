@@ -304,7 +304,22 @@ final class ControlFlowTypeChecker {
                 }
             }
             .sorted { $0.rawValue < $1.rawValue }
-        guard let symbol = candidates.first else {
+        let resolvedCandidates = if !candidates.isEmpty {
+            candidates
+        } else {
+            sema.symbols.lookupByShortName(typeName)
+                .filter { symbolID in
+                    guard let symbol = sema.symbols.symbol(symbolID) else { return false }
+                    switch symbol.kind {
+                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                        return true
+                    default:
+                        return false
+                    }
+                }
+                .sorted { $0.rawValue < $1.rawValue }
+        }
+        guard let symbol = resolvedCandidates.first else {
             return sema.types.anyType
         }
         return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))

@@ -160,9 +160,18 @@ extension CompilerCoreTests {
         let extensionSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
             symbol.kind == .function && ctx.interner.resolve(symbol.name) == "incByOne"
         })?.id)
+        let capturedSymbols = try XCTUnwrap(sema.bindings.captureSymbolsByExpr[callableRefExprID])
+        XCTAssertEqual(capturedSymbols.count, 1)
         let seedSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
-            symbol.kind == .valueParameter && ctx.interner.resolve(symbol.name) == "seed"
+            guard symbol.kind == .valueParameter,
+                  ctx.interner.resolve(symbol.name) == "seed"
+            else {
+                return false
+            }
+            let fqName = symbol.fqName.map(ctx.interner.resolve)
+            return fqName.contains("host")
         })?.id)
+        XCTAssertEqual(capturedSymbols, [seedSymbol])
 
         XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(extensionSymbol))
         XCTAssertEqual(sema.bindings.captureSymbolsByExpr[callableRefExprID], [seedSymbol])

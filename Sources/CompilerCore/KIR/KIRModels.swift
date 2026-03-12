@@ -73,6 +73,8 @@ public enum KIRExprKind: Equatable, Sendable {
     case boolLiteral(Bool)
     case stringLiteral(InternedString)
     case symbolRef(SymbolID)
+    /// Address of an extern C symbol (e.g. kk_comparator_from_selector_trampoline).
+    case externSymbolAddress(InternedString)
     case temporary(Int32)
     case null
     case unit
@@ -113,12 +115,12 @@ public struct KIRFunction: Sendable {
     public let name: InternedString
     public let params: [KIRParameter]
     public let returnType: TypeID
-    public var body: [KIRInstruction]
+    public internal(set) var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
     public let isTailrec: Bool
     public let sourceRange: SourceRange? // function-level source location
-    public var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
+    public internal(set) var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
         symbol: SymbolID, name: InternedString, params: [KIRParameter], returnType: TypeID,
@@ -129,6 +131,14 @@ public struct KIRFunction: Sendable {
         self.returnType = returnType; self.body = body
         self.isSuspend = isSuspend; self.isInline = isInline
         self.isTailrec = isTailrec; self.sourceRange = sourceRange
+        self.instructionLocations = instructionLocations
+    }
+
+    public mutating func replaceBody(_ body: [KIRInstruction]) {
+        self.body = body
+    }
+
+    public mutating func replaceInstructionLocations(_ instructionLocations: [SourceRange?]) {
         self.instructionLocations = instructionLocations
     }
 }

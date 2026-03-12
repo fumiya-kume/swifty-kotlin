@@ -58,7 +58,7 @@ final class ForLoweringPass: LoweringPass {
             }
 
             if didRewrite {
-                updated.body = rewrittenBody
+                updated.replaceBody(rewrittenBody)
             }
             return updated
         }

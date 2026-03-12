@@ -49,8 +49,10 @@ extension MemberLowerer {
             )
             let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
             params.append(KIRParameter(symbol: receiverSymbol, type: ownerType))
-            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-            driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+            driver.ctx.setImplicitReceiver(
+                symbol: receiverSymbol,
+                exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+            )
         }
 
         let returnType: TypeID
@@ -79,10 +81,8 @@ extension MemberLowerer {
         }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
-        {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
 
         switch accessorKind {
@@ -178,8 +178,7 @@ extension MemberLowerer {
         )
         allDecls.append(kirID)
         allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
-        driver.ctx.currentImplicitReceiverExprID = nil
-        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.clearImplicitReceiver()
     }
 
     private func buildCustomDelegateGetterArgs(
@@ -190,7 +189,7 @@ extension MemberLowerer {
         body: inout KIRLoweringEmitContext
     ) -> [KIRExprID] {
         let thisRefExprID: KIRExprID
-        if let receiver = driver.ctx.currentImplicitReceiverExprID {
+        if let receiver = driver.ctx.activeImplicitReceiverExprID() {
             thisRefExprID = receiver
         } else {
             thisRefExprID = arena.appendExpr(.null, type: sema.types.nullableAnyType)
@@ -286,8 +285,10 @@ extension MemberLowerer {
         if let receiverType = extensionReceiverType {
             let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
             params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-            driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            driver.ctx.setImplicitReceiver(
+                symbol: receiverSymbol,
+                exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+            )
         } else if let ownerSymbol,
                   let ownerSym = sema.symbols.symbol(ownerSymbol)
         {
@@ -296,8 +297,10 @@ extension MemberLowerer {
             )
             let receiverSymbol = driver.callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: propertySymbol)
             params.append(KIRParameter(symbol: receiverSymbol, type: ownerType))
-            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
-            driver.ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+            driver.ctx.setImplicitReceiver(
+                symbol: receiverSymbol,
+                exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: ownerType)
+            )
         }
 
         let returnType: TypeID
@@ -310,7 +313,7 @@ extension MemberLowerer {
             // resolve to a backing field access expression.
             if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
                 let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
-                driver.ctx.localValuesBySymbol[backingFieldSym] = bfExprID
+                driver.ctx.setLocalValue(bfExprID, for: backingFieldSym)
             }
         case .setter:
             returnType = sema.types.unitType
@@ -318,25 +321,23 @@ extension MemberLowerer {
             let valueParamSymbol = SyntheticSymbolScheme.setterValueParameterSymbol(for: propertySymbol)
             params.append(KIRParameter(symbol: valueParamSymbol, type: propertyType))
             let valueExprID = arena.appendExpr(.symbolRef(valueParamSymbol), type: propertyType)
-            driver.ctx.localValuesBySymbol[valueParamSymbol] = valueExprID
+            driver.ctx.setLocalValue(valueExprID, for: valueParamSymbol)
             // Sema binds the setter parameter name to a synthetic setter-value
             // symbol (offset -40_000) distinct from both the property symbol
             // and the backing field symbol.
             let semaSetterValueSymbol = SyntheticSymbolScheme.semaSetterValueSymbol(for: propertySymbol)
-            driver.ctx.localValuesBySymbol[semaSetterValueSymbol] = valueExprID
+            driver.ctx.setLocalValue(valueExprID, for: semaSetterValueSymbol)
             // Map the backing field symbol so `field` references in the setter
             // resolve to backing field storage, not the value parameter.
             if let backingFieldSym = sema.symbols.backingFieldSymbol(for: propertySymbol) {
                 let bfExprID = arena.appendExpr(.symbolRef(backingFieldSym), type: propertyType)
-                driver.ctx.localValuesBySymbol[backingFieldSym] = bfExprID
+                driver.ctx.setLocalValue(bfExprID, for: backingFieldSym)
             }
         }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
-        {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
 
         switch accessorBody {
@@ -415,7 +416,6 @@ extension MemberLowerer {
         )
         allDecls.append(kirID)
         allDecls.append(contentsOf: driver.ctx.drainGeneratedCallableDecls())
-        driver.ctx.currentImplicitReceiverExprID = nil
-        driver.ctx.currentImplicitReceiverSymbol = nil
+        driver.ctx.clearImplicitReceiver()
     }
 }

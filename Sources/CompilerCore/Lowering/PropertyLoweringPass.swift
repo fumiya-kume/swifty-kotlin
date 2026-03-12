@@ -233,7 +233,7 @@ final class PropertyLoweringPass: LoweringPass {
                 }
             }
 
-            updated.body = loweredBody
+            updated.replaceBody(loweredBody)
             return updated
         }
         module.recordLowering(Self.name)

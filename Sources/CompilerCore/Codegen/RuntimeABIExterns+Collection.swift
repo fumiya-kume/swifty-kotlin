@@ -3,6 +3,11 @@ public extension RuntimeABIExterns {
         kk_list_of,
         kk_list_size,
         kk_list_get,
+        kk_list_component1,
+        kk_list_component2,
+        kk_list_component3,
+        kk_list_component4,
+        kk_list_component5,
         kk_list_contains,
         kk_list_is_empty,
         kk_list_iterator,
@@ -50,6 +55,21 @@ public extension RuntimeABIExterns {
         kk_list_reversed,
         kk_list_sorted,
         kk_list_distinct,
+        kk_list_shuffled,
+        kk_list_random,
+        kk_list_randomOrNull,
+        kk_list_flatten,
+        kk_list_indexOf,
+        kk_list_lastIndexOf,
+        kk_list_indexOfFirst,
+        kk_list_indexOfLast,
+        kk_list_filterIsInstance,
+        kk_list_chunked,
+        kk_list_windowed,
+        kk_list_sortedDescending,
+        kk_list_sortedByDescending,
+        kk_list_sortedWith,
+        kk_list_partition,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -71,10 +91,28 @@ public extension RuntimeABIExterns {
         kk_map_iterator_next,
         kk_array_of,
         kk_array_size,
+        kk_array_toList,
+        kk_array_toMutableList,
+        kk_list_toTypedArray,
+        kk_array_map,
+        kk_array_filter,
+        kk_array_forEach,
+        kk_array_any,
+        kk_array_none,
+        kk_array_copyOf,
+        kk_array_copyOfRange,
+        kk_array_fill,
         kk_pair_new,
         kk_pair_first,
         kk_pair_second,
         kk_pair_to_string,
+        kk_pair_toList,
+        kk_triple_new,
+        kk_triple_first,
+        kk_triple_second,
+        kk_triple_third,
+        kk_triple_to_string,
+        kk_triple_toList,
         kk_build_string,
         kk_build_list,
         kk_build_list_with_capacity,
@@ -106,6 +144,32 @@ public extension RuntimeABIExterns {
     static let kk_list_get = ExternDecl(
         name: "kk_list_get",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_component1 = ExternDecl(
+        name: "kk_list_component1",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component2 = ExternDecl(
+        name: "kk_list_component2",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component3 = ExternDecl(
+        name: "kk_list_component3",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component4 = ExternDecl(
+        name: "kk_list_component4",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component5 = ExternDecl(
+        name: "kk_list_component5",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -337,6 +401,75 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// Array conversion functions (STDLIB-087)
+    static let kk_array_toList = ExternDecl(
+        name: "kk_array_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_toMutableList = ExternDecl(
+        name: "kk_array_toMutableList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_toTypedArray = ExternDecl(
+        name: "kk_list_toTypedArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Array higher-order functions (STDLIB-088)
+    static let kk_array_map = ExternDecl(
+        name: "kk_array_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_filter = ExternDecl(
+        name: "kk_array_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_forEach = ExternDecl(
+        name: "kk_array_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_any = ExternDecl(
+        name: "kk_array_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_none = ExternDecl(
+        name: "kk_array_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// Array utility functions (STDLIB-089)
+    static let kk_array_copyOf = ExternDecl(
+        name: "kk_array_copyOf",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_copyOfRange = ExternDecl(
+        name: "kk_array_copyOfRange",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_fill = ExternDecl(
+        name: "kk_array_fill",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// Higher-order collection functions (STDLIB-005)
     /// Runtime signature: (listRaw, fnPtr, closureRaw, outThrown)
     static let kk_list_map = ExternDecl(
@@ -519,6 +652,96 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_shuffled = ExternDecl(
+        name: "kk_list_shuffled",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_random = ExternDecl(
+        name: "kk_list_random",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_randomOrNull = ExternDecl(
+        name: "kk_list_randomOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_flatten = ExternDecl(
+        name: "kk_list_flatten",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOf = ExternDecl(
+        name: "kk_list_indexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_lastIndexOf = ExternDecl(
+        name: "kk_list_lastIndexOf",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOfFirst = ExternDecl(
+        name: "kk_list_indexOfFirst",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_indexOfLast = ExternDecl(
+        name: "kk_list_indexOfLast",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_filterIsInstance = ExternDecl(
+        name: "kk_list_filterIsInstance",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_chunked = ExternDecl(
+        name: "kk_list_chunked",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_windowed = ExternDecl(
+        name: "kk_list_windowed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedDescending = ExternDecl(
+        name: "kk_list_sortedDescending",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedByDescending = ExternDecl(
+        name: "kk_list_sortedByDescending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sortedWith = ExternDecl(
+        name: "kk_list_sortedWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_partition = ExternDecl(
+        name: "kk_list_partition",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     /// Pair (FUNC-002)
     static let kk_pair_new = ExternDecl(
         name: "kk_pair_new",
@@ -542,6 +765,49 @@ public extension RuntimeABIExterns {
         name: "kk_pair_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    static let kk_pair_toList = ExternDecl(
+        name: "kk_pair_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Triple (STDLIB-120)
+    static let kk_triple_new = ExternDecl(
+        name: "kk_triple_new",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_first = ExternDecl(
+        name: "kk_triple_first",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_second = ExternDecl(
+        name: "kk_triple_second",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_third = ExternDecl(
+        name: "kk_triple_third",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_triple_to_string = ExternDecl(
+        name: "kk_triple_to_string",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
+    )
+
+    static let kk_triple_toList = ExternDecl(
+        name: "kk_triple_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
     )
 
     /// Builder DSL (STDLIB-002)

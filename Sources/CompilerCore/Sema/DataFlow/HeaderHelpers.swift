@@ -570,17 +570,22 @@ extension DataFlowSemaPhase {
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparisonStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCharStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMathStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticRandomStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticScopeFunctionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
         registerSyntheticCoroutineStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticContractStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticPreconditionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticRegexStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticTODOAndIOStubs(symbols: symbols, types: types, interner: interner)
         registerLateListIndexedMembers(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

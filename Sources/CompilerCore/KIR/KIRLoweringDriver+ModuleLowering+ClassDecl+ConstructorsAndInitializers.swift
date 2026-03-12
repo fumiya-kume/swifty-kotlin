@@ -19,13 +19,13 @@ extension KIRLoweringDriver {
         }
         ctx.resetScopeForFunction()
         ctx.beginCallableLoweringScope()
-        ctx.currentFunctionSymbol = ctorSymbol
+        ctx.setCurrentFunctionSymbol(ctorSymbol)
 
         let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: ctorSymbol)
         var params = [KIRParameter(symbol: receiverSymbol, type: signature.returnType)]
-        ctx.currentImplicitReceiverSymbol = receiverSymbol
-        ctx.currentImplicitReceiverExprID = arena.appendExpr(
-            .symbolRef(receiverSymbol), type: signature.returnType
+        ctx.setImplicitReceiver(
+            symbol: receiverSymbol,
+            exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: signature.returnType)
         )
         params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
             KIRParameter(symbol: pair.0, type: pair.1)
@@ -42,7 +42,7 @@ extension KIRLoweringDriver {
             params: params, returnType: signature.returnType,
             body: body, signature: signature, shared: shared
         )
-        ctx.currentFunctionSymbol = nil
+        ctx.setCurrentFunctionSymbol(nil)
         return decls
     }
 
@@ -57,10 +57,8 @@ extension KIRLoweringDriver {
     ) -> KIRLoweringEmitContext {
         let sema = shared.sema
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverExpr = ctx.currentImplicitReceiverExprID {
-            if let receiverSym = ctx.currentImplicitReceiverSymbol {
-                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
-            }
+        if let receiverBinding = ctx.activeImplicitReceiver() {
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
         let isSecondary = sema.symbols.symbol(ctorSymbol)?.declSite != classDecl.range
         if !isSecondary {
@@ -72,7 +70,7 @@ extension KIRLoweringDriver {
             )
             emitClassDelegationInitializers(
                 classDecl: classDecl, ownerSymbol: ownerSymbol,
-                receiverID: ctx.currentImplicitReceiverExprID!,
+                receiverID: ctx.activeImplicitReceiverExprID()!,
                 shared: shared, compilationCtx: compilationCtx, body: &body
             )
             emitClassBodyInitializers(
@@ -87,7 +85,7 @@ extension KIRLoweringDriver {
                 shared: shared, compilationCtx: compilationCtx, body: &body
             )
         }
-        if let receiver = ctx.currentImplicitReceiverExprID {
+        if let receiver = ctx.activeImplicitReceiverExprID() {
             body.append(.returnValue(receiver))
         } else {
             body.append(.returnUnit)
@@ -117,8 +115,8 @@ extension KIRLoweringDriver {
             }
         )
 
-        guard let receiverID = ctx.currentImplicitReceiverExprID,
-              let ctorSignature = sema.symbols.functionSignature(for: ctx.currentFunctionSymbol ?? .invalid)
+        guard let receiverID = ctx.activeImplicitReceiverExprID(),
+              let ctorSignature = sema.symbols.functionSignature(for: ctx.activeFunctionSymbol() ?? .invalid)
         else {
             return
         }
@@ -174,7 +172,7 @@ extension KIRLoweringDriver {
             ))
         )
         declIDs.append(ctorKirID)
-        if let defaults = ctx.functionDefaultArgumentsBySymbol[ctorSymbol] {
+        if let defaults = ctx.defaultArguments(for: ctorSymbol) {
             let stubID = callSupportLowerer.generateDefaultStubFunction(
                 originalSymbol: ctorSymbol, originalName: classDecl.name,
                 signature: signature, defaultExpressions: defaults,
@@ -228,46 +226,29 @@ extension KIRLoweringDriver {
     /// appear in the class body, matching Kotlin's guaranteed top-to-bottom
     /// initialization semantics.
     ///
-    /// When `classBodyInitOrder` is populated (non-empty) the order recorded
-    /// by the AST builder is used.  For backward-compatibility with AST nodes
-    /// that pre-date this change the method falls back to the legacy
-    /// "all properties first, then all init blocks" ordering.
+    /// The order is driven by `classBodyInitOrder`, which the AST builder
+    /// populates from the declaration-order sequence of properties and
+    /// `init` blocks in the source.
     func emitClassBodyInitializers(
         classDecl: ClassDecl,
         shared: KIRLoweringSharedContext,
         compilationCtx: CompilationContext,
         body: inout KIRLoweringEmitContext
     ) {
-        if !classDecl.classBodyInitOrder.isEmpty {
-            // Declaration-order path
-            for member in classDecl.classBodyInitOrder {
-                switch member {
-                case let .property(index):
-                    guard index < classDecl.memberProperties.count else { continue }
-                    let propDeclID = classDecl.memberProperties[index]
-                    emitPropertyInitializer(
-                        propDeclID: propDeclID,
-                        shared: shared,
-                        compilationCtx: compilationCtx,
-                        body: &body
-                    )
-                case let .initBlock(index):
-                    guard index < classDecl.initBlocks.count else { continue }
-                    emitInitBlock(classDecl.initBlocks[index], shared: shared, body: &body)
-                }
-            }
-        } else {
-            // Fallback: legacy ordering (all properties, then init blocks)
-            for propDeclID in classDecl.memberProperties {
+        for member in classDecl.classBodyInitOrder {
+            switch member {
+            case let .property(index):
+                guard index < classDecl.memberProperties.count else { continue }
+                let propDeclID = classDecl.memberProperties[index]
                 emitPropertyInitializer(
                     propDeclID: propDeclID,
                     shared: shared,
                     compilationCtx: compilationCtx,
                     body: &body
                 )
-            }
-            for initBlock in classDecl.initBlocks {
-                emitInitBlock(initBlock, shared: shared, body: &body)
+            case let .initBlock(index):
+                guard index < classDecl.initBlocks.count else { continue }
+                emitInitBlock(classDecl.initBlocks[index], shared: shared, body: &body)
             }
         }
     }
@@ -330,7 +311,7 @@ extension KIRLoweringDriver {
                 let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
                 let nullExpr = arena.appendExpr(.null, type: propType)
                 body.append(.constValue(result: nullExpr, value: .null))
-                if let receiverID = ctx.currentImplicitReceiverExprID,
+                if let receiverID = ctx.activeImplicitReceiverExprID(),
                    let ownerSymbol = sema.symbols.parentSymbol(for: propSymbol),
                    let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[targetSymbol]
                 {
@@ -453,7 +434,7 @@ extension KIRLoweringDriver {
         let propertyName = sema.symbols.symbol(propSymbol)?.name
             ?? compilationCtx.interner.intern("")
         let thisRefExprID: KIRExprID
-        if let receiver = ctx.currentImplicitReceiverExprID {
+        if let receiver = ctx.activeImplicitReceiverExprID() {
             thisRefExprID = receiver
         } else {
             let nullExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)

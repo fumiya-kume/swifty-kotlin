@@ -76,23 +76,31 @@ final class ABIMismatchTests: XCTestCase {
     func testExceptionFunctionCount() {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
-        // kk_error, kk_todo, kk_todo_noarg
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 11)
+        // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 15)
     }
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 40)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 90)
+    }
+
+    func testRegexFunctionCount() {
+        // kk_regex_create, kk_string_matches_regex, kk_string_contains_regex,
+        // kk_regex_find, kk_regex_findAll, kk_string_replace_regex,
+        // kk_string_split_regex, kk_string_toRegex, kk_regex_pattern,
+        // kk_match_result_value, kk_match_result_groupValues
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 11)
     }
 
     func testPrintlnFunctionCount() {
-        // kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 3)
+        // kk_print_any, kk_println_any, kk_println_bool, kk_println_newline
+        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 4)
     }
 
     func testIOFunctionCount() {
-        // kk_readline
-        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 1)
+        // kk_readline, kk_readln
+        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 2)
     }
 
     func testGCFunctionCount() {
@@ -127,35 +135,45 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        // kk_int_to_float, kk_int_to_byte, kk_int_to_short
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 3)
+        // 13 conversion functions + 3 coercion functions = 16 (STDLIB-151: kk_long_to_int)
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 16)
     }
 
     func testMathFunctionCount() {
         // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
         // kk_math_ceil, kk_math_floor, kk_math_round
         XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 7)
+        XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
     }
 
     func testTotalFunctionCount() {
-        let expected = RuntimeABISpec.memoryFunctions.count
-            + RuntimeABISpec.exceptionFunctions.count
-            + RuntimeABISpec.stringFunctions.count
-            + RuntimeABISpec.printlnFunctions.count
-            + RuntimeABISpec.ioFunctions.count
-            + RuntimeABISpec.gcFunctions.count
-            + RuntimeABISpec.coroutineFunctions.count
-            + RuntimeABISpec.boxingFunctions.count
-            + RuntimeABISpec.arrayFunctions.count
-            + RuntimeABISpec.operatorFunctions.count
-            + RuntimeABISpec.rangeFunctions.count
-            + RuntimeABISpec.primitiveNumericConversionFunctions.count
-            + RuntimeABISpec.kPropertyStubFunctions.count
-            + RuntimeABISpec.delegateFunctions.count
-            + RuntimeABISpec.bitwiseFunctions.count
-            + RuntimeABISpec.mathFunctions.count
-            + RuntimeABISpec.collectionFunctions.count
-            + RuntimeABISpec.sequenceFunctions.count
+        let sections = [
+            RuntimeABISpec.memoryFunctions,
+            RuntimeABISpec.exceptionFunctions,
+            RuntimeABISpec.stringFunctions,
+            RuntimeABISpec.printlnFunctions,
+            RuntimeABISpec.ioFunctions,
+            RuntimeABISpec.systemFunctions,
+            RuntimeABISpec.gcFunctions,
+            RuntimeABISpec.coroutineFunctions,
+            RuntimeABISpec.boxingFunctions,
+            RuntimeABISpec.arrayFunctions,
+            RuntimeABISpec.operatorFunctions,
+            RuntimeABISpec.rangeFunctions,
+            RuntimeABISpec.primitiveNumericConversionFunctions,
+            RuntimeABISpec.kPropertyStubFunctions,
+            RuntimeABISpec.delegateFunctions,
+            RuntimeABISpec.bitwiseFunctions,
+            RuntimeABISpec.mathFunctions,
+            RuntimeABISpec.randomFunctions,
+            RuntimeABISpec.collectionFunctions,
+            RuntimeABISpec.sequenceFunctions,
+            RuntimeABISpec.regexFunctions,
+            RuntimeABISpec.comparatorFunctions,
+        ]
+        let expected = sections.reduce(0) { partial, section in
+            partial + section.count
+        }
         XCTAssertEqual(RuntimeABISpec.allFunctions.count, expected)
     }
 

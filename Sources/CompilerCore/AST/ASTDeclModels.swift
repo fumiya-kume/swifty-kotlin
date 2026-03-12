@@ -242,6 +242,7 @@ public struct ObjectDecl {
     public let superTypes: [TypeRefID]
     public let nestedTypeAliases: [TypeAliasDecl]
     public let initBlocks: [FunctionBody]
+    public let classBodyInitOrder: [ClassBodyInitMember]
     public let memberFunctions: [DeclID]
     public let memberProperties: [DeclID]
     public let nestedClasses: [DeclID]
@@ -255,6 +256,7 @@ public struct ObjectDecl {
         superTypes: [TypeRefID] = [],
         nestedTypeAliases: [TypeAliasDecl] = [],
         initBlocks: [FunctionBody] = [],
+        classBodyInitOrder: [ClassBodyInitMember] = [],
         memberFunctions: [DeclID] = [],
         memberProperties: [DeclID] = [],
         nestedClasses: [DeclID] = [],
@@ -267,6 +269,7 @@ public struct ObjectDecl {
         self.superTypes = superTypes
         self.nestedTypeAliases = nestedTypeAliases
         self.initBlocks = initBlocks
+        self.classBodyInitOrder = classBodyInitOrder
         self.memberFunctions = memberFunctions
         self.memberProperties = memberProperties
         self.nestedClasses = nestedClasses

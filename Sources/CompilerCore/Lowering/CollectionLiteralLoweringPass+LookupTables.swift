@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftformat:disable redundantMemberwiseInit
 struct CollectionLiteralLookupTables {
     // Source-level callee names
     let listOfName: InternedString
@@ -9,6 +10,9 @@ struct CollectionLiteralLookupTables {
     let arrayOfName: InternedString
     let intArrayOfName: InternedString
     let longArrayOfName: InternedString
+    let doubleArrayOfName: InternedString
+    let booleanArrayOfName: InternedString
+    let charArrayOfName: InternedString
     let mapOfName: InternedString
     let mutableMapOfName: InternedString
     let emptyMapName: InternedString
@@ -32,6 +36,15 @@ struct CollectionLiteralLookupTables {
     let kkSetIsEmptyName: InternedString
     let kkSetToStringName: InternedString
     let kkStringSplitName: InternedString
+    let kkStringIteratorName: InternedString
+    let kkStringIteratorHasNextName: InternedString
+    let kkStringIteratorNextName: InternedString
+    let kkStringFilterName: InternedString
+    let kkStringMapName: InternedString
+    let kkStringCountName: InternedString
+    let kkStringAnyName: InternedString
+    let kkStringAllName: InternedString
+    let kkStringNoneName: InternedString
 
     // Higher-order collection function ABI names (FUNC-003)
     let kkListMapName: InternedString
@@ -69,6 +82,30 @@ struct CollectionLiteralLookupTables {
     let kkListReversedName: InternedString
     let kkListSortedName: InternedString
     let kkListDistinctName: InternedString
+    let kkListShuffledName: InternedString
+    let kkListRandomName: InternedString
+    let kkListRandomOrNullName: InternedString
+    let kkListFlattenName: InternedString
+    let kkListIndexOfName: InternedString
+    let kkListLastIndexOfName: InternedString
+    let kkListIndexOfFirstName: InternedString
+    let kkListIndexOfLastName: InternedString
+    let kkListChunkedName: InternedString
+    let kkListWindowedName: InternedString
+    let kkListSortedDescendingName: InternedString
+    let kkListSortedByDescendingName: InternedString
+    let kkListSortedWithName: InternedString
+    let kkListPartitionName: InternedString
+
+    // Comparator ABI names (STDLIB-175, STDLIB-177)
+    let kkComparatorFromSelectorName: InternedString
+    let kkComparatorFromSelectorDescendingName: InternedString
+    let kkComparatorFromSelectorTrampolineName: InternedString
+    let kkComparatorFromSelectorDescendingTrampolineName: InternedString
+    let kkComparatorNaturalOrderName: InternedString
+    let kkComparatorReverseOrderName: InternedString
+    let kkComparatorNaturalOrderTrampolineName: InternedString
+    let kkComparatorReverseOrderTrampolineName: InternedString
 
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
@@ -78,6 +115,15 @@ struct CollectionLiteralLookupTables {
     let kkSequenceToListName: InternedString
     let kkSequenceBuilderBuildName: InternedString
     let kkSequenceBuilderYieldName: InternedString
+
+    // Sequence ABI names (STDLIB-095/096/097)
+    let kkSequenceOfName: InternedString
+    let kkSequenceGenerateName: InternedString
+    let kkSequenceForEachName: InternedString
+    let kkSequenceFlatMapName: InternedString
+    let kkSequenceDropName: InternedString
+    let kkSequenceDistinctName: InternedString
+    let kkSequenceZipName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -99,10 +145,37 @@ struct CollectionLiteralLookupTables {
     let kkArrayNewName: InternedString
     let kkArraySetName: InternedString
 
+    // Array conversion / HOF / utility ABI names (STDLIB-087/088/089)
+    let kkArrayToListName: InternedString
+    let kkArrayToMutableListName: InternedString
+    let kkListToTypedArrayName: InternedString
+    let kkArrayMapName: InternedString
+    let kkArrayFilterName: InternedString
+    let kkArrayForEachName: InternedString
+    let kkArrayAnyName: InternedString
+    let kkArrayNoneName: InternedString
+    let kkArrayCopyOfName: InternedString
+    let kkArrayCopyOfRangeName: InternedString
+    let kkArrayFillName: InternedString
+
     // Range iterator names (emitted by ForLoweringPass)
     let kkRangeIteratorName: InternedString
     let kkRangeHasNextName: InternedString
     let kkRangeNextName: InternedString
+
+    // Range factory / member ABI names (STDLIB-090/091/092/093)
+    let kkOpRangeToName: InternedString
+    let kkOpRangeUntilName: InternedString
+    let kkOpDownToName: InternedString
+    let kkOpStepName: InternedString
+    let kkRangeFirstName: InternedString
+    let kkRangeLastName: InternedString
+    let kkRangeCountName: InternedString
+    let kkRangeToListName: InternedString
+    let kkRangeForEachName: InternedString
+    let kkRangeMapName: InternedString
+    let kkRangeReversedName: InternedString
+    let kkOpContainsName: InternedString
 
     // Member names
     let sizeName: InternedString
@@ -148,8 +221,27 @@ struct CollectionLiteralLookupTables {
     let reversedName: InternedString
     let sortedName: InternedString
     let distinctName: InternedString
+    let shuffledName: InternedString
+    let flattenName: InternedString
     let firstName: InternedString
     let lastName: InternedString
+    let indexOfName: InternedString
+    let lastIndexOfName: InternedString
+    let indexOfFirstName: InternedString
+    let indexOfLastName: InternedString
+    let chunkedName: InternedString
+    let windowedName: InternedString
+    let sortedDescendingName: InternedString
+    let sortedByDescendingName: InternedString
+    let sortedWithName: InternedString
+    let partitionName: InternedString
+
+    // Array member names (STDLIB-087/088/089)
+    let toMutableListName: InternedString
+    let toTypedArrayName: InternedString
+    let copyOfName: InternedString
+    let copyOfRangeName: InternedString
+    let fillName: InternedString
 
     // Sequence member names (STDLIB-003)
     let asSequenceName: InternedString
@@ -157,6 +249,10 @@ struct CollectionLiteralLookupTables {
     let takeName: InternedString
     let sequenceName: InternedString
     let yieldName: InternedString
+
+    // Sequence factory names (STDLIB-097)
+    let sequenceOfName: InternedString
+    let generateSequenceName: InternedString
 
     // println support
     let printlnName: InternedString
@@ -168,6 +264,10 @@ struct CollectionLiteralLookupTables {
     let kkPairNewName: InternedString
     let kkPairFirstName: InternedString
     let kkPairSecondName: InternedString
+
+    // Triple (STDLIB-120)
+    let tripleName: InternedString
+    let kkTripleNewName: InternedString
 
     // Builder DSL names (STDLIB-002)
     let buildStringName: InternedString
@@ -194,6 +294,7 @@ struct CollectionLiteralLookupTables {
     let mapFactoryNames: Set<InternedString>
     let arrayOfFactoryNames: Set<InternedString>
     let builderDSLNames: Set<InternedString>
+    let stringProducingCallees: Set<InternedString>
 
     init(interner: StringInterner) {
         listOfName = interner.intern("listOf")
@@ -203,6 +304,9 @@ struct CollectionLiteralLookupTables {
         arrayOfName = interner.intern("arrayOf")
         intArrayOfName = interner.intern("intArrayOf")
         longArrayOfName = interner.intern("longArrayOf")
+        doubleArrayOfName = interner.intern("doubleArrayOf")
+        booleanArrayOfName = interner.intern("booleanArrayOf")
+        charArrayOfName = interner.intern("charArrayOf")
         mapOfName = interner.intern("mapOf")
         mutableMapOfName = interner.intern("mutableMapOf")
         emptyMapName = interner.intern("emptyMap")
@@ -225,6 +329,15 @@ struct CollectionLiteralLookupTables {
         kkSetIsEmptyName = interner.intern("kk_set_is_empty")
         kkSetToStringName = interner.intern("kk_set_to_string")
         kkStringSplitName = interner.intern("kk_string_split")
+        kkStringIteratorName = interner.intern("kk_string_iterator")
+        kkStringIteratorHasNextName = interner.intern("kk_string_iterator_hasNext")
+        kkStringIteratorNextName = interner.intern("kk_string_iterator_next")
+        kkStringFilterName = interner.intern("kk_string_filter")
+        kkStringMapName = interner.intern("kk_string_map")
+        kkStringCountName = interner.intern("kk_string_count")
+        kkStringAnyName = interner.intern("kk_string_any")
+        kkStringAllName = interner.intern("kk_string_all")
+        kkStringNoneName = interner.intern("kk_string_none")
 
         kkListMapName = interner.intern("kk_list_map")
         kkListFilterName = interner.intern("kk_list_filter")
@@ -260,6 +373,29 @@ struct CollectionLiteralLookupTables {
         kkListReversedName = interner.intern("kk_list_reversed")
         kkListSortedName = interner.intern("kk_list_sorted")
         kkListDistinctName = interner.intern("kk_list_distinct")
+        kkListShuffledName = interner.intern("kk_list_shuffled")
+        kkListRandomName = interner.intern("kk_list_random")
+        kkListRandomOrNullName = interner.intern("kk_list_randomOrNull")
+        kkListFlattenName = interner.intern("kk_list_flatten")
+        kkListIndexOfName = interner.intern("kk_list_indexOf")
+        kkListLastIndexOfName = interner.intern("kk_list_lastIndexOf")
+        kkListIndexOfFirstName = interner.intern("kk_list_indexOfFirst")
+        kkListIndexOfLastName = interner.intern("kk_list_indexOfLast")
+        kkListChunkedName = interner.intern("kk_list_chunked")
+        kkListWindowedName = interner.intern("kk_list_windowed")
+        kkListSortedDescendingName = interner.intern("kk_list_sortedDescending")
+        kkListSortedByDescendingName = interner.intern("kk_list_sortedByDescending")
+        kkListSortedWithName = interner.intern("kk_list_sortedWith")
+        kkListPartitionName = interner.intern("kk_list_partition")
+
+        kkComparatorFromSelectorName = interner.intern("kk_comparator_from_selector")
+        kkComparatorFromSelectorDescendingName = interner.intern("kk_comparator_from_selector_descending")
+        kkComparatorFromSelectorTrampolineName = interner.intern("kk_comparator_from_selector_trampoline")
+        kkComparatorFromSelectorDescendingTrampolineName = interner.intern("kk_comparator_from_selector_descending_trampoline")
+        kkComparatorNaturalOrderName = interner.intern("kk_comparator_natural_order")
+        kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
+        kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
+        kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")
@@ -268,6 +404,14 @@ struct CollectionLiteralLookupTables {
         kkSequenceToListName = interner.intern("kk_sequence_to_list")
         kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
         kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
+
+        kkSequenceOfName = interner.intern("kk_sequence_of")
+        kkSequenceGenerateName = interner.intern("kk_sequence_generate")
+        kkSequenceForEachName = interner.intern("kk_sequence_forEach")
+        kkSequenceFlatMapName = interner.intern("kk_sequence_flatMap")
+        kkSequenceDropName = interner.intern("kk_sequence_drop")
+        kkSequenceDistinctName = interner.intern("kk_sequence_distinct")
+        kkSequenceZipName = interner.intern("kk_sequence_zip")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
@@ -289,9 +433,34 @@ struct CollectionLiteralLookupTables {
         kkArrayNewName = interner.intern("kk_array_new")
         kkArraySetName = interner.intern("kk_array_set")
 
+        kkArrayToListName = interner.intern("kk_array_toList")
+        kkArrayToMutableListName = interner.intern("kk_array_toMutableList")
+        kkListToTypedArrayName = interner.intern("kk_list_toTypedArray")
+        kkArrayMapName = interner.intern("kk_array_map")
+        kkArrayFilterName = interner.intern("kk_array_filter")
+        kkArrayForEachName = interner.intern("kk_array_forEach")
+        kkArrayAnyName = interner.intern("kk_array_any")
+        kkArrayNoneName = interner.intern("kk_array_none")
+        kkArrayCopyOfName = interner.intern("kk_array_copyOf")
+        kkArrayCopyOfRangeName = interner.intern("kk_array_copyOfRange")
+        kkArrayFillName = interner.intern("kk_array_fill")
+
         kkRangeIteratorName = interner.intern("kk_range_iterator")
         kkRangeHasNextName = interner.intern("kk_range_hasNext")
         kkRangeNextName = interner.intern("kk_range_next")
+
+        kkOpRangeToName = interner.intern("kk_op_rangeTo")
+        kkOpRangeUntilName = interner.intern("kk_op_rangeUntil")
+        kkOpDownToName = interner.intern("kk_op_downTo")
+        kkOpStepName = interner.intern("kk_op_step")
+        kkRangeFirstName = interner.intern("kk_range_first")
+        kkRangeLastName = interner.intern("kk_range_last")
+        kkRangeCountName = interner.intern("kk_range_count")
+        kkRangeToListName = interner.intern("kk_range_toList")
+        kkRangeForEachName = interner.intern("kk_range_forEach")
+        kkRangeMapName = interner.intern("kk_range_map")
+        kkRangeReversedName = interner.intern("kk_range_reversed")
+        kkOpContainsName = interner.intern("kk_op_contains")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")
@@ -334,14 +503,35 @@ struct CollectionLiteralLookupTables {
         reversedName = interner.intern("reversed")
         sortedName = interner.intern("sorted")
         distinctName = interner.intern("distinct")
+        shuffledName = interner.intern("shuffled")
+        flattenName = interner.intern("flatten")
         firstName = interner.intern("first")
         lastName = interner.intern("last")
+        indexOfName = interner.intern("indexOf")
+        lastIndexOfName = interner.intern("lastIndexOf")
+        indexOfFirstName = interner.intern("indexOfFirst")
+        indexOfLastName = interner.intern("indexOfLast")
+        chunkedName = interner.intern("chunked")
+        windowedName = interner.intern("windowed")
+        sortedDescendingName = interner.intern("sortedDescending")
+        sortedByDescendingName = interner.intern("sortedByDescending")
+        sortedWithName = interner.intern("sortedWith")
+        partitionName = interner.intern("partition")
+
+        toMutableListName = interner.intern("toMutableList")
+        toTypedArrayName = interner.intern("toTypedArray")
+        copyOfName = interner.intern("copyOf")
+        copyOfRangeName = interner.intern("copyOfRange")
+        fillName = interner.intern("fill")
 
         asSequenceName = interner.intern("asSequence")
         toListName = interner.intern("toList")
         takeName = interner.intern("take")
         sequenceName = interner.intern("sequence")
         yieldName = interner.intern("yield")
+
+        sequenceOfName = interner.intern("sequenceOf")
+        generateSequenceName = interner.intern("generateSequence")
 
         printlnName = interner.intern("println")
         kkPrintlnAnyName = interner.intern("kk_println_any")
@@ -351,6 +541,9 @@ struct CollectionLiteralLookupTables {
         kkPairNewName = interner.intern("kk_pair_new")
         kkPairFirstName = interner.intern("kk_pair_first")
         kkPairSecondName = interner.intern("kk_pair_second")
+
+        tripleName = interner.intern("Triple")
+        kkTripleNewName = interner.intern("kk_triple_new")
 
         buildStringName = interner.intern("buildString")
         buildListName = interner.intern("buildList")
@@ -372,7 +565,41 @@ struct CollectionLiteralLookupTables {
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
-        arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName]
+        arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildMapName]
+
+        stringProducingCallees = [
+            interner.intern("kk_string_concat"),
+            interner.intern("kk_string_trim"),
+            interner.intern("kk_string_lowercase"),
+            interner.intern("kk_string_uppercase"),
+            interner.intern("kk_string_replace"),
+            interner.intern("kk_string_replaceFirst"),
+            interner.intern("kk_string_substring"),
+            interner.intern("kk_string_padStart"),
+            interner.intern("kk_string_padEnd"),
+            interner.intern("kk_string_repeat"),
+            interner.intern("kk_string_reversed"),
+            interner.intern("kk_string_take"),
+            interner.intern("kk_string_drop"),
+            interner.intern("kk_string_takeLast"),
+            interner.intern("kk_string_dropLast"),
+            interner.intern("kk_string_removePrefix"),
+            interner.intern("kk_string_removeSuffix"),
+            interner.intern("kk_string_removeSurrounding"),
+            interner.intern("kk_string_substringBefore"),
+            interner.intern("kk_string_substringAfter"),
+            interner.intern("kk_string_substringBeforeLast"),
+            interner.intern("kk_string_substringAfterLast"),
+            interner.intern("kk_string_prependIndent_default"),
+            interner.intern("kk_string_prependIndent"),
+            interner.intern("kk_string_replaceIndent_default"),
+            interner.intern("kk_string_replaceIndent"),
+            kkStringFilterName,
+            kkStringMapName,
+            interner.intern("kk_build_string"),
+        ]
     }
 }
+
+// swiftformat:enable redundantMemberwiseInit

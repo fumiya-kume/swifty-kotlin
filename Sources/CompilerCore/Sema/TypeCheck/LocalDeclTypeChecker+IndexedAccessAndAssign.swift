@@ -75,6 +75,51 @@ extension LocalDeclTypeChecker {
             }
         }
 
+        if sema.types.isSubtype(receiverType, sema.types.stringType) {
+            let stringGetCandidates = ctx.cachedScopeLookup(getName).filter { symbolID in
+                guard let symbol = ctx.cachedSymbol(symbolID),
+                      symbol.kind == .function,
+                      let signature = sema.symbols.functionSignature(for: symbolID),
+                      let declaredReceiver = signature.receiverType
+                else {
+                    return false
+                }
+                return sema.types.isSubtype(sema.types.stringType, declaredReceiver)
+                    && symbol.flags.contains(.operatorFunction)
+            }
+            if !stringGetCandidates.isEmpty {
+                let callArgs = indexTypes.map { CallArg(type: $0) }
+                let resolved = ctx.resolver.resolveCall(
+                    candidates: stringGetCandidates,
+                    call: CallExpr(
+                        range: range,
+                        calleeName: getName,
+                        args: callArgs
+                    ),
+                    expectedType: nil,
+                    implicitReceiverType: receiverType,
+                    ctx: ctx.semaCtx
+                )
+                if let chosen = resolved.chosenCallee,
+                   let signature = sema.symbols.functionSignature(for: chosen)
+                {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: resolved.substitutedTypeArguments
+                                .sorted(by: { $0.key.rawValue < $1.key.rawValue })
+                                .map(\.value),
+                            parameterMapping: resolved.parameterMapping
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    sema.bindings.bindExprType(id, type: signature.returnType)
+                    return signature.returnType
+                }
+            }
+        }
+
         // Fallback: built-in array access (single Int index only)
         guard indices.count == 1 else {
             sema.bindings.bindExprType(id, type: sema.types.errorType)

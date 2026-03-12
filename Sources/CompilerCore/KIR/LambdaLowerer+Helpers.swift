@@ -179,7 +179,7 @@ extension LambdaLowerer {
                     sema: sema
                 )
             }
-            if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
+            if let receiverSymbol = driver.ctx.activeImplicitReceiverSymbol(),
                containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
                || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
                canCaptureSymbolForLambda(
@@ -227,7 +227,7 @@ extension LambdaLowerer {
                 sema: sema
             )
         }
-        if let receiverSymbol = driver.ctx.currentImplicitReceiverSymbol,
+        if let receiverSymbol = driver.ctx.activeImplicitReceiverSymbol(),
            containsImplicitReceiverReference(in: lambdaBodyExprID, ast: ast)
            || containsImplicitReceiverMemberAccess(in: lambdaBodyExprID, ast: ast, sema: sema),
            canCaptureSymbolForLambda(
@@ -380,11 +380,11 @@ extension LambdaLowerer {
         arena: KIRArena,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
-        if let localValue = driver.ctx.localValuesBySymbol[symbol] {
+        if let localValue = driver.ctx.localValue(for: symbol) {
             return localValue
         }
-        if symbol == driver.ctx.currentImplicitReceiverSymbol,
-           let receiverExprID = driver.ctx.currentImplicitReceiverExprID
+        if symbol == driver.ctx.activeImplicitReceiverSymbol(),
+           let receiverExprID = driver.ctx.activeImplicitReceiverExprID()
         {
             return receiverExprID
         }

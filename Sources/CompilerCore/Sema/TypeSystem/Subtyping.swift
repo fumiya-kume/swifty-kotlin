@@ -167,6 +167,61 @@ extension TypeSystem {
             }
             return isSubtype(leftFunction.returnType, rightFunction.returnType)
 
+        case let (.classType(leftClass), .functionType(rightFunction)):
+            // SAM: fun interface <: function type when the SAM method signature matches
+            guard nullabilitySubtype(leftClass.nullability, rightFunction.nullability) else {
+                return false
+            }
+            guard let symbols = symbolTable else { return false }
+            guard let sym = symbols.symbol(leftClass.classSymbol),
+                  sym.kind == .interface,
+                  sym.flags.contains(.funInterface)
+            else {
+                return false
+            }
+            let children = symbols.children(ofFQName: sym.fqName)
+            var abstractSignatures: [(SymbolID, FunctionSignature)] = []
+            for childID in children {
+                guard let childSym = symbols.symbol(childID),
+                      childSym.kind == .function,
+                      childSym.flags.contains(.abstractType),
+                      let signature = symbols.functionSignature(for: childID)
+                else {
+                    continue
+                }
+                abstractSignatures.append((childID, signature))
+            }
+            guard abstractSignatures.count == 1 else { return false }
+            let samSignature = abstractSignatures[0].1
+            let typeParamSymbols = nominalTypeParameterSymbols(for: leftClass.classSymbol)
+            guard typeParamSymbols.count == leftClass.args.count else { return false }
+            let typeVarBySymbol = makeTypeVarBySymbol(typeParamSymbols)
+            var substitution: [TypeVarID: TypeID] = [:]
+            for (index, arg) in leftClass.args.enumerated() {
+                guard index < typeParamSymbols.count else { break }
+                let tpSymbol = typeParamSymbols[index]
+                guard let typeVar = typeVarBySymbol[tpSymbol] else { continue }
+                switch arg {
+                case let .invariant(type): substitution[typeVar] = type
+                case let .out(type): substitution[typeVar] = type
+                case .in, .star: substitution[typeVar] = anyType
+                }
+            }
+            let samParamTypes = samSignature.parameterTypes.map {
+                substituteTypeParameters(in: $0, substitution: substitution, typeVarBySymbol: typeVarBySymbol)
+            }
+            let samReturnType = substituteTypeParameters(
+                in: samSignature.returnType,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+            guard samParamTypes.count == rightFunction.params.count else { return false }
+            guard samSignature.isSuspend == rightFunction.isSuspend else { return false }
+            for (samParam, rightParam) in zip(samParamTypes, rightFunction.params) {
+                if !isSubtype(rightParam, samParam) { return false }
+            }
+            return isSubtype(samReturnType, rightFunction.returnType)
+
         case let (.any(leftNullability), .any(rightNullability)):
             return nullabilitySubtype(leftNullability, rightNullability)
 

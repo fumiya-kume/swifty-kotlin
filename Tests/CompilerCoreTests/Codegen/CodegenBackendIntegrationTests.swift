@@ -215,7 +215,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "nan\nnan\n")
+            XCTAssertEqual(normalizedStdout, "NaN\nNaN\n")
         }
     }
 
@@ -246,6 +246,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
             XCTAssertEqual(normalizedStdout, "3\n1\n2\n3\ntrue\nfalse\nfalse\n")
+        }
+    }
+
+    func testCodegenEnumNameAndOrdinal() throws {
+        let source = """
+        enum class Color { RED, GREEN, BLUE }
+
+        fun main() {
+            println(Color.RED.name)
+            println(Color.RED.ordinal)
+            println(Color.GREEN.name)
+            println(Color.GREEN.ordinal)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "EnumNameOrdinal",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "RED\n0\nGREEN\n1\n")
         }
     }
 

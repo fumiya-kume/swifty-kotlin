@@ -123,6 +123,7 @@ extension DataFlowSemaPhase {
         }
 
         registerSyntheticPairStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticTripleStub(symbols: symbols, types: types, interner: interner)
 
         // Ensure the "kotlin.collections" package exists.
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
@@ -317,6 +318,99 @@ extension DataFlowSemaPhase {
         )
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
+
+        registerFunctionMember(
+            name: "toList",
+            returnType: types.anyType,
+            externalLinkName: "kk_pair_toList",
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticTripleStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let tripleFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Triple")]
+        let tripleName = interner.intern("Triple")
+        let tripleSymbol: SymbolID = if let existing = symbols.lookup(fqName: tripleFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class, name: tripleName, fqName: tripleFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+        }
+
+        let aName = interner.intern("A")
+        let bName = interner.intern("B")
+        let cName = interner.intern("C")
+        let aSymbol = symbols.lookup(fqName: tripleFQName + [aName]) ?? symbols.define(
+            kind: .typeParameter, name: aName, fqName: tripleFQName + [aName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        let bSymbol = symbols.lookup(fqName: tripleFQName + [bName]) ?? symbols.define(
+            kind: .typeParameter, name: bName, fqName: tripleFQName + [bName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        let cSymbol = symbols.lookup(fqName: tripleFQName + [cName]) ?? symbols.define(
+            kind: .typeParameter, name: cName, fqName: tripleFQName + [cName],
+            declSite: nil, visibility: .private, flags: []
+        )
+        types.setNominalTypeParameterSymbols([aSymbol, bSymbol, cSymbol], for: tripleSymbol)
+        types.setNominalTypeParameterVariances([.out, .out, .out], for: tripleSymbol)
+
+        let aType = types.make(.typeParam(TypeParamType(symbol: aSymbol, nullability: .nonNull)))
+        let bType = types.make(.typeParam(TypeParamType(symbol: bSymbol, nullability: .nonNull)))
+        let cType = types.make(.typeParam(TypeParamType(symbol: cSymbol, nullability: .nonNull)))
+        let tripleType = types.make(.classType(ClassType(
+            classSymbol: tripleSymbol,
+            args: [.out(aType), .out(bType), .out(cType)],
+            nullability: .nonNull
+        )))
+
+        func registerFunctionMember(
+            name: String, returnType: TypeID, externalLinkName: String, flags: SymbolFlags
+        ) {
+            let memberName = interner.intern(name)
+            let memberFQName = tripleFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .function, name: memberName, fqName: memberFQName,
+                declSite: nil, visibility: .public, flags: flags
+            )
+            symbols.setParentSymbol(tripleSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: tripleType, parameterTypes: [], returnType: returnType,
+                    typeParameterSymbols: [aSymbol, bSymbol, cSymbol], classTypeParameterCount: 3
+                ),
+                for: memberSymbol
+            )
+        }
+
+        func registerPropertyMember(name: String, propertyType: TypeID, externalLinkName: String) {
+            let memberName = interner.intern(name)
+            let memberFQName = tripleFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            let memberSymbol = symbols.define(
+                kind: .property, name: memberName, fqName: memberFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(tripleSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setPropertyType(propertyType, for: memberSymbol)
+        }
+
+        registerFunctionMember(name: "component1", returnType: aType, externalLinkName: "kk_triple_first", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component2", returnType: bType, externalLinkName: "kk_triple_second", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component3", returnType: cType, externalLinkName: "kk_triple_third", flags: [.synthetic, .operatorFunction])
+        registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
+        registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
+        registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
+        registerFunctionMember(name: "toList", returnType: types.anyType, externalLinkName: "kk_triple_toList", flags: [.synthetic])
     }
 
     private func registerSyntheticCollectionStub(
@@ -414,6 +508,13 @@ extension DataFlowSemaPhase {
         registerListIndexedMembers(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
+        registerListComponentNMembers(
+            symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
@@ -538,6 +639,56 @@ extension DataFlowSemaPhase {
             ),
             for: listGetSymbol
         )
+    }
+
+    /// STDLIB-183: List<T>.component1() ~ component5() for destructuring.
+    private func registerListComponentNMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let componentNames = ["component1", "component2", "component3", "component4", "component5"]
+        let externalLinkNames = [
+            "kk_list_component1", "kk_list_component2", "kk_list_component3",
+            "kk_list_component4", "kk_list_component5",
+        ]
+        for (componentName, externalLinkName) in zip(componentNames, externalLinkNames) {
+            let name = interner.intern(componentName)
+            let fqName = listFQName + [name]
+            guard symbols.lookupAll(fqName: fqName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.receiverType == listReceiverType && sig.parameterTypes.isEmpty
+            }) == nil else { continue }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: name,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: listTypeParamType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerListContainsAndIsEmptyMembers(
@@ -815,6 +966,11 @@ extension DataFlowSemaPhase {
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
+        registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
+        registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
+        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked")
+        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed")
+        registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
     }
 
     private func registerListAggregateMembers(
@@ -903,6 +1059,119 @@ extension DataFlowSemaPhase {
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
+        // random / randomOrNull (STDLIB-166)
+        registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
+        registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
+
+        // indexOf / lastIndexOf (non-HOF, element argument)
+        let indexOfName = interner.intern("indexOf")
+        let indexOfFQName = listFQName + [indexOfName]
+        if symbols.lookup(fqName: indexOfFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfName,
+                fqName: indexOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let lastIndexOfName = interner.intern("lastIndexOf")
+        let lastIndexOfFQName = listFQName + [lastIndexOfName]
+        if symbols.lookup(fqName: lastIndexOfFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: lastIndexOfName,
+                fqName: lastIndexOfFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_lastIndexOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // indexOfFirst / indexOfLast (HOF, predicate lambda)
+        let predicateType = types.make(.functionType(FunctionType(
+            params: [listTypeParamType],
+            returnType: types.booleanType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let indexOfFirstName = interner.intern("indexOfFirst")
+        let indexOfFirstFQName = listFQName + [indexOfFirstName]
+        if symbols.lookup(fqName: indexOfFirstFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfFirstName,
+                fqName: indexOfFirstFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOfFirst", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let indexOfLastName = interner.intern("indexOfLast")
+        let indexOfLastFQName = listFQName + [indexOfLastName]
+        if symbols.lookup(fqName: indexOfLastFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: indexOfLastName,
+                fqName: indexOfLastFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_indexOfLast", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         let sumOfName = interner.intern("sumOf")
         let sumOfFQName = listFQName + [sumOfName]
         if symbols.lookup(fqName: sumOfFQName) == nil {
@@ -927,6 +1196,103 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [transformType],
                     returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // sortedByDescending (HOF, selector lambda)
+        let sortedByDescendingName = interner.intern("sortedByDescending")
+        let sortedByDescendingFQName = listFQName + [sortedByDescendingName]
+        if symbols.lookup(fqName: sortedByDescendingFQName) == nil {
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sortedByDescendingName,
+                fqName: sortedByDescendingFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_sortedByDescending", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [selectorType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // sortedWith (HOF, comparator lambda with 2 args)
+        let sortedWithName = interner.intern("sortedWith")
+        let sortedWithFQName = listFQName + [sortedWithName]
+        if symbols.lookup(fqName: sortedWithFQName) == nil {
+            let comparatorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType, listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: sortedWithName,
+                fqName: sortedWithFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_sortedWith", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [comparatorType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // partition (HOF, predicate lambda)
+        let partitionName = interner.intern("partition")
+        let partitionFQName = listFQName + [partitionName]
+        if symbols.lookup(fqName: partitionFQName) == nil {
+            let predicateType2 = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.booleanType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: partitionName,
+                fqName: partitionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_partition", for: memberSymbol)
+            // Return type is Pair<List<T>, List<T>> — use Any for now, refined by inference
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType2],
+                    returnType: types.anyType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),

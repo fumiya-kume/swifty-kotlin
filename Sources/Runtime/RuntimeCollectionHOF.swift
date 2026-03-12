@@ -654,3 +654,292 @@ public func kk_list_distinct(_ listRaw: Int) -> Int {
     let elements = runtimeListBox(from: listRaw)?.elements ?? []
     return registerRuntimeObject(RuntimeListBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
+
+@_cdecl("kk_list_shuffled")
+public func kk_list_shuffled(_ listRaw: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let shuffled = elements.shuffled()
+    return registerRuntimeObject(RuntimeListBox(elements: shuffled))
+}
+
+@_cdecl("kk_list_random")
+public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: List is empty.")
+        return 0
+    }
+    return list.elements.randomElement()!
+}
+
+@_cdecl("kk_list_randomOrNull")
+public func kk_list_randomOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw), let element = list.elements.randomElement() else {
+        return runtimeNullSentinelInt
+    }
+    return element
+}
+
+@_cdecl("kk_list_flatten")
+public func kk_list_flatten(_ listRaw: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    var result: [Int] = []
+    for subListRaw in elements {
+        if let subList = runtimeListBox(from: subListRaw) {
+            result.append(contentsOf: subList.elements)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_list_chunked")
+public func kk_list_chunked(_ listRaw: Int, _ size: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let clampedSize = max(1, size)
+    var chunks: [Int] = []
+    var i = 0
+    while i < elements.count {
+        let end = min(i + clampedSize, elements.count)
+        let chunk = Array(elements[i ..< end])
+        chunks.append(registerRuntimeObject(RuntimeListBox(elements: chunk)))
+        i = end
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: chunks))
+}
+
+@_cdecl("kk_list_windowed")
+public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    var windows: [Int] = []
+    var i = 0
+    while i + clampedSize <= elements.count {
+        let window = Array(elements[i ..< (i + clampedSize)])
+        windows.append(registerRuntimeObject(RuntimeListBox(elements: window)))
+        i += clampedStep
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: windows))
+}
+
+@_cdecl("kk_list_indexOf")
+public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
+        return index
+    }
+    return -1
+}
+
+@_cdecl("kk_list_lastIndexOf")
+public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    var lastIdx = -1
+    for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
+        lastIdx = index
+    }
+    return lastIdx
+}
+
+@_cdecl("kk_list_indexOfFirst")
+public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (index, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return -1 }
+        if maybeUnbox(result) != 0 { return index }
+    }
+    return -1
+}
+
+@_cdecl("kk_list_indexOfLast")
+public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var lastIdx = -1
+    for (index, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return -1 }
+        if maybeUnbox(result) != 0 { lastIdx = index }
+    }
+    return lastIdx
+}
+
+// MARK: - filterIsInstance (STDLIB-114)
+
+@_cdecl("kk_list_filterIsInstance")
+public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    var result: [Int] = []
+    for elem in elements where kk_op_is(elem, typeToken) != 0 {
+        result.append(elem)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+// MARK: - Sorting variants (STDLIB-115)
+
+@_cdecl("kk_list_sortedDescending")
+public func kk_list_sortedDescending(_ listRaw: Int) -> Int {
+    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    let sorted = elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    return registerRuntimeObject(RuntimeListBox(elements: sorted))
+}
+
+@_cdecl("kk_list_sortedByDescending")
+public func kk_list_sortedByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        keys.append(key)
+    }
+    let indexed = list.elements.enumerated().map { ($0.offset, $0.element, keys[$0.offset]) }
+    let sorted = indexed.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.2, rhs.2)
+        if comparison != 0 { return comparison > 0 }
+        return lhs.0 < rhs.0
+    }.map(\.1)
+    return registerRuntimeObject(RuntimeListBox(elements: sorted))
+}
+
+@_cdecl("kk_list_sortedWith")
+public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var hadThrow = false
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        guard !hadThrow else { return false }
+        var thrown = 0
+        let result = lambda(closureRaw, lhs.element, rhs.element, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; hadThrow = true; return false }
+        if result != 0 { return result < 0 }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    if hadThrow { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    return registerRuntimeObject(RuntimeListBox(elements: sorted))
+}
+
+// MARK: - Partition (STDLIB-112)
+
+@_cdecl("kk_list_partition")
+public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        let emptyList = registerRuntimeObject(RuntimeListBox(elements: []))
+        return kk_pair_new(emptyList, emptyList)
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var matching: [Int] = []
+    var nonMatching: [Int] = []
+    for elem in list.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            let emptyList = registerRuntimeObject(RuntimeListBox(elements: []))
+            return kk_pair_new(emptyList, emptyList)
+        }
+        if maybeUnbox(result) != 0 {
+            matching.append(elem)
+        } else {
+            nonMatching.append(elem)
+        }
+    }
+    let matchingList = registerRuntimeObject(RuntimeListBox(elements: matching))
+    let nonMatchingList = registerRuntimeObject(RuntimeListBox(elements: nonMatching))
+    return kk_pair_new(matchingList, nonMatchingList)
+}
+
+// MARK: - Array higher-order functions (STDLIB-088)
+
+@_cdecl("kk_array_map")
+public func kk_array_map(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var mapped: [Int] = []
+    mapped.reserveCapacity(array.elements.count)
+    for elem in array.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        mapped.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+@_cdecl("kk_array_filter")
+public func kk_array_filter(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var filtered: [Int] = []
+    for elem in array.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if maybeUnbox(result) != 0 { filtered.append(elem) }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_array_forEach")
+public func kk_array_forEach(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in array.elements {
+        var thrown = 0
+        _ = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    }
+    return 0
+}
+
+@_cdecl("kk_array_any")
+public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(0) }
+    // Zero-arg overload: any() returns true if array is non-empty
+    if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 0 : 1) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in array.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(0) }
+        if maybeUnbox(result) != 0 { return kk_box_bool(1) }
+    }
+    return kk_box_bool(0)
+}
+
+@_cdecl("kk_array_none")
+public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(1) }
+    // Zero-arg overload: none() returns true if array is empty
+    if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 1 : 0) }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in array.elements {
+        var thrown = 0
+        let result = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(1) }
+        if maybeUnbox(result) != 0 { return kk_box_bool(0) }
+    }
+    return kk_box_bool(1)
+}

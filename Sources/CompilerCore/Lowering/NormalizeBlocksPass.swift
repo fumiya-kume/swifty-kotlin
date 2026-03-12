@@ -32,23 +32,25 @@ final class NormalizeBlocksPass: LoweringPass {
     func run(module: KIRModule, ctx _: KIRContext) throws {
         module.arena.transformFunctions { function in
             var updated = function
-            updated.body = function.body.filter { instruction in
+            updated.replaceBody(function.body.filter { instruction in
                 switch instruction {
                 case .beginBlock, .endBlock:
                     false
                 default:
                     true
                 }
-            }
+            })
             if let last = updated.body.last {
                 switch last {
                 case .returnUnit, .returnValue:
                     break
                 default:
-                    updated.body.append(.returnUnit)
+                    var normalizedBody = updated.body
+                    normalizedBody.append(.returnUnit)
+                    updated.replaceBody(normalizedBody)
                 }
             } else {
-                updated.body = [.returnUnit]
+                updated.replaceBody([.returnUnit])
             }
             return updated
         }

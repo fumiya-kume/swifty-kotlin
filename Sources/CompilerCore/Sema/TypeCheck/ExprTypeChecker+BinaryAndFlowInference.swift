@@ -305,6 +305,7 @@ extension ExprTypeChecker {
             }
         case .rangeTo, .rangeUntil, .downTo, .step:
             type = sema.types.intType
+            sema.bindings.markRangeExpr(id)
         case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
             preconditionFailure("Bitwise/shift binary operators must be parsed as infix member calls")
         }

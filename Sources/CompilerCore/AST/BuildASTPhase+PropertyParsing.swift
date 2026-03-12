@@ -108,6 +108,47 @@ extension BuildASTPhase {
             return (getter, setter)
         }
 
+        // Check for propertyAccessor nodes (structured inline accessor syntax).
+        // When the parser wraps accessor tokens in .propertyAccessor nodes we
+        // can collect them reliably without flat-token scanning.
+        // If a propertyAccessor contains a .block child (e.g. `set(v) { ... }`),
+        // process it directly using accessorBody which handles block bodies correctly.
+        var accessorTokens: [Token] = []
+        var hasAccessorNode = false
+        for child in arena.children(of: nodeID) {
+            if case let .node(childID) = child,
+               arena.node(childID).kind == .propertyAccessor
+            {
+                hasAccessorNode = true
+                let hasBlock = arena.children(of: childID).contains { child in
+                    if case let .node(grandchildID) = child {
+                        return arena.node(grandchildID).kind == .block
+                    }
+                    return false
+                }
+                if hasBlock {
+                    processPropertyAccessorWithBlock(
+                        childID,
+                        in: arena,
+                        interner: interner,
+                        astArena: astArena,
+                        getter: &getter,
+                        setter: &setter
+                    )
+                } else {
+                    accessorTokens.append(contentsOf: collectTokens(from: childID, in: arena))
+                }
+            }
+        }
+        if hasAccessorNode {
+            if !accessorTokens.isEmpty {
+                let inlineResult = parseInlineAccessors(from: accessorTokens, nodeRange: arena.node(nodeID).range, interner: interner, astArena: astArena)
+                if getter == nil { getter = inlineResult.getter }
+                if setter == nil { setter = inlineResult.setter }
+            }
+            return (getter, setter)
+        }
+
         // Fallback: detect inline accessor syntax from flat tokens.
         // Handles `val x: T get() = expr` where get()/set() appear as flat
         // tokens of the property node without a wrapping block.
@@ -236,6 +277,34 @@ extension BuildASTPhase {
                     body = .unit
                 }
                 remaining = remaining[exprEnd...]
+            } else if afterParen < remaining.endIndex,
+                      remaining[afterParen].kind == .symbol(.lBrace)
+            {
+                // Block body: `set(v) { ... }` or `get() { ... }`
+                var depth = 1
+                var braceEnd = afterParen + 1
+                while braceEnd < remaining.endIndex, depth > 0 {
+                    if remaining[braceEnd].kind == .symbol(.lBrace) { depth += 1 }
+                    if remaining[braceEnd].kind == .symbol(.rBrace) { depth -= 1 }
+                    braceEnd += 1
+                }
+                let bodyTokens = Array(remaining[(afterParen + 1) ..< (braceEnd - 1)])
+                    .filter { $0.kind != .symbol(.semicolon) }
+                if !bodyTokens.isEmpty {
+                    let parser = ExpressionParser(
+                        tokens: ArraySlice(bodyTokens), interner: interner, astArena: astArena
+                    )
+                    if let exprID = parser.parse(),
+                       let range = astArena.exprRange(exprID)
+                    {
+                        body = .expr(exprID, range)
+                    } else {
+                        body = .unit
+                    }
+                } else {
+                    body = .unit
+                }
+                remaining = remaining[braceEnd...]
             } else {
                 body = .unit
                 remaining = remaining[afterParen...]
@@ -256,6 +325,49 @@ extension BuildASTPhase {
         }
 
         return (getter, setter)
+    }
+
+    private func processPropertyAccessorWithBlock(
+        _ accessorNodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena,
+        getter: inout PropertyAccessorDecl?,
+        setter: inout PropertyAccessorDecl?
+    ) {
+        let headerTokens = collectDirectTokens(from: accessorNodeID, in: arena).filter { token in
+            token.kind != .symbol(.semicolon)
+        }
+        guard let firstToken = headerTokens.first else { return }
+
+        let kind: PropertyAccessorKind
+        switch firstToken.kind {
+        case .softKeyword(.get): kind = .getter
+        case .softKeyword(.set): kind = .setter
+        default: return
+        }
+
+        let parameterName: InternedString? = kind == .setter
+            ? setterParameterName(from: headerTokens, interner: interner)
+            : nil
+
+        let body = accessorBody(
+            statementID: accessorNodeID,
+            headerTokens: headerTokens,
+            in: arena,
+            interner: interner,
+            astArena: astArena
+        )
+        let accessor = PropertyAccessorDecl(
+            range: arena.node(accessorNodeID).range,
+            kind: kind,
+            parameterName: parameterName,
+            body: body
+        )
+        switch kind {
+        case .getter: if getter == nil { getter = accessor }
+        case .setter: if setter == nil { setter = accessor }
+        }
     }
 
     private func processAccessorChild(

@@ -84,8 +84,14 @@ struct TypeCheckHelpers {
             return nil
         }
         switch interner.resolve(symbol.name) {
-        case "IntArray":
+        case "IntArray", "LongArray":
             return sema.types.intType
+        case "DoubleArray":
+            return sema.types.doubleType
+        case "BooleanArray":
+            return sema.types.booleanType
+        case "CharArray":
+            return sema.types.charType
         default:
             // For generic collection types (e.g. List<String?>, MutableList<Int>),
             // extract the first type argument as the element type.
@@ -133,7 +139,7 @@ struct TypeCheckHelpers {
         case "delay":
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
-        case "kk_array_new", "IntArray":
+        case "kk_array_new", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray":
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType
         case "kk_array_get", "kk_list_get":

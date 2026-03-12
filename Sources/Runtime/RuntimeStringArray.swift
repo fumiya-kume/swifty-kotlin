@@ -15,6 +15,77 @@ public func kk_throwable_is_cancellation(_ throwableRaw: Int) -> Int {
     kk_is_cancellation_exception(throwableRaw)
 }
 
+@_cdecl("kk_throwable_message")
+public func kk_throwable_message(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let message: String
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        message = throwable.message
+    } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+        message = cancellation.message
+    } else {
+        return runtimeNullSentinelInt
+    }
+    let box = RuntimeStringBox(message)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_throwable_cause")
+public func kk_throwable_cause(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        return runtimeNullSentinelInt
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        return runtimeNullSentinelInt
+    }
+    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        return throwable.cause == 0 ? runtimeNullSentinelInt : throwable.cause
+    }
+    return runtimeNullSentinelInt
+}
+
+@_cdecl("kk_throwable_stackTraceToString")
+public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
+    if throwableRaw == runtimeNullSentinelInt || throwableRaw == 0 {
+        let box = RuntimeStringBox("")
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: opaque))
+        }
+        return Int(bitPattern: opaque)
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: throwableRaw) else {
+        let box = RuntimeStringBox("")
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+        runtimeStorage.withLock { state in
+            state.objectPointers.insert(UInt(bitPattern: opaque))
+        }
+        return Int(bitPattern: opaque)
+    }
+    let message: String = if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        throwable.message
+    } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
+        cancellation.message
+    } else {
+        ""
+    }
+    let box = RuntimeStringBox(message)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
 @_cdecl("kk_panic")
 public func kk_panic(_ cstr: UnsafePointer<CChar>) -> Never {
     fatalError(runtimePanicMessage(fromCString: cstr))
@@ -200,6 +271,18 @@ public func kk_op_safe_cast(_ value: Int, _ typeToken: Int) -> Int {
 
 @_cdecl("kk_op_contains")
 public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
+    // Range check first
+    if let range = runtimeRangeBox(from: container) {
+        if range.step > 0 {
+            guard element >= range.first, element <= range.last else { return 0 }
+            return (element - range.first) % range.step == 0 ? 1 : 0
+        } else if range.step < 0 {
+            guard element <= range.first, element >= range.last else { return 0 }
+            return (range.first - element) % (-range.step) == 0 ? 1 : 0
+        }
+        return 0
+    }
+    // Array check
     guard let array = runtimeArrayBox(from: container) else {
         return 0
     }
@@ -431,11 +514,11 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
-        Swift.print(doubleBox.value)
+        Swift.print(runtimeFormatFloatingPoint(doubleBox.value))
         return
     }
     if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
-        Swift.print(floatBox.value)
+        Swift.print(runtimeFormatFloatingPoint(floatBox.value))
         return
     }
     if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
@@ -477,6 +560,13 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("(\(first), \(second))")
         return
     }
+    if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
+        let first = runtimeRenderAnyForPrint(tripleBox.first)
+        let second = runtimeRenderAnyForPrint(tripleBox.second)
+        let third = runtimeRenderAnyForPrint(tripleBox.third)
+        Swift.print("(\(first), \(second), \(third))")
+        return
+    }
     if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         Swift.print("kotlin.collections.IndexingIterable@\(hex)")
@@ -488,6 +578,13 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     Swift.print("<object \(raw)>")
+}
+
+/// Runtime support for kotlin.io.print(message) (no newline).
+@_cdecl("kk_print_any")
+public func kk_print_any(_ obj: UnsafeMutableRawPointer?) {
+    let intValue = if let ptr = obj { Int(bitPattern: ptr) } else { 0 }
+    Swift.print(runtimeRenderAnyForPrint(intValue), terminator: "")
 }
 
 /// Runtime support for kotlin.io.println() (STDLIB-063).
@@ -503,6 +600,26 @@ public func kk_println_newline() {
 public func kk_readline() -> Int {
     guard let line = readLine() else {
         return runtimeNullSentinelInt
+    }
+    let utf8 = Array(line.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Runtime support for kotlin.io.readln() (STDLIB-130).
+@_cdecl("kk_readln")
+public func kk_readln(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let line = readLine() else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ReadAfterEOFException")
+        return 0
     }
     let utf8 = Array(line.utf8)
     if utf8.isEmpty {
@@ -539,10 +656,10 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return stringBox.value
     }
     if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
-        return String(doubleBox.value)
+        return runtimeFormatFloatingPoint(doubleBox.value)
     }
     if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
-        return String(floatBox.value)
+        return runtimeFormatFloatingPoint(floatBox.value)
     }
     if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
         return String(longBox.value)
@@ -573,6 +690,12 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         let second = runtimeRenderAnyForPrint(pairBox.second)
         return "(\(first), \(second))"
     }
+    if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
+        let first = runtimeRenderAnyForPrint(tripleBox.first)
+        let second = runtimeRenderAnyForPrint(tripleBox.second)
+        let third = runtimeRenderAnyForPrint(tripleBox.third)
+        return "(\(first), \(second), \(third))"
+    }
     if tryCast(raw, to: RuntimeIndexingIterableBox.self) != nil {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         return "kotlin.collections.IndexingIterable@\(hex)"
@@ -581,6 +704,19 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
     return "<object \(raw)>"
+}
+
+func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
+    if value.isNaN {
+        return "NaN"
+    }
+    if value == .infinity {
+        return "Infinity"
+    }
+    if value == -.infinity {
+        return "-Infinity"
+    }
+    return String(describing: value)
 }
 
 // MARK: - String nullable receiver helpers
