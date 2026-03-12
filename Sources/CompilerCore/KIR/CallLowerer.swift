@@ -107,11 +107,10 @@ final class CallLowerer {
             let receiverSymExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
             instructions.append(.copy(from: loweredReceiverID, to: receiverSymExpr))
 
-            let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
-            let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverSymExpr
-            driver.ctx.currentImplicitReceiverExprID = receiverSymExpr
-            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+            let savedReceiverExprID = driver.ctx.activeImplicitReceiverExprID()
+            let savedReceiverSymbol = driver.ctx.activeImplicitReceiverSymbol()
+            driver.ctx.setLocalValue(receiverSymExpr, for: receiverSymbol)
+            driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverSymExpr)
 
             let loweredLambdaID = driver.lowerExpr(
                 args[1].expr,
@@ -120,8 +119,7 @@ final class CallLowerer {
                 instructions: &instructions
             )
 
-            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+            driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
 
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
@@ -139,8 +137,7 @@ final class CallLowerer {
             } else {
                 // Non-lambda-literal argument; restore state and
                 // fall through to normal call lowering.
-                driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-                driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+                driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
             }
             return result
         }
@@ -333,7 +330,7 @@ final class CallLowerer {
         } else if let chosen,
                   let signature = sema.symbols.functionSignature(for: chosen),
                   signature.receiverType != nil,
-                  let implicitReceiver = driver.ctx.currentImplicitReceiverExprID
+                  let implicitReceiver = driver.ctx.activeImplicitReceiverExprID()
         {
             finalArgIDs.insert(implicitReceiver, at: 0)
         }

@@ -45,7 +45,9 @@ final class NormalizeBlocksPass: LoweringPass {
                 case .returnUnit, .returnValue:
                     break
                 default:
-                    updated.body.append(.returnUnit)
+                    var normalizedBody = updated.body
+                    normalizedBody.append(.returnUnit)
+                    updated.replaceBody(normalizedBody)
                 }
             } else {
                 updated.replaceBody([.returnUnit])

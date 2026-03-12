@@ -556,7 +556,7 @@ extension KIRLoweringDriver {
         for param in params {
             let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             lambdaBody.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            ctx.localValuesBySymbol[param.symbol] = paramExpr
+            ctx.setLocalValue(paramExpr, for: param.symbol)
         }
 
         switch delegateBody {

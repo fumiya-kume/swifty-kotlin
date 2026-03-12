@@ -365,7 +365,7 @@ extension CallLowerer {
            parentInfo.kind != .package,
            parentInfo.kind != .object
         {
-            guard let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
+            guard let receiverExpr = driver.ctx.activeImplicitReceiverExprID(),
                   let fieldOffset = sema.symbols.nominalLayout(for: parentSymbol)?.fieldOffsets[
                       sema.symbols.backingFieldSymbol(for: propertySymbol) ?? propertySymbol
                   ]
@@ -2805,11 +2805,10 @@ extension CallLowerer {
             let receiverSymExpr = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
             instructions.append(.copy(from: loweredReceiverID, to: receiverSymExpr))
 
-            let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
-            let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-            driver.ctx.localValuesBySymbol[receiverSymbol] = receiverSymExpr
-            driver.ctx.currentImplicitReceiverExprID = receiverSymExpr
-            driver.ctx.currentImplicitReceiverSymbol = receiverSymbol
+            let savedReceiverExprID = driver.ctx.activeImplicitReceiverExprID()
+            let savedReceiverSymbol = driver.ctx.activeImplicitReceiverSymbol()
+            driver.ctx.setLocalValue(receiverSymExpr, for: receiverSymbol)
+            driver.ctx.setImplicitReceiver(symbol: receiverSymbol, exprID: receiverSymExpr)
 
             let loweredLambdaID = driver.lowerExpr(
                 args[0].expr,
@@ -2818,8 +2817,7 @@ extension CallLowerer {
                 instructions: &instructions
             )
 
-            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+            driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
 
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
@@ -2837,8 +2835,7 @@ extension CallLowerer {
             } else {
                 // Non-lambda-literal argument (e.g. function reference);
                 // restore state and fall back to normal member call lowering.
-                driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-                driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+                driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
                 return nil
             }
             if scopeKind == .scopeApply {

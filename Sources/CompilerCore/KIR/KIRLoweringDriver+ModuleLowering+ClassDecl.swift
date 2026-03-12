@@ -89,24 +89,25 @@ extension KIRLoweringDriver {
             )
             ctx.resetScopeForFunction()
             ctx.beginCallableLoweringScope()
-            ctx.currentFunctionSymbol = forwardingSymbol
+            ctx.setCurrentFunctionSymbol(forwardingSymbol)
 
             var params: [KIRParameter] = []
             if let receiverType = signature.receiverType {
                 let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: forwardingSymbol)
                 params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-                ctx.currentImplicitReceiverSymbol = receiverSymbol
-                ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                ctx.setImplicitReceiver(
+                    symbol: receiverSymbol,
+                    exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                )
             }
             params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
                 KIRParameter(symbol: pair.0, type: pair.1)
             })
 
             var body: KIRLoweringEmitContext = [.beginBlock]
-            if let receiverExpr = ctx.currentImplicitReceiverExprID,
-               let receiverSym = ctx.currentImplicitReceiverSymbol
+            if let receiverBinding = ctx.activeImplicitReceiver()
             {
-                body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+                body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
             }
 
             let offset = shared.sema.symbols.nominalLayout(for: classSymbol)?.fieldOffsets[info.fieldSymbol] ?? 0
@@ -120,7 +121,7 @@ extension KIRLoweringDriver {
             body.append(.call(
                 symbol: nil,
                 callee: compilationCtx.interner.intern("kk_array_get"),
-                arguments: [ctx.currentImplicitReceiverExprID!, offsetExpr],
+                arguments: [ctx.activeImplicitReceiverExprID()!, offsetExpr],
                 result: delegateResultID,
                 canThrow: true,
                 thrownResult: nil,
@@ -241,8 +242,7 @@ extension KIRLoweringDriver {
             declIDs.append(funcDeclID)
         }
 
-        ctx.currentImplicitReceiverExprID = nil
-        ctx.currentImplicitReceiverSymbol = nil
+        ctx.clearImplicitReceiver()
         return declIDs
     }
 
@@ -409,7 +409,7 @@ extension KIRLoweringDriver {
         }
         guard !delegationTarget.isEmpty else { return }
         var argIDs: [KIRExprID] = []
-        if let receiver = ctx.currentImplicitReceiverExprID {
+        if let receiver = ctx.activeImplicitReceiverExprID() {
             argIDs.append(receiver)
         }
         for arg in delegation.args {

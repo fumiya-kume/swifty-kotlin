@@ -7,25 +7,25 @@ import Foundation
 final class KIRLoweringContext {
     // MARK: - Scope State (saved/restored per function/lambda)
 
-    var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
+    private(set) var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
     /// Lambda param name → symbol for resolving nameRef when identifierSymbols is unbound
     /// (e.g. collection HOF lambdas inferred via fallback).
-    var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
-    var currentImplicitReceiverExprID: KIRExprID?
-    var currentImplicitReceiverSymbol: SymbolID?
-    var currentFunctionSymbol: SymbolID?
-    var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
-    var nextLoopLabel: Int32 = 10000
+    private(set) var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
+    private(set) var currentImplicitReceiverExprID: KIRExprID?
+    private(set) var currentImplicitReceiverSymbol: SymbolID?
+    private(set) var currentFunctionSymbol: SymbolID?
+    private(set) var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
+    private(set) var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
 
     private var functionDefaultArgumentsBySymbol: [SymbolID: [ExprID?]] = [:]
     private var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
     private var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
-    var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
+    private var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
     private var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
     private var emittedObjectLiteralExprIDs: Set<ExprID> = []
-    var nextSyntheticLambdaSymbolRawValue: Int32 = 1
+    private var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
     /// Companion object initializer functions registered during class lowering.
     /// These are called in order during module initialization.
@@ -82,6 +82,96 @@ final class KIRLoweringContext {
         currentFunctionSymbol = nil
         loopControlStack.removeAll(keepingCapacity: true)
         nextLoopLabel = 10000
+    }
+
+    func localValue(for symbol: SymbolID) -> KIRExprID? {
+        localValuesBySymbol[symbol]
+    }
+
+    func setLocalValue(_ exprID: KIRExprID, for symbol: SymbolID) {
+        localValuesBySymbol[symbol] = exprID
+    }
+
+    func clearLocalValue(for symbol: SymbolID) {
+        localValuesBySymbol.removeValue(forKey: symbol)
+    }
+
+    func allLocalValues() -> [SymbolID: KIRExprID] {
+        localValuesBySymbol
+    }
+
+    func lambdaParamSymbol(named name: InternedString) -> SymbolID? {
+        lambdaParamNameToSymbol[name]
+    }
+
+    func registerLambdaParam(symbol: SymbolID, forName name: InternedString) {
+        lambdaParamNameToSymbol[name] = symbol
+    }
+
+    func activeImplicitReceiverExprID() -> KIRExprID? {
+        currentImplicitReceiverExprID
+    }
+
+    func activeImplicitReceiverSymbol() -> SymbolID? {
+        currentImplicitReceiverSymbol
+    }
+
+    func activeImplicitReceiver() -> (symbol: SymbolID, exprID: KIRExprID)? {
+        guard let symbol = currentImplicitReceiverSymbol,
+              let exprID = currentImplicitReceiverExprID
+        else {
+            return nil
+        }
+        return (symbol: symbol, exprID: exprID)
+    }
+
+    func setImplicitReceiver(symbol: SymbolID, exprID: KIRExprID) {
+        currentImplicitReceiverSymbol = symbol
+        currentImplicitReceiverExprID = exprID
+    }
+
+    func clearImplicitReceiver() {
+        currentImplicitReceiverSymbol = nil
+        currentImplicitReceiverExprID = nil
+    }
+
+    func restoreImplicitReceiver(symbol: SymbolID?, exprID: KIRExprID?) {
+        if let symbol, let exprID {
+            setImplicitReceiver(symbol: symbol, exprID: exprID)
+        } else {
+            clearImplicitReceiver()
+        }
+    }
+
+    func activeFunctionSymbol() -> SymbolID? {
+        currentFunctionSymbol
+    }
+
+    func setCurrentFunctionSymbol(_ symbol: SymbolID?) {
+        currentFunctionSymbol = symbol
+    }
+
+    func pushLoopControl(continueLabel: Int32, breakLabel: Int32, name: InternedString?) {
+        loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: name))
+    }
+
+    @discardableResult
+    func popLoopControl() -> (continueLabel: Int32, breakLabel: Int32, name: InternedString?)? {
+        loopControlStack.popLast()
+    }
+
+    func breakLabel(for name: InternedString?) -> Int32? {
+        if let name {
+            return loopControlStack.last(where: { $0.name == name })?.breakLabel
+        }
+        return loopControlStack.last?.breakLabel
+    }
+
+    func continueLabel(for name: InternedString?) -> Int32? {
+        if let name {
+            return loopControlStack.last(where: { $0.name == name })?.continueLabel
+        }
+        return loopControlStack.last?.continueLabel
     }
 
     // MARK: - Label Allocation

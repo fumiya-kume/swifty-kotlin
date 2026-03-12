@@ -108,15 +108,14 @@ final class CallSupportLowerer {
 
         let scopeSnapshot = driver.ctx.saveScope()
         driver.ctx.resetScopeForFunction()
-        driver.ctx.currentFunctionSymbol = originalSymbol
+        driver.ctx.setCurrentFunctionSymbol(originalSymbol)
 
         var params: [KIRParameter] = []
         if let receiverType = signature.receiverType {
             let receiverSym = syntheticReceiverParameterSymbol(functionSymbol: originalSymbol)
             params.append(KIRParameter(symbol: receiverSym, type: receiverType))
             let receiverExpr = arena.appendExpr(.symbolRef(receiverSym), type: receiverType)
-            driver.ctx.currentImplicitReceiverSymbol = receiverSym
-            driver.ctx.currentImplicitReceiverExprID = receiverExpr
+            driver.ctx.setImplicitReceiver(symbol: receiverSym, exprID: receiverExpr)
         }
         for (paramSymbol, paramType) in zip(signature.valueParameterSymbols, signature.parameterTypes) {
             params.append(KIRParameter(symbol: paramSymbol, type: paramType))
@@ -136,10 +135,9 @@ final class CallSupportLowerer {
 
         var body: [KIRInstruction] = [.beginBlock]
 
-        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID,
-           let receiverSym = driver.ctx.currentImplicitReceiverSymbol
+        if let receiverBinding = driver.ctx.activeImplicitReceiver()
         {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
 
         let maskExpr = arena.appendExpr(.symbolRef(maskSymbol), type: intType)
@@ -169,7 +167,7 @@ final class CallSupportLowerer {
                 let afterLabel = driver.ctx.makeLoopLabel()
                 body.append(.jumpIfEqual(lhs: bitExpr, rhs: zeroExpr, target: skipLabel))
 
-                driver.ctx.localValuesBySymbol[paramSymbol] = paramExpr
+                driver.ctx.setLocalValue(paramExpr, for: paramSymbol)
                 let defaultVal = driver.lowerExpr(
                     defaultExprID,
                     ast: ast,
@@ -187,16 +185,16 @@ final class CallSupportLowerer {
                 body.append(.copy(from: paramExpr, to: resolvedExpr))
 
                 body.append(.label(afterLabel))
-                driver.ctx.localValuesBySymbol[paramSymbol] = resolvedExpr
+                driver.ctx.setLocalValue(resolvedExpr, for: paramSymbol)
                 resolvedParamExprs.append(resolvedExpr)
             } else {
-                driver.ctx.localValuesBySymbol[paramSymbol] = paramExpr
+                driver.ctx.setLocalValue(paramExpr, for: paramSymbol)
                 resolvedParamExprs.append(paramExpr)
             }
         }
 
         var callArgs: [KIRExprID] = []
-        if let receiverExpr = driver.ctx.currentImplicitReceiverExprID {
+        if let receiverExpr = driver.ctx.activeImplicitReceiverExprID() {
             callArgs.append(receiverExpr)
         }
         callArgs.append(contentsOf: resolvedParamExprs)

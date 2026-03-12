@@ -64,8 +64,8 @@ extension CallLowerer {
                 lambdaExprID: args[1].expr,
                 paramIndex: 0
             )
-            let previousLocalValue = driver.ctx.localValuesBySymbol[lambdaParamSymbol]
-            driver.ctx.localValuesBySymbol[lambdaParamSymbol] = indexExpr
+            let previousLocalValue = driver.ctx.localValue(for: lambdaParamSymbol)
+            driver.ctx.setLocalValue(indexExpr, for: lambdaParamSymbol)
             _ = driver.lowerExpr(
                 bodyExpr,
                 ast: ast,
@@ -76,9 +76,9 @@ extension CallLowerer {
                 instructions: &instructions
             )
             if let previousLocalValue {
-                driver.ctx.localValuesBySymbol[lambdaParamSymbol] = previousLocalValue
+                driver.ctx.setLocalValue(previousLocalValue, for: lambdaParamSymbol)
             } else {
-                driver.ctx.localValuesBySymbol.removeValue(forKey: lambdaParamSymbol)
+                driver.ctx.clearLocalValue(for: lambdaParamSymbol)
             }
         } else {
             let actionExpr = driver.lowerExpr(

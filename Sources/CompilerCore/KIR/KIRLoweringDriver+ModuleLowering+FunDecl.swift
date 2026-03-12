@@ -12,7 +12,7 @@ extension KIRLoweringDriver {
 
         ctx.resetScopeForFunction()
         ctx.beginCallableLoweringScope()
-        ctx.currentFunctionSymbol = symbol
+        ctx.setCurrentFunctionSymbol(symbol)
         let signature = sema.symbols.functionSignature(for: symbol)
         let params = buildFunDeclParams(function, symbol: symbol, signature: signature, shared: shared)
         let returnType = signature?.returnType ?? sema.types.unitType
@@ -30,9 +30,8 @@ extension KIRLoweringDriver {
         var declIDs: [KIRDeclID] = [kirID]
         appendDefaultStub(symbol: symbol, function: function, signature: signature, shared: shared, declIDs: &declIDs)
         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
-        ctx.currentImplicitReceiverExprID = nil
-        ctx.currentImplicitReceiverSymbol = nil
-        ctx.currentFunctionSymbol = nil
+        ctx.clearImplicitReceiver()
+        ctx.setCurrentFunctionSymbol(nil)
         return declIDs
     }
 
@@ -51,8 +50,10 @@ extension KIRLoweringDriver {
             if let receiverType = signature.receiverType {
                 let receiverSymbol = callSupportLowerer.syntheticReceiverParameterSymbol(functionSymbol: symbol)
                 params.append(KIRParameter(symbol: receiverSymbol, type: receiverType))
-                ctx.currentImplicitReceiverSymbol = receiverSymbol
-                ctx.currentImplicitReceiverExprID = arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                ctx.setImplicitReceiver(
+                    symbol: receiverSymbol,
+                    exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
+                )
             }
             params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
                 KIRParameter(symbol: pair.0, type: pair.1)
@@ -152,17 +153,16 @@ extension KIRLoweringDriver {
         body: inout KIRLoweringEmitContext,
         arena: KIRArena
     ) {
-        if let receiverExpr = ctx.currentImplicitReceiverExprID,
-           let receiverSym = ctx.currentImplicitReceiverSymbol
+        if let receiverBinding = ctx.activeImplicitReceiver()
         {
-            body.append(.constValue(result: receiverExpr, value: .symbolRef(receiverSym)))
-            ctx.localValuesBySymbol[receiverSym] = receiverExpr
+            body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
+            ctx.setLocalValue(receiverBinding.exprID, for: receiverBinding.symbol)
         }
 
-        for param in params where param.symbol != ctx.currentImplicitReceiverSymbol {
+        for param in params where param.symbol != ctx.activeImplicitReceiverSymbol() {
             let paramExpr = arena.appendExpr(.symbolRef(param.symbol), type: param.type)
             body.append(.constValue(result: paramExpr, value: .symbolRef(param.symbol)))
-            ctx.localValuesBySymbol[param.symbol] = paramExpr
+            ctx.setLocalValue(paramExpr, for: param.symbol)
         }
     }
 }

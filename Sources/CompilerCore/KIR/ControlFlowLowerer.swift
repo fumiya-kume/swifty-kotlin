@@ -63,7 +63,7 @@ final class ControlFlowLowerer {
         instructions.append(.jumpIfEqual(lhs: hasNextID, rhs: falseID, target: breakLabel))
 
         let loopVariableSymbol = sema.bindings.identifierSymbols[exprID]
-        let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValuesBySymbol[$0] }
+        let previousLoopValue = loopVariableSymbol.flatMap { driver.ctx.localValue(for: $0) }
         let nextValueID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
         instructions.append(.call(
             symbol: nil,
@@ -74,10 +74,10 @@ final class ControlFlowLowerer {
             thrownResult: nil
         ))
         if let loopVariableSymbol {
-            driver.ctx.localValuesBySymbol[loopVariableSymbol] = nextValueID
+            driver.ctx.setLocalValue(nextValueID, for: loopVariableSymbol)
         }
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -87,15 +87,15 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = driver.ctx.loopControlStack.popLast()
+        _ = driver.ctx.popLoopControl()
         instructions.append(.jump(continueLabel))
         instructions.append(.label(breakLabel))
 
         if let loopVariableSymbol {
             if let previousLoopValue {
-                driver.ctx.localValuesBySymbol[loopVariableSymbol] = previousLoopValue
+                driver.ctx.setLocalValue(previousLoopValue, for: loopVariableSymbol)
             } else {
-                driver.ctx.localValuesBySymbol.removeValue(forKey: loopVariableSymbol)
+                driver.ctx.clearLocalValue(for: loopVariableSymbol)
             }
         }
 
@@ -134,7 +134,7 @@ final class ControlFlowLowerer {
         instructions.append(.constValue(result: falseID, value: .boolLiteral(false)))
         instructions.append(.jumpIfEqual(lhs: conditionID, rhs: falseID, target: breakLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -144,7 +144,7 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = driver.ctx.loopControlStack.popLast()
+        _ = driver.ctx.popLoopControl()
         instructions.append(.jump(continueLabel))
         instructions.append(.label(breakLabel))
 
@@ -171,7 +171,7 @@ final class ControlFlowLowerer {
         let breakLabel = driver.ctx.makeLoopLabel()
         instructions.append(.label(bodyLabel))
 
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: label))
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: label)
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -181,7 +181,7 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = driver.ctx.loopControlStack.popLast()
+        _ = driver.ctx.popLoopControl()
 
         instructions.append(.label(continueLabel))
         let conditionID = driver.lowerExpr(
@@ -394,8 +394,8 @@ final class ControlFlowLowerer {
             if clause.paramName != nil, binding.parameterSymbol != .invalid {
                 let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: binding.parameterType)
                 instructions.append(.copy(from: exceptionSlot, to: paramID))
-                previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
-                driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
+                previousCatchParamValue = driver.ctx.localValue(for: binding.parameterSymbol)
+                driver.ctx.setLocalValue(paramID, for: binding.parameterSymbol)
             }
             instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
             instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
@@ -422,9 +422,9 @@ final class ControlFlowLowerer {
 
             if clause.paramName != nil, binding.parameterSymbol != .invalid {
                 if let previousCatchParamValue {
-                    driver.ctx.localValuesBySymbol[binding.parameterSymbol] = previousCatchParamValue
+                    driver.ctx.setLocalValue(previousCatchParamValue, for: binding.parameterSymbol)
                 } else {
-                    driver.ctx.localValuesBySymbol.removeValue(forKey: binding.parameterSymbol)
+                    driver.ctx.clearLocalValue(for: binding.parameterSymbol)
                 }
             }
 
@@ -494,8 +494,8 @@ final class ControlFlowLowerer {
                 if clause.paramName != nil, binding.parameterSymbol != .invalid {
                     let paramID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: binding.parameterType)
                     instructions.append(.copy(from: exceptionSlot, to: paramID))
-                    previousCatchParamValue = driver.ctx.localValuesBySymbol[binding.parameterSymbol]
-                    driver.ctx.localValuesBySymbol[binding.parameterSymbol] = paramID
+                    previousCatchParamValue = driver.ctx.localValue(for: binding.parameterSymbol)
+                    driver.ctx.setLocalValue(paramID, for: binding.parameterSymbol)
                 }
                 instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
                 instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
@@ -522,9 +522,9 @@ final class ControlFlowLowerer {
 
                 if clause.paramName != nil, binding.parameterSymbol != .invalid {
                     if let previousCatchParamValue {
-                        driver.ctx.localValuesBySymbol[binding.parameterSymbol] = previousCatchParamValue
+                        driver.ctx.setLocalValue(previousCatchParamValue, for: binding.parameterSymbol)
                     } else {
-                        driver.ctx.localValuesBySymbol.removeValue(forKey: binding.parameterSymbol)
+                        driver.ctx.clearLocalValue(for: binding.parameterSymbol)
                     }
                 }
 
@@ -766,13 +766,13 @@ final class ControlFlowLowerer {
             ))
 
             if let symbol = candidates.first {
-                previousValues.append((symbol, driver.ctx.localValuesBySymbol[symbol]))
-                driver.ctx.localValuesBySymbol[symbol] = componentResult
+                previousValues.append((symbol, driver.ctx.localValue(for: symbol)))
+                driver.ctx.setLocalValue(componentResult, for: symbol)
             }
         }
 
         let loopLabel = ast.arena.loopLabel(for: exprID)
-        driver.ctx.loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: loopLabel))
+        driver.ctx.pushLoopControl(continueLabel: continueLabel, breakLabel: breakLabel, name: loopLabel)
         _ = driver.lowerExpr(
             bodyExpr,
             ast: ast,
@@ -782,16 +782,16 @@ final class ControlFlowLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        _ = driver.ctx.loopControlStack.popLast()
+        _ = driver.ctx.popLoopControl()
         instructions.append(.jump(continueLabel))
         instructions.append(.label(breakLabel))
 
         // Restore previous values
         for (symbol, previous) in previousValues {
             if let previous {
-                driver.ctx.localValuesBySymbol[symbol] = previous
+                driver.ctx.setLocalValue(previous, for: symbol)
             } else {
-                driver.ctx.localValuesBySymbol.removeValue(forKey: symbol)
+                driver.ctx.clearLocalValue(for: symbol)
             }
         }
 

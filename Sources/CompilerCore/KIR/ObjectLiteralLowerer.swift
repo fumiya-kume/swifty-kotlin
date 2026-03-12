@@ -107,13 +107,11 @@ final class ObjectLiteralLowerer {
             instructions: &instructions
         )
 
-        let savedReceiverExprID = driver.ctx.currentImplicitReceiverExprID
-        let savedReceiverSymbol = driver.ctx.currentImplicitReceiverSymbol
-        driver.ctx.currentImplicitReceiverExprID = objectValue
-        driver.ctx.currentImplicitReceiverSymbol = objectSymbol
+        let savedReceiverExprID = driver.ctx.activeImplicitReceiverExprID()
+        let savedReceiverSymbol = driver.ctx.activeImplicitReceiverSymbol()
+        driver.ctx.setImplicitReceiver(symbol: objectSymbol, exprID: objectValue)
         defer {
-            driver.ctx.currentImplicitReceiverExprID = savedReceiverExprID
-            driver.ctx.currentImplicitReceiverSymbol = savedReceiverSymbol
+            driver.ctx.restoreImplicitReceiver(symbol: savedReceiverSymbol, exprID: savedReceiverExprID)
         }
 
         for propertyDeclID in objectDecl.memberProperties {

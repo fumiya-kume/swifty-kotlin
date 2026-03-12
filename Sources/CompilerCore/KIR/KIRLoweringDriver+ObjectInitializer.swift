@@ -31,8 +31,7 @@ extension KIRLoweringDriver {
             classSymbol: objectSymbol, args: [], nullability: .nonNull
         )))
         let objectReceiverExpr = arena.appendExpr(.symbolRef(objectSymbol), type: objectType)
-        ctx.currentImplicitReceiverSymbol = objectSymbol
-        ctx.currentImplicitReceiverExprID = objectReceiverExpr
+        ctx.setImplicitReceiver(symbol: objectSymbol, exprID: objectReceiverExpr)
 
         var body: KIRLoweringEmitContext = [.beginBlock]
         body.append(.constValue(result: objectReceiverExpr, value: .symbolRef(objectSymbol)))
@@ -54,8 +53,7 @@ extension KIRLoweringDriver {
 
         var declIDs: [KIRDeclID] = [initDeclID]
         declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
-        ctx.currentImplicitReceiverExprID = nil
-        ctx.currentImplicitReceiverSymbol = nil
+        ctx.clearImplicitReceiver()
         return declIDs
     }
 
