@@ -260,6 +260,170 @@
 
 ---
 
+### 📦 Runtime Hardening — Silent Fallback 排除
+
+- [ ] STDLIB-238: `Sequence` runtime の invalid handle fallback を fail-fast に置き換える
+  - 背景: `kk_sequence_of` と同系統で、壊れた handle が空 sequence として観測される余地がまだ残っている
+  - [ ] [Sources/Runtime/RuntimeSequence.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeSequence.swift) の `kk_sequence_from_list` / `kk_sequence_map` / `kk_sequence_filter` / `kk_sequence_take` / `kk_sequence_drop` / `kk_sequence_distinct` / `kk_sequence_zip` / `kk_sequence_forEach` / `kk_sequence_flatMap` / `kk_sequence_to_list` で `?? []` / 空 source fallback を棚卸しする
+  - [ ] invalid handle を Kotlin 仕様の空 sequence と区別し、`fatalError("KSwiftK panic [...]")` か throwable 返却のどちらかに統一する
+  - [ ] `runtimeSequenceSourceElements(from:)` の利用規約を整理し、「本当に許容される入力型」だけを受けるように制約する
+  - [ ] `sequenceOf` / `asSequence` / `generateSequence` / chained HOF の diff/golden ケースを追加する
+  - **完了条件**: 壊れた sequence handle は空結果にならず診断付きで停止し、正常系は `kotlinc` と一致する
+
+- [ ] STDLIB-239: `Sequence` runtime の lambda throw 握りつぶしを解消する
+  - 背景: `applyMapStep` / `applyFilterStep` / `kk_sequence_flatMap` が throw を空結果や部分結果に潰している
+  - [ ] [Sources/Runtime/RuntimeSequence.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeSequence.swift) の throw 経路を洗い出し、`outThrown` 相当の伝搬戦略を決める
+  - [ ] `applyMapStep` / `applyFilterStep` を result と thrown を分離して返せる形にリファクタする
+  - [ ] `kk_sequence_forEach` / `kk_sequence_flatMap` を含め、例外発生時に silent success を返さないよう修正する
+  - [ ] sequence HOF の throw ケース golden を追加する
+  - **完了条件**: Sequence HOF 内の例外は空 list / 部分結果に化けず、呼び出し元まで観測可能になる
+
+- [ ] STDLIB-240: Collection HOF の invalid container fallback を fail-fast へ統一する
+  - 背景: list/map/array HOF が invalid handle を空 list/map/false に潰し、ABI 破綻や pointer 汚染の検知を遅らせている
+  - [ ] [Sources/Runtime/RuntimeCollectionHOF.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeCollectionHOF.swift) の `kk_list_*` / `kk_map_*` / `kk_array_*` で invalid handle 時の返り値を一覧化する
+  - [ ] Kotlin 仕様上 nullable/empty が正しいケースと runtime corruption を分離し、invalid handle は fail-fast か throwable に統一する
+  - [ ] `map` / `filter` / `flatMap` / `groupBy` / `sortedBy` / `associate*` / `array_map` / `array_filter` を優先して修正する
+  - [ ] `zip` / `unzip` / `take` / `drop` / `reversed` / `sorted` / `distinct` / `flatten` / `chunked` / `windowed` の `?.elements ?? []` 系 fallback も hardening 対象に含める
+  - [ ] invalid handle の回帰ケースを追加する
+  - **完了条件**: 壊れた collection handle が空コレクション成功扱いにならない
+
+- [ ] STDLIB-241: Collection HOF の lambda throw fallback を厳格化する
+  - 背景: `kk_list_map` などが `outThrown` を立てつつ空結果を返すため、呼び出し側の取りこぼしで silent corruption になる
+  - [ ] [Sources/Runtime/RuntimeCollectionHOF.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeCollectionHOF.swift) の throw 処理を類型化する
+  - [ ] `outThrown` を持つ runtime helper で「throw 時の返り値は未使用である」ことを ABI/コード生成側まで含めて確認する
+  - [ ] 必要なら sentinel return を専用 panic path に切り替える
+  - [ ] list/map/array HOF の throw regression を追加する
+  - **完了条件**: HOF 内例外が空結果や `false` に見えず、すべて一貫した失敗経路に乗る
+
+- [ ] STDLIB-242: Collection conversion API の silent empty fallback を除去する
+  - 背景: `toList` / `toMutableList` / `toSet` / `copyOf` 系が invalid handle を空コレクションとして返す
+  - [ ] [Sources/Runtime/RuntimeCollections.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeCollections.swift) の conversion/utility API を棚卸しする
+  - [ ] `kk_list_to_mutable_list` / `kk_list_to_set` / `kk_map_keys` / `kk_map_values` / `kk_map_entries` / `kk_map_to_mutable_map` / `kk_array_toList` / `kk_array_toMutableList` / `kk_list_toTypedArray` / `kk_array_copyOf` / `kk_array_copyOfRange` を優先して修正する
+  - [ ] Kotlin 仕様として empty が正当なケースは、入力が valid handle の場合にのみ成立することをテストで固定する
+  - [ ] diff/golden とランタイム単体テストを追加する
+  - **完了条件**: conversion 系 API で invalid handle が空結果として観測されない
+
+- [ ] STDLIB-243: Range runtime の invalid handle fallback を厳格化する
+  - 背景: range API が invalid handle を `0` や空 list に潰しており、空 range と区別できない
+  - [ ] [Sources/Runtime/RuntimeRangeAndDispatch.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeRangeAndDispatch.swift) の `kk_range_first` / `last` / `count` / `toList` / `forEach` / `map` を見直す
+  - [ ] property access と terminal/HOF で、invalid handle 時の失敗方針を統一する
+  - [ ] `IntRange` / `downTo` / `step` / empty range / invalid handle の回帰ケースを追加する
+  - **完了条件**: invalid range handle が空 range 相当の成功値にならない
+
+- [ ] STDLIB-244: Regex runtime で no-match と invalid handle を分離する
+  - 背景: regex API は invalid regex/string を false・空文字・元文字列・空 list に潰しており、仕様上の no-match と混同している
+  - [ ] [Sources/Runtime/RuntimeRegex.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeRegex.swift) の `matches` / `contains` / `find` / `findAll` / `replace` / `split` / `pattern` / `match_result_*` を棚卸しする
+  - [ ] 「入力 regex が invalid」ケースと「正しい regex だが match しない」ケースを分けて返すよう修正する
+  - [ ] 既存 API 契約上 nullable を返すものは nullable を維持しつつ、invalid handle は fail-fast か throwable に統一する
+  - [ ] regex diff/golden に invalid handle 回帰ケースを追加する
+  - **完了条件**: Regex API で invalid handle が no-match と同じ返り値に潰れない
+
+- [ ] STDLIB-245: String runtime の invalid handle fallback を fail-fast 方針へ整理する
+  - 背景: `runtimeStringFromRaw(...) ?? ""` が広範囲に使われており、壊れた string handle が空文字として観測される
+  - [ ] [Sources/Runtime/RuntimeStringStdlib.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeStringStdlib.swift) と [Sources/Runtime/RuntimeStringArray.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeStringArray.swift) の `?? ""` / `?? []` / `return 0` を棚卸しする
+  - [ ] `trim` / `lowercase` / `uppercase` / `split` / `replace` / `startsWith` / `endsWith` / `contains` / `substringBefore*` / `substringAfter*` / `format` を優先して、invalid handle と正当な空文字入力を分離する
+  - [ ] `String.iterator()` / `iterator.hasNext()` / `iterator.next()` の invalid iterator を通常終端と区別できるようにする
+  - [ ] string invalid handle の diff/golden と runtime 単体テストを追加する
+  - **完了条件**: invalid string / string-iterator handle が空文字や通常終端に潰れない
+
+- [ ] STDLIB-246: String HOF の throw fallback を厳格化する
+  - 背景: `kk_string_filter` / `kk_string_map` などが throw 時に空文字を返し、呼び出し側の取りこぼしで silent corruption になる
+  - [ ] [Sources/Runtime/RuntimeStringStdlib.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeStringStdlib.swift) の `filter` / `map` / `count` / `any` / `all` / `none` の throw 経路を棚卸しする
+  - [ ] `outThrown` を使う API の返り値契約を明文化し、throw 時に成功値風の文字列を返さないよう統一する
+  - [ ] string HOF の throw regression を追加する
+  - **完了条件**: String HOF 内例外が `""` や `false` に見えず、一貫した失敗経路に乗る
+
+- [ ] STDLIB-247: Comparator trampoline の invalid closure fallback を fail-fast 化する
+  - 背景: comparator trampoline が closure decode 失敗時に `0` を返し、比較結果の「同値」と区別できない
+  - [ ] [Sources/Runtime/RuntimeComparator.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeComparator.swift) の `kk_comparator_from_selector_trampoline` / `kk_comparator_then_by_trampoline` / `kk_comparator_reversed_trampoline` の guard failure を棚卸しする
+  - [ ] invalid comparator closure を fail-fast か throwable に統一し、`0` を返さないよう修正する
+  - [ ] `sortedBy` / `sortedWith` / `compareBy` / `thenBy` / `reversed` 経由の回帰ケースを追加する
+  - **完了条件**: invalid comparator closure が「要素が等しい」比較結果に潰れない
+
+- [ ] STDLIB-248: Pair / Triple runtime の silent fallback を整理する
+  - 背景: `Pair` / `Triple` accessor / conversion / toString が invalid handle を null sentinel・空 list・`(null, null)` に潰している
+  - [ ] [Sources/Runtime/RuntimeCollections.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeCollections.swift) の `kk_pair_first` / `kk_pair_second` / `kk_pair_to_string` / `kk_pair_toList` / `kk_triple_*` を棚卸しする
+  - [ ] API ごとに「Kotlin 仕様上 nullable を返す」のか「runtime corruption を fail-fast すべきか」を決める
+  - [ ] pair/triple invalid handle の回帰ケースを追加する
+  - **完了条件**: invalid `Pair` / `Triple` handle が成功値風の null sentinel / 空 list / 文字列表現に潰れない
+
+- [ ] STDLIB-249: Delegate runtime の invalid handle fallback を fail-fast 化する
+  - 背景: property delegate / lazy / observable / vetoable / custom delegate の各 helper が invalid handle を `0` や `newValue` に潰している
+  - [ ] [Sources/Runtime/RuntimeDelegates.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeDelegates.swift) の `kk_kproperty_stub_*` / `kk_lazy_*` / `kk_observable_*` / `kk_vetoable_*` / `kk_custom_delegate_*` / `kk_delegate_*` を棚卸しする
+  - [ ] invalid handle と「正当な false/0/null/新値返却」を区別し、fail-fast か throwable に統一する
+  - [ ] custom delegate getter/setter 未設定時の契約を明文化し、silent success を返さないよう整理する
+  - [ ] delegated property invalid handle の回帰ケースを追加する
+  - **完了条件**: invalid delegate handle が通常の property 値や setter 成功値に潰れない
+
+- [ ] STDLIB-250: Coroutine / Flow / Channel runtime の invalid handle fallback を整理する
+  - 背景: flow collect / emit / channel / scope / await helper が invalid handle を `0` や no-op に潰している
+  - [ ] [Sources/Runtime/RuntimeCoroutine.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeCoroutine.swift) の `kk_flow_*` / `kk_channel_*` / `kk_coroutine_scope_*` / `kk_job_join` / `kk_await_all` と補助 helper を棚卸しする
+  - [ ] invalid handle・解放済み handle・型違い handle を fail-fast か throwable に統一する
+  - [ ] `runtimeReadArrayElement` の `0` fallback を見直し、array decode failure と実際の `0` 要素を区別できるようにする
+  - [ ] coroutine/flow invalid handle の回帰ケースを追加する
+  - **完了条件**: invalid coroutine/flow/channel handle が通常終了や `0` 結果に潰れない
+
+- [ ] STDLIB-251: Dispatch lookup の lookup failure と runtime corruption を分離する
+  - 背景: `vtable` / `itable` lookup が `0` を返し、未登録メソッドと invalid receiver の区別が曖昧
+  - [ ] [Sources/Runtime/RuntimeRangeAndDispatch.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeRangeAndDispatch.swift) の `kk_vtable_lookup` / `kk_itable_lookup` / `kk_dispatch_error` の契約を整理する
+  - [ ] invalid receiver / slot 範囲外 / method 未登録を区別できる診断経路を導入する
+  - [ ] dispatch failure の回帰ケースを追加する
+  - **完了条件**: dispatch 失敗時に「本当にメソッドがない」のか「receiver/itable が壊れている」のか区別できる
+
+- [ ] STDLIB-252: 低レベル String ABI の silent fallback を整理する
+  - 背景: low-level string ABI が invalid pointer を `""` や null sentinel に潰しており、高レベル string API の hardeningを迂回してしまう
+  - [ ] [Sources/Runtime/RuntimeStringArray.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeStringArray.swift) の `kk_string_concat` / `kk_string_compareTo` / `kk_string_length` と関連 helper を棚卸しする
+  - [ ] invalid string pointer と正当な空文字/nullable を分離する
+  - [ ] low-level string ABI の invalid handle 回帰ケースを追加する
+  - **完了条件**: invalid string pointer が空文字や通常比較結果に潰れない
+
+- [ ] STDLIB-253: Boxing / unboxing の契約違反を検出できるようにする
+  - 背景: `kk_unbox_long` / `kk_unbox_float` / `kk_unbox_double` / `kk_unbox_char` は decode 不能時に入力値をそのまま返し、box/unbox の契約違反を隠す余地がある
+  - [ ] [Sources/Runtime/RuntimeBoxing.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeBoxing.swift) の unbox helper の設計意図を整理する
+  - [ ] 「未 box 値の passthrough」と「壊れた object pointer」の区別方法を設計する
+  - [ ] 必要なら debug/runtime check を追加し、契約違反時に診断を出す
+  - [ ] boxing/unboxing mismatch の回帰ケースを追加する
+  - **完了条件**: box/unbox 契約違反が無言で passthrough されず、少なくとも診断可能になる
+
+- [ ] STDLIB-254: Builder DSL runtime の silent fallback を fail-fast 化する
+  - 背景: `buildString` / `buildList` / `buildMap` が frame push 失敗や invalid input を空結果に潰している
+  - [ ] [Sources/Runtime/RuntimeBuilderDSL.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeBuilderDSL.swift) の `kk_string_builder_append` / `kk_build_string` / `kk_builder_list_add` / `kk_build_list` / `kk_builder_map_put` / `kk_build_map` を棚卸しする
+  - [ ] frame 未作成・nesting 超過・invalid string pointer を fail-fast か throwable に統一する
+  - [ ] builder lambda の throw 時に空文字/空 list/空 map を返さないよう契約を整理する
+  - [ ] builder DSL invalid state の回帰ケースを追加する
+  - **完了条件**: builder runtime の内部状態破綻が空結果成功に潰れない
+
+- [ ] STDLIB-255: Random runtime の invalid range fallback を Kotlin 互換に修正する
+  - 背景: `nextInt(until)` / `nextInt(from, until)` が不正範囲で `0` や `from` を返し、例外条件を成功値に潰している
+  - [ ] [Sources/Runtime/RuntimeRandom.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeRandom.swift) の `kk_random_nextInt_until` / `kk_random_nextInt_range` を Kotlin 仕様と照合する
+  - [ ] invalid range 時は `IllegalArgumentException` 系の失敗経路へ統一する
+  - [ ] random range error の diff/golden ケースを追加する
+  - **完了条件**: invalid random range が `0` や `from` に潰れず、`kotlinc` と同じ失敗になる
+
+- [ ] STDLIB-256: low-level enum/string equality helper の invalid pointer fallback を整理する
+  - 背景: enum 系で使う `kk_string_equals` が invalid pointer を `""` として比較し、名前比較の corruption を隠す
+  - [ ] [Sources/Runtime/RuntimeEnum.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeEnum.swift) の `kk_string_equals` / `kk_enum_valueOf_throw` を見直す
+  - [ ] invalid string pointer と正当な空文字比較を区別する
+  - [ ] enum name comparison の invalid handle 回帰ケースを追加する
+  - **完了条件**: enum/string name 比較で invalid pointer が空文字比較に潰れない
+
+- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
+  - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
+  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
+  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
+  - [ ] lazy message throw の回帰ケースを追加する
+  - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
+
+- [ ] TOOL-046: synthetic stdlib stub と runtime ABI の整合性検査を自動化する
+  - 背景: `sequenceOf` では `registerSyntheticVarargFunction(... externalLinkName: "kk_sequence_of")` と runtime ABI の引数数ズレが CI まで漏れた
+  - [ ] `registerSyntheticVarargFunction` / `setExternalLinkName` で紐づく symbol を抽出し、[Sources/Runtime/RuntimeABISpec.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimeABISpec.swift) 系の spec と照合する仕組みを作る
+  - [ ] vararg function は「runtime 側が受け取る形が packed array 1 引数である」ことを明示チェックする
+  - [ ] CI に ABI 整合性検査を追加する
+  - [ ] 不整合時は具体的な symbol 名・宣言箇所・期待/実際の引数数を出す
+  - **完了条件**: synthetic stub と runtime ABI の引数数/vararg 形状ズレが CI で即座に検出される
+
+---
+
 ### 📦 Stdlib — ArrayDeque
 
 - [ ] STDLIB-240: `ArrayDeque<T>` 型を実装する
