@@ -170,7 +170,8 @@ extension DataFlowSemaPhase {
         registerSyntheticMutableSetStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
-            setInterfaceSymbol: setInterfaceSymbol
+            setInterfaceSymbol: setInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         registerListConversionMembers(
             symbols: symbols, types: types, interner: interner,
@@ -1714,7 +1715,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
-        setInterfaceSymbol: SymbolID
+        setInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let typeParamName = interner.intern("E")
         let mutableSetName = interner.intern("MutableSet")
@@ -1771,6 +1773,7 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             mutableSetFQName: mutableSetFQName,
             mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
@@ -1877,7 +1880,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_set_clear", for: memberSymbol)
@@ -1899,6 +1902,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         mutableSetFQName: [InternedString],
         mutableSetInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
         typeParamSymbol: SymbolID,
         typeParamType: TypeID
     ) {
@@ -1908,6 +1912,11 @@ extension DataFlowSemaPhase {
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableSetInterfaceSymbol,
             args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1923,7 +1932,7 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: [types.anyType],
+                parameterTypes: [collectionType],
                 returnType: types.booleanType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1

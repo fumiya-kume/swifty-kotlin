@@ -307,11 +307,11 @@ public func kk_mutable_set_addAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
         return kk_box_bool(0)
     }
-    guard let list = runtimeListBox(from: collectionRaw) else {
+    guard let elements = runtimeCollectionElements(from: collectionRaw) else {
         return kk_box_bool(0)
     }
     var modified = false
-    for elem in list.elements {
+    for elem in elements {
         if !set.elements.contains(where: { runtimeValuesEqual($0, elem) }) {
             set.elements.append(elem)
             modified = true
