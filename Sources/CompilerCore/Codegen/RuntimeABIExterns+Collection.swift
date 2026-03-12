@@ -132,6 +132,9 @@ public extension RuntimeABIExterns {
         kk_mutable_list_retainAll,
         kk_mutable_list_removeAt,
         kk_mutable_list_clear,
+        kk_mutable_list_sort,
+        kk_mutable_list_sortBy,
+        kk_mutable_list_sortByDescending,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_builder_map_put,
@@ -933,6 +936,24 @@ public extension RuntimeABIExterns {
     static let kk_mutable_list_clear = ExternDecl(
         name: "kk_mutable_list_clear",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_sort = ExternDecl(
+        name: "kk_mutable_list_sort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_sortBy = ExternDecl(
+        name: "kk_mutable_list_sortBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_sortByDescending = ExternDecl(
+        name: "kk_mutable_list_sortByDescending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

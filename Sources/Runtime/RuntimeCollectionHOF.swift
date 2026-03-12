@@ -968,6 +968,66 @@ public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     return kk_pair_new(matchingList, nonMatchingList)
 }
 
+// MARK: - MutableList in-place sort (STDLIB-205)
+
+@_cdecl("kk_mutable_list_sort")
+public func kk_mutable_list_sort(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let indexed = list.elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 { return comparison < 0 }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< indexed.count {
+        list.elements[i] = indexed[i]
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_sortBy")
+public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] < keys[rhs.offset] }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_sortByDescending")
+public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] > keys[rhs.offset] }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
+}
+
 // MARK: - Array higher-order functions (STDLIB-088)
 
 @_cdecl("kk_array_map")

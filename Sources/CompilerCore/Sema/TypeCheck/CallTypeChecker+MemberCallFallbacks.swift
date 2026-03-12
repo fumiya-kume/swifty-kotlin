@@ -340,6 +340,9 @@ extension CallTypeChecker {
             interner.intern("sortedWith"),
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
+            interner.intern("sort"),
+            interner.intern("sortBy"),
+            interner.intern("sortByDescending"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
@@ -396,7 +399,8 @@ extension CallTypeChecker {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
-             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"):
+             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
+             interner.intern("sort"):
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
@@ -405,7 +409,8 @@ extension CallTypeChecker {
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
-             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
+             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
+             interner.intern("sortBy"), interner.intern("sortByDescending"):
             return argCount == 1
         case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return isMapReceiver && argCount == 1
@@ -456,7 +461,12 @@ extension CallTypeChecker {
             return sema.types.make(.primitive(.boolean, .nonNull))
         }
 
-        if memberName == interner.intern("forEach") || memberName == interner.intern("forEachIndexed") {
+        if memberName == interner.intern("forEach") ||
+            memberName == interner.intern("forEachIndexed") ||
+            memberName == interner.intern("sort") ||
+            memberName == interner.intern("sortBy") ||
+            memberName == interner.intern("sortByDescending")
+        {
             return sema.types.unitType
         }
 
@@ -588,6 +598,8 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
+            interner.intern("sortBy"),
+            interner.intern("sortByDescending"),
             interner.intern("maxByOrNull"),
             interner.intern("minByOrNull"),
         ]
