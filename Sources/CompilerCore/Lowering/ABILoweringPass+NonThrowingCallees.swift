@@ -319,6 +319,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_windowed"),
             interner.intern("kk_list_indexOf"),
             interner.intern("kk_list_lastIndexOf"),
+            interner.intern("kk_list_binarySearch"),
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_list_subList"),

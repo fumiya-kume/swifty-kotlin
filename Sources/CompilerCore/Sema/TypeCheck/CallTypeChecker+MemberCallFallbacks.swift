@@ -464,6 +464,7 @@ extension CallTypeChecker {
             interner.intern("dropWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("binarySearch"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),

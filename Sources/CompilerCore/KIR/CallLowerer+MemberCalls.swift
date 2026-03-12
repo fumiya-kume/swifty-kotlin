@@ -77,7 +77,7 @@ extension CallLowerer {
 
     private static let unresolvedCollectionMemberNames: Set<String> = [
         "size", "get", "contains", "containsAll", "containsKey",
-        "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
+        "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast", "binarySearch",
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
@@ -89,7 +89,7 @@ extension CallLowerer {
         "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "joinToString",
         "replaceFirstChar",
         "sort", "sortBy", "sortByDescending",
         "onEach", "onEachIndexed",
@@ -1666,6 +1666,8 @@ extension CallLowerer {
                     "kk_list_indexOf"
                 case "lastIndexOf":
                     "kk_list_lastIndexOf"
+                case "binarySearch":
+                    "kk_list_binarySearch"
                 case "partition":
                     "kk_list_partition"
                 case "getOrNull":
@@ -2692,6 +2694,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_indexOf")
             case "lastIndexOf":
                 return interner.intern("kk_list_lastIndexOf")
+            case "binarySearch":
+                return interner.intern("kk_list_binarySearch")
             case "partition":
                 return interner.intern("kk_list_partition")
             case "getOrNull":

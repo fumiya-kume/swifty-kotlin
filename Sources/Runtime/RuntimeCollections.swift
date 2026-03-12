@@ -538,6 +538,22 @@ public func kk_list_minus_collection(_ listRaw: Int, _ otherRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
+// MARK: - List binarySearch (STDLIB-214)
+
+@_cdecl("kk_list_binarySearch")
+public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    var low = 0, high = list.elements.count - 1
+    while low <= high {
+        let mid = (low + high) / 2
+        let cmp = runtimeCompareValues(list.elements[mid], element)
+        if cmp < 0 { low = mid + 1 }
+        else if cmp > 0 { high = mid - 1 }
+        else { return mid }
+    }
+    return -(low + 1)
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")
