@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-11
+最終更新: 2026-03-12
 
 ## 運用ルール
 
@@ -19,139 +19,10 @@
 
 ### 🧩 Frontend / Sema / Lowering の暫定対応解消
 
-- [ ] MPP-001: `expect` / `actual` の nominal/typealias 互換判定を厳密化する
-  - [ ] `same-kind/same-fqName` を無条件許可している暫定判定を廃止する
-  - [ ] 型引数・上限・種別差分を含む互換条件を定義する
-  - [ ] 不一致ケースと曖昧解決ケースの golden を追加する
-  - **完了条件**: nominal/typealias の不正な `actual` が受理されず、正当な組み合わせのみ `expect/actual` link される
-
-- [ ] PROP-001: property accessor のフラットトークン fallback 依存を解消する
-  - [ ] `val x: T get() = expr` 形式を AST 段階で正規ノードとして構築する
-  - [ ] `BuildASTPhase+PropertyParsing` の flat token 再解析 fallback を不要にする
-  - [ ] inline accessor の diff/golden ケースを追加する
-  - **完了条件**: inline accessor が fallback なしで安定して AST 化される
-
-- [ ] TYPE-001: 継承解決時の primitive/built-in 型引数の all-or-nothing fallback を解消する
-  - [ ] `Int` / `String` / `Boolean` などの built-in 型引数を DataFlowSemaPhase でも解決可能にする
-  - [ ] 1 個の型引数解決失敗で supertype edge 全体の型引数を落とす処理を廃止する
-  - [ ] 継承・型別名・generic supertype の golden を追加する
-  - **完了条件**: primitive を含む型引数付き継承が後段任せにならず、DataFlowSemaPhase で一貫した型情報を保持できる
-
-- [ ] GEN-001: class initializer 順序の legacy fallback を解消する
-  - [ ] property initializer と init block の順序情報を常に lowering 入力へ保持する
-  - [ ] `legacy ordering` fallback を削除する
-  - [ ] 初期化順序依存ケースの diff/golden を追加する
-  - **完了条件**: property / init block の実行順序が常に Kotlin 仕様どおりで、legacy fallback が不要になる
-
-- [ ] GEN-002: virtual dispatch の null guard 不可時 direct dispatch fallback を解消する
-  - [ ] callee 解決時に null guard を構築できない原因を切り分ける
-  - [ ] `NativeEmitter+FunctionEmission` の direct dispatch fallback を不要にする
-  - [ ] 例外経路と nullable receiver を含む codegen テストを追加する
-  - **完了条件**: virtual dispatch が null guard 付きで一貫して生成され、fallback 経路に依存しない
-
-### 📦 Stdlib — Char 拡張
-
-- [ ] STDLIB-081: `Char.uppercase()` / `Char.lowercase()` / `Char.titlecase()` を実装する
-  - [ ] Sema に `Char.uppercase(): String` / `Char.lowercase(): String` stub を登録する
-  - [ ] Runtime に `kk_char_uppercase` / `kk_char_lowercase` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `'a'.uppercase()` → `"A"` が `kotlinc` と一致する
-
-- [ ] STDLIB-082: `Char.isUpperCase()` / `Char.isLowerCase()` / `Char.code` を実装する
-  - [ ] Sema に `Char.isUpperCase(): Boolean` / `Char.isLowerCase(): Boolean` / `Char.code: Int` を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `'A'.isUpperCase()` → `true`, `'A'.code` → `65` が `kotlinc` と一致する
-
-- [ ] STDLIB-083: `Char.digitToInt()` / `Char.digitToIntOrNull()` を実装する
-  - [ ] Sema に `Char.digitToInt(): Int` / `Char.digitToIntOrNull(): Int?` stub を登録する
-  - [ ] Runtime に `kk_char_digitToInt` を追加し、非数字で `IllegalArgumentException` を throw する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `'5'.digitToInt()` → `5` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Array 操作
-
-- [x] STDLIB-085: `Array<T>` コンストラクタ `Array(size) { init }` を実装する
-  - [x] Sema に `Array(Int, init: (Int) -> T)` の constructor stub を登録する
-  - [x] Lowering / Runtime で配列を初期化ラムダで生成する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `Array(3) { it * 2 }` → `[0, 2, 4]` が `kotlinc` と一致する
-
-- [x] STDLIB-086: `IntArray` / `LongArray` / `DoubleArray` / `BooleanArray` などプリミティブ配列型を実装する
-  - [x] Sema に `IntArray(size)` / `intArrayOf(vararg Int)` 等の stub を登録する
-  - [x] Runtime に対応するプリミティブ配列ボックスを追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `intArrayOf(1, 2, 3).size` → `3` が `kotlinc` と一致する
-
-- [x] STDLIB-087: `Array.toList()` / `Array.toMutableList()` / `List.toTypedArray()` を実装する
-  - [x] Sema に配列⇔リスト変換 stub を登録する
-  - [x] Runtime に変換ヘルパーを追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `arrayOf(1, 2, 3).toList()` → `[1, 2, 3]` が `kotlinc` と一致する
-
-- [x] STDLIB-088: `Array.map {}` / `Array.filter {}` / `Array.forEach {}` を実装する
-  - [x] Sema に `Array<T>` の HOF stub (`map`, `filter`, `forEach`, `any`, `none`) を登録する
-  - [x] Runtime に `kk_array_map` / `kk_array_filter` / `kk_array_forEach` を追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `arrayOf(1, 2, 3).map { it * 2 }` → `[2, 4, 6]` が `kotlinc` と一致する
-
-- [x] STDLIB-089: `Array.copyOf()` / `Array.copyOfRange(from, to)` / `Array.fill(value)` を実装する
-  - [x] Sema に `copyOf` / `copyOfRange` / `fill` stub を登録する
-  - [x] Runtime に対応ヘルパーを追加する
-  - [x] diff/golden ケースを追加する
-  - **完了条件**: `arrayOf(1,2,3).copyOfRange(0, 2).toList()` → `[1, 2]` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Range / Progression 拡張
-
-- [ ] STDLIB-090: `IntRange.contains(value)` / `in` 演算子をサポートする
-  - [ ] Sema に `IntRange.contains(Int): Boolean` stub を登録する
-  - [ ] Lowering で `value in start..end` を効率的な比較命令に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `5 in 1..10` → `true` が `kotlinc` と一致する
-
-- [ ] STDLIB-091: `IntRange.toList()` / `IntRange.forEach {}` / `IntRange.map {}` を実装する
-  - [ ] Sema に `IntRange` の HOF stub を登録する
-  - [ ] Runtime に `kk_range_toList` / `kk_range_forEach` / `kk_range_map` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `(1..5).toList()` → `[1, 2, 3, 4, 5]` が `kotlinc` と一致する
-
-- [ ] STDLIB-092: `IntRange.first` / `IntRange.last` / `IntRange.count()` プロパティを実装する
-  - [ ] Sema に `IntRange.first: Int` / `IntRange.last: Int` のプロパティ stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `(1..5).first` → `1`, `(1..5).last` → `5` が `kotlinc` と一致する
-
-- [ ] STDLIB-093: `IntRange.reversed()` / `IntProgression.step` を実装する
-  - [ ] Sema に `IntRange.reversed()` / `IntProgression.step` stub を登録する
-  - [ ] Runtime で逆順イテレーションとステップ付きイテレーションを正しく生成する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `(1..5).reversed().toList()` → `[5, 4, 3, 2, 1]` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Sequence 拡張
-
-- [ ] STDLIB-095: `Sequence.flatMap {}` / `Sequence.forEach {}` を実装する
-  - [ ] Sema に `Sequence<T>` の `flatMap` / `forEach` stub を登録する
-  - [ ] Runtime に `kk_sequence_flatMap` / `kk_sequence_forEach` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `sequenceOf(1,2,3).forEach { print(it) }` → `123` が `kotlinc` と一致する
-
-- [ ] STDLIB-096: `Sequence.zip(other)` / `Sequence.drop(n)` / `Sequence.distinct()` を実装する
-  - [ ] Sema に `zip` / `drop` / `distinct` stub を登録する
-  - [ ] Runtime に対応する lazy ステップ処理を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `sequenceOf(1,2,3).drop(1).toList()` → `[2, 3]` が `kotlinc` と一致する
-
-- [ ] STDLIB-097: `sequenceOf(vararg T)` / `generateSequence(seed) { nextFunc }` を実装する
-  - [ ] Sema に `sequenceOf` / `generateSequence` stub を登録する
-  - [ ] Runtime に `kk_sequence_of` / `kk_sequence_generate` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `generateSequence(1) { it * 2 }.take(5).toList()` → `[1, 2, 4, 8, 16]` が `kotlinc` と一致する
+- [ ] GEN-001: ObjectDecl initializer 順序の legacy fallback を解消する
+  - ClassDecl 側は `classBodyInitOrder` 必須化済み（既存実装済み）
+  - [ ] ObjectDecl の `emitObjectBodyInitializers` から legacy fallback を削除する
+  - **完了条件**: ObjectDecl でも legacy fallback が不要になり、常に宣言順で初期化される
 
 ---
 
@@ -242,11 +113,12 @@
 
 ### 📦 Stdlib — 例外型の拡充
 
-- [ ] STDLIB-125: `IllegalArgumentException` / `IllegalStateException` / `IndexOutOfBoundsException` を実装する
-  - [ ] Sema に各例外クラスのコンストラクタ stub と supertype 関係を登録する
+- [ ] STDLIB-125: `IndexOutOfBoundsException` を実装する
+  - `IllegalArgumentException` / `IllegalStateException` / `Error` / `NotImplementedError` は既存実装済み
+  - [ ] Sema に `IndexOutOfBoundsException` のコンストラクタ stub と supertype 関係を登録する
   - [ ] Runtime で例外メッセージ付き throw を正しくハンドルする
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `throw IllegalArgumentException("bad arg")` が catch 可能で `kotlinc` と一致する
+  - **完了条件**: `throw IndexOutOfBoundsException("index")` が catch 可能で `kotlinc` と一致する
 
 - [ ] STDLIB-126: `UnsupportedOperationException` / `NoSuchElementException` / `ArithmeticException` / `ClassCastException` を実装する
   - [ ] Sema に各例外クラスの supertype 階層を登録する
@@ -264,8 +136,9 @@
 
 ### 📦 Stdlib — I/O / システム
 
-- [ ] STDLIB-130: `print(message)` 複数引数版 / `readln()` を実装する
-  - [ ] Sema に `print(Any?)` / `readln(): String` stub を登録する
+- [ ] STDLIB-130: `readln(): String` を実装する
+  - `print(Any?)` / `println(Any?)` / `readLine(): String?` は既存実装済み
+  - [ ] Sema に `readln(): String` (non-null) stub を登録する
   - [ ] Runtime で stdin 読み取りを実装する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `readln()` が入力を返し `kotlinc` と一致する
@@ -1142,4 +1015,3 @@ UPDATE_GOLDEN=1 bash Scripts/swift_test.sh --filter GoldenHarnessTests
 | `Scripts/generate_test_case.sh` | テストケース scaffold ジェネレータ |
 | `Scripts/test_templates/{lexer,parser,sema,diff}/` | カテゴリ別 Kotlin テンプレート |
 | `Tests/CompilerCoreTests/GoldenCases/{Lexer,Parser,Sema}/` | golden テスト（`.kt` + `.golden`） |
-| `Scripts/diff_cases/` | diff テスト（`kotlinc` との出力比較） |
