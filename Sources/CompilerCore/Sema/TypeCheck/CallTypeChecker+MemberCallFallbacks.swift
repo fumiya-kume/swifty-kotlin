@@ -661,7 +661,6 @@ extension CallTypeChecker {
             return sema.types.unitType
         }
 
-        let knownNames = KnownCompilerNames(interner: interner)
         if memberName == knownNames.putAll {
             return sema.types.unitType
         }
