@@ -713,10 +713,11 @@ extension CallLowerer {
                 || (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
                 || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
                 || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
-            let numericTypes = [intType, longType, uintType, ulongType, floatType, doubleType]
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
-               numericTypes.contains(nonNullReceiverType)
+               nonNullReceiverType == intType || nonNullReceiverType == longType
+               || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
+               || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
@@ -2052,6 +2053,7 @@ extension CallLowerer {
         return fallback
     }
 
+    // swiftlint:disable cyclomatic_complexity
     private func unresolvedSyntheticMemberCallee(
         memberName: String,
         receiverExpr: ExprID,
@@ -2060,122 +2062,81 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-
         if memberName == "length",
            sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
         {
             return interner.intern("kk_string_length")
         }
 
-        if let stringCallee = getStringSyntheticCallee(memberName: memberName, nonNullReceiverType: nonNullReceiverType, sema: sema, interner: interner) {
-            return stringCallee
+        if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+            switch memberName {
+            case "compareTo":
+                return interner.intern("kk_string_compareTo_member")
+            case "get":
+                return interner.intern("kk_string_get")
+            case "lines":
+                return interner.intern("kk_string_lines")
+            case "toRegex":
+                return interner.intern("kk_string_toRegex")
+            default:
+                break
+            }
         }
 
-        if let listCallee = getListSyntheticCallee(memberName: memberName, nonNullReceiverType: nonNullReceiverType, sema: sema, interner: interner) {
-            return listCallee
+        if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "indexOf":
+                return interner.intern("kk_list_indexOf")
+            case "lastIndexOf":
+                return interner.intern("kk_list_lastIndexOf")
+            case "partition":
+                return interner.intern("kk_list_partition")
+            default:
+                break
+            }
         }
 
-        if let sequenceCallee = getSequenceSyntheticCallee(memberName: memberName, receiverExpr: receiverExpr, nonNullReceiverType: nonNullReceiverType, sema: sema, interner: interner) {
-            return sequenceCallee
+        switch memberName {
+        case "partition":
+            return interner.intern("kk_list_partition")
+        case "indexOf":
+            return interner.intern("kk_list_indexOf")
+        case "lastIndexOf":
+            return interner.intern("kk_list_lastIndexOf")
+        default:
+            break
+        }
+
+        if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        {
+            switch memberName {
+            case "map":
+                return interner.intern("kk_sequence_map")
+            case "filter":
+                return interner.intern("kk_sequence_filter")
+            case "take":
+                return interner.intern("kk_sequence_take")
+            case "toList":
+                return interner.intern("kk_sequence_to_list")
+            case "forEach":
+                return interner.intern("kk_sequence_forEach")
+            case "flatMap":
+                return interner.intern("kk_sequence_flatMap")
+            case "drop":
+                return interner.intern("kk_sequence_drop")
+            case "distinct":
+                return interner.intern("kk_sequence_distinct")
+            case "zip":
+                return interner.intern("kk_sequence_zip")
+            default:
+                break
+            }
         }
 
         return nil
     }
-
-    private func getStringSyntheticCallee(
-        memberName: String,
-        nonNullReceiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> InternedString? {
-        guard sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) else { return nil }
-
-        switch memberName {
-        case "compareTo":
-            return interner.intern("kk_string_compareTo_member")
-        case "get":
-            return interner.intern("kk_string_get")
-        case "lines":
-            return interner.intern("kk_string_lines")
-        case "toRegex":
-            return interner.intern("kk_string_toRegex")
-        default:
-            return nil
-        }
-    }
-
-    private func getListSyntheticCallee(
-        memberName: String,
-        nonNullReceiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> InternedString? {
-        guard isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) else {
-            return getGenericListCallee(memberName: memberName, interner: interner)
-        }
-
-        switch memberName {
-        case "indexOf":
-            return interner.intern("kk_list_indexOf")
-        case "lastIndexOf":
-            return interner.intern("kk_list_lastIndexOf")
-        case "partition":
-            return interner.intern("kk_list_partition")
-        default:
-            return getGenericListCallee(memberName: memberName, interner: interner)
-        }
-    }
-
-    private func getGenericListCallee(
-        memberName: String,
-        interner: StringInterner
-    ) -> InternedString? {
-        switch memberName {
-        case "partition":
-            return interner.intern("kk_list_partition")
-        case "indexOf":
-            return interner.intern("kk_list_indexOf")
-        case "lastIndexOf":
-            return interner.intern("kk_list_lastIndexOf")
-        default:
-            return nil
-        }
-    }
-
-    private func getSequenceSyntheticCallee(
-        memberName: String,
-        receiverExpr: ExprID,
-        nonNullReceiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> InternedString? {
-        guard isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
-            || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
-        else { return nil }
-
-        switch memberName {
-        case "map":
-            return interner.intern("kk_sequence_map")
-        case "filter":
-            return interner.intern("kk_sequence_filter")
-        case "take":
-            return interner.intern("kk_sequence_take")
-        case "toList":
-            return interner.intern("kk_sequence_to_list")
-        case "forEach":
-            return interner.intern("kk_sequence_forEach")
-        case "flatMap":
-            return interner.intern("kk_sequence_flatMap")
-        case "drop":
-            return interner.intern("kk_sequence_drop")
-        case "distinct":
-            return interner.intern("kk_sequence_distinct")
-        case "zip":
-            return interner.intern("kk_sequence_zip")
-        default:
-            return nil
-        }
-    }
+    // swiftlint:enable cyclomatic_complexity
 
     private func unresolvedCollectionPropertyCallee(
         memberName: String,
