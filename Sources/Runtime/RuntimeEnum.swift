@@ -29,7 +29,7 @@ public func kk_enum_valueOf_throw(_ nameRaw: Int, _ outThrown: UnsafeMutablePoin
 public func kk_enum_make_values_array(_ count: Int) -> Int {
     var elements: [Int] = []
     elements.reserveCapacity(max(0, count))
-    for i in 0 ..< count {
+    for i in 0 ..< max(0, count) {
         elements.append(kk_box_int(i))
     }
     return registerRuntimeObject(RuntimeListBox(elements: elements))
