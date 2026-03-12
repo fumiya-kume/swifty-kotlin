@@ -17,52 +17,18 @@
 
 ## 未完了バックログ
 
-### 📦 Stdlib — Pair / Triple
-
-- [ ] STDLIB-120: `Triple<A, B, C>` 型を実装する
-  - [ ] Sema に `Triple(A, B, C)` / `Triple.first` / `Triple.second` / `Triple.third` / `Triple.toString()` を登録する
-  - [ ] Runtime に `RuntimeTripleBox` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `Triple(1, "a", true).toString()` → `(1, a, true)` が `kotlinc` と一致する
-
-- [ ] STDLIB-121: `Pair.toList()` / `Triple.toList()` を実装する
-  - [ ] Sema に `Pair.toList(): List<Any?>` / `Triple.toList(): List<Any?>` stub を登録する
-  - [ ] Runtime に変換ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `Pair(1, 2).toList()` → `[1, 2]` が `kotlinc` と一致する
-
----
-
 ### 📦 Stdlib — I/O / システム
 
-- [ ] STDLIB-130: `readln(): String` を実装する
-  - `print(Any?)` / `println(Any?)` / `readLine(): String?` は既存実装済み
-  - [ ] Sema に `readln(): String` (non-null) stub を登録する
-  - [ ] Runtime で stdin 読み取りを実装する
+- [ ] STDLIB-131: `System.currentTimeMillis()` public API を実装する
+  - `kotlin.system.measureTimeMillis {}` と runtime helper `kk_system_currentTimeMillis` は既存実装済み
+  - [ ] Sema に `System.currentTimeMillis()` stub を登録する
+  - [ ] `System.currentTimeMillis()` 呼び出しを runtime helper に接続する
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `readln()` が入力を返し `kotlinc` と一致する
-
-- [ ] STDLIB-131: `System.currentTimeMillis()` 相当の時刻取得を実装する
-  - [ ] Sema に `kotlin.system.measureTimeMillis {}` / `System.currentTimeMillis()` stub を登録する
-  - [ ] Runtime に `kk_system_currentTimeMillis` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `measureTimeMillis { Thread.sleep(100) }` の戻り値が正の整数になる
-
-- [ ] STDLIB-132: `kotlin.system.exitProcess(status)` を実装する
-  - [ ] Sema に `exitProcess(Int): Nothing` stub を登録する
-  - [ ] Runtime で `exit()` システムコールに展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `exitProcess(0)` でプロセスが終了する
+  - **完了条件**: `println(System.currentTimeMillis() > 0)` → `true` が `kotlinc` と一致する
 
 ---
 
 ### 📦 Stdlib — 数値拡張・追加
-
-- [ ] STDLIB-150: `Int.coerceIn(min, max)` / `Int.coerceAtLeast(min)` / `Int.coerceAtMost(max)` を実装する
-  - [ ] Sema に `Comparable<T>.coerceIn` / `coerceAtLeast` / `coerceAtMost` extension stub を登録する
-  - [ ] Runtime / Lowering で比較・クランプ命令に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `15.coerceIn(1, 10)` → `10` が `kotlinc` と一致する
 
 - [ ] STDLIB-151: `Long.toInt()` / `Double.toInt()` / `Float.toInt()` / `Double.toLong()` 等の逆方向変換を実装する
   - [ ] Sema に各型の逆変換 stub を登録する
@@ -161,23 +127,6 @@
 ---
 
 ### 📦 Stdlib — Destructuring（componentN）
-
-- [ ] STDLIB-180: `Pair.component1()` / `Pair.component2()` destructuring を実装する
-  - [ ] Sema に `Pair<A,B>.component1(): A` / `component2(): B` operator stub を登録する
-  - [ ] Lowering で destructuring declaration を componentN 呼び出しに展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val (a, b) = Pair(1, "x"); println("$a $b")` → `1 x` が `kotlinc` と一致する
-
-- [ ] STDLIB-181: `Triple.component1()` / `component2()` / `component3()` destructuring を実装する
-  - [ ] Sema に `Triple<A,B,C>` の componentN operator stub を登録する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val (a, b, c) = Triple(1, "x", true)` が動作し `kotlinc` と一致する
-
-- [ ] STDLIB-182: `Map.Entry.component1()` / `component2()` destructuring を実装する
-  - [ ] Sema に `Map.Entry<K,V>.component1(): K` / `component2(): V` を登録する
-  - [ ] `for ((key, value) in map)` パターンで destructuring が動作するようにする
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `for ((k, v) in mapOf("a" to 1)) { println("$k=$v") }` → `a=1` が `kotlinc` と一致する
 
 - [ ] STDLIB-183: `List` の `component1()` 〜 `component5()` destructuring を実装する
   - [ ] Sema に `List<T>.component1()` 〜 `component5()` operator stub を登録する
@@ -403,16 +352,12 @@
 
 ### 📦 Stdlib — Annotation 処理
 
-- [ ] STDLIB-235: `@Deprecated(message)` annotation を実装する
-  - [ ] Sema に `@Deprecated` annotation class を登録し、使用箇所で warning 診断を出す
-  - [ ] metadata に annotation を保持し、library import 時にも warning を伝搬する
+- [ ] STDLIB-236: `@JvmOverloads` / `@JvmField` annotation を実装する
+  - `@JvmStatic` は既存実装済み
+  - [ ] Sema に `@JvmOverloads` / `@JvmField` annotation class を登録する
+  - [ ] default parameter / field に対する lowering を調整する
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `@Deprecated("use newFun")` 付き関数の呼び出しで warning が出る
-
-- [ ] STDLIB-236: `@JvmStatic` / `@JvmOverloads` / `@JvmField` annotation を実装する
-  - [ ] Sema に各 annotation class を登録し、companion object member / default parameter / field に対する lowering を調整する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `@JvmStatic fun create()` が static メソッドとして codegen される
+  - **完了条件**: `@JvmField val x = 1` と `@JvmOverloads fun f(x: Int = 0)` が `kotlinc` と一致する
 
 - [ ] STDLIB-237: `@Throws(ExceptionClass::class)` annotation を実装する
   - [ ] Sema に `@Throws` annotation class を登録し、metadata に伝搬する
@@ -475,17 +420,19 @@
 
 ### 📦 Stdlib — MutableMap 操作
 
-- [ ] STDLIB-260: `MutableMap.put(key, value)` / `MutableMap.remove(key)` / `MutableMap.clear()` を実装する
-  - [ ] Sema に `MutableMap<K,V>.put(K, V): V?` / `remove(K): V?` / `clear()` stub を登録する
-  - [ ] Runtime に `kk_mutable_map_put` / `kk_mutable_map_remove` / `kk_mutable_map_clear` を追加する
+- [ ] STDLIB-260: `MutableMap.clear()` を実装する
+  - `MutableMap.put(K, V): V?` / `remove(K): V?` は既存実装済み
+  - [ ] Sema に `MutableMap<K,V>.clear()` stub を登録する
+  - [ ] Runtime に `kk_mutable_map_clear` を追加する
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val m = mutableMapOf("a" to 1); m.put("b", 2); m.remove("a"); println(m)` → `{b=2}` が `kotlinc` と一致する
+  - **完了条件**: `val m = mutableMapOf("a" to 1); m.clear(); println(m)` → `{}` が `kotlinc` と一致する
 
-- [ ] STDLIB-261: `MutableMap[key] = value` operator set / `MutableMap.putAll(map)` を実装する
-  - [ ] Sema に `MutableMap<K,V>.set(K, V)` operator と `putAll(Map<K,V>)` stub を登録する
+- [ ] STDLIB-261: `MutableMap.putAll(map)` を実装する
+  - `MutableMap[key] = value` operator set は既存実装済み
+  - [ ] Sema に `MutableMap<K,V>.putAll(Map<K,V>)` stub を登録する
   - [ ] Runtime に対応ヘルパーを追加する
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val m = mutableMapOf<String, Int>(); m["a"] = 1; println(m)` → `{a=1}` が `kotlinc` と一致する
+  - **完了条件**: `val m = mutableMapOf("a" to 1); m.putAll(mapOf("b" to 2)); println(m)` → `{a=1, b=2}` が `kotlinc` と一致する
 
 - [ ] STDLIB-262: `Map.getValue(key)` を実装する
   - [ ] Sema に `Map<K,V>.getValue(K): V` stub を登録する（キー不在時 `NoSuchElementException` throw）
@@ -497,11 +444,12 @@
 
 ### 📦 Stdlib — MutableSet / Set 操作
 
-- [ ] STDLIB-265: `MutableSet.add(element)` / `MutableSet.remove(element)` / `MutableSet.clear()` / `MutableSet.addAll(collection)` を実装する
-  - [ ] Sema に `MutableSet<E>` の member stub を登録する
-  - [ ] Runtime に `kk_mutable_set_add` / `kk_mutable_set_remove` / `kk_mutable_set_clear` を追加する
+- [ ] STDLIB-265: `MutableSet.clear()` / `MutableSet.addAll(collection)` を実装する
+  - `MutableSet.add(element)` / `MutableSet.remove(element)` は既存実装済み
+  - [ ] Sema に `MutableSet<E>.clear()` / `addAll(Collection<E>): Boolean` stub を登録する
+  - [ ] Runtime に `kk_mutable_set_clear` / `kk_mutable_set_addAll` を追加する
   - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val s = mutableSetOf(1, 2); s.add(3); s.remove(1); println(s)` → `[2, 3]` が `kotlinc` と一致する
+  - **完了条件**: `val s = mutableSetOf(1, 2); s.clear(); s.addAll(setOf(2, 3)); println(s)` → `[2, 3]` が `kotlinc` と一致する
 
 - [ ] STDLIB-266: `Set.intersect(other)` / `Set.union(other)` / `Set.subtract(other)` を実装する
   - [ ] Sema に `Set<T>.intersect(Iterable<T>): Set<T>` / `union` / `subtract` stub を登録する
