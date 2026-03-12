@@ -1,5 +1,6 @@
 import Foundation
 
+// swiftformat:disable redundantMemberwiseInit
 struct CollectionLiteralLookupTables {
     // Source-level callee names
     let listOfName: InternedString
@@ -522,3 +523,5 @@ struct CollectionLiteralLookupTables {
         builderDSLNames = [buildStringName, buildListName, buildMapName]
     }
 }
+
+// swiftformat:enable redundantMemberwiseInit
