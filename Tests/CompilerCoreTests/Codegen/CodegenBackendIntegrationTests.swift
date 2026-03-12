@@ -249,6 +249,34 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenEnumNameAndOrdinal() throws {
+        let source = """
+        enum class Color { RED, GREEN, BLUE }
+
+        fun main() {
+            println(Color.RED.name)
+            println(Color.RED.ordinal)
+            println(Color.GREEN.name)
+            println(Color.GREEN.ordinal)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "EnumNameOrdinal",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "RED\n0\nGREEN\n1\n")
+        }
+    }
+
     func testCodegenMutableListBasicMutationsUseRuntimeListBox() throws {
         let source = """
         fun main() {

@@ -509,6 +509,20 @@ extension CallLowerer {
             return storedObjectProperty
         }
 
+        if let enumEntryProperty = tryLowerEnumEntryPropertyRead(
+            exprID,
+            loweredReceiverID: loweredReceiverID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            args: args,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            return enumEntryProperty
+        }
+
         if let externalMemberProperty = tryLowerExternalMemberPropertyRead(
             exprID,
             loweredReceiverID: loweredReceiverID,
@@ -1576,6 +1590,43 @@ extension CallLowerer {
             interner: interner,
             instructions: &instructions
         )
+    }
+
+    private func tryLowerEnumEntryPropertyRead(
+        _ exprID: ExprID,
+        loweredReceiverID: KIRExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty else { return nil }
+        let calleeStr = interner.resolve(calleeName)
+        guard calleeStr == "name" || calleeStr == "ordinal" else { return nil }
+        guard case let .symbolRef(entrySym) = arena.expr(loweredReceiverID),
+              isEnumEntryField(entrySym, sema: sema),
+              let entryInfo = sema.symbols.symbol(entrySym)
+        else { return nil }
+        let entryName = interner.resolve(entryInfo.name)
+        let helperSuffix = calleeStr == "name" ? "$enumName" : "$enumOrdinal"
+        let helperName = interner.intern(entryName + helperSuffix)
+        let resultType = sema.bindings.exprTypes[exprID]
+            ?? (calleeStr == "name"
+                ? sema.types.make(.primitive(.string, .nonNull))
+                : sema.types.make(.primitive(.int, .nonNull)))
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: helperName,
+            arguments: [],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
     }
 
     private func tryLowerExternalMemberPropertyRead(

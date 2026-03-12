@@ -392,6 +392,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_equals = ExternDecl(
+        name: "kk_string_equals",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_enum_valueOf_throw = ExternDecl(
+        name: "kk_enum_valueOf_throw",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-142
     public static let kk_string_toBoolean = ExternDecl(
         name: "kk_string_toBoolean",
@@ -1393,6 +1405,8 @@ public enum RuntimeABIExterns {
             kk_string_get,
             kk_string_compareTo_member,
             kk_string_compareToIgnoreCase,
+            kk_string_equals,
+            kk_enum_valueOf_throw,
             kk_string_toBoolean,
             kk_string_toBooleanStrict,
             kk_string_lines,

@@ -245,7 +245,8 @@ extension NativeEmitter {
             appendThrownChannel: Bool
         ) -> (symbol: SymbolID, function: LLVMFunction)? {
             var match: (symbol: SymbolID, function: LLVMFunction)?
-            let expectedParameterCount = argumentCount + (appendThrownChannel ? 1 : 0)
+            // Match by KIR param count (user args only); outThrown is appended by codegen.
+            let expectedParameterCount = argumentCount
             for declaration in module.arena.declarations {
                 guard case let .function(candidate) = declaration,
                       interner.resolve(candidate.name) == calleeName,
