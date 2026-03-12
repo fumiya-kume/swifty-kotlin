@@ -1340,7 +1340,6 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
-                        || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
                         || callee == lookup.toListName
                     {
                         if callee == lookup.toListName, arguments.count == 1 {

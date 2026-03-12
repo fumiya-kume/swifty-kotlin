@@ -251,7 +251,11 @@ public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_map_maxByOrNull")
 public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw), !map.keys.isEmpty else {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let pairCount = min(map.keys.count, map.values.count)
+    guard pairCount > 0 else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -260,7 +264,7 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     var thrown = 0
     var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
-    for idx in 1 ..< min(map.keys.count, map.values.count) {
+    for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0
@@ -277,7 +281,11 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 
 @_cdecl("kk_map_minByOrNull")
 public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw), !map.keys.isEmpty else {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let pairCount = min(map.keys.count, map.values.count)
+    guard pairCount > 0 else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -286,7 +294,7 @@ public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     var thrown = 0
     var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
-    for idx in 1 ..< min(map.keys.count, map.values.count) {
+    for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0

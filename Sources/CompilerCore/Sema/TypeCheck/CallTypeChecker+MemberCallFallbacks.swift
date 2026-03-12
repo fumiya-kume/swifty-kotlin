@@ -324,8 +324,6 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("maxOrNull"),
             interner.intern("minOrNull"),
-            interner.intern("maxByOrNull"),
-            interner.intern("minByOrNull"),
             interner.intern("asSequence"),
             interner.intern("toList"),
             interner.intern("toTypedArray"),
@@ -349,6 +347,8 @@ extension CallTypeChecker {
             interner.intern("mapKeys"),
             knownNames.getOrDefault,
             knownNames.getOrElse,
+            interner.intern("maxByOrNull"),
+            interner.intern("minByOrNull"),
         ]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
@@ -399,9 +399,10 @@ extension CallTypeChecker {
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
-             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
-             interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
+             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
             return argCount == 1
+        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
+            return isMapReceiver && argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
         case knownNames.getOrDefault:
@@ -559,7 +560,15 @@ extension CallTypeChecker {
             interner.intern("maxByOrNull"),
             interner.intern("minByOrNull"),
         ]
-        if memberName == mapValues || memberName == mapKeys {
+        let mapOnlyMembers: Set = [
+            mapValues,
+            mapKeys,
+            knownNames.getOrDefault,
+            knownNames.getOrElse,
+            interner.intern("maxByOrNull"),
+            interner.intern("minByOrNull"),
+        ]
+        if mapOnlyMembers.contains(memberName) {
             guard isMapReceiver, argCount == 1 else {
                 return nil
             }
