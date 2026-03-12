@@ -673,6 +673,17 @@ public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
+// MARK: - STDLIB-192: equals(other, ignoreCase)
+
+@_cdecl("kk_string_equalsIgnoreCase")
+public func kk_string_equalsIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    if otherRaw == runtimeNullSentinelInt {
+        return kk_box_bool(0)
+    }
+    let cmp = kk_string_compareToIgnoreCase(strRaw, otherRaw, ignoreCaseRaw)
+    return kk_box_bool(cmp == 0 ? 1 : 0)
+}
+
 @_cdecl("kk_compare_any")
 public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     if lhsRaw == rhsRaw {

@@ -301,6 +301,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_prependIndent_default = ExternDecl(
+        name: "kk_string_prependIndent_default",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_prependIndent = ExternDecl(
+        name: "kk_string_prependIndent",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceIndent_default = ExternDecl(
+        name: "kk_string_replaceIndent_default",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_replaceIndent = ExternDecl(
+        name: "kk_string_replaceIndent",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_first = ExternDecl(
         name: "kk_string_first",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
@@ -1551,6 +1575,10 @@ public enum RuntimeABIExterns {
             kk_string_single,
             kk_string_firstOrNull,
             kk_string_lastOrNull,
+            kk_string_prependIndent_default,
+            kk_string_prependIndent,
+            kk_string_replaceIndent_default,
+            kk_string_replaceIndent,
             // Print / Println
             kk_print_any,
             kk_println_any,

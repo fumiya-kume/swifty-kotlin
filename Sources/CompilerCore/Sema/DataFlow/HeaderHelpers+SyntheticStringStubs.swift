@@ -777,6 +777,87 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-191: prependIndent / replaceIndent ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "prependIndent",
+            externalLinkName: "kk_string_prependIndent_default",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "prependIndent",
+            externalLinkName: "kk_string_prependIndent",
+            receiverType: stringType,
+            parameters: [
+                ("indent", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceIndent",
+            externalLinkName: "kk_string_replaceIndent_default",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "replaceIndent",
+            externalLinkName: "kk_string_replaceIndent",
+            receiverType: stringType,
+            parameters: [
+                ("newIndent", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-192: equals(other, ignoreCase) ---
+
+        let nullableStringType = types.make(.primitive(.string, .nullable))
+
+        registerSyntheticStringExtensionFunction(
+            named: "equals",
+            externalLinkName: "kk_string_equals",
+            receiverType: stringType,
+            parameters: [
+                ("other", nullableStringType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "equals",
+            externalLinkName: "kk_string_equalsIgnoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("other", nullableStringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
 
         registerSyntheticStringExtensionFunction(

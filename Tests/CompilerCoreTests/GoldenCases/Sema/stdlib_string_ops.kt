@@ -57,3 +57,11 @@ fun useIsNotEmpty(): Boolean = "x".isNotEmpty()
 fun useIsBlank(): Boolean = "  ".isBlank()
 
 fun useIsNotBlank(): Boolean = "x".isNotBlank()
+
+fun useFirst(): Char = "hello".first()
+
+fun useFirstOrNull(): Char? = "".firstOrNull()
+
+fun usePrependIndent(): String = "abc\ndef".prependIndent("  ")
+
+fun useReplaceIndent(): String = "  abc\n  def".replaceIndent("")

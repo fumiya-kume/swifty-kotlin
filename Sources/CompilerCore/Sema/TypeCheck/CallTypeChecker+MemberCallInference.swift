@@ -1631,6 +1631,8 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.double, .nullable))
                     case "reversed", "trimStart", "trimEnd":
                         sema.types.stringType
+                    case "prependIndent", "replaceIndent":
+                        sema.types.stringType
                     case "toList", "toCharArray":
                         listCharType
                     case "toBoolean", "toBooleanStrict":
@@ -1699,6 +1701,8 @@ extension CallTypeChecker {
                     case "removePrefix", "removeSuffix", "removeSurrounding":
                         sema.types.stringType
                     case "substringBefore", "substringAfter", "substringBeforeLast", "substringAfterLast":
+                        sema.types.stringType
+                    case "prependIndent", "replaceIndent":
                         sema.types.stringType
                     default:
                         nil
