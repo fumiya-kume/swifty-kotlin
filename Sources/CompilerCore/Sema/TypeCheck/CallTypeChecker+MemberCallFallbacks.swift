@@ -725,5 +725,4 @@ extension CallTypeChecker {
         }
         return knownNames.isArrayLikeName(symbol.name)
     }
-
 }
