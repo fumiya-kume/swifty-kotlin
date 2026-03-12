@@ -871,6 +871,8 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             values.add(1)
             values.remove(1)
             values.addAll(listOf(2, 3))
+            values.addAll(setOf(2, 3))
+            values.clear()
         }
         """
 
@@ -884,6 +886,8 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let expectedExternalLinks = [
                 "add": "kk_mutable_set_add",
                 "remove": "kk_mutable_set_remove",
+                "addAll": "kk_mutable_set_addAll",
+                "clear": "kk_mutable_set_clear",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {
@@ -986,6 +990,26 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableSetClearIsNotMarkedOperatorFunction() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let clearSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableSet"),
+                ctx.interner.intern("clear"),
+            ]))
+
+            XCTAssertFalse(
+                sema.symbols.symbol(clearSymbol)?.flags.contains(.operatorFunction) == true,
+                "MutableSet.clear should not be registered as an operator function"
+            )
+        }
+    }
+
     /// Map member calls (containsKey, put, remove) go through the collection-fallback
     /// inference path which does not record a callBinding. Instead we verify that the
     /// synthetic symbols in the symbol table carry the correct external link names.
@@ -1013,10 +1037,12 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 (mapFQ, "entries", "kk_map_entries"),
                 (mapFQ, "mapValues", "kk_map_mapValues"),
                 (mapFQ, "mapKeys", "kk_map_mapKeys"),
+                (mapFQ, "getValue", "kk_map_getValue"),
                 (mapFQ, "toList", "kk_map_toList"),
                 (mapFQ, "toMutableMap", "kk_map_to_mutable_map"),
                 (mutableMapFQ, "put", "kk_mutable_map_put"),
                 (mutableMapFQ, "remove", "kk_mutable_map_remove"),
+                (mutableMapFQ, "putAll", "kk_mutable_map_putAll"),
             ]
 
             for (ownerFQ, memberName, expectedExternal) in expectedLinks {
