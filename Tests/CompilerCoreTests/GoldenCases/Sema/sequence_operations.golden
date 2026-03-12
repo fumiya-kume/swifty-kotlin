@@ -266,7 +266,7 @@ symbol s264 kind=function fq=kotlin.io.print vis=public flags=synthetic sig=recv
 symbol s265 kind=valueParameter fq=kotlin.io.print.message vis=private flags=synthetic
 symbol s266 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
 symbol s267 kind=package fq=kotlin.sequences vis=public flags=synthetic
-symbol s268 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s268 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[1]
 symbol s269 kind=valueParameter fq=kotlin.sequences.sequenceOf.elements vis=private flags=synthetic
 symbol s270 kind=function fq=kotlin.sequences.generateSequence vis=public flags=synthetic sig=recv=_ params=[Any,Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s271 kind=valueParameter fq=kotlin.sequences.generateSequence.seed vis=private flags=synthetic
@@ -295,41 +295,41 @@ expr e0 name(sequenceOf) type=_
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
-expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=<error>
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Any call=s268 map=[0->0,1->0,2->0] targs=[]
 expr e5 localDecl s mutable=0 type=_ init=e4 type=Unit ref=s284
-expr e6 name(s) type=<error> ref=s284
+expr e6 name(s) type=Any ref=s284
 expr e7 name(println) type=_
 expr e8 name(it) type=_
 expr e9 call callee=e7 args=[_:e8] type=_
 expr e10 name(println) type=_
-expr e11 name(it) type=<error>
+expr e11 name(it) type=Any ref=s-1003328
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s262 map=[0->0] targs=[]
-expr e13 lambda params=[] body=e12 type=() -> Unit
-expr e14 memberCall recv=e6 callee=forEach args=[_:e13] type=<error>
-expr e15 name(s) type=<error> ref=s284
+expr e13 lambda params=[] body=e12 type=(Any) -> Unit
+expr e14 memberCall recv=e6 callee=forEach args=[_:e13] type=Unit
+expr e15 name(s) type=Any ref=s284
 expr e16 name(sequenceOf) type=_
 expr e17 name(it) type=_
 expr e18 call callee=e16 args=[_:e17] type=_
 expr e19 name(sequenceOf) type=_
-expr e20 name(it) type=<error>
+expr e20 name(it) type=Any ref=s-1005632
 expr e21 call callee=e19 args=[_:e20] type=Any call=s268 map=[0->0] targs=[]
-expr e22 lambda params=[] body=e21 type=() -> Any
-expr e23 memberCall recv=e15 callee=flatMap args=[_:e22] type=<error>
+expr e22 lambda params=[] body=e21 type=(Any) -> Any
+expr e23 memberCall recv=e15 callee=flatMap args=[_:e22] type=Class#23<Any>
 expr e24 localDecl fm mutable=0 type=_ init=e23 type=Unit ref=s285
-expr e25 name(s) type=<error> ref=s284
+expr e25 name(s) type=Any ref=s284
 expr e26 int(1) type=Int
-expr e27 memberCall recv=e25 callee=drop args=[_:e26] type=String call=s149 map=[0->0] targs=[]
+expr e27 memberCall recv=e25 callee=drop args=[_:e26] type=Any
 expr e28 localDecl d mutable=0 type=_ init=e27 type=Unit ref=s286
-expr e29 name(s) type=<error> ref=s284
-expr e30 memberCall recv=e29 callee=distinct args=[] type=<error>
+expr e29 name(s) type=Any ref=s284
+expr e30 memberCall recv=e29 callee=distinct args=[] type=Any
 expr e31 localDecl u mutable=0 type=_ init=e30 type=Unit ref=s287
-expr e32 name(s) type=<error> ref=s284
+expr e32 name(s) type=Any ref=s284
 expr e33 name(sequenceOf) type=_
 expr e34 int(4) type=Int
 expr e35 int(5) type=Int
 expr e36 int(6) type=Int
-expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=<error>
-expr e38 memberCall recv=e32 callee=zip args=[_:e37] type=<error>
+expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=Any call=s268 map=[0->0,1->0,2->0] targs=[]
+expr e38 memberCall recv=e32 callee=zip args=[_:e37] type=Any
 expr e39 localDecl z mutable=0 type=_ init=e38 type=Unit ref=s288
 expr e40 name(generateSequence) type=_
 expr e41 int(1) type=Int
