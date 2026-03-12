@@ -1340,6 +1340,7 @@ extension CollectionLiteralLoweringPass {
                     if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
+                        || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
                         || callee == lookup.toListName
                     {
                         if callee == lookup.toListName, arguments.count == 1 {
@@ -1415,6 +1416,7 @@ extension CollectionLiteralLoweringPass {
                             if mapExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
                                || callee == lookup.mapValuesName || callee == lookup.mapKeysName
+                               || callee == lookup.flatMapName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -1430,6 +1432,9 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.forEachName: lookup.kkMapForEachName
                                 case lookup.mapValuesName: lookup.kkMapMapValuesName
                                 case lookup.mapKeysName: lookup.kkMapMapKeysName
+                                case lookup.flatMapName: lookup.kkMapFlatMapName
+                                case lookup.maxByOrNullName: lookup.kkMapMaxByOrNullName
+                                case lookup.minByOrNullName: lookup.kkMapMinByOrNullName
                                 default: callee
                                 }
                                 let hofResult = module.arena.appendExpr(
@@ -1443,7 +1448,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapName, let result {
+                                if callee == lookup.mapName || callee == lookup.flatMapName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }

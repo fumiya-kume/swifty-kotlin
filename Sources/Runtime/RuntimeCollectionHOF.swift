@@ -231,6 +231,76 @@ public func kk_map_toList(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: pairs))
 }
 
+@_cdecl("kk_map_flatMap")
+public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result: [Int] = []
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let subListRaw = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if let subList = runtimeListBox(from: subListRaw) {
+            result.append(contentsOf: subList.elements)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_map_maxByOrNull")
+public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw), !map.keys.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestKey = map.keys[0]
+    var bestValue = map.values[0]
+    var thrown = 0
+    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for idx in 1 ..< min(map.keys.count, map.values.count) {
+        let key = map.keys[idx]
+        let value = map.values[idx]
+        thrown = 0
+        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(selector, bestSelector) > 0 {
+            bestKey = key
+            bestValue = value
+            bestSelector = selector
+        }
+    }
+    return kk_pair_new(bestKey, bestValue)
+}
+
+@_cdecl("kk_map_minByOrNull")
+public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw), !map.keys.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestKey = map.keys[0]
+    var bestValue = map.values[0]
+    var thrown = 0
+    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for idx in 1 ..< min(map.keys.count, map.values.count) {
+        let key = map.keys[idx]
+        let value = map.values[idx]
+        thrown = 0
+        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(selector, bestSelector) < 0 {
+            bestKey = key
+            bestValue = value
+            bestSelector = selector
+        }
+    }
+    return kk_pair_new(bestKey, bestValue)
+}
+
 @_cdecl("kk_list_flatMap")
 public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

@@ -135,6 +135,9 @@ struct CollectionLiteralLookupTables {
     let kkMapFilterName: InternedString
     let kkMapMapValuesName: InternedString
     let kkMapMapKeysName: InternedString
+    let kkMapFlatMapName: InternedString
+    let kkMapMaxByOrNullName: InternedString
+    let kkMapMinByOrNullName: InternedString
     let kkMapToListName: InternedString
     let kkMapToStringName: InternedString
     let kkMapIteratorName: InternedString
@@ -217,6 +220,8 @@ struct CollectionLiteralLookupTables {
     let sumOfName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
+    let maxByOrNullName: InternedString
+    let minByOrNullName: InternedString
     let dropName: InternedString
     let reversedName: InternedString
     let sortedName: InternedString
@@ -423,6 +428,9 @@ struct CollectionLiteralLookupTables {
         kkMapFilterName = interner.intern("kk_map_filter")
         kkMapMapValuesName = interner.intern("kk_map_mapValues")
         kkMapMapKeysName = interner.intern("kk_map_mapKeys")
+        kkMapFlatMapName = interner.intern("kk_map_flatMap")
+        kkMapMaxByOrNullName = interner.intern("kk_map_maxByOrNull")
+        kkMapMinByOrNullName = interner.intern("kk_map_minByOrNull")
         kkMapToListName = interner.intern("kk_map_toList")
         kkMapToStringName = interner.intern("kk_map_to_string")
         kkMapIteratorName = interner.intern("kk_map_iterator")
@@ -499,6 +507,8 @@ struct CollectionLiteralLookupTables {
         sumOfName = interner.intern("sumOf")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")
+        maxByOrNullName = interner.intern("maxByOrNull")
+        minByOrNullName = interner.intern("minByOrNull")
         dropName = interner.intern("drop")
         reversedName = interner.intern("reversed")
         sortedName = interner.intern("sorted")

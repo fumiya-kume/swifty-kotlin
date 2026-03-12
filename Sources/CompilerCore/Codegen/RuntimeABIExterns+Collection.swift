@@ -86,6 +86,9 @@ public extension RuntimeABIExterns {
         kk_map_values,
         kk_map_entries,
         kk_map_to_string,
+        kk_map_flatMap,
+        kk_map_maxByOrNull,
+        kk_map_minByOrNull,
         kk_map_toList,
         kk_map_to_mutable_map,
         kk_map_iterator,
@@ -372,6 +375,24 @@ public extension RuntimeABIExterns {
         name: "kk_map_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    static let kk_map_flatMap = ExternDecl(
+        name: "kk_map_flatMap",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_maxByOrNull = ExternDecl(
+        name: "kk_map_maxByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_minByOrNull = ExternDecl(
+        name: "kk_map_minByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
     )
 
     static let kk_map_toList = ExternDecl(

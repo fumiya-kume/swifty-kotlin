@@ -2273,7 +2273,67 @@ extension DataFlowSemaPhase {
                 returnType: toListType,
                 typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
             )
+
+            let rName = interner.intern("R")
+            let flatMapRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: mapFQName + [interner.intern("flatMap"), rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let flatMapRType = types.make(.typeParam(TypeParamType(symbol: flatMapRSymbol, nullability: .nullable)))
+            let flatMapLambdaReturnType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(flatMapRType)],
+                nullability: .nonNull
+            )))
+            let flatMapLambdaType = types.make(.functionType(FunctionType(
+                params: [entryType],
+                returnType: flatMapLambdaReturnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let flatMapReturnType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(flatMapRType)],
+                nullability: .nonNull
+            )))
+            registerMember(
+                name: "flatMap",
+                externalLinkName: "kk_map_flatMap",
+                parameterTypes: [flatMapLambdaType],
+                returnType: flatMapReturnType,
+                typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, flatMapRSymbol],
+                flags: [.synthetic, .inlineFunction]
+            )
         }
+
+        let maxByOrNullLambdaType = types.make(.functionType(FunctionType(
+            params: [entryType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let nullableEntryType = types.makeNullable(entryType)
+        registerMember(
+            name: "maxByOrNull",
+            externalLinkName: "kk_map_maxByOrNull",
+            parameterTypes: [maxByOrNullLambdaType],
+            returnType: nullableEntryType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+
+        registerMember(
+            name: "minByOrNull",
+            externalLinkName: "kk_map_minByOrNull",
+            parameterTypes: [maxByOrNullLambdaType],
+            returnType: nullableEntryType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
     }
 
     private func registerSyntheticMapEntryStub(

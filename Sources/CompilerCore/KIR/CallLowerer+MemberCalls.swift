@@ -84,6 +84,7 @@ extension CallLowerer {
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getOrDefault", "getOrElse", "getOrPut",
+        "maxByOrNull", "minByOrNull",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -1580,6 +1581,7 @@ extension CallLowerer {
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
             "getOrElse", "getOrPut",
+            "maxByOrNull", "minByOrNull",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
         ].contains(interner.resolve(calleeName))

@@ -324,6 +324,8 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("maxOrNull"),
             interner.intern("minOrNull"),
+            interner.intern("maxByOrNull"),
+            interner.intern("minByOrNull"),
             interner.intern("asSequence"),
             interner.intern("toList"),
             interner.intern("toTypedArray"),
@@ -397,7 +399,8 @@ extension CallTypeChecker {
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
-             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
+             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
+             interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
@@ -464,7 +467,9 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == interner.intern("maxOrNull") || memberName == interner.intern("minOrNull") {
+        if memberName == interner.intern("maxOrNull") || memberName == interner.intern("minOrNull")
+            || memberName == interner.intern("maxByOrNull") || memberName == interner.intern("minByOrNull")
+        {
             return sema.types.makeNullable(receiverElementType)
         }
 
@@ -551,6 +556,8 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
+            interner.intern("maxByOrNull"),
+            interner.intern("minByOrNull"),
         ]
         if memberName == mapValues || memberName == mapKeys {
             guard isMapReceiver, argCount == 1 else {
