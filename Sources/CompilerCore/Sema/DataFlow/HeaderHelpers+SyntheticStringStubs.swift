@@ -23,6 +23,11 @@ extension DataFlowSemaPhase {
             interner: interner,
             elementType: charType
         )
+        let charArrayType = makeNominalType(
+            symbols: symbols,
+            types: types,
+            fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
+        )
 
         registerSyntheticStringExtensionFunction(
             named: "length",
@@ -360,7 +365,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_string_toCharArray",
             receiverType: stringType,
             parameters: [],
-            returnType: listCharType,
+            returnType: charArrayType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -1100,6 +1105,21 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) -> TypeID {
         makeListType(symbols: symbols, types: types, interner: interner, elementType: types.stringType)
+    }
+
+    private func makeNominalType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        fqName: [InternedString]
+    ) -> TypeID {
+        guard let symbol = symbols.lookup(fqName: fqName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
+            nullability: .nonNull
+        )))
     }
 
     private func registerSyntheticStringExtensionFunction(

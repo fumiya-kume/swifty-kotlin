@@ -139,7 +139,7 @@ public func kk_string_toList(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_toCharArray")
 public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    return runtimeMakeListRaw(charRaws)
+    return runtimeMakeArrayRaw(charRaws)
 }
 
 // MARK: - STDLIB-189: String iterator and HOF (filter, map, count, any, all, none)
@@ -1099,6 +1099,18 @@ private func runtimeMakeStringRaw(_ value: String) -> Int {
 
 private func runtimeMakeListRaw(_ values: [Int]) -> Int {
     let box = RuntimeListBox(elements: values)
+    let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: pointer))
+    }
+    return Int(bitPattern: pointer)
+}
+
+private func runtimeMakeArrayRaw(_ values: [Int]) -> Int {
+    let box = RuntimeArrayBox(length: values.count)
+    for (index, value) in values.enumerated() {
+        box.elements[index] = value
+    }
     let pointer = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: pointer))

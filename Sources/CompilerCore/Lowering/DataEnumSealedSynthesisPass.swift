@@ -521,22 +521,22 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         let param = KIRParameter(symbol: paramSymbol, type: intType)
         let paramRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: intType)
+        let unboxedOrdinalRef = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: intType
+        )
 
         var body: [KIRInstruction] = []
         body.append(.constValue(result: paramRef, value: .symbolRef(paramSymbol)))
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_unbox_int"),
+            arguments: [paramRef],
+            result: unboxedOrdinalRef,
+            canThrow: false,
+            thrownResult: nil
+        ))
         var labelCounter: Int32 = 6000
-        let endLabel = labelCounter
-        labelCounter += 1
-        let checkLabels = (0 ..< entries.count).map { _ in
-            let L = labelCounter
-            labelCounter += 1
-            return L
-        }
-        let matchLabels = (0 ..< entries.count).map { _ in
-            let L = labelCounter
-            labelCounter += 1
-            return L
-        }
 
         for (ordinal, entry) in entries.enumerated() {
             let entryName = interner.resolve(entry.name)
@@ -550,10 +550,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 type: intType
             )
             body.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
-            let nextLabel = ordinal + 1 < entries.count ? checkLabels[ordinal + 1] : endLabel
-            body.append(.jumpIfEqual(lhs: paramRef, rhs: ordinalExpr, target: matchLabels[ordinal]))
+            let nextLabel = labelCounter
+            labelCounter += 1
+            let matchLabel = labelCounter
+            labelCounter += 1
+            body.append(.jumpIfEqual(lhs: unboxedOrdinalRef, rhs: ordinalExpr, target: matchLabel))
             body.append(.jump(nextLabel))
-            body.append(.label(matchLabels[ordinal]))
+            body.append(.label(matchLabel))
             body.append(.call(
                 symbol: nil,
                 callee: helperName,
@@ -563,14 +566,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 thrownResult: nil
             ))
             body.append(.returnValue(resultExpr))
-            body.append(.label(checkLabels[ordinal]))
+            body.append(.label(nextLabel))
         }
         let emptyExpr = module.arena.appendExpr(
             .stringLiteral(interner.intern("")),
             type: stringType
         )
         body.append(.constValue(result: emptyExpr, value: .stringLiteral(interner.intern(""))))
-        body.append(.label(endLabel))
         body.append(.returnValue(emptyExpr))
 
         let signature = FunctionSignature(

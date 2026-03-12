@@ -1608,6 +1608,12 @@ extension CallTypeChecker {
                 interner: interner,
                 elementType: sema.types.make(.primitive(.char, .nonNull))
             )
+            let charArrayType = makeSyntheticNominalType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
+            )
             if args.isEmpty {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
@@ -1633,8 +1639,10 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
                         sema.types.stringType
-                    case "toList", "toCharArray":
+                    case "toList":
                         listCharType
+                    case "toCharArray":
+                        charArrayType
                     case "toBoolean", "toBooleanStrict":
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "isEmpty", "isNotEmpty", "isBlank", "isNotBlank":
@@ -2702,6 +2710,22 @@ extension CallTypeChecker {
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
             args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticNominalType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner _: StringInterner,
+        fqName: [InternedString]
+    ) -> TypeID {
+        guard let symbol = symbols.lookup(fqName: fqName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
             nullability: .nonNull
         )))
     }

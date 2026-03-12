@@ -1102,6 +1102,12 @@ final class CallTypeChecker {
                     interner: interner,
                     elementType: sema.types.make(.primitive(.char, .nonNull))
                 )
+                let charArrayType = makeSyntheticNominalType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    fqName: [interner.intern("kotlin"), interner.intern("CharArray")]
+                )
                 var stringResultType: TypeID?
                 if args.isEmpty {
                     stringResultType = switch name {
@@ -1114,7 +1120,8 @@ final class CallTypeChecker {
                     case "toDoubleOrNull": sema.types.make(.primitive(.double, .nullable))
                     case "indexOf", "lastIndexOf": sema.types.intType
                     case "reversed": sema.types.stringType
-                    case "toList", "toCharArray": listCharType
+                    case "toList": listCharType
+                    case "toCharArray": charArrayType
                     default: nil
                     }
                 } else if args.count == 1 {
@@ -1194,6 +1201,22 @@ final class CallTypeChecker {
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
             args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticNominalType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner _: StringInterner,
+        fqName: [InternedString]
+    ) -> TypeID {
+        guard let symbol = symbols.lookup(fqName: fqName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: symbol,
+            args: [],
             nullability: .nonNull
         )))
     }
