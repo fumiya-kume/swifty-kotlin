@@ -218,6 +218,50 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - MutableList bulk operations (STDLIB-207)
+
+@_cdecl("kk_mutable_list_addAll")
+public func kk_mutable_list_addAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let collection = runtimeListBox(from: collectionRaw)
+    else {
+        return kk_box_bool(0)
+    }
+    if collection.elements.isEmpty {
+        return kk_box_bool(0)
+    }
+    list.elements.append(contentsOf: collection.elements)
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_mutable_list_removeAll")
+public func kk_mutable_list_removeAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let collection = runtimeListBox(from: collectionRaw)
+    else {
+        return kk_box_bool(0)
+    }
+    let originalCount = list.elements.count
+    list.elements.removeAll { elem in
+        collection.elements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
+}
+
+@_cdecl("kk_mutable_list_retainAll")
+public func kk_mutable_list_retainAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          let collection = runtimeListBox(from: collectionRaw)
+    else {
+        return kk_box_bool(0)
+    }
+    let originalCount = list.elements.count
+    list.elements.removeAll { elem in
+        !collection.elements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")
