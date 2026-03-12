@@ -1063,6 +1063,7 @@ extension DataFlowSemaPhase {
         registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked")
         registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed")
         registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
+        registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
     }
 
     private func registerListAggregateMembers(

@@ -262,6 +262,19 @@ public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
     return list.elements[list.elements.count - 1]
 }
 
+// STDLIB-213: List.subList(fromIndex, toIndex)
+@_cdecl("kk_list_subList")
+public func kk_list_subList(_ listRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let size = list.elements.count
+    let from = max(0, min(fromIndex, size))
+    let to = max(from, min(toIndex, size))
+    let subElements = Array(list.elements[from ..< to])
+    return registerRuntimeObject(RuntimeListBox(elements: subElements))
+}
+
 @_cdecl("kk_mutable_list_add")
 public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

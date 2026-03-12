@@ -18,6 +18,7 @@ public extension RuntimeABIExterns {
         kk_list_joinToString,
         kk_list_to_set,
         kk_list_toMap,
+        kk_list_subList,
         kk_set_of,
         kk_set_size,
         kk_set_contains,
@@ -272,6 +273,12 @@ public extension RuntimeABIExterns {
     static let kk_list_toMap = ExternDecl(
         name: "kk_list_toMap",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_subList = ExternDecl(
+        name: "kk_list_subList",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

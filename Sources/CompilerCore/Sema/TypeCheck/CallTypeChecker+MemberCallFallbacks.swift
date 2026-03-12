@@ -439,6 +439,7 @@ extension CallTypeChecker {
             interner.intern("dropWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("subList"),
         ]
         let listOnlyMembers: Set = [
             interner.intern("getOrNull"),
@@ -501,6 +502,7 @@ extension CallTypeChecker {
             interner.intern("onEach"), interner.intern("onEachIndexed"),
             interner.intern("filterIsInstance"),
             interner.intern("takeWhile"), interner.intern("dropWhile"),
+            interner.intern("subList"),
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
@@ -557,7 +559,7 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("windowed"):
+        case interner.intern("fold"), interner.intern("windowed"), interner.intern("subList"):
             return argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
             return argCount == 0 || argCount == 1
