@@ -172,15 +172,16 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             setInterfaceSymbol: setInterfaceSymbol
         )
-        registerListConversionMembers(
-            symbols: symbols, types: types, interner: interner,
-            kotlinCollectionsPkg: kotlinCollectionsPkg,
-            listInterfaceSymbol: listInterfaceSymbol
-        )
-
         let mapSymbols = registerSyntheticMapStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        registerListConversionMembers(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listInterfaceSymbol: listInterfaceSymbol,
+            mapInterfaceSymbol: mapSymbols.mapSymbol
         )
 
         registerSyntheticMutableMapStub(
@@ -920,24 +921,56 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         listInterfaceSymbol: SymbolID,
-        listTypeParamSymbol: SymbolID,
-        listTypeParamType: TypeID,
         mapInterfaceSymbol: SymbolID
     ) {
-        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let pairSymbol = symbols.lookup(
+            fqName: [interner.intern("kotlin"), interner.intern("Pair")]
+        ) ?? symbols.lookupByShortName(interner.intern("Pair")).first
+        guard let pairSymbol,
+              let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName
+        else {
+            return
+        }
         let memberName = interner.intern("toMap")
         let memberFQName = listFQName + [memberName]
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let keyName = interner.intern("K")
+        let valueName = interner.intern("V")
+        let keyTypeSymbol = symbols.define(
+            kind: .typeParameter,
+            name: keyName,
+            fqName: memberFQName + [keyName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let valueTypeSymbol = symbols.define(
+            kind: .typeParameter,
+            name: valueName,
+            fqName: memberFQName + [valueName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let keyType = types.make(.typeParam(TypeParamType(symbol: keyTypeSymbol, nullability: .nonNull)))
+        let valueType = types.make(.typeParam(TypeParamType(symbol: valueTypeSymbol, nullability: .nonNull)))
+        let pairType = types.make(.classType(ClassType(
+            classSymbol: pairSymbol,
+            args: [.out(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
         let receiverType = types.make(.classType(ClassType(
             classSymbol: listInterfaceSymbol,
-            args: [.out(listTypeParamType)],
+            args: [.out(pairType)],
             nullability: .nonNull
         )))
         let mapType = types.make(.classType(ClassType(
             classSymbol: mapInterfaceSymbol,
-            args: [.out(types.anyType), .out(types.anyType)],
+            args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
+
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
@@ -947,14 +980,16 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setParentSymbol(memberSymbol, for: keyTypeSymbol)
+        symbols.setParentSymbol(memberSymbol, for: valueTypeSymbol)
         symbols.setExternalLinkName("kk_list_toMap", for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [],
                 returnType: mapType,
-                typeParameterSymbols: [listTypeParamSymbol],
-                classTypeParameterCount: 1
+                typeParameterSymbols: [keyTypeSymbol, valueTypeSymbol],
+                classTypeParameterCount: 0
             ),
             for: memberSymbol
         )
@@ -1351,7 +1386,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
-        listInterfaceSymbol: SymbolID
+        listInterfaceSymbol: SymbolID,
+        mapInterfaceSymbol: SymbolID
     ) {
         guard let listTypeParamSymbol = symbols.lookup(
             fqName: kotlinCollectionsPkg + [interner.intern("List"), interner.intern("E")]
@@ -1382,17 +1418,11 @@ extension DataFlowSemaPhase {
             listTypeParamType: listTypeParamType,
             setInterfaceSymbol: setInterfaceSymbol
         )
-        if let mapInterfaceSymbol = symbols.lookup(
-            fqName: kotlinCollectionsPkg + [interner.intern("Map")]
-        ) {
-            registerListToMapMember(
-                symbols: symbols, types: types, interner: interner,
-                listInterfaceSymbol: listInterfaceSymbol,
-                listTypeParamSymbol: listTypeParamSymbol,
-                listTypeParamType: listTypeParamType,
-                mapInterfaceSymbol: mapInterfaceSymbol
-            )
-        }
+        registerListToMapMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            mapInterfaceSymbol: mapInterfaceSymbol
+        )
     }
 
     /// Register `kotlin.collections.MutableList<E>` interface stub with `operator fun set(index: Int, element: E): E`.

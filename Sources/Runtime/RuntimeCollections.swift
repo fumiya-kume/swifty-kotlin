@@ -192,18 +192,24 @@ public func kk_list_toMap(_ listRaw: Int) -> Int {
     var keys: [Int] = []
     var values: [Int] = []
     for element in list.elements {
-        if let pointer = UnsafeMutableRawPointer(bitPattern: element),
-           let pair = tryCast(pointer, to: RuntimePairBox.self) {
-            var found = false
-            for (idx, existingKey) in keys.enumerated() where runtimeValuesEqual(existingKey, pair.first) {
-                values[idx] = pair.second
-                found = true
-                break
-            }
-            if !found {
-                keys.append(pair.first)
-                values.append(pair.second)
-            }
+        guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
+            continue
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: pointer))
+        }
+        guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {
+            continue
+        }
+        var found = false
+        for (idx, existingKey) in keys.enumerated() where runtimeValuesEqual(existingKey, pair.first) {
+            values[idx] = pair.second
+            found = true
+            break
+        }
+        if !found {
+            keys.append(pair.first)
+            values.append(pair.second)
         }
     }
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
