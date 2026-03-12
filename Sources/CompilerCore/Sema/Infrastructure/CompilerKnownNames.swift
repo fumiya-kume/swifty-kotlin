@@ -331,6 +331,10 @@ struct KnownCompilerNames {
         symbol.name == mutableMap || symbolMatches(symbol, fqName: kotlinCollectionsMutableMapFQName)
     }
 
+    func isMutableListSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == mutableList || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
+    }
+
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         isConcreteListLikeSymbol(symbol)
             || symbol.name == set
