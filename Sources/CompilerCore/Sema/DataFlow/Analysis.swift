@@ -278,7 +278,7 @@ public final class DataFlowAnalyzer {
         }
         switch conditionExpr {
         case let .nameRef(name, _):
-            if interner.resolve(name) == "null" {
+            if name == KnownCompilerNames(interner: interner).null {
                 var vars = base.variables
                 vars[subjectSymbol] = VariableFlowState(
                     possibleTypes: [subjectType],
@@ -461,7 +461,7 @@ public final class DataFlowAnalyzer {
         else {
             return false
         }
-        return interner.resolve(name) == "null"
+        return name == KnownCompilerNames(interner: interner).null
     }
 
     private func resolveLocalVariable(

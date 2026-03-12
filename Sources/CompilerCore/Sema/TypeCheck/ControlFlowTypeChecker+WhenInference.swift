@@ -38,7 +38,7 @@ extension ControlFlowTypeChecker {
                     else {
                         return false
                     }
-                    return interner.resolve(name) == "null"
+                    return name == KnownCompilerNames(interner: interner).null
                 }
             }
             var branchTypes: [TypeID] = []
@@ -60,7 +60,7 @@ extension ControlFlowTypeChecker {
                 else {
                     return false
                 }
-                return interner.resolve(name) == "null"
+                return name == KnownCompilerNames(interner: interner).null
             }
 
             func recordCoverage(for conditionID: ExprID, conditionType: TypeID) {
@@ -121,7 +121,7 @@ extension ControlFlowTypeChecker {
                     covered.insert(interner.intern("false"))
 
                 case let .nameRef(name, _):
-                    if interner.resolve(name) == "null" {
+                    if name == KnownCompilerNames(interner: interner).null {
                         hasNullCase = true
                         return
                     }

@@ -204,7 +204,7 @@ final class LocalDeclTypeChecker {
             return ctx.sema.types.unitType
         }
 
-        if interner.resolve(name) == "field" {
+        if name == KnownCompilerNames(interner: interner).field {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-FIELD",
                 "'field' can only be used inside a property getter or setter body.",

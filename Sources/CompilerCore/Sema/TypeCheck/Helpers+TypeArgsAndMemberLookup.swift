@@ -200,7 +200,7 @@ extension TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        if interner.resolve(name) == "null" { return nil }
+        if name == KnownCompilerNames(interner: interner).null { return nil }
         guard let conditionSymbolID = sema.bindings.identifierSymbols[conditionID],
               let conditionSymbol = sema.symbols.symbol(conditionSymbolID)
         else { return nil }

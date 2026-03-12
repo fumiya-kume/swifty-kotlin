@@ -17,19 +17,19 @@ extension CallTypeChecker {
         }
 
         guard let symbol = sema.symbols.symbol(candidate) else { return false }
-        let memberName = interner.resolve(symbol.name)
-        let ownerFQName = symbol.fqName.dropLast().map(interner.resolve)
-        switch (ownerFQName, memberName) {
-        case (["kotlin", "collections", "List"], "contains"),
-             (["kotlin", "collections", "List"], "indexOf"),
-             (["kotlin", "collections", "List"], "lastIndexOf"),
-             (["kotlin", "collections", "List"], "isEmpty"),
-             (["kotlin", "collections", "Set"], "contains"),
-             (["kotlin", "collections", "Set"], "isEmpty"),
-             (["kotlin", "collections", "Collection"], "contains"),
-             (["kotlin", "collections", "Collection"], "isEmpty"),
-             (["kotlin", "collections", "Map"], "get"),
-             (["kotlin", "collections", "Map"], "containsKey"):
+        let knownNames = KnownCompilerNames(interner: interner)
+        let ownerFQName = Array(symbol.fqName.dropLast())
+        switch (ownerFQName, symbol.name) {
+        case (knownNames.kotlinCollectionsListFQName, interner.intern("contains")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("indexOf")),
+             (knownNames.kotlinCollectionsListFQName, interner.intern("lastIndexOf")),
+             (knownNames.kotlinCollectionsListFQName, knownNames.isEmpty),
+             (knownNames.kotlinCollectionsSetFQName, interner.intern("contains")),
+             (knownNames.kotlinCollectionsSetFQName, knownNames.isEmpty),
+             (knownNames.kotlinCollectionsCollectionFQName, interner.intern("contains")),
+             (knownNames.kotlinCollectionsCollectionFQName, knownNames.isEmpty),
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("get")),
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("containsKey")):
             return true
         default:
             return false

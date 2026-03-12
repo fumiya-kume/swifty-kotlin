@@ -226,6 +226,7 @@ extension BuildASTPhase {
             ast: ASTModule,
             interner: StringInterner
         ) -> Bool {
+            let knownNames = KnownCompilerNames(interner: interner)
             guard let expr = ast.arena.expr(exprID) else {
                 return false
             }
@@ -236,10 +237,9 @@ extension BuildASTPhase {
                 else {
                     return false
                 }
-                return interner.resolve(calleeName) == "lazy"
+                return calleeName == knownNames.lazy
             case let .memberCall(_, calleeName, _, _, _):
-                let name = interner.resolve(calleeName)
-                return name == "observable" || name == "vetoable"
+                return calleeName == knownNames.observable || calleeName == knownNames.vetoable
             default:
                 return false
             }

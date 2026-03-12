@@ -473,13 +473,16 @@ extension CallTypeChecker {
     }
 
     func collectionFallbackElementType(receiverID: ExprID, sema: SemaModule, interner: StringInterner) -> TypeID {
+        let knownNames = KnownCompilerNames(interner: interner)
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType))
         else {
             return sema.types.anyType
         }
-        let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
-        if receiverSymbolName == "Map" || receiverSymbolName.contains("Map"), classType.args.count == 2 {
+        if let symbol = sema.symbols.symbol(classType.classSymbol),
+           knownNames.isMapLikeSymbol(symbol),
+           classType.args.count == 2
+        {
             let keyType = switch classType.args[0] {
             case let .invariant(type), let .out(type), let .in(type):
                 type
@@ -536,24 +539,24 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        return [
-            "List", "MutableList", "Set", "MutableSet", "Map", "MutableMap",
-        ].contains(shortName)
+        return knownNames.isCollectionLikeSymbol(symbol)
     }
 
     private func isMapLikeCollectionReceiver(receiverID: ExprID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
-        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) else {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
             return false
         }
-        let receiverSymbolName = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
-        return (receiverSymbolName == "Map" || receiverSymbolName.contains("Map")) && classType.args.count == 2
+        return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
     }
 
     // MARK: - Array member fallback (STDLIB-087/088/089)
@@ -685,6 +688,7 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         if sema.bindings.isCollectionExpr(receiverID) {
             let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
             if isArrayLikeType(receiverType, sema: sema, interner: interner) {
@@ -695,9 +699,7 @@ extension CallTypeChecker {
             if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
                let symbol = sema.symbols.symbol(classType.classSymbol)
             {
-                let shortName = interner.resolve(symbol.name)
-                let arrayNames: Set = ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
-                if arrayNames.contains(shortName) {
+                if knownNames.isArrayLikeName(symbol.name) {
                     return true
                 }
             }
@@ -715,14 +717,13 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        let arrayNames: Set = ["Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray"]
-        return arrayNames.contains(shortName)
+        return knownNames.isArrayLikeName(symbol.name)
     }
 
     // MARK: - IntRange member fallback (STDLIB-090/091/092/093)

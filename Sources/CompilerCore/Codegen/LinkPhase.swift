@@ -125,11 +125,12 @@ public final class LinkPhase: CompilerPhase {
         interner: StringInterner,
         fileFacadeNamesByFileID: [Int32: String]
     ) -> String? {
+        let knownNames = KnownCompilerNames(interner: interner)
         for decl in kir.arena.declarations {
             guard case let .function(function) = decl else {
                 continue
             }
-            if interner.resolve(function.name) == "main" {
+            if function.name == knownNames.main {
                 return CodegenSymbolSupport.cFunctionSymbol(
                     for: function,
                     interner: interner,

@@ -58,7 +58,7 @@ extension DataFlowSemaPhase {
         guard let declRange else {
             return
         }
-        for ann in astAnnotations where ann.name == "Suppress" || ann.name == "kotlin.Suppress" {
+        for ann in astAnnotations where KnownCompilerAnnotation.suppress.matches(ann.name) {
             for arg in ann.arguments {
                 let code = arg.trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
                 if !code.isEmpty {

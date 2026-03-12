@@ -27,7 +27,7 @@ extension DataFlowSemaPhase {
             symbols.setAnnotations(merged, for: packageSymbol)
         }
 
-        for annotation in file.annotations where annotation.name == "Suppress" || annotation.name == "kotlin.Suppress" {
+        for annotation in file.annotations where KnownCompilerAnnotation.suppress.matches(annotation.name) {
             guard let fileRange = file.range else {
                 continue
             }

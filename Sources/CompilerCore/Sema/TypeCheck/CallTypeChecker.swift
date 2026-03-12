@@ -23,6 +23,7 @@ final class CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
 
         let calleeExpr = ast.arena.expr(calleeID)
         let calleeName: InternedString? = if case let .nameRef(name, _) = calleeExpr {
@@ -34,8 +35,7 @@ final class CallTypeChecker {
         // Must intercept BEFORE eager arg inference so the lambda argument
         // is inferred with the correct implicit receiver type.
         if let calleeName {
-            let name = interner.resolve(calleeName)
-            if let builderKind = builderDSLKind(for: name),
+            if let builderKind = builderDSLKind(for: calleeName, interner: interner),
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
                 let lambdaArgumentIndex: Int? = switch builderKind {
@@ -105,7 +105,7 @@ final class CallTypeChecker {
         // is inferred with the correct implicit receiver type.
         // Intercept when no local or user-defined (non-synthetic) `with` shadows the stdlib helper.
         if let calleeName, args.count == 2,
-           interner.resolve(calleeName) == "with",
+           calleeName == knownNames.with,
            locals[calleeName] == nil,
            !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
                guard let sym = ctx.cachedSymbol(candidate) else { return false }
@@ -145,7 +145,7 @@ final class CallTypeChecker {
         // We infer the lambda with a flow-builder scope so unqualified `emit`
         // resolves in Sema fallback.
         if let calleeName,
-           interner.resolve(calleeName) == "flow",
+           calleeName == knownNames.flow,
            args.count == 1,
            shouldUseBuiltinFlowFactorySpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
         {
@@ -196,7 +196,7 @@ final class CallTypeChecker {
         // effect call and returns Unit.
         if ctx.isFlowBuilderLambdaScope,
            let calleeName,
-           interner.resolve(calleeName) == "emit",
+           calleeName == knownNames.emit,
            args.count == 1,
            ctx.cachedScopeLookup(calleeName).isEmpty,
            locals[calleeName] == nil
@@ -207,7 +207,7 @@ final class CallTypeChecker {
         }
 
         if let calleeName,
-           interner.resolve(calleeName) == "Regex",
+           calleeName == knownNames.regexCtor,
            args.count == 1
         {
             _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
@@ -435,7 +435,7 @@ final class CallTypeChecker {
         }
 
         if let calleeName,
-           interner.resolve(calleeName) == "Channel",
+           calleeName == knownNames.channel,
            args.isEmpty
         {
             let visibleCandidates = ctx.cachedScopeLookup(calleeName)
@@ -538,7 +538,7 @@ final class CallTypeChecker {
             coroutineLauncherExpectedLambdaType = nil
         }
         let withContextExpectedLambdaType: TypeID? = if let calleeName,
-                                                        interner.resolve(calleeName) == "withContext",
+                                                        calleeName == knownNames.withContext,
                                                         args.count >= 2,
                                                         let secondArgExpr = ast.arena.expr(args[1].expr),
                                                         case .lambdaLiteral = secondArgExpr
@@ -1236,7 +1236,7 @@ final class CallTypeChecker {
             guard let expr = ast.arena.expr(argument.expr) else { return nil }
             switch expr {
             case let .memberCall(receiver, callee, _, pairArgs, _)
-                where interner.resolve(callee) == "to" && pairArgs.count == 1:
+                where callee == KnownCompilerNames(interner: interner).to && pairArgs.count == 1:
                 let keyType = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
                 let valueType = driver.inferExpr(pairArgs[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
                 keyTypes.append(keyType)
@@ -1245,7 +1245,7 @@ final class CallTypeChecker {
                 guard pairArgs.count == 2,
                       let callee = ast.arena.expr(calleeExpr),
                       case let .nameRef(name, _) = callee,
-                      interner.resolve(name) == "to"
+                      name == KnownCompilerNames(interner: interner).to
                 else {
                     return nil
                 }
@@ -1449,12 +1449,7 @@ final class CallTypeChecker {
             else {
                 return false
             }
-            if symbol.flags.contains(.synthetic) {
-                let fqName = symbol.fqName.map(ctx.interner.resolve)
-                return fqName != ["kotlinx", "coroutines", "flow", "flow"]
-            }
-            let fqName = symbol.fqName.map(ctx.interner.resolve)
-            return fqName != ["kotlinx", "coroutines", "flow", "flow"]
+            return symbol.fqName != KnownCompilerNames(interner: ctx.interner).kotlinxCoroutinesFlowFQName
         }
         return !hasConflictingUserDefinedCandidate
     }

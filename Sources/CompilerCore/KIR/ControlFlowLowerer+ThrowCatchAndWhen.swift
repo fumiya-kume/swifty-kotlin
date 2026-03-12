@@ -46,54 +46,26 @@ extension ControlFlowLowerer {
         guard let typeName else {
             return sema.types.anyType
         }
-        switch interner.resolve(typeName) {
-        case "Int":
-            return sema.types.make(.primitive(.int, .nonNull))
-        case "Long":
-            return sema.types.make(.primitive(.long, .nonNull))
-        case "Float":
-            return sema.types.make(.primitive(.float, .nonNull))
-        case "Double":
-            return sema.types.make(.primitive(.double, .nonNull))
-        case "Boolean":
-            return sema.types.make(.primitive(.boolean, .nonNull))
-        case "Char":
-            return sema.types.make(.primitive(.char, .nonNull))
-        case "String":
-            return sema.types.make(.primitive(.string, .nonNull))
-        case "UInt":
-            return sema.types.make(.primitive(.uint, .nonNull))
-        case "ULong":
-            return sema.types.make(.primitive(.ulong, .nonNull))
-        case "UByte":
-            return sema.types.make(.primitive(.ubyte, .nonNull))
-        case "UShort":
-            return sema.types.make(.primitive(.ushort, .nonNull))
-        case "Any":
-            return sema.types.anyType
-        case "Unit":
-            return sema.types.unitType
-        case "Nothing":
-            return sema.types.nothingType
-        default:
-            let candidates = sema.symbols.lookupAll(fqName: [typeName])
-                .filter { symbolID in
-                    guard let symbol = sema.symbols.symbol(symbolID) else {
-                        return false
-                    }
-                    switch symbol.kind {
-                    case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
-                        return true
-                    default:
-                        return false
-                    }
-                }
-                .sorted { $0.rawValue < $1.rawValue }
-            guard let symbol = candidates.first else {
-                return sema.types.anyType
-            }
-            return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
+        if let builtin = KnownCompilerNames(interner: interner).builtinType(named: typeName, types: sema.types) {
+            return builtin
         }
+        let candidates = sema.symbols.lookupAll(fqName: [typeName])
+            .filter { symbolID in
+                guard let symbol = sema.symbols.symbol(symbolID) else {
+                    return false
+                }
+                switch symbol.kind {
+                case .class, .interface, .object, .enumClass, .annotationClass, .typeAlias:
+                    return true
+                default:
+                    return false
+                }
+            }
+            .sorted { $0.rawValue < $1.rawValue }
+        guard let symbol = candidates.first else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
     }
 
     func isCatchAllType(_ type: TypeID, sema: SemaModule) -> Bool {
@@ -112,8 +84,7 @@ extension ControlFlowLowerer {
         else {
             return false
         }
-        let name = interner.resolve(symbol.name)
-        return name == "Throwable" || name == "Exception"
+        return KnownCompilerNames(interner: interner).isThrowableCatchAllSymbol(symbol)
     }
 
     func isCancellationExceptionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
@@ -122,7 +93,7 @@ extension ControlFlowLowerer {
         else {
             return false
         }
-        return interner.resolve(symbol.name) == "CancellationException"
+        return KnownCompilerNames(interner: interner).isCancellationExceptionSymbol(symbol)
     }
 
     func lowerForDestructuringExpr(

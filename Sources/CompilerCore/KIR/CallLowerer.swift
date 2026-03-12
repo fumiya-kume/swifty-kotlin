@@ -171,29 +171,28 @@ final class CallLowerer {
                 instructions: &instructions
             )
         }
-        if interner.resolve(sourceCalleeName) == "toList",
+        let knownNames = KnownCompilerNames(interner: interner)
+        if sourceCalleeName == interner.intern("toList"),
            args.count == 1,
            sema.bindings.isCollectionExpr(args[0].expr)
         {
             let argumentType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
             let nonNullArgumentType = sema.types.makeNonNullable(argumentType)
-            let runtimeCallee: InternedString?
-            if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
-               let symbol = sema.symbols.symbol(classType.classSymbol)
+            let runtimeCallee: InternedString? = if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
+                                                    let symbol = sema.symbols.symbol(classType.classSymbol)
             {
-                let typeName = interner.resolve(symbol.name)
-                switch typeName {
-                case "List", "MutableList":
-                    runtimeCallee = nil
-                case "Range", "IntRange", "LongRange":
-                    runtimeCallee = interner.intern("kk_range_toList")
-                case "String":
-                    runtimeCallee = interner.intern("kk_string_toList")
+                switch symbol.name {
+                case knownNames.list, knownNames.mutableList:
+                    nil
+                case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
+                    interner.intern("kk_range_toList")
+                case knownNames.string:
+                    interner.intern("kk_string_toList")
                 default:
-                    runtimeCallee = interner.intern("kk_sequence_to_list")
+                    interner.intern("kk_sequence_to_list")
                 }
             } else {
-                runtimeCallee = interner.intern("kk_sequence_to_list")
+                interner.intern("kk_sequence_to_list")
             }
             if let runtimeCallee {
                 let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
@@ -356,24 +355,19 @@ final class CallLowerer {
         // function reference); subsequent arguments are value args for the
         // referenced suspend function and should not be expanded.
         if loweredCallable == nil {
-            let runBlockingID = interner.intern("runBlocking")
-            let launchID = interner.intern("launch")
-            let asyncID = interner.intern("async")
-            let isSyntheticCoroutineLauncher: Bool
-            if let chosen,
-               let chosenInfo = sema.symbols.symbol(chosen)
+            let isSyntheticCoroutineLauncher: Bool = if let chosen,
+                                                        let chosenInfo = sema.symbols.symbol(chosen)
             {
-                let fqName = chosenInfo.fqName.map(interner.resolve)
-                isSyntheticCoroutineLauncher = fqName == ["kotlinx", "coroutines", "runBlocking"]
-                    || fqName == ["kotlinx", "coroutines", "launch"]
-                    || fqName == ["kotlinx", "coroutines", "async"]
+                chosenInfo.fqName == knownNames.kotlinxCoroutinesRunBlockingFQName
+                    || chosenInfo.fqName == knownNames.kotlinxCoroutinesLaunchFQName
+                    || chosenInfo.fqName == knownNames.kotlinxCoroutinesAsyncFQName
             } else {
-                isSyntheticCoroutineLauncher = true
+                true
             }
             if isSyntheticCoroutineLauncher,
-               sourceCalleeName == runBlockingID
-               || sourceCalleeName == launchID
-               || sourceCalleeName == asyncID,
+               sourceCalleeName == knownNames.runBlocking
+               || sourceCalleeName == knownNames.launch
+               || sourceCalleeName == knownNames.async,
                let firstArg = finalArgIDs.first,
                let callableInfo = driver.ctx.callableValueInfo(for: firstArg),
                !callableInfo.captureArguments.isEmpty
@@ -381,8 +375,7 @@ final class CallLowerer {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
             }
         }
-        let withContextID = interner.intern("withContext")
-        if sourceCalleeName == withContextID,
+        if sourceCalleeName == knownNames.withContext,
            finalArgIDs.count >= 2,
            let callableInfo = driver.ctx.callableValueInfo(for: finalArgIDs[1]),
            !callableInfo.captureArguments.isEmpty

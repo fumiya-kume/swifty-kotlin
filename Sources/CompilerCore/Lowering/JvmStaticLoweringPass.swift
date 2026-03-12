@@ -155,8 +155,7 @@ final class JvmStaticLoweringPass: LoweringPass {
             return false
         }
         return symbols.annotations(for: symbol).contains { ann in
-            ann.annotationFQName == "JvmStatic"
-                || ann.annotationFQName == "kotlin.jvm.JvmStatic"
+            KnownCompilerAnnotation.jvmStatic.matches(ann.annotationFQName)
         }
     }
 

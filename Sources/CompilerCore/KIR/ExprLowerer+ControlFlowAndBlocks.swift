@@ -1253,7 +1253,7 @@ extension ExprLowerer {
 
         case let .callableRef(receiverExpr, memberName, _):
             // T::class  — emit the type token for the reified type parameter
-            if interner.resolve(memberName) == "class",
+            if memberName == KnownCompilerNames(interner: interner).className,
                sema.bindings.classRefTargetType(for: exprID) != nil
             {
                 // The actual lowering (to kk_type_token_simple_name) happens

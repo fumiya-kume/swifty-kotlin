@@ -15,18 +15,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        if shortName == "Job" || shortName == "Deferred" {
-            return true
-        }
-        let fqName = symbol.fqName.map(interner.resolve)
-        return fqName == ["kotlinx", "coroutines", "Job"]
-            || fqName == ["kotlinx", "coroutines", "Deferred"]
+        return knownNames.isCoroutineHandleSymbol(symbol)
     }
 
     private func isChannelReceiverType(
@@ -34,17 +29,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        if shortName != "Channel" {
-            return false
-        }
-        let fqName = symbol.fqName.map(interner.resolve)
-        return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
+        return knownNames.isChannelSymbol(symbol)
     }
 
     private func wrapLateinitReadIfNeeded(
@@ -128,7 +119,7 @@ extension CallLowerer {
 
         // ── T::class.simpleName / T::class.qualifiedName ──────────────
         if case let .callableRef(classRefReceiver, refMember, _) = ast.arena.expr(receiverExpr),
-           interner.resolve(refMember) == "class",
+           refMember == KnownCompilerNames(interner: interner).className,
            let classRefTargetType = sema.bindings.classRefTargetType(for: receiverExpr)
         {
             let callee = interner.resolve(calleeName)
@@ -349,7 +340,7 @@ extension CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         guard args.isEmpty,
-              interner.resolve(calleeName) == "isInitialized",
+              calleeName == KnownCompilerNames(interner: interner).isInitialized,
               case .callableRef = ast.arena.expr(receiverExpr),
               let propertySymbol = sema.bindings.identifierSymbol(for: receiverExpr),
               let propertyInfo = sema.symbols.symbol(propertySymbol),
@@ -414,13 +405,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        return interner.resolve(symbol.name) == "Regex"
-            && symbol.fqName.map(interner.resolve) == ["kotlin", "text", "Regex"]
+        return knownNames.isRegexSymbol(symbol)
     }
 
     private func isSequenceLikeType(
@@ -428,13 +419,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        return interner.resolve(symbol.name) == "Sequence"
-            || symbol.fqName.map(interner.resolve) == ["kotlin", "sequences", "Sequence"]
+        return knownNames.isSequenceSymbol(symbol)
     }
 
     private func isConcreteListLikeType(
@@ -442,13 +433,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let ownerName = interner.resolve(symbol.name)
-        return ownerName == "List" || ownerName == "MutableList"
+        return knownNames.isConcreteListLikeSymbol(symbol)
     }
 
     private func isConcreteCollectionLikeType(
@@ -456,14 +447,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        return [
-            "List", "MutableList", "Set", "MutableSet", "Map", "MutableMap", "Collection",
-        ].contains(interner.resolve(symbol.name))
+        return knownNames.isCollectionLikeSymbol(symbol)
     }
 
     private func isConcreteArrayLikeType(
@@ -471,14 +461,13 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        return [
-            "Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray",
-        ].contains(interner.resolve(symbol.name))
+        return knownNames.isArrayLikeName(symbol.name)
     }
 
     // swiftlint:disable cyclomatic_complexity function_body_length
@@ -1643,8 +1632,9 @@ extension CallLowerer {
               let parent = sema.symbols.parentSymbol(for: valueSym),
               sema.symbols.symbol(parent)?.kind == .object
         else { return nil }
+        let knownNames = KnownCompilerNames(interner: interner)
         if let parentInfo = sema.symbols.symbol(parent),
-           interner.resolve(parentInfo.name) == "Dispatchers"
+           parentInfo.name == knownNames.dispatchers
         {
             let runtimeCallee: InternedString
             switch interner.resolve(info.name) {
@@ -2435,30 +2425,31 @@ extension CallLowerer {
             return nil
         }
 
-        let ownerName = interner.resolve(symbol.name)
+        let knownNames = KnownCompilerNames(interner: interner)
         switch memberName {
         case "size":
-            if ownerName.contains("Map") {
+            switch knownNames.collectionKind(of: symbol) {
+            case .map?:
                 return interner.intern("kk_map_size")
-            }
-            if ownerName.contains("Set") {
+            case .set?:
                 return interner.intern("kk_set_size")
-            }
-            if ownerName.contains("Array") {
+            case .array?:
                 return interner.intern("kk_array_size")
-            }
-            if ownerName.contains("List") || ownerName.contains("Collection") {
+            case .list?, .collection?:
                 return interner.intern("kk_list_size")
+            default:
+                break
             }
         case "isEmpty":
-            if ownerName.contains("Map") {
+            switch knownNames.collectionKind(of: symbol) {
+            case .map?:
                 return interner.intern("kk_map_is_empty")
-            }
-            if ownerName.contains("Set") {
+            case .set?:
                 return interner.intern("kk_set_is_empty")
-            }
-            if ownerName.contains("List") || ownerName.contains("Collection") {
+            case .list?, .collection?:
                 return interner.intern("kk_list_is_empty")
+            default:
+                break
             }
         default:
             break

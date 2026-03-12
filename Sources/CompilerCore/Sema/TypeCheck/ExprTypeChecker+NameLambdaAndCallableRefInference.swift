@@ -109,7 +109,7 @@ extension ExprTypeChecker {
             return sema.types.unitType
         }
 
-        if interner.resolve(name) == "field" {
+        if name == KnownCompilerNames(interner: interner).field {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-FIELD",
                 "'field' can only be used inside a property getter or setter body.",
@@ -135,12 +135,13 @@ extension ExprTypeChecker {
     ) -> TypeID {
         let sema = ctx.sema
         let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
 
-        if interner.resolve(name) == "null" {
+        if name == knownNames.null {
             sema.bindings.bindExprType(id, type: sema.types.nullableNothingType)
             return sema.types.nullableNothingType
         }
-        if interner.resolve(name) == "this",
+        if name == knownNames.thisName,
            let receiverType = ctx.implicitReceiverType
         {
             sema.bindings.bindExprType(id, type: receiverType)
@@ -210,7 +211,7 @@ extension ExprTypeChecker {
                 return result.type
             } else if let firstInvisible = invisibleSyms.first {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(name), range: nameRange, diagnostics: ctx.semaCtx.diagnostics)
-            } else if interner.resolve(name) == "field" {
+            } else if name == knownNames.field {
                 // Kotlin's `field` identifier is only valid inside property
                 // getter/setter bodies where it refers to the backing field.
                 // Emit a targeted diagnostic instead of the generic
@@ -275,6 +276,7 @@ extension ExprTypeChecker {
     ) -> TypeID? {
         // STDLIB-004: Inside receiver lambdas (run/apply/with), bare name
         // references resolve as properties on the implicit receiver (this).
+        let knownNames = KnownCompilerNames(interner: interner)
         let resolvedName = interner.resolve(name)
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
         var implicitMemberType: TypeID?
@@ -282,14 +284,13 @@ extension ExprTypeChecker {
         if sema.types.isSubtype(nonNullReceiver, sema.types.stringType), resolvedName == "length" {
             implicitMemberType = sema.types.intType
         }
-        if implicitMemberType == nil, resolvedName == "size" || resolvedName == "isEmpty",
+        if implicitMemberType == nil, name == knownNames.size || name == knownNames.isEmpty,
            case let .classType(classInfo) = sema.types.kind(of: nonNullReceiver)
         {
-            let className = sema.symbols.symbol(classInfo.classSymbol).map { interner.resolve($0.name) } ?? ""
-            if className.contains("List") || className.contains("Set") || className.contains("Map")
-                || className.contains("Collection") || className.contains("Array")
+            if let symbol = sema.symbols.symbol(classInfo.classSymbol),
+               knownNames.collectionKind(of: symbol) != nil
             {
-                implicitMemberType = resolvedName == "size"
+                implicitMemberType = name == knownNames.size
                     ? sema.types.intType
                     : sema.types.make(.primitive(.boolean, .nonNull))
             }
@@ -486,7 +487,7 @@ extension ExprTypeChecker {
         let outerSymbols = Set(locals.values.map(\.symbol))
 
         // ── T::class  — reified type-parameter class reference ──────────
-        if interner.resolve(member) == "class",
+        if member == KnownCompilerNames(interner: interner).className,
            let receiver,
            case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
         {

@@ -78,19 +78,20 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return nil
         }
-        switch interner.resolve(symbol.name) {
-        case "IntArray", "LongArray":
+        switch symbol.name {
+        case knownNames.intArray, knownNames.longArray:
             return sema.types.intType
-        case "DoubleArray":
+        case knownNames.doubleArray:
             return sema.types.doubleType
-        case "BooleanArray":
+        case knownNames.booleanArray:
             return sema.types.booleanType
-        case "CharArray":
+        case knownNames.charArray:
             return sema.types.charType
         default:
             // For generic collection types (e.g. List<String?>, MutableList<Int>),
@@ -116,11 +117,12 @@ struct TypeCheckHelpers {
         guard let calleeName else {
             return nil
         }
-        switch interner.resolve(calleeName) {
-        case "runBlocking":
+        let knownNames = KnownCompilerNames(interner: interner)
+        switch calleeName {
+        case knownNames.runBlocking:
             guard argumentCount >= 1 else { return nil }
             return sema.types.anyType
-        case "launch":
+        case knownNames.launch:
             guard argumentCount >= 1 else { return nil }
             return syntheticCoroutineNominalType(
                 packageName: [interner.intern("kotlinx"), interner.intern("coroutines")],
@@ -128,7 +130,7 @@ struct TypeCheckHelpers {
                 sema: sema,
                 interner: interner
             ) ?? sema.types.anyType
-        case "async":
+        case knownNames.async:
             guard argumentCount >= 1 else { return nil }
             return syntheticCoroutineNominalType(
                 packageName: [interner.intern("kotlinx"), interner.intern("coroutines")],
@@ -136,29 +138,34 @@ struct TypeCheckHelpers {
                 sema: sema,
                 interner: interner
             ) ?? sema.types.anyType
-        case "delay":
+        case interner.intern("delay"):
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
-        case "kk_array_new", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray":
+        case interner.intern("kk_array_new"),
+             knownNames.intArray,
+             knownNames.longArray,
+             knownNames.doubleArray,
+             knownNames.booleanArray,
+             knownNames.charArray:
             guard argumentCount == 1 else { return nil }
             return sema.types.anyType
-        case "kk_array_get", "kk_list_get":
+        case interner.intern("kk_array_get"), interner.intern("kk_list_get"):
             guard argumentCount == 2 else { return nil }
             return sema.types.anyType
-        case "kk_array_set":
+        case interner.intern("kk_array_set"):
             guard argumentCount == 3 else { return nil }
             return sema.types.unitType
         // Flow (CORO-003): type-erase Flow<T> as nullableAnyType
-        case "flow":
+        case knownNames.flow:
             guard argumentCount == 1 else { return nil }
             return sema.types.nullableAnyType
-        case "emit":
+        case knownNames.emit:
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
-        case "collect":
+        case interner.intern("collect"):
             guard argumentCount >= 1 else { return nil }
             return sema.types.unitType
-        case "map", "filter", "take":
+        case interner.intern("map"), interner.intern("filter"), interner.intern("take"):
             guard argumentCount == 1 || argumentCount == 2 else { return nil }
             return sema.types.nullableAnyType
         default:
@@ -166,26 +173,19 @@ struct TypeCheckHelpers {
         }
     }
 
+    func resolveBuiltinTypeName(
+        _ name: InternedString,
+        nullability: Nullability = .nonNull,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID? {
+        KnownCompilerNames(interner: interner).builtinType(named: name, nullability: nullability, types: types)
+    }
+
     func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
-        switch name {
-        case "Byte": types.withNullability(nullability, for: types.intType)
-        case "Short": types.withNullability(nullability, for: types.intType)
-        case "Int": types.withNullability(nullability, for: types.intType)
-        case "Long": types.withNullability(nullability, for: types.longType)
-        case "Float": types.withNullability(nullability, for: types.floatType)
-        case "Double": types.withNullability(nullability, for: types.doubleType)
-        case "Boolean": types.withNullability(nullability, for: types.booleanType)
-        case "Char": types.withNullability(nullability, for: types.charType)
-        case "String": types.withNullability(nullability, for: types.stringType)
-        case "UInt": types.withNullability(nullability, for: types.uintType)
-        case "ULong": types.withNullability(nullability, for: types.ulongType)
-        case "UByte": types.withNullability(nullability, for: types.ubyteType)
-        case "UShort": types.withNullability(nullability, for: types.ushortType)
-        case "Any": types.withNullability(nullability, for: types.anyType)
-        case "Unit": types.unitType
-        case "Nothing": types.withNullability(nullability, for: types.nothingType)
-        default: nil
-        }
+        let interner = StringInterner()
+        let internedName = interner.intern(name)
+        return resolveBuiltinTypeName(internedName, nullability: nullability, types: types, interner: interner)
     }
 
     func resolveTypeRef(
@@ -204,9 +204,8 @@ struct TypeCheckHelpers {
             guard let shortName = path.last else {
                 return sema.types.errorType
             }
-            let name = interner.resolve(shortName)
             let nullability: Nullability = nullable ? .nullable : .nonNull
-            if let builtin = resolveBuiltinTypeName(name, nullability: nullability, types: sema.types) {
+            if let builtin = resolveBuiltinTypeName(shortName, nullability: nullability, types: sema.types, interner: interner) {
                 return builtin
             }
             if path.count == 1,
@@ -271,7 +270,7 @@ struct TypeCheckHelpers {
                 }
                 diagnostics?.error(
                     "KSWIFTK-SEMA-0025",
-                    "Unresolved type '\(name)'.",
+                    "Unresolved type '\(interner.resolve(shortName))'.",
                     range: nil
                 )
                 return sema.types.errorType

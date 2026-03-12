@@ -94,18 +94,13 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        if shortName == "Job" || shortName == "Deferred" {
-            return true
-        }
-        let fqName = symbol.fqName.map(interner.resolve)
-        return fqName == ["kotlinx", "coroutines", "Job"]
-            || fqName == ["kotlinx", "coroutines", "Deferred"]
+        return knownNames.isCoroutineHandleSymbol(symbol)
     }
 
     private func isChannelReceiverType(
@@ -113,17 +108,13 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return false
         }
-        let shortName = interner.resolve(symbol.name)
-        if shortName != "Channel" {
-            return false
-        }
-        let fqName = symbol.fqName.map(interner.resolve)
-        return fqName == ["kotlinx", "coroutines", "channels", "Channel"]
+        return knownNames.isChannelSymbol(symbol)
     }
 
     // swiftlint:disable cyclomatic_complexity function_body_length
@@ -144,11 +135,12 @@ extension CallTypeChecker {
         let ast = ctx.ast
         let sema = ctx.sema
         let interner = ctx.interner
+        let knownNames = KnownCompilerNames(interner: interner)
         // swiftlint:enable cyclomatic_complexity function_body_length
 
         if args.isEmpty,
            case .callableRef = ast.arena.expr(receiverID),
-           interner.resolve(calleeName) == "isInitialized"
+           calleeName == knownNames.isInitialized
         {
             _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
             if let propertySymbol = sema.bindings.identifierSymbol(for: receiverID),
@@ -176,12 +168,11 @@ extension CallTypeChecker {
         // then verify it was actually set (guards against `x::class` where
         // x is a local variable rather than a type name).
         if case let .callableRef(_, refMember, _) = ast.arena.expr(receiverID),
-           interner.resolve(refMember) == "class"
+           refMember == knownNames.className
         {
             _ = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
             if sema.bindings.classRefTargetType(for: receiverID) != nil {
-                let callee = interner.resolve(calleeName)
-                if callee == "simpleName" || callee == "qualifiedName" {
+                if calleeName == knownNames.simpleName || calleeName == knownNames.qualifiedName {
                     _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
                     let nullableStringType = sema.types.makeNullable(
                         sema.types.make(.primitive(.string, .nonNull))
@@ -869,7 +860,7 @@ extension CallTypeChecker {
             driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
-        let hasLeadingLocaleArgument = interner.resolve(calleeName) == "format"
+        let hasLeadingLocaleArgument = calleeName == interner.intern("format")
             && argTypes.first.map { isJavaUtilLocaleType($0, sema: sema, interner: interner) } == true
         let lookupReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
         // Primitive member function: Int/Long/UInt/ULong.inv() → same type (P5-103, TYPE-005)
@@ -928,7 +919,7 @@ extension CallTypeChecker {
         }
 
         // Stdlib infix function: Any.to(Any) → Pair<LHS, RHS> (FUNC-002)
-        if interner.resolve(calleeName) == "to",
+        if calleeName == knownNames.to,
            args.count == 1
         {
             let rhsType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
@@ -1406,7 +1397,11 @@ extension CallTypeChecker {
                 }
             }
         }
-        let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) { interner.resolve(name) == "null" } else { false }
+        let isNullLiteralReceiver = if case let .nameRef(name, _) = ast.arena.expr(receiverID) {
+            name == KnownCompilerNames(interner: interner).null
+        } else {
+            false
+        }
 
         let isChannelReceiver = isChannelReceiverType(
             lookupReceiverType,
@@ -2072,7 +2067,7 @@ extension CallTypeChecker {
                 }
             }
             // String stdlib: format(vararg args) (STDLIB-006)
-            if interner.resolve(calleeName) == "format", !hasLeadingLocaleArgument {
+            if calleeName == interner.intern("format"), !hasLeadingLocaleArgument {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
@@ -2181,7 +2176,7 @@ extension CallTypeChecker {
             // lightweight fallback when no symbol candidate was discovered.
             if !isClassNameReceiver,
                args.count == 1,
-               interner.resolve(calleeName) == "to"
+               calleeName == knownNames.to
             {
                 let resultType = sema.types.anyType
                 let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -2837,13 +2832,16 @@ extension CallTypeChecker {
     }
 
     private func getCollectionElementType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
+        let knownNames = KnownCompilerNames(interner: interner)
         let nonNullType = sema.types.makeNonNullable(type)
         guard case let .classType(classType) = sema.types.kind(of: nonNullType) else {
             return sema.types.anyType
         }
 
-        let name = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
-        if name == "Map" || name.contains("Map"), classType.args.count == 2 {
+        if let symbol = sema.symbols.symbol(classType.classSymbol),
+           knownNames.isMapLikeSymbol(symbol),
+           classType.args.count == 2
+        {
             let keyType = switch classType.args[0] {
             case let .invariant(id), let .out(id), let .in(id): id
             case .star: sema.types.anyType
@@ -2884,12 +2882,14 @@ extension CallTypeChecker {
     }
 
     private func isMapLikeCollectionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
         let nonNullType = sema.types.makeNonNullable(type)
-        guard case let .classType(classType) = sema.types.kind(of: nonNullType) else {
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
             return false
         }
-        let name = sema.symbols.symbol(classType.classSymbol).map { interner.resolve($0.name) } ?? ""
-        return (name == "Map" || name.contains("Map")) && classType.args.count == 2
+        return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
     }
 
     private func makeSyntheticPairType(

@@ -418,7 +418,7 @@ extension DeclTypeChecker {
     ) -> Bool {
         guard let expr = ast.arena.expr(exprID) else { return false }
         if case let .nameRef(name, _) = expr {
-            return interner.resolve(name) == "null"
+            return name == KnownCompilerNames(interner: interner).null
         }
         return false
     }

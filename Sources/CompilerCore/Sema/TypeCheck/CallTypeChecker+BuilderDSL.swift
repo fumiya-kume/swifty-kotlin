@@ -6,16 +6,17 @@ extension CallTypeChecker {
         case keyed([(key: TypeID, value: TypeID)])
     }
 
-    func builderDSLKind(for name: String) -> BuilderDSLKind? {
+    func builderDSLKind(for name: InternedString, interner: StringInterner) -> BuilderDSLKind? {
+        let knownNames = KnownCompilerNames(interner: interner)
         switch name {
-        case "buildString":
-            .buildString
-        case "buildList":
-            .buildList
-        case "buildMap":
-            .buildMap
+        case knownNames.buildString:
+            return .buildString
+        case knownNames.buildList:
+            return .buildList
+        case knownNames.buildMap:
+            return .buildMap
         default:
-            nil
+            return nil
         }
     }
 
@@ -173,16 +174,14 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard let expectedType else {
             return nil
         }
-        let candidates: Set<[String]> = [
-            ["kotlin", "collections", "List"],
-            ["kotlin", "collections", "MutableList"],
-        ]
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
               let symbol = sema.symbols.symbol(classType.classSymbol),
-              candidates.contains(symbol.fqName.map(interner.resolve)),
+              symbol.fqName == knownNames.kotlinCollectionsListFQName
+              || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName,
               let firstArg = classType.args.first
         else {
             return nil
@@ -200,16 +199,14 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> (TypeID, TypeID)? {
+        let knownNames = KnownCompilerNames(interner: interner)
         guard let expectedType else {
             return nil
         }
-        let candidates: Set<[String]> = [
-            ["kotlin", "collections", "Map"],
-            ["kotlin", "collections", "MutableMap"],
-        ]
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
               let symbol = sema.symbols.symbol(classType.classSymbol),
-              candidates.contains(symbol.fqName.map(interner.resolve)),
+              symbol.fqName == knownNames.kotlinCollectionsMapFQName
+              || symbol.fqName == knownNames.kotlinCollectionsMutableMapFQName,
               classType.args.count >= 2
         else {
             return nil
