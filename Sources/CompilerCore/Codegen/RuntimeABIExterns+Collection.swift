@@ -178,6 +178,7 @@ public extension RuntimeABIExterns {
         kk_builder_map_put,
         kk_mutable_map_put,
         kk_mutable_map_remove,
+        kk_mutable_map_clear,
         kk_mutable_map_getOrPut,
         kk_mutable_map_putAll,
         kk_list_plus_element,
@@ -1260,6 +1261,12 @@ public extension RuntimeABIExterns {
     static let kk_mutable_map_remove = ExternDecl(
         name: "kk_mutable_map_remove",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_map_clear = ExternDecl(
+        name: "kk_mutable_map_clear",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
