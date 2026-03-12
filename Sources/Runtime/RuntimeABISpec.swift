@@ -537,6 +537,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
+        // STDLIB-171: enumValues<T>()
+        RuntimeABIFunctionSpec(
+            name: "kk_enum_make_values_array",
+            parameters: [
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
         // STDLIB-142: String.toBoolean
         RuntimeABIFunctionSpec(
             name: "kk_string_toBoolean",
