@@ -363,7 +363,7 @@ extension CallLowerer {
         let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
         let receiverLooksLikeArray: Bool = if case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
-                                             let symbol = sema.symbols.symbol(classType.classSymbol)
+                                              let symbol = sema.symbols.symbol(classType.classSymbol)
         {
             [
                 "Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray",

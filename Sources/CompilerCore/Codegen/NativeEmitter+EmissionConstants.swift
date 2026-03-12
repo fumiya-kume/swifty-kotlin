@@ -154,6 +154,7 @@ extension NativeEmitter {
         }
         return (true, lowered)
     }
+
     // swiftlint:enable cyclomatic_complexity
 
     func emitConstantValue(

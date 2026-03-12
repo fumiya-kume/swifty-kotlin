@@ -242,7 +242,7 @@ extension NativeEmitter {
         func resolveUnnamedInternalFunction(
             named calleeName: String,
             argumentCount: Int,
-            appendThrownChannel: Bool
+            appendThrownChannel _: Bool
         ) -> (symbol: SymbolID, function: LLVMFunction)? {
             var match: (symbol: SymbolID, function: LLVMFunction)?
             // Match by KIR param count (user args only); outThrown is appended by codegen.

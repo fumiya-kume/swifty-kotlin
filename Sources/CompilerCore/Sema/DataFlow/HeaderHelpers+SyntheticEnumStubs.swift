@@ -95,7 +95,7 @@ extension DataFlowSemaPhase {
 
     private func ensureEnumTypeParameter(
         symbols: SymbolTable,
-        types: TypeSystem,
+        types _: TypeSystem,
         interner: StringInterner,
         enumFQName: [InternedString]
     ) -> SymbolID {
@@ -120,7 +120,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         enumSymbol: SymbolID,
         enumFQName: [InternedString],
-        receiverType: TypeID
+        receiverType _: TypeID
     ) {
         let stringType = types.make(.primitive(.string, .nonNull))
         let intType = types.make(.primitive(.int, .nonNull))
@@ -149,7 +149,7 @@ extension DataFlowSemaPhase {
 
     private func ensureEnumEntriesInterface(
         symbols: SymbolTable,
-        types: TypeSystem,
+        types _: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString]
     ) -> SymbolID {
@@ -305,7 +305,7 @@ extension DataFlowSemaPhase {
     func collectSyntheticEnumEntryProperties(
         ownerSymbol: SymbolID,
         ownerFQName: [InternedString],
-        enumType: TypeID,
+        enumType _: TypeID,
         symbols: SymbolTable,
         types: TypeSystem,
         scope: Scope,

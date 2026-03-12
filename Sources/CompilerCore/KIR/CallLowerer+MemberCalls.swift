@@ -466,6 +466,21 @@ extension CallLowerer {
         ].contains(interner.resolve(symbol.name))
     }
 
+    private func isConcreteArrayLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return [
+            "Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray",
+        ].contains(interner.resolve(symbol.name))
+    }
+
     // swiftlint:disable cyclomatic_complexity function_body_length
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
@@ -779,8 +794,8 @@ extension CallLowerer {
             }
             let isRepresentationPreservingConversion =
                 (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
-                || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
-                || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
+                    || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
+                    || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
@@ -1277,6 +1292,36 @@ extension CallLowerer {
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "map":
+                    "kk_array_map"
+                case "filter":
+                    "kk_array_filter"
+                case "forEach":
+                    "kk_array_forEach"
+                case "any":
+                    "kk_array_any"
+                case "none":
+                    "kk_array_none"
+                case "fill":
+                    "kk_array_fill"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
@@ -1359,9 +1404,50 @@ extension CallLowerer {
             }
         }
 
+        if args.count == 2 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner),
+               interner.resolve(calleeName) == "copyOfRange"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_copyOfRange"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         if args.isEmpty {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let runtimeCallee: String? = switch interner.resolve(calleeName) {
+                case "toList":
+                    "kk_array_toList"
+                case "toMutableList":
+                    "kk_array_toMutableList"
+                case "copyOf":
+                    "kk_array_copyOf"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
@@ -1711,7 +1797,7 @@ extension CallLowerer {
     private func tryLowerEnumEntryPropertyRead(
         _ exprID: ExprID,
         loweredReceiverID: KIRExprID,
-        receiverExpr: ExprID,
+        receiverExpr _: ExprID,
         calleeName: InternedString,
         args: [CallArgument],
         sema: SemaModule,
@@ -2264,6 +2350,31 @@ extension CallLowerer {
             }
         }
 
+        if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "map":
+                return interner.intern("kk_array_map")
+            case "filter":
+                return interner.intern("kk_array_filter")
+            case "toList":
+                return interner.intern("kk_array_toList")
+            case "toMutableList":
+                return interner.intern("kk_array_toMutableList")
+            case "forEach":
+                return interner.intern("kk_array_forEach")
+            case "any":
+                return interner.intern("kk_array_any")
+            case "none":
+                return interner.intern("kk_array_none")
+            case "copyOf":
+                return interner.intern("kk_array_copyOf")
+            case "fill":
+                return interner.intern("kk_array_fill")
+            default:
+                break
+            }
+        }
+
         switch memberName {
         case "partition":
             return interner.intern("kk_list_partition")
@@ -2304,6 +2415,7 @@ extension CallLowerer {
 
         return nil
     }
+
     // swiftlint:enable cyclomatic_complexity
 
     private func unresolvedCollectionPropertyCallee(

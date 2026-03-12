@@ -178,7 +178,7 @@ extension CollectionLiteralLoweringPass {
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs _: inout Set<Int32>
     ) {
         guard let result, !arguments.isEmpty else { return }
         let src = arguments[0].rawValue

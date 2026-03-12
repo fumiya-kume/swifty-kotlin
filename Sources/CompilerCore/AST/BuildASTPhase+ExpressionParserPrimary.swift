@@ -251,7 +251,7 @@ extension BuildASTPhase.ExpressionParser {
         guard let open = consume() else { return nil }
         var end = open.range.end
         let closingKind = open.kind
-        let shouldDecodeEscapes: Bool = if case .stringQuote = open.kind { true } else { false }
+        let shouldDecodeEscapes = if case .stringQuote = open.kind { true } else { false }
 
         var hasTemplate = false
         var scanIdx = index

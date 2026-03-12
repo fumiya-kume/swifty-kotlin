@@ -855,7 +855,9 @@ extension CollectionLiteralLoweringPass {
                        arguments.count == 2 || arguments.count == 3
                     {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if sequenceExprIDs.contains(receiverID.rawValue),
+                           !arrayExprIDs.contains(receiverID.rawValue)
+                        {
                             let kkName = callee == lookup.mapName ? lookup.kkSequenceMapName : lookup.kkSequenceFilterName
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -1108,7 +1110,9 @@ extension CollectionLiteralLoweringPass {
                     // toList() on sequence → kk_sequence_to_list
                     if callee == lookup.toListName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                        if sequenceExprIDs.contains(receiverID.rawValue),
+                           !arrayExprIDs.contains(receiverID.rawValue)
+                        {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )

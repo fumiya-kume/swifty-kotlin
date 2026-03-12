@@ -26,6 +26,14 @@ extension CollectionLiteralLoweringPass {
         let module = context.module
         let lookup = context.lookup
 
+        if rewriteArrayVirtualCall(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
         if rewriteSequenceVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, module: module, lookup: lookup,
@@ -46,14 +54,6 @@ extension CollectionLiteralLoweringPass {
             result: result, lookup: lookup,
             listExprIDs: listExprIDs, setExprIDs: setExprIDs, mapExprIDs: mapExprIDs,
             arrayExprIDs: arrayExprIDs,
-            loweredBody: &loweredBody
-        ) { return true }
-
-        if rewriteArrayVirtualCall(
-            callee: callee, receiver: receiver, arguments: arguments,
-            result: result, origCanThrow: origCanThrow,
-            origThrownResult: origThrownResult, module: module, lookup: lookup,
-            listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 

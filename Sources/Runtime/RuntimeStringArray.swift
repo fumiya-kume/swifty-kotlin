@@ -706,7 +706,7 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
     return "<object \(raw)>"
 }
 
-func runtimeFormatFloatingPoint<T: BinaryFloatingPoint>(_ value: T) -> String {
+func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
     if value.isNaN {
         return "NaN"
     }

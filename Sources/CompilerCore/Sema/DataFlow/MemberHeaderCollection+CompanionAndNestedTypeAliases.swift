@@ -83,7 +83,8 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         if symbols.symbol(ownerSymbol)?.kind == .enumClass,
-           let ownerType {
+           let ownerType
+        {
             collectSyntheticEnumCompanionMembers(
                 companionSymbol: companionSymbol,
                 companionFQName: companionFQName,
