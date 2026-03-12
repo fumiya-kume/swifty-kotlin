@@ -2238,6 +2238,39 @@ extension DataFlowSemaPhase {
         )
 
         registerMember(
+            name: "count",
+            externalLinkName: "kk_map_count",
+            parameterTypes: [filterLambdaType],
+            returnType: types.intType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "any",
+            externalLinkName: "kk_map_any",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "all",
+            externalLinkName: "kk_map_all",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "none",
+            externalLinkName: "kk_map_none",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+
+        registerMember(
             name: "getOrDefault",
             externalLinkName: "kk_map_getOrDefault",
             parameterTypes: [keyType, valueType],
