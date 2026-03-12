@@ -158,7 +158,8 @@ extension DataFlowSemaPhase {
         registerSyntheticMutableListStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
-            listInterfaceSymbol: listInterfaceSymbol
+            listInterfaceSymbol: listInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
         let setInterfaceSymbol = registerSyntheticSetStub(
@@ -1345,7 +1346,8 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
-        listInterfaceSymbol: SymbolID
+        listInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let listTypeParamName = interner.intern("E")
         let mutableListName = interner.intern("MutableList")
@@ -1416,7 +1418,7 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
             mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            listInterfaceSymbol: listInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
@@ -1424,7 +1426,7 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
             mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            listInterfaceSymbol: listInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
@@ -1432,7 +1434,7 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
             mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            listInterfaceSymbol: listInterfaceSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
@@ -1601,7 +1603,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         mutableListFQName: [InternedString],
         mutableListInterfaceSymbol: SymbolID,
-        listInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
         mlTypeParamSymbol: SymbolID,
         mlTypeParamType: TypeID
     ) {
@@ -1614,7 +1616,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
-            classSymbol: listInterfaceSymbol,
+            classSymbol: collectionInterfaceSymbol,
             args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
@@ -1646,7 +1648,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         mutableListFQName: [InternedString],
         mutableListInterfaceSymbol: SymbolID,
-        listInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
         mlTypeParamSymbol: SymbolID,
         mlTypeParamType: TypeID
     ) {
@@ -1659,7 +1661,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
-            classSymbol: listInterfaceSymbol,
+            classSymbol: collectionInterfaceSymbol,
             args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
@@ -1691,7 +1693,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         mutableListFQName: [InternedString],
         mutableListInterfaceSymbol: SymbolID,
-        listInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
         mlTypeParamSymbol: SymbolID,
         mlTypeParamType: TypeID
     ) {
@@ -1704,7 +1706,7 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
-            classSymbol: listInterfaceSymbol,
+            classSymbol: collectionInterfaceSymbol,
             args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
