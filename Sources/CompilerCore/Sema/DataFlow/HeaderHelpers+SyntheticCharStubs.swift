@@ -2,6 +2,84 @@ import Foundation
 
 // Char stdlib extension stubs (STDLIB-080) for kotlin.text.
 
+enum SyntheticCharMemberReturnKind {
+    case boolean
+    case string
+    case int
+    case nullableInt
+
+    func typeID(in types: TypeSystem) -> TypeID {
+        switch self {
+        case .boolean:
+            types.booleanType
+        case .string:
+            types.stringType
+        case .int:
+            types.intType
+        case .nullableInt:
+            types.make(.primitive(.int, .nullable))
+        }
+    }
+}
+
+struct SyntheticCharMemberSpec {
+    let name: String
+    let externalLinkName: String
+    let returnKind: SyntheticCharMemberReturnKind
+}
+
+private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
+    SyntheticCharMemberSpec(
+        name: "isDigit",
+        externalLinkName: "kk_char_isDigit",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isLetter",
+        externalLinkName: "kk_char_isLetter",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isLetterOrDigit",
+        externalLinkName: "kk_char_isLetterOrDigit",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isWhitespace",
+        externalLinkName: "kk_char_isWhitespace",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "uppercase",
+        externalLinkName: "kk_char_uppercase",
+        returnKind: .string
+    ),
+    SyntheticCharMemberSpec(
+        name: "lowercase",
+        externalLinkName: "kk_char_lowercase",
+        returnKind: .string
+    ),
+    SyntheticCharMemberSpec(
+        name: "titlecase",
+        externalLinkName: "kk_char_titlecase",
+        returnKind: .string
+    ),
+    SyntheticCharMemberSpec(
+        name: "digitToInt",
+        externalLinkName: "kk_char_digitToInt",
+        returnKind: .int
+    ),
+    SyntheticCharMemberSpec(
+        name: "digitToIntOrNull",
+        externalLinkName: "kk_char_digitToIntOrNull",
+        returnKind: .nullableInt
+    ),
+]
+
+func syntheticCharMemberSpec(named name: String) -> SyntheticCharMemberSpec? {
+    syntheticCharMemberSpecs.first { $0.name == name }
+}
+
 extension DataFlowSemaPhase {
     func registerSyntheticCharStubs(
         symbols: SymbolTable,
@@ -9,61 +87,17 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let kotlinTextPkg = ensureKotlinTextPackageForCharStubs(symbols: symbols, interner: interner)
-        let members: [(name: String, externalLinkName: String)] = [
-            ("isDigit", "kk_char_isDigit"),
-            ("isLetter", "kk_char_isLetter"),
-            ("isLetterOrDigit", "kk_char_isLetterOrDigit"),
-            ("isWhitespace", "kk_char_isWhitespace"),
-        ]
-
-        for member in members {
+        for member in syntheticCharMemberSpecs {
             registerSyntheticCharExtensionFunction(
                 named: member.name,
                 externalLinkName: member.externalLinkName,
                 receiverType: types.charType,
-                returnType: types.booleanType,
+                returnType: member.returnKind.typeID(in: types),
                 packageFQName: kotlinTextPkg,
                 symbols: symbols,
                 interner: interner
             )
         }
-
-        let stringMembers: [(name: String, externalLinkName: String)] = [
-            ("uppercase", "kk_char_uppercase"),
-            ("lowercase", "kk_char_lowercase"),
-            ("titlecase", "kk_char_titlecase"),
-        ]
-        for member in stringMembers {
-            registerSyntheticCharExtensionFunction(
-                named: member.name,
-                externalLinkName: member.externalLinkName,
-                receiverType: types.charType,
-                returnType: types.stringType,
-                packageFQName: kotlinTextPkg,
-                symbols: symbols,
-                interner: interner
-            )
-        }
-
-        registerSyntheticCharExtensionFunction(
-            named: "digitToInt",
-            externalLinkName: "kk_char_digitToInt",
-            receiverType: types.charType,
-            returnType: types.intType,
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticCharExtensionFunction(
-            named: "digitToIntOrNull",
-            externalLinkName: "kk_char_digitToIntOrNull",
-            receiverType: types.charType,
-            returnType: types.make(.primitive(.int, .nullable)),
-            packageFQName: kotlinTextPkg,
-            symbols: symbols,
-            interner: interner
-        )
     }
 
     private func ensureKotlinTextPackageForCharStubs(

@@ -1134,23 +1134,13 @@ final class CallTypeChecker {
                     return resultType
                 }
             }
-            if sema.types.isSubtype(nonNullReceiver, sema.types.charType), args.count <= 1 {
-                let charResultType: TypeID? = switch name {
-                case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
-                    args.isEmpty ? sema.types.booleanType : nil
-                case "uppercase", "lowercase", "titlecase":
-                    args.isEmpty ? sema.types.stringType : nil
-                case "digitToInt":
-                    args.isEmpty ? sema.types.intType : nil
-                case "digitToIntOrNull":
-                    args.isEmpty ? sema.types.makeNullable(sema.types.intType) : nil
-                default:
-                    nil
-                }
-                if let resultType = charResultType {
-                    sema.bindings.bindExprType(id, type: resultType)
-                    return resultType
-                }
+            if sema.types.isSubtype(nonNullReceiver, sema.types.charType),
+               args.isEmpty,
+               let member = syntheticCharMemberSpec(named: name)
+            {
+                let resultType = member.returnKind.typeID(in: sema.types)
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
             }
 
             // General member function lookup via implicit receiver

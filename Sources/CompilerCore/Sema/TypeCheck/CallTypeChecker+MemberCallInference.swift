@@ -1507,19 +1507,8 @@ extension CallTypeChecker {
                     : lookupReceiverType
                 if receiverTypeForCheck == sema.types.charType {
                     let calleeStr = interner.resolve(calleeName)
-                    let resultType: TypeID? = switch calleeStr {
-                    case "isDigit", "isLetter", "isLetterOrDigit", "isWhitespace":
-                        sema.types.booleanType
-                    case "uppercase", "lowercase", "titlecase":
-                        sema.types.stringType
-                    case "digitToInt":
-                        sema.types.intType
-                    case "digitToIntOrNull":
-                        sema.types.make(.primitive(.int, .nullable))
-                    default:
-                        nil
-                    }
-                    if let resultType {
+                    if let member = syntheticCharMemberSpec(named: calleeStr) {
+                        let resultType = member.returnKind.typeID(in: sema.types)
                         let kotlinTextFQName = [
                             interner.intern("kotlin"),
                             interner.intern("text"),
