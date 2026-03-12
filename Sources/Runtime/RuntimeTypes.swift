@@ -218,6 +218,17 @@ final class RuntimeListIteratorBox {
     }
 }
 
+/// Iterator box for `String` iteration via `for (c in str)` (STDLIB-189).
+final class RuntimeStringIteratorBox {
+    let charRaws: [Int]
+    var index: Int
+
+    init(charRaws: [Int]) {
+        self.charRaws = charRaws
+        index = 0
+    }
+}
+
 /// Iterator box for `Map` iteration via `for (entry in map)`.
 final class RuntimeMapIteratorBox {
     let keys: [Int]

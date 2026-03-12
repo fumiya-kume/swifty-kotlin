@@ -36,6 +36,15 @@ struct CollectionLiteralLookupTables {
     let kkSetIsEmptyName: InternedString
     let kkSetToStringName: InternedString
     let kkStringSplitName: InternedString
+    let kkStringIteratorName: InternedString
+    let kkStringIteratorHasNextName: InternedString
+    let kkStringIteratorNextName: InternedString
+    let kkStringFilterName: InternedString
+    let kkStringMapName: InternedString
+    let kkStringCountName: InternedString
+    let kkStringAnyName: InternedString
+    let kkStringAllName: InternedString
+    let kkStringNoneName: InternedString
 
     // Higher-order collection function ABI names (FUNC-003)
     let kkListMapName: InternedString
@@ -285,6 +294,7 @@ struct CollectionLiteralLookupTables {
     let mapFactoryNames: Set<InternedString>
     let arrayOfFactoryNames: Set<InternedString>
     let builderDSLNames: Set<InternedString>
+    let stringProducingCallees: Set<InternedString>
 
     init(interner: StringInterner) {
         listOfName = interner.intern("listOf")
@@ -319,6 +329,15 @@ struct CollectionLiteralLookupTables {
         kkSetIsEmptyName = interner.intern("kk_set_is_empty")
         kkSetToStringName = interner.intern("kk_set_to_string")
         kkStringSplitName = interner.intern("kk_string_split")
+        kkStringIteratorName = interner.intern("kk_string_iterator")
+        kkStringIteratorHasNextName = interner.intern("kk_string_iterator_hasNext")
+        kkStringIteratorNextName = interner.intern("kk_string_iterator_next")
+        kkStringFilterName = interner.intern("kk_string_filter")
+        kkStringMapName = interner.intern("kk_string_map")
+        kkStringCountName = interner.intern("kk_string_count")
+        kkStringAnyName = interner.intern("kk_string_any")
+        kkStringAllName = interner.intern("kk_string_all")
+        kkStringNoneName = interner.intern("kk_string_none")
 
         kkListMapName = interner.intern("kk_list_map")
         kkListFilterName = interner.intern("kk_list_filter")
@@ -548,6 +567,38 @@ struct CollectionLiteralLookupTables {
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildMapName]
+
+        stringProducingCallees = [
+            interner.intern("kk_string_concat"),
+            interner.intern("kk_string_trim"),
+            interner.intern("kk_string_lowercase"),
+            interner.intern("kk_string_uppercase"),
+            interner.intern("kk_string_replace"),
+            interner.intern("kk_string_replaceFirst"),
+            interner.intern("kk_string_substring"),
+            interner.intern("kk_string_padStart"),
+            interner.intern("kk_string_padEnd"),
+            interner.intern("kk_string_repeat"),
+            interner.intern("kk_string_reversed"),
+            interner.intern("kk_string_take"),
+            interner.intern("kk_string_drop"),
+            interner.intern("kk_string_takeLast"),
+            interner.intern("kk_string_dropLast"),
+            interner.intern("kk_string_removePrefix"),
+            interner.intern("kk_string_removeSuffix"),
+            interner.intern("kk_string_removeSurrounding"),
+            interner.intern("kk_string_substringBefore"),
+            interner.intern("kk_string_substringAfter"),
+            interner.intern("kk_string_substringBeforeLast"),
+            interner.intern("kk_string_substringAfterLast"),
+            interner.intern("kk_string_prependIndent_default"),
+            interner.intern("kk_string_prependIndent"),
+            interner.intern("kk_string_replaceIndent_default"),
+            interner.intern("kk_string_replaceIndent"),
+            kkStringFilterName,
+            kkStringMapName,
+            interner.intern("kk_build_string"),
+        ]
     }
 }
 

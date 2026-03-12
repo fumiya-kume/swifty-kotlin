@@ -361,6 +361,60 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_iterator = ExternDecl(
+        name: "kk_string_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterator_hasNext = ExternDecl(
+        name: "kk_string_iterator_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterator_next = ExternDecl(
+        name: "kk_string_iterator_next",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_filter = ExternDecl(
+        name: "kk_string_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_map = ExternDecl(
+        name: "kk_string_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_count = ExternDecl(
+        name: "kk_string_count",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_any = ExternDecl(
+        name: "kk_string_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_all = ExternDecl(
+        name: "kk_string_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_none = ExternDecl(
+        name: "kk_string_none",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_isEmpty = ExternDecl(
         name: "kk_string_isEmpty",
         parameterTypes: ["intptr_t"],
@@ -1595,6 +1649,15 @@ public enum RuntimeABIExterns {
             kk_string_single,
             kk_string_firstOrNull,
             kk_string_lastOrNull,
+            kk_string_iterator,
+            kk_string_iterator_hasNext,
+            kk_string_iterator_next,
+            kk_string_filter,
+            kk_string_map,
+            kk_string_count,
+            kk_string_any,
+            kk_string_all,
+            kk_string_none,
             kk_string_prependIndent_default,
             kk_string_prependIndent,
             kk_string_replaceIndent_default,

@@ -1955,6 +1955,56 @@ extension CallTypeChecker {
                     return finalType
                 }
             }
+            // String stdlib: HOF filter/map/count/any/all/none (STDLIB-189)
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let calleeStr = interner.resolve(calleeName)
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   ["filter", "map", "count", "any", "all", "none"].contains(calleeStr)
+                {
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    let predicateReturnType: TypeID = switch calleeStr {
+                    case "filter", "any", "all", "none", "count": sema.types.booleanType
+                    case "map": charType
+                    default: sema.types.anyType
+                    }
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [charType],
+                        returnType: predicateReturnType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let resultType: TypeID = switch calleeStr {
+                    case "filter", "map": sema.types.stringType
+                    case "count": sema.types.intType
+                    case "any", "all", "none": sema.types.booleanType
+                    default: sema.types.anyType
+                    }
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // String stdlib: 2-arg methods (STDLIB-006)
             if args.count == 2, interner.resolve(calleeName) == "replace" {
                 let receiverTypeForCheck = safeCall

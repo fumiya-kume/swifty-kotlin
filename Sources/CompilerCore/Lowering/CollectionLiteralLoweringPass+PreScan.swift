@@ -63,7 +63,8 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
-        rangeExprIDs: inout Set<Int32>
+        rangeExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
     ) {
         for instruction in function.body {
             switch instruction {
@@ -74,7 +75,8 @@ extension CollectionLiteralLoweringPass {
                     setExprIDs: &setExprIDs,
                     mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
                     sequenceExprIDs: &sequenceExprIDs,
-                    rangeExprIDs: &rangeExprIDs
+                    rangeExprIDs: &rangeExprIDs,
+                    stringExprIDs: &stringExprIDs
                 )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                 handleVirtualCallInstruction(
@@ -82,7 +84,8 @@ extension CollectionLiteralLoweringPass {
                     lookup: lookup, listExprIDs: &listExprIDs,
                     mapExprIDs: &mapExprIDs,
                     sequenceExprIDs: &sequenceExprIDs,
-                    rangeExprIDs: &rangeExprIDs
+                    rangeExprIDs: &rangeExprIDs,
+                    stringExprIDs: &stringExprIDs
                 )
             case let .copy(from, to):
                 handleCopyInstruction(
@@ -90,8 +93,11 @@ extension CollectionLiteralLoweringPass {
                     listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
                     setExprIDs: &setExprIDs,
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
-                    rangeExprIDs: &rangeExprIDs
+                    rangeExprIDs: &rangeExprIDs,
+                    stringExprIDs: &stringExprIDs
                 )
+            case let .constValue(result, .stringLiteral):
+                stringExprIDs.insert(result.rawValue)
             default:
                 break
             }
@@ -108,7 +114,8 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
-        rangeExprIDs: inout Set<Int32>
+        rangeExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
     ) {
         classifyFactoryCall(
             callee: callee, result: result, lookup: lookup,
@@ -128,10 +135,15 @@ extension CollectionLiteralLoweringPass {
         {
             sequenceExprIDs.insert(result.rawValue)
         }
+        // STDLIB-189: Classify string-producing calls
+        if let result, lookup.stringProducingCallees.contains(callee) {
+            stringExprIDs.insert(result.rawValue)
+        }
         propagateCollectionOperation(
             callee: callee, arguments: arguments, result: result, lookup: lookup,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
-            sequenceExprIDs: &sequenceExprIDs
+            sequenceExprIDs: &sequenceExprIDs,
+            stringExprIDs: &stringExprIDs
         )
     }
 
@@ -165,7 +177,8 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
-        sequenceExprIDs: inout Set<Int32>
+        sequenceExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
     ) {
         guard let result, !arguments.isEmpty else { return }
         let src = arguments[0].rawValue
@@ -213,7 +226,8 @@ extension CollectionLiteralLoweringPass {
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
-        rangeExprIDs: inout Set<Int32>
+        rangeExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
     ) {
         if callee == lookup.asSequenceName {
             if let result { sequenceExprIDs.insert(result.rawValue) }
@@ -271,6 +285,13 @@ extension CollectionLiteralLoweringPass {
                 if let result { listExprIDs.insert(result.rawValue) }
             }
         }
+
+        // STDLIB-189: Track string HOF results
+        if stringExprIDs.contains(receiverRaw) {
+            if callee == lookup.mapName || callee == lookup.filterName, let result {
+                stringExprIDs.insert(result.rawValue)
+            }
+        }
     }
 
     private func handleCopyInstruction(
@@ -281,7 +302,8 @@ extension CollectionLiteralLoweringPass {
         setExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
-        rangeExprIDs: inout Set<Int32>
+        rangeExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
             listExprIDs.insert(to.rawValue)
@@ -300,6 +322,9 @@ extension CollectionLiteralLoweringPass {
         }
         if rangeExprIDs.contains(from.rawValue) {
             rangeExprIDs.insert(to.rawValue)
+        }
+        if stringExprIDs.contains(from.rawValue) {
+            stringExprIDs.insert(to.rawValue)
         }
     }
 }

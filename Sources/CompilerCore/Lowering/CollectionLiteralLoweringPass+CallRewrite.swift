@@ -21,6 +21,7 @@ extension CollectionLiteralLoweringPass {
             var arrayExprIDs: Set<Int32> = []
             var sequenceExprIDs: Set<Int32> = []
             var rangeExprIDs: Set<Int32> = []
+            var stringExprIDs: Set<Int32> = []
 
             collectInitialCollectionExprIDs(
                 function: function,
@@ -30,12 +31,14 @@ extension CollectionLiteralLoweringPass {
                 mapExprIDs: &mapExprIDs,
                 arrayExprIDs: &arrayExprIDs,
                 sequenceExprIDs: &sequenceExprIDs,
-                rangeExprIDs: &rangeExprIDs
+                rangeExprIDs: &rangeExprIDs,
+                stringExprIDs: &stringExprIDs
             )
 
             // Phase 2: Rewrite instructions
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
+            var stringIteratorExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -485,6 +488,19 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-189: Rewrite kk_range_iterator on String → kk_string_iterator
+                        if stringExprIDs.contains(argID.rawValue) {
+                            if let result { stringIteratorExprIDs.insert(result.rawValue) }
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkStringIteratorName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
@@ -512,6 +528,18 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-189: Rewrite kk_range_hasNext on string iterator → kk_string_iterator_hasNext
+                        if stringIteratorExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkStringIteratorHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
@@ -532,6 +560,18 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkMapIteratorNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        // STDLIB-189: Rewrite kk_range_next on string iterator → kk_string_iterator_next
+                        if stringIteratorExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkStringIteratorNextName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -1983,11 +2023,17 @@ extension CollectionLiteralLoweringPass {
                     if rangeExprIDs.contains(from.rawValue) {
                         rangeExprIDs.insert(to.rawValue)
                     }
+                    if stringExprIDs.contains(from.rawValue) {
+                        stringExprIDs.insert(to.rawValue)
+                    }
                     if listIteratorExprIDs.contains(from.rawValue) {
                         listIteratorExprIDs.insert(to.rawValue)
                     }
                     if mapIteratorExprIDs.contains(from.rawValue) {
                         mapIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if stringIteratorExprIDs.contains(from.rawValue) {
+                        stringIteratorExprIDs.insert(to.rawValue)
                     }
                     loweredBody.append(instruction)
 

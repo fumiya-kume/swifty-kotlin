@@ -50,6 +50,19 @@ func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     return tryCast(ptr, to: RuntimeListIteratorBox.self)
 }
 
+func runtimeStringIteratorBox(from rawValue: Int) -> RuntimeStringIteratorBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeStringIteratorBox.self)
+}
+
 func runtimeMapIteratorBox(from rawValue: Int) -> RuntimeMapIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil

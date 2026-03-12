@@ -888,6 +888,80 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-189: String HOF (filter, map, count, any, all, none) ---
+        let charToBoolType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: boolType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let charToCharType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: charType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerSyntheticStringExtensionFunction(
+            named: "filter",
+            externalLinkName: "kk_string_filter",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "map",
+            externalLinkName: "kk_string_map",
+            receiverType: stringType,
+            parameters: [("transform", charToCharType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "count",
+            externalLinkName: "kk_string_count",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "any",
+            externalLinkName: "kk_string_any",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "all",
+            externalLinkName: "kk_string_all",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "none",
+            externalLinkName: "kk_string_none",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
 
         registerSyntheticStringExtensionFunction(
