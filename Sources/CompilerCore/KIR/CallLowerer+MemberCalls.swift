@@ -2477,7 +2477,7 @@ extension CallLowerer {
         let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol),
-              knownNames.isMapLikeSymbol(symbol)
+              knownNames.isMutableMapSymbol(symbol)
         else {
             return nil
         }

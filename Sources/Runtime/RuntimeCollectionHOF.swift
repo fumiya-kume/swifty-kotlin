@@ -160,21 +160,34 @@ public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureR
 
 @_cdecl("kk_mutable_map_getOrPut")
 public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     if let map = runtimeMapBox(from: mapRaw) {
         for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
-            if idx < map.values.count { return map.values[idx] }
+            if idx < map.values.count {
+                let existing = maybeUnbox(map.values[idx])
+                if existing != runtimeNullSentinelInt {
+                    return existing
+                }
+                var thrown = 0
+                let result = lambda(closureRaw, &thrown)
+                if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+                let normalizedResult = maybeUnbox(result)
+                map.values[idx] = normalizedResult
+                return normalizedResult
+            }
             break
         }
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+
     var thrown = 0
     let result = lambda(closureRaw, &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    let normalizedResult = maybeUnbox(result)
     if let map = runtimeMapBox(from: mapRaw) {
         map.keys.append(key)
-        map.values.append(result)
+        map.values.append(normalizedResult)
     }
-    return result
+    return normalizedResult
 }
 
 @_cdecl("kk_map_mapValues")
