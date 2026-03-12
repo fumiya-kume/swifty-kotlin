@@ -69,7 +69,7 @@ public func kk_char_digitToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<I
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Char is not a digit")
         return 0
     }
-    if let digitValue = charUnicodeDigitValue(scalar) {
+    if let digitValue = charBase10DigitValue(scalar) {
         return digitValue
     }
     outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Char \(scalar) is not a digit")
@@ -79,11 +79,24 @@ public func kk_char_digitToInt(_ value: Int, _ outThrown: UnsafeMutablePointer<I
 @_cdecl("kk_char_digitToIntOrNull")
 public func kk_char_digitToIntOrNull(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value),
-          let digitValue = charUnicodeDigitValue(scalar)
+          let digitValue = charBase10DigitValue(scalar)
     else {
         return runtimeNullSentinelInt
     }
     return digitValue
+}
+
+private func charBase10DigitValue(_ scalar: UnicodeScalar) -> Int? {
+    if scalar.value >= 0x30, scalar.value <= 0x39 {
+        return Int(scalar.value - 0x30)
+    }
+    if CharacterSet.decimalDigits.contains(scalar) {
+        let numericValue = scalar.properties.numericValue
+        if let value = numericValue, value >= 0, value <= 9, value == value.rounded() {
+            return Int(value)
+        }
+    }
+    return nil
 }
 
 private func charUnicodeDigitValue(_ scalar: UnicodeScalar) -> Int? {

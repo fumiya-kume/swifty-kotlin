@@ -69,6 +69,7 @@ extension ABILoweringPass {
             // kk_property_access removed — PropertyLowering now emits direct accessor
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),
+            interner.intern("kk_print_any"),
             interner.intern("kk_println_any"),
             interner.intern("kk_println_newline"),
             interner.intern("kk_readline"),
@@ -244,6 +245,14 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_builder_create"),
             interner.intern("kk_sequence_builder_yield"),
             interner.intern("kk_sequence_builder_build"),
+            // Sequence (STDLIB-095/096/097)
+            interner.intern("kk_sequence_of"),
+            interner.intern("kk_sequence_generate"),
+            interner.intern("kk_sequence_forEach"),
+            interner.intern("kk_sequence_flatMap"),
+            interner.intern("kk_sequence_drop"),
+            interner.intern("kk_sequence_distinct"),
+            interner.intern("kk_sequence_zip"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

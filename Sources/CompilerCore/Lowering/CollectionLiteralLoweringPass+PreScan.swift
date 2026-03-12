@@ -122,6 +122,12 @@ extension CollectionLiteralLoweringPass {
         {
             rangeExprIDs.insert(result.rawValue)
         }
+        // Classify sequence factory calls (STDLIB-097)
+        if let result,
+           callee == lookup.sequenceOfName || callee == lookup.generateSequenceName
+        {
+            sequenceExprIDs.insert(result.rawValue)
+        }
         propagateCollectionOperation(
             callee: callee, arguments: arguments, result: result, lookup: lookup,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
@@ -147,7 +153,7 @@ extension CollectionLiteralLoweringPass {
             setExprIDs.insert(result.rawValue)
         } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
             mapExprIDs.insert(result.rawValue)
-        } else if lookup.arrayOfFactoryNames.contains(callee) {
+        } else if lookup.arrayOfFactoryNames.contains(callee) || callee == lookup.kkArrayNewName {
             arrayExprIDs.insert(result.rawValue)
         }
     }
@@ -167,7 +173,9 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.toListName, sequenceExprIDs.contains(src) {
             listExprIDs.insert(result.rawValue)
-        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName,
+        } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName
+            || callee == lookup.flatMapName || callee == lookup.dropName
+            || callee == lookup.distinctName || callee == lookup.zipName,
                   sequenceExprIDs.contains(src)
         {
             sequenceExprIDs.insert(result.rawValue)
@@ -216,7 +224,10 @@ extension CollectionLiteralLoweringPass {
         if sequenceExprIDs.contains(receiverRaw) {
             if callee == lookup.toListName {
                 if let result { listExprIDs.insert(result.rawValue) }
-            } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName {
+            } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName
+                || callee == lookup.flatMapName || callee == lookup.dropName
+                || callee == lookup.distinctName || callee == lookup.zipName
+            {
                 if let result { sequenceExprIDs.insert(result.rawValue) }
             }
             return

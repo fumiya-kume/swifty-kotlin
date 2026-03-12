@@ -203,10 +203,10 @@ public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
     // Range check first
     if let range = runtimeRangeBox(from: container) {
         if range.step > 0 {
-            guard element >= range.first && element <= range.last else { return 0 }
+            guard element >= range.first, element <= range.last else { return 0 }
             return (element - range.first) % range.step == 0 ? 1 : 0
         } else if range.step < 0 {
-            guard element <= range.first && element >= range.last else { return 0 }
+            guard element <= range.first, element >= range.last else { return 0 }
             return (range.first - element) % (-range.step) == 0 ? 1 : 0
         }
         return 0
@@ -500,6 +500,13 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     Swift.print("<object \(raw)>")
+}
+
+/// Runtime support for kotlin.io.print(message) (no newline).
+@_cdecl("kk_print_any")
+public func kk_print_any(_ obj: UnsafeMutableRawPointer?) {
+    let intValue = if let ptr = obj { Int(bitPattern: ptr) } else { 0 }
+    Swift.print(runtimeRenderAnyForPrint(intValue), terminator: "")
 }
 
 /// Runtime support for kotlin.io.println() (STDLIB-063).

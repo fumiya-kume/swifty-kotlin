@@ -56,11 +56,50 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticTopLevelFunction(
+            named: "print",
+            packageFQName: kotlinIOPkg,
+            parameters: [(name: "message", type: types.makeNullable(types.anyType))],
+            returnType: types.unitType,
+            externalLinkName: "kk_print_any",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
             named: "readLine",
             packageFQName: kotlinIOPkg,
             parameters: [],
             returnType: types.makeNullable(types.stringType),
             externalLinkName: "kk_readline",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- Sequence factory functions (STDLIB-097) ---
+        let kotlinSequencesPkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin"), interner.intern("sequences")],
+            symbols: symbols
+        )
+
+        registerSyntheticVarargFunction(
+            named: "sequenceOf",
+            packageFQName: kotlinSequencesPkg,
+            returnType: types.anyType,
+            externalLinkName: "kk_sequence_of",
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "generateSequence",
+            packageFQName: kotlinSequencesPkg,
+            parameters: [
+                (name: "seed", type: types.anyType),
+                (name: "nextFunction", type: types.anyType),
+            ],
+            returnType: types.anyType,
+            externalLinkName: "kk_sequence_generate",
             symbols: symbols,
             interner: interner
         )
@@ -166,6 +205,55 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func registerSyntheticVarargFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        let paramNameID = interner.intern("elements")
+        let paramSymbol = symbols.define(
+            kind: .valueParameter,
+            name: paramNameID,
+            fqName: functionFQName + [paramNameID],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [types.anyType],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [paramSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [true]
             ),
             for: functionSymbol
         )

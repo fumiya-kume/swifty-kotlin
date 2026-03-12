@@ -402,7 +402,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // MARK: - Println
+    // MARK: - Print / Println
+
+    public static let kk_print_any = ExternDecl(
+        name: "kk_print_any",
+        parameterTypes: ["void * _Nullable"],
+        returnType: "void"
+    )
 
     public static let kk_println_any = ExternDecl(
         name: "kk_println_any",
@@ -1213,7 +1219,8 @@ public enum RuntimeABIExterns {
             kk_string_drop,
             kk_string_takeLast,
             kk_string_dropLast,
-            // Println
+            // Print / Println
+            kk_print_any,
             kk_println_any,
             kk_println_bool,
             kk_println_newline,

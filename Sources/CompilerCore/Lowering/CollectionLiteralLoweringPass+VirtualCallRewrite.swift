@@ -64,6 +64,27 @@ extension CollectionLiteralLoweringPass {
             loweredBody: &loweredBody
         ) { return true }
 
+        // toTypedArray() on list → kk_list_toTypedArray (result is Array)
+        if callee == lookup.toTypedArrayName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+            let toArrayResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListToTypedArrayName,
+                arguments: [receiver],
+                result: toArrayResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                arrayExprIDs.insert(result.rawValue)
+                arrayExprIDs.insert(toArrayResult.rawValue)
+                loweredBody.append(.copy(from: toArrayResult, to: result))
+            }
+            return true
+        }
+
         return false
     }
 

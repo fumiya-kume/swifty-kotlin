@@ -228,6 +228,10 @@ enum SequenceStepKind {
     case filterStep(fnPtr: Int)
     case takeStep(count: Int)
     case builder(elements: [Int])
+    case generator(seed: Int, fnPtr: Int)
+    case dropStep(count: Int)
+    case distinctStep
+    case zipStep(otherElements: [Int])
 }
 
 /// Runtime box for `Sequence<T>`.

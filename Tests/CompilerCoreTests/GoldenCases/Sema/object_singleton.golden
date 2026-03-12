@@ -262,36 +262,44 @@ symbol s260 kind=package fq=kotlin.io vis=public flags=synthetic
 symbol s261 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s262 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s263 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s264 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s265 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
-symbol s266 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s267 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#265<out T#266> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s268 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#265<out T#266> params=[] ret=T#266 suspend=0 defaults=[] vararg=[]
-symbol s269 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s270 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#266
-symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#23<out T#24> params=[] ret=Class#19<out Class#265<out T#24>> suspend=0 defaults=[] vararg=[]
-symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s276 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#275 params=[] ret=Any suspend=0 defaults=[] vararg=[]
-symbol s277 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
-symbol s278 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
-symbol s279 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s264 kind=function fq=kotlin.io.print vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s265 kind=valueParameter fq=kotlin.io.print.message vis=private flags=synthetic
+symbol s266 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s267 kind=package fq=kotlin.sequences vis=public flags=synthetic
+symbol s268 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s269 kind=valueParameter fq=kotlin.sequences.sequenceOf.elements vis=private flags=synthetic
+symbol s270 kind=function fq=kotlin.sequences.generateSequence vis=public flags=synthetic sig=recv=_ params=[Any,Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s271 kind=valueParameter fq=kotlin.sequences.generateSequence.seed vis=private flags=synthetic
+symbol s272 kind=valueParameter fq=kotlin.sequences.generateSequence.nextFunction vis=private flags=synthetic
+symbol s273 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
+symbol s274 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s275 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#273<out T#274> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s276 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#273<out T#274> params=[] ret=T#274 suspend=0 defaults=[] vararg=[]
+symbol s277 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s278 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#274
+symbol s279 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#23<out T#24> params=[] ret=Class#19<out Class#273<out T#24>> suspend=0 defaults=[] vararg=[]
+symbol s280 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s281 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s282 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#281] ret=Class#23<out T#281> suspend=0 defaults=[] vararg=[]
+symbol s283 kind=object fq=golden.sema.Counter vis=public flags=_
+symbol s284 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#283 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s285 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
+symbol s286 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
+symbol s287 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 file f0 package=golden.sema
-  decl d3 object Counter sym=s275
-  decl d4 fun useCounter suspend=0 inline=0 sym=s279
+  decl d3 object Counter sym=s283
+  decl d4 fun useCounter suspend=0 inline=0 sym=s287
 expr e0 string(counter) type=String
 expr e1 int(0) type=Int
 expr e2 name(n) type=_
-expr e3 name(n) type=Int ref=s278
+expr e3 name(n) type=Int ref=s286
 expr e4 int(1) type=Int
 expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign n value=e5 type=Unit ref=s278
+expr e6 localAssign n value=e5 type=Unit ref=s286
 expr e7 name(n) type=_
 expr e8 int(1) type=Int
-expr e9 localAssign n value=e8 type=Unit ref=s278
-expr e10 name(Counter) type=Class#275 ref=s275
-expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s276 map=[] targs=[]
-expr e12 name(Counter) type=Class#275 ref=s275
-expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s276 map=[] targs=[]
+expr e9 localAssign n value=e8 type=Unit ref=s286
+expr e10 name(Counter) type=Class#283 ref=s283
+expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s284 map=[] targs=[]
+expr e12 name(Counter) type=Class#283 ref=s283
+expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s284 map=[] targs=[]

@@ -262,34 +262,42 @@ symbol s260 kind=package fq=kotlin.io vis=public flags=synthetic
 symbol s261 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s262 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s263 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s264 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s265 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
-symbol s266 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s267 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#265<out T#266> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s268 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#265<out T#266> params=[] ret=T#266 suspend=0 defaults=[] vararg=[]
-symbol s269 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s270 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#266
-symbol s271 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#23<out T#24> params=[] ret=Class#19<out Class#265<out T#24>> suspend=0 defaults=[] vararg=[]
-symbol s272 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s273 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s274 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#273] ret=Class#23<out T#273> suspend=0 defaults=[] vararg=[]
-symbol s275 kind=enumClass fq=golden.sema.Color vis=public flags=_
-symbol s276 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#275 params=[] ret=Class#275 suspend=0 defaults=[] vararg=[]
-symbol s277 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#275
-symbol s278 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#275
-symbol s279 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#275
-symbol s280 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s281 kind=valueParameter fq=golden.sema.classify.$280.x vis=private flags=_
-symbol s282 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#275] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s283 kind=valueParameter fq=golden.sema.classifyColor.$282.c vis=private flags=_
-symbol s284 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
-symbol s285 kind=valueParameter fq=golden.sema.classifyBool.$284.b vis=private flags=_
+symbol s264 kind=function fq=kotlin.io.print vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s265 kind=valueParameter fq=kotlin.io.print.message vis=private flags=synthetic
+symbol s266 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s267 kind=package fq=kotlin.sequences vis=public flags=synthetic
+symbol s268 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s269 kind=valueParameter fq=kotlin.sequences.sequenceOf.elements vis=private flags=synthetic
+symbol s270 kind=function fq=kotlin.sequences.generateSequence vis=public flags=synthetic sig=recv=_ params=[Any,Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s271 kind=valueParameter fq=kotlin.sequences.generateSequence.seed vis=private flags=synthetic
+symbol s272 kind=valueParameter fq=kotlin.sequences.generateSequence.nextFunction vis=private flags=synthetic
+symbol s273 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
+symbol s274 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s275 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#273<out T#274> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s276 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#273<out T#274> params=[] ret=T#274 suspend=0 defaults=[] vararg=[]
+symbol s277 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s278 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#274
+symbol s279 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#23<out T#24> params=[] ret=Class#19<out Class#273<out T#24>> suspend=0 defaults=[] vararg=[]
+symbol s280 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s281 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s282 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#23<out T#24> params=[(Int, T#24) -> T#281] ret=Class#23<out T#281> suspend=0 defaults=[] vararg=[]
+symbol s283 kind=enumClass fq=golden.sema.Color vis=public flags=_
+symbol s284 kind=constructor fq=golden.sema.Color.<init> vis=public flags=_ sig=recv=Class#283 params=[] ret=Class#283 suspend=0 defaults=[] vararg=[]
+symbol s285 kind=field fq=golden.sema.Color.Red vis=public flags=_ type=Class#283
+symbol s286 kind=field fq=golden.sema.Color.Green vis=public flags=_ type=Class#283
+symbol s287 kind=field fq=golden.sema.Color.Blue vis=public flags=_ type=Class#283
+symbol s288 kind=function fq=golden.sema.classify vis=public flags=_ sig=recv=_ params=[Int] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s289 kind=valueParameter fq=golden.sema.classify.$288.x vis=private flags=_
+symbol s290 kind=function fq=golden.sema.classifyColor vis=public flags=_ sig=recv=_ params=[Class#283] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s291 kind=valueParameter fq=golden.sema.classifyColor.$290.c vis=private flags=_
+symbol s292 kind=function fq=golden.sema.classifyBool vis=public flags=_ sig=recv=_ params=[Boolean] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s293 kind=valueParameter fq=golden.sema.classifyBool.$292.b vis=private flags=_
 file f0 package=golden.sema
-  decl d0 class Color sym=s275
-  decl d1 fun classify suspend=0 inline=0 sym=s280
-  decl d2 fun classifyColor suspend=0 inline=0 sym=s282
-  decl d3 fun classifyBool suspend=0 inline=0 sym=s284
-expr e0 name(x) type=Int ref=s281
+  decl d0 class Color sym=s283
+  decl d1 fun classify suspend=0 inline=0 sym=s288
+  decl d2 fun classifyColor suspend=0 inline=0 sym=s290
+  decl d3 fun classifyBool suspend=0 inline=0 sym=s292
+expr e0 name(x) type=Int ref=s289
 expr e1 int(1) type=Int
 expr e2 int(2) type=Int
 expr e3 int(3) type=Int
@@ -299,17 +307,17 @@ expr e6 int(5) type=Int
 expr e7 string(some) type=String
 expr e8 string(many) type=String
 expr e9 when subject=e0 branches=[e1,e2,e3->e4,e5,e6->e7] else=e8 type=String
-expr e10 name(c) type=Class#275 ref=s283
-expr e11 name(Color) type=Any ref=s275
-expr e12 memberCall recv=e11 callee=Red args=[] type=Class#275 ref=s277
-expr e13 name(Color) type=Any ref=s275
-expr e14 memberCall recv=e13 callee=Green args=[] type=Class#275 ref=s278
+expr e10 name(c) type=Class#283 ref=s291
+expr e11 name(Color) type=Any ref=s283
+expr e12 memberCall recv=e11 callee=Red args=[] type=Class#283 ref=s285
+expr e13 name(Color) type=Any ref=s283
+expr e14 memberCall recv=e13 callee=Green args=[] type=Class#283 ref=s286
 expr e15 string(warm) type=String
-expr e16 name(Color) type=Any ref=s275
-expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#275 ref=s279
+expr e16 name(Color) type=Any ref=s283
+expr e17 memberCall recv=e16 callee=Blue args=[] type=Class#283 ref=s287
 expr e18 string(cold) type=String
 expr e19 when subject=e10 branches=[e12,e14->e15,e17->e18] else=_ type=String
-expr e20 name(b) type=Boolean ref=s285
+expr e20 name(b) type=Boolean ref=s293
 expr e21 bool(true) type=Boolean
 expr e22 bool(false) type=Boolean
 expr e23 string(always) type=String

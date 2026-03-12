@@ -73,5 +73,70 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // Factory functions (STDLIB-097)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_of",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_generate",
+            parameters: [
+                RuntimeABIParameter(name: "seed", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        // Terminal operations (STDLIB-095)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_forEach",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_flatMap",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        // Intermediate operations (STDLIB-096)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_drop",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_distinct",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_zip",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
     ]
 }

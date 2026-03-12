@@ -652,7 +652,8 @@ final class CallTypeChecker {
                      "doubleArrayOf", "booleanArrayOf", "charArrayOf",
                      "mapOf", "mutableMapOf", "emptyMap",
                      "setOf", "mutableSetOf", "emptySet",
-                     "listOfNotNull":
+                     "listOfNotNull",
+                     "sequenceOf":
                     sema.bindings.markCollectionExpr(id)
                 default:
                     break
@@ -825,7 +826,8 @@ final class CallTypeChecker {
                  "doubleArrayOf", "booleanArrayOf", "charArrayOf",
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
-                 "listOfNotNull":
+                 "listOfNotNull",
+                 "sequenceOf":
                 sema.bindings.markCollectionExpr(id)
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =

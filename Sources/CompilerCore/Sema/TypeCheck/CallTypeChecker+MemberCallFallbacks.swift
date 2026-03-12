@@ -75,7 +75,7 @@ extension CallTypeChecker {
             "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
             "withIndex", "forEachIndexed", "mapIndexed", "sumOf", "maxOrNull", "minOrNull",
-            "asSequence", "toList", "take", "drop", "reversed", "sorted", "distinct",
+            "asSequence", "toList", "toTypedArray", "take", "drop", "reversed", "sorted", "distinct",
         ]
         let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys"]
         if mapOnlyMembers.contains(memberName) {
@@ -88,7 +88,7 @@ extension CallTypeChecker {
         let collectionReturningMembers: Set = [
             "asSequence", "map", "filter", "mapNotNull", "filterNotNull",
             "flatMap", "sortedBy", "groupBy", "associateBy", "associateWith",
-            "associate", "zip", "toList", "take", "drop", "reversed",
+            "associate", "zip", "toList", "toTypedArray", "take", "drop", "reversed",
             "sorted", "distinct", "withIndex", "mapIndexed",
         ]
         if memberName == "mapValues" || memberName == "mapKeys" {
@@ -99,7 +99,7 @@ extension CallTypeChecker {
 
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int, isMapReceiver: Bool) -> Bool {
         switch memberName {
-        case "size", "isEmpty", "iterator", "asSequence", "toList", "reversed", "sorted", "distinct", "withIndex", "maxOrNull", "minOrNull":
+        case "size", "isEmpty", "iterator", "asSequence", "toList", "toTypedArray", "reversed", "sorted", "distinct", "withIndex", "maxOrNull", "minOrNull":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
@@ -423,7 +423,7 @@ extension CallTypeChecker {
     }
 
     private func isArrayMemberReturningCollection(_ memberName: String) -> Bool {
-        ["toList", "toMutableList", "map", "filter"].contains(memberName)
+        ["toList", "toMutableList", "map", "filter", "copyOf", "copyOfRange"].contains(memberName)
     }
 
     private func arrayMemberResultType(memberName: String, sema: SemaModule) -> TypeID {

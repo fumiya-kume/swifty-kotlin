@@ -82,6 +82,15 @@ struct CollectionLiteralLookupTables {
     let kkSequenceBuilderBuildName: InternedString
     let kkSequenceBuilderYieldName: InternedString
 
+    // Sequence ABI names (STDLIB-095/096/097)
+    let kkSequenceOfName: InternedString
+    let kkSequenceGenerateName: InternedString
+    let kkSequenceForEachName: InternedString
+    let kkSequenceFlatMapName: InternedString
+    let kkSequenceDropName: InternedString
+    let kkSequenceDistinctName: InternedString
+    let kkSequenceZipName: InternedString
+
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
     let kkMapGetName: InternedString
@@ -194,6 +203,10 @@ struct CollectionLiteralLookupTables {
     let takeName: InternedString
     let sequenceName: InternedString
     let yieldName: InternedString
+
+    // Sequence factory names (STDLIB-097)
+    let sequenceOfName: InternedString
+    let generateSequenceName: InternedString
 
     // println support
     let printlnName: InternedString
@@ -309,6 +322,14 @@ struct CollectionLiteralLookupTables {
         kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
         kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
 
+        kkSequenceOfName = interner.intern("kk_sequence_of")
+        kkSequenceGenerateName = interner.intern("kk_sequence_generate")
+        kkSequenceForEachName = interner.intern("kk_sequence_forEach")
+        kkSequenceFlatMapName = interner.intern("kk_sequence_flatMap")
+        kkSequenceDropName = interner.intern("kk_sequence_drop")
+        kkSequenceDistinctName = interner.intern("kk_sequence_distinct")
+        kkSequenceZipName = interner.intern("kk_sequence_zip")
+
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
         kkMapGetName = interner.intern("kk_map_get")
@@ -413,6 +434,9 @@ struct CollectionLiteralLookupTables {
         takeName = interner.intern("take")
         sequenceName = interner.intern("sequence")
         yieldName = interner.intern("yield")
+
+        sequenceOfName = interner.intern("sequenceOf")
+        generateSequenceName = interner.intern("generateSequence")
 
         printlnName = interner.intern("println")
         kkPrintlnAnyName = interner.intern("kk_println_any")
