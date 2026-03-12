@@ -289,8 +289,7 @@ final class ControlFlowTypeChecker {
         guard let typeName else {
             return sema.types.anyType
         }
-        let name = interner.resolve(typeName)
-        if let builtin = driver.helpers.resolveBuiltinTypeName(name, types: sema.types) {
+        if let builtin = driver.helpers.resolveBuiltinTypeName(typeName, types: sema.types, interner: interner) {
             return builtin
         }
         let candidates = sema.symbols.lookupAll(fqName: [typeName])

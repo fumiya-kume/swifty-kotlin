@@ -278,7 +278,7 @@ public final class DataFlowAnalyzer {
         }
         switch conditionExpr {
         case let .nameRef(name, _):
-            if name == KnownCompilerNames(interner: interner).null {
+            if name == BuiltinTypeNames(interner: interner).null {
                 var vars = base.variables
                 vars[subjectSymbol] = VariableFlowState(
                     possibleTypes: [subjectType],
@@ -461,7 +461,7 @@ public final class DataFlowAnalyzer {
         else {
             return false
         }
-        return name == KnownCompilerNames(interner: interner).null
+        return name == BuiltinTypeNames(interner: interner).null
     }
 
     private func resolveLocalVariable(
@@ -749,8 +749,7 @@ public final class DataFlowAnalyzer {
             return sema.types.make(.typeParam(TypeParamType(symbol: typeParameterSymbol, nullability: nullability)))
         }
 
-        let targetName = interner.resolve(shortName)
-        if let primitiveType = resolveBuiltinTypeName(targetName, types: sema.types) {
+        if let primitiveType = resolveBuiltinTypeName(shortName, types: sema.types, interner: interner) {
             return nullability == .nullable ? sema.types.makeNullable(primitiveType) : primitiveType
         }
 
@@ -805,8 +804,7 @@ public final class DataFlowAnalyzer {
                 else {
                     return .star
                 }
-                let innerName = interner.resolve(innerFirst)
-                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                if let builtin = resolveBuiltinTypeName(innerFirst, types: types, interner: interner) {
                     let resolved = innerNullable ? types.makeNullable(builtin) : builtin
                     return .invariant(resolved)
                 }
@@ -818,8 +816,7 @@ public final class DataFlowAnalyzer {
                 else {
                     return .star
                 }
-                let innerName = interner.resolve(innerFirst)
-                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                if let builtin = resolveBuiltinTypeName(innerFirst, types: types, interner: interner) {
                     let resolved = innerNullable ? types.makeNullable(builtin) : builtin
                     return .out(resolved)
                 }
@@ -831,8 +828,7 @@ public final class DataFlowAnalyzer {
                 else {
                     return .star
                 }
-                let innerName = interner.resolve(innerFirst)
-                if let builtin = resolveBuiltinTypeName(innerName, types: types) {
+                if let builtin = resolveBuiltinTypeName(innerFirst, types: types, interner: interner) {
                     let resolved = innerNullable ? types.makeNullable(builtin) : builtin
                     return .in(resolved)
                 }
@@ -860,26 +856,18 @@ public final class DataFlowAnalyzer {
             .sorted(by: { $0.rawValue < $1.rawValue })
     }
 
-    private func resolveBuiltinTypeName(_ name: String, types: TypeSystem) -> TypeID? {
-        switch name {
-        case "Byte": types.intType
-        case "Short": types.intType
-        case "Int": types.intType
-        case "Long": types.longType
-        case "Float": types.floatType
-        case "Double": types.doubleType
-        case "Boolean": types.booleanType
-        case "Char": types.charType
-        case "String": types.stringType
-        case "UInt": types.uintType
-        case "ULong": types.ulongType
-        case "UByte": types.ubyteType
-        case "UShort": types.ushortType
-        case "Any": types.anyType
-        case "Unit": types.unitType
-        case "Nothing": types.nothingType
-        default: nil
+    private func resolveBuiltinTypeName(
+        _ name: InternedString,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID? {
+        if let builtin = BuiltinTypeNames(interner: interner).resolveBuiltinType(name, types: types) {
+            return builtin
         }
+        if name == interner.intern("Byte") || name == interner.intern("Short") {
+            return types.intType
+        }
+        return nil
     }
 
     private func enumEntryNames(for enumSymbol: SemanticSymbol, sema: SemaModule) -> Set<InternedString> {

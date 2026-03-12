@@ -46,7 +46,11 @@ extension ExprLowerer {
                     )
                 )
             }
-            let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(interner.resolve(last), nullable: nullable)
+            let literal = RuntimeTypeCheckToken.encodeBuiltinTypeName(
+                last,
+                nullable: nullable,
+                builtinNames: BuiltinTypeNames(interner: interner)
+            )
                 ?? RuntimeTypeCheckToken.encode(base: RuntimeTypeCheckToken.unknownBase, nullable: nullable)
             return emitLiteral(literal)
 

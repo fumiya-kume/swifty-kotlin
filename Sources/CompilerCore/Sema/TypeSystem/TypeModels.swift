@@ -22,6 +22,25 @@ public enum PrimitiveType: String, Hashable, Sendable {
     case ushort
 }
 
+public extension PrimitiveType {
+    /// The Kotlin source-level name for this primitive type.
+    var kotlinName: String {
+        switch self {
+        case .boolean: "Boolean"
+        case .char: "Char"
+        case .int: "Int"
+        case .long: "Long"
+        case .float: "Float"
+        case .double: "Double"
+        case .string: "String"
+        case .uint: "UInt"
+        case .ulong: "ULong"
+        case .ubyte: "UByte"
+        case .ushort: "UShort"
+        }
+    }
+}
+
 public enum Nullability: Hashable, Sendable {
     case nonNull
     case nullable

@@ -56,6 +56,7 @@ extension DataFlowSemaPhase {
         localTypeParameters: [InternedString: SymbolID] = [:],
         diagnostics: DiagnosticEngine? = nil
     ) -> TypeID? {
+        let builtinNames = BuiltinTypeNames(interner: interner)
         guard let typeRefID, let typeRef = ast.arena.typeRef(typeRefID) else {
             return nil
         }
@@ -72,7 +73,13 @@ extension DataFlowSemaPhase {
                 return types.make(.typeParam(TypeParamType(symbol: typeParamSymbol, nullability: nullability)))
             }
 
-            if let builtinType = resolveBuiltinTypeName(interner.resolve(shortName), nullability: nullability, types: types) {
+            if let builtinType = resolveBuiltinTypeName(
+                shortName,
+                nullability: nullability,
+                types: types,
+                interner: interner,
+                builtinNames: builtinNames
+            ) {
                 return builtinType
             }
 
@@ -172,26 +179,20 @@ extension DataFlowSemaPhase {
         }
     }
 
-    private func resolveBuiltinTypeName(_ name: String, nullability: Nullability, types: TypeSystem) -> TypeID? {
-        switch name {
-        case "Byte": types.make(.primitive(.int, nullability))
-        case "Short": types.make(.primitive(.int, nullability))
-        case "Int": types.make(.primitive(.int, nullability))
-        case "Long": types.make(.primitive(.long, nullability))
-        case "Float": types.make(.primitive(.float, nullability))
-        case "Double": types.make(.primitive(.double, nullability))
-        case "Char": types.make(.primitive(.char, nullability))
-        case "Boolean": types.make(.primitive(.boolean, nullability))
-        case "String": types.make(.primitive(.string, nullability))
-        case "UInt": types.make(.primitive(.uint, nullability))
-        case "ULong": types.make(.primitive(.ulong, nullability))
-        case "UByte": types.make(.primitive(.ubyte, nullability))
-        case "UShort": types.make(.primitive(.ushort, nullability))
-        case "Any": types.withNullability(nullability, for: types.anyType)
-        case "Unit": nullability == .nullable ? types.nullableAnyType : types.unitType
-        case "Nothing": types.withNullability(nullability, for: types.nothingType)
-        default: nil
+    private func resolveBuiltinTypeName(
+        _ name: InternedString,
+        nullability: Nullability,
+        types: TypeSystem,
+        interner: StringInterner,
+        builtinNames: BuiltinTypeNames
+    ) -> TypeID? {
+        if let builtin = builtinNames.resolveBuiltinType(name, nullability: nullability, types: types) {
+            return builtin
         }
+        if name == interner.intern("Byte") || name == interner.intern("Short") {
+            return types.make(.primitive(.int, nullability))
+        }
+        return nil
     }
 
     func resolveTypeArgRefs(
