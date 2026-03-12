@@ -1512,6 +1512,16 @@ extension DataFlowSemaPhase {
     ) {
         let memberName = interner.intern("add")
         let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == [types.intType, mlTypeParamType] &&
+                existingSignature.returnType == types.unitType
+        }) == nil else {
+            return
+        }
+
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
             args: [.invariant(mlTypeParamType)],
