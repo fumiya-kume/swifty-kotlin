@@ -17,17 +17,6 @@
 
 ## 未完了バックログ
 
-### 📦 Stdlib — I/O / システム
-
-- [ ] STDLIB-131: `System.currentTimeMillis()` public API を実装する
-  - `kotlin.system.measureTimeMillis {}` と runtime helper `kk_system_currentTimeMillis` は既存実装済み
-  - [ ] Sema に `System.currentTimeMillis()` stub を登録する
-  - [ ] `System.currentTimeMillis()` 呼び出しを runtime helper に接続する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `println(System.currentTimeMillis() > 0)` → `true` が `kotlinc` と一致する
-
----
-
 ### 📦 Stdlib — Enum ユーティリティ
 
 - [ ] STDLIB-171: `enumValues<T>()` / `enumValueOf<T>(name)` を実装する
@@ -41,44 +30,6 @@
   - [ ] Lowering で companion property アクセスとして展開する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `Color.entries.map { it.name }` → `[RED, GREEN]` が `kotlinc` と一致する
-
-- [ ] STDLIB-173: `Enum.valueOf(name)` 静的メソッドを実装する
-  - [ ] Sema に各 enum class の companion `valueOf(String): T` stub を自動登録する
-  - [ ] Runtime で名前からの enum entry 逆引きを実装し、見つからない場合 `IllegalArgumentException` を throw する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `Color.valueOf("RED")` → `Color.RED` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Destructuring（componentN）
-
-- [ ] STDLIB-183: `List` の `component1()` 〜 `component5()` destructuring を実装する
-  - [ ] Sema に `List<T>.component1()` 〜 `component5()` operator stub を登録する
-  - [ ] Runtime でインデックスアクセスに展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val (a, b, c) = listOf(1, 2, 3)` が動作し `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — String 高度操作
-
-- [ ] STDLIB-185: `String.removePrefix(prefix)` / `String.removeSuffix(suffix)` / `String.removeSurrounding(delimiter)` を実装する
-  - [ ] Sema に `removePrefix(String): String` / `removeSuffix(String): String` / `removeSurrounding(String): String` stub を登録する
-  - [ ] Runtime に `kk_string_removePrefix` / `kk_string_removeSuffix` / `kk_string_removeSurrounding` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `"[hello]".removeSurrounding("[", "]")` → `"hello"` が `kotlinc` と一致する
-
-- [ ] STDLIB-186: `String.substringBefore(delimiter)` / `String.substringAfter(delimiter)` / `substringBeforeLast` / `substringAfterLast` を実装する
-  - [ ] Sema に各 stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `"hello.world.kt".substringAfterLast(".")` → `"kt"` が `kotlinc` と一致する
-
-- [ ] STDLIB-187: `String.isEmpty()` / `String.isNotEmpty()` / `String.isBlank()` / `String.isNotBlank()` を実装する
-  - [ ] Sema に各 member stub を登録する
-  - [ ] Runtime に `kk_string_isEmpty` / `kk_string_isBlank` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `"".isEmpty()` → `true`, `"  ".isBlank()` → `true` が `kotlinc` と一致する
 
 ---
 
