@@ -62,7 +62,7 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String) 
     let value = String(str[matchRange])
 
     var groupValues: [String] = []
-    for i in 0..<result.numberOfRanges {
+    for i in 0 ..< result.numberOfRanges {
         let groupRange = result.range(at: i)
         if groupRange.location != NSNotFound, let range = Range(groupRange, in: str) {
             groupValues.append(String(str[range]))
@@ -158,7 +158,7 @@ public func kk_string_split_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
     var lastEnd = str.startIndex
     for match in matches {
         let matchRange = Range(match.range, in: str)!
-        parts.append(String(str[lastEnd..<matchRange.lowerBound]))
+        parts.append(String(str[lastEnd ..< matchRange.lowerBound]))
         lastEnd = matchRange.upperBound
     }
     parts.append(String(str[lastEnd...]))

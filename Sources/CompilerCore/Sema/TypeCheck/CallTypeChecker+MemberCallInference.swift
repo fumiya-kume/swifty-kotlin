@@ -1186,6 +1186,50 @@ extension CallTypeChecker {
             }
         }
 
+        if !isClassNameReceiver,
+           args.isEmpty,
+           let propResult = driver.helpers.lookupMemberProperty(
+               named: calleeName,
+               receiverType: memberLookupType,
+               sema: sema
+           )
+        {
+            if let propSymbol = sema.symbols.symbol(propResult.symbol),
+               !ctx.visibilityChecker.isAccessible(
+                   propSymbol,
+                   fromFile: ctx.currentFileID,
+                   enclosingClass: ctx.enclosingClassSymbol
+               )
+            {
+                driver.helpers.emitVisibilityError(
+                    for: propSymbol,
+                    name: interner.resolve(calleeName),
+                    range: range,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+                return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+            }
+            sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
+            let finalType = safeCall ? sema.types.makeNullable(propResult.type) : propResult.type
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+        if !isClassNameReceiver,
+           args.isEmpty,
+           let extensionPropertyType = resolveExtensionPropertyGetter(
+               id: id,
+               calleeName: calleeName,
+               range: range,
+               receiverType: memberLookupType,
+               expectedType: expectedType,
+               ctx: ctx
+           )
+        {
+            let finalType = safeCall ? sema.types.makeNullable(extensionPropertyType) : extensionPropertyType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
         // Track the companion type so we can pass it (not the owner class type)
         // as the implicit receiver when resolving the call.
         var companionReceiverType: TypeID?
@@ -1339,6 +1383,59 @@ extension CallTypeChecker {
                 isSyntheticStringFormatCandidate(candidate, sema: sema, interner: interner)
             }
         }
+        if interner.resolve(calleeName) == "trimMargin" {
+            let receiverTypeForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                if !explicitTypeArgs.isEmpty {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0002",
+                        "No viable overload found for call.",
+                        range: range
+                    )
+                    sema.bindings.bindExprType(id, type: sema.types.errorType)
+                    return sema.types.errorType
+                }
+                let trimMarginFQName = [
+                    interner.intern("kotlin"),
+                    interner.intern("text"),
+                    calleeName,
+                ]
+                let chosen = sema.symbols.lookupAll(fqName: trimMarginFQName).first(where: { symbolID in
+                    guard let signature = sema.symbols.functionSignature(for: symbolID),
+                          signature.receiverType == sema.types.stringType
+                    else {
+                        return false
+                    }
+                    switch args.count {
+                    case 0:
+                        return signature.parameterTypes.isEmpty
+                    case 1:
+                        return signature.parameterTypes.count == 1
+                            && sema.types.isSubtype(sema.types.makeNonNullable(argTypes[0]), signature.parameterTypes[0])
+                    default:
+                        return false
+                    }
+                })
+                if let chosen {
+                    let returnType = bindCallAndResolveReturnType(
+                        id,
+                        chosen: chosen,
+                        resolved: ResolvedCall(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [:],
+                            parameterMapping: args.isEmpty ? [:] : [0: 0],
+                            diagnostic: nil
+                        ),
+                        sema: sema
+                    )
+                    let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
         if candidates.isEmpty {
             if isClassNameReceiver,
                args.isEmpty,
@@ -1408,6 +1505,36 @@ extension CallTypeChecker {
                         nil
                     }
                     if let resultType {
+                        let kotlinTextFQName = [
+                            interner.intern("kotlin"),
+                            interner.intern("text"),
+                            calleeName,
+                        ]
+                        if let chosen = sema.symbols.lookupAll(fqName: kotlinTextFQName).first(where: { symbolID in
+                            guard let signature = sema.symbols.functionSignature(for: symbolID) else {
+                                return false
+                            }
+                            return signature.receiverType == sema.types.charType
+                                && signature.parameterTypes.isEmpty
+                        }) {
+                            _ = bindCallAndResolveReturnType(
+                                id,
+                                chosen: chosen,
+                                resolved: ResolvedCall(
+                                    chosenCallee: chosen,
+                                    substitutedTypeArguments: [:],
+                                    parameterMapping: [:],
+                                    diagnostic: nil
+                                ),
+                                sema: sema
+                            )
+                        }
+                        switch calleeStr {
+                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray":
+                            sema.bindings.markCollectionExpr(id)
+                        default:
+                            break
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -1446,6 +1573,8 @@ extension CallTypeChecker {
                     let resultType: TypeID? = switch calleeStr {
                     case "trim":
                         sema.types.stringType
+                    case "trimIndent", "trimMargin":
+                        sema.types.stringType
                     case "lowercase", "uppercase":
                         sema.types.stringType
                     case "toInt":
@@ -1480,6 +1609,20 @@ extension CallTypeChecker {
                         nil
                     }
                     if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -1507,6 +1650,20 @@ extension CallTypeChecker {
                         nil
                     }
                     if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -1533,6 +1690,20 @@ extension CallTypeChecker {
                         nil
                     }
                     if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -1550,6 +1721,20 @@ extension CallTypeChecker {
                 {
                     let calleeStr = interner.resolve(calleeName)
                     if calleeStr == "substring" {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -1591,15 +1776,40 @@ extension CallTypeChecker {
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
                 let startType = sema.types.makeNonNullable(argTypes[0])
-                let endType = sema.types.makeNonNullable(argTypes[1])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
                 if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
-                   sema.types.isSubtype(startType, sema.types.intType),
-                   sema.types.isSubtype(endType, sema.types.intType),
-                   interner.resolve(calleeName) == "substring"
+                   sema.types.isSubtype(startType, sema.types.intType)
                 {
-                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
+                    let calleeStr = interner.resolve(calleeName)
+                    let resultType: TypeID? = switch calleeStr {
+                    case "substring" where sema.types.isSubtype(arg1Type, sema.types.intType):
+                        sema.types.stringType
+                    case "padStart" where arg1Type == sema.types.charType:
+                        sema.types.stringType
+                    case "padEnd" where arg1Type == sema.types.charType:
+                        sema.types.stringType
+                    default:
+                        nil
+                    }
+                    if let resultType {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                 }
             }
             // String stdlib: format(vararg args) (STDLIB-006)
@@ -1704,45 +1914,6 @@ extension CallTypeChecker {
                 }
             }
 
-            if !isClassNameReceiver,
-               args.isEmpty,
-               let propResult = driver.helpers.lookupMemberProperty(
-                   named: calleeName,
-                   receiverType: memberLookupType,
-                   sema: sema
-               )
-            {
-                // Check visibility before returning the property.
-                if let propSymbol = sema.symbols.symbol(propResult.symbol),
-                   !ctx.visibilityChecker.isAccessible(
-                       propSymbol,
-                       fromFile: ctx.currentFileID,
-                       enclosingClass: ctx.enclosingClassSymbol
-                   )
-                {
-                    driver.helpers.emitVisibilityError(for: propSymbol, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
-                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
-                }
-                sema.bindings.bindIdentifier(id, symbol: propResult.symbol)
-                let finalType = safeCall ? sema.types.makeNullable(propResult.type) : propResult.type
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
-            }
-            if !isClassNameReceiver,
-               args.isEmpty,
-               let extensionPropertyType = resolveExtensionPropertyGetter(
-                   id: id,
-                   calleeName: calleeName,
-                   range: range,
-                   receiverType: memberLookupType,
-                   expectedType: expectedType,
-                   ctx: ctx
-               )
-            {
-                let finalType = safeCall ? sema.types.makeNullable(extensionPropertyType) : extensionPropertyType
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
-            }
             if lookupReceiverType == sema.types.errorType {
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
@@ -2224,10 +2395,46 @@ extension CallTypeChecker {
         explicitTypeArgs: [TypeID],
         safeCall: Bool
     ) -> TypeID? {
+        tryBindSyntheticStringMemberFallback(
+            id,
+            calleeName: calleeName,
+            receiverType: receiverType,
+            args: args,
+            argTypes: argTypes,
+            range: range,
+            ctx: ctx,
+            expectedType: expectedType,
+            explicitTypeArgs: explicitTypeArgs,
+            safeCall: safeCall
+        )
+    }
+
+    private func tryBindSyntheticStringMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
         let sema = ctx.sema
         let interner = ctx.interner
-        let candidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
-            isSyntheticStringFormatCandidate(candidate, sema: sema, interner: interner)
+        var candidates = ctx.cachedScopeLookup(calleeName).filter { candidate in
+            isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+        }
+        if candidates.isEmpty {
+            let stringMemberFQName = [
+                interner.intern("kotlin"),
+                interner.intern("text"),
+                calleeName,
+            ]
+            candidates = sema.symbols.lookupAll(fqName: stringMemberFQName).filter { candidate in
+                isSyntheticStringMemberCandidate(candidate, named: calleeName, sema: sema, interner: interner)
+            }
         }
         guard !candidates.isEmpty else {
             return nil
@@ -2248,9 +2455,12 @@ extension CallTypeChecker {
             implicitReceiverType: receiverType,
             ctx: ctx.semaCtx
         )
-        guard resolved.diagnostic == nil,
-              let chosen = resolved.chosenCallee
-        else {
+        if let diagnostic = resolved.diagnostic {
+            ctx.semaCtx.diagnostics.emit(diagnostic)
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
+        }
+        guard let chosen = resolved.chosenCallee else {
             return nil
         }
 
@@ -2258,6 +2468,25 @@ extension CallTypeChecker {
         let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
+    }
+
+    private func isSyntheticStringMemberCandidate(
+        _ symbolID: SymbolID,
+        named calleeName: InternedString,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbol = sema.symbols.symbol(symbolID),
+              symbol.fqName == [
+                  interner.intern("kotlin"),
+                  interner.intern("text"),
+                  calleeName,
+              ],
+              let signature = sema.symbols.functionSignature(for: symbolID)
+        else {
+            return false
+        }
+        return signature.receiverType == sema.types.stringType
     }
 
     private func getCollectionElementType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {

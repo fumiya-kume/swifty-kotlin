@@ -162,9 +162,16 @@ extension CompilerCoreTests {
         })?.id)
         let capturedSymbols = try XCTUnwrap(sema.bindings.captureSymbolsByExpr[callableRefExprID])
         XCTAssertEqual(capturedSymbols.count, 1)
-        let seedSymbol = capturedSymbols[0]
-        let seedName = sema.symbols.symbol(seedSymbol).map { ctx.interner.resolve($0.name) }
-        XCTAssertEqual(seedName, "seed")
+        let seedSymbol = try XCTUnwrap(sema.symbols.allSymbols().first(where: { symbol in
+            guard symbol.kind == .valueParameter,
+                  ctx.interner.resolve(symbol.name) == "seed"
+            else {
+                return false
+            }
+            let fqName = symbol.fqName.map(ctx.interner.resolve)
+            return fqName.contains("host")
+        })?.id)
+        XCTAssertEqual(capturedSymbols, [seedSymbol])
 
         XCTAssertEqual(sema.bindings.callableTargets[callableRefExprID], .symbol(extensionSymbol))
         XCTAssertEqual(sema.bindings.captureSymbolsByExpr[callableRefExprID], [seedSymbol])

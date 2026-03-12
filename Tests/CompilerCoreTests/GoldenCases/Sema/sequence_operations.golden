@@ -446,5 +446,5 @@ expr e50 localDecl g mutable=0 type=_ init=e49 type=Unit ref=s390
 expr e51 name(g) type=Any ref=s390
 expr e52 int(3) type=Int
 expr e53 memberCall recv=e51 callee=take args=[_:e52] type=<error>
-expr e54 memberCall recv=e53 callee=toList args=[] type=Class#35<out Char>
+expr e54 memberCall recv=e53 callee=toList args=[] type=Class#35<out Char> call=s164 map=[] targs=[]
 expr e55 localDecl r mutable=0 type=_ init=e54 type=Unit ref=s391

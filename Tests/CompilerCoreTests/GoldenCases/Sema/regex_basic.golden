@@ -400,7 +400,7 @@ expr e8 call callee=e4 args=[_:e7] type=Unit call=s349 map=[0->0] targs=[]
 expr e9 name(println) type=_
 expr e10 string(hello) type=String
 expr e11 name(regex) type=<error> ref=s385
-expr e12 memberCall recv=e10 callee=contains args=[_:e11] type=Boolean
+expr e12 memberCall recv=e10 callee=contains args=[_:e11] type=<error>
 expr e13 call callee=e9 args=[_:e12] type=Unit call=s349 map=[0->0] targs=[]
 expr e14 name(regex) type=<error> ref=s385
 expr e15 string(abc123) type=String
@@ -423,7 +423,7 @@ expr e31 string(a1b2) type=String
 expr e32 name(Regex) type=Class#180 ref=s180
 expr e33 string([0-9]+) type=String
 expr e34 call callee=e32 args=[_:e33] type=<error>
-expr e35 memberCall recv=e31 callee=split args=[_:e34] type=Any
+expr e35 memberCall recv=e31 callee=split args=[_:e34] type=<error>
 expr e36 call callee=e30 args=[_:e35] type=Unit call=s349 map=[0->0] targs=[]
 expr e37 string(test) type=String
 expr e38 memberCall recv=e37 callee=toRegex args=[] type=<error>

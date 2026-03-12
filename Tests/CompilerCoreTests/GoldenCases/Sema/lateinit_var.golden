@@ -389,7 +389,7 @@ symbol s387 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#384 
 symbol s388 kind=property fq=Config.name vis=public flags=mutable type=String
 symbol s389 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s390 kind=local fq=__local_7.c vis=private flags=_
-symbol s391 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Any
+symbol s391 kind=local fq=__try_21_catch_0.e vis=internal flags=_ type=Class#237
 file f0 package=_
   decl d3 class Config sym=s384
   decl d4 fun main suspend=0 inline=0 sym=s389

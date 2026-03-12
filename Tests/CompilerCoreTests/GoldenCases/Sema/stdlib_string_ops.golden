@@ -418,47 +418,47 @@ file f0 package=golden.sema
   decl d15 fun useToDoubleOrNullValid suspend=0 inline=0 sym=s399
   decl d16 fun useToDoubleOrNullInvalid suspend=0 inline=0 sym=s400
 expr e0 string(  hi  ) type=String
-expr e1 memberCall recv=e0 callee=trim args=[] type=String
+expr e1 memberCall recv=e0 callee=trim args=[] type=String call=s129 map=[] targs=[]
 expr e2 string(1,2,3) type=String
 expr e3 string(,) type=String
-expr e4 memberCall recv=e2 callee=split args=[_:e3] type=Any
+expr e4 memberCall recv=e2 callee=split args=[_:e3] type=Class#35<out String> call=s132 map=[0->0] targs=[]
 expr e5 string(abc) type=String
 expr e6 string(a) type=String
 expr e7 string(z) type=String
 expr e8 memberCall recv=e5 callee=replace args=[_:e6,_:e7] type=String
 expr e9 string(Kotlin) type=String
 expr e10 string(Ko) type=String
-expr e11 memberCall recv=e9 callee=startsWith args=[_:e10] type=Boolean
+expr e11 memberCall recv=e9 callee=startsWith args=[_:e10] type=Boolean call=s137 map=[0->0] targs=[]
 expr e12 string(Kotlin) type=String
 expr e13 string(lin) type=String
-expr e14 memberCall recv=e12 callee=endsWith args=[_:e13] type=Boolean
+expr e14 memberCall recv=e12 callee=endsWith args=[_:e13] type=Boolean call=s139 map=[0->0] targs=[]
 expr e15 string(Kotlin) type=String
 expr e16 string(otl) type=String
-expr e17 memberCall recv=e15 callee=contains args=[_:e16] type=Boolean
+expr e17 memberCall recv=e15 callee=contains args=[_:e16] type=Boolean call=s141 map=[0->0] targs=[]
 expr e18 string(42) type=String
-expr e19 memberCall recv=e18 callee=toInt args=[] type=Int
+expr e19 memberCall recv=e18 callee=toInt args=[] type=Int call=s143 map=[] targs=[]
 expr e20 string(3.14) type=String
-expr e21 memberCall recv=e20 callee=toDouble args=[] type=Double
+expr e21 memberCall recv=e20 callee=toDouble args=[] type=Double call=s145 map=[] targs=[]
 expr e22 string(%s:%d) type=String
 expr e23 string(age) type=String
 expr e24 int(7) type=Int
-expr e25 memberCall recv=e22 callee=format args=[_:e23,_:e24] type=<error>
+expr e25 memberCall recv=e22 callee=format args=[_:e23,_:e24] type=String call=s151 map=[0->0,1->0] targs=[]
 expr e26 string(hello) type=String
 expr e27 int(1) type=Int
-expr e28 memberCall recv=e26 callee=substring args=[_:e27] type=String
+expr e28 memberCall recv=e26 callee=substring args=[_:e27] type=String call=s147 map=[0->0] targs=[]
 expr e29 string(hello) type=String
 expr e30 int(1) type=Int
 expr e31 int(3) type=Int
-expr e32 memberCall recv=e29 callee=substring args=[_:e30,_:e31] type=String
+expr e32 memberCall recv=e29 callee=substring args=[_:e30,_:e31] type=String call=s149 map=[0->0,1->1] targs=[]
 expr e33 string(Hello) type=String
-expr e34 memberCall recv=e33 callee=lowercase args=[] type=String
+expr e34 memberCall recv=e33 callee=lowercase args=[] type=String call=s130 map=[] targs=[]
 expr e35 string(Hello) type=String
-expr e36 memberCall recv=e35 callee=uppercase args=[] type=String
+expr e36 memberCall recv=e35 callee=uppercase args=[] type=String call=s131 map=[] targs=[]
 expr e37 string(123) type=String
-expr e38 memberCall recv=e37 callee=toIntOrNull args=[] type=Int?
+expr e38 memberCall recv=e37 callee=toIntOrNull args=[] type=Int? call=s144 map=[] targs=[]
 expr e39 string(abc) type=String
-expr e40 memberCall recv=e39 callee=toIntOrNull args=[] type=Int?
+expr e40 memberCall recv=e39 callee=toIntOrNull args=[] type=Int? call=s144 map=[] targs=[]
 expr e41 string( 3.14 ) type=String
-expr e42 memberCall recv=e41 callee=toDoubleOrNull args=[] type=Double?
+expr e42 memberCall recv=e41 callee=toDoubleOrNull args=[] type=Double? call=s146 map=[] targs=[]
 expr e43 string(abc) type=String
-expr e44 memberCall recv=e43 callee=toDoubleOrNull args=[] type=Double?
+expr e44 memberCall recv=e43 callee=toDoubleOrNull args=[] type=Double? call=s146 map=[] targs=[]

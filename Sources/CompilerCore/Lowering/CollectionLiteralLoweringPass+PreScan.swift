@@ -176,7 +176,7 @@ extension CollectionLiteralLoweringPass {
         } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName
             || callee == lookup.flatMapName || callee == lookup.dropName
             || callee == lookup.distinctName || callee == lookup.zipName,
-                  sequenceExprIDs.contains(src)
+            sequenceExprIDs.contains(src)
         {
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.groupByName || callee == lookup.associateByName

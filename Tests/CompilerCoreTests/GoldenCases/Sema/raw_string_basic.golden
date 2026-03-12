@@ -396,8 +396,8 @@ expr e5 string(
         line1
         line2
     ) type=String
-expr e6 memberCall recv=e5 callee=trimIndent args=[] type=<error>
+expr e6 memberCall recv=e5 callee=trimIndent args=[] type=String call=s153 map=[] targs=[]
 expr e7 localDecl multi mutable=0 type=_ init=e6 type=Unit ref=s386
 expr e8 name(println) type=_
-expr e9 name(multi) type=<error> ref=s386
+expr e9 name(multi) type=String ref=s386
 expr e10 call callee=e8 args=[_:e9] type=Unit call=s349 map=[0->0] targs=[]

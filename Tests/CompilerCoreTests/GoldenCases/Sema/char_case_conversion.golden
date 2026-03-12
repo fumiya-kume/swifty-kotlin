@@ -390,8 +390,8 @@ file f0 package=_
   decl d1 fun charLowercase suspend=0 inline=0 sym=s385
   decl d2 fun charTitlecase suspend=0 inline=0 sym=s386
 expr e0 char(97) type=Char
-expr e1 memberCall recv=e0 callee=uppercase args=[] type=String
+expr e1 memberCall recv=e0 callee=uppercase args=[] type=String call=s208 map=[] targs=[]
 expr e2 char(65) type=Char
-expr e3 memberCall recv=e2 callee=lowercase args=[] type=String
+expr e3 memberCall recv=e2 callee=lowercase args=[] type=String call=s209 map=[] targs=[]
 expr e4 char(97) type=Char
-expr e5 memberCall recv=e4 callee=titlecase args=[] type=String
+expr e5 memberCall recv=e4 callee=titlecase args=[] type=String call=s210 map=[] targs=[]

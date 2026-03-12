@@ -390,14 +390,14 @@ symbol s388 kind=function fq=golden.sema.catchNoSuchElement vis=public flags=_ s
 symbol s389 kind=function fq=golden.sema.catchArithmetic vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s390 kind=function fq=golden.sema.catchClassCast vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s391 kind=function fq=golden.sema.throwableProperties vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s392 kind=local fq=__try_7_catch_0.e vis=internal flags=_ type=Any
-symbol s393 kind=local fq=__try_15_catch_0.e vis=internal flags=_ type=Any
-symbol s394 kind=local fq=__try_23_catch_0.e vis=internal flags=_ type=Any
-symbol s395 kind=local fq=__try_31_catch_0.e vis=internal flags=_ type=Any
-symbol s396 kind=local fq=__try_39_catch_0.e vis=internal flags=_ type=Any
-symbol s397 kind=local fq=__try_47_catch_0.e vis=internal flags=_ type=Any
-symbol s398 kind=local fq=__try_55_catch_0.e vis=internal flags=_ type=Any
-symbol s399 kind=local fq=__try_74_catch_0.e vis=internal flags=_ type=Any
+symbol s392 kind=local fq=__try_7_catch_0.e vis=internal flags=_ type=Class#243
+symbol s393 kind=local fq=__try_15_catch_0.e vis=internal flags=_ type=Class#244
+symbol s394 kind=local fq=__try_23_catch_0.e vis=internal flags=_ type=Class#245
+symbol s395 kind=local fq=__try_31_catch_0.e vis=internal flags=_ type=Class#246
+symbol s396 kind=local fq=__try_39_catch_0.e vis=internal flags=_ type=Class#247
+symbol s397 kind=local fq=__try_47_catch_0.e vis=internal flags=_ type=Class#248
+symbol s398 kind=local fq=__try_55_catch_0.e vis=internal flags=_ type=Class#249
+symbol s399 kind=local fq=__try_74_catch_0.e vis=internal flags=_ type=Class#236
 symbol s400 kind=local fq=__local_63.msg vis=private flags=_
 symbol s401 kind=local fq=__local_66.cause vis=private flags=_
 symbol s402 kind=local fq=__local_69.trace vis=private flags=_
@@ -471,14 +471,14 @@ expr e57 string(test) type=String
 expr e58 call callee=e56 args=[_:e57] type=Class#238 call=s252 map=[0->0] targs=[]
 expr e59 throw value=e58 type=Nothing
 expr e60 blockExpr stmts=[] trailing=e59 type=Nothing
-expr e61 name(e) type=Any ref=s399
-expr e62 memberCall recv=e61 callee=message args=[] type=<error>
+expr e61 name(e) type=Class#236 ref=s399
+expr e62 memberCall recv=e61 callee=message args=[] type=String? ref=s285
 expr e63 localDecl msg mutable=0 type=t8 init=e62 type=Unit ref=s400
-expr e64 name(e) type=Any ref=s399
-expr e65 memberCall recv=e64 callee=cause args=[] type=<error>
+expr e64 name(e) type=Class#236 ref=s399
+expr e65 memberCall recv=e64 callee=cause args=[] type=Class#236? ref=s286
 expr e66 localDecl cause mutable=0 type=t9 init=e65 type=Unit ref=s401
-expr e67 name(e) type=Any ref=s399
-expr e68 memberCall recv=e67 callee=stackTraceToString args=[] type=<error>
+expr e67 name(e) type=Class#236 ref=s399
+expr e68 memberCall recv=e67 callee=stackTraceToString args=[] type=String call=s287 map=[] targs=[]
 expr e69 localDecl trace mutable=0 type=t10 init=e68 type=Unit ref=s402
 expr e70 name(msg) type=String? ref=s400
 expr e71 string(null) type=String

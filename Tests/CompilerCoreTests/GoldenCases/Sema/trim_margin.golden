@@ -392,18 +392,18 @@ expr e0 string(
         |beta
         |gamma
     ) type=String
-expr e1 memberCall recv=e0 callee=trimMargin args=[] type=<error>
+expr e1 memberCall recv=e0 callee=trimMargin args=[] type=String call=s154 map=[] targs=[]
 expr e2 localDecl defaultMargin mutable=0 type=_ init=e1 type=Unit ref=s385
 expr e3 name(println) type=_
-expr e4 name(defaultMargin) type=<error> ref=s385
+expr e4 name(defaultMargin) type=String ref=s385
 expr e5 call callee=e3 args=[_:e4] type=Unit call=s349 map=[0->0] targs=[]
 expr e6 string(
         >left
         >right
     ) type=String
 expr e7 string(>) type=String
-expr e8 memberCall recv=e6 callee=trimMargin args=[_:e7] type=<error>
+expr e8 memberCall recv=e6 callee=trimMargin args=[_:e7] type=String call=s155 map=[0->0] targs=[]
 expr e9 localDecl customMargin mutable=0 type=_ init=e8 type=Unit ref=s386
 expr e10 name(println) type=_
-expr e11 name(customMargin) type=<error> ref=s386
+expr e11 name(customMargin) type=String ref=s386
 expr e12 call callee=e10 args=[_:e11] type=Unit call=s349 map=[0->0] targs=[]

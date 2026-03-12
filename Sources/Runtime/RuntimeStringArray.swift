@@ -71,13 +71,12 @@ public func kk_throwable_stackTraceToString(_ throwableRaw: Int) -> Int {
         }
         return Int(bitPattern: opaque)
     }
-    let message: String
-    if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
-        message = throwable.message
+    let message: String = if let throwable = tryCast(ptr, to: RuntimeThrowableBox.self) {
+        throwable.message
     } else if let cancellation = tryCast(ptr, to: RuntimeCancellationBox.self) {
-        message = cancellation.message
+        cancellation.message
     } else {
-        message = ""
+        ""
     }
     let box = RuntimeStringBox(message)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())

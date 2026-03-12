@@ -363,11 +363,27 @@ final class ControlFlowLowerer {
                     ))
                 } else {
                     let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                    let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+                    let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                    let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                     instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                    instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                     instructions.append(.binary(
                         op: .equal,
                         lhs: exceptionTypeSlot,
                         rhs: tokenExpr,
+                        result: typeMatches
+                    ))
+                    instructions.append(.binary(
+                        op: .equal,
+                        lhs: exceptionTypeSlot,
+                        rhs: unknownTypeToken,
+                        result: typeUnknown
+                    ))
+                    instructions.append(.binary(
+                        op: .logicalOr,
+                        lhs: typeMatches,
+                        rhs: typeUnknown,
                         result: matchResult
                     ))
                 }
@@ -445,11 +461,27 @@ final class ControlFlowLowerer {
                         ))
                     } else {
                         let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                        let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+                        let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+                        let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                        instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                         instructions.append(.binary(
                             op: .equal,
                             lhs: exceptionTypeSlot,
                             rhs: tokenExpr,
+                            result: typeMatches
+                        ))
+                        instructions.append(.binary(
+                            op: .equal,
+                            lhs: exceptionTypeSlot,
+                            rhs: unknownTypeToken,
+                            result: typeUnknown
+                        ))
+                        instructions.append(.binary(
+                            op: .logicalOr,
+                            lhs: typeMatches,
+                            rhs: typeUnknown,
                             result: matchResult
                         ))
                     }

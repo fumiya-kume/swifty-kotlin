@@ -399,16 +399,16 @@ symbol s397 kind=function fq=golden.sema.tryPartialCatchRethrow vis=public flags
 symbol s398 kind=valueParameter fq=golden.sema.tryPartialCatchRethrow.$397.flag vis=private flags=_
 symbol s399 kind=property fq=golden.sema.propTryCatch vis=public flags=_ type=String
 symbol s400 kind=property fq=golden.sema.propTryFinally vis=public flags=_ type=String
-symbol s401 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Any
-symbol s402 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Any
-symbol s403 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Any
-symbol s404 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Any
-symbol s405 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Any
+symbol s401 kind=local fq=__try_10_catch_0.e vis=internal flags=_ type=Class#237
+symbol s402 kind=local fq=__try_17_catch_0.e vis=internal flags=_ type=Class#243
+symbol s403 kind=local fq=__try_17_catch_1.e vis=internal flags=_ type=Class#237
+symbol s404 kind=local fq=__try_27_catch_0.e vis=internal flags=_ type=Class#237
+symbol s405 kind=local fq=__try_32_catch_0.e vis=internal flags=_ type=Class#237
 symbol s406 kind=local fq=__local_33.x vis=private flags=_
-symbol s407 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Any
-symbol s408 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Any
+symbol s407 kind=local fq=__try_61_catch_0.e vis=internal flags=_ type=Class#384
+symbol s408 kind=local fq=__try_61_catch_1.e vis=internal flags=_ type=Class#386
 symbol s409 kind=local fq=__local_62.x vis=private flags=mutable
-symbol s410 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Any
+symbol s410 kind=local fq=__try_76_catch_0.e vis=internal flags=_ type=Class#384
 file f0 package=golden.sema
   decl d0 class Handled sym=s384
   decl d1 class Unhandled sym=s386

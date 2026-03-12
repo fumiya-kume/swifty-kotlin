@@ -444,6 +444,18 @@ extension CallLowerer {
             return storedObjectProperty
         }
 
+        if let externalMemberProperty = tryLowerExternalMemberPropertyRead(
+            exprID,
+            loweredReceiverID: loweredReceiverID,
+            args: args,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            return externalMemberProperty
+        }
+
         if let storedMemberProperty = tryLowerStoredMemberPropertyRead(
             exprID,
             loweredReceiverID: loweredReceiverID,
@@ -894,6 +906,8 @@ extension CallLowerer {
                     return result
                 }
                 let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
+                case "split":
+                    ("kk_string_split", [loweredReceiverID, loweredArgIDs[0]])
                 case "startsWith":
                     ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "endsWith":
@@ -1286,6 +1300,45 @@ extension CallLowerer {
             symbol: nil,
             callee: interner.intern("kk_array_get_inbounds"),
             arguments: [loweredReceiverID, offsetExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return wrapLateinitReadIfNeeded(
+            result,
+            symbol: propertySymbol,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        )
+    }
+
+    private func tryLowerExternalMemberPropertyRead(
+        _ exprID: ExprID,
+        loweredReceiverID: KIRExprID,
+        args: [CallArgument],
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard args.isEmpty,
+              let propertySymbol = sema.bindings.identifierSymbol(for: exprID),
+              let externalLinkName = sema.symbols.externalLinkName(for: propertySymbol),
+              !externalLinkName.isEmpty
+        else {
+            return nil
+        }
+
+        let resultType = sema.bindings.exprTypes[exprID]
+            ?? sema.symbols.propertyType(for: propertySymbol)
+            ?? sema.types.anyType
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: propertySymbol,
+            callee: interner.intern(externalLinkName),
+            arguments: [loweredReceiverID],
             result: result,
             canThrow: false,
             thrownResult: nil
@@ -1716,7 +1769,60 @@ extension CallLowerer {
         if interner.resolve(fallback) == "length" {
             return interner.intern("kk_string_length")
         }
+        if let collectionProperty = unresolvedCollectionPropertyCallee(
+            memberName: interner.resolve(fallback),
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) {
+            return collectionProperty
+        }
         return fallback
+    }
+
+    private func unresolvedCollectionPropertyCallee(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        guard memberName == "size" || memberName == "isEmpty",
+              case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return nil
+        }
+
+        let ownerName = interner.resolve(symbol.name)
+        switch memberName {
+        case "size":
+            if ownerName.contains("Map") {
+                return interner.intern("kk_map_size")
+            }
+            if ownerName.contains("Set") {
+                return interner.intern("kk_set_size")
+            }
+            if ownerName.contains("Array") {
+                return interner.intern("kk_array_size")
+            }
+            if ownerName.contains("List") || ownerName.contains("Collection") {
+                return interner.intern("kk_list_size")
+            }
+        case "isEmpty":
+            if ownerName.contains("Map") {
+                return interner.intern("kk_map_is_empty")
+            }
+            if ownerName.contains("Set") {
+                return interner.intern("kk_set_is_empty")
+            }
+            if ownerName.contains("List") || ownerName.contains("Collection") {
+                return interner.intern("kk_list_is_empty")
+            }
+        default:
+            break
+        }
+
+        return nil
     }
 
     // MARK: - Member Assignment

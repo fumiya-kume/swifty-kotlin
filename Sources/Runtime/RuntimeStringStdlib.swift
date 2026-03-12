@@ -346,6 +346,93 @@ public func kk_string_lastIndexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return lastIndex
 }
 
+@_cdecl("kk_string_get")
+public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard indexRaw >= 0, indexRaw < scalars.count else {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: index=\(indexRaw), length=\(scalars.count)"
+        )
+        return 0
+    }
+    return kk_box_char(Int(scalars[indexRaw].value))
+}
+
+@_cdecl("kk_string_compareTo_member")
+public func kk_string_compareTo_member(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    return runtimeCompareStrings(lhs, rhs)
+}
+
+@_cdecl("kk_string_compareToIgnoreCase")
+public func kk_string_compareToIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    if ignoreCaseRaw == 0 {
+        return runtimeCompareStrings(lhs, rhs)
+    }
+    let comparison = lhs.caseInsensitiveCompare(rhs)
+    switch comparison {
+    case .orderedAscending:
+        return -1
+    case .orderedDescending:
+        return 1
+    case .orderedSame:
+        return 0
+    }
+}
+
+@_cdecl("kk_string_toBoolean")
+public func kk_string_toBoolean(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.caseInsensitiveCompare("true") == .orderedSame ? 1 : 0)
+}
+
+@_cdecl("kk_string_toBooleanStrict")
+public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    switch source {
+    case "true":
+        return kk_box_bool(1)
+    case "false":
+        return kk_box_bool(0)
+    default:
+        runtimeSetThrown(
+            outThrown,
+            message: "The string doesn't represent a boolean value: \(source)"
+        )
+        return 0
+    }
+}
+
+@_cdecl("kk_string_lines")
+public func kk_string_lines(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringListRaw(runtimeNormalizedMultilineString(source))
+}
+
+@_cdecl("kk_string_trimStart")
+public func kk_string_trimStart(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringRaw(String(source.drop { $0.isWhitespace }))
+}
+
+@_cdecl("kk_string_trimEnd")
+public func kk_string_trimEnd(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeStringRaw(String(source.reversed().drop { $0.isWhitespace }.reversed()))
+}
+
+@_cdecl("kk_string_toByteArray")
+public func kk_string_toByteArray(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return runtimeMakeListRaw(source.utf8.map(Int.init))
+}
+
 @_cdecl("kk_string_format")
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let template = runtimeStringFromRaw(formatRaw) ?? ""

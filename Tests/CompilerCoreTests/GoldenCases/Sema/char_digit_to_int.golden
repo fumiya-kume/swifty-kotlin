@@ -389,8 +389,8 @@ symbol s387 kind=local fq=__local_5.n vis=private flags=_
 file f0 package=_
   decl d0 fun testDigitConversion suspend=0 inline=0 sym=s384
 expr e0 name(c) type=Char ref=s385
-expr e1 memberCall recv=e0 callee=digitToInt args=[] type=Int
+expr e1 memberCall recv=e0 callee=digitToInt args=[] type=Int call=s211 map=[] targs=[]
 expr e2 localDecl d mutable=0 type=_ init=e1 type=Unit ref=s386
 expr e3 name(c) type=Char ref=s385
-expr e4 memberCall recv=e3 callee=digitToIntOrNull args=[] type=Int?
+expr e4 memberCall recv=e3 callee=digitToIntOrNull args=[] type=Int? call=s212 map=[] targs=[]
 expr e5 localDecl n mutable=0 type=_ init=e4 type=Unit ref=s387
