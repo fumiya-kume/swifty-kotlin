@@ -125,6 +125,10 @@ private let sortedByTens: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) 
     value / 10
 }
 
+private let sortBySelfStringValue: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value
+}
+
 private let mapEntrySum: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, pairRaw, _ in
     kk_pair_first(pairRaw) + kk_pair_second(pairRaw)
 }
@@ -186,6 +190,35 @@ final class RuntimeCollectionHOFTests: XCTestCase {
 
         let sorted = kk_list_sortedBy(makeList([22, 12, 21, 11]), unsafeBitCast(sortedByTens, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
         XCTAssertEqual(listElements(sorted), [12, 11, 22, 21])
+    }
+
+    func testSortedByWithStringKeyHandlesNonIntegerComparison() {
+        let source = makeList([makeRuntimeStringRaw("b"), makeRuntimeStringRaw("a"), makeRuntimeStringRaw("c")])
+
+        let sorted = kk_list_sortedBy(
+            source,
+            unsafeBitCast(sortBySelfStringValue, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(sorted).map(runtimeStringValue), ["a", "b", "c"])
+
+        let sortedDesc = kk_list_sortedByDescending(
+            source,
+            unsafeBitCast(sortBySelfStringValue, to: Int.self),
+            0,
+            nil as UnsafeMutablePointer<Int>?
+        )
+        XCTAssertEqual(listElements(sortedDesc).map(runtimeStringValue), ["c", "b", "a"])
+    }
+
+    func testMutableListSortByStringKeyMutatesInPlace() {
+        let source = makeList([makeRuntimeStringRaw("b"), makeRuntimeStringRaw("a"), makeRuntimeStringRaw("c")])
+        _ = kk_mutable_list_sortBy(source, unsafeBitCast(sortBySelfStringValue, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["a", "b", "c"])
+
+        _ = kk_mutable_list_sortByDescending(source, unsafeBitCast(sortBySelfStringValue, to: Int.self), 0, nil as UnsafeMutablePointer<Int>?)
+        XCTAssertEqual(listElements(source).map(runtimeStringValue), ["c", "b", "a"])
     }
 
     func testAnyAllNoneShortCircuitAndNoArgOverloads() {
@@ -354,5 +387,17 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             keys.append(kk_map_iterator_next(iterator))
         }
         return keys
+    }
+
+    private func makeRuntimeStringRaw(_ value: String) -> Int {
+        value.withCString { cstr in
+            cstr.withMemoryRebound(to: UInt8.self, capacity: max(1, value.utf8.count)) { ptr in
+                Int(bitPattern: kk_string_from_utf8(ptr, Int32(value.utf8.count)))
+            }
+        }
+    }
+
+    private func runtimeStringValue(_ raw: Int) -> String {
+        extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 }
