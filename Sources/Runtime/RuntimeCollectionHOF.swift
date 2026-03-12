@@ -164,16 +164,15 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
     if let map = runtimeMapBox(from: mapRaw) {
         for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
             if idx < map.values.count {
-                let existing = maybeUnbox(map.values[idx])
+                let existing = map.values[idx]
                 if existing != runtimeNullSentinelInt {
                     return existing
                 }
                 var thrown = 0
                 let result = lambda(closureRaw, &thrown)
-                if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
-                let normalizedResult = maybeUnbox(result)
-                map.values[idx] = normalizedResult
-                return normalizedResult
+                if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+                map.values[idx] = result
+                return result
             }
             break
         }
@@ -182,12 +181,11 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
     var thrown = 0
     let result = lambda(closureRaw, &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let normalizedResult = maybeUnbox(result)
     if let map = runtimeMapBox(from: mapRaw) {
         map.keys.append(key)
-        map.values.append(normalizedResult)
+        map.values.append(result)
     }
-    return normalizedResult
+    return result
 }
 
 @_cdecl("kk_map_mapValues")

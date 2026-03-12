@@ -2477,7 +2477,7 @@ extension CallLowerer {
         let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
               let symbol = sema.symbols.symbol(classType.classSymbol),
-              knownNames.isMutableMapSymbol(symbol)
+              knownNames.isMapLikeSymbol(symbol)
         else {
             return nil
         }
@@ -2487,6 +2487,9 @@ extension CallLowerer {
         case "getOrElse":
             return interner.intern("kk_map_getOrElse")
         case "getOrPut":
+            guard knownNames.isMutableMapSymbol(symbol) else {
+                return nil
+            }
             return interner.intern("kk_mutable_map_getOrPut")
         default:
             return nil
