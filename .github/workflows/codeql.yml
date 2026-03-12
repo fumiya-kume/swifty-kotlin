@@ -45,10 +45,6 @@ jobs:
         include:
         - language: actions
           build-mode: none
-        - language: c-cpp
-          build-mode: autobuild
-        - language: java-kotlin
-          build-mode: autobuild
         - language: swift
           build-mode: autobuild
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
@@ -62,6 +58,12 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Install Swift
+      if: matrix.language == 'swift'
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: "6.2"
 
     # Add any setup steps before running the `github/codeql-action/init` action.
     # This includes steps like installing compilers or runtimes (`actions/setup-node`
