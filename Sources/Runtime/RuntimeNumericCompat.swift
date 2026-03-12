@@ -11,6 +11,9 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
     if value == runtimeNullSentinelInt {
         return runtimeMakeStringPointer("null")
     }
+    if tag == 2 {
+        return runtimeMakeStringPointer(value != 0 ? "true" : "false")
+    }
     if tag == 3,
        let pointer = UnsafeMutableRawPointer(bitPattern: value),
        extractString(from: pointer) != nil

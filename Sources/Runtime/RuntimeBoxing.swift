@@ -3,6 +3,14 @@ import Foundation
 @_cdecl("kk_box_int")
 public func kk_box_int(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
+    if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: objPointer))
+        }
+        if isObjectPointer, tryCast(objPointer, to: RuntimeIntBox.self) != nil {
+            return value
+        }
+    }
     let box = RuntimeIntBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
