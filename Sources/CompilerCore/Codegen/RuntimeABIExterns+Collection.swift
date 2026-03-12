@@ -121,6 +121,8 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_string_builder_append,
         kk_builder_list_add,
+        kk_list_firstOrNull,
+        kk_list_lastOrNull,
         kk_mutable_list_add,
         kk_mutable_list_removeAt,
         kk_mutable_list_clear,
@@ -754,6 +756,19 @@ public extension RuntimeABIExterns {
     static let kk_list_partition = ExternDecl(
         name: "kk_list_partition",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-210: firstOrNull / lastOrNull (no-predicate)
+    static let kk_list_firstOrNull = ExternDecl(
+        name: "kk_list_firstOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_lastOrNull = ExternDecl(
+        name: "kk_list_lastOrNull",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

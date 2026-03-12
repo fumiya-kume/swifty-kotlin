@@ -88,6 +88,7 @@ extension CallLowerer {
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "copyOf", "copyOfRange", "fill",
+        "firstOrNull", "lastOrNull",
         "to", // FUNC-002
     ]
 

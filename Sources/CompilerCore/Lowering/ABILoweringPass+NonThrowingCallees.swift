@@ -277,6 +277,8 @@ extension ABILoweringPass {
             interner.intern("kk_list_distinct"),
             interner.intern("kk_list_shuffled"),
             interner.intern("kk_list_randomOrNull"),
+            interner.intern("kk_list_firstOrNull"),
+            interner.intern("kk_list_lastOrNull"),
             interner.intern("kk_list_flatten"),
             interner.intern("kk_list_chunked"),
             interner.intern("kk_list_windowed"),

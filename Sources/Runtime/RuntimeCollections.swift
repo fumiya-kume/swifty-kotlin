@@ -190,6 +190,28 @@ public func kk_list_to_set(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
+// MARK: - STDLIB-210: List.firstOrNull() / lastOrNull()
+
+@_cdecl("kk_list_firstOrNull")
+public func kk_list_firstOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements[0]
+}
+
+@_cdecl("kk_list_lastOrNull")
+public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          !list.elements.isEmpty
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements[list.elements.count - 1]
+}
+
 @_cdecl("kk_mutable_list_add")
 public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

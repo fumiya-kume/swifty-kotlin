@@ -1063,6 +1063,10 @@ extension DataFlowSemaPhase {
         registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
         registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
 
+        // firstOrNull / lastOrNull no-predicate (STDLIB-210)
+        registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
+        registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
+
         // indexOf / lastIndexOf (non-HOF, element argument)
         let indexOfName = interner.intern("indexOf")
         let indexOfFQName = listFQName + [indexOfName]

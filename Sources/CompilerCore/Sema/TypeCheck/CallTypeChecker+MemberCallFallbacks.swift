@@ -340,6 +340,8 @@ extension CallTypeChecker {
             interner.intern("sortedWith"),
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
+            interner.intern("firstOrNull"),
+            interner.intern("lastOrNull"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
@@ -388,7 +390,8 @@ extension CallTypeChecker {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
-             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"):
+             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"):
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
@@ -464,7 +467,11 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == interner.intern("maxOrNull") || memberName == interner.intern("minOrNull") {
+        if memberName == interner.intern("maxOrNull")
+            || memberName == interner.intern("minOrNull")
+            || memberName == interner.intern("firstOrNull")
+            || memberName == interner.intern("lastOrNull")
+        {
             return sema.types.makeNullable(receiverElementType)
         }
 
