@@ -1760,6 +1760,20 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        registerMutableSetClearMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+        registerMutableSetAddAllMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableSetFQName: mutableSetFQName,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
     }
 
     private func registerMutableSetAddMember(
@@ -1832,6 +1846,84 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [typeParamType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetClearMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("clear")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_clear", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.unitType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableSetAddAllMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableSetFQName: [InternedString],
+        mutableSetInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("addAll")
+        let memberFQName = mutableSetFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableSetInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_set_addAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [types.anyType],
                 returnType: types.booleanType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1

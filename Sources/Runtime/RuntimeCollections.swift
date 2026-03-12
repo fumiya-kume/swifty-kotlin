@@ -293,6 +293,33 @@ public func kk_mutable_set_remove(_ setRaw: Int, _ elem: Int) -> Int {
     return kk_box_bool(1)
 }
 
+@_cdecl("kk_mutable_set_clear")
+public func kk_mutable_set_clear(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return 0
+    }
+    set.elements.removeAll(keepingCapacity: false)
+    return 0
+}
+
+@_cdecl("kk_mutable_set_addAll")
+public func kk_mutable_set_addAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    guard let list = runtimeListBox(from: collectionRaw) else {
+        return kk_box_bool(0)
+    }
+    var modified = false
+    for elem in list.elements {
+        if !set.elements.contains(where: { runtimeValuesEqual($0, elem) }) {
+            set.elements.append(elem)
+            modified = true
+        }
+    }
+    return kk_box_bool(modified ? 1 : 0)
+}
+
 // MARK: - Map Functions (STDLIB-001)
 
 @_cdecl("kk_map_of")
