@@ -362,11 +362,10 @@ extension CallTypeChecker {
             if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                classType.args.count >= 2
             {
-                let valueType = switch classType.args[1] {
+                return switch classType.args[1] {
                 case let .invariant(t), let .out(t), let .in(t): t
                 case .star: sema.types.anyType
                 }
-                return valueType
             }
             return sema.types.anyType
         }
