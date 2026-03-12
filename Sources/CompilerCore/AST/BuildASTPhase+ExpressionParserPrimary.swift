@@ -251,6 +251,7 @@ extension BuildASTPhase.ExpressionParser {
         guard let open = consume() else { return nil }
         var end = open.range.end
         let closingKind = open.kind
+        let shouldDecodeEscapes: Bool = if case .stringQuote = open.kind { true } else { false }
 
         var hasTemplate = false
         var scanIdx = index
@@ -271,7 +272,8 @@ extension BuildASTPhase.ExpressionParser {
                     break
                 }
                 if case let .stringSegment(segment) = token.kind {
-                    pieces.append(interner.resolve(segment))
+                    let segmentText = interner.resolve(segment)
+                    pieces.append(shouldDecodeEscapes ? decodeEscapedStringSegment(segmentText) : segmentText)
                 }
                 end = token.range.end
                 _ = consume()
@@ -329,5 +331,77 @@ extension BuildASTPhase.ExpressionParser {
 
         let range = SourceRange(start: open.range.start, end: end)
         return astArena.appendExpr(.stringTemplate(parts: parts, range: range))
+    }
+
+    private func decodeEscapedStringSegment(_ segment: String) -> String {
+        var result = ""
+        var index = segment.startIndex
+
+        func advance(_ current: String.Index, by offset: Int) -> String.Index {
+            segment.index(current, offsetBy: offset, limitedBy: segment.endIndex) ?? segment.endIndex
+        }
+
+        while index < segment.endIndex {
+            let character = segment[index]
+            guard character == "\\" else {
+                result.append(character)
+                index = segment.index(after: index)
+                continue
+            }
+
+            let escapeIndex = segment.index(after: index)
+            guard escapeIndex < segment.endIndex else {
+                result.append("\\")
+                break
+            }
+
+            let escape = segment[escapeIndex]
+            switch escape {
+            case "n":
+                result.append("\n")
+                index = segment.index(after: escapeIndex)
+            case "t":
+                result.append("\t")
+                index = segment.index(after: escapeIndex)
+            case "r":
+                result.append("\r")
+                index = segment.index(after: escapeIndex)
+            case "\"":
+                result.append("\"")
+                index = segment.index(after: escapeIndex)
+            case "'":
+                result.append("'")
+                index = segment.index(after: escapeIndex)
+            case "\\":
+                result.append("\\")
+                index = segment.index(after: escapeIndex)
+            case "$":
+                result.append("$")
+                index = segment.index(after: escapeIndex)
+            case "b":
+                result.append("\u{08}")
+                index = segment.index(after: escapeIndex)
+            case "u":
+                let hexStart = segment.index(after: escapeIndex)
+                let hexEnd = advance(hexStart, by: 4)
+                let hexDigits = String(segment[hexStart ..< hexEnd])
+                if hexDigits.count == 4,
+                   let scalarValue = UInt32(hexDigits, radix: 16),
+                   let scalar = UnicodeScalar(scalarValue)
+                {
+                    result.unicodeScalars.append(scalar)
+                    index = hexEnd
+                } else {
+                    result.append("\\")
+                    result.append("u")
+                    index = segment.index(after: escapeIndex)
+                }
+            default:
+                result.append(escape)
+                index = segment.index(after: escapeIndex)
+            }
+        }
+
+        return result
     }
 }

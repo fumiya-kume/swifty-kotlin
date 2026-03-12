@@ -206,6 +206,46 @@ final class CallTypeChecker {
             return sema.types.unitType
         }
 
+        if let calleeName,
+           interner.resolve(calleeName) == "Regex",
+           args.count == 1
+        {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+            let regexType: TypeID = if let regexSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("text"),
+                interner.intern("Regex"),
+            ]) {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: regexSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            sema.bindings.bindExprType(id, type: regexType)
+            return regexType
+        }
+
+        if let calleeName,
+           interner.resolve(calleeName) == "generateSequence",
+           args.count == 2
+        {
+            let seedType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+            let nextExpectedType = sema.types.make(.functionType(FunctionType(
+                params: [seedType],
+                returnType: sema.types.makeNullable(seedType),
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: nextExpectedType)
+            sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            sema.bindings.markCollectionExpr(id)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
         // --- Stdlib repeat(times) { ... } (STDLIB-008) ---
         // Infer the lambda argument with the expected `(Int) -> Unit` type so
         // implicit `it` resolves to the loop index.
@@ -850,7 +890,7 @@ final class CallTypeChecker {
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull",
-                 "sequenceOf":
+                 "sequenceOf", "generateSequence":
                 sema.bindings.markCollectionExpr(id)
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
@@ -1008,11 +1048,42 @@ final class CallTypeChecker {
                             valueType: sema.types.anyType
                         )
                     }
+                } else if name == "generateSequence", args.count == 2 {
+                    let seedType = argTypes.first ?? sema.types.anyType
+                    let nextExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [seedType],
+                        returnType: sema.types.makeNullable(seedType),
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: nextExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    collectionType = sema.types.anyType
                 } else {
                     collectionType = sema.types.anyType
                 }
                 sema.bindings.bindExprType(id, type: collectionType)
                 return collectionType
+            case "Regex":
+                guard args.count == 1 else {
+                    break
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+                let regexType: TypeID = if let regexSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("text"),
+                    interner.intern("Regex"),
+                ]) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: regexSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: regexType)
+                return regexType
             default:
                 break
             }

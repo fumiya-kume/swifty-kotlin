@@ -174,6 +174,58 @@ final class CallLowerer {
                 instructions: &instructions
             )
         }
+        if interner.resolve(sourceCalleeName) == "toList",
+           args.count == 1,
+           sema.bindings.isCollectionExpr(args[0].expr)
+        {
+            let argumentType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let nonNullArgumentType = sema.types.makeNonNullable(argumentType)
+            let runtimeCallee: InternedString?
+            if case let .classType(classType) = sema.types.kind(of: nonNullArgumentType),
+               let symbol = sema.symbols.symbol(classType.classSymbol)
+            {
+                let typeName = interner.resolve(symbol.name)
+                switch typeName {
+                case "List", "MutableList":
+                    runtimeCallee = nil
+                case "Range", "IntRange", "LongRange":
+                    runtimeCallee = interner.intern("kk_range_toList")
+                case "String":
+                    runtimeCallee = interner.intern("kk_string_toList")
+                default:
+                    runtimeCallee = interner.intern("kk_sequence_to_list")
+                }
+            } else {
+                runtimeCallee = interner.intern("kk_sequence_to_list")
+            }
+            if let runtimeCallee {
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: runtimeCallee,
+                    arguments: loweredArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            return loweredArgIDs[0]
+        }
+        if args.count == 1,
+           let loweredNumericConversion = lowerTopLevelNumericConversionCall(
+               sourceCalleeName: sourceCalleeName,
+               argumentExpr: args[0].expr,
+               loweredArgumentID: loweredArgIDs[0],
+               boundType: boundType ?? sema.types.anyType,
+               sema: sema,
+               arena: arena,
+               interner: interner,
+               instructions: &instructions
+           )
+        {
+            return loweredNumericConversion
+        }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         let callBinding = sema.bindings.callBindings[exprID]
         let callableValueCallBinding = sema.bindings.callableValueCalls[exprID]
@@ -425,7 +477,7 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              ["kk_require_lazy", "kk_check_lazy"].contains(externalLinkName),
+              ["kk_require_lazy", "kk_check_lazy", "kk_sequence_generate"].contains(externalLinkName),
               loweredArguments.count == originalArgs.count,
               loweredArguments.count == 2
         else {
@@ -619,5 +671,69 @@ final class CallLowerer {
             substitutedTypeArguments: [],
             parameterMapping: parameterMapping
         )
+    }
+
+    private func lowerTopLevelNumericConversionCall(
+        sourceCalleeName: InternedString,
+        argumentExpr: ExprID,
+        loweredArgumentID: KIRExprID,
+        boundType: TypeID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        let receiverType = sema.types.makeNonNullable(sema.bindings.exprTypes[argumentExpr] ?? sema.types.anyType)
+        let calleeStr = interner.resolve(sourceCalleeName)
+
+        let runtimeCallee: InternedString? = switch (calleeStr, receiverType, boundType) {
+        case ("toInt", sema.types.uintType, sema.types.intType): interner.intern("kk_uint_to_int")
+        case ("toInt", sema.types.ulongType, sema.types.intType): interner.intern("kk_ulong_to_int")
+        case ("toInt", sema.types.doubleType, sema.types.intType): interner.intern("kk_double_to_int")
+        case ("toInt", sema.types.floatType, sema.types.intType): interner.intern("kk_float_to_int")
+        case ("toInt", sema.types.intType, sema.types.intType), ("toInt", sema.types.longType, sema.types.intType): nil
+
+        case ("toLong", sema.types.intType, sema.types.longType): interner.intern("kk_int_to_long")
+        case ("toLong", sema.types.uintType, sema.types.longType): interner.intern("kk_uint_to_long")
+        case ("toLong", sema.types.doubleType, sema.types.longType): interner.intern("kk_double_to_long")
+        case ("toLong", sema.types.floatType, sema.types.longType): interner.intern("kk_float_to_long")
+        case ("toLong", sema.types.longType, sema.types.longType), ("toLong", sema.types.ulongType, sema.types.longType): nil
+
+        case ("toFloat", sema.types.intType, sema.types.floatType): interner.intern("kk_int_to_float")
+        case ("toFloat", sema.types.longType, sema.types.floatType): interner.intern("kk_long_to_float")
+        case ("toFloat", sema.types.doubleType, sema.types.floatType): interner.intern("kk_double_to_float")
+        case ("toFloat", sema.types.floatType, sema.types.floatType): nil
+
+        case ("toDouble", sema.types.intType, sema.types.doubleType): interner.intern("kk_int_to_double_bits")
+        case ("toDouble", sema.types.longType, sema.types.doubleType): interner.intern("kk_long_to_double")
+        case ("toDouble", sema.types.floatType, sema.types.doubleType): interner.intern("kk_float_to_double_bits")
+        case ("toDouble", sema.types.doubleType, sema.types.doubleType): nil
+
+        case ("toByte", sema.types.intType, sema.types.intType): interner.intern("kk_int_to_byte")
+        case ("toByte", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_byte")
+        case ("toShort", sema.types.intType, sema.types.intType): interner.intern("kk_int_to_short")
+        case ("toShort", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_short")
+        default: nil
+        }
+
+        if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toByte", "toShort"].contains(calleeStr),
+           runtimeCallee == nil
+        {
+            return loweredArgumentID
+        }
+        guard let runtimeCallee else {
+            return nil
+        }
+
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: runtimeCallee,
+            arguments: [loweredArgumentID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
     }
 }

@@ -409,6 +409,9 @@ extension CallTypeChecker {
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
+        let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
+            && !isCollectionLikeType(receiverType, sema: sema, interner: interner)
+            && !isMapReceiver
         let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
@@ -469,26 +472,33 @@ extension CallTypeChecker {
 
                     switch calleeStr {
                     case "map":
-                        let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
-                            sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
-                        } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
-                            fnType.returnType
+                        if isSyntheticSequenceReceiver {
+                            resultType = sema.types.anyType
                         } else {
-                            sema.types.anyType
+                            let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                                sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+                            } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
+                                fnType.returnType
+                            } else {
+                                sema.types.anyType
+                            }
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                                args: [.invariant(bodyType)],
+                                nullability: .nonNull
+                            )))
                         }
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
-                            args: [.invariant(bodyType)],
-                            nullability: .nonNull
-                        )))
-                    case "filter": resultType = receiverType
+                    case "filter":
+                        resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "forEach": resultType = sema.types.unitType
                     case "flatMap":
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
-                            args: [.invariant(sema.types.anyType)],
-                            nullability: .nonNull
-                        )))
+                        resultType = isSyntheticSequenceReceiver
+                            ? sema.types.anyType
+                            : sema.types.make(.classType(ClassType(
+                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                                args: [.invariant(sema.types.anyType)],
+                                nullability: .nonNull
+                            )))
                     case "any", "none", "all": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
                     case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
@@ -759,6 +769,11 @@ extension CallTypeChecker {
             }
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+            if isSyntheticSequenceReceiver,
+               ["map", "filter", "flatMap"].contains(calleeStr)
+            {
+                sema.bindings.markCollectionExpr(id)
+            }
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
         }
@@ -1933,6 +1948,30 @@ extension CallTypeChecker {
                 driver.helpers.emitVisibilityError(for: firstInvisible, name: interner.resolve(calleeName), range: range, diagnostics: ctx.semaCtx.diagnostics)
                 return driver.helpers.bindAndReturnErrorType(id, sema: sema)
             }
+            if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryStringMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -2134,6 +2173,30 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryStringMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryArrayMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -2202,6 +2265,30 @@ extension CallTypeChecker {
                 return staticMember.type
             }
             if let fallbackType = tryCollectionMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryRegexMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryStringMemberFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,

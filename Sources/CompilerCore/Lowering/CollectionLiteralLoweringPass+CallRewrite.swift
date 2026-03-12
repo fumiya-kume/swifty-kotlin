@@ -321,11 +321,13 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- Rewrite generateSequence → kk_sequence_generate (STDLIB-097) ---
-                    if callee == lookup.generateSequenceName, arguments.count == 2 {
+                    if callee == lookup.generateSequenceName,
+                       arguments.count == 2 || arguments.count == 3
+                    {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceGenerateName,
-                            arguments: [arguments[0], arguments[1]],
+                            arguments: arguments,
                             result: result,
                             canThrow: false,
                             thrownResult: nil
@@ -815,11 +817,10 @@ extension CollectionLiteralLoweringPass {
                         let receiverID = arguments[0]
                         if sequenceExprIDs.contains(receiverID.rawValue) {
                             let kkName = callee == lookup.mapName ? lookup.kkSequenceMapName : lookup.kkSequenceFilterName
-                            let rewrittenArguments = [arguments[0], arguments[1]]
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: kkName,
-                                arguments: rewrittenArguments,
+                                arguments: arguments,
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
@@ -874,7 +875,7 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceForEachName,
-                                arguments: [arguments[0], arguments[1]],
+                                arguments: arguments,
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
@@ -892,7 +893,7 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceFlatMapName,
-                                arguments: [arguments[0], arguments[1]],
+                                arguments: arguments,
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil

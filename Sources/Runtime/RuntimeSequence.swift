@@ -39,13 +39,13 @@ private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
 
 /// Applies a map transformation to elements using the given function pointer.
 /// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
-private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
+private func applyMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     mapped.reserveCapacity(elements.count)
     for elem in elements {
         var thrown = 0
-        let result = lambda(0, elem, &thrown)
+        let result = lambda(closureRaw, elem, &thrown)
         if thrown != 0 { return [] }
         mapped.append(maybeUnbox(result))
     }
@@ -54,12 +54,12 @@ private func applyMapStep(_ elements: [Int], fnPtr: Int) -> [Int] {
 
 /// Applies a filter transformation to elements using the given function pointer.
 /// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
-private func applyFilterStep(_ elements: [Int], fnPtr: Int) -> [Int] {
+private func applyFilterStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
     let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filtered: [Int] = []
     for elem in elements {
         var thrown = 0
-        let result = predicate(0, elem, &thrown)
+        let result = predicate(closureRaw, elem, &thrown)
         if thrown != 0 { return [] }
         if maybeUnbox(result) != 0 {
             filtered.append(elem)
@@ -78,14 +78,14 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             elements = source
             break
         }
-        if case let .generator(seed, fnPtr) = step {
+        if case let .generator(seed, fnPtr, closureRaw) = step {
             let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var current = seed
             var generated: [Int] = [current]
             let hardLimit = 100_000
             while generated.count < hardLimit {
                 var thrown = 0
-                let next = nextFn(0, current, &thrown)
+                let next = nextFn(closureRaw, current, &thrown)
                 if thrown != 0 { break }
                 let unboxed = maybeUnbox(next)
                 if unboxed == runtimeNullSentinelInt { break }
@@ -102,10 +102,10 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
         switch step {
         case .source, .builder, .generator:
             break
-        case let .mapStep(fnPtr):
-            elements = applyMapStep(elements, fnPtr: fnPtr)
-        case let .filterStep(fnPtr):
-            elements = applyFilterStep(elements, fnPtr: fnPtr)
+        case let .mapStep(fnPtr, closureRaw):
+            elements = applyMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
+        case let .filterStep(fnPtr, closureRaw):
+            elements = applyFilterStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
         case let .takeStep(count):
             if count >= 0, count < elements.count {
                 elements = Array(elements.prefix(count))
@@ -159,33 +159,33 @@ public func kk_sequence_of(_ arrayRaw: Int, _ count: Int) -> Int {
 }
 
 @_cdecl("kk_sequence_generate")
-public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int) -> Int {
-    let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr)])
+public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr, closureRaw: closureRaw)])
     return registerRuntimeObject(seq)
 }
 
 // MARK: - Sequence Intermediate Operations (Lazy)
 
 @_cdecl("kk_sequence_map")
-public func kk_sequence_map(_ seqRaw: Int, _ fnPtr: Int) -> Int {
+public func kk_sequence_map(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
-        let newSeq = RuntimeSequenceBox(steps: [.mapStep(fnPtr: fnPtr)])
+        let newSeq = RuntimeSequenceBox(steps: [.mapStep(fnPtr: fnPtr, closureRaw: closureRaw)])
         return registerRuntimeObject(newSeq)
     }
     var newSteps = seq.steps
-    newSteps.append(.mapStep(fnPtr: fnPtr))
+    newSteps.append(.mapStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
 
 @_cdecl("kk_sequence_filter")
-public func kk_sequence_filter(_ seqRaw: Int, _ fnPtr: Int) -> Int {
+public func kk_sequence_filter(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
-        let newSeq = RuntimeSequenceBox(steps: [.filterStep(fnPtr: fnPtr)])
+        let newSeq = RuntimeSequenceBox(steps: [.filterStep(fnPtr: fnPtr, closureRaw: closureRaw)])
         return registerRuntimeObject(newSeq)
     }
     var newSteps = seq.steps
-    newSteps.append(.filterStep(fnPtr: fnPtr))
+    newSteps.append(.filterStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
@@ -247,20 +247,20 @@ public func kk_sequence_zip(_ seqRaw: Int, _ otherRaw: Int) -> Int {
 // MARK: - Sequence Terminal Operations
 
 @_cdecl("kk_sequence_forEach")
-public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int) -> Int {
+public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else { return 0 }
     let elements = evaluateSequence(seq)
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in elements {
         var thrown = 0
-        _ = lambda(0, elem, &thrown)
+        _ = lambda(closureRaw, elem, &thrown)
         if thrown != 0 { return 0 }
     }
     return 0
 }
 
 @_cdecl("kk_sequence_flatMap")
-public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int) -> Int {
+public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     guard let seq = runtimeSequenceBox(from: seqRaw) else {
         return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
     }
@@ -269,7 +269,7 @@ public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int) -> Int {
     var result: [Int] = []
     for elem in elements {
         var thrown = 0
-        let subRaw = lambda(0, elem, &thrown)
+        let subRaw = lambda(closureRaw, elem, &thrown)
         if thrown != 0 { break }
         if let subList = runtimeListBox(from: subRaw) {
             result.append(contentsOf: subList.elements)

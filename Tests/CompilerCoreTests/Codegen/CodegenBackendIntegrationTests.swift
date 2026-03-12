@@ -215,7 +215,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            XCTAssertEqual(normalizedStdout, "nan\nnan\n")
+            XCTAssertEqual(normalizedStdout, "NaN\nNaN\n")
         }
     }
 

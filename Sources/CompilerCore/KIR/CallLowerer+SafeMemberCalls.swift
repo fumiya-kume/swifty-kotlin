@@ -250,8 +250,13 @@ extension CallLowerer {
                 ))
                 return result
             }
+            let isRepresentationPreservingConversion =
+                (calleeStr == "toInt" && nonNullReceiverType == longType && nonNullResultType == intType)
+                || (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
+                || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
+                || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
-               nonNullReceiverType == nonNullResultType,
+               (nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion),
                nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))

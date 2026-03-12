@@ -514,11 +514,11 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         return
     }
     if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
-        Swift.print(doubleBox.value)
+        Swift.print(runtimeFormatFloatingPoint(doubleBox.value))
         return
     }
     if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
-        Swift.print(floatBox.value)
+        Swift.print(runtimeFormatFloatingPoint(floatBox.value))
         return
     }
     if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
@@ -656,10 +656,10 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return stringBox.value
     }
     if let doubleBox = tryCast(raw, to: RuntimeDoubleBox.self) {
-        return String(doubleBox.value)
+        return runtimeFormatFloatingPoint(doubleBox.value)
     }
     if let floatBox = tryCast(raw, to: RuntimeFloatBox.self) {
-        return String(floatBox.value)
+        return runtimeFormatFloatingPoint(floatBox.value)
     }
     if let longBox = tryCast(raw, to: RuntimeLongBox.self) {
         return String(longBox.value)
@@ -704,6 +704,19 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
     return "<object \(raw)>"
+}
+
+func runtimeFormatFloatingPoint<T: BinaryFloatingPoint>(_ value: T) -> String {
+    if value.isNaN {
+        return "NaN"
+    }
+    if value == .infinity {
+        return "Infinity"
+    }
+    if value == -.infinity {
+        return "-Infinity"
+    }
+    return String(describing: value)
 }
 
 // MARK: - String nullable receiver helpers

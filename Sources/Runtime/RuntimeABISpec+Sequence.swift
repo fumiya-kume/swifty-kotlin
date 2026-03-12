@@ -18,6 +18,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"
@@ -27,6 +28,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"
@@ -88,6 +90,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "seed", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"
@@ -98,6 +101,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"
@@ -107,6 +111,7 @@ public extension RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"

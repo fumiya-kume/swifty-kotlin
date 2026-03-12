@@ -357,7 +357,7 @@ public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMut
         )
         return 0
     }
-    return kk_box_char(Int(scalars[indexRaw].value))
+    return Int(scalars[indexRaw].value)
 }
 
 @_cdecl("kk_string_compareTo_member")
@@ -566,10 +566,16 @@ private func runtimeSplitString(_ source: String, delimiter: String) -> [String]
 }
 
 private func runtimeCompareStrings(_ lhs: String, _ rhs: String) -> Int {
-    if lhs == rhs {
-        return 0
+    let lhsScalars = Array(lhs.unicodeScalars)
+    let rhsScalars = Array(rhs.unicodeScalars)
+    let sharedCount = Swift.min(lhsScalars.count, rhsScalars.count)
+    for index in 0 ..< sharedCount {
+        let difference = Int(lhsScalars[index].value) - Int(rhsScalars[index].value)
+        if difference != 0 {
+            return difference
+        }
     }
-    return lhs < rhs ? -1 : 1
+    return lhsScalars.count - rhsScalars.count
 }
 
 private func runtimeNormalizedMultilineString(_ source: String) -> [String] {

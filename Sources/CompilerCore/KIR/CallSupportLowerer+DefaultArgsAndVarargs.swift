@@ -110,6 +110,11 @@ extension CallSupportLowerer {
                 return nil
             }
             return interner.intern("kk_array_new")
+        case "Regex":
+            guard argumentCount == 1 else {
+                return nil
+            }
+            return interner.intern("kk_regex_create")
         default:
             return nil
         }

@@ -323,6 +323,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName("kk_throwable_new", for: ctorSymbol)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {

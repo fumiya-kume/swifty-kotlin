@@ -40,59 +40,53 @@ extension DataFlowSemaPhase {
         )
 
         // --- STDLIB-101: Regex.find / Regex.findAll ---
-        registerRegexExtensionFunction(
+        registerRegexMemberFunction(
             named: "find",
             externalLinkName: "kk_regex_find",
-            receiverType: regexType,
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
             parameters: [("input", stringType, false, false)],
             returnType: nullableMatchResultType,
-            packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
 
-        registerRegexExtensionFunction(
+        registerRegexMemberFunction(
             named: "findAll",
             externalLinkName: "kk_regex_findAll",
-            receiverType: regexType,
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
             parameters: [("input", stringType, false, false)],
             returnType: listMatchResultType,
-            packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
 
         // --- STDLIB-103: Regex.pattern ---
-        registerRegexExtensionFunction(
+        registerRegexMemberProperty(
             named: "pattern",
             externalLinkName: "kk_regex_pattern",
-            receiverType: regexType,
-            parameters: [],
+            ownerSymbol: regexSymbol,
             returnType: stringType,
-            packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
 
         // --- STDLIB-101: MatchResult.value / MatchResult.groupValues ---
-        registerRegexExtensionFunction(
+        registerRegexMemberProperty(
             named: "value",
             externalLinkName: "kk_match_result_value",
-            receiverType: matchResultType,
-            parameters: [],
+            ownerSymbol: matchResultSymbol,
             returnType: stringType,
-            packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
 
-        registerRegexExtensionFunction(
+        registerRegexMemberProperty(
             named: "groupValues",
             externalLinkName: "kk_match_result_groupValues",
-            receiverType: matchResultType,
-            parameters: [],
+            ownerSymbol: matchResultSymbol,
             returnType: listStringType,
-            packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
@@ -210,23 +204,26 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerRegexExtensionFunction(
+    private func registerRegexMemberFunction(
         named name: String,
         externalLinkName: String,
-        receiverType: TypeID,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
-        packageFQName: [InternedString],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
         let functionName = interner.intern(name)
-        let functionFQName = packageFQName + [functionName]
+        let functionFQName = ownerInfo.fqName + [functionName]
         if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
             guard let existingSignature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return existingSignature.receiverType == receiverType
+            return existingSignature.receiverType == ownerType
                 && existingSignature.parameterTypes == parameters.map(\.type)
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
@@ -241,9 +238,7 @@ extension DataFlowSemaPhase {
             visibility: .public,
             flags: [.synthetic]
         )
-        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
-            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
-        }
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
         symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
 
         var parameterTypes: [TypeID] = []
@@ -270,7 +265,7 @@ extension DataFlowSemaPhase {
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: receiverType,
+                receiverType: ownerType,
                 parameterTypes: parameterTypes,
                 returnType: returnType,
                 isSuspend: false,
@@ -281,5 +276,39 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerRegexMemberProperty(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
     }
 }

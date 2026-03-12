@@ -27,13 +27,13 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_map = ExternDecl(
         name: "kk_sequence_map",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
     static let kk_sequence_filter = ExternDecl(
         name: "kk_sequence_filter",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -76,20 +76,20 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_generate = ExternDecl(
         name: "kk_sequence_generate",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
     // STDLIB-095: Terminal operations
     static let kk_sequence_forEach = ExternDecl(
         name: "kk_sequence_forEach",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
     static let kk_sequence_flatMap = ExternDecl(
         name: "kk_sequence_flatMap",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

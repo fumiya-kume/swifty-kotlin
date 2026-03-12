@@ -77,12 +77,14 @@ public func kk_println_long(_ value: Int) {
 
 @_cdecl("kk_println_float")
 public func kk_println_float(_ value: Int) {
-    Swift.print(kk_bits_to_float(value))
+    let rendered = runtimeFormatFloatingPoint(kk_bits_to_float(value))
+    Swift.print(rendered)
 }
 
 @_cdecl("kk_println_double")
 public func kk_println_double(_ value: Int) {
-    Swift.print(kk_bits_to_double(value))
+    let rendered = runtimeFormatFloatingPoint(kk_bits_to_double(value))
+    Swift.print(rendered)
 }
 
 @_cdecl("kk_math_abs_int")

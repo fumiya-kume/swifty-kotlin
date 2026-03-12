@@ -334,70 +334,69 @@ symbol s332 kind=valueParameter fq=kotlin.check.lazyMessage vis=private flags=sy
 symbol s333 kind=function fq=kotlin.error vis=public flags=synthetic sig=recv=_ params=[Any] ret=Nothing suspend=0 defaults=[0] vararg=[0]
 symbol s334 kind=valueParameter fq=kotlin.error.message vis=private flags=synthetic
 symbol s335 kind=class fq=kotlin.text.MatchResult vis=public flags=synthetic
-symbol s336 kind=valueParameter fq=kotlin.text.Regex.pattern vis=private flags=synthetic
-symbol s337 kind=function fq=kotlin.text.find vis=public flags=synthetic sig=recv=Class#180 params=[String] ret=Class#335? suspend=0 defaults=[0] vararg=[0]
-symbol s338 kind=valueParameter fq=kotlin.text.find.input vis=private flags=synthetic
-symbol s339 kind=function fq=kotlin.text.findAll vis=public flags=synthetic sig=recv=Class#180 params=[String] ret=Class#35<out Class#335> suspend=0 defaults=[0] vararg=[0]
-symbol s340 kind=valueParameter fq=kotlin.text.findAll.input vis=private flags=synthetic
-symbol s341 kind=function fq=kotlin.text.pattern vis=public flags=synthetic sig=recv=Class#180 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s342 kind=function fq=kotlin.text.value vis=public flags=synthetic sig=recv=Class#335 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s343 kind=function fq=kotlin.text.groupValues vis=public flags=synthetic sig=recv=Class#335 params=[] ret=Class#35<out String> suspend=0 defaults=[] vararg=[]
-symbol s344 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[] ret=Nothing suspend=0 defaults=[] vararg=[]
-symbol s345 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
-symbol s346 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
-symbol s347 kind=package fq=kotlin.io vis=public flags=synthetic
-symbol s348 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s349 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s350 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
-symbol s351 kind=function fq=kotlin.io.print vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
-symbol s352 kind=valueParameter fq=kotlin.io.print.message vis=private flags=synthetic
-symbol s353 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
-symbol s354 kind=function fq=kotlin.io.readln vis=public flags=synthetic sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s355 kind=package fq=kotlin.sequences vis=public flags=synthetic
-symbol s356 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[1]
-symbol s357 kind=valueParameter fq=kotlin.sequences.sequenceOf.elements vis=private flags=synthetic
-symbol s358 kind=function fq=kotlin.sequences.generateSequence vis=public flags=synthetic sig=recv=_ params=[Any,Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s359 kind=valueParameter fq=kotlin.sequences.generateSequence.seed vis=private flags=synthetic
-symbol s360 kind=valueParameter fq=kotlin.sequences.generateSequence.nextFunction vis=private flags=synthetic
-symbol s361 kind=package fq=kotlin.system vis=public flags=synthetic
-symbol s362 kind=function fq=kotlin.system.exitProcess vis=public flags=synthetic sig=recv=_ params=[Int] ret=Nothing suspend=0 defaults=[0] vararg=[0]
-symbol s363 kind=valueParameter fq=kotlin.system.exitProcess.status vis=private flags=synthetic
-symbol s364 kind=function fq=kotlin.system.measureTimeMillis vis=public flags=synthetic sig=recv=_ params=[Any] ret=Long suspend=0 defaults=[0] vararg=[0]
-symbol s365 kind=valueParameter fq=kotlin.system.measureTimeMillis.block vis=private flags=synthetic
-symbol s366 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
-symbol s367 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
-symbol s368 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#366<out T#367> params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s369 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#366<out T#367> params=[] ret=T#367 suspend=0 defaults=[] vararg=[]
-symbol s370 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
-symbol s371 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#367
-symbol s372 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#35<out T#36> params=[] ret=Class#31<out Class#366<out T#36>> suspend=0 defaults=[] vararg=[]
-symbol s373 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#35<out T#36> params=[(Int, T#36) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s374 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
-symbol s375 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#35<out T#36> params=[(Int, T#36) -> T#374] ret=Class#35<out T#374> suspend=0 defaults=[] vararg=[]
-symbol s376 kind=package fq=kotlin.ranges vis=public flags=synthetic
-symbol s377 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s378 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
-symbol s379 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
-symbol s380 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s381 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
-symbol s382 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s383 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
-symbol s384 kind=class fq=golden.sema.Validated vis=public flags=_
-symbol s385 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#384 params=[] ret=Class#384 suspend=0 defaults=[] vararg=[]
-symbol s386 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
-symbol s387 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
-symbol s388 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
+symbol s336 kind=valueParameter fq=kotlin.text.Regex.pattern vis=private flags=synthetic type=String
+symbol s337 kind=function fq=kotlin.text.Regex.find vis=public flags=synthetic sig=recv=Class#180 params=[String] ret=Class#335? suspend=0 defaults=[0] vararg=[0]
+symbol s338 kind=valueParameter fq=kotlin.text.Regex.find.input vis=private flags=synthetic
+symbol s339 kind=function fq=kotlin.text.Regex.findAll vis=public flags=synthetic sig=recv=Class#180 params=[String] ret=Class#35<out Class#335> suspend=0 defaults=[0] vararg=[0]
+symbol s340 kind=valueParameter fq=kotlin.text.Regex.findAll.input vis=private flags=synthetic
+symbol s341 kind=property fq=kotlin.text.MatchResult.value vis=public flags=synthetic type=String
+symbol s342 kind=property fq=kotlin.text.MatchResult.groupValues vis=public flags=synthetic type=Class#35<out String>
+symbol s343 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[] ret=Nothing suspend=0 defaults=[] vararg=[]
+symbol s344 kind=function fq=kotlin.TODO vis=public flags=synthetic sig=recv=_ params=[String] ret=Nothing suspend=0 defaults=[0] vararg=[0]
+symbol s345 kind=valueParameter fq=kotlin.TODO.reason vis=private flags=synthetic
+symbol s346 kind=package fq=kotlin.io vis=public flags=synthetic
+symbol s347 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s348 kind=function fq=kotlin.io.println vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s349 kind=valueParameter fq=kotlin.io.println.message vis=private flags=synthetic
+symbol s350 kind=function fq=kotlin.io.print vis=public flags=synthetic sig=recv=_ params=[Any?] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s351 kind=valueParameter fq=kotlin.io.print.message vis=private flags=synthetic
+symbol s352 kind=function fq=kotlin.io.readLine vis=public flags=synthetic sig=recv=_ params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s353 kind=function fq=kotlin.io.readln vis=public flags=synthetic sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s354 kind=package fq=kotlin.sequences vis=public flags=synthetic
+symbol s355 kind=function fq=kotlin.sequences.sequenceOf vis=public flags=synthetic sig=recv=_ params=[Any] ret=Any suspend=0 defaults=[0] vararg=[1]
+symbol s356 kind=valueParameter fq=kotlin.sequences.sequenceOf.elements vis=private flags=synthetic
+symbol s357 kind=function fq=kotlin.sequences.generateSequence vis=public flags=synthetic sig=recv=_ params=[Any,Any] ret=Any suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s358 kind=valueParameter fq=kotlin.sequences.generateSequence.seed vis=private flags=synthetic
+symbol s359 kind=valueParameter fq=kotlin.sequences.generateSequence.nextFunction vis=private flags=synthetic
+symbol s360 kind=package fq=kotlin.system vis=public flags=synthetic
+symbol s361 kind=function fq=kotlin.system.exitProcess vis=public flags=synthetic sig=recv=_ params=[Int] ret=Nothing suspend=0 defaults=[0] vararg=[0]
+symbol s362 kind=valueParameter fq=kotlin.system.exitProcess.status vis=private flags=synthetic
+symbol s363 kind=function fq=kotlin.system.measureTimeMillis vis=public flags=synthetic sig=recv=_ params=[Any] ret=Long suspend=0 defaults=[0] vararg=[0]
+symbol s364 kind=valueParameter fq=kotlin.system.measureTimeMillis.block vis=private flags=synthetic
+symbol s365 kind=class fq=kotlin.collections.IndexedValue vis=public flags=synthetic|dataType
+symbol s366 kind=typeParameter fq=kotlin.collections.IndexedValue.T vis=private flags=_
+symbol s367 kind=function fq=kotlin.collections.IndexedValue.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#365<out T#366> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s368 kind=function fq=kotlin.collections.IndexedValue.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#365<out T#366> params=[] ret=T#366 suspend=0 defaults=[] vararg=[]
+symbol s369 kind=property fq=kotlin.collections.IndexedValue.index vis=public flags=synthetic type=Int
+symbol s370 kind=property fq=kotlin.collections.IndexedValue.value vis=public flags=synthetic type=T#366
+symbol s371 kind=function fq=kotlin.collections.List.withIndex vis=public flags=synthetic sig=recv=Class#35<out T#36> params=[] ret=Class#31<out Class#365<out T#36>> suspend=0 defaults=[] vararg=[]
+symbol s372 kind=function fq=kotlin.collections.List.forEachIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#35<out T#36> params=[(Int, T#36) -> Unit] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s373 kind=typeParameter fq=kotlin.collections.List.mapIndexed.R vis=private flags=_
+symbol s374 kind=function fq=kotlin.collections.List.mapIndexed vis=public flags=inlineFunction|synthetic sig=recv=Class#35<out T#36> params=[(Int, T#36) -> T#373] ret=Class#35<out T#373> suspend=0 defaults=[] vararg=[]
+symbol s375 kind=package fq=kotlin.ranges vis=public flags=synthetic
+symbol s376 kind=function fq=kotlin.ranges.coerceIn vis=public flags=synthetic sig=recv=Int params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
+symbol s377 kind=valueParameter fq=kotlin.ranges.coerceIn.minimumValue vis=private flags=synthetic
+symbol s378 kind=valueParameter fq=kotlin.ranges.coerceIn.maximumValue vis=private flags=synthetic
+symbol s379 kind=function fq=kotlin.ranges.coerceAtLeast vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s380 kind=valueParameter fq=kotlin.ranges.coerceAtLeast.minimumValue vis=private flags=synthetic
+symbol s381 kind=function fq=kotlin.ranges.coerceAtMost vis=public flags=synthetic sig=recv=Int params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
+symbol s382 kind=valueParameter fq=kotlin.ranges.coerceAtMost.maximumValue vis=private flags=synthetic
+symbol s383 kind=class fq=golden.sema.Validated vis=public flags=_
+symbol s384 kind=constructor fq=golden.sema.Validated.<init> vis=public flags=_ sig=recv=Class#383 params=[] ret=Class#383 suspend=0 defaults=[] vararg=[]
+symbol s385 kind=property fq=golden.sema.Validated.value vis=public flags=mutable type=Int
+symbol s386 kind=backingField fq=golden.sema.Validated.$backing_value vis=private flags=mutable type=Int
+symbol s387 kind=property fq=golden.sema.Validated.doubled vis=public flags=_ type=Int
 file f0 package=golden.sema
-  decl d2 class Validated sym=s384
+  decl d2 class Validated sym=s383
 expr e0 name(field) type=_
-expr e1 name(v) type=Int ref=s-40386
+expr e1 name(v) type=Int ref=s-40385
 expr e2 int(0) type=Int
 expr e3 binary(lessThan) lhs=e1 rhs=e2 type=Boolean
 expr e4 int(0) type=Int
-expr e5 name(v) type=Int ref=s-40386
+expr e5 name(v) type=Int ref=s-40385
 expr e6 if cond=e3 then=e4 else=e5 type=Int
-expr e7 localAssign field value=e6 type=Unit ref=s387
+expr e7 localAssign field value=e6 type=Unit ref=s386
 expr e8 int(0) type=Int
-expr e9 name(value) type=Int ref=s386
+expr e9 name(value) type=Int ref=s385
 expr e10 int(2) type=Int
 expr e11 binary(multiply) lhs=e9 rhs=e10 type=Int

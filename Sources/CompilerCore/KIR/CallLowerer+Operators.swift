@@ -360,6 +360,42 @@ extension CallLowerer {
             argumentExprs: indices,
             sema: sema
         ) ?? sema.bindings.callBindings[exprID]
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let receiverLooksLikeArray: Bool = if case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+                                             let symbol = sema.symbols.symbol(classType.classSymbol)
+        {
+            [
+                "Array", "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray",
+            ].contains(interner.resolve(symbol.name))
+        } else {
+            false
+        }
+        if indices.count == 1,
+           sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) || !receiverLooksLikeArray && boundType == sema.types.charType
+        {
+            let indexID = driver.lowerExpr(
+                indices[0],
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let thrownExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: thrownExpr, value: .intLiteral(0)))
+            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_get"),
+                arguments: [receiverID, indexID, thrownExpr],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
         if let chosenGet = callBinding?.chosenCallee,
            chosenGet != .invalid,
            let signature = sema.symbols.functionSignature(for: chosenGet),

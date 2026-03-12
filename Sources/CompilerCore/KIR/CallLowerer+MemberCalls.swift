@@ -355,6 +355,63 @@ extension CallLowerer {
         return result
     }
 
+    private func isRegexLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return interner.resolve(symbol.name) == "Regex"
+            && symbol.fqName.map(interner.resolve) == ["kotlin", "text", "Regex"]
+    }
+
+    private func isSequenceLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return interner.resolve(symbol.name) == "Sequence"
+            || symbol.fqName.map(interner.resolve) == ["kotlin", "sequences", "Sequence"]
+    }
+
+    private func isConcreteListLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let ownerName = interner.resolve(symbol.name)
+        return ownerName == "List" || ownerName == "MutableList"
+    }
+
+    private func isConcreteCollectionLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return [
+            "List", "MutableList", "Set", "MutableSet", "Map", "MutableMap", "Collection",
+        ].contains(interner.resolve(symbol.name))
+    }
+
     // swiftlint:disable cyclomatic_complexity function_body_length
     /// This shared lowering path still centralizes legacy stdlib/member special cases.
     private func lowerMemberLikeCallExpr(
@@ -383,6 +440,14 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return foldedConst
+        }
+        if let constValue = sema.bindings.constExprValue(for: exprID) {
+            let constResult = arena.appendExpr(
+                constValue,
+                type: sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+            )
+            instructions.append(.constValue(result: constResult, value: constValue))
+            return constResult
         }
         if let staticMemberValue = tryLowerClassNameMemberValueExpr(
             exprID,
@@ -643,8 +708,13 @@ extension CallLowerer {
                 ))
                 return result
             }
+            let isRepresentationPreservingConversion =
+                (calleeStr == "toInt" && nonNullReceiverType == longType && nonNullResultType == intType)
+                || (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
+                || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
+                || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
             if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
-               nonNullReceiverType == nonNullResultType,
+               (nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion),
                nonNullReceiverType == intType || nonNullReceiverType == longType || nonNullReceiverType == uintType || nonNullReceiverType == ulongType || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
@@ -870,6 +940,28 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "toRegex" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_toRegex"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "lines" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_lines"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
@@ -905,19 +997,41 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                let stringGetThrownExpr: KIRExprID?
+                if calleeStr == "get" {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    stringGetThrownExpr = zeroExpr
+                } else {
+                    stringGetThrownExpr = nil
+                }
                 let runtimeCall: (callee: String, arguments: [KIRExprID])? = switch calleeStr {
                 case "split":
-                    ("kk_string_split", [loweredReceiverID, loweredArgIDs[0]])
+                    if isRegexLikeType(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType, sema: sema, interner: interner) {
+                        ("kk_string_split_regex", [loweredReceiverID, loweredArgIDs[0]])
+                    } else {
+                        ("kk_string_split", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "startsWith":
                     ("kk_string_startsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "endsWith":
                     ("kk_string_endsWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "contains":
-                    ("kk_string_contains_str", [loweredReceiverID, loweredArgIDs[0]])
+                    if isRegexLikeType(sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType, sema: sema, interner: interner) {
+                        ("kk_string_contains_regex", [loweredReceiverID, loweredArgIDs[0]])
+                    } else {
+                        ("kk_string_contains_str", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "indexOf":
                     ("kk_string_indexOf", [loweredReceiverID, loweredArgIDs[0]])
                 case "lastIndexOf":
                     ("kk_string_lastIndexOf", [loweredReceiverID, loweredArgIDs[0]])
+                case "get":
+                    ("kk_string_get", [loweredReceiverID, loweredArgIDs[0], stringGetThrownExpr!])
+                case "compareTo":
+                    ("kk_string_compareTo_member", [loweredReceiverID, loweredArgIDs[0]])
+                case "matches":
+                    ("kk_string_matches_regex", [loweredReceiverID, loweredArgIDs[0]])
                 case "repeat":
                     ("kk_string_repeat", [loweredReceiverID, loweredArgIDs[0]])
                 case "take":
@@ -950,6 +1064,19 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let calleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "compareTo"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_compareToIgnoreCase"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd"
             {
@@ -994,10 +1121,145 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                let runtimeCallee = if isRegexLikeType(
+                    sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType,
+                    sema: sema,
+                    interner: interner
+                ) {
+                    "kk_string_replace_regex"
+                } else {
+                    "kk_string_replace"
+                }
                 instructions.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_string_replace"),
+                    callee: interner.intern(runtimeCallee),
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        if args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "map":
+                    "kk_sequence_map"
+                case "filter":
+                    "kk_sequence_filter"
+                case "take":
+                    "kk_sequence_take"
+                case "forEach":
+                    "kk_sequence_forEach"
+                case "flatMap":
+                    "kk_sequence_flatMap"
+                case "drop":
+                    "kk_sequence_drop"
+                case "zip":
+                    "kk_sequence_zip"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+            if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "indexOf":
+                    "kk_list_indexOf"
+                case "lastIndexOf":
+                    "kk_list_lastIndexOf"
+                case "partition":
+                    "kk_list_partition"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+            if isRegexLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "find":
+                    "kk_regex_find"
+                case "findAll":
+                    "kk_regex_findAll"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
+        if args.isEmpty {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let runtimeCallee: String? = switch interner.resolve(calleeName) {
+                case "toList":
+                    "kk_sequence_to_list"
+                case "distinct":
+                    "kk_sequence_distinct"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+            if isRegexLikeType(nonNullReceiverType, sema: sema, interner: interner),
+               interner.resolve(calleeName) == "pattern"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_regex_pattern"),
+                    arguments: [loweredReceiverID],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
@@ -1724,24 +1986,29 @@ extension CallLowerer {
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
+        let fallbackName = interner.resolve(fallback)
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+
         if let chosenCallee {
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {
                 return interner.intern(externalLinkName)
             }
-            if interner.resolve(fallback) == "length" {
-                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-                if sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType) {
-                    return interner.intern("kk_string_length")
-                }
+            if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
+                memberName: fallbackName,
+                receiverExpr: receiverExpr,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner
+            ) {
+                return unresolvedSynthetic
             }
             return fallback
         }
 
-        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         if isCoroutineHandleReceiverType(receiverType, sema: sema, interner: interner) {
-            switch interner.resolve(fallback) {
+            switch fallbackName {
             case "await":
                 return interner.intern("kk_kxmini_async_await")
             case "join":
@@ -1753,7 +2020,7 @@ extension CallLowerer {
             }
         }
         if isChannelReceiverType(receiverType, sema: sema, interner: interner) {
-            switch interner.resolve(fallback) {
+            switch fallbackName {
             case "send":
                 return interner.intern("kk_channel_send")
             case "receive":
@@ -1764,20 +2031,104 @@ extension CallLowerer {
                 break
             }
         }
-        // String.length: use kk_string_length when chosenCallee is nil (unresolved call).
-        // Type check may not bind in lambda bodies (e.g. mapIndexed { _, v -> v.length }).
-        if interner.resolve(fallback) == "length" {
-            return interner.intern("kk_string_length")
-        }
         if let collectionProperty = unresolvedCollectionPropertyCallee(
-            memberName: interner.resolve(fallback),
+            memberName: fallbackName,
             receiverType: receiverType,
             sema: sema,
             interner: interner
         ) {
             return collectionProperty
         }
+        if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
+            memberName: fallbackName,
+            receiverExpr: receiverExpr,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) {
+            return unresolvedSynthetic
+        }
         return fallback
+    }
+
+    private func unresolvedSyntheticMemberCallee(
+        memberName: String,
+        receiverExpr: ExprID,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if memberName == "length",
+           sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
+        {
+            return interner.intern("kk_string_length")
+        }
+        if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+            switch memberName {
+            case "compareTo":
+                return interner.intern("kk_string_compareTo_member")
+            case "get":
+                return interner.intern("kk_string_get")
+            case "lines":
+                return interner.intern("kk_string_lines")
+            case "toRegex":
+                return interner.intern("kk_string_toRegex")
+            default:
+                break
+            }
+        }
+
+        if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "indexOf":
+                return interner.intern("kk_list_indexOf")
+            case "lastIndexOf":
+                return interner.intern("kk_list_lastIndexOf")
+            case "partition":
+                return interner.intern("kk_list_partition")
+            default:
+                break
+            }
+        }
+        switch memberName {
+        case "partition":
+            return interner.intern("kk_list_partition")
+        case "indexOf":
+            return interner.intern("kk_list_indexOf")
+        case "lastIndexOf":
+            return interner.intern("kk_list_lastIndexOf")
+        default:
+            break
+        }
+
+        if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        {
+            switch memberName {
+            case "map":
+                return interner.intern("kk_sequence_map")
+            case "filter":
+                return interner.intern("kk_sequence_filter")
+            case "take":
+                return interner.intern("kk_sequence_take")
+            case "toList":
+                return interner.intern("kk_sequence_to_list")
+            case "forEach":
+                return interner.intern("kk_sequence_forEach")
+            case "flatMap":
+                return interner.intern("kk_sequence_flatMap")
+            case "drop":
+                return interner.intern("kk_sequence_drop")
+            case "distinct":
+                return interner.intern("kk_sequence_distinct")
+            case "zip":
+                return interner.intern("kk_sequence_zip")
+            default:
+                break
+            }
+        }
+        return nil
     }
 
     private func unresolvedCollectionPropertyCallee(

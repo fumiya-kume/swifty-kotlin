@@ -1,6 +1,206 @@
 import Foundation
 
 extension CallTypeChecker {
+    func tryRegexMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver else {
+            return nil
+        }
+        let regexSymbol = sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("Regex"),
+        ])
+        let matchResultSymbol = sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("MatchResult"),
+        ])
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        let memberName = interner.resolve(calleeName)
+
+        if let regexSymbol {
+            let regexType = sema.types.make(.classType(ClassType(
+                classSymbol: regexSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            if nonNullReceiverType == regexType {
+                let listMatchResultType: TypeID
+                if let listSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("List"),
+                ]), let matchResultSymbol {
+                    let matchResultType = sema.types.make(.classType(ClassType(
+                        classSymbol: matchResultSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                    listMatchResultType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.out(matchResultType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    listMatchResultType = sema.types.anyType
+                }
+                let resultType: TypeID? = switch (memberName, args.count) {
+                case ("find", 1):
+                    matchResultSymbol.map {
+                        sema.types.makeNullable(sema.types.make(.classType(ClassType(
+                            classSymbol: $0,
+                            args: [],
+                            nullability: .nonNull
+                        ))))
+                    } ?? sema.types.anyType
+                case ("findAll", 1):
+                    listMatchResultType
+                case ("pattern", 0):
+                    sema.types.stringType
+                default:
+                    nil
+                }
+                if let resultType {
+                    if args.indices.contains(0) {
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
+        if let matchResultSymbol {
+            let matchResultType = sema.types.make(.classType(ClassType(
+                classSymbol: matchResultSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            if nonNullReceiverType == matchResultType {
+                let resultType: TypeID? = switch (memberName, args.count) {
+                case ("value", 0):
+                    sema.types.stringType
+                case ("groupValues", 0):
+                    if let listSymbol = sema.symbols.lookup(fqName: [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("List"),
+                    ]) {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.out(sema.types.stringType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        sema.types.anyType
+                    }
+                default:
+                    nil
+                }
+                if let resultType {
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+        return nil
+    }
+
+    func tryStringMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver else {
+            return nil
+        }
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard sema.types.isSubtype(sema.types.makeNonNullable(receiverType), sema.types.stringType) else {
+            return nil
+        }
+
+        let memberName = interner.resolve(calleeName)
+        let regexType = sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("text"),
+            interner.intern("Regex"),
+        ]).map {
+            sema.types.make(.classType(ClassType(classSymbol: $0, args: [], nullability: .nonNull)))
+        }
+        let listStringType: TypeID = if let listSymbol = sema.symbols.lookup(fqName: [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]) {
+            sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(sema.types.stringType)],
+                nullability: .nonNull
+            )))
+        } else {
+            sema.types.anyType
+        }
+
+        let resultType: TypeID? = switch (memberName, args.count) {
+        case ("toRegex", 0):
+            regexType ?? sema.types.anyType
+        case ("lines", 0):
+            listStringType
+        case ("matches", 1), ("contains", 1):
+            sema.types.booleanType
+        case ("split", 1):
+            listStringType
+        case ("replace", 2):
+            sema.types.stringType
+        default:
+            nil
+        }
+        guard let resultType else {
+            return nil
+        }
+
+        if memberName == "toRegex" {
+            sema.bindings.bindExprType(id, type: resultType)
+            return safeCall ? sema.types.makeNullable(resultType) : resultType
+        }
+        if args.indices.contains(0), let regexType {
+            let expectedType = memberName == "replace" || memberName == "contains" || memberName == "matches" || memberName == "split"
+                ? regexType
+                : nil
+            if let expectedType {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
+            }
+        }
+        if memberName == "replace", args.indices.contains(1) {
+            _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+        }
+
+        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
     func tryCollectionMemberFallback(
         _ id: ExprID,
         calleeName: InternedString,
