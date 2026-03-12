@@ -1936,6 +1936,7 @@ public enum RuntimeABISpec {
             + collectionFunctions
             + sequenceFunctions
             + regexFunctions
+            + comparatorFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

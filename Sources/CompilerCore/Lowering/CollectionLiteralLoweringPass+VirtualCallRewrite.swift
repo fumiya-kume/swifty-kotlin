@@ -4,6 +4,7 @@ extension CollectionLiteralLoweringPass {
     struct VirtualCallRewriteContext {
         let module: KIRModule
         let lookup: CollectionLiteralLookupTables
+        let functionBody: [KIRInstruction]
     }
 
     func rewriteVirtualCallInstruction(
@@ -35,7 +36,7 @@ extension CollectionLiteralLoweringPass {
         if rewriteListHOFVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
-            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            origThrownResult: origThrownResult, context: context,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -398,12 +399,13 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         origCanThrow: Bool,
         origThrownResult: KIRExprID?,
-        module: KIRModule,
-        lookup: CollectionLiteralLookupTables,
+        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        let module = context.module
+        let lookup = context.lookup
         if rewriteCommonListHOF(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
@@ -422,7 +424,7 @@ extension CollectionLiteralLoweringPass {
         if rewriteGroupSortFindHOF(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
-            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            origThrownResult: origThrownResult, context: context,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -617,6 +619,50 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
+    private enum ComparatorSource {
+        case ascending
+        case descending
+        case naturalOrder
+        case reverseOrder
+        case unknown
+    }
+
+    private func isComparatorFromCall(
+        exprID: KIRExprID,
+        body: [KIRInstruction],
+        ascendingCallee: InternedString,
+        descendingCallee: InternedString,
+        naturalOrderCallee: InternedString,
+        reverseOrderCallee: InternedString
+    ) -> ComparatorSource {
+        for inst in body {
+            switch inst {
+            case let .call(_, callee, _, result, _, _, _):
+                if let result, result.rawValue == exprID.rawValue {
+                    if callee == ascendingCallee { return .ascending }
+                    if callee == descendingCallee { return .descending }
+                    if callee == naturalOrderCallee { return .naturalOrder }
+                    if callee == reverseOrderCallee { return .reverseOrder }
+                    return .unknown
+                }
+            case let .copy(from: fromID, to: toID):
+                if toID.rawValue == exprID.rawValue {
+                    return isComparatorFromCall(
+                        exprID: fromID,
+                        body: body,
+                        ascendingCallee: ascendingCallee,
+                        descendingCallee: descendingCallee,
+                        naturalOrderCallee: naturalOrderCallee,
+                        reverseOrderCallee: reverseOrderCallee
+                    )
+                }
+            default:
+                break
+            }
+        }
+        return .unknown
+    }
+
     private func rewriteGroupSortFindHOF(
         callee: InternedString,
         receiver: KIRExprID,
@@ -624,19 +670,22 @@ extension CollectionLiteralLoweringPass {
         result: KIRExprID?,
         origCanThrow: Bool,
         origThrownResult: KIRExprID?,
-        module: KIRModule,
-        lookup: CollectionLiteralLookupTables,
+        context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        let module = context.module
+        let lookup = context.lookup
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
         else {
             return false
         }
-        guard arguments.count == 1, listExprIDs.contains(receiver.rawValue) else { return false }
+        guard arguments.count == 1 || (callee == lookup.sortedWithName && arguments.count == 2),
+              listExprIDs.contains(receiver.rawValue)
+        else { return false }
 
         let kkName: InternedString = switch callee {
         case lookup.groupByName: lookup.kkListGroupByName
@@ -649,10 +698,49 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateName: lookup.kkListAssociateName
         default: callee
         }
+
+        var hofArgs: [KIRExprID]
+        if callee == lookup.sortedWithName, arguments.count == 1 {
+            let comparatorExpr = arguments[0]
+            let source = isComparatorFromCall(
+                exprID: comparatorExpr,
+                body: context.functionBody,
+                ascendingCallee: lookup.kkComparatorFromSelectorName,
+                descendingCallee: lookup.kkComparatorFromSelectorDescendingName,
+                naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
+                reverseOrderCallee: lookup.kkComparatorReverseOrderName
+            )
+            let trampolineName: InternedString
+            let closureExpr: KIRExprID
+            switch source {
+            case .descending:
+                trampolineName = lookup.kkComparatorFromSelectorDescendingTrampolineName
+                closureExpr = comparatorExpr
+            case .naturalOrder:
+                trampolineName = lookup.kkComparatorNaturalOrderTrampolineName
+                let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zero, value: .intLiteral(0)))
+                closureExpr = zero
+            case .reverseOrder:
+                trampolineName = lookup.kkComparatorReverseOrderTrampolineName
+                let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zero, value: .intLiteral(0)))
+                closureExpr = zero
+            default:
+                trampolineName = lookup.kkComparatorFromSelectorTrampolineName
+                closureExpr = comparatorExpr
+            }
+            let trampolineExpr = module.arena.appendExpr(.externSymbolAddress(trampolineName), type: nil)
+            loweredBody.append(.constValue(result: trampolineExpr, value: .externSymbolAddress(trampolineName)))
+            hofArgs = [trampolineExpr, closureExpr]
+        } else {
+            hofArgs = arguments
+        }
+
         let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
         loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
-            kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
+            kkName: kkName, receiver: receiver, arguments: hofArgs + [zeroExpr],
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody

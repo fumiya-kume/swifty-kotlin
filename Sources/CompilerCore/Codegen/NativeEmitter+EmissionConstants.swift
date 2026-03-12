@@ -164,7 +164,8 @@ extension NativeEmitter {
         internalFunctions: [SymbolID: LLVMFunction],
         globalVariables: [SymbolID: LLVMCAPIBindings.LLVMValueRef] = [:],
         generatedStringLiteralCount: inout Int32,
-        declareExternalFunction: (String, Int, Bool) -> LLVMFunction?
+        declareExternalFunction: (String, Int, Bool) -> LLVMFunction?,
+        interner: StringInterner
     ) -> LLVMCAPIBindings.LLVMValueRef {
         switch expression {
         case let .intLiteral(number):
@@ -228,6 +229,17 @@ extension NativeEmitter {
                 arguments: [pointerAsInt, lengthValue],
                 name: "str_from_utf8_\(literalID)"
             ) ?? state.zeroValue
+        case let .externSymbolAddress(symbolName):
+            let symbolStr = interner.resolve(symbolName)
+            if let externFn = declareExternalFunction(symbolStr, 4, false) {
+                return bindings.buildPtrToInt(
+                    state.builder,
+                    value: externFn.value,
+                    type: state.int64Type,
+                    name: "extern_addr_\(symbolStr)"
+                ) ?? state.zeroValue
+            }
+            return state.zeroValue
         case let .symbolRef(symbol):
             if let parameter = parameterValues[symbol] {
                 return parameter

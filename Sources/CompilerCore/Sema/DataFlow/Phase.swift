@@ -12,6 +12,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
 
         let symbols = SymbolTable()
         let types = TypeSystem()
+        types.symbolTable = symbols
         let bindings = BindingTable()
         let sema = SemaModule(
             symbols: symbols, types: types,

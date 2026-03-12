@@ -291,6 +291,8 @@ public final class CodegenPhase: CompilerPhase {
             "stringB64:\(base64Encode(interner.resolve(text)))"
         case let .symbolRef(symbol):
             "symbol:\(symbol.rawValue)"
+        case let .externSymbolAddress(name):
+            "extern:\(name)"
         case let .temporary(raw):
             "temp:\(raw)"
         case .null:

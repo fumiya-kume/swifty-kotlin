@@ -73,6 +73,8 @@ public enum KIRExprKind: Equatable, Sendable {
     case boolLiteral(Bool)
     case stringLiteral(InternedString)
     case symbolRef(SymbolID)
+    /// Address of an extern C symbol (e.g. kk_comparator_from_selector_trampoline).
+    case externSymbolAddress(InternedString)
     case temporary(Int32)
     case null
     case unit

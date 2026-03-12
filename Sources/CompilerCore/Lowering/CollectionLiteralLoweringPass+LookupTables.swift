@@ -85,6 +85,16 @@ struct CollectionLiteralLookupTables {
     let kkListSortedWithName: InternedString
     let kkListPartitionName: InternedString
 
+    // Comparator ABI names (STDLIB-175, STDLIB-177)
+    let kkComparatorFromSelectorName: InternedString
+    let kkComparatorFromSelectorDescendingName: InternedString
+    let kkComparatorFromSelectorTrampolineName: InternedString
+    let kkComparatorFromSelectorDescendingTrampolineName: InternedString
+    let kkComparatorNaturalOrderName: InternedString
+    let kkComparatorReverseOrderName: InternedString
+    let kkComparatorNaturalOrderTrampolineName: InternedString
+    let kkComparatorReverseOrderTrampolineName: InternedString
+
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
     let kkSequenceMapName: InternedString
@@ -351,6 +361,15 @@ struct CollectionLiteralLookupTables {
         kkListSortedByDescendingName = interner.intern("kk_list_sortedByDescending")
         kkListSortedWithName = interner.intern("kk_list_sortedWith")
         kkListPartitionName = interner.intern("kk_list_partition")
+
+        kkComparatorFromSelectorName = interner.intern("kk_comparator_from_selector")
+        kkComparatorFromSelectorDescendingName = interner.intern("kk_comparator_from_selector_descending")
+        kkComparatorFromSelectorTrampolineName = interner.intern("kk_comparator_from_selector_trampoline")
+        kkComparatorFromSelectorDescendingTrampolineName = interner.intern("kk_comparator_from_selector_descending_trampoline")
+        kkComparatorNaturalOrderName = interner.intern("kk_comparator_natural_order")
+        kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
+        kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
+        kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")

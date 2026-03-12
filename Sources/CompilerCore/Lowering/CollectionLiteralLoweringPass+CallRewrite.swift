@@ -1950,7 +1950,7 @@ extension CollectionLiteralLoweringPass {
                         result: result,
                         origCanThrow: origCanThrow,
                         origThrownResult: origThrownResult,
-                        context: .init(module: module, lookup: lookup),
+                        context: .init(module: module, lookup: lookup, functionBody: function.body),
                         listExprIDs: &listExprIDs,
                         setExprIDs: &setExprIDs,
                         mapExprIDs: &mapExprIDs,

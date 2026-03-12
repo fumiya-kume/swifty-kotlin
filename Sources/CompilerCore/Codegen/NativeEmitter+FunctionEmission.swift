@@ -274,7 +274,8 @@ extension NativeEmitter {
                 generatedStringLiteralCount: &generatedStringLiteralCount,
                 declareExternalFunction: { name, argCount, appendThrown in
                     declareExternalFunction(named: name, argumentCount: argCount, appendThrownChannel: appendThrown)
-                }
+                },
+                interner: interner
             )
         }
 
