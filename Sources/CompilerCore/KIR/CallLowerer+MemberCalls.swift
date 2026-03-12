@@ -87,6 +87,7 @@ extension CallLowerer {
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sort", "sortBy", "sortByDescending",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -1582,6 +1583,7 @@ extension CallLowerer {
             "getOrElse",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "sortBy", "sortByDescending",
         ].contains(interner.resolve(calleeName))
     }
 

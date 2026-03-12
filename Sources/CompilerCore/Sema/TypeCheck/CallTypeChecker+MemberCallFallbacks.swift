@@ -279,6 +279,7 @@ extension CallTypeChecker {
             "chunked", "windowed",
             "sortedDescending", "sortedByDescending", "sortedWith", "partition",
             "filterIsInstance",
+            "sort", "sortBy", "sortByDescending",
         ]
         let mapOnlyMembers: Set = ["containsKey", "mapValues", "mapKeys", "getOrDefault", "getOrElse"]
         if mapOnlyMembers.contains(memberName) {
@@ -305,7 +306,8 @@ extension CallTypeChecker {
     func isValidCollectionFallbackArity(_ memberName: String, argCount: Int, isMapReceiver: Bool) -> Bool {
         switch memberName {
         case "size", "isEmpty", "iterator", "asSequence", "toList", "toTypedArray", "reversed", "sorted", "distinct", "flatten", "withIndex", "maxOrNull", "minOrNull",
-             "sortedDescending", "filterIsInstance":
+             "sortedDescending", "filterIsInstance",
+             "sort":
             argCount == 0
         case "filterNotNull", "unzip":
             argCount == 0
@@ -314,7 +316,8 @@ extension CallTypeChecker {
              "any", "none", "all",
              "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "reduce", "take", "drop", "zip",
              "forEachIndexed", "mapIndexed", "sumOf", "chunked",
-             "sortedByDescending", "sortedWith", "partition":
+             "sortedByDescending", "sortedWith", "partition",
+             "sortBy", "sortByDescending":
             argCount == 1
         case "containsKey", "mapValues", "mapKeys":
             isMapReceiver && argCount == 1
@@ -350,7 +353,9 @@ extension CallTypeChecker {
             return sema.types.make(.primitive(.boolean, .nonNull))
         }
 
-        if memberName == "forEach" || memberName == "forEachIndexed" {
+        if memberName == "forEach" || memberName == "forEachIndexed"
+            || memberName == "sort" || memberName == "sortBy" || memberName == "sortByDescending"
+        {
             return sema.types.unitType
         }
 
@@ -423,6 +428,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "groupBy", "sortedBy", "count", "first", "last", "find", "associateBy", "associateWith", "associate", "sumOf",
             "sortedByDescending", "partition",
+            "sortBy", "sortByDescending",
         ]
         if memberName == "mapValues" || memberName == "mapKeys" {
             guard isMapReceiver, argCount == 1 else {
