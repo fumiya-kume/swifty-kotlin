@@ -139,6 +139,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "element", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"
@@ -149,6 +150,7 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "listRaw", type: .intptr),
                 RuntimeABIParameter(name: "index", type: .intptr),
                 RuntimeABIParameter(name: "element", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "Collection"

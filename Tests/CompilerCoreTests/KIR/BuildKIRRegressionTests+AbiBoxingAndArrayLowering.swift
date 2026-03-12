@@ -194,6 +194,33 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testMutableListIndexedMutationUsesThrowingABI() throws {
+        let source = """
+        fun main(): Any? {
+            val values = mutableListOf(10, 20)
+            values.add(1, 15)
+            values[0] = 5
+            return values[0]
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+            XCTAssertTrue(callNames.contains("kk_mutable_list_add_at"))
+            XCTAssertTrue(callNames.contains("kk_mutable_list_set"))
+
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+            XCTAssertEqual(throwFlags["kk_mutable_list_add_at"]?.allSatisfy { $0 == true }, true)
+            XCTAssertEqual(throwFlags["kk_mutable_list_set"]?.allSatisfy { $0 == true }, true)
+        }
+    }
+
     func testFrontendAndSemaResolveTypedDeclarationsAndEmitExpectedDiagnostics() throws {
         let source = """
         package typed.demo
