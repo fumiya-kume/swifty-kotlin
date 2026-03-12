@@ -262,7 +262,7 @@ extension CoroutineLoweringPass {
                 names: names
             )
 
-            updated.body = loweredBody
+            updated.replaceBody(loweredBody)
             return updated
         }
     }

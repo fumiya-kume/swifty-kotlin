@@ -3,6 +3,11 @@ public extension RuntimeABIExterns {
         kk_list_of,
         kk_list_size,
         kk_list_get,
+        kk_list_component1,
+        kk_list_component2,
+        kk_list_component3,
+        kk_list_component4,
+        kk_list_component5,
         kk_list_contains,
         kk_list_is_empty,
         kk_list_iterator,
@@ -139,6 +144,32 @@ public extension RuntimeABIExterns {
     static let kk_list_get = ExternDecl(
         name: "kk_list_get",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_component1 = ExternDecl(
+        name: "kk_list_component1",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component2 = ExternDecl(
+        name: "kk_list_component2",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component3 = ExternDecl(
+        name: "kk_list_component3",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component4 = ExternDecl(
+        name: "kk_list_component4",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+    static let kk_list_component5 = ExternDecl(
+        name: "kk_list_component5",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

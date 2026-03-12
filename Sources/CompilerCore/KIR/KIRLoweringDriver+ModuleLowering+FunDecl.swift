@@ -79,7 +79,7 @@ extension KIRLoweringDriver {
         shared: KIRLoweringSharedContext,
         declIDs: inout [KIRDeclID]
     ) {
-        if let defaults = ctx.functionDefaultArgumentsBySymbol[symbol], let sig = signature {
+        if let defaults = ctx.defaultArguments(for: symbol), let sig = signature {
             let stubID = callSupportLowerer.generateDefaultStubFunction(
                 originalSymbol: symbol, originalName: function.name,
                 signature: sig, defaultExpressions: defaults, shared: shared

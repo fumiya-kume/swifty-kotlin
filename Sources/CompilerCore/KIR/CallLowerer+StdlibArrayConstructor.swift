@@ -110,7 +110,7 @@ extension CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callableInfo = driver.ctx.callableValueInfoByExprID[actionExpr] {
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
                 instructions.append(.call(
                     symbol: callableInfo.symbol,

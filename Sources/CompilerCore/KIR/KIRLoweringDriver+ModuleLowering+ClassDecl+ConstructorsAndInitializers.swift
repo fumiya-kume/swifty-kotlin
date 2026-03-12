@@ -174,7 +174,7 @@ extension KIRLoweringDriver {
             ))
         )
         declIDs.append(ctorKirID)
-        if let defaults = ctx.functionDefaultArgumentsBySymbol[ctorSymbol] {
+        if let defaults = ctx.defaultArguments(for: ctorSymbol) {
             let stubID = callSupportLowerer.generateDefaultStubFunction(
                 originalSymbol: ctorSymbol, originalName: classDecl.name,
                 signature: signature, defaultExpressions: defaults,

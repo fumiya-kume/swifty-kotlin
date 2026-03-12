@@ -101,11 +101,12 @@ public final class LexPhase: CompilerPhase {
                 allTokens.append(contentsOf: fileTokens)
             }
         }
-        ctx.tokens = allTokens
-        ctx.tokensByFile = tokensByFile
+        ctx.storeLexResults(allTokens: allTokens, tokensByFile: tokensByFile)
 
         for (fileID, fileTokens) in tokensByFile {
-            ctx.fileIRs[fileID] = FileIR(fileID: fileID, tokens: fileTokens)
+            ctx.updateFileIR(fileID: fileID) { fileIR in
+                fileIR.tokens = fileTokens
+            }
         }
 
         ctx.diagnostics.sortBySourceLocation()
@@ -135,15 +136,13 @@ public final class ParsePhase: CompilerPhase {
             (fileID, parsed.0, parsed.1)
         }
 
-        ctx.syntaxTrees = syntaxTrees
-        if let first = syntaxTrees.first {
-            ctx.syntaxTree = first.1
-            ctx.syntaxTreeRoot = first.2
-        }
+        ctx.storeSyntaxTrees(syntaxTrees)
 
         for (fileID, cstArena, root) in syntaxTrees {
-            ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxArena = cstArena
-            ctx.fileIRs[fileID, default: FileIR(fileID: fileID)].syntaxRoot = root
+            ctx.updateFileIR(fileID: fileID) { fileIR in
+                fileIR.syntaxArena = cstArena
+                fileIR.syntaxRoot = root
+            }
         }
 
         ctx.diagnostics.sortBySourceLocation()
@@ -183,7 +182,7 @@ public final class BuildASTPhase: CompilerPhase {
                 } else {
                     FileID(rawValue: 0)
                 }
-                ctx.syntaxTrees = [(fileID, cst, ctx.syntaxTreeRoot)]
+                ctx.storeFallbackSyntaxTree(fileID: fileID, arena: cst, root: ctx.syntaxTreeRoot)
             } else {
                 throw CompilerPipelineError.invalidInput("Parse phase did not run.")
             }
@@ -477,11 +476,13 @@ public final class BuildASTPhase: CompilerPhase {
             ctx.tokens.count
         }
 
-        ctx.ast = ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount)
+        ctx.storeAST(ASTModule(files: files, arena: arena, declarationCount: declarations.count, tokenCount: totalTokenCount))
 
         for file in files {
-            ctx.fileIRs[file.fileID, default: FileIR(fileID: file.fileID)].astFile = file
-            ctx.fileIRs[file.fileID, default: FileIR(fileID: file.fileID)].astArena = arena
+            ctx.updateFileIR(fileID: file.fileID) { fileIR in
+                fileIR.astFile = file
+                fileIR.astArena = arena
+            }
         }
     }
 }

@@ -19,17 +19,17 @@ final class KIRLoweringContext {
 
     // MARK: - Module-Level State (accumulated across entire pass)
 
-    var functionDefaultArgumentsBySymbol: [SymbolID: [ExprID?]] = [:]
-    var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
-    var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
+    private var functionDefaultArgumentsBySymbol: [SymbolID: [ExprID?]] = [:]
+    private var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
+    private var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
     var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
-    var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
-    var emittedObjectLiteralExprIDs: Set<ExprID> = []
+    private var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
+    private var emittedObjectLiteralExprIDs: Set<ExprID> = []
     var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
     /// Companion object initializer functions registered during class lowering.
     /// These are called in order during module initialization.
-    var companionInitializerFunctions: [(symbol: SymbolID, name: InternedString)] = []
+    private var companionInitializerFunctions: [(symbol: SymbolID, name: InternedString)] = []
 
     // MARK: - Structured Scope Management
 
@@ -104,6 +104,10 @@ final class KIRLoweringContext {
         return generated
     }
 
+    func appendGeneratedCallableDecl(_ declID: KIRDeclID) {
+        pendingGeneratedCallableDeclIDs.append(declID)
+    }
+
     func registerCallableValue(
         _ exprID: KIRExprID,
         symbol: SymbolID,
@@ -117,6 +121,18 @@ final class KIRLoweringContext {
             captureArguments: captureArguments,
             hasClosureParam: hasClosureParam
         )
+    }
+
+    func callableValueInfo(for exprID: KIRExprID) -> KIRCallableValueInfo? {
+        callableValueInfoByExprID[exprID]
+    }
+
+    func setFunctionDefaultArguments(_ mapping: [SymbolID: [ExprID?]]) {
+        functionDefaultArgumentsBySymbol = mapping
+    }
+
+    func defaultArguments(for symbol: SymbolID) -> [ExprID?]? {
+        functionDefaultArgumentsBySymbol[symbol]
     }
 
     // MARK: - Synthetic Symbol Management
@@ -143,6 +159,24 @@ final class KIRLoweringContext {
         SymbolID(rawValue: nextSyntheticLambdaSymbolRawID())
     }
 
+    func syntheticObjectLiteralSymbols(
+        for exprID: ExprID
+    ) -> (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)? {
+        syntheticObjectLiteralSymbolsByExprID[exprID]
+    }
+
+    func registerSyntheticObjectLiteralSymbols(
+        _ symbols: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString),
+        for exprID: ExprID
+    ) {
+        syntheticObjectLiteralSymbolsByExprID[exprID] = symbols
+    }
+
+    @discardableResult
+    func markObjectLiteralEmitted(_ exprID: ExprID) -> Bool {
+        emittedObjectLiteralExprIDs.insert(exprID).inserted
+    }
+
     private func nextSyntheticLambdaSymbolRawID() -> Int32 {
         precondition(
             nextSyntheticLambdaSymbolRawValue < Int32.max,
@@ -157,6 +191,10 @@ final class KIRLoweringContext {
 
     func registerCompanionInitializer(symbol: SymbolID, name: InternedString) {
         companionInitializerFunctions.append((symbol: symbol, name: name))
+    }
+
+    func allCompanionInitializers() -> [(symbol: SymbolID, name: InternedString)] {
+        companionInitializerFunctions
     }
 
     func resetModuleState() {

@@ -29,7 +29,7 @@ public final class DataFlowSemaPhase: CompilerPhase {
         runValidationPasses(ast: ast, symbols: symbols, bindings: bindings, types: types, ctx: ctx)
         runBodyAnalysis(ast: ast, symbols: symbols, types: types, bindings: bindings, ctx: ctx)
 
-        ctx.sema = sema
+        ctx.storeSema(sema)
     }
 
     private func buildFileScopes(

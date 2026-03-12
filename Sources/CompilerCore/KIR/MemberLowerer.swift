@@ -313,7 +313,7 @@ final class MemberLowerer {
         )))
         directMembers.append(kirID)
         allDecls.append(kirID)
-        if let defaults = driver.ctx.functionDefaultArgumentsBySymbol[symbol], let sig = signature {
+        if let defaults = driver.ctx.defaultArguments(for: symbol), let sig = signature {
             let stubID = driver.callSupportLowerer.generateDefaultStubFunction(
                 originalSymbol: symbol, originalName: function.name, signature: sig,
                 defaultExpressions: defaults, ast: ast, sema: sema, arena: arena,

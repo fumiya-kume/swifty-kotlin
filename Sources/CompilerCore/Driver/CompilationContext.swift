@@ -35,32 +35,32 @@ public final class CompilationContext: @unchecked Sendable {
     public let diagnostics: DiagnosticEngine
     public let interner: StringInterner
 
-    public var tokens: [Token] = []
-    public var tokensByFile: [(FileID, [Token])] = []
-    public var syntaxTree: SyntaxArena?
-    public var syntaxTreeRoot: NodeID = .init()
-    public var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
-    public var ast: ASTModule?
-    public var sema: SemaModule?
-    public var kir: KIRModule?
-    public var generatedObjectPath: String?
-    public var generatedLLVMIRPath: String?
+    public private(set) var tokens: [Token] = []
+    public private(set) var tokensByFile: [(FileID, [Token])] = []
+    public private(set) var syntaxTree: SyntaxArena?
+    public private(set) var syntaxTreeRoot: NodeID = .init()
+    public private(set) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
+    public private(set) var ast: ASTModule?
+    public private(set) var sema: SemaModule?
+    public private(set) var kir: KIRModule?
+    public private(set) var generatedObjectPath: String?
+    public private(set) var generatedLLVMIRPath: String?
 
     /// Per-file intermediate representations keyed by FileID.
     /// Populated unconditionally by LexPhase, ParsePhase, and BuildASTPhase
     /// to track per-file tokens, CST, and AST results.
-    public var fileIRs: [FileID: FileIR] = [:]
+    public private(set) var fileIRs: [FileID: FileIR] = [:]
 
     /// Incremental compilation cache (non-nil when incremental mode is active).
-    public var incrementalCache: IncrementalCompilationCache?
+    public private(set) var incrementalCache: IncrementalCompilationCache?
 
     /// Set of file paths that need recompilation in incremental mode.
     /// `nil` means full build (all files).
-    public var incrementalRecompileSet: Set<String>?
+    public private(set) var incrementalRecompileSet: Set<String>?
 
     /// Phase timer for recording per-phase wall-clock durations.
     /// Non-nil when the `time-phases` frontend flag is active.
-    public var phaseTimer: PhaseTimer?
+    public private(set) var phaseTimer: PhaseTimer?
 
     public init(
         options: CompilerOptions,
@@ -92,5 +92,65 @@ public final class CompilationContext: @unchecked Sendable {
     /// Returns 1 (sequential) if the flag is not set.
     public var frontendJobs: Int {
         options.frontendJobs
+    }
+
+    public func storeLexResults(allTokens: [Token], tokensByFile: [(FileID, [Token])]) {
+        self.tokens = allTokens
+        self.tokensByFile = tokensByFile
+    }
+
+    public func storeSyntaxTrees(_ syntaxTrees: [(FileID, SyntaxArena, NodeID)]) {
+        self.syntaxTrees = syntaxTrees
+        if let first = syntaxTrees.first {
+            syntaxTree = first.1
+            syntaxTreeRoot = first.2
+        } else {
+            syntaxTree = nil
+            syntaxTreeRoot = .init()
+        }
+    }
+
+    public func storeFallbackSyntaxTree(fileID: FileID, arena: SyntaxArena, root: NodeID) {
+        syntaxTree = arena
+        syntaxTreeRoot = root
+        syntaxTrees = [(fileID, arena, root)]
+    }
+
+    public func updateFileIR(fileID: FileID, _ update: (inout FileIR) -> Void) {
+        var fileIR = fileIRs[fileID] ?? FileIR(fileID: fileID)
+        update(&fileIR)
+        fileIRs[fileID] = fileIR
+    }
+
+    public func storeAST(_ ast: ASTModule) {
+        self.ast = ast
+    }
+
+    public func storeSema(_ sema: SemaModule) {
+        self.sema = sema
+    }
+
+    public func storeKIR(_ kir: KIRModule) {
+        self.kir = kir
+    }
+
+    public func storeGeneratedObjectPath(_ path: String) {
+        generatedObjectPath = path
+    }
+
+    public func storeGeneratedLLVMIRPath(_ path: String) {
+        generatedLLVMIRPath = path
+    }
+
+    public func installIncrementalCache(_ cache: IncrementalCompilationCache) {
+        incrementalCache = cache
+    }
+
+    public func setIncrementalRecompileSet(_ recompileSet: Set<String>?) {
+        incrementalRecompileSet = recompileSet
+    }
+
+    public func installPhaseTimer(_ timer: PhaseTimer) {
+        phaseTimer = timer
     }
 }

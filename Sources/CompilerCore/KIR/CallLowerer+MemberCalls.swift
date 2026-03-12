@@ -1610,7 +1610,7 @@ extension CallLowerer {
         for (loweredArgID, argExprID) in zip(loweredArgIDs, argExprIDs) {
             finalArgs.append(loweredArgID)
             guard sema.bindings.isCollectionHOFLambdaExpr(argExprID),
-                  let callableInfo = driver.ctx.callableValueInfoByExprID[loweredArgID]
+                  let callableInfo = driver.ctx.callableValueInfo(for: loweredArgID)
             else {
                 continue
             }
@@ -2163,11 +2163,15 @@ extension CallLowerer {
             instructions.append(inst)
             return
         }
+        var callArguments = finalArguments
+        if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
+            callArguments = []
+        }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
-            arguments: finalArguments,
+            arguments: callArguments,
             result: result,
             canThrow: canThrow,
             thrownResult: nil,
@@ -2665,7 +2669,7 @@ extension CallLowerer {
             instructions: &instructions
         )
 
-        guard let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] else {
+        guard let info = driver.ctx.callableValueInfo(for: loweredLambdaID) else {
             return nil
         }
 
@@ -2711,7 +2715,8 @@ extension CallLowerer {
         instructions.append(.copy(from: nullVal, to: result))
         instructions.append(.jump(endLabel))
 
-        // Predicate passed: copy receiver to result
+        // Predicate passed: forward the lowered receiver as-is.
+        // The surrounding lowering/codegen path will box later if needed.
         instructions.append(.label(useReceiverLabel))
         instructions.append(.copy(from: loweredReceiverID, to: result))
         instructions.append(.label(endLabel))
@@ -2763,7 +2768,7 @@ extension CallLowerer {
                 .temporary(Int32(arena.expressions.count)),
                 type: boundType
             )
-            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
                 let callArgs: [KIRExprID]
                 if info.hasClosureParam {
                     let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -2820,7 +2825,7 @@ extension CallLowerer {
                 .temporary(Int32(arena.expressions.count)),
                 type: boundType
             )
-            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
                 instructions.append(.call(
                     symbol: info.symbol,
                     callee: info.callee,

@@ -106,13 +106,13 @@ public final class CompilerDriver {
                 // Nothing changed — we still run the full pipeline to produce
                 // a consistent output. In the future, we could short-circuit
                 // here or reuse cached intermediate results more aggressively.
-                ctx.incrementalRecompileSet = nil
+                ctx.setIncrementalRecompileSet(nil)
             } else {
-                ctx.incrementalRecompileSet = recompileSet
+                ctx.setIncrementalRecompileSet(recompileSet)
             }
         } else {
             // No previous cache — full build.
-            ctx.incrementalRecompileSet = nil
+            ctx.setIncrementalRecompileSet(nil)
         }
     }
 
@@ -126,7 +126,7 @@ public final class CompilerDriver {
 
         let timePhasesEnabled = options.frontendFlags.contains("time-phases")
         if timePhasesEnabled {
-            context.phaseTimer = PhaseTimer()
+            context.installPhaseTimer(PhaseTimer())
         }
 
         let incrementalEnabled = isIncrementalEnabled(options: options)
@@ -134,7 +134,7 @@ public final class CompilerDriver {
             let cachePath = resolveIncrementalCachePath(options: options)
             let cache = IncrementalCompilationCache(cachePath: cachePath)
             cache.loadPreviousState()
-            context.incrementalCache = cache
+            context.installIncrementalCache(cache)
         }
 
         return PreparedRunContext(

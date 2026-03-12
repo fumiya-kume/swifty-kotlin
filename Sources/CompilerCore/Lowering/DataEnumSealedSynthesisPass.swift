@@ -7,7 +7,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         module.arena.transformFunctions { function in
             var updated = function
             if updated.body.isEmpty {
-                updated.body = [.nop, .returnUnit]
+                updated.replaceBody([.nop, .returnUnit])
             }
             return updated
         }
@@ -96,9 +96,35 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             name: ctx.interner.intern("values"), owner: nominalSymbol, entries: entries,
             module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols
         )
+        appendSyntheticEnumOrdinalToNameIfNeeded(
+            owner: nominalSymbol,
+            entries: entries,
+            module: module,
+            sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
+        )
+        // valueOf lives on the companion (Color.valueOf) so use companion as owner
+        let valueOfOwner: SemanticSymbol
+        if let companionSymbol = sema.symbols.companionObjectSymbol(for: nominalSymbol.id),
+           let companionSym = sema.symbols.symbol(companionSymbol)
+        {
+            valueOfOwner = companionSym
+        } else {
+            valueOfOwner = nominalSymbol
+        }
         appendSyntheticEnumValueOfIfNeeded(
-            name: ctx.interner.intern("valueOf"), owner: nominalSymbol, entries: entries,
-            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols,
+            name: ctx.interner.intern("valueOf"),
+            owner: valueOfOwner,
+            enumType: sema.types.make(.classType(ClassType(
+                classSymbol: nominalSymbol.id,
+                args: [],
+                nullability: .nonNull
+            ))),
+            entries: entries,
+            module: module,
+            sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols,
             interner: ctx.interner
         )
     }
@@ -471,12 +497,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    /// Synthesizes `valueOf(String)` which does a linear comparison of the
-    /// argument against each entry name and returns the matching ordinal.
-    /// If no match is found, it calls `kk_enum_valueOf_throw` to signal an
-    /// IllegalArgumentException.
-    private func appendSyntheticEnumValueOfIfNeeded(
-        name: InternedString,
+    /// Synthesizes `$enumOrdinalToName(ordinal: Int): String` for (valueOf result).name.
+    /// Switches on ordinal and returns the entry name via the per-entry $enumName helpers.
+    private func appendSyntheticEnumOrdinalToNameIfNeeded(
         owner: SemanticSymbol,
         entries: [SemanticSymbol],
         module: KIRModule,
@@ -484,8 +507,109 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         existingFunctionSymbols: Set<SymbolID>,
         interner: StringInterner
     ) {
-        let stringType = sema.types.make(.primitive(.string, .nonNull))
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let name = interner.intern("$enumOrdinalToName")
+        let fqName = owner.fqName + [name]
+        let paramName = interner.intern("$ordinal")
+        let paramSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: paramName,
+            fqName: fqName + [paramName],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let param = KIRParameter(symbol: paramSymbol, type: intType)
+        let paramRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: intType)
+
+        var body: [KIRInstruction] = []
+        body.append(.constValue(result: paramRef, value: .symbolRef(paramSymbol)))
+        var labelCounter: Int32 = 6000
+        let endLabel = labelCounter
+        labelCounter += 1
+        let checkLabels = (0..<entries.count).map { _ in
+            let L = labelCounter
+            labelCounter += 1
+            return L
+        }
+        let matchLabels = (0..<entries.count).map { _ in
+            let L = labelCounter
+            labelCounter += 1
+            return L
+        }
+
+        for (ordinal, entry) in entries.enumerated() {
+            let entryName = interner.resolve(entry.name)
+            let helperName = interner.intern("\(entryName)$enumName")
+            let resultExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            let ordinalExpr = module.arena.appendExpr(
+                .intLiteral(Int64(ordinal)),
+                type: intType
+            )
+            body.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
+            let nextLabel = ordinal + 1 < entries.count ? checkLabels[ordinal + 1] : endLabel
+            body.append(.jumpIfEqual(lhs: paramRef, rhs: ordinalExpr, target: matchLabels[ordinal]))
+            body.append(.jump(nextLabel))
+            body.append(.label(matchLabels[ordinal]))
+            body.append(.call(
+                symbol: nil,
+                callee: helperName,
+                arguments: [],
+                result: resultExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            body.append(.returnValue(resultExpr))
+            body.append(.label(checkLabels[ordinal]))
+        }
+        let emptyExpr = module.arena.appendExpr(
+            .stringLiteral(interner.intern("")),
+            type: stringType
+        )
+        body.append(.constValue(result: emptyExpr, value: .stringLiteral(interner.intern(""))))
+        body.append(.label(endLabel))
+        body.append(.returnValue(emptyExpr))
+
+        let signature = FunctionSignature(
+            parameterTypes: [intType],
+            returnType: stringType,
+            isSuspend: false,
+            valueParameterSymbols: [paramSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false]
+        )
+        appendSyntheticFunctionIfNeeded(
+            name: name,
+            owner: owner,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [param],
+            body: body,
+            existingFunctionSymbols: existingFunctionSymbols
+        )
+    }
+
+    /// Synthesizes `valueOf(String)` which does a linear comparison of the
+    /// argument against each entry name and returns the matching ordinal.
+    /// If no match is found, it calls `kk_enum_valueOf_throw` to signal an
+    /// IllegalArgumentException. When owner is the companion, uses the stub's
+    /// symbol so Color.valueOf resolves to the same KIR function.
+    private func appendSyntheticEnumValueOfIfNeeded(
+        name: InternedString,
+        owner: SemanticSymbol,
+        enumType: TypeID,
+        entries: [SemanticSymbol],
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
 
         let fqName = owner.fqName + [name]
         let parameterName = interner.intern("$name")
@@ -542,10 +666,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
             body.append(.jumpIfEqual(lhs: cmpResult, rhs: falseExpr, target: nextLabel))
 
-            // Match found – return ordinal
+            // Match found – return ordinal (enum values are represented as ordinals)
             let ordinalExpr = module.arena.appendExpr(
                 .intLiteral(Int64(ordinal)),
-                type: intType
+                type: enumType
             )
             body.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
             body.append(.returnValue(ordinalExpr))
@@ -569,24 +693,74 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         ))
         body.append(.returnValue(throwResult))
 
+        let companionType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
         let signature = FunctionSignature(
+            receiverType: companionType,
             parameterTypes: [stringType],
-            returnType: intType,
+            returnType: enumType,
             isSuspend: false,
             valueParameterSymbols: [parameterSymbol],
             valueParameterHasDefaultValues: [false],
             valueParameterIsVararg: [false]
         )
-        appendSyntheticFunctionIfNeeded(
-            name: name,
-            owner: owner,
-            module: module,
-            sema: sema,
-            signature: signature,
-            params: [parameter],
-            body: body,
-            existingFunctionSymbols: existingFunctionSymbols
-        )
+
+        // Use existing stub symbol when companion has valueOf from Sema
+        let existingValueOf = sema.symbols.lookupAll(fqName: fqName).first { candidate in
+            guard let sym = sema.symbols.symbol(candidate),
+                  sym.kind == .function,
+                  sym.flags.contains(.synthetic),
+                  sema.symbols.parentSymbol(for: candidate) == owner.id
+            else { return false }
+            return true
+        }
+        if let existingSymbol = existingValueOf, !existingFunctionSymbols.contains(existingSymbol) {
+            let receiverParam = KIRParameter(
+                symbol: sema.symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("$self"),
+                    fqName: fqName + [interner.intern("$self")],
+                    declSite: owner.declSite,
+                    visibility: .private,
+                    flags: [.synthetic]
+                ),
+                type: companionType
+            )
+            appendSyntheticFunctionWithSymbol(
+                functionSymbol: existingSymbol,
+                name: name,
+                module: module,
+                sema: sema,
+                signature: signature,
+                params: [receiverParam, parameter],
+                body: body
+            )
+        } else {
+            let receiverParam = KIRParameter(
+                symbol: sema.symbols.define(
+                    kind: .valueParameter,
+                    name: interner.intern("$self"),
+                    fqName: fqName + [interner.intern("$self")],
+                    declSite: owner.declSite,
+                    visibility: .private,
+                    flags: [.synthetic]
+                ),
+                type: companionType
+            )
+            appendSyntheticFunctionIfNeeded(
+                name: name,
+                owner: owner,
+                module: module,
+                sema: sema,
+                signature: signature,
+                params: [receiverParam, parameter],
+                body: body,
+                existingFunctionSymbols: existingFunctionSymbols
+            )
+        }
     }
 
     /// Appends a KIR function using an existing symbol (e.g. from Sema). Used when the symbol

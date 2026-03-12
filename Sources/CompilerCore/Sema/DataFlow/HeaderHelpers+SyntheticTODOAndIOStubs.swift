@@ -139,6 +139,113 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- kotlin.system.System object (STDLIB-131) ---
+        let systemSymbol = ensureSyntheticObjectSymbol(
+            named: "System",
+            in: kotlinSystemPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let systemType = types.make(.classType(ClassType(
+            classSymbol: systemSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(systemType, for: systemSymbol)
+        registerSyntheticSystemMember(
+            ownerSymbol: systemSymbol,
+            ownerType: systemType,
+            name: "currentTimeMillis",
+            externalLinkName: "kk_system_currentTimeMillis",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func ensureSyntheticObjectSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .object,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticSystemMember(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        name: String,
+        externalLinkName: String,
+        returnType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard symbols.symbol(ownerSymbol) != nil else {
+            return
+        }
+        let memberName = interner.intern(name)
+        let memberFQName = symbols.symbol(ownerSymbol)!.fqName + [memberName]
+        if symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes == parameters.map(\.type) &&
+                existingSignature.returnType == returnType
+        }) != nil {
+            return
+        }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameters.map(\.type),
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: memberSymbol
+        )
     }
 
     private func ensureSyntheticPackage(

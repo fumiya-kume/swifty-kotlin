@@ -278,7 +278,7 @@ final class ABILoweringPass: LoweringPass {
                 idx += 1
             }
 
-            updated.body = newBody
+            updated.replaceBody(newBody)
             return updated
         }
         module.recordLowering(Self.name)

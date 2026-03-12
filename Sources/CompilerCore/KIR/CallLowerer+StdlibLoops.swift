@@ -90,7 +90,7 @@ extension CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callableInfo = driver.ctx.callableValueInfoByExprID[actionExpr] {
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
                 instructions.append(.call(
                     symbol: callableInfo.symbol,
@@ -170,7 +170,7 @@ extension CallLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callableInfo = driver.ctx.callableValueInfoByExprID[actionExpr] {
+            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let unitType = sema.types.unitType
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
                 instructions.append(.call(

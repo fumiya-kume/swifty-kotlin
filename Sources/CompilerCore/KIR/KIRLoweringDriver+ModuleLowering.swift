@@ -25,10 +25,10 @@ extension KIRLoweringDriver {
             interner: compilationCtx.interner,
             propertyConstantInitializers: propertyConstantInitializers
         )
-        ctx.functionDefaultArgumentsBySymbol = callSupportLowerer.collectFunctionDefaultArgumentExpressions(
+        ctx.setFunctionDefaultArguments(callSupportLowerer.collectFunctionDefaultArgumentExpressions(
             ast: ast,
             sema: sema
-        )
+        ))
 
         // Collect all top-level property init instructions (regular + delegate) in declaration order.
         // Using a single array ensures Kotlin's strict declaration-order initialization guarantee.
@@ -208,8 +208,9 @@ extension KIRLoweringDriver {
         sema: SemaModule,
         allTopLevelInitInstructions: inout KIRLoweringEmitContext
     ) {
-        guard !ctx.companionInitializerFunctions.isEmpty else { return }
-        for initializer in ctx.companionInitializerFunctions {
+        let companionInitializers = ctx.allCompanionInitializers()
+        guard !companionInitializers.isEmpty else { return }
+        for initializer in companionInitializers {
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
                 type: sema.types.unitType

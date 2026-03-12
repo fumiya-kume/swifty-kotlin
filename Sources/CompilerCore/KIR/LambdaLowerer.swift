@@ -224,7 +224,7 @@ final class LambdaLowerer {
                 )
             )
         )
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(lambdaDecl)
+        driver.ctx.appendGeneratedCallableDecl(lambdaDecl)
 
         if isSamConversion,
            let boundType,
@@ -383,7 +383,7 @@ final class LambdaLowerer {
         )
 
         let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: wrapperSymbol)))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+        driver.ctx.appendGeneratedCallableDecl(nominalDeclID)
 
         let scopeSnapshot = driver.ctx.saveScope()
         driver.ctx.resetScopeForFunction()
@@ -451,7 +451,7 @@ final class LambdaLowerer {
             isSuspend: samMethod.signature.isSuspend,
             isInline: false
         )))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(methodDeclID)
+        driver.ctx.appendGeneratedCallableDecl(methodDeclID)
         driver.ctx.restoreScope(scopeSnapshot)
 
         let slotCount = Int64(max(2 + captureFieldSymbols.count, 1))
@@ -649,7 +649,7 @@ final class LambdaLowerer {
                     )
                 )
             )
-            driver.ctx.pendingGeneratedCallableDeclIDs.append(fallbackDecl)
+            driver.ctx.appendGeneratedCallableDecl(fallbackDecl)
         }
 
         let callableType = boundType ?? typeForSymbolReference(callableSymbol, sema: sema)

@@ -39,12 +39,12 @@ extension CoroutineLoweringPass {
             if function.isSuspend,
                let wrapperBody = buildSuspendWrapperBody(for: function, using: rewrite)
             {
-                updated.body = wrapperBody
-                updated.instructionLocations = Array(repeating: nil, count: wrapperBody.count)
+                updated.replaceBody(wrapperBody)
+                updated.replaceInstructionLocations(Array(repeating: nil, count: wrapperBody.count))
                 return updated
             }
 
-            updated.body = rewriteFunctionBody(function, using: rewrite)
+            updated.replaceBody(rewriteFunctionBody(function, using: rewrite))
             return updated
         }
     }

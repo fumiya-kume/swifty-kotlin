@@ -127,7 +127,7 @@ final class CallLowerer {
                 .temporary(Int32(arena.expressions.count)),
                 type: boundType
             )
-            if let info = driver.ctx.callableValueInfoByExprID[loweredLambdaID] {
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
                 instructions.append(.call(
                     symbol: info.symbol,
                     callee: info.callee,
@@ -155,7 +155,7 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
-        let loweredCallable = driver.ctx.callableValueInfoByExprID[loweredCalleeExprID]
+        let loweredCallable = driver.ctx.callableValueInfo(for: loweredCalleeExprID)
         let sourceCalleeName: InternedString = if let callee = ast.arena.expr(calleeExpr), case let .nameRef(name, _) = callee {
             name
         } else if let loweredCallable {
@@ -378,7 +378,7 @@ final class CallLowerer {
                || sourceCalleeName == launchID
                || sourceCalleeName == asyncID,
                let firstArg = finalArgIDs.first,
-               let callableInfo = driver.ctx.callableValueInfoByExprID[firstArg],
+               let callableInfo = driver.ctx.callableValueInfo(for: firstArg),
                !callableInfo.captureArguments.isEmpty
             {
                 finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 1)
@@ -387,7 +387,7 @@ final class CallLowerer {
         let withContextID = interner.intern("withContext")
         if sourceCalleeName == withContextID,
            finalArgIDs.count >= 2,
-           let callableInfo = driver.ctx.callableValueInfoByExprID[finalArgIDs[1]],
+           let callableInfo = driver.ctx.callableValueInfo(for: finalArgIDs[1]),
            !callableInfo.captureArguments.isEmpty
         {
             finalArgIDs.insert(contentsOf: callableInfo.captureArguments, at: 2)
@@ -486,7 +486,7 @@ final class CallLowerer {
 
         var finalArgs = [loweredArguments[0], loweredArguments[1]]
         if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
-           let callableInfo = driver.ctx.callableValueInfoByExprID[loweredArguments[1]],
+           let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
            let closureRaw = callableInfo.captureArguments.first
         {
             finalArgs.append(closureRaw)

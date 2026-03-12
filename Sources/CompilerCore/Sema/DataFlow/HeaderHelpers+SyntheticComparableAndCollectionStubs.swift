@@ -513,6 +513,13 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListComponentNMembers(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
     }
 
     /// Register `kotlin.collections.List<E>` interface stub with `operator fun get(index: Int): E`.
@@ -632,6 +639,56 @@ extension DataFlowSemaPhase {
             ),
             for: listGetSymbol
         )
+    }
+
+    /// STDLIB-183: List<T>.component1() ~ component5() for destructuring.
+    private func registerListComponentNMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let componentNames = ["component1", "component2", "component3", "component4", "component5"]
+        let externalLinkNames = [
+            "kk_list_component1", "kk_list_component2", "kk_list_component3",
+            "kk_list_component4", "kk_list_component5",
+        ]
+        for (componentName, externalLinkName) in zip(componentNames, externalLinkNames) {
+            let name = interner.intern(componentName)
+            let fqName = listFQName + [name]
+            guard symbols.lookupAll(fqName: fqName).first(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.receiverType == listReceiverType && sig.parameterTypes.isEmpty
+            }) == nil else { continue }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: name,
+                fqName: fqName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [],
+                    returnType: listTypeParamType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerListContainsAndIsEmptyMembers(

@@ -557,7 +557,7 @@ extension ExprLowerer {
                     transitiveChanged = false
                     for sym in captureSymbols {
                         guard let outerExpr = driver.ctx.localValuesBySymbol[sym],
-                              let callableInfo = driver.ctx.callableValueInfoByExprID[outerExpr]
+                              let callableInfo = driver.ctx.callableValueInfo(for: outerExpr)
                         else {
                             continue
                         }
@@ -645,7 +645,7 @@ extension ExprLowerer {
                     }
                 }
                 for capture in captureBindings {
-                    if let outerCallableInfo = driver.ctx.callableValueInfoByExprID[capture.valueExpr],
+                    if let outerCallableInfo = driver.ctx.callableValueInfo(for: capture.valueExpr),
                        let bodyCallableExpr = driver.ctx.localValuesBySymbol[capture.capturedSymbol]
                     {
                         var remappedArgs: [KIRExprID] = []
@@ -785,7 +785,7 @@ extension ExprLowerer {
                         )
                     )
                 )
-                driver.ctx.pendingGeneratedCallableDeclIDs.append(localFunDeclID)
+                driver.ctx.appendGeneratedCallableDecl(localFunDeclID)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.unitType)
             instructions.append(.constValue(result: unit, value: .unit))
@@ -1401,6 +1401,8 @@ extension ExprLowerer {
                 initializer, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers, instructions: &instructions
             )
+            let rhsType = sema.bindings.exprTypes[initializer] ?? sema.types.anyType
+            let nonNullRhsType = sema.types.makeNonNullable(rhsType)
             for (index, name) in names.enumerated() {
                 guard let name else {
                     // Underscore — skip
@@ -1408,6 +1410,21 @@ extension ExprLowerer {
                 }
                 let componentIndex = index + 1
                 let componentName = interner.intern("component\(componentIndex)")
+
+                // Resolve componentN to externalLinkName when available (Pair, Triple, List, etc.)
+                let memberCandidates = TypeCheckHelpers().collectMemberFunctionCandidates(
+                    named: componentName,
+                    receiverType: nonNullRhsType,
+                    sema: sema
+                )
+                let calleeName: InternedString = if let chosen = memberCandidates.first,
+                    let linkName = sema.symbols.externalLinkName(for: chosen),
+                    !linkName.isEmpty
+                {
+                    interner.intern(linkName)
+                } else {
+                    componentName
+                }
 
                 // Look up the symbol defined by Sema for this variable first,
                 // so we can use its per-component type (not the expression-level Unit type)
@@ -1419,7 +1436,7 @@ extension ExprLowerer {
                 let componentResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: componentType)
                 instructions.append(.call(
                     symbol: nil,
-                    callee: componentName,
+                    callee: calleeName,
                     arguments: [rhsID],
                     result: componentResult,
                     canThrow: false,

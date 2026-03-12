@@ -346,8 +346,13 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let stringType = types.make(.primitive(.string, .nonNull))
+        let companionType = types.make(.classType(ClassType(
+            classSymbol: companionSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
 
-        // valueOf(name: String): T
+        // valueOf(name: String): T — companion receiver so Color.valueOf resolves
         let valueOfName = interner.intern("valueOf")
         let valueOfFQName = companionFQName + [valueOfName]
         if symbols.lookupAll(fqName: valueOfFQName).compactMap({ symbols.symbol($0) }).allSatisfy({ $0.kind != .function }) {
@@ -371,7 +376,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(companionSymbol, for: funcSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
-                    receiverType: nil,
+                    receiverType: companionType,
                     parameterTypes: [stringType],
                     returnType: enumType,
                     isSuspend: false,

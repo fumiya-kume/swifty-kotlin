@@ -198,18 +198,18 @@ final class ObjectLiteralLowerer {
         objectSymbol: SymbolID,
         arena: KIRArena
     ) {
-        guard driver.ctx.emittedObjectLiteralExprIDs.insert(exprID).inserted else {
+        guard driver.ctx.markObjectLiteralEmitted(exprID) else {
             return
         }
         let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: objectSymbol)))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+        driver.ctx.appendGeneratedCallableDecl(nominalDeclID)
     }
 
     private func syntheticObjectLiteralSymbols(
         for exprID: ExprID,
         interner: StringInterner
     ) -> (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString) {
-        if let existing = driver.ctx.syntheticObjectLiteralSymbolsByExprID[exprID] {
+        if let existing = driver.ctx.syntheticObjectLiteralSymbols(for: exprID) {
             return existing
         }
         let nominalSymbol = driver.ctx.allocateSyntheticGeneratedSymbol()
@@ -220,7 +220,7 @@ final class ObjectLiteralLowerer {
             constructorSymbol: constructorSymbol,
             constructorName: constructorName
         )
-        driver.ctx.syntheticObjectLiteralSymbolsByExprID[exprID] = generated
+        driver.ctx.registerSyntheticObjectLiteralSymbols(generated, for: exprID)
         return generated
     }
 
@@ -233,12 +233,12 @@ final class ObjectLiteralLowerer {
         arena: KIRArena,
         interner: StringInterner
     ) {
-        guard driver.ctx.emittedObjectLiteralExprIDs.insert(exprID).inserted else {
+        guard driver.ctx.markObjectLiteralEmitted(exprID) else {
             return
         }
 
         let nominalDeclID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbols.nominalSymbol)))
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(nominalDeclID)
+        driver.ctx.appendGeneratedCallableDecl(nominalDeclID)
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let storageSlotCount = max(1, superTypeCount)
@@ -272,6 +272,6 @@ final class ObjectLiteralLowerer {
                 )
             )
         )
-        driver.ctx.pendingGeneratedCallableDeclIDs.append(constructorDeclID)
+        driver.ctx.appendGeneratedCallableDecl(constructorDeclID)
     }
 }

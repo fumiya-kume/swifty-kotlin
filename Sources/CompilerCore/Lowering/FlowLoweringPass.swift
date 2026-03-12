@@ -412,7 +412,7 @@ final class FlowLoweringPass: LoweringPass {
                 }
             }
 
-            updated.body = loweredBody
+            updated.replaceBody(loweredBody)
             return updated
         }
 
