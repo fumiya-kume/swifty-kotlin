@@ -2482,6 +2482,14 @@ extension CallLowerer {
             return nil
         }
         switch memberName {
+        case "count":
+            return interner.intern("kk_map_count")
+        case "any":
+            return interner.intern("kk_map_any")
+        case "all":
+            return interner.intern("kk_map_all")
+        case "none":
+            return interner.intern("kk_map_none")
         case "getOrDefault":
             return interner.intern("kk_map_getOrDefault")
         case "getOrElse":

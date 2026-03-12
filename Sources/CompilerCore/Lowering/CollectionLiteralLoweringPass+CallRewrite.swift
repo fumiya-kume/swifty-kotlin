@@ -104,6 +104,37 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // map.count(predicate) on map literals
+                    if callee == lookup.countName && (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if mapExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkMapCountName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of ---
                     if lookup.setFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -1415,8 +1446,8 @@ extension CollectionLiteralLoweringPass {
                             if mapExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
                                || callee == lookup.mapValuesName || callee == lookup.mapKeysName
-                               || callee == lookup.countName || callee == lookup.anyName
-                               || callee == lookup.allName || callee == lookup.noneName
+                               || callee == lookup.anyName || callee == lookup.allName
+                               || callee == lookup.noneName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -1432,7 +1463,6 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.forEachName: lookup.kkMapForEachName
                                 case lookup.mapValuesName: lookup.kkMapMapValuesName
                                 case lookup.mapKeysName: lookup.kkMapMapKeysName
-                                case lookup.countName: lookup.kkMapCountName
                                 case lookup.anyName: lookup.kkMapAnyName
                                 case lookup.allName: lookup.kkMapAllName
                                 case lookup.noneName: lookup.kkMapNoneName
