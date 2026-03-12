@@ -228,8 +228,9 @@ public func kk_mutable_list_shuffle(_ listRaw: Int) -> Int {
     // Fisher-Yates shuffle
     let count = list.elements.count
     if count > 1 {
+        var rng = SystemRandomNumberGenerator()
         for i in stride(from: count - 1, through: 1, by: -1) {
-            let j = Int.random(in: 0 ... i)
+            let j = Int.random(in: 0 ... i, using: &rng)
             list.elements.swapAt(i, j)
         }
     }
