@@ -2422,6 +2422,7 @@ extension CallLowerer {
         }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
             || loweredCallee == interner.intern("kk_sequence_sortedBy")
+            || loweredCallee == interner.intern("kk_map_getValue")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,

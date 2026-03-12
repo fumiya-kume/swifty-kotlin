@@ -186,6 +186,31 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testMapGetValueLoweringMarksRuntimeCallAsThrowing() throws {
+        let source = """
+        fun main(): Int {
+            val map = mapOf("a" to 1)
+            return map.getValue("b")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let throwFlags = extractThrowFlags(from: body, interner: ctx.interner)
+
+            XCTAssertEqual(
+                throwFlags["kk_map_getValue"]?.allSatisfy { $0 == true },
+                true,
+                "kk_map_getValue should be lowered as throwing so ABI lowering wires outThrown."
+            )
+        }
+    }
+
     func testArrayOutOfBoundsThrownChannelReturnsEarlyBeforeSubsequentReturn() throws {
         let source = """
         fun readOutOfBounds(arr: Any?): Any? = arr[5]
