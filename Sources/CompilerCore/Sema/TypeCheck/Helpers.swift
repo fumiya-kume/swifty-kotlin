@@ -78,6 +78,7 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
+        let builtinNames = BuiltinTypeNames(interner: interner)
         let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol)
@@ -85,7 +86,7 @@ struct TypeCheckHelpers {
             return nil
         }
         switch symbol.name {
-        case knownNames.intArray, knownNames.longArray:
+        case builtinNames.intArray, knownNames.longArray:
             return sema.types.intType
         case knownNames.doubleArray:
             return sema.types.doubleType
@@ -179,13 +180,13 @@ struct TypeCheckHelpers {
         types: TypeSystem,
         interner: StringInterner
     ) -> TypeID? {
-        KnownCompilerNames(interner: interner).builtinType(named: name, nullability: nullability, types: types)
-    }
-
-    func resolveBuiltinTypeName(_ name: String, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
-        let interner = StringInterner()
-        let internedName = interner.intern(name)
-        return resolveBuiltinTypeName(internedName, nullability: nullability, types: types, interner: interner)
+        if let builtin = BuiltinTypeNames(interner: interner).resolveBuiltinType(name, nullability: nullability, types: types) {
+            return builtin
+        }
+        if name == interner.intern("Byte") || name == interner.intern("Short") {
+            return types.make(.primitive(.int, nullability))
+        }
+        return nil
     }
 
     func resolveTypeRef(

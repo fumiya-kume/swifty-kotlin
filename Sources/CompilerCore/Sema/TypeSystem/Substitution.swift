@@ -19,30 +19,7 @@ public extension TypeSystem {
         case let .any(nullability):
             return "Any\(nullabilitySuffix(nullability))"
         case let .primitive(primitive, nullability):
-            let base = switch primitive {
-            case .boolean:
-                "Boolean"
-            case .char:
-                "Char"
-            case .int:
-                "Int"
-            case .long:
-                "Long"
-            case .uint:
-                "UInt"
-            case .ulong:
-                "ULong"
-            case .ubyte:
-                "UByte"
-            case .ushort:
-                "UShort"
-            case .float:
-                "Float"
-            case .double:
-                "Double"
-            case .string:
-                "String"
-            }
+            let base = primitive.kotlinName
             return "\(base)\(nullabilitySuffix(nullability))"
         case let .classType(classType):
             let args = if classType.args.isEmpty {

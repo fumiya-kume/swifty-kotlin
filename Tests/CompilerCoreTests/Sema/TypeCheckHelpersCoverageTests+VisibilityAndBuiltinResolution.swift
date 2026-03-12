@@ -164,10 +164,29 @@ extension TypeCheckHelpersCoverageTests {
         let fixture = makeHelpersFixture()
         let helpers = TypeCheckHelpers()
 
-        XCTAssertEqual(helpers.resolveBuiltinTypeName("Int", types: fixture.types), fixture.types.intType)
-        XCTAssertEqual(helpers.resolveBuiltinTypeName("Any", nullability: .nullable, types: fixture.types), fixture.types.nullableAnyType)
-        XCTAssertEqual(helpers.resolveBuiltinTypeName("Nothing", nullability: .nullable, types: fixture.types), fixture.types.nullableNothingType)
-        XCTAssertNil(helpers.resolveBuiltinTypeName("Unknown", types: fixture.types))
+        XCTAssertEqual(
+            helpers.resolveBuiltinTypeName(fixture.interner.intern("Int"), types: fixture.types, interner: fixture.interner),
+            fixture.types.intType
+        )
+        XCTAssertEqual(
+            helpers.resolveBuiltinTypeName(
+                fixture.interner.intern("Any"),
+                nullability: .nullable,
+                types: fixture.types,
+                interner: fixture.interner
+            ),
+            fixture.types.nullableAnyType
+        )
+        XCTAssertEqual(
+            helpers.resolveBuiltinTypeName(
+                fixture.interner.intern("Nothing"),
+                nullability: .nullable,
+                types: fixture.types,
+                interner: fixture.interner
+            ),
+            fixture.types.nullableNothingType
+        )
+        XCTAssertNil(helpers.resolveBuiltinTypeName(fixture.interner.intern("Unknown"), types: fixture.types, interner: fixture.interner))
 
         let intRef = fixture.astArena.appendTypeRef(
             .named(path: [fixture.interner.intern("Int")], args: [], nullable: false)

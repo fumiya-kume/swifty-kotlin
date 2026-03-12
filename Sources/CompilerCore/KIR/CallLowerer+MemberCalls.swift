@@ -83,6 +83,7 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
+        "getOrDefault", "getOrElse",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
@@ -1578,6 +1579,7 @@ extension CallLowerer {
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
+            "getOrElse",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
         ].contains(interner.resolve(calleeName))
@@ -2289,6 +2291,14 @@ extension CallLowerer {
         ) {
             return collectionProperty
         }
+        if let mapMember = unresolvedMapMemberCallee(
+            memberName: fallbackName,
+            receiverType: receiverType,
+            sema: sema,
+            interner: interner
+        ) {
+            return mapMember
+        }
         if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
             memberName: fallbackName,
             receiverExpr: receiverExpr,
@@ -2456,6 +2466,29 @@ extension CallLowerer {
         }
 
         return nil
+    }
+
+    private func unresolvedMapMemberCallee(
+        memberName: String,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> InternedString? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              knownNames.isMapLikeSymbol(symbol)
+        else {
+            return nil
+        }
+        switch memberName {
+        case "getOrDefault":
+            return interner.intern("kk_map_getOrDefault")
+        case "getOrElse":
+            return interner.intern("kk_map_getOrElse")
+        default:
+            return nil
+        }
     }
 
     // MARK: - Member Assignment

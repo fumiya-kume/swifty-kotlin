@@ -110,19 +110,14 @@ public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_map_map")
 public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
-    }
+    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     mapped.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeListBox(elements: []))
-        }
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
@@ -130,9 +125,7 @@ public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
 
 @_cdecl("kk_map_filter")
 public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-    }
+    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filteredKeys: [Int] = []
     var filteredValues: [Int] = []
@@ -141,10 +134,7 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
         if maybeUnbox(result) != 0 {
             filteredKeys.append(key)
             filteredValues.append(value)
@@ -153,21 +143,31 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
 }
 
+@_cdecl("kk_map_getOrElse")
+public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let map = runtimeMapBox(from: mapRaw) {
+        for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+            if idx < map.values.count { return map.values[idx] }
+            break
+        }
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    return result
+}
+
 @_cdecl("kk_map_mapValues")
 public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-    }
+    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mappedValues: [Int] = []
     mappedValues.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
         mappedValues.append(maybeUnbox(result))
     }
     let normalized = runtimeNormalizeMapEntries(keys: map.keys, values: mappedValues)
@@ -176,19 +176,14 @@ public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
 
 @_cdecl("kk_map_mapKeys")
 public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-    }
+    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mappedKeys: [Int] = []
     mappedKeys.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
         mappedKeys.append(maybeUnbox(result))
     }
     let normalized = runtimeNormalizeMapEntries(keys: mappedKeys, values: map.values)
@@ -197,9 +192,7 @@ public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_map_toList")
 public func kk_map_toList(_ mapRaw: Int) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
-    }
+    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
     var pairs: [Int] = []
     pairs.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {

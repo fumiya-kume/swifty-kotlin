@@ -34,6 +34,7 @@ public final class CompilationContext: @unchecked Sendable {
     public let sourceManager: SourceManager
     public let diagnostics: DiagnosticEngine
     public let interner: StringInterner
+    public lazy var builtinNames: BuiltinTypeNames = BuiltinTypeNames(interner: interner)
 
     public internal(set) var tokens: [Token] = []
     public internal(set) var tokensByFile: [(FileID, [Token])] = []

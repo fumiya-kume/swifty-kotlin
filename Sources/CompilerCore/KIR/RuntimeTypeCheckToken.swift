@@ -33,25 +33,29 @@ enum RuntimeTypeCheckToken {
         return token
     }
 
-    static func encodeBuiltinTypeName(_ name: String, nullable: Bool) -> Int64? {
+    static func encodeBuiltinTypeName(
+        _ name: InternedString,
+        nullable: Bool,
+        builtinNames: BuiltinTypeNames
+    ) -> Int64? {
         switch name {
-        case "Any":
+        case builtinNames.any:
             encode(base: anyBase, nullable: nullable)
-        case "String":
+        case builtinNames.string:
             encode(base: stringBase, nullable: nullable)
-        case "Int":
+        case builtinNames.int:
             encode(base: intBase, nullable: nullable)
-        case "UInt":
+        case builtinNames.uint:
             encode(base: uintBase, nullable: nullable)
-        case "ULong":
+        case builtinNames.ulong:
             encode(base: ulongBase, nullable: nullable)
-        case "UByte":
+        case builtinNames.ubyte:
             encode(base: ubyteBase, nullable: nullable)
-        case "UShort":
+        case builtinNames.ushort:
             encode(base: ushortBase, nullable: nullable)
-        case "Boolean":
+        case builtinNames.boolean:
             encode(base: booleanBase, nullable: nullable)
-        case "Nothing":
+        case builtinNames.nothing:
             nullable ? nullBase : unknownBase
         default:
             nil
@@ -96,27 +100,27 @@ enum RuntimeTypeCheckToken {
         case .any:
             return "Any"
         case .primitive(.string, _):
-            return "String"
+            return PrimitiveType.string.kotlinName
         case .primitive(.int, _):
-            return "Int"
+            return PrimitiveType.int.kotlinName
         case .primitive(.long, _):
-            return "Long"
+            return PrimitiveType.long.kotlinName
         case .primitive(.uint, _):
-            return "UInt"
+            return PrimitiveType.uint.kotlinName
         case .primitive(.ulong, _):
-            return "ULong"
+            return PrimitiveType.ulong.kotlinName
         case .primitive(.ubyte, _):
-            return "UByte"
+            return PrimitiveType.ubyte.kotlinName
         case .primitive(.ushort, _):
-            return "UShort"
+            return PrimitiveType.ushort.kotlinName
         case .primitive(.boolean, _):
-            return "Boolean"
+            return PrimitiveType.boolean.kotlinName
         case .primitive(.char, _):
-            return "Char"
+            return PrimitiveType.char.kotlinName
         case .primitive(.float, _):
-            return "Float"
+            return PrimitiveType.float.kotlinName
         case .primitive(.double, _):
-            return "Double"
+            return PrimitiveType.double.kotlinName
         case .nothing:
             return "Nothing"
         case let .classType(classType):

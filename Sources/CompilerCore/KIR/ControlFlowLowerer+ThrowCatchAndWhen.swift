@@ -46,7 +46,7 @@ extension ControlFlowLowerer {
         guard let typeName else {
             return sema.types.anyType
         }
-        if let builtin = KnownCompilerNames(interner: interner).builtinType(named: typeName, types: sema.types) {
+        if let builtin = BuiltinTypeNames(interner: interner).resolveBuiltinType(typeName, types: sema.types) {
             return builtin
         }
         let candidates = sema.symbols.lookupAll(fqName: [typeName])

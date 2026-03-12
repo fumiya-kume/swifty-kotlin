@@ -212,8 +212,12 @@ extension DataFlowSemaPhase {
             }
             // Resolve built-in/primitive type names that don't have symbol table entries
             if path.count == 1 {
-                let name = interner.resolve(path[0])
-                if let builtinType = resolveBuiltinTypeNameForInheritance(name, nullability: nullability, types: types) {
+                if let builtinType = resolveBuiltinTypeNameForInheritance(
+                    path[0],
+                    interner: interner,
+                    nullability: nullability,
+                    types: types
+                ) {
                     return builtinType
                 }
             }
@@ -257,26 +261,19 @@ extension DataFlowSemaPhase {
         )))
     }
 
-    private func resolveBuiltinTypeNameForInheritance(_ name: String, nullability: Nullability, types: TypeSystem) -> TypeID? {
-        switch name {
-        case "Byte": types.make(.primitive(.int, nullability))
-        case "Short": types.make(.primitive(.int, nullability))
-        case "Int": types.make(.primitive(.int, nullability))
-        case "Long": types.make(.primitive(.long, nullability))
-        case "Float": types.make(.primitive(.float, nullability))
-        case "Double": types.make(.primitive(.double, nullability))
-        case "Char": types.make(.primitive(.char, nullability))
-        case "Boolean": types.make(.primitive(.boolean, nullability))
-        case "String": types.make(.primitive(.string, nullability))
-        case "UInt": types.make(.primitive(.uint, nullability))
-        case "ULong": types.make(.primitive(.ulong, nullability))
-        case "UByte": types.make(.primitive(.ubyte, nullability))
-        case "UShort": types.make(.primitive(.ushort, nullability))
-        case "Any": types.withNullability(nullability, for: types.anyType)
-        case "Unit": nullability == .nullable ? types.nullableAnyType : types.unitType
-        case "Nothing": types.withNullability(nullability, for: types.nothingType)
-        default: nil
+    private func resolveBuiltinTypeNameForInheritance(
+        _ name: InternedString,
+        interner: StringInterner,
+        nullability: Nullability,
+        types: TypeSystem
+    ) -> TypeID? {
+        if let builtinType = BuiltinTypeNames(interner: interner).resolveBuiltinType(name, nullability: nullability, types: types) {
+            return builtinType
         }
+        if name == interner.intern("Byte") || name == interner.intern("Short") {
+            return types.make(.primitive(.int, nullability))
+        }
+        return nil
     }
 
     func isNominalTypeSymbol(_ kind: SymbolKind) -> Bool {

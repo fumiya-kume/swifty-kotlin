@@ -2237,6 +2237,29 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .inlineFunction]
         )
 
+        registerMember(
+            name: "getOrDefault",
+            externalLinkName: "kk_map_getOrDefault",
+            parameterTypes: [keyType, valueType],
+            returnType: valueType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+        )
+
+        let getOrElseLambdaType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: valueType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerMember(
+            name: "getOrElse",
+            externalLinkName: "kk_map_getOrElse",
+            parameterTypes: [keyType, getOrElseLambdaType],
+            returnType: valueType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+
         if let listSymbol {
             let toListType = types.make(.classType(ClassType(
                 classSymbol: listSymbol,
