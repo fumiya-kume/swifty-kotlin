@@ -1398,6 +1398,13 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        registerMutableListAddAtMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListRemoveAtMember(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
@@ -1441,7 +1448,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic, .operatorFunction]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: mlSetSymbol)
-        symbols.setExternalLinkName("kk_array_set", for: mlSetSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_set", for: mlSetSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: mlReceiverType,
@@ -1486,6 +1493,45 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [mlTypeParamType],
                 returnType: types.booleanType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// Register `fun add(index: Int, element: E): Unit` on MutableList (insert at index).
+    private func registerMutableListAddAtMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("add")
+        let memberFQName = mutableListFQName + [memberName]
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_add_at", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [types.intType, mlTypeParamType],
+                returnType: types.unitType,
                 typeParameterSymbols: [mlTypeParamSymbol],
                 classTypeParameterCount: 1
             ),

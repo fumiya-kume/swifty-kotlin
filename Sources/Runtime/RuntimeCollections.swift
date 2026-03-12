@@ -218,6 +218,28 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_mutable_list_add_at")
+public func kk_mutable_list_add_at(_ listRaw: Int, _ index: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return 0
+    }
+    let clampedIndex = max(0, min(index, list.elements.count))
+    list.elements.insert(element, at: clampedIndex)
+    return 0
+}
+
+@_cdecl("kk_mutable_list_set")
+public func kk_mutable_list_set(_ listRaw: Int, _ index: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          list.elements.indices.contains(index)
+    else {
+        return 0
+    }
+    let old = list.elements[index]
+    list.elements[index] = element
+    return old
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")
