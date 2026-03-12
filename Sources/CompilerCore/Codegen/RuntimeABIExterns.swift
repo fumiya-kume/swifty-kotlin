@@ -348,6 +348,66 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-140
+    public static let kk_string_get = ExternDecl(
+        name: "kk_string_get",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-141
+    public static let kk_string_compareTo_member = ExternDecl(
+        name: "kk_string_compareTo_member",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_compareToIgnoreCase = ExternDecl(
+        name: "kk_string_compareToIgnoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-142
+    public static let kk_string_toBoolean = ExternDecl(
+        name: "kk_string_toBoolean",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toBooleanStrict = ExternDecl(
+        name: "kk_string_toBooleanStrict",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-143
+    public static let kk_string_lines = ExternDecl(
+        name: "kk_string_lines",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-144
+    public static let kk_string_trimStart = ExternDecl(
+        name: "kk_string_trimStart",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_trimEnd = ExternDecl(
+        name: "kk_string_trimEnd",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-145
+    public static let kk_string_toByteArray = ExternDecl(
+        name: "kk_string_toByteArray",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -1282,6 +1342,15 @@ public enum RuntimeABIExterns {
             kk_string_toDoubleOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
+            kk_string_get,
+            kk_string_compareTo_member,
+            kk_string_compareToIgnoreCase,
+            kk_string_toBoolean,
+            kk_string_toBooleanStrict,
+            kk_string_lines,
+            kk_string_trimStart,
+            kk_string_trimEnd,
+            kk_string_toByteArray,
             kk_char_isDigit,
             kk_char_isLetter,
             kk_char_isLetterOrDigit,

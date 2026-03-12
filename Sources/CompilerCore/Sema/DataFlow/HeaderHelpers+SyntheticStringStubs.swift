@@ -477,6 +477,143 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-140: String.get(Int): Char ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "get",
+            externalLinkName: "kk_string_get",
+            receiverType: stringType,
+            parameters: [
+                ("index", intType, false, false),
+            ],
+            returnType: charType,
+            flags: [.synthetic, .operatorFunction],
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-141: String.compareTo ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "compareTo",
+            externalLinkName: "kk_string_compareTo_member",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "compareTo",
+            externalLinkName: "kk_string_compareToIgnoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "toBoolean",
+            externalLinkName: "kk_string_toBoolean",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toBooleanStrict",
+            externalLinkName: "kk_string_toBooleanStrict",
+            receiverType: stringType,
+            parameters: [],
+            returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-143: String.lines ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "lines",
+            externalLinkName: "kk_string_lines",
+            receiverType: stringType,
+            parameters: [],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-144: String.trimStart / trimEnd ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "trimStart",
+            externalLinkName: "kk_string_trimStart",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "trimEnd",
+            externalLinkName: "kk_string_trimEnd",
+            receiverType: stringType,
+            parameters: [],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-145: String.toByteArray / encodeToByteArray ---
+
+        let listIntType = makeListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: intType
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toByteArray",
+            externalLinkName: "kk_string_toByteArray",
+            receiverType: stringType,
+            parameters: [],
+            returnType: listIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "encodeToByteArray",
+            externalLinkName: "kk_string_toByteArray",
+            receiverType: stringType,
+            parameters: [],
+            returnType: listIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

@@ -1405,10 +1405,26 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.double, .nonNull))
                     case "toDoubleOrNull":
                         sema.types.make(.primitive(.double, .nullable))
-                    case "reversed":
+                    case "reversed", "trimStart", "trimEnd":
                         sema.types.stringType
                     case "toList", "toCharArray":
                         listCharType
+                    case "toBoolean", "toBooleanStrict":
+                        sema.types.make(.primitive(.boolean, .nonNull))
+                    case "lines":
+                        makeSyntheticListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.stringType
+                        )
+                    case "toByteArray", "encodeToByteArray":
+                        makeSyntheticListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.intType
+                        )
                     default:
                         nil
                     }
@@ -1434,7 +1450,7 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "split":
                         sema.types.anyType
-                    case "indexOf", "lastIndexOf":
+                    case "indexOf", "lastIndexOf", "compareTo":
                         sema.types.make(.primitive(.int, .nonNull))
                     default:
                         nil
@@ -1458,6 +1474,8 @@ extension CallTypeChecker {
                     let resultType: TypeID? = switch calleeStr {
                     case "repeat", "drop", "take", "takeLast", "dropLast":
                         sema.types.stringType
+                    case "get":
+                        sema.types.make(.primitive(.char, .nonNull))
                     default:
                         nil
                     }
@@ -1483,6 +1501,19 @@ extension CallTypeChecker {
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
+                }
+            }
+            // String stdlib: 2-arg compareTo(String, Boolean) (STDLIB-141)
+            if args.count == 2, interner.resolve(calleeName) == "compareTo" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    let finalType = safeCall
+                        ? sema.types.makeNullable(sema.types.intType)
+                        : sema.types.intType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
                 }
             }
             // String stdlib: 2-arg methods (STDLIB-006)

@@ -356,6 +356,118 @@ public func kk_string_trimMargin(_ strRaw: Int, _ marginPrefixRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeTrimMargin(source, marginPrefix: marginPrefix))
 }
 
+// MARK: - STDLIB-140 String.get(index)
+
+@_cdecl("kk_string_get")
+public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard indexRaw >= 0, indexRaw < scalars.count else {
+        runtimeSetThrown(
+            outThrown,
+            message: "StringIndexOutOfBoundsException: String index out of range: \(indexRaw)"
+        )
+        return 0
+    }
+    return kk_box_char(Int(scalars[indexRaw].value))
+}
+
+// MARK: - STDLIB-141 String.compareTo
+
+@_cdecl("kk_string_compareTo_member")
+public func kk_string_compareTo_member(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    if lhs < rhs { return -1 }
+    if lhs > rhs { return 1 }
+    return 0
+}
+
+@_cdecl("kk_string_compareToIgnoreCase")
+public func kk_string_compareToIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let lhs = runtimeStringFromRaw(strRaw) ?? ""
+    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    let ignoreCase = ignoreCaseRaw != 0
+    if ignoreCase {
+        let lhsLower = lhs.lowercased()
+        let rhsLower = rhs.lowercased()
+        if lhsLower < rhsLower { return -1 }
+        if lhsLower > rhsLower { return 1 }
+        return 0
+    }
+    if lhs < rhs { return -1 }
+    if lhs > rhs { return 1 }
+    return 0
+}
+
+// MARK: - STDLIB-142 String.toBoolean / toBooleanStrict
+
+@_cdecl("kk_string_toBoolean")
+public func kk_string_toBoolean(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    return kk_box_bool(source.lowercased() == "true" ? 1 : 0)
+}
+
+@_cdecl("kk_string_toBooleanStrict")
+public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    switch source {
+    case "true":
+        return kk_box_bool(1)
+    case "false":
+        return kk_box_bool(0)
+    default:
+        runtimeSetThrown(
+            outThrown,
+            message: "IllegalArgumentException: The string doesn't represent a boolean value: \(source)"
+        )
+        return 0
+    }
+}
+
+// MARK: - STDLIB-143 String.lines
+
+@_cdecl("kk_string_lines")
+public func kk_string_lines(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let normalized = source
+        .replacingOccurrences(of: "\r\n", with: "\n")
+        .replacingOccurrences(of: "\r", with: "\n")
+    let lines = normalized.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    return runtimeMakeStringListRaw(lines)
+}
+
+// MARK: - STDLIB-144 String.trimStart / trimEnd
+
+@_cdecl("kk_string_trimStart")
+public func kk_string_trimStart(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let trimmed = String(source.drop { $0.isWhitespace })
+    return runtimeMakeStringRaw(trimmed)
+}
+
+@_cdecl("kk_string_trimEnd")
+public func kk_string_trimEnd(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    var end = source.endIndex
+    while end > source.startIndex {
+        let prev = source.index(before: end)
+        guard source[prev].isWhitespace else { break }
+        end = prev
+    }
+    return runtimeMakeStringRaw(String(source[source.startIndex ..< end]))
+}
+
+// MARK: - STDLIB-145 String.toByteArray / encodeToByteArray
+
+@_cdecl("kk_string_toByteArray")
+public func kk_string_toByteArray(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let bytes = Array(source.utf8).map { Int($0) }
+    return runtimeMakeListRaw(bytes)
+}
+
 @_cdecl("kk_compare_any")
 public func kk_compare_any(_ lhsRaw: Int, _ rhsRaw: Int) -> Int {
     if lhsRaw == rhsRaw {
