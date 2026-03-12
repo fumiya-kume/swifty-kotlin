@@ -153,8 +153,7 @@ extension KIRLoweringDriver {
         body: inout KIRLoweringEmitContext,
         arena: KIRArena
     ) {
-        if let receiverBinding = ctx.activeImplicitReceiver()
-        {
+        if let receiverBinding = ctx.activeImplicitReceiver() {
             body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
             ctx.setLocalValue(receiverBinding.exprID, for: receiverBinding.symbol)
         }

@@ -105,8 +105,7 @@ extension KIRLoweringDriver {
             })
 
             var body: KIRLoweringEmitContext = [.beginBlock]
-            if let receiverBinding = ctx.activeImplicitReceiver()
-            {
+            if let receiverBinding = ctx.activeImplicitReceiver() {
                 body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
             }
 

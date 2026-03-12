@@ -1417,8 +1417,8 @@ extension ExprLowerer {
                     sema: sema
                 )
                 let calleeName: InternedString = if let chosen = memberCandidates.first,
-                    let linkName = sema.symbols.externalLinkName(for: chosen),
-                    !linkName.isEmpty
+                                                    let linkName = sema.symbols.externalLinkName(for: chosen),
+                                                    !linkName.isEmpty
                 {
                     interner.intern(linkName)
                 } else {

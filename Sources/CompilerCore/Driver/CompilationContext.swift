@@ -35,32 +35,32 @@ public final class CompilationContext: @unchecked Sendable {
     public let diagnostics: DiagnosticEngine
     public let interner: StringInterner
 
-    public private(set) var tokens: [Token] = []
-    public private(set) var tokensByFile: [(FileID, [Token])] = []
-    public private(set) var syntaxTree: SyntaxArena?
-    public private(set) var syntaxTreeRoot: NodeID = .init()
-    public private(set) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
-    public private(set) var ast: ASTModule?
-    public private(set) var sema: SemaModule?
-    public private(set) var kir: KIRModule?
-    public private(set) var generatedObjectPath: String?
-    public private(set) var generatedLLVMIRPath: String?
+    public internal(set) var tokens: [Token] = []
+    public internal(set) var tokensByFile: [(FileID, [Token])] = []
+    public internal(set) var syntaxTree: SyntaxArena?
+    public internal(set) var syntaxTreeRoot: NodeID = .init()
+    public internal(set) var syntaxTrees: [(FileID, SyntaxArena, NodeID)] = []
+    public internal(set) var ast: ASTModule?
+    public internal(set) var sema: SemaModule?
+    public internal(set) var kir: KIRModule?
+    public internal(set) var generatedObjectPath: String?
+    public internal(set) var generatedLLVMIRPath: String?
 
     /// Per-file intermediate representations keyed by FileID.
     /// Populated unconditionally by LexPhase, ParsePhase, and BuildASTPhase
     /// to track per-file tokens, CST, and AST results.
-    public private(set) var fileIRs: [FileID: FileIR] = [:]
+    public internal(set) var fileIRs: [FileID: FileIR] = [:]
 
     /// Incremental compilation cache (non-nil when incremental mode is active).
-    public private(set) var incrementalCache: IncrementalCompilationCache?
+    public internal(set) var incrementalCache: IncrementalCompilationCache?
 
     /// Set of file paths that need recompilation in incremental mode.
     /// `nil` means full build (all files).
-    public private(set) var incrementalRecompileSet: Set<String>?
+    public internal(set) var incrementalRecompileSet: Set<String>?
 
     /// Phase timer for recording per-phase wall-clock durations.
     /// Non-nil when the `time-phases` frontend flag is active.
-    public private(set) var phaseTimer: PhaseTimer?
+    public internal(set) var phaseTimer: PhaseTimer?
 
     public init(
         options: CompilerOptions,
@@ -95,7 +95,7 @@ public final class CompilationContext: @unchecked Sendable {
     }
 
     public func storeLexResults(allTokens: [Token], tokensByFile: [(FileID, [Token])]) {
-        self.tokens = allTokens
+        tokens = allTokens
         self.tokensByFile = tokensByFile
     }
 

@@ -115,12 +115,12 @@ public struct KIRFunction: Sendable {
     public let name: InternedString
     public let params: [KIRParameter]
     public let returnType: TypeID
-    public private(set) var body: [KIRInstruction]
+    public internal(set) var body: [KIRInstruction]
     public let isSuspend: Bool
     public let isInline: Bool
     public let isTailrec: Bool
     public let sourceRange: SourceRange? // function-level source location
-    public private(set) var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
+    public internal(set) var instructionLocations: [SourceRange?] // per-instruction source locations, parallel to body
 
     public init(
         symbol: SymbolID, name: InternedString, params: [KIRParameter], returnType: TypeID,

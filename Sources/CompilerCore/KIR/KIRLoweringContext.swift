@@ -7,25 +7,25 @@ import Foundation
 final class KIRLoweringContext {
     // MARK: - Scope State (saved/restored per function/lambda)
 
-    private(set) var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
+    var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
     /// Lambda param name → symbol for resolving nameRef when identifierSymbols is unbound
     /// (e.g. collection HOF lambdas inferred via fallback).
-    private(set) var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
-    private(set) var currentImplicitReceiverExprID: KIRExprID?
-    private(set) var currentImplicitReceiverSymbol: SymbolID?
-    private(set) var currentFunctionSymbol: SymbolID?
-    private(set) var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
-    private(set) var nextLoopLabel: Int32 = 10000
+    var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
+    var currentImplicitReceiverExprID: KIRExprID?
+    var currentImplicitReceiverSymbol: SymbolID?
+    var currentFunctionSymbol: SymbolID?
+    var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
+    var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
 
     private var functionDefaultArgumentsBySymbol: [SymbolID: [ExprID?]] = [:]
-    private var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
-    private var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
-    private var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
-    private var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
-    private var emittedObjectLiteralExprIDs: Set<ExprID> = []
-    private var nextSyntheticLambdaSymbolRawValue: Int32 = 1
+    var pendingGeneratedCallableDeclIDs: [KIRDeclID] = []
+    var callableValueInfoByExprID: [KIRExprID: KIRCallableValueInfo] = [:]
+    var syntheticLambdaSymbolsByExprID: [ExprID: SymbolID] = [:]
+    var syntheticObjectLiteralSymbolsByExprID: [ExprID: (nominalSymbol: SymbolID, constructorSymbol: SymbolID, constructorName: InternedString)] = [:]
+    var emittedObjectLiteralExprIDs: Set<ExprID> = []
+    var nextSyntheticLambdaSymbolRawValue: Int32 = 1
 
     /// Companion object initializer functions registered during class lowering.
     /// These are called in order during module initialization.

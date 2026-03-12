@@ -81,8 +81,7 @@ extension MemberLowerer {
         }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverBinding = driver.ctx.activeImplicitReceiver()
-        {
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
             body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
 
@@ -337,8 +336,7 @@ extension MemberLowerer {
         }
 
         var body: KIRLoweringEmitContext = [.beginBlock]
-        if let receiverBinding = driver.ctx.activeImplicitReceiver()
-        {
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
             body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
         }
 

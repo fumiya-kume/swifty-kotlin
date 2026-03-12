@@ -60,15 +60,29 @@ public func kk_list_get(_ listRaw: Int, _ index: Int) -> Int {
 
 // STDLIB-183: List destructuring component1() ~ component5()
 @_cdecl("kk_list_component1")
-public func kk_list_component1(_ listRaw: Int) -> Int { kk_list_get(listRaw, 0) }
+public func kk_list_component1(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 0)
+}
+
 @_cdecl("kk_list_component2")
-public func kk_list_component2(_ listRaw: Int) -> Int { kk_list_get(listRaw, 1) }
+public func kk_list_component2(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 1)
+}
+
 @_cdecl("kk_list_component3")
-public func kk_list_component3(_ listRaw: Int) -> Int { kk_list_get(listRaw, 2) }
+public func kk_list_component3(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 2)
+}
+
 @_cdecl("kk_list_component4")
-public func kk_list_component4(_ listRaw: Int) -> Int { kk_list_get(listRaw, 3) }
+public func kk_list_component4(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 3)
+}
+
 @_cdecl("kk_list_component5")
-public func kk_list_component5(_ listRaw: Int) -> Int { kk_list_get(listRaw, 4) }
+public func kk_list_component5(_ listRaw: Int) -> Int {
+    kk_list_get(listRaw, 4)
+}
 
 @_cdecl("kk_list_contains")
 public func kk_list_contains(_ listRaw: Int, _ element: Int) -> Int {

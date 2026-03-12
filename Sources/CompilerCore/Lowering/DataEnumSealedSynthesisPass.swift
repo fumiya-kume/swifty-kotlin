@@ -105,13 +105,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             interner: ctx.interner
         )
         // valueOf lives on the companion (Color.valueOf) so use companion as owner
-        let valueOfOwner: SemanticSymbol
-        if let companionSymbol = sema.symbols.companionObjectSymbol(for: nominalSymbol.id),
-           let companionSym = sema.symbols.symbol(companionSymbol)
+        let valueOfOwner: SemanticSymbol = if let companionSymbol = sema.symbols.companionObjectSymbol(for: nominalSymbol.id),
+                                              let companionSym = sema.symbols.symbol(companionSymbol)
         {
-            valueOfOwner = companionSym
+            companionSym
         } else {
-            valueOfOwner = nominalSymbol
+            nominalSymbol
         }
         appendSyntheticEnumValueOfIfNeeded(
             name: ctx.interner.intern("valueOf"),
@@ -528,12 +527,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         var labelCounter: Int32 = 6000
         let endLabel = labelCounter
         labelCounter += 1
-        let checkLabels = (0..<entries.count).map { _ in
+        let checkLabels = (0 ..< entries.count).map { _ in
             let L = labelCounter
             labelCounter += 1
             return L
         }
-        let matchLabels = (0..<entries.count).map { _ in
+        let matchLabels = (0 ..< entries.count).map { _ in
             let L = labelCounter
             labelCounter += 1
             return L

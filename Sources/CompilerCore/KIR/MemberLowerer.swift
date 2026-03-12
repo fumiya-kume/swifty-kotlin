@@ -406,8 +406,7 @@ final class MemberLowerer {
         body: inout [KIRInstruction],
         arena: KIRArena
     ) {
-        if let receiverBinding = driver.ctx.activeImplicitReceiver()
-        {
+        if let receiverBinding = driver.ctx.activeImplicitReceiver() {
             body.append(.constValue(result: receiverBinding.exprID, value: .symbolRef(receiverBinding.symbol)))
             driver.ctx.setLocalValue(receiverBinding.exprID, for: receiverBinding.symbol)
         }
