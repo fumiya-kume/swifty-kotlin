@@ -2404,10 +2404,18 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
+        let getOrPutLambdaType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: valueType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
         let members: [(name: String, params: [TypeID], ret: TypeID, external: String, flags: SymbolFlags)] = [
             ("set", [keyType, valueType], types.unitType, "kk_mutable_map_put", [.synthetic, .operatorFunction]),
             ("put", [keyType, valueType], types.makeNullable(valueType), "kk_mutable_map_put", [.synthetic]),
             ("remove", [keyType], types.makeNullable(valueType), "kk_mutable_map_remove", [.synthetic]),
+            ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
         ]
 
         for member in members {
