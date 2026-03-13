@@ -33,6 +33,7 @@ struct CollectionLiteralLookupTables {
     let kkSetOfName: InternedString
     let kkSetSizeName: InternedString
     let kkSetContainsName: InternedString
+    let kkSetContainsAllName: InternedString
     let kkSetIsEmptyName: InternedString
     let kkSetToStringName: InternedString
     let kkStringSplitName: InternedString
@@ -181,6 +182,7 @@ struct CollectionLiteralLookupTables {
     let sizeName: InternedString
     let getName: InternedString
     let containsName: InternedString
+    let containsAllName: InternedString
     let containsKeyName: InternedString
     let isEmptyName: InternedString
     let countName: InternedString
@@ -326,6 +328,7 @@ struct CollectionLiteralLookupTables {
         kkSetOfName = interner.intern("kk_set_of")
         kkSetSizeName = interner.intern("kk_set_size")
         kkSetContainsName = interner.intern("kk_set_contains")
+        kkSetContainsAllName = interner.intern("kk_set_containsAll")
         kkSetIsEmptyName = interner.intern("kk_set_is_empty")
         kkSetToStringName = interner.intern("kk_set_to_string")
         kkStringSplitName = interner.intern("kk_string_split")
@@ -465,6 +468,7 @@ struct CollectionLiteralLookupTables {
         sizeName = interner.intern("size")
         getName = interner.intern("get")
         containsName = interner.intern("contains")
+        containsAllName = interner.intern("containsAll")
         containsKeyName = interner.intern("containsKey")
         isEmptyName = interner.intern("isEmpty")
         countName = interner.intern("count")

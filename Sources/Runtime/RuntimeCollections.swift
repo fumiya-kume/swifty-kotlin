@@ -253,6 +253,28 @@ public func kk_set_is_empty(_ setRaw: Int) -> Int {
     return kk_box_bool(set.elements.isEmpty ? 1 : 0)
 }
 
+
+@_cdecl("kk_set_containsAll")
+public func kk_set_containsAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    let otherElements: [Int]
+    if let otherList = runtimeListBox(from: collectionRaw) {
+        otherElements = otherList.elements
+    } else if let otherSet = runtimeSetBox(from: collectionRaw) {
+        otherElements = otherSet.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    for element in otherElements {
+        if !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            return kk_box_bool(0)
+        }
+    }
+    return kk_box_bool(1)
+}
+
 @_cdecl("kk_set_to_string")
 public func kk_set_to_string(_ setRaw: Int) -> UnsafeMutableRawPointer {
     guard let set = runtimeSetBox(from: setRaw) else {

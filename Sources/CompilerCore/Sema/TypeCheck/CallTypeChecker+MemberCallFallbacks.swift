@@ -291,6 +291,7 @@ extension CallTypeChecker {
             knownNames.isEmpty,
             interner.intern("get"),
             interner.intern("contains"),
+            interner.intern("containsAll"),
             interner.intern("first"),
             interner.intern("last"),
             interner.intern("indexOf"),
@@ -392,7 +393,7 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
-        case interner.intern("get"), interner.intern("contains"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
+        case interner.intern("get"), interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
@@ -437,7 +438,8 @@ extension CallTypeChecker {
         }
 
         let boolReturningMembers: Set = [
-            knownNames.isEmpty, interner.intern("contains"), interner.intern("containsKey"),
+            knownNames.isEmpty, interner.intern("contains"), interner.intern("containsAll"),
+            interner.intern("containsKey"),
             interner.intern("any"), interner.intern("none"), interner.intern("all")
         ]
         if boolReturningMembers.contains(memberName) {
