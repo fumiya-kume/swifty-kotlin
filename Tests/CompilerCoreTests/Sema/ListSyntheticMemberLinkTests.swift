@@ -569,6 +569,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             )
         }
     }
+
     /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
     /// The synthetic List type uses .out projection; variance relaxation must apply.
     func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {
