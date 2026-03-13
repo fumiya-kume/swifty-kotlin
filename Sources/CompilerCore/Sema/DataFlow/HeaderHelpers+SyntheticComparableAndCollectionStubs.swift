@@ -446,9 +446,15 @@ extension DataFlowSemaPhase {
             visibility: .private,
             flags: []
         )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: collectionInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: collectionInterfaceSymbol)
         symbols.setDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
+        types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
         return collectionInterfaceSymbol
     }
 
@@ -563,6 +569,9 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([listTypeParamSymbol], for: listInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: listInterfaceSymbol)
         symbols.setDirectSupertypes([collectionInterfaceSymbol], for: listInterfaceSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: listInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
@@ -1383,8 +1392,8 @@ extension DataFlowSemaPhase {
         )))
         types.setNominalTypeParameterSymbols([mlTypeParamSymbol], for: mutableListInterfaceSymbol)
         types.setNominalTypeParameterVariances([.invariant], for: mutableListInterfaceSymbol)
-        symbols.setSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
-        types.setNominalSupertypeTypeArgs([.invariant(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(mlTypeParamType)], for: mutableListInterfaceSymbol, supertype: listInterfaceSymbol)
 
         registerMutableListSetOperator(
             symbols: symbols, types: types, interner: interner,
@@ -1455,7 +1464,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: mlSetFQName) == nil else { return }
         let mlReceiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let mlSetSymbol = symbols.define(
@@ -1494,7 +1503,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1533,7 +1542,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1572,7 +1581,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(

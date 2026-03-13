@@ -173,6 +173,115 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListSortMembersUseRuntimeExternalLinks() throws {
+        let source = """
+        fun mutate(values: MutableList<Int>) {
+            values.sort()
+            values.sortBy { it }
+            values.sortByDescending { it }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedExternalLinks = [
+                "sort": "kk_mutable_list_sort",
+                "sortBy": "kk_mutable_list_sortBy",
+                "sortByDescending": "kk_mutable_list_sortByDescending",
+            ]
+
+            for (memberName, externalLinkName) in expectedExternalLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
+    func testMutableListBulkCollectionMembersAcceptCollectionOfSameElementType() throws {
+        let source = """
+        fun mutate(values: MutableList<Int>) {
+            values.addAll(listOf(1, 2))
+            values.removeAll(listOf(3, 4))
+            values.retainAll(listOf(5, 6))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedExternalLinks = [
+                "addAll": "kk_mutable_list_addAll",
+                "removeAll": "kk_mutable_list_removeAll",
+                "retainAll": "kk_mutable_list_retainAll",
+            ]
+
+            for (memberName, externalLinkName) in expectedExternalLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
+    func testListSortMembersRemainUnavailableOnImmutableList() throws {
+        let source = """
+        fun mutate(values: List<Int>) {
+            values.sort()
+            values.sortBy { it }
+            values.sortByDescending { it }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            for memberName in ["sort", "sortBy", "sortByDescending"] {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                XCTAssertNil(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected immutable List.\(memberName) to remain unresolved"
+                )
+            }
+
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected diagnostics for immutable List.sort* calls"
+            )
+        }
+    }
+
     /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
     /// The synthetic List type uses .out projection; variance relaxation must apply.
     func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {
