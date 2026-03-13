@@ -111,6 +111,9 @@ struct KnownCompilerNames {
     let qualifiedName: InternedString
     let size: InternedString
     let isEmpty: InternedString
+    let getOrDefault: InternedString
+    let getOrElse: InternedString
+    let getOrPut: InternedString
     let regexCtor: InternedString
     let runBlocking: InternedString
     let launch: InternedString
@@ -199,6 +202,9 @@ struct KnownCompilerNames {
         qualifiedName = interner.intern("qualifiedName")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
+        getOrDefault = interner.intern("getOrDefault")
+        getOrElse = interner.intern("getOrElse")
+        getOrPut = interner.intern("getOrPut")
         regexCtor = interner.intern("Regex")
         runBlocking = interner.intern("runBlocking")
         launch = interner.intern("launch")
@@ -319,6 +325,10 @@ struct KnownCompilerNames {
         symbol.name == map || symbol.name == mutableMap
             || symbolMatches(symbol, fqName: kotlinCollectionsMapFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableMapFQName)
+    }
+
+    func isMutableMapSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == mutableMap || symbolMatches(symbol, fqName: kotlinCollectionsMutableMapFQName)
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

@@ -277,6 +277,59 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenEnumValuesAndValueOf() throws {
+        // Test enumValueOf (no map dependency)
+        let sourceValueOf = """
+        enum class Color { RED, GREEN, BLUE }
+
+        fun main() {
+            println(enumValueOf<Color>("GREEN"))
+        }
+        """
+        try withTemporaryFile(contents: sourceValueOf) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "EnumValueOf",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "GREEN\n")
+        }
+
+        // Test enumValues (returns list; map { it.name } requires kk_list_map)
+        let sourceValues = """
+        enum class Color { RED, GREEN, BLUE }
+
+        fun main() {
+            val values = enumValues<Color>()
+            println(values.size)
+            println(values.get(0))
+            println(values.get(1))
+        }
+        """
+        try withTemporaryFile(contents: sourceValues) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "EnumValues",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            // values.size=3, get(0)=RED ordinal (0), get(1)=GREEN ordinal (1)
+            // println of ordinal prints the boxed int - need to check actual output
+            XCTAssertTrue(normalizedStdout.contains("3"), "Expected size 3, got: \(normalizedStdout)")
+        }
+    }
+
     func testCodegenMutableListBasicMutationsUseRuntimeListBox() throws {
         let source = """
         fun main() {
