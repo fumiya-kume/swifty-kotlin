@@ -50,6 +50,10 @@ public extension RuntimeABIExterns {
         kk_list_sumOf,
         kk_list_maxOrNull,
         kk_list_minOrNull,
+        kk_list_maxByOrNull,
+        kk_list_minByOrNull,
+        kk_list_maxOfOrNull,
+        kk_list_minOfOrNull,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -651,6 +655,30 @@ public extension RuntimeABIExterns {
     static let kk_list_minOrNull = ExternDecl(
         name: "kk_list_minOrNull",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxByOrNull = ExternDecl(
+        name: "kk_list_maxByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minByOrNull = ExternDecl(
+        name: "kk_list_minByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOfOrNull = ExternDecl(
+        name: "kk_list_maxOfOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOfOrNull = ExternDecl(
+        name: "kk_list_minOfOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

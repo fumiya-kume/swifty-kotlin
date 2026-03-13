@@ -700,6 +700,8 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
+            || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+            || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
         else {
             return false
         }
@@ -716,6 +718,10 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
         case lookup.associateName: lookup.kkListAssociateName
+        case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
+        case lookup.minByOrNullName: lookup.kkListMinByOrNullName
+        case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
+        case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
         default: callee
         }
 

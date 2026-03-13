@@ -1069,6 +1069,10 @@ public extension RuntimeABISpec {
                 hofSpec("kk_list_sortedByDescending"),
                 hofSpec("kk_list_sortedWith"),
                 hofSpec("kk_list_partition"),
+                hofSpec("kk_list_maxByOrNull"),
+                hofSpec("kk_list_minByOrNull"),
+                hofSpec("kk_list_maxOfOrNull"),
+                hofSpec("kk_list_minOfOrNull"),
             ]
     }()
 }

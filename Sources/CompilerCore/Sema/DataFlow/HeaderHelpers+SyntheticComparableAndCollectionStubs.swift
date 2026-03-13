@@ -1060,6 +1060,47 @@ extension DataFlowSemaPhase {
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
+        // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
+        do {
+            let selectorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
+            func registerByOrNull(name: String, externalLinkName: String, returnType: TypeID) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [selectorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerByOrNull(name: "maxByOrNull", externalLinkName: "kk_list_maxByOrNull", returnType: nullableElementType)
+            registerByOrNull(name: "minByOrNull", externalLinkName: "kk_list_minByOrNull", returnType: nullableElementType)
+            registerByOrNull(name: "maxOfOrNull", externalLinkName: "kk_list_maxOfOrNull", returnType: types.make(.nullable(types.anyType)))
+            registerByOrNull(name: "minOfOrNull", externalLinkName: "kk_list_minOfOrNull", returnType: types.make(.nullable(types.anyType)))
+        }
+
         // random / randomOrNull (STDLIB-166)
         registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
         registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
