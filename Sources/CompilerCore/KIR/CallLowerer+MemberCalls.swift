@@ -2621,6 +2621,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_elementAtOrNull")
             case "getOrElse":
                 return interner.intern("kk_list_getOrElse")
+            case "subList":
+                return interner.intern("kk_list_subList")
             default:
                 break
             }
