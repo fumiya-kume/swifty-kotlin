@@ -8,9 +8,6 @@ private let selectIdentity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?
     value
 }
 
-private let selectModTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
-    value % 10
-}
 
 private let throwingSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
     outThrown?.pointee = 1
@@ -45,11 +42,11 @@ private let throwingComparator: @convention(c) (Int, Int, Int, UnsafeMutablePoin
 // MARK: - Helpers
 
 private func selectorPtr(_ fn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
-    unsafeBitCast(fn, to: Int.self)
+    Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
 }
 
 private func comparatorPtr(_ fn: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
-    unsafeBitCast(fn, to: Int.self)
+    Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
 }
 
 private func makeList(_ elements: [Int]) -> Int {

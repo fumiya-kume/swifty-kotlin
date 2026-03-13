@@ -474,7 +474,6 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
     guard let list = runtimeListBox(from: listRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var indexed: [(offset: Int, element: Int, key: Int)] = []
     indexed.reserveCapacity(list.elements.count)
     for elem in list.elements {

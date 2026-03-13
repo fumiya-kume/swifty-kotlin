@@ -336,14 +336,13 @@ public func kk_sequence_sortedBy(
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var elems: [Int] = []
     var keys: [Int] = []
     elems.reserveCapacity(elements.count)
     keys.reserveCapacity(elements.count)
     for elem in elements {
         var thrown = 0
-        let key = lambda(closureRaw, elem, &thrown)
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
             outThrown?.pointee = thrown
             return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
