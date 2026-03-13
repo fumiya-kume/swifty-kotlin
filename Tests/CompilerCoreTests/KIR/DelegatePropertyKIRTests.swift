@@ -294,6 +294,30 @@ final class DelegatePropertyKIRTests: XCTestCase {
         }
     }
 
+    func testDetectDelegateKindNotNullProducesNotNullCreate() throws {
+        let source = """
+        import kotlin.properties.Delegates
+        var x: String by Delegates.notNull()
+        fun main() {
+            x = "hello"
+            println(x)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_notNull_create"),
+                          "Delegates.notNull should be detected as notNull kind, got: \(callees)")
+            XCTAssertFalse(callees.contains("kk_custom_delegate_create"),
+                           "Delegates.notNull should not fall back to custom delegate create, got: \(callees)")
+        }
+    }
+
     // MARK: - End-to-End: Lazy Delegate Compilation
 
     func testLazyDelegateEndToEndCompilesToExecutable() throws {
@@ -321,6 +345,51 @@ final class DelegatePropertyKIRTests: XCTestCase {
 
             XCTAssertTrue(FileManager.default.fileExists(atPath: outputPath),
                           "Executable should be produced for lazy delegate program")
+        }
+    }
+
+    func testNotNullDelegateReadBeforeAssignmentTrapsWithHelpfulMessage() throws {
+        let source = """
+        import kotlin.properties.Delegates
+        var name: String by Delegates.notNull()
+        fun main() {
+            println(name)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let outputPath = FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString)
+                .path
+            defer { try? FileManager.default.removeItem(atPath: outputPath) }
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "NotNullTrapExec",
+                emit: .executable,
+                outputPath: outputPath
+            )
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+            try CodegenPhase().run(ctx)
+            try LinkPhase().run(ctx)
+
+            let process = Process()
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+            process.executableURL = URL(fileURLWithPath: outputPath)
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+
+            try process.run()
+            process.waitUntilExit()
+
+            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+
+            XCTAssertNotEqual(process.terminationStatus, 0, "Reading notNull before assignment should fail")
+            XCTAssertTrue(
+                stderr.contains("IllegalStateException: Property delegate must be assigned before being accessed."),
+                "Expected fatal error output to mention the uninitialized notNull delegate, got: \(stderr)"
+            )
         }
     }
 

@@ -94,6 +94,7 @@ jobs:
         continue-on-error: true
         env:
           DIFF_REPORT: ${{ runner.temp }}/diff_kotlinc_report.tsv
+          DIFF_PARALLEL: "0"
           DIFF_COMPILE_TIMEOUT: "120"
           DIFF_RUN_TIMEOUT: "30"
         run: bash Scripts/diff_kotlinc.sh --report "$DIFF_REPORT" Scripts/diff_cases
