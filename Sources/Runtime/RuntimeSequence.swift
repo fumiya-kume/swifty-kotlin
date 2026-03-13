@@ -334,7 +334,12 @@ public func kk_sequence_sorted(_ seqRaw: Int) -> Int {
 }
 
 @_cdecl("kk_sequence_sortedBy")
-public func kk_sequence_sortedBy(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+public func kk_sequence_sortedBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var elems: [Int] = []
@@ -345,14 +350,17 @@ public func kk_sequence_sortedBy(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int)
         var thrown = 0
         let key = lambda(closureRaw, elem, &thrown)
         if thrown != 0 {
+            outThrown?.pointee = thrown
             return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
         }
         elems.append(elem)
         keys.append(maybeUnbox(key))
     }
-    let indices = Array(elems.indices)
-    let sorted = indices.sorted { lhs, rhs in
-        if keys[lhs] != keys[rhs] { return keys[lhs] < keys[rhs] }
+    let sorted = elems.indices.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(keys[lhs], keys[rhs])
+        if comparison != 0 {
+            return comparison < 0
+        }
         return lhs < rhs
     }
     let seq = RuntimeSequenceBox(steps: [.source(elements: sorted.map { elems[$0] })])

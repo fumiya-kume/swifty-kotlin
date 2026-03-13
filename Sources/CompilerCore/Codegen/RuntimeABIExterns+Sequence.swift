@@ -124,7 +124,7 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_sortedBy = ExternDecl(
         name: "kk_sequence_sortedBy",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

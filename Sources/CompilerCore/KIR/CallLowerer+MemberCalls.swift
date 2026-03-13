@@ -724,54 +724,6 @@ extension CallLowerer {
             }
         }
 
-        // Any.toString(): String — no-arg fallback via kk_any_to_string (STDLIB-306)
-        if args.isEmpty, interner.resolve(calleeName) == "toString" {
-            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            let tag: Int64 = switch sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
-            case .primitive(.boolean, _): 2
-            case .primitive(.string, _): 3
-            default: 1
-            }
-            let intType = sema.types.make(.primitive(.int, .nonNull))
-            let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
-            instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_any_to_string"),
-                arguments: [loweredReceiverID, tagID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        }
-
-        // Any.hashCode(): Int — via kk_any_hashCode (STDLIB-306)
-        if args.isEmpty, interner.resolve(calleeName) == "hashCode" {
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_any_hashCode"),
-                arguments: [loweredReceiverID],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        }
-
-        // Any.equals(other: Any?): Boolean — via kk_any_equals (STDLIB-306)
-        if args.count == 1, interner.resolve(calleeName) == "equals" {
-            instructions.append(.call(
-                symbol: nil,
-                callee: interner.intern("kk_any_equals"),
-                arguments: [loweredReceiverID, loweredArgIDs[0]],
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
-            return result
-        }
-
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
         // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
@@ -1354,7 +1306,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
+                        canThrow: runtimeCallee == "kk_sequence_sortedBy",
                         thrownResult: nil
                     ))
                     return result
@@ -1390,7 +1342,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
+                        canThrow: runtimeCallee == "kk_sequence_sortedBy",
                         thrownResult: nil
                     ))
                     return result
@@ -2215,6 +2167,7 @@ extension CallLowerer {
             callArguments = []
         }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
+            || loweredCallee == interner.intern("kk_sequence_sortedBy")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,

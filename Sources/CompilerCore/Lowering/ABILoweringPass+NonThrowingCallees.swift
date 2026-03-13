@@ -320,7 +320,6 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),
             interner.intern("kk_sequence_sorted"),
-            interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sortedDescending"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
