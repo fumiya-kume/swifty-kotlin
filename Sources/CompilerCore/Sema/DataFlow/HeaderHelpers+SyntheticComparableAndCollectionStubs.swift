@@ -1524,7 +1524,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1563,7 +1563,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1602,7 +1602,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1642,7 +1642,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
@@ -1687,7 +1687,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
@@ -1732,7 +1732,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
