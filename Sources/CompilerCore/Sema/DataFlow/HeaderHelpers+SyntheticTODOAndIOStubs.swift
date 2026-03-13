@@ -120,6 +120,13 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticSequenceJoinToStringMember(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinSequencesPkg: kotlinSequencesPkg
+        )
+
         // --- kotlin.system package functions (STDLIB-131/132) ---
         let kotlinSystemPkg = ensureSyntheticPackage(
             path: [interner.intern("kotlin"), interner.intern("system")],
@@ -189,6 +196,107 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticSequenceJoinToStringMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinSequencesPkg: [InternedString]
+    ) {
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = sequenceFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sequenceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+
+        let memberName = interner.intern("joinToString")
+        let memberFQName = sequenceFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_sequence_joinToString", for: memberSymbol)
+
+        let parameters: [(name: String, type: TypeID, hasDefault: Bool)] = [
+            ("separator", types.stringType, true),
+            ("prefix", types.stringType, true),
+            ("postfix", types.stringType, true),
+        ]
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        var parameterDefaults: [Bool] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+            parameterDefaults.append(parameter.hasDefault)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: types.stringType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: parameterDefaults,
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
         )
     }
 

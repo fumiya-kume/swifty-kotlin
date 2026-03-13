@@ -64,6 +64,18 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(listElements(kk_sequence_to_list(sorted)), [])
     }
 
+    func testJoinToStringUsesSeparatorPrefixAndPostfix() {
+        let seq = makeSequence([1, 2, 3])
+        let renderedRaw = kk_sequence_joinToString(
+            seq,
+            runtimeTestStringHandle(":"),
+            runtimeTestStringHandle("["),
+            runtimeTestStringHandle("]")
+        )
+
+        XCTAssertEqual(extractString(from: renderedRaw), "[1:2:3]")
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
