@@ -300,6 +300,84 @@ public func kk_map_toList(_ mapRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: pairs))
 }
 
+@_cdecl("kk_map_flatMap")
+public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result: [Int] = []
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let subListRaw = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if let subList = runtimeListBox(from: subListRaw) {
+            result.append(contentsOf: subList.elements)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_map_maxByOrNull")
+public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let pairCount = min(map.keys.count, map.values.count)
+    guard pairCount > 0 else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestKey = map.keys[0]
+    var bestValue = map.values[0]
+    var thrown = 0
+    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for idx in 1 ..< pairCount {
+        let key = map.keys[idx]
+        let value = map.values[idx]
+        thrown = 0
+        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(selector, bestSelector) > 0 {
+            bestKey = key
+            bestValue = value
+            bestSelector = selector
+        }
+    }
+    return kk_pair_new(bestKey, bestValue)
+}
+
+@_cdecl("kk_map_minByOrNull")
+public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let pairCount = min(map.keys.count, map.values.count)
+    guard pairCount > 0 else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestKey = map.keys[0]
+    var bestValue = map.values[0]
+    var thrown = 0
+    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for idx in 1 ..< pairCount {
+        let key = map.keys[idx]
+        let value = map.values[idx]
+        thrown = 0
+        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(selector, bestSelector) < 0 {
+            bestKey = key
+            bestValue = value
+            bestSelector = selector
+        }
+    }
+    return kk_pair_new(bestKey, bestValue)
+}
+
 @_cdecl("kk_list_flatMap")
 public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -983,6 +1061,66 @@ public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     let matchingList = registerRuntimeObject(RuntimeListBox(elements: matching))
     let nonMatchingList = registerRuntimeObject(RuntimeListBox(elements: nonMatching))
     return kk_pair_new(matchingList, nonMatchingList)
+}
+
+// MARK: - MutableList in-place sort (STDLIB-205)
+
+@_cdecl("kk_mutable_list_sort")
+public func kk_mutable_list_sort(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let indexed = list.elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 { return comparison < 0 }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< indexed.count {
+        list.elements[i] = indexed[i]
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_sortBy")
+public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] < keys[rhs.offset] }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_sortByDescending")
+public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    keys.reserveCapacity(list.elements.count)
+    for elem in list.elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = list.elements.enumerated().sorted { lhs, rhs in
+        if keys[lhs.offset] != keys[rhs.offset] { return keys[lhs.offset] > keys[rhs.offset] }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    for i in 0 ..< sorted.count {
+        list.elements[i] = sorted[i]
+    }
+    return 0
 }
 
 // MARK: - Array higher-order functions (STDLIB-088)
