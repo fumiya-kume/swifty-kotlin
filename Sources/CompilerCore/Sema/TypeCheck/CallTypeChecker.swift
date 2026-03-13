@@ -1195,6 +1195,21 @@ final class CallTypeChecker {
                 return resultType
             }
 
+            // Boolean.not() / Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+            if sema.types.isSubtype(nonNullReceiver, sema.types.booleanType) {
+                let boolMethodNames: Set = ["not", "and", "or", "xor"]
+                if boolMethodNames.contains(name) {
+                    if (name == "not" && args.isEmpty) || (name != "not" && args.count == 1) {
+                        for arg in args {
+                            _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
+                        }
+                        let resultType = sema.types.booleanType
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
+                }
+            }
+
             // General member function lookup via implicit receiver
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: calleeName,

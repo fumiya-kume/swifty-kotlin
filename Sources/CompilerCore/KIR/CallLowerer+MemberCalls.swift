@@ -622,6 +622,54 @@ extension CallLowerer {
             return result
         }
 
+        // Boolean.not() → kk_op_not (STDLIB-308)
+        if calleeName == interner.intern("not"),
+           args.isEmpty
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == sema.types.booleanType {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_not"),
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+        if args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType == sema.types.booleanType {
+                let boolCallee: InternedString? = switch interner.resolve(calleeName) {
+                case "and":
+                    interner.intern("kk_bitwise_and")
+                case "or":
+                    interner.intern("kk_bitwise_or")
+                case "xor":
+                    interner.intern("kk_bitwise_xor")
+                default:
+                    nil
+                }
+                if let boolCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: boolCallee,
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
         if args.count == 1,
            shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
