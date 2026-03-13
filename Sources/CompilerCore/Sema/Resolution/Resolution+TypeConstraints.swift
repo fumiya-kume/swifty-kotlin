@@ -266,12 +266,17 @@ extension OverloadResolver {
         {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .classType(subClass) = subtypeKind,
-               subClass.classSymbol == superClass.classSymbol,
-               subClass.args.count == superClass.args.count,
-               subClass.nullability == superClass.nullability || superClass.nullability == .nullable
+               let alignedSubtype = alignNominalSubtype(
+                   subClass,
+                   to: superClass.classSymbol,
+                   targetNullability: superClass.nullability,
+                   typeSystem: typeSystem
+               ),
+               case let .classType(alignedClass) = typeSystem.kind(of: alignedSubtype),
+               alignedClass.args.count == superClass.args.count
             {
                 var result: [VariableConstraint] = []
-                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                for (subArg, superArg) in zip(alignedClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(
                         subArg: subArg,
                         superArg: superArg,
@@ -382,18 +387,26 @@ extension OverloadResolver {
         )]
     }
 
-    func liftClassType(
+    private func alignNominalSubtype(
         _ subtype: ClassType,
-        to targetSymbol: SymbolID,
+        to superSymbol: SymbolID,
+        targetNullability: Nullability,
         typeSystem: TypeSystem
     ) -> TypeID? {
-        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol) else {
+        guard subtype.nullability == targetNullability || targetNullability == .nullable else {
             return nil
         }
-        let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: targetSymbol)
+        if subtype.classSymbol == superSymbol {
+            return typeSystem.make(.classType(subtype))
+        }
+        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: superSymbol) else {
+            return nil
+        }
+
+        let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: superSymbol)
         guard !mappedArgs.isEmpty else {
             return typeSystem.make(.classType(ClassType(
-                classSymbol: targetSymbol,
+                classSymbol: superSymbol,
                 args: [],
                 nullability: subtype.nullability
             )))
@@ -402,13 +415,26 @@ extension OverloadResolver {
             substituteChildTypeArg($0, childSymbol: subtype.classSymbol, childArgs: subtype.args, typeSystem: typeSystem)
         }
         return typeSystem.make(.classType(ClassType(
-            classSymbol: targetSymbol,
+            classSymbol: superSymbol,
             args: substitutedArgs,
             nullability: subtype.nullability
         )))
     }
 
-    func substituteChildTypeArg(
+    func liftClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem
+    ) -> TypeID? {
+        alignNominalSubtype(
+            subtype,
+            to: targetSymbol,
+            targetNullability: subtype.nullability,
+            typeSystem: typeSystem
+        )
+    }
+
+    private func substituteChildTypeArg(
         _ arg: TypeArg,
         childSymbol: SymbolID,
         childArgs: [TypeArg],
@@ -416,17 +442,17 @@ extension OverloadResolver {
     ) -> TypeArg {
         switch arg {
         case let .invariant(type):
-            .invariant(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+            .invariant(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
         case let .out(type):
-            .out(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+            .out(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
         case let .in(type):
-            .in(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+            .in(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
         case .star:
             .star
         }
     }
 
-    func substituteChildTypeParam(
+    private func substituteChildType(
         _ type: TypeID,
         childSymbol: SymbolID,
         childArgs: [TypeArg],

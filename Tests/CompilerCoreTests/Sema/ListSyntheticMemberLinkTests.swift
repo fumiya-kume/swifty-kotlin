@@ -173,6 +173,22 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListBulkOperationsAcceptListArguments() throws {
+        let source = """
+        fun mutate(values: MutableList<Int>) {
+            values.addAll(listOf(1, 2))
+            values.removeAll(listOf(1))
+            values.retainAll(listOf(2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
     /// The synthetic List type uses .out projection; variance relaxation must apply.
     func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {
