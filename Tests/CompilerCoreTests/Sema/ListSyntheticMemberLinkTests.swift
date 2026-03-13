@@ -99,6 +99,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionFallbackSupportsNullableAndDefaultedListLookups() throws {
+        let source = """
+        fun firstValue(values: Collection<Int>): Int? = values.firstOrNull()
+        fun lastValue(values: Collection<Int>): Int? = values.lastOrNull()
+        fun fallbackValue(values: Collection<Int>): Int = values.getOrElse(0) { -1 }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let expectedTypes: [String: TypeID] = [
+                "firstOrNull": sema.types.makeNullable(sema.types.intType),
+                "lastOrNull": sema.types.makeNullable(sema.types.intType),
+                "getOrElse": sema.types.intType,
+            ]
+
+            for (memberName, expectedType) in expectedTypes {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName)")
+                XCTAssertEqual(sema.bindings.exprTypes[callExpr], expectedType)
+            }
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {

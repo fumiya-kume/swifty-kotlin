@@ -222,8 +222,10 @@ extension CallTypeChecker {
 
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
+            isListReceiver: isListReceiver,
             isMapReceiver: isMapReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             interner: interner
@@ -282,6 +284,7 @@ extension CallTypeChecker {
 
     func isSupportedCollectionFallbackMember(
         _ memberName: InternedString,
+        isListReceiver: Bool,
         isMapReceiver: Bool,
         isMutableMapReceiver: Bool,
         interner: StringInterner
@@ -342,27 +345,38 @@ extension CallTypeChecker {
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
         ]
-        let collectionSpecificMembers: Set = [
+        let listOnlyMembers: Set = [
             interner.intern("getOrNull"),
             interner.intern("elementAtOrNull"),
-            knownNames.getOrElse,
+        ]
+        let collectionSpecificMembers: Set = [
+            interner.intern("firstOrNull"),
+            interner.intern("lastOrNull"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
             knownNames.getOrDefault,
-            knownNames.getOrElse,
             interner.intern("plus"),
             interner.intern("minus"),
         ]
+        if listOnlyMembers.contains(memberName) {
+            return isListReceiver
+        }
+        if collectionSpecificMembers.contains(memberName) {
+            return !isMapReceiver
+        }
+        if memberName == knownNames.getOrElse {
+            return true
+        }
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
         if memberName == knownNames.getOrPut {
             return isMutableMapReceiver
         }
-        return collectionMembers.contains(memberName) || collectionSpecificMembers.contains(memberName)
+        return collectionMembers.contains(memberName)
     }
 
     func isCollectionReturningMember(
@@ -400,7 +414,8 @@ extension CallTypeChecker {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
              interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
-             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"):
+             interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"):
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
@@ -468,7 +483,11 @@ extension CallTypeChecker {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        if memberName == interner.intern("getOrNull") || memberName == interner.intern("elementAtOrNull") {
+        if memberName == interner.intern("getOrNull")
+            || memberName == interner.intern("elementAtOrNull")
+            || memberName == interner.intern("firstOrNull")
+            || memberName == interner.intern("lastOrNull")
+        {
             return sema.types.makeNullable(receiverElementType)
         }
 
@@ -814,6 +833,21 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMutableMapSymbol(symbol) && classType.args.count == 2
+    }
+
+    private func isConcreteListLikeCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isConcreteListLikeSymbol(symbol) && !knownNames.isMapLikeSymbol(symbol)
     }
 
     // MARK: - Array member fallback (STDLIB-087/088/089)
