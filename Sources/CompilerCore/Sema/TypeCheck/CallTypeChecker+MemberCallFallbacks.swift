@@ -352,6 +352,9 @@ extension CallTypeChecker {
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
             knownNames.getOrDefault,
+            knownNames.getOrElse,
+            interner.intern("plus"),
+            interner.intern("minus"),
         ]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
@@ -375,7 +378,11 @@ extension CallTypeChecker {
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
             interner.intern("filterIsInstance"),
         ]
-        if memberName == interner.intern("mapValues") || memberName == interner.intern("mapKeys") {
+        if memberName == interner.intern("mapValues") ||
+            memberName == interner.intern("mapKeys") ||
+            memberName == interner.intern("plus") ||
+            memberName == interner.intern("minus")
+        {
             return isMapReceiver
         }
         return collectionReturningMembers.contains(memberName)
@@ -413,6 +420,8 @@ extension CallTypeChecker {
             return isMapReceiver ? argCount == 1 : argCount == 2
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case interner.intern("plus"), interner.intern("minus"):
+            return isMapReceiver && argCount == 1
         case interner.intern("fold"), interner.intern("windowed"):
             return argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
@@ -465,6 +474,29 @@ extension CallTypeChecker {
 
         if memberName == knownNames.getOrElse, !isMapReceiver {
             return receiverElementType
+        }
+
+        if memberName == interner.intern("plus") || memberName == interner.intern("minus") {
+            // plus/minus return the same Map type as the receiver.
+            // receiverElementType for maps is Map.Entry<K,V>, so reconstruct Map<K,V>.
+            if case let .classType(entryType) = sema.types.kind(of: receiverElementType),
+               entryType.args.count >= 2
+            {
+                let keyArg = entryType.args[0]
+                let valueArg = entryType.args[1]
+                if let mapSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("Map"),
+                ]) {
+                    return sema.types.make(.classType(ClassType(
+                        classSymbol: mapSymbol,
+                        args: [keyArg, valueArg],
+                        nullability: .nonNull
+                    )))
+                }
+            }
+            return sema.types.anyType
         }
 
         if memberName == knownNames.getOrDefault || memberName == knownNames.getOrElse || memberName == knownNames.getOrPut {
