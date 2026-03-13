@@ -154,7 +154,7 @@ final class PhaseTimerTests: XCTestCase {
 
     // MARK: - JSON encoding shape
 
-    func testExportJSONEncodingShape() {
+    func testExportJSONEncodingShape() throws {
         let timer = PhaseTimer()
         timer.beginPhase("Lex")
         timer.endPhase()
@@ -165,8 +165,8 @@ final class PhaseTimerTests: XCTestCase {
         let report = timer.exportJSON()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = try! encoder.encode(report)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let data = try encoder.encode(report)
+        let jsonString = try XCTUnwrap(String(data: data, encoding: .utf8))
 
         // Verify structural keys are present
         XCTAssertTrue(jsonString.contains("\"phase\""))
@@ -176,14 +176,14 @@ final class PhaseTimerTests: XCTestCase {
         XCTAssertTrue(jsonString.contains("\"TOTAL\""))
 
         // Verify round-trip: decode back and compare
-        let decoded = try! JSONDecoder().decode([PhaseTimer.PhaseReportEntry].self, from: data)
+        let decoded = try JSONDecoder().decode([PhaseTimer.PhaseReportEntry].self, from: data)
         XCTAssertEqual(decoded.count, report.count)
         for (original, roundTripped) in zip(report, decoded) {
             XCTAssertEqual(original, roundTripped)
         }
     }
 
-    func testPhaseReportEntryCodableRoundTrip() {
+    func testPhaseReportEntryCodableRoundTrip() throws {
         let entry = PhaseTimer.PhaseReportEntry(
             phase: "Sema",
             durationMs: 12.34,
@@ -192,15 +192,15 @@ final class PhaseTimerTests: XCTestCase {
                 PhaseTimer.PhaseReportEntry(phase: "TypeCheck", durationMs: 8.12, percent: 30.2),
             ]
         )
-        let data = try! JSONEncoder().encode(entry)
-        let decoded = try! JSONDecoder().decode(PhaseTimer.PhaseReportEntry.self, from: data)
+        let data = try JSONEncoder().encode(entry)
+        let decoded = try JSONDecoder().decode(PhaseTimer.PhaseReportEntry.self, from: data)
         XCTAssertEqual(entry, decoded)
     }
 
-    func testPhaseReportEntryOmitsNilSubPhases() {
+    func testPhaseReportEntryOmitsNilSubPhases() throws {
         let entry = PhaseTimer.PhaseReportEntry(phase: "Lex", durationMs: 1.0, percent: 50.0)
-        let data = try! JSONEncoder().encode(entry)
-        let jsonString = String(data: data, encoding: .utf8)!
+        let data = try JSONEncoder().encode(entry)
+        let jsonString = try XCTUnwrap(String(data: data, encoding: .utf8))
         XCTAssertFalse(jsonString.contains("sub_phases"))
     }
 
