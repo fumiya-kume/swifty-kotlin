@@ -300,7 +300,7 @@ final class ControlFlowLowerer {
         instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
         instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
 
-        let tryResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
+        let tryResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)
 
         let catchDispatchLabel = driver.ctx.makeLoopLabel()
         let finallyLabel = driver.ctx.makeLoopLabel()

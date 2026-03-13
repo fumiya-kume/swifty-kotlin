@@ -52,8 +52,16 @@ extension ControlFlowTypeChecker {
                    let signature = sema.symbols.functionSignature(for: candidate)
                 {
                     componentType = signature.returnType
-                } else {
+                } else if isDataClassType(rhsType, sema: sema) {
+                    // Data class componentN() is synthesized during lowering; fall back to Any
                     componentType = sema.types.anyType
+                } else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0086",
+                        "Type does not have a 'component\(componentIndex)()' operator for destructuring.",
+                        range: range
+                    )
+                    componentType = sema.types.errorType
                 }
             }
 
@@ -91,7 +99,14 @@ extension ControlFlowTypeChecker {
 
         let iterableType = driver.inferExpr(iterableExpr, ctx: ctx, locals: &locals, expectedType: nil)
         let isRangeExpr = Self.isRangeExpression(iterableExpr, ast: ctx.ast)
-        let elementType = driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: interner) ?? sema.types.anyType
+        let elementType: TypeID = driver.helpers.iterableElementType(for: iterableType, isRangeExpr: isRangeExpr, sema: sema, interner: interner) ?? {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0087",
+                "Cannot determine element type for destructuring in for-loop.",
+                range: range
+            )
+            return sema.types.errorType
+        }()
 
         var bodyLocals = locals
 
@@ -109,12 +124,21 @@ extension ControlFlowTypeChecker {
                 sema: sema
             )
 
-            let componentType: TypeID = if let candidate = candidates.first,
-                                           let signature = sema.symbols.functionSignature(for: candidate)
+            let componentType: TypeID
+            if let candidate = candidates.first,
+               let signature = sema.symbols.functionSignature(for: candidate)
             {
-                signature.returnType
+                componentType = signature.returnType
+            } else if isDataClassType(elementType, sema: sema) {
+                // Data class componentN() is synthesized during lowering; fall back to Any
+                componentType = sema.types.anyType
             } else {
-                sema.types.anyType
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0087",
+                    "Iterable element type does not have a 'component\(componentIndex)()' operator for destructuring.",
+                    range: range
+                )
+                componentType = sema.types.errorType
             }
 
             let symbol = sema.symbols.define(
@@ -155,5 +179,14 @@ extension ControlFlowTypeChecker {
         default:
             return false
         }
+    }
+
+    private func isDataClassType(_ type: TypeID, sema: SemaModule) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: type),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.flags.contains(.dataType)
     }
 }

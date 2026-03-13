@@ -63,13 +63,13 @@ extension ControlFlowLowerer {
             }
             .sorted { $0.rawValue < $1.rawValue }
         guard let symbol = candidates.first else {
-            return sema.types.anyType
+            return sema.types.errorType
         }
         return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
     }
 
     func isCatchAllType(_ type: TypeID, sema: SemaModule) -> Bool {
-        type == sema.types.anyType || type == sema.types.nullableAnyType
+        type == sema.types.anyType || type == sema.types.nullableAnyType || type == sema.types.errorType
     }
 
     func isCatchAllType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {

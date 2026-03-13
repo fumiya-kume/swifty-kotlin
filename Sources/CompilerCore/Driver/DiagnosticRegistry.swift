@@ -402,6 +402,24 @@ public enum DiagnosticRegistry {
             summary: "Invalid use in constant context."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-0085",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Unresolved exception type in catch clause."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-0086",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Destructuring declaration requires componentN() operator."
+        ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-0087",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Iterable element type does not support destructuring with componentN()."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0096",
             pass: "SEMA",
             defaultSeverity: .warning,

@@ -92,12 +92,13 @@ extension KIRLowererPart2CoverageTests {
             sema: fixture.sema,
             interner: fixture.interner
         )
-        XCTAssertEqual(unresolvedType, fixture.types.anyType)
+        XCTAssertEqual(unresolvedType, fixture.types.errorType)
 
         XCTAssertTrue(fixture.driver.controlFlowLowerer.isCatchAllType(fixture.types.anyType, sema: fixture.sema))
         XCTAssertTrue(
             fixture.driver.controlFlowLowerer.isCatchAllType(fixture.types.nullableAnyType, sema: fixture.sema)
         )
+        XCTAssertTrue(fixture.driver.controlFlowLowerer.isCatchAllType(fixture.types.errorType, sema: fixture.sema))
         XCTAssertFalse(fixture.driver.controlFlowLowerer.isCatchAllType(fixture.types.intType, sema: fixture.sema))
     }
 
