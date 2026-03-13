@@ -19,11 +19,13 @@
 
 ### 📦 Stdlib — Enum ユーティリティ
 
-- [ ] STDLIB-171: `enumValues<T>()` / `enumValueOf<T>(name)` を実装する
-  - [ ] Sema に reified type parameter 付き `enumValues<T>(): Array<T>` / `enumValueOf<T>(String): T` stub を登録する
-  - [ ] Runtime で enum entry の配列生成と名前逆引きを実装する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `enumValues<Color>().map { it.name }` → `[RED, GREEN]` が `kotlinc` と一致する
+- [x] STDLIB-171: `enumValues<T>()` / `enumValueOf<T>(name)` を実装する（基本実装完了）
+  - [x] Sema に reified type parameter 付き `enumValues<T>(): List<T>` / `enumValueOf<T>(String): T` stub を登録する
+  - [x] CallTypeChecker で enumValues/enumValueOf の特殊処理を追加
+  - [x] CallLowerer で enumValues → kk_enum_make_values_array、enumValueOf → Companion.valueOf へ書き換え
+  - [x] Runtime に `kk_enum_make_values_array(count)` を追加
+  - [x] diff ケース `Scripts/diff_cases/enum_values.kt` を追加
+  - [ ] `enumValues<Color>().map { it.name }` → `[RED, GREEN, BLUE]` の完全一致（map HOF のリンク要確認）
 
 - [ ] STDLIB-172: `Enum.entries` プロパティ（Kotlin 1.9+）を実装する
   - [ ] Sema に `Enum<T>` companion の `entries: EnumEntries<T>` プロパティ stub を登録する
