@@ -1100,7 +1100,7 @@ extension CallTypeChecker {
         case .primitive:
             true
         default:
-            anyFallbackReceiverType == sema.types.anyType || anyFallbackReceiverType == sema.types.nullableAnyType
+            anyFallbackReceiverType == sema.types.anyType || (anyFallbackReceiverType == sema.types.nullableAnyType && safeCall)
         }
 
         // Any.hashCode(): Int (STDLIB-306)
