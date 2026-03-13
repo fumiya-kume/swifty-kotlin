@@ -400,6 +400,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListBulkMutationMembersUseInvariantReceiverType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let mutableListFQName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableList"),
+            ]
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
+                let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: mutableListFQName + [ctx.interner.intern(memberName)]))
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+                let receiverType = try XCTUnwrap(signature.receiverType)
+
+                guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType),
+                      let firstArg = receiverClassType.args.first
+                else {
+                    return XCTFail("Expected MutableList.\(memberName) receiver to be a class type")
+                }
+
+                guard case .invariant = firstArg else {
+                    return XCTFail("Expected MutableList.\(memberName) receiver to remain invariant")
+                }
+            }
+        }
+    }
+
     /// Map member calls (containsKey, put, remove) go through the collection-fallback
     /// inference path which does not record a callBinding. Instead we verify that the
     /// synthetic symbols in the symbol table carry the correct external link names.
