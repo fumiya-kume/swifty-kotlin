@@ -240,6 +240,68 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
+// MARK: - MutableList bulk operations (STDLIB-207)
+
+@_cdecl("kk_mutable_list_addAll")
+public func kk_mutable_list_addAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let collectionElements: [Int]
+    if let collection = runtimeListBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else if let collection = runtimeSetBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    if collectionElements.isEmpty {
+        return kk_box_bool(0)
+    }
+    list.elements.append(contentsOf: collectionElements)
+    return kk_box_bool(1)
+}
+
+@_cdecl("kk_mutable_list_removeAll")
+public func kk_mutable_list_removeAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let collectionElements: [Int]
+    if let collection = runtimeListBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else if let collection = runtimeSetBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    let originalCount = list.elements.count
+    list.elements.removeAll { elem in
+        collectionElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
+}
+
+@_cdecl("kk_mutable_list_retainAll")
+public func kk_mutable_list_retainAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let collectionElements: [Int]
+    if let collection = runtimeListBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else if let collection = runtimeSetBox(from: collectionRaw) {
+        collectionElements = collection.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    let originalCount = list.elements.count
+    list.elements.removeAll { elem in
+        !collectionElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")
@@ -273,6 +335,28 @@ public func kk_set_is_empty(_ setRaw: Int) -> Int {
         return kk_box_bool(1)
     }
     return kk_box_bool(set.elements.isEmpty ? 1 : 0)
+}
+
+
+@_cdecl("kk_set_containsAll")
+public func kk_set_containsAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    let otherElements: [Int]
+    if let otherList = runtimeListBox(from: collectionRaw) {
+        otherElements = otherList.elements
+    } else if let otherSet = runtimeSetBox(from: collectionRaw) {
+        otherElements = otherSet.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    for element in otherElements {
+        if !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            return kk_box_bool(0)
+        }
+    }
+    return kk_box_bool(1)
 }
 
 @_cdecl("kk_set_to_string")
@@ -501,6 +585,47 @@ public func kk_map_to_string(_ mapRaw: Int) -> UnsafeMutableRawPointer {
     return utf8.withUnsafeBufferPointer { buf in
         kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
     }
+}
+
+@_cdecl("kk_map_plus")
+public func kk_map_plus(_ mapRaw: Int, _ pairRaw: Int) -> Int {
+    var keys: [Int] = []
+    var values: [Int] = []
+    if let map = runtimeMapBox(from: mapRaw) {
+        (keys, values) = runtimeNormalizeMapEntries(keys: map.keys, values: map.values)
+    }
+    if let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
+       let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    {
+        let key = pairBox.first
+        let value = pairBox.second
+        if let index = keys.firstIndex(where: { runtimeValuesEqual($0, key) }) {
+            values[index] = value
+        } else {
+            keys.append(key)
+            values.append(value)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
+@_cdecl("kk_map_minus")
+public func kk_map_minus(_ mapRaw: Int, _ key: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let (normalizedKeys, normalizedValues) = runtimeNormalizeMapEntries(keys: map.keys, values: map.values)
+    var keys: [Int] = []
+    var values: [Int] = []
+    for (idx, mapKey) in normalizedKeys.enumerated() {
+        if !runtimeValuesEqual(mapKey, key) {
+            keys.append(mapKey)
+            if idx < normalizedValues.count {
+                values.append(normalizedValues[idx])
+            }
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
 }
 
 @_cdecl("kk_map_to_mutable_map")
