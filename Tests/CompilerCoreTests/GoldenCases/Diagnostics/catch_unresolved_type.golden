@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "catch_unresolved_type.kt",
+      "range": {
+        "start": { "line": 2, "character": 14 },
+        "end": { "line": 2, "character": 31 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0002",
+      "source": "kswiftk",
+      "message": "No viable overload found for call.",
+      "codeActions": []
+    },
+    {
+      "file": "catch_unresolved_type.kt",
+      "range": {
+        "start": { "line": 3, "character": 6 },
+        "end": { "line": 5, "character": 5 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0085",
+      "source": "kswiftk",
+      "message": "Unresolved exception type 'NonExistentException' in catch clause.",
+      "codeActions": []
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "file": "destructuring_missing_component.kt",
+      "range": {
+        "start": { "line": 4, "character": 4 },
+        "end": { "line": 4, "character": 19 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0086",
+      "source": "kswiftk",
+      "message": "Type does not have a 'component1()' operator for destructuring.",
+      "codeActions": []
+    },
+    {
+      "file": "destructuring_missing_component.kt",
+      "range": {
+        "start": { "line": 4, "character": 4 },
+        "end": { "line": 4, "character": 19 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0086",
+      "source": "kswiftk",
+      "message": "Type does not have a 'component2()' operator for destructuring.",
+      "codeActions": []
+    },
+    {
+      "file": "destructuring_missing_component.kt",
+      "range": {
+        "start": { "line": 4, "character": 8 },
+        "end": { "line": 4, "character": 8 }
+      },
+      "severity": 2,
+      "severityLabel": "warning",
+      "code": "KSWIFTK-PARSE-0002",
+      "source": "kswiftk",
+      "message": "Expected property name.",
+      "codeActions": [{ "title": "Insert placeholder name", "kind": "quickfix" }]
+    },
+    {
+      "file": "destructuring_missing_component.kt",
+      "range": {
+        "start": { "line": 9, "character": 4 },
+        "end": { "line": 11, "character": 5 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0087",
+      "source": "kswiftk",
+      "message": "Iterable element type does not have a 'component1()' operator for destructuring.",
+      "codeActions": []
+    },
+    {
+      "file": "destructuring_missing_component.kt",
+      "range": {
+        "start": { "line": 9, "character": 4 },
+        "end": { "line": 11, "character": 5 }
+      },
+      "severity": 1,
+      "severityLabel": "error",
+      "code": "KSWIFTK-SEMA-0087",
+      "source": "kswiftk",
+      "message": "Iterable element type does not have a 'component2()' operator for destructuring.",
+      "codeActions": []
+    }
+  ]
+}

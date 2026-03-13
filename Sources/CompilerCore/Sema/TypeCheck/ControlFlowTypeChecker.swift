@@ -221,7 +221,9 @@ final class ControlFlowTypeChecker {
             let catchParamType = resolveCatchClauseParameterType(
                 clause.paramTypeName,
                 sema: sema,
-                interner: interner
+                interner: interner,
+                diagnostics: ctx.semaCtx.diagnostics,
+                range: clause.range
             )
             var catchParamSymbol = SymbolID.invalid
             if let paramName = clause.paramName {
@@ -284,7 +286,9 @@ final class ControlFlowTypeChecker {
     private func resolveCatchClauseParameterType(
         _ typeName: InternedString?,
         sema: SemaModule,
-        interner: StringInterner
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine,
+        range: SourceRange?
     ) -> TypeID {
         guard let typeName else {
             return sema.types.anyType
@@ -319,7 +323,12 @@ final class ControlFlowTypeChecker {
                 .sorted { $0.rawValue < $1.rawValue }
         }
         guard let symbol = resolvedCandidates.first else {
-            return sema.types.anyType
+            diagnostics.error(
+                "KSWIFTK-SEMA-0085",
+                "Unresolved exception type '\(interner.resolve(typeName))' in catch clause.",
+                range: range
+            )
+            return sema.types.errorType
         }
         return sema.types.make(.classType(ClassType(classSymbol: symbol, args: [], nullability: .nonNull)))
     }
