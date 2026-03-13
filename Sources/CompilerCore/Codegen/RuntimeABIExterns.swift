@@ -1403,6 +1403,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_notNull_create = ExternDecl(
+        name: "kk_notNull_create",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_notNull_get_value = ExternDecl(
+        name: "kk_notNull_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_notNull_set_value = ExternDecl(
+        name: "kk_notNull_set_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_custom_delegate_create = ExternDecl(
         name: "kk_custom_delegate_create",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
@@ -1805,6 +1823,9 @@ public enum RuntimeABIExterns {
             kk_vetoable_create,
             kk_vetoable_get_value,
             kk_vetoable_set_value,
+            kk_notNull_create,
+            kk_notNull_get_value,
+            kk_notNull_set_value,
             kk_custom_delegate_create,
             kk_custom_delegate_get_value,
             kk_custom_delegate_set_value,

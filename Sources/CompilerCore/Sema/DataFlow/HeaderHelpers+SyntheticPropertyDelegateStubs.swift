@@ -100,5 +100,22 @@ extension DataFlowSemaPhase {
                 for: funcSymbol
             )
         }
+
+        // Register Delegates.notNull<T>(): ReadWriteProperty<Any?, T>
+        let notNullName = interner.intern("notNull")
+        let notNullFQName = ownerSym.fqName + [notNullName]
+        if symbols.lookup(fqName: notNullFQName) == nil {
+            let notNullSymbol = symbols.define(
+                kind: .function, name: notNullName, fqName: notNullFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(delegatesSymbol, for: notNullSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: delegatesType, parameterTypes: [], returnType: rwPropertyType
+                ),
+                for: notNullSymbol
+            )
+        }
     }
 }
