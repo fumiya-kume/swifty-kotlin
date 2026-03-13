@@ -446,9 +446,15 @@ extension DataFlowSemaPhase {
             visibility: .private,
             flags: []
         )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: collectionInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: collectionInterfaceSymbol)
         symbols.setDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
+        types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
         return collectionInterfaceSymbol
     }
 
@@ -563,6 +569,9 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([listTypeParamSymbol], for: listInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: listInterfaceSymbol)
         symbols.setDirectSupertypes([collectionInterfaceSymbol], for: listInterfaceSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: listInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(listTypeParamType)], for: listInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
         registerListGetOperator(
             symbols: symbols, types: types, interner: interner,
