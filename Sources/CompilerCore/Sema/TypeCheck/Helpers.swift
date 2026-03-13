@@ -156,10 +156,17 @@ struct TypeCheckHelpers {
         case interner.intern("kk_array_set"):
             guard argumentCount == 3 else { return nil }
             return sema.types.unitType
-        // Flow (CORO-003): type-erase Flow<T> as nullableAnyType
+        // Flow (CORO-003): preserve `flow { ... }` fallback typing as Flow<Any>.
+        // Member-like names such as `map`/`filter`/`take` stay conservative here
+        // because this helper does not know whether the unresolved callee was
+        // invoked on an actual Flow receiver.
         case knownNames.flow:
             guard argumentCount == 1 else { return nil }
-            return sema.types.nullableAnyType
+            return makeFlowType(
+                elementType: sema.types.anyType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         case knownNames.emit:
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
@@ -172,6 +179,28 @@ struct TypeCheckHelpers {
         default:
             return nil
         }
+    }
+
+    /// Construct a `Flow<elementType>` ClassType by looking up the synthetic
+    /// `kotlinx.coroutines.flow.Flow` interface symbol.  Returns `nil` when
+    /// the symbol has not been registered (caller should fall back to `anyType`).
+    func makeFlowType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let flowFQName: [InternedString] = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+            interner.intern("flow"),
+            interner.intern("Flow"),
+        ]
+        guard let symbolID = sema.symbols.lookup(fqName: flowFQName) else { return nil }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbolID,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     func resolveBuiltinTypeName(

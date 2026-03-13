@@ -187,8 +187,12 @@ final class CallTypeChecker {
                     break
                 }
             }
-            sema.bindings.bindExprType(id, type: sema.types.anyType)
-            return sema.types.anyType
+            let flowElementType = sema.bindings.flowElementType(forExpr: id) ?? sema.types.anyType
+            let flowExprType = driver.helpers.makeFlowType(
+                elementType: flowElementType, sema: sema, interner: interner
+            ) ?? sema.types.anyType
+            sema.bindings.bindExprType(id, type: flowExprType)
+            return flowExprType
         }
 
         // --- Flow builder lambda calls (CORO-003) ---

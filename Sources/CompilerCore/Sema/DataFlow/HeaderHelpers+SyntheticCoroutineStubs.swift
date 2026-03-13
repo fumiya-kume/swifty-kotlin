@@ -33,6 +33,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let flowPkg = ensureSyntheticPackage(
+            coroutinesPkg + [interner.intern("flow")],
+            symbols: symbols,
+            interner: interner
+        )
 
         let exceptionSymbol = ensureClassSymbol(
             named: "Exception",
@@ -54,6 +59,18 @@ extension DataFlowSemaPhase {
         )
         let dispatchersSymbol = ensureObjectSymbol(
             named: "Dispatchers",
+            in: coroutinesPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let flowInterfaceSymbol = ensureInterfaceSymbol(
+            named: "Flow",
+            in: flowPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let dispatcherSymbol = ensureClassSymbol(
+            named: "CoroutineDispatcher",
             in: coroutinesPkg,
             symbols: symbols,
             interner: interner
@@ -98,6 +115,16 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        let flowRawType = types.make(.classType(ClassType(
+            classSymbol: flowInterfaceSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let dispatcherType = types.make(.classType(ClassType(
+            classSymbol: dispatcherSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
         let channelType = types.make(.classType(ClassType(
             classSymbol: channelSymbol,
             args: [],
@@ -117,6 +144,8 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(jobType, for: jobSymbol)
         symbols.setPropertyType(deferredType, for: deferredSymbol)
         symbols.setPropertyType(dispatchersType, for: dispatchersSymbol)
+        symbols.setPropertyType(flowRawType, for: flowInterfaceSymbol)
+        symbols.setPropertyType(dispatcherType, for: dispatcherSymbol)
         symbols.setPropertyType(channelType, for: channelSymbol)
         symbols.setPropertyType(cancellationType, for: cancellationSymbol)
         symbols.setPropertyType(rootCancellationType, for: rootCancellationSymbol)
@@ -178,7 +207,7 @@ extension DataFlowSemaPhase {
             named: "withContext",
             packageFQName: coroutinesPkg,
             parameters: [
-                (name: "context", type: types.anyType),
+                (name: "context", type: dispatcherType),
                 (name: "block", type: types.make(.functionType(FunctionType(
                     params: [],
                     returnType: types.anyType,
@@ -210,7 +239,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: dispatchersSymbol,
             ownerType: dispatchersType,
             name: "Default",
-            propertyType: types.anyType,
+            propertyType: dispatcherType,
             symbols: symbols,
             interner: interner
         )
@@ -218,7 +247,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: dispatchersSymbol,
             ownerType: dispatchersType,
             name: "IO",
-            propertyType: types.anyType,
+            propertyType: dispatcherType,
             symbols: symbols,
             interner: interner
         )
@@ -226,7 +255,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: dispatchersSymbol,
             ownerType: dispatchersType,
             name: "Main",
-            propertyType: types.anyType,
+            propertyType: dispatcherType,
             symbols: symbols,
             interner: interner
         )

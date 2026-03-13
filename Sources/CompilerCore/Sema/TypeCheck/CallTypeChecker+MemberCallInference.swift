@@ -32,7 +32,10 @@ extension CallTypeChecker {
             )
             sema.bindings.markFlowExpr(id)
             sema.bindings.bindFlowElementType(receiverElementType, forExpr: id)
-            let resultType = safeCall ? sema.types.makeNullable(sema.types.anyType) : sema.types.anyType
+            let flowType = driver.helpers.makeFlowType(
+                elementType: receiverElementType, sema: sema, interner: ctx.interner
+            ) ?? sema.types.anyType
+            let resultType = safeCall ? sema.types.makeNullable(flowType) : flowType
             sema.bindings.bindExprType(id, type: resultType)
             return resultType
 
@@ -79,7 +82,15 @@ extension CallTypeChecker {
                 sema.bindings.bindFlowElementType(resultElementType, forExpr: id)
             }
 
-            let resultType: TypeID = memberName == "collect" ? sema.types.unitType : sema.types.anyType
+            let resultType: TypeID
+            if memberName == "collect" {
+                resultType = sema.types.unitType
+            } else {
+                let resultElement = sema.bindings.flowElementType(forExpr: id) ?? receiverElementType
+                resultType = driver.helpers.makeFlowType(
+                    elementType: resultElement, sema: sema, interner: ctx.interner
+                ) ?? sema.types.anyType
+            }
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
@@ -2517,9 +2528,15 @@ extension CallTypeChecker {
                             }
                             sema.bindings.bindFlowElementType(resultElementType, forExpr: id)
                         }
-                        let resultType: TypeID = memberName == "collect"
-                            ? sema.types.unitType
-                            : sema.types.anyType
+                        let resultType: TypeID
+                        if memberName == "collect" {
+                            resultType = sema.types.unitType
+                        } else {
+                            let resultElement = sema.bindings.flowElementType(forExpr: id) ?? flowElementType
+                            resultType = driver.helpers.makeFlowType(
+                                elementType: resultElement, sema: sema, interner: interner
+                            ) ?? sema.types.anyType
+                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
