@@ -2304,6 +2304,25 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_chunked",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "size", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_windowed",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "size", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =

@@ -472,12 +472,17 @@ extension OverloadResolver {
         else {
             return type
         }
+        let substituted: TypeID
         switch childArgs[index] {
         case let .invariant(inner), let .out(inner), let .in(inner):
-            return inner
+            substituted = inner
         case .star:
-            return typeSystem.nullableAnyType
+            substituted = typeSystem.nullableAnyType
         }
+        if typeParam.nullability == .nullable {
+            return typeSystem.makeNullable(substituted)
+        }
+        return substituted
     }
 
     /// Decomposes a pair of type arguments into constraints respecting variance.
