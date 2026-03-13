@@ -138,6 +138,23 @@
       ]
     },
     {
+      "task": "TYPE-108",
+      "category": "types",
+      "description": "Collection HOF type inference regression (mapIndexed/flatMap/associate/groupBy/partition, array-erase guard, delegate ABI)",
+      "cases": [
+        {
+          "type": "golden-sema",
+          "name": "list_collection_hofs",
+          "template": "Scripts/test_templates/sema/list_collection_hofs.kt"
+        },
+        {
+          "type": "golden-sema",
+          "name": "list_collection_hofs_chained",
+          "template": "Scripts/test_templates/sema/list_collection_hofs_chained.kt"
+        }
+      ]
+    },
+    {
       "task": "P5-100",
       "category": "expressions",
       "description": "as (unsafe cast) / as? (safe cast)",

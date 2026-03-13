@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -494,17 +494,87 @@ symbol s492 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|s
 symbol s493 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
 symbol s494 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
 symbol s495 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#493 suspend=0 defaults=[0] vararg=[0]
-symbol s496 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
-symbol s497 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
-symbol s498 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-file f0 package=golden.sema
-  decl d0 property pi var=0 sym=s496
-  decl d1 property counter var=1 sym=s497
-  decl d2 fun increment suspend=0 inline=0 sym=s498
-expr e0 double(3.14) type=Double
-expr e1 int(0) type=Int
-expr e2 name(counter) type=_
-expr e3 name(counter) type=Int ref=s497
-expr e4 int(1) type=Int
-expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign counter value=e5 type=Unit ref=s497
+symbol s496 kind=function fq=transform vis=public flags=_ sig=recv=_ params=[Class#35<String>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s497 kind=valueParameter fq=transform.$496.values vis=private flags=_
+symbol s498 kind=local fq=__local_9.indexed vis=private flags=_
+symbol s499 kind=local fq=__local_23.flat vis=private flags=_
+symbol s500 kind=local fq=__local_35.assoc vis=private flags=_
+symbol s501 kind=local fq=__local_43.byKey vis=private flags=_
+symbol s502 kind=local fq=__local_51.withVal vis=private flags=_
+symbol s503 kind=local fq=__local_59.grouped vis=private flags=_
+symbol s504 kind=local fq=__destructuring_71.matching vis=private flags=_ type=T#12
+symbol s505 kind=local fq=__destructuring_71.rest vis=private flags=_ type=T#13
+file f0 package=_
+  decl d0 fun transform suspend=0 inline=0 sym=s496
+expr e0 name(values) type=Class#35<String> ref=s497
+expr e1 name(index) type=_
+expr e2 name(item) type=_
+expr e3 stringTemplate[expr(e1),lit(: ),expr(e2)] type=_
+expr e4 name(index) type=Int ref=s-1001792
+expr e5 name(item) type=String ref=s-1001793
+expr e6 stringTemplate[expr(e4),lit(: ),expr(e5)] type=String
+expr e7 lambda params=[index,item] body=e6 type=(Int, String) -> Any
+expr e8 memberCall recv=e0 callee=mapIndexed args=[_:e7] type=Class#35<Any>
+expr e9 localDecl indexed mutable=0 type=_ init=e8 type=Unit ref=s498
+expr e10 name(values) type=Class#35<String> ref=s497
+expr e11 name(listOf) type=_
+expr e12 name(it) type=_
+expr e13 name(it) type=_
+expr e14 memberCall recv=e13 callee=uppercase args=[] type=_
+expr e15 call callee=e11 args=[_:e12,_:e14] type=_
+expr e16 name(listOf) type=_
+expr e17 name(it) type=String ref=s-1005376
+expr e18 name(it) type=String ref=s-1005376
+expr e19 memberCall recv=e18 callee=uppercase args=[] type=String call=s158 map=[] targs=[]
+expr e20 call callee=e16 args=[_:e17,_:e19] type=Class#35<out String>
+expr e21 lambda params=[] body=e20 type=(String) -> Any
+expr e22 memberCall recv=e10 callee=flatMap args=[_:e21] type=Class#35<Any>
+expr e23 localDecl flat mutable=0 type=_ init=e22 type=Unit ref=s499
+expr e24 name(values) type=Class#35<String> ref=s497
+expr e25 name(it) type=_
+expr e26 name(it) type=_
+expr e27 memberCall recv=e26 callee=length args=[] type=_
+expr e28 memberCall recv=e25 callee=to args=[_:e27] type=_
+expr e29 name(it) type=String ref=s-1008448
+expr e30 name(it) type=String ref=s-1008448
+expr e31 memberCall recv=e30 callee=length args=[] type=Int
+expr e32 memberCall recv=e29 callee=to args=[_:e31] type=Class#11<String, Int>
+expr e33 lambda params=[] body=e32 type=(String) -> Any
+expr e34 memberCall recv=e24 callee=associate args=[_:e33] type=Class#85<Any, Any>
+expr e35 localDecl assoc mutable=0 type=_ init=e34 type=Unit ref=s500
+expr e36 name(values) type=Class#35<String> ref=s497
+expr e37 name(it) type=_
+expr e38 memberCall recv=e37 callee=first args=[] type=_
+expr e39 name(it) type=String ref=s-1010496
+expr e40 memberCall recv=e39 callee=first args=[] type=Char call=s250 map=[] targs=[]
+expr e41 lambda params=[] body=e40 type=(String) -> Any
+expr e42 memberCall recv=e36 callee=associateBy args=[_:e41] type=Class#85<Any, Any>
+expr e43 localDecl byKey mutable=0 type=_ init=e42 type=Unit ref=s501
+expr e44 name(values) type=Class#35<String> ref=s497
+expr e45 name(it) type=_
+expr e46 memberCall recv=e45 callee=length args=[] type=_
+expr e47 name(it) type=String ref=s-1012544
+expr e48 memberCall recv=e47 callee=length args=[] type=Int
+expr e49 lambda params=[] body=e48 type=(String) -> Any
+expr e50 memberCall recv=e44 callee=associateWith args=[_:e49] type=Class#85<Any, Any>
+expr e51 localDecl withVal mutable=0 type=_ init=e50 type=Unit ref=s502
+expr e52 name(values) type=Class#35<String> ref=s497
+expr e53 name(it) type=_
+expr e54 memberCall recv=e53 callee=length args=[] type=_
+expr e55 name(it) type=String ref=s-1014592
+expr e56 memberCall recv=e55 callee=length args=[] type=Int
+expr e57 lambda params=[] body=e56 type=(String) -> Any
+expr e58 memberCall recv=e52 callee=groupBy args=[_:e57] type=Class#85<Int, Class#35<String>>
+expr e59 localDecl grouped mutable=0 type=_ init=e58 type=Unit ref=s503
+expr e60 name(values) type=Class#35<String> ref=s497
+expr e61 name(it) type=_
+expr e62 memberCall recv=e61 callee=length args=[] type=_
+expr e63 int(3) type=_
+expr e64 binary(greaterThan) lhs=e62 rhs=e63 type=_
+expr e65 name(it) type=String ref=s-1017664
+expr e66 memberCall recv=e65 callee=length args=[] type=Int
+expr e67 int(3) type=Int
+expr e68 binary(greaterThan) lhs=e66 rhs=e67 type=Boolean
+expr e69 lambda params=[] body=e68 type=(String) -> Boolean
+expr e70 memberCall recv=e60 callee=partition args=[_:e69] type=Class#11<Class#35<String>, Class#35<String>>
+expr e71 destructuringDecl names=[matching,rest] mutable=0 init=e70 type=Unit

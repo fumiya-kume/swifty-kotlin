@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -494,17 +494,65 @@ symbol s492 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|s
 symbol s493 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
 symbol s494 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
 symbol s495 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#493 suspend=0 defaults=[0] vararg=[0]
-symbol s496 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
-symbol s497 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
-symbol s498 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-file f0 package=golden.sema
-  decl d0 property pi var=0 sym=s496
-  decl d1 property counter var=1 sym=s497
-  decl d2 fun increment suspend=0 inline=0 sym=s498
-expr e0 double(3.14) type=Double
-expr e1 int(0) type=Int
-expr e2 name(counter) type=_
-expr e3 name(counter) type=Int ref=s497
-expr e4 int(1) type=Int
-expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign counter value=e5 type=Unit ref=s497
+symbol s496 kind=function fq=chained vis=public flags=_ sig=recv=_ params=[Class#35<Int>] ret=Unit suspend=0 defaults=[0] vararg=[0]
+symbol s497 kind=valueParameter fq=chained.$496.values vis=private flags=_
+symbol s498 kind=local fq=__local_37.result vis=private flags=_
+symbol s499 kind=local fq=__local_55.groups vis=private flags=_
+file f0 package=_
+  decl d0 fun chained suspend=0 inline=0 sym=s496
+expr e0 name(values) type=Class#35<Int> ref=s497
+expr e1 name(it) type=_
+expr e2 int(0) type=_
+expr e3 binary(greaterThan) lhs=e1 rhs=e2 type=_
+expr e4 name(it) type=Int ref=s-1001792
+expr e5 int(0) type=Int
+expr e6 binary(greaterThan) lhs=e4 rhs=e5 type=Boolean
+expr e7 lambda params=[] body=e6 type=(Int) -> Boolean
+expr e8 memberCall recv=e0 callee=filter args=[_:e7] type=Class#35<Int>
+expr e9 name(i) type=_
+expr e10 name(v) type=_
+expr e11 binary(add) lhs=e9 rhs=e10 type=_
+expr e12 name(i) type=Int ref=s-1003840
+expr e13 name(v) type=Int ref=s-1003841
+expr e14 binary(add) lhs=e12 rhs=e13 type=Int
+expr e15 lambda params=[i,v] body=e14 type=(Int, Int) -> Any
+expr e16 memberCall recv=e8 callee=mapIndexed args=[_:e15] type=Class#35<Any>
+expr e17 name(listOf) type=_
+expr e18 name(it) type=_
+expr e19 name(it) type=_
+expr e20 int(2) type=_
+expr e21 binary(multiply) lhs=e19 rhs=e20 type=_
+expr e22 call callee=e17 args=[_:e18,_:e21] type=_
+expr e23 name(listOf) type=_
+expr e24 name(it) type=Any ref=s-1007424
+expr e25 name(it) type=Any ref=s-1007424
+expr e26 int(2) type=Int
+expr e27 binary(multiply) lhs=e25 rhs=e26 type=Int
+expr e28 call callee=e23 args=[_:e24,_:e27] type=Class#35<out Any?>
+expr e29 lambda params=[] body=e28 type=(Any) -> Any
+expr e30 memberCall recv=e16 callee=flatMap args=[_:e29] type=Class#35<Any>
+expr e31 name(it) type=_
+expr e32 memberCall recv=e31 callee=toString args=[] type=_
+expr e33 name(it) type=Any ref=s-1008960
+expr e34 memberCall recv=e33 callee=toString args=[] type=<error>
+expr e35 lambda params=[] body=e34 type=(Any) -> Any
+expr e36 memberCall recv=e30 callee=associateWith args=[_:e35] type=Class#85<Any, Any>
+expr e37 localDecl result mutable=0 type=_ init=e36 type=Unit ref=s498
+expr e38 name(values) type=Class#35<Int> ref=s497
+expr e39 name(it) type=_
+expr e40 int(3) type=_
+expr e41 binary(modulo) lhs=e39 rhs=e40 type=_
+expr e42 name(it) type=Int ref=s-1011520
+expr e43 int(3) type=Int
+expr e44 binary(modulo) lhs=e42 rhs=e43 type=Int
+expr e45 lambda params=[] body=e44 type=(Int) -> Any
+expr e46 memberCall recv=e38 callee=groupBy args=[_:e45] type=Class#85<Int, Class#35<Int>>
+expr e47 name(it) type=_
+expr e48 memberCall recv=e47 callee=value args=[] type=_
+expr e49 memberCall recv=e48 callee=size args=[] type=_
+expr e50 name(it) type=Class#98<out Int, out Class#35<Int>> ref=s-1013568
+expr e51 memberCall recv=e50 callee=value args=[] type=Class#35<Int> call=s102 map=[] targs=[Int,Class#35<Int>]
+expr e52 memberCall recv=e51 callee=size args=[] type=Int
+expr e53 lambda params=[] body=e52 type=(Class#98<out Int, out Class#35<Int>>) -> Any
+expr e54 memberCall recv=e46 callee=mapValues args=[_:e53] type=Class#85<Int, Int>
+expr e55 localDecl groups mutable=0 type=_ init=e54 type=Unit ref=s499
