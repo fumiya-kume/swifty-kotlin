@@ -236,6 +236,7 @@ extension ABILoweringPass {
             interner.intern("kk_set_of"),
             interner.intern("kk_set_size"),
             interner.intern("kk_set_contains"),
+            interner.intern("kk_set_containsAll"),
             interner.intern("kk_set_is_empty"),
             interner.intern("kk_set_to_string"),
             // NOTE: kk_list_map/filter/forEach/flatMap/any/none/all are NOT

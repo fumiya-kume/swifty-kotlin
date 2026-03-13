@@ -20,6 +20,7 @@ public extension RuntimeABIExterns {
         kk_set_of,
         kk_set_size,
         kk_set_contains,
+        kk_set_containsAll,
         kk_set_is_empty,
         kk_set_to_string,
         kk_list_map,
@@ -261,6 +262,12 @@ public extension RuntimeABIExterns {
 
     static let kk_set_contains = ExternDecl(
         name: "kk_set_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_containsAll = ExternDecl(
+        name: "kk_set_containsAll",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
