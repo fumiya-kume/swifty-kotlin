@@ -415,6 +415,7 @@ extension CallTypeChecker {
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
             "sort", "sortBy", "sortByDescending",
+            "takeWhile", "dropWhile",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]

@@ -2597,6 +2597,8 @@ extension CallLowerer {
             let takeWhileName = interner.intern("takeWhile")
             let dropWhileName = interner.intern("dropWhile")
             let sortedByName = interner.intern("sortedBy")
+            let sortedName = interner.intern("sorted")
+            let sortedDescendingName = interner.intern("sortedDescending")
             switch internedMemberName {
             case mapName:
                 return interner.intern("kk_sequence_map")
@@ -2622,9 +2624,9 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_dropWhile")
             case sortedByName:
                 return interner.intern("kk_sequence_sortedBy")
-            case "sorted":
+            case sortedName:
                 return interner.intern("kk_sequence_sorted")
-            case "sortedDescending":
+            case sortedDescendingName:
                 return interner.intern("kk_sequence_sortedDescending")
             default:
                 break
