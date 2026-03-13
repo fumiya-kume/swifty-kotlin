@@ -3,6 +3,40 @@ import Foundation
 import XCTest
 
 extension BuildKIRRegressionTests {
+    func testBuildKIRLowersListFirstOrNullAndLastOrNullToCollectionRuntimeCalls() throws {
+        let source = """
+        fun main(values: List<Int>) {
+            values.firstOrNull()
+            values.lastOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callNames = extractCallees(from: body, interner: ctx.interner)
+
+            XCTAssertTrue(callNames.contains("kk_list_firstOrNull"))
+            XCTAssertTrue(callNames.contains("kk_list_lastOrNull"))
+            XCTAssertFalse(callNames.contains("firstOrNull"))
+            XCTAssertFalse(callNames.contains("lastOrNull"))
+        }
+    }
+
+    func testABILoweringMarksSetCollectionHelpersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_set_toList")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_set_intersect")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_set_union")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_set_subtract")))
+    }
+
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
         let source = """
         class Vec

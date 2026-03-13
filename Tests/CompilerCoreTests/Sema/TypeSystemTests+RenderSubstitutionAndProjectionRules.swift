@@ -194,6 +194,24 @@ extension TypeSystemTests {
         }
     }
 
+    func testSubstituteNullableTypeParameterPreservesNullableWrapper() throws {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nullableIntType = ts.make(.primitive(.int, .nullable))
+        let tpSym = SymbolID(rawValue: 0)
+        let nullableTypeParam = ts.make(.typeParam(TypeParamType(symbol: tpSym, nullability: .nullable)))
+
+        let varMap = ts.makeTypeVarBySymbol([tpSym])
+        let tv = try XCTUnwrap(varMap[tpSym])
+        let result = ts.substituteTypeParameters(
+            in: nullableTypeParam,
+            substitution: [tv: intType],
+            typeVarBySymbol: varMap
+        )
+
+        XCTAssertEqual(result, nullableIntType)
+    }
+
     func testSubstituteInIntersectionType() throws {
         let ts = TypeSystem()
         let intType = ts.make(.primitive(.int, .nonNull))

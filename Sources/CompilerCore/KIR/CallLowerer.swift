@@ -736,6 +736,7 @@ final class CallLowerer {
         case ("toInt", sema.types.ulongType, sema.types.intType): interner.intern("kk_ulong_to_int")
         case ("toInt", sema.types.doubleType, sema.types.intType): interner.intern("kk_double_to_int")
         case ("toInt", sema.types.floatType, sema.types.intType): interner.intern("kk_float_to_int")
+        case ("toInt", sema.types.charType, sema.types.intType): nil
         case ("toInt", sema.types.intType, sema.types.intType), ("toInt", sema.types.longType, sema.types.intType): nil
         case ("toLong", sema.types.intType, sema.types.longType): interner.intern("kk_int_to_long")
         case ("toLong", sema.types.uintType, sema.types.longType): interner.intern("kk_uint_to_long")
@@ -754,10 +755,11 @@ final class CallLowerer {
         case ("toByte", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_byte")
         case ("toShort", sema.types.intType, sema.types.intType): interner.intern("kk_int_to_short")
         case ("toShort", sema.types.longType, sema.types.intType): interner.intern("kk_long_to_short")
+        case ("toChar", sema.types.intType, sema.types.charType): nil
         default: nil
         }
 
-        if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toByte", "toShort"].contains(calleeStr),
+        if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toByte", "toShort", "toChar"].contains(calleeStr),
            runtimeCallee == nil
         {
             return loweredArgumentID
