@@ -2715,6 +2715,70 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // onEach(action: (E) -> Unit): List<E>
+        let onEachName = interner.intern("onEach")
+        let onEachFQName = listFQName + [onEachName]
+        if symbols.lookup(fqName: onEachFQName) == nil {
+            let actionType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: onEachName,
+                fqName: onEachFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_onEach", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [actionType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // onEachIndexed(action: (Int, E) -> Unit): List<E>
+        let onEachIndexedName = interner.intern("onEachIndexed")
+        let onEachIndexedFQName = listFQName + [onEachIndexedName]
+        if symbols.lookup(fqName: onEachIndexedFQName) == nil {
+            let actionType2 = types.make(.functionType(FunctionType(
+                params: [types.intType, listTypeParamType],
+                returnType: types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: onEachIndexedName,
+                fqName: onEachIndexedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_onEachIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [actionType2],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         // mapIndexed(transform: (Int, E) -> R): List<R>
         let mapIndexedName = interner.intern("mapIndexed")
         let mapIndexedFQName = listFQName + [mapIndexedName]

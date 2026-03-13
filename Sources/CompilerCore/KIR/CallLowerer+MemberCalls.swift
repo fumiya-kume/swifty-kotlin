@@ -86,7 +86,7 @@ extension CallLowerer {
         "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -1582,6 +1582,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
 
