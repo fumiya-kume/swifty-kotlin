@@ -76,7 +76,7 @@ extension CallLowerer {
     }
 
     private static let unresolvedCollectionMemberNames: Set<String> = [
-        "size", "get", "contains", "containsKey",
+        "size", "get", "contains", "containsAll", "containsKey",
         "isEmpty", "first", "last", "indexOf", "lastIndexOf", "indexOfFirst", "indexOfLast",
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",

@@ -743,6 +743,36 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let containsAllName = interner.intern("containsAll")
+        let containsAllFQName = listFQName + [containsAllName]
+        if symbols.lookup(fqName: containsAllFQName) == nil {
+            let containsAllSymbol = symbols.define(
+                kind: .function,
+                name: containsAllName,
+                fqName: containsAllFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: containsAllSymbol)
+            symbols.setExternalLinkName("kk_list_containsAll", for: containsAllSymbol)
+            let collectionParamType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [collectionParamType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsAllSymbol
+            )
+        }
+
         let isEmptyName = interner.intern("isEmpty")
         let isEmptyFQName = listFQName + [isEmptyName]
         if symbols.lookup(fqName: isEmptyFQName) == nil {
