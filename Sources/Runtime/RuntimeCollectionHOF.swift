@@ -860,6 +860,32 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: sorted))
 }
 
+// MARK: - onEach / onEachIndexed (STDLIB-300)
+
+@_cdecl("kk_list_onEach")
+public func kk_list_onEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        _ = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+    }
+    return listRaw
+}
+
+@_cdecl("kk_list_onEachIndexed")
+public func kk_list_onEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        _ = lambda(closureRaw, idx, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+    }
+    return listRaw
+}
+
 // MARK: - Partition (STDLIB-112)
 
 @_cdecl("kk_list_partition")
