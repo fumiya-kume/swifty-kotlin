@@ -1508,7 +1508,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
+                        canThrow: runtimeCallee == "kk_sequence_sortedBy",
                         thrownResult: nil
                     ))
                     return result
@@ -1614,6 +1614,10 @@ extension CallLowerer {
                     "kk_sequence_to_list"
                 case "distinct":
                     "kk_sequence_distinct"
+                case "sorted":
+                    "kk_sequence_sorted"
+                case "sortedDescending":
+                    "kk_sequence_sortedDescending"
                 default:
                     nil
                 }
@@ -2332,6 +2336,7 @@ extension CallLowerer {
             callArguments = []
         }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
+            || loweredCallee == interner.intern("kk_sequence_sortedBy")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2584,8 +2589,12 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
-                case "sortedBy":
-                    "kk_sequence_sortedBy"
+            case "sorted":
+                return interner.intern("kk_sequence_sorted")
+            case "sortedBy":
+                return interner.intern("kk_sequence_sortedBy")
+            case "sortedDescending":
+                return interner.intern("kk_sequence_sortedDescending")
             default:
                 break
             }

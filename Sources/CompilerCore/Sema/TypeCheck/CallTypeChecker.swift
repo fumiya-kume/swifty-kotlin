@@ -242,8 +242,14 @@ final class CallTypeChecker {
             _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: nextExpectedType)
             sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
             sema.bindings.markCollectionExpr(id)
-            sema.bindings.bindExprType(id, type: sema.types.anyType)
-            return sema.types.anyType
+            let sequenceType = makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: seedType
+            )
+            sema.bindings.bindExprType(id, type: sequenceType)
+            return sequenceType
         }
 
         // --- Stdlib repeat(times) { ... } (STDLIB-008) ---
@@ -968,6 +974,25 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
+                          name == "sequenceOf"
+                {
+                    let elementType = sema.types.lub(argTypes)
+                    collectionType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: elementType
+                    )
+                } else if let explicitTypeArg = explicitTypeArgs.first,
+                          name == "sequenceOf"
+                {
+                    collectionType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: explicitTypeArg
+                    )
+                } else if !argTypes.isEmpty,
                           name == "listOf" || name == "listOfNotNull" || name == "emptyList" || name == "mutableListOf"
                 {
                     // Infer element type from arguments via LUB so that
@@ -1103,7 +1128,12 @@ final class CallTypeChecker {
                     )))
                     _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: nextExpectedType)
                     sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
-                    collectionType = sema.types.anyType
+                    collectionType = makeSyntheticSequenceType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: seedType
+                    )
                 } else {
                     collectionType = sema.types.anyType
                 }
@@ -1285,6 +1315,27 @@ final class CallTypeChecker {
         return types.make(.classType(ClassType(
             classSymbol: symbol,
             args: [],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticSequenceType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let sequenceFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("sequences"),
+            interner.intern("Sequence"),
+        ]
+        guard let sequenceSymbol = symbols.lookup(fqName: sequenceFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(elementType)],
             nullability: .nonNull
         )))
     }

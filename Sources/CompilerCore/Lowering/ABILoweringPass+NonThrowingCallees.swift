@@ -190,6 +190,8 @@ extension ABILoweringPass {
             interner.intern("kk_int_to_double_bits"),
             interner.intern("kk_float_to_double_bits"),
             interner.intern("kk_any_to_string"),
+            interner.intern("kk_any_hashCode"),
+            interner.intern("kk_any_equals"),
             interner.intern("kk_throwable_is_cancellation"),
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),
@@ -326,6 +328,8 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_drop"),
             interner.intern("kk_sequence_distinct"),
             interner.intern("kk_sequence_zip"),
+            interner.intern("kk_sequence_sorted"),
+            interner.intern("kk_sequence_sortedDescending"),
             // Regex (STDLIB-100/101/102/103)
             interner.intern("kk_regex_create"),
             interner.intern("kk_string_matches_regex"),

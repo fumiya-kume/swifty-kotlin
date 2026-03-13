@@ -131,6 +131,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceDropName: InternedString
     let kkSequenceDistinctName: InternedString
     let kkSequenceZipName: InternedString
+    let kkSequenceSortedName: InternedString
+    let kkSequenceSortedByName: InternedString
+    let kkSequenceSortedDescendingName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -440,6 +443,10 @@ struct CollectionLiteralLookupTables {
         kkSequenceDropName = interner.intern("kk_sequence_drop")
         kkSequenceDistinctName = interner.intern("kk_sequence_distinct")
         kkSequenceZipName = interner.intern("kk_sequence_zip")
+
+        kkSequenceSortedName = interner.intern("kk_sequence_sorted")
+        kkSequenceSortedByName = interner.intern("kk_sequence_sortedBy")
+        kkSequenceSortedDescendingName = interner.intern("kk_sequence_sortedDescending")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
