@@ -494,17 +494,24 @@ symbol s492 kind=function fq=kotlin.enumValues vis=public flags=inlineFunction|s
 symbol s493 kind=typeParameter fq=kotlin.enumValueOf.T vis=private flags=reifiedTypeParameter
 symbol s494 kind=valueParameter fq=kotlin.enumValueOf.name vis=private flags=synthetic
 symbol s495 kind=function fq=kotlin.enumValueOf vis=public flags=inlineFunction|synthetic sig=recv=_ params=[String] ret=T#493 suspend=0 defaults=[0] vararg=[0]
-symbol s496 kind=property fq=golden.sema.pi vis=public flags=_ type=Double
-symbol s497 kind=property fq=golden.sema.counter vis=public flags=mutable type=Int
-symbol s498 kind=function fq=golden.sema.increment vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s496 kind=function fq=golden.sema.main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s497 kind=class fq=__ObjectLiteral_0_48_113 vis=private flags=synthetic
+symbol s498 kind=property fq=__ObjectLiteral_0_48_113.x vis=public flags=synthetic type=Int
+symbol s499 kind=property fq=__ObjectLiteral_0_48_113.y vis=public flags=synthetic type=String
+symbol s500 kind=local fq=__local_5.obj vis=private flags=_
 file f0 package=golden.sema
-  decl d0 property pi var=0 sym=s496
-  decl d1 property counter var=1 sym=s497
-  decl d2 fun increment suspend=0 inline=0 sym=s498
-expr e0 double(3.14) type=Double
-expr e1 int(0) type=Int
-expr e2 name(counter) type=_
-expr e3 name(counter) type=Int ref=s497
-expr e4 int(1) type=Int
-expr e5 binary(add) lhs=e3 rhs=e4 type=Int
-expr e6 localAssign counter value=e5 type=Unit ref=s497
+  decl d3 fun main suspend=0 inline=0 sym=s496
+expr e0 int(42) type=Int
+expr e1 localDecl x mutable=0 type=_ init=e0 type=_
+expr e2 string(hello) type=String
+expr e3 localDecl y mutable=0 type=t0 init=e2 type=_
+expr e4 objectLiteral supers=[] type=Class#497
+expr e5 localDecl obj mutable=0 type=_ init=e4 type=Unit ref=s500
+expr e6 name(println) type=_
+expr e7 name(obj) type=Class#497 ref=s500
+expr e8 memberCall recv=e7 callee=x args=[] type=Int ref=s498
+expr e9 call callee=e6 args=[_:e8] type=Unit call=s443 map=[0->0] targs=[]
+expr e10 name(println) type=_
+expr e11 name(obj) type=Class#497 ref=s500
+expr e12 memberCall recv=e11 callee=y args=[] type=String ref=s499
+expr e13 call callee=e10 args=[_:e12] type=Unit call=s443 map=[0->0] targs=[]

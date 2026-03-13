@@ -16,17 +16,21 @@ extension ExprTypeChecker {
               let decl = ast.arena.decl(declID),
               case let .objectDecl(objectDecl) = decl
         else {
-            let objectType = superTypes.first.map {
-                driver.helpers.resolveTypeRef(
-                    $0,
+            if let firstSuperType = superTypes.first {
+                let resolved = driver.helpers.resolveTypeRef(
+                    firstSuperType,
                     ast: ast,
                     sema: sema,
                     interner: interner,
                     diagnostics: ctx.semaCtx.diagnostics
                 )
-            } ?? sema.types.anyType
-            sema.bindings.bindExprType(id, type: objectType)
-            return objectType
+                sema.bindings.bindExprType(id, type: resolved)
+                return resolved
+            }
+            // No superTypes and no declID → malformed object literal;
+            // upstream parser already emitted an error.
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
 
         let objectSymbol = ensureObjectLiteralSymbol(
@@ -196,10 +200,20 @@ extension ExprTypeChecker {
                 inferredType = nil
             }
 
-            sema.symbols.setPropertyType(
-                declaredType ?? inferredType ?? sema.types.anyType,
-                for: propertySymbol
-            )
+            let finalType: TypeID
+            if let declaredType {
+                finalType = declaredType
+            } else if let inferredType {
+                finalType = inferredType
+            } else {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-0101",
+                    "Property '\(interner.resolve(propertyDecl.name))' in object literal must have a type annotation or initializer.",
+                    range: propertyDecl.range
+                )
+                finalType = sema.types.errorType
+            }
+            sema.symbols.setPropertyType(finalType, for: propertySymbol)
         }
 
         let superClass = directSuperSymbols.first { superSymbol in

@@ -75,7 +75,7 @@ extension ExprTypeChecker {
                 && (parentSym.kind == .class || parentSym.kind == .object || parentSym.kind == .interface))
         }) {
             sema.bindings.bindIdentifier(id, symbol: propSymbol.id)
-            let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.anyType
+            let propType = sema.symbols.propertyType(for: propSymbol.id) ?? sema.types.errorType
             if !propSymbol.flags.contains(.mutable) {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-0014",
@@ -534,7 +534,7 @@ extension ExprTypeChecker {
                 return symbol.kind == .property
             }
             if let propertySymbol = propertyCandidates.first {
-                let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.anyType
+                let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.errorType
                 sema.bindings.bindIdentifier(id, symbol: propertySymbol)
                 sema.bindings.bindExprType(id, type: propertyType)
                 return propertyType
@@ -600,10 +600,19 @@ extension ExprTypeChecker {
             return resultType
         }
 
+        if candidates.isEmpty {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0022",
+                "Unresolved reference '::\(interner.resolve(member))'.",
+                range: range
+            )
+        }
         let fallbackType: TypeID = if let expectedType,
                                       case .functionType = sema.types.kind(of: expectedType)
         {
             expectedType
+        } else if candidates.isEmpty {
+            sema.types.errorType
         } else {
             sema.types.anyType
         }
@@ -646,6 +655,7 @@ extension ExprTypeChecker {
             }
             let resolved = sema.types.make(.typeParam(TypeParamType(symbol: sym.id)))
             sema.bindings.bindClassRefTargetType(id, type: resolved)
+            // TODO(TYPE-111): Replace anyType with KClass<T> once the type is modeled.
             sema.bindings.bindExprType(id, type: sema.types.anyType)
             _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
             return sema.types.anyType
@@ -657,6 +667,7 @@ extension ExprTypeChecker {
             else { continue }
             let classType = sema.types.make(.classType(ClassType(classSymbol: sym.id)))
             sema.bindings.bindClassRefTargetType(id, type: classType)
+            // TODO(TYPE-111): Replace anyType with KClass<T> once the type is modeled.
             sema.bindings.bindExprType(id, type: sema.types.anyType)
             _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
             return sema.types.anyType
