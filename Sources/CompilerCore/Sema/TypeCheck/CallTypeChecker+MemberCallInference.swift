@@ -410,6 +410,7 @@ extension CallTypeChecker {
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
+            "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
@@ -479,7 +480,7 @@ extension CallTypeChecker {
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys":
+                 "mapValues", "mapKeys", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -491,7 +492,7 @@ extension CallTypeChecker {
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
                     case "filter", "any", "none", "all": sema.types.booleanType
-                    case "forEach": sema.types.unitType
+                    case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull": sema.types.nullableAnyType
                     default: sema.types.anyType
@@ -526,6 +527,7 @@ extension CallTypeChecker {
                     case "filter":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "forEach": resultType = sema.types.unitType
+                    case "onEach": resultType = receiverType
                     case "flatMap":
                         resultType = isSyntheticSequenceReceiver
                             ? sema.types.anyType
@@ -754,12 +756,14 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
 
-            case "forEachIndexed", "mapIndexed":
+            case "forEachIndexed", "mapIndexed", "onEachIndexed":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                let lambdaReturnType = calleeStr == "forEachIndexed" ? sema.types.unitType : sema.types.anyType
+                let lambdaReturnType = calleeStr == "forEachIndexed" || calleeStr == "onEachIndexed"
+                    ? sema.types.unitType
+                    : sema.types.anyType
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [sema.types.intType, collectionElementType],
                     returnType: lambdaReturnType
@@ -770,6 +774,8 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 if calleeStr == "forEachIndexed" {
                     resultType = sema.types.unitType
+                } else if calleeStr == "onEachIndexed" {
+                    resultType = receiverType
                 } else {
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
@@ -823,7 +829,7 @@ extension CallTypeChecker {
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             if isSyntheticSequenceReceiver,
-               ["map", "filter", "flatMap"].contains(calleeStr)
+               ["map", "filter", "flatMap", "onEach", "onEachIndexed"].contains(calleeStr)
             {
                 sema.bindings.markCollectionExpr(id)
             }
@@ -1026,6 +1032,20 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }
+            }
+        }
+
+        // Any?.toString() → String (STDLIB-307)
+        // In Kotlin, toString() is an extension on Any? that always returns String.
+        // For null receivers it returns the string "null".
+        if interner.resolve(calleeName) == "toString",
+           args.isEmpty
+        {
+            let nonNullReceiver = sema.types.makeNonNullable(lookupReceiverType)
+            if nonNullReceiver != lookupReceiverType {
+                let stringType = sema.types.stringType
+                sema.bindings.bindExprType(id, type: stringType)
+                return stringType
             }
         }
 
