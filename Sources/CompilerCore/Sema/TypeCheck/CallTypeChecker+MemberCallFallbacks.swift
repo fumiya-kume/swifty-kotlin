@@ -340,6 +340,8 @@ extension CallTypeChecker {
             interner.intern("sortedWith"),
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
+            interner.intern("takeWhile"),
+            interner.intern("dropWhile"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),

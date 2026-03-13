@@ -320,33 +320,19 @@ public func kk_sequence_zip(_ seqRaw: Int, _ otherRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_takeWhile")
 public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    guard let seq = runtimeSequenceBox(from: seqRaw) else {
-        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-        let newSeq = RuntimeSequenceBox(steps: [
-            .source(elements: sourceElements),
-            .takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
-        ])
-        return registerRuntimeObject(newSeq)
-    }
-    var newSteps = seq.steps
-    newSteps.append(.takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
-    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let newSeq = RuntimeSequenceBox(steps: [
+        .source(elements: applyTakeWhileStep(sourceElements, fnPtr: fnPtr, closureRaw: closureRaw)),
+    ])
     return registerRuntimeObject(newSeq)
 }
 
 @_cdecl("kk_sequence_dropWhile")
 public func kk_sequence_dropWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    guard let seq = runtimeSequenceBox(from: seqRaw) else {
-        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-        let newSeq = RuntimeSequenceBox(steps: [
-            .source(elements: sourceElements),
-            .dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
-        ])
-        return registerRuntimeObject(newSeq)
-    }
-    var newSteps = seq.steps
-    newSteps.append(.dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
-    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let newSeq = RuntimeSequenceBox(steps: [
+        .source(elements: applyDropWhileStep(sourceElements, fnPtr: fnPtr, closureRaw: closureRaw)),
+    ])
     return registerRuntimeObject(newSeq)
 }
 

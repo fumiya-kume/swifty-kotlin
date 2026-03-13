@@ -412,7 +412,7 @@ extension CallTypeChecker {
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast",
-            "sortedByDescending", "sortedWith", "partition",
+            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
@@ -469,13 +469,20 @@ extension CallTypeChecker {
         // --- Collection higher-order functions (STDLIB-005) ---
         if isCollectionHOF {
             let calleeStr = interner.resolve(calleeName)
-            let collectionElementType = getCollectionElementType(receiverType, sema: sema, interner: interner)
+            let collectionElementType = resolvedCollectionElementType(
+                receiverID: receiverID,
+                receiverType: receiverType,
+                sema: sema,
+                interner: interner,
+                ctx: ctx,
+                locals: &locals
+            )
 
             let resultType: TypeID
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys":
+                 "mapValues", "mapKeys", "takeWhile", "dropWhile":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -486,7 +493,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "any", "none", "all": sema.types.booleanType
+                    case "filter", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
                     case "forEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull": sema.types.nullableAnyType
@@ -521,6 +528,8 @@ extension CallTypeChecker {
                         }
                     case "filter":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
+                    case "takeWhile", "dropWhile":
+                        resultType = receiverType
                     case "forEach": resultType = sema.types.unitType
                     case "flatMap":
                         resultType = isSyntheticSequenceReceiver
@@ -801,7 +810,7 @@ extension CallTypeChecker {
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             if isSyntheticSequenceReceiver,
-               ["map", "filter", "flatMap"].contains(calleeStr)
+               ["map", "filter", "flatMap", "sortedBy", "sortedByDescending", "takeWhile", "dropWhile"].contains(calleeStr)
             {
                 sema.bindings.markCollectionExpr(id)
             }
@@ -2879,6 +2888,44 @@ extension CallTypeChecker {
             }
         }
         return sema.types.anyType
+    }
+
+    private func resolvedCollectionElementType(
+        receiverID: ExprID,
+        receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID {
+        let directElementType = getCollectionElementType(receiverType, sema: sema, interner: interner)
+        if directElementType != sema.types.anyType {
+            return directElementType
+        }
+        guard let receiverExpr = ctx.ast.arena.expr(receiverID) else {
+            return directElementType
+        }
+        switch receiverExpr {
+        case let .call(calleeExpr, _, args, _):
+            guard let callee = ctx.ast.arena.expr(calleeExpr),
+                  case let .nameRef(name, _) = callee
+            else {
+                return directElementType
+            }
+            let calleeName = interner.resolve(name)
+            if calleeName == "sequenceOf" {
+                let elementTypes = args.map { argument in
+                    driver.inferExpr(argument.expr, ctx: ctx, locals: &locals, expectedType: nil)
+                }
+                return elementTypes.isEmpty ? sema.types.anyType : sema.types.lub(elementTypes)
+            }
+            if calleeName == "generateSequence", let firstArg = args.first {
+                return driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
+            }
+            return directElementType
+        default:
+            return directElementType
+        }
     }
 
     private func isMapLikeCollectionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {

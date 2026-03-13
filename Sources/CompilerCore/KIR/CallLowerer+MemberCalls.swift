@@ -1586,6 +1586,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "takeWhile", "dropWhile",
         ].contains(interner.resolve(calleeName))
     }
 
