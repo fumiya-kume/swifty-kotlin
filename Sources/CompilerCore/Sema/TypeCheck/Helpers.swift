@@ -174,6 +174,28 @@ struct TypeCheckHelpers {
         }
     }
 
+    /// Construct a `Flow<elementType>` ClassType by looking up the synthetic
+    /// `kotlinx.coroutines.flow.Flow` interface symbol.  Returns `nil` when
+    /// the symbol has not been registered (caller should fall back to `anyType`).
+    func makeFlowType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let flowFQName: [InternedString] = [
+            interner.intern("kotlinx"),
+            interner.intern("coroutines"),
+            interner.intern("flow"),
+            interner.intern("Flow"),
+        ]
+        guard let symbolID = sema.symbols.lookup(fqName: flowFQName) else { return nil }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: symbolID,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
     func resolveBuiltinTypeName(
         _ name: InternedString,
         nullability: Nullability = .nonNull,

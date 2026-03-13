@@ -132,6 +132,131 @@ final class FlowSemaTests: XCTestCase {
         }
     }
 
+    // MARK: - TYPE-113: Flow<T> type preservation tests
+
+    func testFlowBuilderExprTypeIsFlowClassType() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                val f = flow { emit(1) }
+                f.collect { println(it) }
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            // Find the flow expression and verify its type is Flow<...> (a classType),
+            // not Any.
+            let flowExprs = sema.bindings.flowExprIDs
+            XCTAssertFalse(flowExprs.isEmpty, "Should have at least one flow expression")
+
+            for flowExpr in flowExprs {
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                // The expression type should NOT be anyType or nullableAnyType
+                XCTAssertNotEqual(exprType, sema.types.anyType,
+                    "Flow expression type should not be erased to Any")
+                XCTAssertNotEqual(exprType, sema.types.nullableAnyType,
+                    "Flow expression type should not be erased to Any?")
+                // It should be a classType (Flow<...>)
+                if case .classType(let classType) = sema.types.kind(of: exprType) {
+                    let symbol = sema.symbols.symbol(classType.classSymbol)
+                    let name = symbol.map { ctx.interner.resolve($0.name) }
+                    XCTAssertEqual(name, "Flow", "Flow expression should have Flow class type")
+                    XCTAssertFalse(classType.args.isEmpty, "Flow type should have type arguments")
+                }
+            }
+        }
+    }
+
+    func testFlowMapResultTypeIsFlowClassType() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                val mapped = flow { emit(1) }.map { it * 2 }
+                mapped.collect { println(it) }
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            // The map result should also be a flow expression with a non-Any type
+            let flowExprs = sema.bindings.flowExprIDs
+            XCTAssertGreaterThanOrEqual(flowExprs.count, 2,
+                "Should have flow builder + map as flow expressions")
+
+            for flowExpr in flowExprs {
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                XCTAssertNotEqual(exprType, sema.types.anyType,
+                    "Flow chain result should not be erased to Any")
+            }
+        }
+    }
+
+    func testFlowFilterPreservesElementType() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                val f = flow { emit(1); emit(2) }.filter { it > 1 }
+                f.collect { println(it) }
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let flowExprs = sema.bindings.flowExprIDs
+            XCTAssertGreaterThanOrEqual(flowExprs.count, 2,
+                "Should have flow builder + filter as flow expressions")
+            // At least one flow expression (the filter result) should track element type
+            let exprsWithElementType = flowExprs.filter { sema.bindings.flowElementType(forExpr: $0) != nil }
+            XCTAssertFalse(exprsWithElementType.isEmpty,
+                "At least one flow expression should track element type after filter")
+        }
+    }
+
+    func testFlowTakeResultTypeIsFlowClassType() throws {
+        let source = """
+        fun main() {
+            runBlocking {
+                val taken = flow { emit(1); emit(2); emit(3) }.take(2)
+                taken.collect { println(it) }
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let flowExprs = sema.bindings.flowExprIDs
+            for flowExpr in flowExprs {
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                XCTAssertNotEqual(exprType, sema.types.anyType,
+                    "Flow.take() result should not be erased to Any")
+            }
+        }
+    }
+
     func testUserDefinedEmitInsideFlowBuilderShadowsBuiltinEmitFallback() throws {
         let source = """
         fun main() {
