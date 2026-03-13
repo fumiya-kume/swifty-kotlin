@@ -266,12 +266,17 @@ extension OverloadResolver {
         {
             let subtypeKind = typeSystem.kind(of: subtype)
             if case let .classType(subClass) = subtypeKind,
-               subClass.classSymbol == superClass.classSymbol,
-               subClass.args.count == superClass.args.count,
-               subClass.nullability == superClass.nullability || superClass.nullability == .nullable
+               let alignedSubtype = alignNominalSubtype(
+                   subClass,
+                   to: superClass.classSymbol,
+                   targetNullability: superClass.nullability,
+                   typeSystem: typeSystem
+               ),
+               case let .classType(alignedClass) = typeSystem.kind(of: alignedSubtype),
+               alignedClass.args.count == superClass.args.count
             {
                 var result: [VariableConstraint] = []
-                for (subArg, superArg) in zip(subClass.args, superClass.args) {
+                for (subArg, superArg) in zip(alignedClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(
                         subArg: subArg,
                         superArg: superArg,
@@ -365,6 +370,82 @@ extension OverloadResolver {
             right: .type(supertype),
             blameRange: blameRange
         )]
+    }
+
+    private func alignNominalSubtype(
+        _ subtype: ClassType,
+        to superSymbol: SymbolID,
+        targetNullability: Nullability,
+        typeSystem: TypeSystem
+    ) -> TypeID? {
+        guard subtype.nullability == targetNullability || targetNullability == .nullable else {
+            return nil
+        }
+        if subtype.classSymbol == superSymbol {
+            return typeSystem.make(.classType(subtype))
+        }
+        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: superSymbol) else {
+            return nil
+        }
+
+        let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: superSymbol)
+        guard !mappedArgs.isEmpty else {
+            return typeSystem.make(.classType(ClassType(
+                classSymbol: superSymbol,
+                args: [],
+                nullability: subtype.nullability
+            )))
+        }
+
+        let substitutedArgs = mappedArgs.map {
+            substituteChildTypeArg($0, childSymbol: subtype.classSymbol, childArgs: subtype.args, typeSystem: typeSystem)
+        }
+        return typeSystem.make(.classType(ClassType(
+            classSymbol: superSymbol,
+            args: substitutedArgs,
+            nullability: subtype.nullability
+        )))
+    }
+
+    private func substituteChildTypeArg(
+        _ arg: TypeArg,
+        childSymbol: SymbolID,
+        childArgs: [TypeArg],
+        typeSystem: TypeSystem
+    ) -> TypeArg {
+        switch arg {
+        case let .invariant(type):
+            .invariant(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case let .out(type):
+            .out(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case let .in(type):
+            .in(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case .star:
+            .star
+        }
+    }
+
+    private func substituteChildType(
+        _ type: TypeID,
+        childSymbol: SymbolID,
+        childArgs: [TypeArg],
+        typeSystem: TypeSystem
+    ) -> TypeID {
+        guard case let .typeParam(typeParam) = typeSystem.kind(of: type) else {
+            return type
+        }
+        let childTypeParams = typeSystem.nominalTypeParameterSymbols(for: childSymbol)
+        guard let index = childTypeParams.firstIndex(of: typeParam.symbol),
+              index < childArgs.count
+        else {
+            return type
+        }
+        switch childArgs[index] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            return inner
+        case .star:
+            return typeSystem.nullableAnyType
+        }
     }
 
     /// Decomposes a pair of type arguments into constraints respecting variance.
