@@ -1028,7 +1028,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if (callee == lookup.reversedName || callee == lookup.asReversedName), arguments.count == 1 {
+                    if callee == lookup.reversedName || callee == lookup.asReversedName, arguments.count == 1 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
@@ -1049,7 +1049,7 @@ extension CollectionLiteralLoweringPass {
                             }
                             continue
                         }
-                        if rangeExprIDs.contains(receiverID.rawValue) {
+                        if callee == lookup.reversedName, rangeExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
