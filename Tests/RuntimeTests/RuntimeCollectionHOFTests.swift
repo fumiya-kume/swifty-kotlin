@@ -388,8 +388,14 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 9)), 0)
+        XCTAssertEqual(kk_unbox_bool(kk_list_containsAll(source, makeList([1, 3]))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_list_containsAll(source, makeList([1, 9]))), 0)
         XCTAssertEqual(kk_unbox_bool(kk_list_is_empty(source)), 0)
         XCTAssertEqual(kk_unbox_bool(kk_list_is_empty(makeList([]))), 1)
+
+        let set = kk_set_of(makeArray([1, 2, 3]), 3)
+        XCTAssertEqual(kk_unbox_bool(kk_set_containsAll(set, makeList([1, 3]))), 1)
+        XCTAssertEqual(kk_unbox_bool(kk_set_containsAll(set, makeList([1, 9]))), 0)
 
         let keys = makeArray([1, 2])
         let values = makeArray([10, 20])

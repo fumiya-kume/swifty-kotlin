@@ -2388,7 +2388,8 @@ extension DataFlowSemaPhase {
             setFQName: setFQName,
             setInterfaceSymbol: setInterfaceSymbol,
             typeParamSymbol: typeParamSymbol,
-            typeParamType: typeParamType
+            typeParamType: typeParamType,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         for (memberName, externName) in [
             ("intersect", "kk_set_intersect"),
@@ -2498,7 +2499,8 @@ extension DataFlowSemaPhase {
         setFQName: [InternedString],
         setInterfaceSymbol: SymbolID,
         typeParamSymbol: SymbolID,
-        typeParamType: TypeID
+        typeParamType: TypeID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let memberName = interner.intern("containsAll")
         let memberFQName = setFQName + [memberName]
@@ -2508,7 +2510,11 @@ extension DataFlowSemaPhase {
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
-        let collectionType = types.anyType
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
