@@ -144,36 +144,65 @@ public final class PhaseTimer {
         return lines.joined(separator: "\n") + "\n"
     }
 
-    /// Export timing data as a JSON-compatible dictionary array.
-    public func exportJSON() -> [[String: Any]] {
+    // MARK: - Typed report model
+
+    /// A single entry in the exported timing report.
+    public struct PhaseReportEntry: Codable, Equatable {
+        public let phase: String
+        public let durationMs: Double
+        public let percent: Double
+        public let subPhases: [PhaseReportEntry]?
+
+        enum CodingKeys: String, CodingKey {
+            case phase
+            case durationMs = "duration_ms"
+            case percent
+            case subPhases = "sub_phases"
+        }
+
+        public init(phase: String, durationMs: Double, percent: Double, subPhases: [PhaseReportEntry]? = nil) {
+            self.phase = phase
+            self.durationMs = durationMs
+            self.percent = percent
+            self.subPhases = subPhases
+        }
+    }
+
+    /// Export timing data as a typed report.
+    public func exportJSON() -> [PhaseReportEntry] {
         let total = totalMs
-        var result: [[String: Any]] = []
+        var result: [PhaseReportEntry] = []
         for record in records {
             let ms = record.durationMs
             let pct = total > 0 ? (ms / total) * 100.0 : 0.0
-            var entry: [String: Any] = [
-                "phase": record.name,
-                "duration_ms": round(ms * 100) / 100,
-                "percent": round(pct * 10) / 10,
-            ]
-            if !record.subRecords.isEmpty {
-                entry["sub_phases"] = record.subRecords.map { sub in
-                    let subMs = sub.durationMs
-                    let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
-                    return [
-                        "phase": sub.name,
-                        "duration_ms": round(subMs * 100) / 100,
-                        "percent": round(subPct * 10) / 10,
-                    ] as [String: Any]
-                }
+            let subs: [PhaseReportEntry]? = record.subRecords.isEmpty ? nil : record.subRecords.map { sub in
+                let subMs = sub.durationMs
+                let subPct = total > 0 ? (subMs / total) * 100.0 : 0.0
+                return PhaseReportEntry(
+                    phase: sub.name,
+                    durationMs: round(subMs * 100) / 100,
+                    percent: round(subPct * 10) / 10
+                )
             }
-            result.append(entry)
+            result.append(PhaseReportEntry(
+                phase: record.name,
+                durationMs: round(ms * 100) / 100,
+                percent: round(pct * 10) / 10,
+                subPhases: subs
+            ))
         }
-        result.append([
-            "phase": "TOTAL",
-            "duration_ms": round(total * 100) / 100,
-            "percent": 100.0,
-        ])
+        result.append(PhaseReportEntry(
+            phase: "TOTAL",
+            durationMs: round(total * 100) / 100,
+            percent: 100.0
+        ))
         return result
+    }
+
+    /// Encode timing report as JSON `Data`.
+    public func exportJSONData() -> Data {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        return (try? encoder.encode(exportJSON())) ?? Data("[]".utf8)
     }
 }
