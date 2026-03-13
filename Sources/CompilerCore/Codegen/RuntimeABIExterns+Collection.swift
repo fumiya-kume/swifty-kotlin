@@ -877,6 +877,7 @@ public extension RuntimeABIExterns {
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
+
     /// onEach / onEachIndexed (STDLIB-300)
     static let kk_list_onEach = ExternDecl(
         name: "kk_list_onEach",

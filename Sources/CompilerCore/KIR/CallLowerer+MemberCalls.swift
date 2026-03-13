@@ -2410,6 +2410,10 @@ extension CallLowerer {
 
         if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "firstOrNull":
+                return interner.intern("kk_list_firstOrNull")
+            case "lastOrNull":
+                return interner.intern("kk_list_lastOrNull")
             case "indexOf":
                 return interner.intern("kk_list_indexOf")
             case "lastIndexOf":

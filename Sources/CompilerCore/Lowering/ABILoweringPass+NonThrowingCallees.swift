@@ -238,6 +238,10 @@ extension ABILoweringPass {
             interner.intern("kk_set_contains"),
             interner.intern("kk_set_containsAll"),
             interner.intern("kk_set_is_empty"),
+            interner.intern("kk_set_toList"),
+            interner.intern("kk_set_intersect"),
+            interner.intern("kk_set_union"),
+            interner.intern("kk_set_subtract"),
             interner.intern("kk_set_to_string"),
             // NOTE: kk_list_map/filter/forEach/flatMap/any/none/all are NOT
             // non-throwing — the lambda argument can throw, so they need an
