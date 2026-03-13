@@ -127,6 +127,9 @@ public extension RuntimeABIExterns {
     static let kk_sequence_dropWhile = ExternDecl(
         name: "kk_sequence_dropWhile",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-272: Sorting operations
     static let kk_sequence_sorted = ExternDecl(
         name: "kk_sequence_sorted",
