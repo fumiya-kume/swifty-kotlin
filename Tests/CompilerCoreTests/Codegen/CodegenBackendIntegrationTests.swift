@@ -301,7 +301,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
             XCTAssertEqual(normalizedStdout, "GREEN\n")
         }
 
-        // Test enumValues (returns list; map { it.name } requires kk_list_map)
+        // Test enumValues
         let sourceValues = """
         enum class Color { RED, GREEN, BLUE }
 
@@ -324,9 +324,7 @@ final class CodegenBackendIntegrationTests: XCTestCase {
 
             let result = try CommandRunner.run(executable: outputBase, arguments: [])
             let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
-            // values.size=3, get(0)=RED ordinal (0), get(1)=GREEN ordinal (1)
-            // println of ordinal prints the boxed int - need to check actual output
-            XCTAssertTrue(normalizedStdout.contains("3"), "Expected size 3, got: \(normalizedStdout)")
+            XCTAssertEqual(normalizedStdout, "3\nRED\nGREEN\n")
         }
     }
 

@@ -570,10 +570,11 @@ public enum RuntimeABISpec {
         RuntimeABIFunctionSpec(
             name: "kk_enum_make_values_array",
             parameters: [
+                RuntimeABIParameter(name: "valuesRaw", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
             ],
             returnType: .intptr,
-            section: "Exception"
+            section: "Enum"
         ),
         // STDLIB-142: String.toBoolean
         RuntimeABIFunctionSpec(
