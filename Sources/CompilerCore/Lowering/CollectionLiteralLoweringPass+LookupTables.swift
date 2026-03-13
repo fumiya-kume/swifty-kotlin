@@ -243,6 +243,7 @@ struct CollectionLiteralLookupTables {
     let minOfOrNullName: InternedString
     let dropName: InternedString
     let reversedName: InternedString
+    let asReversedName: InternedString
     let sortedName: InternedString
     let distinctName: InternedString
     let shuffledName: InternedString
@@ -550,6 +551,7 @@ struct CollectionLiteralLookupTables {
         minOfOrNullName = interner.intern("minOfOrNull")
         dropName = interner.intern("drop")
         reversedName = interner.intern("reversed")
+        asReversedName = interner.intern("asReversed")
         sortedName = interner.intern("sorted")
         distinctName = interner.intern("distinct")
         shuffledName = interner.intern("shuffled")

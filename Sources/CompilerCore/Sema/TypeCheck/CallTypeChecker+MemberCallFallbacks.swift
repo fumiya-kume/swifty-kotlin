@@ -420,6 +420,7 @@ extension CallTypeChecker {
             interner.intern("take"),
             interner.intern("drop"),
             interner.intern("reversed"),
+            interner.intern("asReversed"),
             interner.intern("sorted"),
             interner.intern("distinct"),
             interner.intern("flatten"),
@@ -472,7 +473,7 @@ extension CallTypeChecker {
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
             interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("associateBy"), interner.intern("associateWith"),
-            interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"),
+            interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
             interner.intern("onEach"), interner.intern("onEachIndexed"),
@@ -499,7 +500,8 @@ extension CallTypeChecker {
         let knownNames = KnownCompilerNames(interner: interner)
         switch memberName {
         case knownNames.size, knownNames.isEmpty, interner.intern("iterator"), interner.intern("asSequence"),
-             interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
+             interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"),
+            interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
              interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"):

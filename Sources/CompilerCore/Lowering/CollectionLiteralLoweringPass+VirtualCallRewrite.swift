@@ -188,7 +188,7 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.reversedName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
+        if (callee == lookup.reversedName || callee == lookup.asReversedName), arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
