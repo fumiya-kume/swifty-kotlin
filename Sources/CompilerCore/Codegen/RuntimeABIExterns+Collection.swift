@@ -1017,7 +1017,7 @@ public extension RuntimeABIExterns {
 
     static let kk_mutable_list_set = ExternDecl(
         name: "kk_mutable_list_set",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

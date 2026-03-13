@@ -140,6 +140,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.add(1)
+            values.add(1, 0)
             values.removeAt(0)
             values.clear()
         }
@@ -152,22 +153,23 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
 
-            let expectedExternalLinks = [
-                "add": "kk_mutable_list_add",
-                "removeAt": "kk_mutable_list_removeAt",
-                "clear": "kk_mutable_list_clear",
+            let expectedExternalLinks: [(String, Int, String)] = [
+                ("add", 1, "kk_mutable_list_add"),
+                ("add", 2, "kk_mutable_list_add_at"),
+                ("removeAt", 1, "kk_mutable_list_removeAt"),
+                ("clear", 0, "kk_mutable_list_clear"),
             ]
 
-            for (memberName, externalLinkName) in expectedExternalLinks {
+            for (memberName, argumentCount, externalLinkName) in expectedExternalLinks {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                    return ctx.interner.resolve(callee) == memberName
-                }, "Expected member call to \(memberName) in AST")
+                    guard case let .memberCall(_, callee, _, valueArgs, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName && valueArgs.count == argumentCount
+                }, "Expected member call to \(memberName) with \(argumentCount) arguments in AST")
                 let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
                 XCTAssertEqual(
                     sema.symbols.externalLinkName(for: chosenCallee),
                     externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                    "Expected \(memberName)/\(argumentCount) to resolve to \(externalLinkName)"
                 )
             }
         }
