@@ -987,6 +987,20 @@ extension CallTypeChecker {
             }
         }
 
+        // Any?.toString() → String (STDLIB-307)
+        // In Kotlin, toString() is an extension on Any? that always returns String.
+        // For null receivers it returns the string "null".
+        if interner.resolve(calleeName) == "toString",
+           args.isEmpty
+        {
+            let nonNullReceiver = sema.types.makeNonNullable(lookupReceiverType)
+            if nonNullReceiver != lookupReceiverType {
+                let stringType = sema.types.stringType
+                sema.bindings.bindExprType(id, type: stringType)
+                return stringType
+            }
+        }
+
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
         // toFloat(), toDouble(), toByte(), toShort() (TYPE-005, STDLIB-151)
         if args.isEmpty {
