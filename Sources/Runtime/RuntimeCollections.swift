@@ -182,6 +182,39 @@ public func kk_list_joinToString(
     }
 }
 
+// MARK: - List toMap (STDLIB-200)
+
+@_cdecl("kk_list_toMap")
+public func kk_list_toMap(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    var keys: [Int] = []
+    var values: [Int] = []
+    for element in list.elements {
+        guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
+            continue
+        }
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: pointer))
+        }
+        guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {
+            continue
+        }
+        var found = false
+        for (idx, existingKey) in keys.enumerated() where runtimeValuesEqual(existingKey, pair.first) {
+            values[idx] = pair.second
+            found = true
+            break
+        }
+        if !found {
+            keys.append(pair.first)
+            values.append(pair.second)
+        }
+    }
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
 @_cdecl("kk_list_to_set")
 public func kk_list_to_set(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -215,6 +248,34 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
         return 0
     }
     list.elements.removeAll(keepingCapacity: false)
+    return 0
+}
+
+// MARK: - MutableList shuffle/reverse (STDLIB-206)
+
+@_cdecl("kk_mutable_list_shuffle")
+public func kk_mutable_list_shuffle(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return 0
+    }
+    // Fisher-Yates shuffle
+    let count = list.elements.count
+    if count > 1 {
+        var rng = SystemRandomNumberGenerator()
+        for i in stride(from: count - 1, through: 1, by: -1) {
+            let j = Int.random(in: 0 ... i, using: &rng)
+            list.elements.swapAt(i, j)
+        }
+    }
+    return 0
+}
+
+@_cdecl("kk_mutable_list_reverse")
+public func kk_mutable_list_reverse(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return 0
+    }
+    list.elements.reverse()
     return 0
 }
 
@@ -313,6 +374,28 @@ public func kk_set_is_empty(_ setRaw: Int) -> Int {
         return kk_box_bool(1)
     }
     return kk_box_bool(set.elements.isEmpty ? 1 : 0)
+}
+
+
+@_cdecl("kk_set_containsAll")
+public func kk_set_containsAll(_ setRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return kk_box_bool(0)
+    }
+    let otherElements: [Int]
+    if let otherList = runtimeListBox(from: collectionRaw) {
+        otherElements = otherList.elements
+    } else if let otherSet = runtimeSetBox(from: collectionRaw) {
+        otherElements = otherSet.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    for element in otherElements {
+        if !set.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            return kk_box_bool(0)
+        }
+    }
+    return kk_box_bool(1)
 }
 
 @_cdecl("kk_set_to_string")
