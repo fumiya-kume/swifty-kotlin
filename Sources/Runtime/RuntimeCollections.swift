@@ -434,10 +434,13 @@ public func kk_list_plus_collection(_ listRaw: Int, _ otherRaw: Int) -> Int {
     } else {
         []
     }
-    let rhsElements: [Int] = if let other = runtimeListBox(from: otherRaw) {
-        other.elements
+    let rhsElements: [Int]
+    if let other = runtimeListBox(from: otherRaw) {
+        rhsElements = other.elements
+    } else if let other = runtimeSetBox(from: otherRaw) {
+        rhsElements = other.elements
     } else {
-        []
+        rhsElements = []
     }
     return registerRuntimeObject(RuntimeListBox(elements: lhsElements + rhsElements))
 }
