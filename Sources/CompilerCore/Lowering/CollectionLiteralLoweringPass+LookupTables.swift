@@ -73,6 +73,8 @@ struct CollectionLiteralLookupTables {
     let kkListUnzipName: InternedString
     let kkListWithIndexName: InternedString
     let kkListForEachIndexedName: InternedString
+    let kkListOnEachName: InternedString
+    let kkListOnEachIndexedName: InternedString
     let kkListMapIndexedName: InternedString
     let kkListSumOfName: InternedString
     let kkListMaxOrNullName: InternedString
@@ -217,6 +219,8 @@ struct CollectionLiteralLookupTables {
     let unzipName: InternedString
     let withIndexName: InternedString
     let forEachIndexedName: InternedString
+    let onEachName: InternedString
+    let onEachIndexedName: InternedString
     let mapIndexedName: InternedString
     let sumOfName: InternedString
     let maxOrNullName: InternedString
@@ -368,6 +372,8 @@ struct CollectionLiteralLookupTables {
         kkListUnzipName = interner.intern("kk_list_unzip")
         kkListWithIndexName = interner.intern("kk_list_withIndex")
         kkListForEachIndexedName = interner.intern("kk_list_forEachIndexed")
+        kkListOnEachName = interner.intern("kk_list_onEach")
+        kkListOnEachIndexedName = interner.intern("kk_list_onEachIndexed")
         kkListMapIndexedName = interner.intern("kk_list_mapIndexed")
         kkListSumOfName = interner.intern("kk_list_sumOf")
         kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
@@ -503,6 +509,8 @@ struct CollectionLiteralLookupTables {
         unzipName = interner.intern("unzip")
         withIndexName = interner.intern("withIndex")
         forEachIndexedName = interner.intern("forEachIndexed")
+        onEachName = interner.intern("onEach")
+        onEachIndexedName = interner.intern("onEachIndexed")
         mapIndexedName = interner.intern("mapIndexed")
         sumOfName = interner.intern("sumOf")
         maxOrNullName = interner.intern("maxOrNull")

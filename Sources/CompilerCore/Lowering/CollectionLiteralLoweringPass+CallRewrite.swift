@@ -1368,7 +1368,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
-                    if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName
+                    if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName || callee == lookup.onEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
                         || callee == lookup.toListName
@@ -1413,6 +1413,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.filterName: lookup.kkListFilterName
                                 case lookup.mapNotNullName: lookup.kkListMapNotNullName
                                 case lookup.forEachName: lookup.kkListForEachName
+                                case lookup.onEachName: lookup.kkListOnEachName
                                 case lookup.flatMapName: lookup.kkListFlatMapName
                                 case lookup.anyName: lookup.kkListAnyName
                                 case lookup.noneName: lookup.kkListNoneName
@@ -1423,6 +1424,7 @@ extension CollectionLiteralLoweringPass {
                                     || callee == lookup.mapNotNullName
                                     || callee == lookup.flatMapName
                                     || callee == lookup.filterName
+                                    || callee == lookup.onEachName
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
@@ -1723,14 +1725,19 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName {
+                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
-                                let kkName: InternedString = callee == lookup.forEachIndexedName
-                                    ? lookup.kkListForEachIndexedName
-                                    : lookup.kkListMapIndexedName
+                                let kkName: InternedString
+                                if callee == lookup.forEachIndexedName {
+                                    kkName = lookup.kkListForEachIndexedName
+                                } else if callee == lookup.onEachIndexedName {
+                                    kkName = lookup.kkListOnEachIndexedName
+                                } else {
+                                    kkName = lookup.kkListMapIndexedName
+                                }
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -1750,7 +1757,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapIndexedName, let result {
+                                if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }
