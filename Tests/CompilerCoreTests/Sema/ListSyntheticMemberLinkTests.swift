@@ -490,6 +490,25 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testOutProjectedMutableListBlocksBulkMutationMembers() throws {
+        let source = """
+        fun mutate(values: MutableList<out Number>) {
+            values.addAll(listOf(1, 2))
+            values.removeAll(listOf(3, 4))
+            values.retainAll(listOf(5, 6))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-VAR-OUT" }
+            XCTAssertEqual(diagnostics.count, 3, "Expected projected MutableList bulk writes to be rejected")
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+        }
+    }
+
     func testListSortMembersRemainUnavailableOnImmutableList() throws {
         let source = """
         fun mutate(values: List<Int>) {
