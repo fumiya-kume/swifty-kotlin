@@ -2366,6 +2366,7 @@ extension DataFlowSemaPhase {
                 symbols: symbols, types: types, interner: interner,
                 setFQName: setFQName,
                 setInterfaceSymbol: setInterfaceSymbol,
+                collectionInterfaceSymbol: collectionInterfaceSymbol,
                 typeParamSymbol: typeParamSymbol,
                 typeParamType: typeParamType,
                 memberName: memberName,
@@ -2503,6 +2504,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         setFQName: [InternedString],
         setInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
         typeParamSymbol: SymbolID,
         typeParamType: TypeID,
         memberName: String,
@@ -2511,13 +2513,13 @@ extension DataFlowSemaPhase {
         let internedMemberName = interner.intern(memberName)
         let memberFQName = setFQName + [internedMemberName]
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let receiverType = types.make(.classType(ClassType(
+        let setType = types.make(.classType(ClassType(
             classSymbol: setInterfaceSymbol,
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
-        let returnType = types.make(.classType(ClassType(
-            classSymbol: setInterfaceSymbol,
+        let paramType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
@@ -2533,9 +2535,9 @@ extension DataFlowSemaPhase {
         symbols.setExternalLinkName(externName, for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: [types.anyType],
-                returnType: returnType,
+                receiverType: setType,
+                parameterTypes: [paramType],
+                returnType: setType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
