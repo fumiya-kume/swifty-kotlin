@@ -88,6 +88,10 @@ public extension RuntimeABIExterns {
         kk_map_values,
         kk_map_entries,
         kk_map_to_string,
+        kk_map_count,
+        kk_map_any,
+        kk_map_all,
+        kk_map_none,
         kk_map_toList,
         kk_map_plus,
         kk_map_minus,
@@ -329,6 +333,30 @@ public extension RuntimeABIExterns {
 
     static let kk_map_filter = ExternDecl(
         name: "kk_map_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_count = ExternDecl(
+        name: "kk_map_count",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_any = ExternDecl(
+        name: "kk_map_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_all = ExternDecl(
+        name: "kk_map_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_none = ExternDecl(
+        name: "kk_map_none",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

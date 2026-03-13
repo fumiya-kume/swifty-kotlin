@@ -1635,7 +1635,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_addAll", for: memberSymbol)
@@ -1680,7 +1680,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_removeAll", for: memberSymbol)
@@ -1725,7 +1725,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_retainAll", for: memberSymbol)
@@ -2453,6 +2453,39 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_map_filter",
             parameterTypes: [filterLambdaType],
             returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+
+        registerMember(
+            name: "count",
+            externalLinkName: "kk_map_count",
+            parameterTypes: [filterLambdaType],
+            returnType: types.intType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "any",
+            externalLinkName: "kk_map_any",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "all",
+            externalLinkName: "kk_map_all",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "none",
+            externalLinkName: "kk_map_none",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
             flags: [.synthetic, .inlineFunction]
         )
