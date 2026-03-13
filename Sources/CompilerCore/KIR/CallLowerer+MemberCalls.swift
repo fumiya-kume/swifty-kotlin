@@ -1331,6 +1331,10 @@ extension CallLowerer {
                     "kk_sequence_drop"
                 case "zip":
                     "kk_sequence_zip"
+                case "takeWhile":
+                    "kk_sequence_takeWhile"
+                case "dropWhile":
+                    "kk_sequence_dropWhile"
                 default:
                     nil
                 }
@@ -2412,6 +2416,10 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
+            case "takeWhile":
+                return interner.intern("kk_sequence_takeWhile")
+            case "dropWhile":
+                return interner.intern("kk_sequence_dropWhile")
             default:
                 break
             }

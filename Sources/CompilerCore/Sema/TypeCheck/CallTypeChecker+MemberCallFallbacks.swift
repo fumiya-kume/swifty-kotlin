@@ -371,6 +371,7 @@ extension CallTypeChecker {
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
             interner.intern("filterIsInstance"),
+            interner.intern("takeWhile"), interner.intern("dropWhile"),
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
@@ -403,7 +404,8 @@ extension CallTypeChecker {
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
-             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
+             interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
+             interner.intern("takeWhile"), interner.intern("dropWhile"):
             return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
@@ -559,6 +561,8 @@ extension CallTypeChecker {
             interner.intern("indexOfFirst"),
             interner.intern("indexOfLast"),
             interner.intern("partition"),
+            interner.intern("takeWhile"),
+            interner.intern("dropWhile"),
         ]
         let knownNames = KnownCompilerNames(interner: interner)
         let oneParamMembers: Set = [
@@ -582,6 +586,8 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
+            interner.intern("takeWhile"),
+            interner.intern("dropWhile"),
         ]
         if memberName == mapValues || memberName == mapKeys {
             guard isMapReceiver, argCount == 1 else {

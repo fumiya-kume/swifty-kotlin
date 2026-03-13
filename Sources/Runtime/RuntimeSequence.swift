@@ -81,6 +81,43 @@ private func applyFilterStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> 
     return filtered
 }
 
+/// Applies a takeWhile transformation: takes elements while predicate returns true.
+private func applyTakeWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var result: [Int] = []
+    for elem in elements {
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, elem, &thrown)
+        if thrown != 0 { return result }
+        if maybeUnbox(predicateResult) == 0 {
+            break
+        }
+        result.append(elem)
+    }
+    return result
+}
+
+/// Applies a dropWhile transformation: drops elements while predicate returns true, then takes the rest.
+private func applyDropWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
+    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var dropping = true
+    var result: [Int] = []
+    for elem in elements {
+        if dropping {
+            var thrown = 0
+            let predicateResult = predicate(closureRaw, elem, &thrown)
+            if thrown != 0 { return result }
+            if maybeUnbox(predicateResult) == 0 {
+                dropping = false
+                result.append(elem)
+            }
+        } else {
+            result.append(elem)
+        }
+    }
+    return result
+}
+
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
@@ -140,6 +177,10 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
                 zipped.append(kk_pair_new(elements[i], otherElements[i]))
             }
             elements = zipped
+        case let .takeWhileStep(fnPtr, closureRaw):
+            elements = applyTakeWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
+        case let .dropWhileStep(fnPtr, closureRaw):
+            elements = applyDropWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
         }
     }
 
@@ -273,6 +314,38 @@ public func kk_sequence_zip(_ seqRaw: Int, _ otherRaw: Int) -> Int {
     }
     var newSteps = seq.steps
     newSteps.append(.zipStep(otherElements: otherElements))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_takeWhile")
+public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_dropWhile")
+public func kk_sequence_dropWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
     let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
