@@ -1628,7 +1628,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1667,7 +1667,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1706,7 +1706,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -3126,6 +3126,7 @@ extension DataFlowSemaPhase {
             ("put", [keyType, valueType], types.makeNullable(valueType), "kk_mutable_map_put", [.synthetic]),
             ("remove", [keyType], types.makeNullable(valueType), "kk_mutable_map_remove", [.synthetic]),
             ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
+            ("putAll", [types.make(.classType(ClassType(classSymbol: mapInterfaceSymbol, args: [.invariant(keyType), .invariant(valueType)], nullability: .nonNull)))], types.unitType, "kk_mutable_map_putAll", [.synthetic]),
         ]
 
         for member in members {

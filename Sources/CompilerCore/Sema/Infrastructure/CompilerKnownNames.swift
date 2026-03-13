@@ -114,6 +114,7 @@ struct KnownCompilerNames {
     let getOrDefault: InternedString
     let getOrElse: InternedString
     let getOrPut: InternedString
+    let putAll: InternedString
     let regexCtor: InternedString
     let runBlocking: InternedString
     let launch: InternedString
@@ -205,6 +206,7 @@ struct KnownCompilerNames {
         getOrDefault = interner.intern("getOrDefault")
         getOrElse = interner.intern("getOrElse")
         getOrPut = interner.intern("getOrPut")
+        putAll = interner.intern("putAll")
         regexCtor = interner.intern("Regex")
         runBlocking = interner.intern("runBlocking")
         launch = interner.intern("launch")

@@ -368,6 +368,47 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListBulkCollectionMembersKeepInvariantReceiverType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let mutableListFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableList"),
+            ]
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: mutableListFQName + [ctx.interner.intern(memberName)]),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                let receiverType = try XCTUnwrap(signature.receiverType)
+                guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+                    return XCTFail("Expected \(memberName) receiver to be a class type")
+                }
+                guard case .invariant = try XCTUnwrap(receiverClassType.args.first) else {
+                    return XCTFail(
+                        "Expected \(memberName) receiver to keep invariant element type, got \(sema.types.renderType(receiverType))"
+                    )
+                }
+
+                let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+                guard case let .classType(parameterClassType) = sema.types.kind(of: parameterType) else {
+                    return XCTFail("Expected \(memberName) parameter to be a class type")
+                }
+                guard case .out = try XCTUnwrap(parameterClassType.args.first) else {
+                    return XCTFail(
+                        "Expected \(memberName) parameter to remain covariant Collection<out E>, got \(sema.types.renderType(parameterType))"
+                    )
+                }
+            }
+        }
+    }
+
     func testListSortMembersRemainUnavailableOnImmutableList() throws {
         let source = """
         fun mutate(values: List<Int>) {
