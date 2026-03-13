@@ -46,7 +46,7 @@ jobs:
         - language: actions
           build-mode: none
         - language: swift
-          build-mode: autobuild
+          build-mode: manual
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
@@ -91,15 +91,12 @@ jobs:
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
     - name: Run manual build steps
-      if: matrix.build-mode == 'manual'
+      if: matrix.language == 'swift'
       shell: bash
       run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1
+        SWIFT_BIN=20 20 12 61 79 80 81 98 701 33 100 204 250 395 398 399 400xcrun --toolchain swift --find swift || xcrun --find swift)
+        "" --version
+        "" build --package-path ""
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
