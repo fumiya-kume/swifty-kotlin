@@ -2091,6 +2091,51 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerMutableListRetainAllMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("retainAll")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let paramType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_retainAll", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [paramType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     private func registerMutableListSortMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -3534,7 +3579,7 @@ extension DataFlowSemaPhase {
 
         let mapParamType = types.make(.classType(ClassType(
             classSymbol: mapInterfaceSymbol,
-            args: [.invariant(keyType), .invariant(valueType)],
+            args: [.out(keyType), .out(valueType)],
             nullability: .nonNull
         )))
 
