@@ -284,6 +284,37 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             )
         }
     }
+
+    func testMutableListMatchesTransitiveCollectionConstraint() throws {
+        let source = """
+        fun <T> consume(values: Collection<T>): T? = values.firstOrNull()
+
+        fun demo(values: MutableList<Int>): Int? = consume(values)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let consumeCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "consume"
+            }, "Expected consume(values) call in AST")
+
+            XCTAssertNotNil(
+                sema.bindings.callBinding(for: consumeCall)?.chosenCallee,
+                "Expected MutableList<Int> to satisfy Collection<T> through transitive lifting"
+            )
+        }
+    }
+
     /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
     /// The synthetic List type uses .out projection; variance relaxation must apply.
     func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {

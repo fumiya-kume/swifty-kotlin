@@ -416,7 +416,6 @@ extension CallTypeChecker {
             "sortedByDescending", "sortedWith", "partition",
             "sort", "sortBy", "sortByDescending",
         ]
-        let mutableListSortHOFNames: Set = ["sortBy", "sortByDescending"]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
         let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
@@ -457,8 +456,6 @@ extension CallTypeChecker {
         }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
-        let isMutableListSortHOF = isMutableListReceiver
-            && mutableListSortHOFNames.contains(interner.resolve(calleeName))
 
         // filterIsInstance<R>() — reified type parameter, returns List<R> (STDLIB-114)
         if interner.resolve(calleeName) == "filterIsInstance",
@@ -909,20 +906,6 @@ extension CallTypeChecker {
             return finalType
         }
 
-        if isMutableListSortHOF,
-           args.count == 1
-        {
-            let collectionElementType = getCollectionElementType(receiverType, sema: sema, interner: interner)
-            let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                params: [collectionElementType],
-                returnType: sema.types.anyType
-            )))
-            if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
-                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-            }
-            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-        }
-
         if isFlowHOF,
            let lambdaArg = args.first?.expr,
            let lambdaExpr = ast.arena.expr(lambdaArg),
@@ -970,13 +953,7 @@ extension CallTypeChecker {
 
         // Infer argument types for the normal resolution path (scope functions and
         // collection HOFs infer their lambda args with expected type above and return).
-        let argTypes = args.enumerated().map { index, arg in
-            if isMutableListSortHOF,
-               index == 0,
-               let boundType = sema.bindings.exprType(for: arg.expr)
-            {
-                return boundType
-            }
+        let argTypes = args.enumerated().map { _, arg in
             return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
@@ -3042,17 +3019,6 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMapLikeSymbol(symbol) && classType.args.count == 2
-    }
-
-    private func isMutableListCollectionType(_ type: TypeID, sema: SemaModule, interner: StringInterner) -> Bool {
-        let knownNames = KnownCompilerNames(interner: interner)
-        let nonNullType = sema.types.makeNonNullable(type)
-        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
-              let symbol = sema.symbols.symbol(classType.classSymbol)
-        else {
-            return false
-        }
-        return knownNames.isMutableListSymbol(symbol) && classType.args.count == 1
     }
 
     private func makeSyntheticPairType(
