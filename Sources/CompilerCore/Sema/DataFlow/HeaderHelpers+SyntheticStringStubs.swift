@@ -1070,6 +1070,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-316: String.chunked / String.windowed ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "chunked",
+            externalLinkName: "kk_string_chunked",
+            receiverType: stringType,
+            parameters: [
+                ("size", intType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "windowed",
+            externalLinkName: "kk_string_windowed",
+            receiverType: stringType,
+            parameters: [
+                ("size", intType, false, false),
+                ("step", intType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(
