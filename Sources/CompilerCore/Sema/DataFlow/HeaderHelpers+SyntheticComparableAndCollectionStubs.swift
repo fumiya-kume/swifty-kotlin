@@ -1612,12 +1612,12 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
             classSymbol: collectionInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1626,7 +1626,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_addAll", for: memberSymbol)
@@ -1657,12 +1657,12 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
             classSymbol: collectionInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1671,7 +1671,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_removeAll", for: memberSymbol)
@@ -1702,12 +1702,12 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
             classSymbol: collectionInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
+            args: [.out(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1716,7 +1716,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_retainAll", for: memberSymbol)
