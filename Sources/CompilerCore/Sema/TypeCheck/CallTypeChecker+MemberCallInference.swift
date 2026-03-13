@@ -993,31 +993,38 @@ extension CallTypeChecker {
             }
         }
 
+        let anyFallbackReceiverType = safeCall
+            ? sema.types.makeNonNullable(lookupReceiverType)
+            : lookupReceiverType
+        let allowsAnyFallback: Bool = switch sema.types.kind(of: anyFallbackReceiverType) {
+        case .primitive(.string, _):
+            false
+        case .primitive:
+            true
+        default:
+            anyFallbackReceiverType == sema.types.anyType || anyFallbackReceiverType == sema.types.nullableAnyType
+        }
+
         // Any.hashCode(): Int (STDLIB-306)
-        if interner.resolve(calleeName) == "hashCode", args.isEmpty {
+        if interner.resolve(calleeName) == "hashCode", args.isEmpty, allowsAnyFallback {
             let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
         }
 
-        // Any.toString(): String — fallback for all non-Int/Long receivers (STDLIB-306)
-        if interner.resolve(calleeName) == "toString", args.isEmpty {
+        // Any.toString(): String (STDLIB-306)
+        if interner.resolve(calleeName) == "toString", args.isEmpty, allowsAnyFallback {
             let stringType = sema.types.make(.primitive(.string, .nonNull))
             let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
             sema.bindings.bindExprType(id, type: finalType)
             return finalType
         }
 
-        // Any.equals(other: Any?): Boolean — fallback for non-String receivers (STDLIB-306)
-        if interner.resolve(calleeName) == "equals", args.count == 1 {
-            let receiverTypeForCheck = safeCall
-                ? sema.types.makeNonNullable(lookupReceiverType)
-                : lookupReceiverType
-            if !sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
-                let finalType = safeCall ? sema.types.makeNullable(sema.types.booleanType) : sema.types.booleanType
-                sema.bindings.bindExprType(id, type: finalType)
-                return finalType
-            }
+        // Any.equals(other: Any?): Boolean (STDLIB-306)
+        if interner.resolve(calleeName) == "equals", args.count == 1, allowsAnyFallback {
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.booleanType) : sema.types.booleanType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
         }
 
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),

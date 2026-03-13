@@ -1473,15 +1473,21 @@ public enum RuntimeABIExterns {
 
     // MARK: - Any methods (STDLIB-306)
 
+    public static let kk_any_to_string = ExternDecl(
+        name: "kk_any_to_string",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "void *"
+    )
+
     public static let kk_any_hashCode = ExternDecl(
         name: "kk_any_hashCode",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
     public static let kk_any_equals = ExternDecl(
         name: "kk_any_equals",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -1833,6 +1839,7 @@ public enum RuntimeABIExterns {
             kk_op_shr,
             kk_op_ushr,
             kk_int_toString_radix,
+            kk_any_to_string,
             kk_any_hashCode,
             kk_any_equals,
         ]
