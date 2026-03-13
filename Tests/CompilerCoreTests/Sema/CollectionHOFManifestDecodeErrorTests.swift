@@ -59,7 +59,7 @@ final class CollectionHOFManifestDecodeErrorTests: XCTestCase {
         try withTemporaryFile(contents: source) { path in
             let ctx = makeCompilationContext(
                 inputs: [path],
-                searchPaths: ["/nonexistent/path/to/library"]
+                searchPaths: ["/tmp/kswiftk-test-(UUID().uuidString)/nonexistent"]
             )
             // Must not crash.
             XCTAssertNoThrow(try runSema(ctx))
