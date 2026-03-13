@@ -764,6 +764,13 @@ extension CollectionLiteralLoweringPass {
         } else {
             hofArgs = arguments
         }
+        let needsClosureRaw = callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
+            && callee != lookup.maxOfOrNullName && callee != lookup.minOfOrNullName
+        if needsClosureRaw {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            hofArgs.append(zeroExpr)
+        }
 
         let hofResult = emitHOFCall(
             kkName: kkName, receiver: receiver, arguments: hofArgs,
