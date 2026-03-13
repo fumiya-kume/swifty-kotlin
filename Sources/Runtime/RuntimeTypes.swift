@@ -359,3 +359,9 @@ final class RuntimeVetoableBox {
         self.callbackFnPtr = callbackFnPtr
     }
 }
+
+/// Runtime box for `Delegates.notNull<T>()` delegate.
+/// Throws `IllegalStateException` if accessed before being assigned.
+final class RuntimeNotNullBox {
+    var currentValue: Int?
+}

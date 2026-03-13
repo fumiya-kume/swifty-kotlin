@@ -173,7 +173,12 @@ public extension TypeSystem {
             if let variable = typeVarBySymbol[typeParam.symbol],
                let concrete = substitution[variable]
             {
-                return concrete
+                switch typeParam.nullability {
+                case .nullable, .platformType:
+                    return withNullability(typeParam.nullability, for: concrete)
+                case .nonNull:
+                    return concrete
+                }
             }
             return type
 

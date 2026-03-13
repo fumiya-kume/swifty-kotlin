@@ -390,6 +390,70 @@ public func kk_sequence_to_list(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(list)
 }
 
+// MARK: - Sequence Sorting Operations (STDLIB-272)
+
+@_cdecl("kk_sequence_sorted")
+public func kk_sequence_sorted(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let sorted = elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    let seq = RuntimeSequenceBox(steps: [.source(elements: sorted)])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_sequence_sortedBy")
+public func kk_sequence_sortedBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var elems: [Int] = []
+    var keys: [Int] = []
+    elems.reserveCapacity(elements.count)
+    keys.reserveCapacity(elements.count)
+    for elem in elements {
+        var thrown = 0
+        let key = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        elems.append(elem)
+        keys.append(maybeUnbox(key))
+    }
+    let sorted = elems.indices.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(keys[lhs], keys[rhs])
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs < rhs
+    }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: sorted.map { elems[$0] })])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_sequence_sortedDescending")
+public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let sorted = elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    let seq = RuntimeSequenceBox(steps: [.source(elements: sorted)])
+    return registerRuntimeObject(seq)
+}
+
 // MARK: - Sequence Builder (sequence { yield(x) })
 
 @_cdecl("kk_sequence_builder_create")

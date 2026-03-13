@@ -285,4 +285,17 @@ final class RuntimeDelegateTests: IsolatedRuntimeXCTestCase {
         let value = kk_vetoable_get_value(0)
         XCTAssertEqual(value, 0)
     }
+
+    // MARK: - NotNull Delegate Tests
+
+    func testNotNullSetThenGetReturnsAssignedValue() {
+        let handle = kk_notNull_create()
+        XCTAssertNotEqual(handle, 0)
+
+        let written = kk_notNull_set_value(handle, 321)
+        XCTAssertEqual(written, 321)
+
+        let current = kk_notNull_get_value(handle)
+        XCTAssertEqual(current, 321)
+    }
 }

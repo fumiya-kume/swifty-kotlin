@@ -102,6 +102,7 @@ struct KnownCompilerNames {
     let lazy: InternedString
     let observable: InternedString
     let vetoable: InternedString
+    let notNull: InternedString
     let buildList: InternedString
     let buildMap: InternedString
     let buildString: InternedString
@@ -114,6 +115,7 @@ struct KnownCompilerNames {
     let getOrDefault: InternedString
     let getOrElse: InternedString
     let getOrPut: InternedString
+    let putAll: InternedString
     let regexCtor: InternedString
     let runBlocking: InternedString
     let launch: InternedString
@@ -193,6 +195,7 @@ struct KnownCompilerNames {
         lazy = interner.intern("lazy")
         observable = interner.intern("observable")
         vetoable = interner.intern("vetoable")
+        notNull = interner.intern("notNull")
         buildList = interner.intern("buildList")
         buildMap = interner.intern("buildMap")
         buildString = interner.intern("buildString")
@@ -205,6 +208,7 @@ struct KnownCompilerNames {
         getOrDefault = interner.intern("getOrDefault")
         getOrElse = interner.intern("getOrElse")
         getOrPut = interner.intern("getOrPut")
+        putAll = interner.intern("putAll")
         regexCtor = interner.intern("Regex")
         runBlocking = interner.intern("runBlocking")
         launch = interner.intern("launch")
@@ -329,6 +333,10 @@ struct KnownCompilerNames {
 
     func isMutableMapSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == mutableMap || symbolMatches(symbol, fqName: kotlinCollectionsMutableMapFQName)
+    }
+
+    func isMutableListSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == mutableList || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

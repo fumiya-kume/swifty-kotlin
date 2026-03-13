@@ -273,6 +273,13 @@ extension KIRLoweringDriver {
                 symbol: symbol, delegateStorageSymbol: delegateStorageSymbol,
                 delegateType: delegateType, shared: shared, initInstructions: &initInstructions
             )
+        case .notNull:
+            emitNotNullDelegateInit(
+                propertyDecl: propertyDecl, symbol: symbol,
+                delegateStorageSymbol: delegateStorageSymbol,
+                delegateType: delegateType, shared: shared,
+                initInstructions: &initInstructions
+            )
         case .custom:
             emitCustomDelegateInit(
                 propertyDecl: propertyDecl, symbol: symbol,
@@ -332,6 +339,25 @@ extension KIRLoweringDriver {
         initInstructions.append(.call(
             symbol: nil, callee: interner.intern(runtimeFnName),
             arguments: [initialValueExpr, callbackFnPtr],
+            result: createResult, canThrow: false, thrownResult: nil
+        ))
+        initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))
+    }
+
+    private func emitNotNullDelegateInit(
+        propertyDecl _: PropertyDecl,
+        symbol _: SymbolID,
+        delegateStorageSymbol: SymbolID,
+        delegateType: TypeID,
+        shared: KIRLoweringSharedContext,
+        initInstructions: inout KIRLoweringEmitContext
+    ) {
+        let arena = shared.arena
+        let interner = shared.interner
+        let createResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: delegateType)
+        initInstructions.append(.call(
+            symbol: nil, callee: interner.intern("kk_notNull_create"),
+            arguments: [],
             result: createResult, canThrow: false, thrownResult: nil
         ))
         initInstructions.append(.storeGlobal(value: createResult, symbol: delegateStorageSymbol))

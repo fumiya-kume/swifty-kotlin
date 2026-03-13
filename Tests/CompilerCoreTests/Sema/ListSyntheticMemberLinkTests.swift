@@ -79,6 +79,54 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
+        let source = """
+        fun probe(values: List<Int>) {
+            values.firstOrNull()
+            values.lastOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedMembers = [
+                "firstOrNull": "kk_list_firstOrNull",
+                "lastOrNull": "kk_list_lastOrNull",
+            ]
+            let nullableIntType = sema.types.makeNullable(sema.types.intType)
+
+            for (memberName, externalLinkName) in expectedMembers {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for \(memberName)"
+                )
+
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    nullableIntType,
+                    "Expected \(memberName) to return a nullable element type"
+                )
+                XCTAssertFalse(
+                    sema.bindings.isCollectionExpr(callExpr),
+                    "Expected \(memberName) result to avoid collection-expression marking"
+                )
+            }
+        }
+    }
+
     func testListMaxOrNullAndMinOrNullRequireComparableElements() throws {
         let source = """
         class Box
@@ -140,6 +188,9 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.add(1)
+            values.addAll(listOf(2, 3))
+            values.removeAll(listOf(4))
+            values.retainAll(listOf(5))
             values.removeAt(0)
             values.clear()
         }
@@ -154,20 +205,85 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let expectedExternalLinks = [
                 "add": "kk_mutable_list_add",
+                "addAll": "kk_mutable_list_addAll",
+                "removeAll": "kk_mutable_list_removeAll",
+                "retainAll": "kk_mutable_list_retainAll",
                 "removeAt": "kk_mutable_list_removeAt",
                 "clear": "kk_mutable_list_clear",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {
+                _ = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("collections"),
+                            ctx.interner.intern("MutableList"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: symbolID),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
+    func testMutableListBulkMutationFallbacksReturnBoolean() throws {
+        let source = """
+        fun mutate(): Boolean {
+            val values = listOf(1, 2, 3).toMutableList()
+            return values.addAll(listOf(4))
+                || values.removeAll(listOf(5))
+                || values.retainAll(listOf(1, 2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName) in AST")
-                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("collections"),
+                            ctx.interner.intern("MutableList"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+
                 XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: chosenCallee),
-                    externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                    sema.symbols.externalLinkName(for: symbolID),
+                    "kk_mutable_list_\(memberName)",
+                    "Expected \(memberName) to resolve to runtime extern"
+                )
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    sema.types.booleanType,
+                    "Expected \(memberName) to return Boolean"
+                )
+                XCTAssertFalse(
+                    sema.bindings.isCollectionExpr(callExpr),
+                    "Expected \(memberName) result to remain a scalar Boolean"
                 )
             }
         }
@@ -190,7 +306,6 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
-
             let expectedExternalLinks = [
                 "sort": "kk_mutable_list_sort",
                 "sortBy": "kk_mutable_list_sortBy",
@@ -252,6 +367,47 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListBulkCollectionMembersKeepInvariantReceiverType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let mutableListFQName: [InternedString] = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableList"),
+            ]
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(fqName: mutableListFQName + [ctx.interner.intern(memberName)]),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                let receiverType = try XCTUnwrap(signature.receiverType)
+                guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType) else {
+                    return XCTFail("Expected \(memberName) receiver to be a class type")
+                }
+                guard case .invariant = try XCTUnwrap(receiverClassType.args.first) else {
+                    return XCTFail(
+                        "Expected \(memberName) receiver to keep invariant element type, got \(sema.types.renderType(receiverType))"
+                    )
+                }
+
+                let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+                guard case let .classType(parameterClassType) = sema.types.kind(of: parameterType) else {
+                    return XCTFail("Expected \(memberName) parameter to be a class type")
+                }
+                guard case .out = try XCTUnwrap(parameterClassType.args.first) else {
+                    return XCTFail(
+                        "Expected \(memberName) parameter to remain covariant Collection<out E>, got \(sema.types.renderType(parameterType))"
+                    )
+                }
+            }
+        }
+    }
+
     func testListSortMembersRemainUnavailableOnImmutableList() throws {
         let source = """
         fun mutate(values: List<Int>) {
@@ -282,6 +438,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.diagnostics.isEmpty,
                 "Expected diagnostics for immutable List.sort* calls"
+            )
+        }
+    }
+
+    func testMutableListMatchesTransitiveCollectionConstraint() throws {
+        let source = """
+        fun <T> consume(values: Collection<T>): T? = values.firstOrNull()
+
+        fun demo(values: MutableList<Int>): Int? = consume(values)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let consumeCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "consume"
+            }, "Expected consume(values) call in AST")
+
+            XCTAssertNotNil(
+                sema.bindings.callBinding(for: consumeCall)?.chosenCallee,
+                "Expected MutableList<Int> to satisfy Collection<T> through transitive lifting"
             )
         }
     }
@@ -350,6 +536,31 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 sema.symbols.externalLinkName(for: chosenCallee),
                 "kk_set_contains",
                 "Expected contains to resolve to kk_set_contains"
+            )
+        }
+    }
+
+    func testSetRegistersCollectionAsNominalSupertype() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let setSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Set"),
+            ]))
+            let collectionSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Collection"),
+            ]))
+
+            XCTAssertEqual(
+                sema.types.directNominalSupertypes(for: setSymbol),
+                [collectionSymbol],
+                "Expected Set to register Collection as its nominal supertype"
             )
         }
     }
