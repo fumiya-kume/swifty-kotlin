@@ -5,6 +5,7 @@ enum StdlibDelegateKind: Equatable {
     case lazy
     case observable
     case vetoable
+    case notNull
     /// Custom user-defined delegate with getValue/setValue operators.
     case custom
 }
@@ -24,6 +25,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         let lazyCreateName = interner.intern("kk_lazy_create")
         let observableCreateName = interner.intern("kk_observable_create")
         let vetoableCreateName = interner.intern("kk_vetoable_create")
+        let notNullCreateName = interner.intern("kk_notNull_create")
 
         let lazyThreadSafetyModeValue = Int64(ctx.options.lazyThreadSafetyMode.rawValue)
 
@@ -188,6 +190,26 @@ final class StdlibDelegateLoweringPass: LoweringPass {
                                     skipNext = true
                                     continue
                                 }
+                            case .notNull:
+                                if callResult != nil {
+                                    let createResult = module.arena.appendExpr(
+                                        .temporary(Int32(module.arena.expressions.count)),
+                                        type: nil
+                                    )
+                                    finalBody.append(
+                                        .call(
+                                            symbol: nil,
+                                            callee: notNullCreateName,
+                                            arguments: [],
+                                            result: createResult,
+                                            canThrow: false,
+                                            thrownResult: nil
+                                        )
+                                    )
+                                    finalBody.append(.copy(from: createResult, to: to))
+                                    skipNext = true
+                                    continue
+                                }
                             case .custom:
                                 // Custom delegates: the kk_custom_delegate_create
                                 // call was already emitted by KIR lowering.
@@ -213,6 +235,7 @@ final class StdlibDelegateLoweringPass: LoweringPass {
         case "lazy": .lazy
         case "observable": .observable
         case "vetoable": .vetoable
+        case "notNull": .notNull
         default: nil
         }
     }

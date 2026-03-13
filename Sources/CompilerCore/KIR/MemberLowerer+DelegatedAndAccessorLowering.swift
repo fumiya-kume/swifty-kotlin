@@ -66,6 +66,8 @@ extension MemberLowerer {
             interner.intern("kk_observable_get_value")
         case .vetoable:
             interner.intern("kk_vetoable_get_value")
+        case .notNull:
+            interner.intern("kk_notNull_get_value")
         case .custom:
             interner.intern("getValue")
         }
@@ -76,6 +78,8 @@ extension MemberLowerer {
             interner.intern("kk_observable_set_value")
         case .vetoable:
             interner.intern("kk_vetoable_set_value")
+        case .notNull:
+            interner.intern("kk_notNull_set_value")
         case .custom:
             interner.intern("setValue")
         }

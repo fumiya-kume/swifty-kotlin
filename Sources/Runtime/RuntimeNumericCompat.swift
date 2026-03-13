@@ -160,6 +160,11 @@ public func kk_bitwise_xor(_ lhs: Int, _ rhs: Int) -> Int {
     lhs ^ rhs
 }
 
+@_cdecl("kk_op_not")
+public func kk_op_not(_ value: Int) -> Int {
+    value == 0 ? 1 : 0
+}
+
 @_cdecl("kk_op_inv")
 public func kk_op_inv(_ value: Int) -> Int {
     ~value
