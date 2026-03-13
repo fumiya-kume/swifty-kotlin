@@ -211,6 +211,47 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListBinarySearchHasComparableElementUpperBound() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let symbolID = try XCTUnwrap(
+                sema.symbols.lookupAll(
+                    fqName: [
+                        ctx.interner.intern("kotlin"),
+                        ctx.interner.intern("collections"),
+                        ctx.interner.intern("List"),
+                        ctx.interner.intern("binarySearch"),
+                    ]
+                ).first(where: { sema.symbols.externalLinkName(for: $0) == "kk_list_binarySearch" }),
+                "Expected synthetic List member binarySearch to be registered"
+            )
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+            XCTAssertEqual(signature.typeParameterUpperBoundsList.count, 1)
+            let upperBounds = signature.typeParameterUpperBoundsList[0]
+            XCTAssertEqual(upperBounds.count, 1, "Expected Comparable upper bound for binarySearch element type")
+
+            guard case let .classType(boundType) = sema.types.kind(of: upperBounds[0]) else {
+                return XCTFail("Expected binarySearch upper bound to be a class type")
+            }
+
+            XCTAssertEqual(boundType.classSymbol, sema.types.comparableInterfaceSymbol)
+            XCTAssertEqual(boundType.args.count, 1)
+
+            guard case let .invariant(argumentType) = boundType.args[0] else {
+                return XCTFail("Expected Comparable upper bound to reference invariant element type")
+            }
+
+            let expectedElementType = sema.types.make(.typeParam(TypeParamType(
+                symbol: signature.typeParameterSymbols[0],
+                nullability: .nonNull
+            )))
+            XCTAssertEqual(argumentType, expectedElementType)
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {

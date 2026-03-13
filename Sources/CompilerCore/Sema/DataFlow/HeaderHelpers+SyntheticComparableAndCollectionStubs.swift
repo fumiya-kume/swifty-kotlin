@@ -1428,6 +1428,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: [listTypeParamType],
                     returnType: types.intType,
                     typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
