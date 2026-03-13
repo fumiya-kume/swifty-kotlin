@@ -1780,6 +1780,7 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterVariances([.out], for: setInterfaceSymbol)
         symbols.setDirectSupertypes([collectionInterfaceSymbol], for: setInterfaceSymbol)
         symbols.setSupertypeTypeArgs([.out(typeParamType)], for: setInterfaceSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: setInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: setInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
         registerSetContainsMember(
