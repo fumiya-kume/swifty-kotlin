@@ -23,6 +23,103 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
     return runtimeMakeStringPointer(runtimeElementToString(value))
 }
 
+private func runtimeStringHashCode(_ value: String) -> Int {
+    value.unicodeScalars.reduce(0) { partial, scalar in
+        31 &* partial &+ Int(Int32(bitPattern: scalar.value))
+    }
+}
+
+private func runtimeAnyHashCode(_ value: Int, _ tag: Int32) -> Int {
+    if value == runtimeNullSentinelInt {
+        return 0
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: value) else {
+        return tag == 2 ? (value != 0 ? 1231 : 1237) : value
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return tag == 2 ? (value != 0 ? 1231 : 1237) : value
+    }
+    if let stringBox = tryCast(pointer, to: RuntimeStringBox.self) {
+        return runtimeStringHashCode(stringBox.value)
+    }
+    if let boolBox = tryCast(pointer, to: RuntimeBoolBox.self) {
+        return boolBox.value ? 1231 : 1237
+    }
+    if let intBox = tryCast(pointer, to: RuntimeIntBox.self) {
+        return intBox.value
+    }
+    if let longBox = tryCast(pointer, to: RuntimeLongBox.self) {
+        let longValue = Int64(longBox.value)
+        return Int(truncatingIfNeeded: longValue ^ (longValue >> 32))
+    }
+    if let floatBox = tryCast(pointer, to: RuntimeFloatBox.self) {
+        return kk_float_to_bits(floatBox.value)
+    }
+    if let doubleBox = tryCast(pointer, to: RuntimeDoubleBox.self) {
+        let bits = Int64(bitPattern: UInt64(bitPattern: Int64(kk_double_to_bits(doubleBox.value))))
+        return Int(truncatingIfNeeded: bits ^ (bits >> 32))
+    }
+    if let charBox = tryCast(pointer, to: RuntimeCharBox.self) {
+        return charBox.value
+    }
+    return Int(truncatingIfNeeded: UInt(bitPattern: pointer))
+}
+
+private func runtimeAnyKind(_ value: Int, _ tag: Int32) -> Int32 {
+    if value == runtimeNullSentinelInt {
+        return 0
+    }
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: value) else {
+        return tag == 2 ? 2 : 1
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isObjectPointer else {
+        return tag == 2 ? 2 : 1
+    }
+    if tryCast(pointer, to: RuntimeBoolBox.self) != nil {
+        return 2
+    }
+    if tryCast(pointer, to: RuntimeStringBox.self) != nil {
+        return 3
+    }
+    if tryCast(pointer, to: RuntimeIntBox.self) != nil {
+        return 1
+    }
+    if tryCast(pointer, to: RuntimeLongBox.self) != nil {
+        return 4
+    }
+    if tryCast(pointer, to: RuntimeFloatBox.self) != nil {
+        return 5
+    }
+    if tryCast(pointer, to: RuntimeDoubleBox.self) != nil {
+        return 6
+    }
+    if tryCast(pointer, to: RuntimeCharBox.self) != nil {
+        return 7
+    }
+    return 100
+}
+
+/// Any.hashCode() — uses runtime-aware hashing for boxed values and raw primitives.
+@_cdecl("kk_any_hashCode")
+public func kk_any_hashCode(_ value: Int, _ tag: Int32) -> Int {
+    runtimeAnyHashCode(value, tag)
+}
+
+/// Any.equals(other) — uses runtime-aware equality for boxed values and tagged primitives.
+@_cdecl("kk_any_equals")
+public func kk_any_equals(_ lhs: Int, _ lhsTag: Int32, _ rhs: Int, _ rhsTag: Int32) -> Int {
+    if runtimeAnyKind(lhs, lhsTag) != runtimeAnyKind(rhs, rhsTag) {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(runtimeValuesEqual(lhs, rhs) ? 1 : 0)
+}
+
 @_cdecl("kk_float_to_bits")
 public func kk_float_to_bits(_ value: Float) -> Int {
     Int(value.bitPattern)

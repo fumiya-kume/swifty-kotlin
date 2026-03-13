@@ -222,6 +222,109 @@ extension CallLowerer {
             }
         }
 
+        let anyFallbackReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullAnyFallbackReceiverType = sema.types.makeNonNullable(anyFallbackReceiverType)
+        let allowsAnyFallback: Bool = switch sema.types.kind(of: nonNullAnyFallbackReceiverType) {
+        case .primitive(.string, _):
+            false
+        case .primitive:
+            true
+        default:
+            nonNullAnyFallbackReceiverType == sema.types.anyType
+        }
+        func anyFallbackTag(for type: TypeID) -> Int64 {
+            switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
+            case .primitive(.boolean, _):
+                2
+            case .primitive(.string, _):
+                3
+            default:
+                1
+            }
+        }
+
+        // Any.toString(): String — no-arg fallback via kk_any_to_string (STDLIB-306)
+        if args.isEmpty, interner.resolve(effectiveCalleeName) == "toString", allowsAnyFallback {
+            let tag = anyFallbackTag(for: anyFallbackReceiverType)
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let callLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+            instructions.append(.constValue(result: nullExpr, value: .null))
+            instructions.append(.copy(from: nullExpr, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(callLabel))
+            let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+            instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_to_string"),
+                arguments: [loweredReceiverID, tagID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            instructions.append(.label(endLabel))
+            return result
+        }
+
+        // Any.hashCode(): Int — via kk_any_hashCode (STDLIB-306)
+        if args.isEmpty, interner.resolve(effectiveCalleeName) == "hashCode", allowsAnyFallback {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let callLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+            instructions.append(.constValue(result: nullExpr, value: .null))
+            instructions.append(.copy(from: nullExpr, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(callLabel))
+            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType)
+            let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
+            instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_hashCode"),
+                arguments: [loweredReceiverID, receiverTagID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            instructions.append(.label(endLabel))
+            return result
+        }
+
+        // Any.equals(other: Any?): Boolean — via kk_any_equals (STDLIB-306)
+        if args.count == 1, interner.resolve(effectiveCalleeName) == "equals", allowsAnyFallback {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let callLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+            instructions.append(.constValue(result: nullExpr, value: .null))
+            instructions.append(.copy(from: nullExpr, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(callLabel))
+            let receiverTag = anyFallbackTag(for: anyFallbackReceiverType)
+            let argType = sema.bindings.exprTypes[args[0].expr] ?? sema.types.anyType
+            let argTag = anyFallbackTag(for: argType)
+            let receiverTagID = arena.appendExpr(.intLiteral(receiverTag), type: intType)
+            instructions.append(.constValue(result: receiverTagID, value: .intLiteral(receiverTag)))
+            let argTagID = arena.appendExpr(.intLiteral(argTag), type: intType)
+            instructions.append(.constValue(result: argTagID, value: .intLiteral(argTag)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_equals"),
+                arguments: [loweredReceiverID, receiverTagID, loweredArgIDs[0], argTagID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            instructions.append(.label(endLabel))
+            return result
+        }
+
         // Numeric coercion: Int/Long.coerceIn/coerceAtLeast/coerceAtMost (STDLIB-150)
         if args.count == 2, interner.resolve(effectiveCalleeName) == "coerceIn" {
             let intType = sema.types.make(.primitive(.int, .nonNull))

@@ -395,6 +395,35 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_any_to_string",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "tag", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_any_hashCode",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "tag", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_any_equals",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "lhsTag", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+                RuntimeABIParameter(name: "rhsTag", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_replaceRange",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),

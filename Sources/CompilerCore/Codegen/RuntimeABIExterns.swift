@@ -1501,6 +1501,26 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    // MARK: - Any methods (STDLIB-306)
+
+    public static let kk_any_to_string = ExternDecl(
+        name: "kk_any_to_string",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "void *"
+    )
+
+    public static let kk_any_hashCode = ExternDecl(
+        name: "kk_any_hashCode",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_any_equals = ExternDecl(
+        name: "kk_any_equals",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Regex (STDLIB-100/101/102/103)
 
     public static let kk_regex_create = ExternDecl(
@@ -1629,6 +1649,9 @@ public enum RuntimeABIExterns {
             kk_string_contains_str,
             kk_string_replace,
             kk_string_replaceFirst,
+            kk_any_to_string,
+            kk_any_hashCode,
+            kk_any_equals,
             kk_string_replaceRange,
             kk_string_substring,
             kk_string_split,
