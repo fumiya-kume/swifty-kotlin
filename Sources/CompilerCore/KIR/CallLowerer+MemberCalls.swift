@@ -85,7 +85,7 @@ extension CallLowerer {
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getOrDefault", "getOrElse", "getOrPut",
         "asSequence", "toList", "toMutableList", "toTypedArray",
-        "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
+        "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002

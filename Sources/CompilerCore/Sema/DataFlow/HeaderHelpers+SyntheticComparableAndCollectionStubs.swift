@@ -964,6 +964,7 @@ extension DataFlowSemaPhase {
         registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
         registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop")
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
+        registerMember(name: "asReversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
