@@ -1,5 +1,5 @@
 fun main() {
-    println("hello".replaceFirstChar { it.uppercaseChar() })
-    println("Hello".replaceFirstChar { it.lowercaseChar() })
-    println("".replaceFirstChar { it.uppercaseChar() })
+    println("hello".replaceFirstChar { 'H' })
+    println("Hello".replaceFirstChar { 'h' })
+    println("".replaceFirstChar { 'X' })
 }

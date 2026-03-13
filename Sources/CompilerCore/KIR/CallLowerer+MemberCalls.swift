@@ -87,6 +87,7 @@ extension CallLowerer {
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "replaceFirstChar",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -1137,6 +1138,8 @@ extension CallLowerer {
                     ("kk_string_matches_regex", [loweredReceiverID, loweredArgIDs[0]])
                 case "repeat":
                     ("kk_string_repeat", [loweredReceiverID, loweredArgIDs[0]])
+                case "replaceFirstChar":
+                    ("kk_string_replaceFirstChar", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -1154,7 +1157,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
-                        canThrow: calleeStr == "repeat",
+                        canThrow: calleeStr == "repeat" || calleeStr == "replaceFirstChar",
                         thrownResult: nil
                     ))
                     return result
@@ -1582,6 +1585,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "replaceFirstChar",
         ].contains(interner.resolve(calleeName))
     }
 

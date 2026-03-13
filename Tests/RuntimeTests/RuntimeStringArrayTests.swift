@@ -17,6 +17,11 @@ private let runtimeReplaceFirstCharWithInvalidScalar: RuntimeStringUnaryEntry = 
     Int.max
 }
 
+private let runtimeReplaceFirstCharThrowing: RuntimeStringUnaryEntry = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "replaceFirstChar failure")
+    return 0
+}
+
 final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
@@ -257,6 +262,21 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         )
 
         XCTAssertEqual(runtimeStringValue(replaced), original)
+    }
+
+    func testStringReplaceFirstCharPropagatesThrownValue() {
+        var thrown = -1
+        let replaced = kk_string_replaceFirstChar(
+            rawFromRuntimeString("abc"),
+            unsafeBitCast(runtimeReplaceFirstCharThrowing, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(runtimeStringValue(replaced), "")
+        XCTAssertNotEqual(thrown, 0)
+        let thrownOutput = capturePrintln { kk_println_any(UnsafeMutableRawPointer(bitPattern: thrown)) }
+        XCTAssertTrue(thrownOutput.contains("replaceFirstChar failure"))
     }
 
     func testStringStartsWithEndsWithContains() {

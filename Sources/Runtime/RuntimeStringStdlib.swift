@@ -278,6 +278,7 @@ public func kk_string_none(
 public func kk_string_replaceFirstChar(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let scalars = runtimeStringScalars(strRaw)
     guard !scalars.isEmpty else { return runtimeMakeStringRaw("") }
     guard fnPtr != 0 else { return strRaw }
@@ -285,7 +286,14 @@ public func kk_string_replaceFirstChar(
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     let result = lambda(closureRaw, firstCharRaw, &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+    if thrown != 0 {
+        runtimePropagateThrownOrTrap(
+            thrown,
+            outThrown: outThrown,
+            context: "replaceFirstChar transform"
+        )
+        return runtimeMakeStringRaw("")
+    }
     let mappedChar = maybeUnbox(result)
     let replacement = runtimeUnicodeScalarFromRaw(mappedChar) ?? scalars[0]
     let tail = scalars.dropFirst()
@@ -1147,6 +1155,18 @@ private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
+}
+
+private func runtimePropagateThrownOrTrap(
+    _ thrown: Int,
+    outThrown: UnsafeMutablePointer<Int>?,
+    context: String
+) {
+    guard thrown != 0 else { return }
+    guard let outThrown else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(context) threw")
+    }
+    outThrown.pointee = thrown
 }
 
 private struct RuntimeFormatSpecifier {
