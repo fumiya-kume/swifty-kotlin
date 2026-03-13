@@ -107,7 +107,7 @@ extension ExprTypeChecker {
         }
         // STDLIB-345: List plus/minus operators
         if !lhsIsPrimitive, operatorCandidates.isEmpty, (op == .add || op == .subtract) {
-            if driver.callChecker.isCollectionLikeType(lhs, sema: sema, interner: interner)
+            if driver.callChecker.isListLikeType(lhs, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(lhsID)
             {
                 sema.bindings.bindExprType(id, type: lhs)

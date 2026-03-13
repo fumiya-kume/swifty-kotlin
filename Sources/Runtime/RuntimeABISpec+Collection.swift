@@ -1346,6 +1346,41 @@ public extension RuntimeABISpec {
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_plus_element",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_plus_collection",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "otherList", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_minus_element",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_minus_collection",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "otherList", type: .intptr),
+                    ],
+                    returnType: .intptr,
                     section: "Collection"
                 ),
             ]
