@@ -744,7 +744,9 @@ extension CallLowerer {
             case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
             case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
             case ("toInt", longType, intType): interner.intern("kk_long_to_int")
+            case ("toInt", sema.types.charType, intType): nil // identity (Char is stored as Int)
             case ("toInt", intType, intType): nil // identity
+            case ("toChar", intType, sema.types.charType): nil // identity (Char is stored as Int)
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
@@ -786,11 +788,14 @@ extension CallLowerer {
                 (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
                     || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
+                    || (calleeStr == "toInt" && nonNullReceiverType == sema.types.charType && nonNullResultType == intType)
+                    || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == sema.types.charType)
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
                || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
+               || nonNullReceiverType == sema.types.charType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
@@ -839,6 +844,11 @@ extension CallLowerer {
                         canThrow: false,
                         thrownResult: nil
                     ))
+                    return result
+                }
+                // Char.code → identity (Char is stored as its Int code point) (STDLIB-305)
+                if calleeStr == "code" {
+                    instructions.append(.copy(from: loweredReceiverID, to: result))
                     return result
                 }
             }
