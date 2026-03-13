@@ -438,6 +438,12 @@ public enum DiagnosticRegistry {
             summary: "Cannot apply postfix operator to operand type."
         ),
         DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-0101",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "Property in object literal must have a type annotation or initializer."
+        ),
+        DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-TAILREC",
             pass: "SEMA",
             defaultSeverity: .warning,
