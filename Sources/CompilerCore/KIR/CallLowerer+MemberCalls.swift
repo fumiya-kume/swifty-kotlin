@@ -96,6 +96,7 @@ extension CallLowerer {
         "copyOf", "copyOfRange", "fill",
         "firstOrNull", "lastOrNull",
         "addAll", "removeAll", "retainAll",
+        "intersect", "union", "subtract",
         "to", // FUNC-002
     ]
 

@@ -2357,6 +2357,21 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+        for (memberName, externName) in [
+            ("intersect", "kk_set_intersect"),
+            ("union", "kk_set_union"),
+            ("subtract", "kk_set_subtract"),
+        ] {
+            registerSetBinaryOperationMember(
+                symbols: symbols, types: types, interner: interner,
+                setFQName: setFQName,
+                setInterfaceSymbol: setInterfaceSymbol,
+                typeParamSymbol: typeParamSymbol,
+                typeParamType: typeParamType,
+                memberName: memberName,
+                externName: externName
+            )
+        }
 
         return setInterfaceSymbol
     }
@@ -2506,11 +2521,6 @@ extension DataFlowSemaPhase {
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
-        let paramType = types.make(.classType(ClassType(
-            classSymbol: setInterfaceSymbol,
-            args: [.out(typeParamType)],
-            nullability: .nonNull
-        )))
         let memberSymbol = symbols.define(
             kind: .function,
             name: internedMemberName,
@@ -2524,7 +2534,7 @@ extension DataFlowSemaPhase {
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
-                parameterTypes: [paramType],
+                parameterTypes: [types.anyType],
                 returnType: returnType,
                 typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
@@ -2532,6 +2542,7 @@ extension DataFlowSemaPhase {
             for: memberSymbol
         )
     }
+
     private func registerSyntheticMutableSetStub(
         symbols: SymbolTable,
         types: TypeSystem,

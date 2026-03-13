@@ -439,6 +439,9 @@ extension CallTypeChecker {
             interner.intern("dropWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("intersect"),
+            interner.intern("union"),
+            interner.intern("subtract"),
         ]
         let listOnlyMembers: Set = [
             interner.intern("getOrNull"),
@@ -501,6 +504,7 @@ extension CallTypeChecker {
             interner.intern("onEach"), interner.intern("onEachIndexed"),
             interner.intern("filterIsInstance"),
             interner.intern("takeWhile"), interner.intern("dropWhile"),
+            interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
         ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
@@ -539,7 +543,8 @@ extension CallTypeChecker {
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
-             interner.intern("sortBy"), interner.intern("sortByDescending"):
+             interner.intern("sortBy"), interner.intern("sortByDescending"),
+             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return argCount == 1
         case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return isMapReceiver && argCount == 1
