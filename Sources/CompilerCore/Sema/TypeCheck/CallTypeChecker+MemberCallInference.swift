@@ -414,10 +414,12 @@ extension CallTypeChecker {
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "sort", "sortBy", "sortByDescending",
         ]
         let mutableListSortHOFNames: Set = ["sortBy", "sortByDescending"]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
+        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -442,11 +444,17 @@ extension CallTypeChecker {
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
-        let isMutableListReceiver = isMutableListCollectionType(receiverType, sema: sema, interner: interner)
+        let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
         let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
             && !isCollectionLikeType(receiverType, sema: sema, interner: interner)
             && !isMapReceiver
-        let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
+        var activeCollectionHOFNames = collectionHOFNames
+        if !isMutableListReceiver {
+            activeCollectionHOFNames.subtract(mutableListOnlyCollectionHOFNames)
+        }
+        if isMapReceiver {
+            activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
+        }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
         let isMutableListSortHOF = isMutableListReceiver
@@ -817,6 +825,70 @@ extension CallTypeChecker {
                             range: ast.arena.exprRange(id)
                         )
                         let failedType = safeCall ? sema.types.nullableAnyType : sema.types.anyType
+                        sema.bindings.bindExprType(id, type: failedType)
+                        return failedType
+                    }
+                }
+                resultType = sema.types.makeNullable(collectionElementType)
+
+            case "maxByOrNull", "minByOrNull":
+                guard args.count == 1 else {
+                    let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    sema.bindings.bindExprType(id, type: failedType)
+                    return failedType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let selectorType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                    sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                } else if let lambdaExprType = sema.bindings.exprType(for: args[0].expr),
+                          case let .functionType(fnType) = sema.types.kind(of: lambdaExprType)
+                {
+                    sema.types.makeNonNullable(fnType.returnType)
+                } else {
+                    sema.types.anyType
+                }
+                do {
+                    let primitiveComparableTypes: Set<TypeID> = [
+                        sema.types.intType,
+                        sema.types.longType,
+                        sema.types.floatType,
+                        sema.types.doubleType,
+                        sema.types.charType,
+                        sema.types.stringType,
+                        sema.types.make(.primitive(.uint, .nonNull)),
+                        sema.types.make(.primitive(.ulong, .nonNull)),
+                    ]
+                    let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
+                    let isNominalComparable: Bool
+                    if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                        let comparableSelectorType = sema.types.make(.classType(ClassType(
+                            classSymbol: comparableSymbol,
+                            args: [.invariant(selectorType)],
+                            nullability: .nonNull
+                        )))
+                        isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
+                    } else {
+                        isNominalComparable = false
+                    }
+                    if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-BOUND",
+                            "Type argument does not satisfy upper bound constraint.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
                         sema.bindings.bindExprType(id, type: failedType)
                         return failedType
                     }
@@ -2730,6 +2802,24 @@ extension CallTypeChecker {
             interner.intern("util"),
             interner.intern("Locale"),
         ]
+    }
+
+    private func isMutableListType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let symbolID = driver.helpers.nominalSymbol(
+            of: sema.types.makeNonNullable(type),
+            types: sema.types
+        ),
+            let symbol = sema.symbols.symbol(symbolID)
+        else {
+            return false
+        }
+        return symbol.name == knownNames.mutableList
+            || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
     private func isSyntheticStringFormatCandidate(
