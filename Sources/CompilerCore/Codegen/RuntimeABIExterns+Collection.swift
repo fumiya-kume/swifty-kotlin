@@ -91,6 +91,8 @@ public extension RuntimeABIExterns {
         kk_map_all,
         kk_map_none,
         kk_map_toList,
+        kk_map_plus,
+        kk_map_minus,
         kk_map_to_mutable_map,
         kk_map_iterator,
         kk_map_iterator_hasNext,
@@ -126,6 +128,9 @@ public extension RuntimeABIExterns {
         kk_string_builder_append,
         kk_builder_list_add,
         kk_mutable_list_add,
+        kk_mutable_list_addAll,
+        kk_mutable_list_removeAll,
+        kk_mutable_list_retainAll,
         kk_mutable_list_removeAt,
         kk_mutable_list_clear,
         kk_mutable_set_add,
@@ -133,6 +138,7 @@ public extension RuntimeABIExterns {
         kk_builder_map_put,
         kk_mutable_map_put,
         kk_mutable_map_remove,
+        kk_mutable_map_getOrPut,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -404,6 +410,18 @@ public extension RuntimeABIExterns {
     static let kk_map_toList = ExternDecl(
         name: "kk_map_toList",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_plus = ExternDecl(
+        name: "kk_map_plus",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_minus = ExternDecl(
+        name: "kk_map_minus",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -895,6 +913,24 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_list_addAll = ExternDecl(
+        name: "kk_mutable_list_addAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_removeAll = ExternDecl(
+        name: "kk_mutable_list_removeAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_retainAll = ExternDecl(
+        name: "kk_mutable_list_retainAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_list_removeAt = ExternDecl(
         name: "kk_mutable_list_removeAt",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -934,6 +970,12 @@ public extension RuntimeABIExterns {
     static let kk_mutable_map_remove = ExternDecl(
         name: "kk_mutable_map_remove",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_map_getOrPut = ExternDecl(
+        name: "kk_mutable_map_getOrPut",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }

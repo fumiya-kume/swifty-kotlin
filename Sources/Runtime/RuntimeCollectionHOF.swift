@@ -211,6 +211,36 @@ public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureR
     return result
 }
 
+@_cdecl("kk_mutable_map_getOrPut")
+public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    if let map = runtimeMapBox(from: mapRaw) {
+        for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+            if idx < map.values.count {
+                let existing = map.values[idx]
+                if existing != runtimeNullSentinelInt {
+                    return existing
+                }
+                var thrown = 0
+                let result = lambda(closureRaw, &thrown)
+                if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+                map.values[idx] = result
+                return result
+            }
+            break
+        }
+    }
+
+    var thrown = 0
+    let result = lambda(closureRaw, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if let map = runtimeMapBox(from: mapRaw) {
+        map.keys.append(key)
+        map.values.append(result)
+    }
+    return result
+}
+
 @_cdecl("kk_map_mapValues")
 public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
