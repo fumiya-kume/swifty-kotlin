@@ -272,6 +272,37 @@ public func kk_string_none(
     return 1
 }
 
+// MARK: - STDLIB-315: String.replaceFirstChar
+
+@_cdecl("kk_string_replaceFirstChar")
+public func kk_string_replaceFirstChar(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else { return runtimeMakeStringRaw("") }
+    guard fnPtr != 0 else { return strRaw }
+    let firstCharRaw = kk_box_char(Int(scalars[0].value))
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, firstCharRaw, &thrown)
+    if thrown != 0 {
+        runtimePropagateThrownOrTrap(
+            thrown,
+            outThrown: outThrown,
+            context: "replaceFirstChar transform"
+        )
+        return runtimeMakeStringRaw("")
+    }
+    let mappedChar = maybeUnbox(result)
+    let replacement = runtimeUnicodeScalarFromRaw(mappedChar) ?? scalars[0]
+    let tail = scalars.dropFirst()
+    var rebuilt = String.UnicodeScalarView()
+    rebuilt.append(replacement)
+    rebuilt.append(contentsOf: tail)
+    return runtimeMakeStringRaw(String(rebuilt))
+}
+
 @_cdecl("kk_string_take")
 public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""
@@ -1124,6 +1155,18 @@ private func runtimeMakeStringListRaw(_ values: [String]) -> Int {
 
 private func runtimeSetThrown(_ outThrown: UnsafeMutablePointer<Int>?, message: String) {
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
+}
+
+private func runtimePropagateThrownOrTrap(
+    _ thrown: Int,
+    outThrown: UnsafeMutablePointer<Int>?,
+    context: String
+) {
+    guard thrown != 0 else { return }
+    guard let outThrown else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(context) threw")
+    }
+    outThrown.pointee = thrown
 }
 
 private struct RuntimeFormatSpecifier {
