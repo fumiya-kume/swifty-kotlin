@@ -275,6 +275,27 @@ public func kk_list_subList(_ listRaw: Int, _ fromIndex: Int, _ toIndex: Int) ->
     return registerRuntimeObject(RuntimeListBox(elements: subElements))
 }
 
+@_cdecl("kk_list_containsAll")
+public func kk_list_containsAll(_ listRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let otherElements: [Int]
+    if let otherList = runtimeListBox(from: collectionRaw) {
+        otherElements = otherList.elements
+    } else if let otherSet = runtimeSetBox(from: collectionRaw) {
+        otherElements = otherSet.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    for element in otherElements {
+        if !list.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            return kk_box_bool(0)
+        }
+    }
+    return kk_box_bool(1)
+}
+
 @_cdecl("kk_mutable_list_add")
 public func kk_mutable_list_add(_ listRaw: Int, _ elem: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

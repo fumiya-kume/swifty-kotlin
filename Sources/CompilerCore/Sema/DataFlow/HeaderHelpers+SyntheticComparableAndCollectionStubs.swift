@@ -587,7 +587,8 @@ extension DataFlowSemaPhase {
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
-            listTypeParamType: listTypeParamType
+            listTypeParamType: listTypeParamType,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         registerListJoinToStringMember(
             symbols: symbols, types: types, interner: interner,
@@ -710,7 +711,8 @@ extension DataFlowSemaPhase {
         listFQName: [InternedString],
         listInterfaceSymbol: SymbolID,
         listTypeParamSymbol: SymbolID,
-        listTypeParamType: TypeID
+        listTypeParamType: TypeID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let listReceiverType = types.make(.classType(ClassType(
             classSymbol: listInterfaceSymbol,
@@ -757,7 +759,7 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(listInterfaceSymbol, for: containsAllSymbol)
             symbols.setExternalLinkName("kk_list_containsAll", for: containsAllSymbol)
             let collectionParamType = types.make(.classType(ClassType(
-                classSymbol: listInterfaceSymbol,
+                classSymbol: collectionInterfaceSymbol,
                 args: [.out(listTypeParamType)],
                 nullability: .nonNull
             )))
