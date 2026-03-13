@@ -1071,17 +1071,40 @@ extension DataFlowSemaPhase {
 
         // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
         do {
-            let selectorType = types.make(.functionType(FunctionType(
-                params: [listTypeParamType],
-                returnType: types.anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-
-            func registerByOrNull(name: String, externalLinkName: String, returnType: TypeID) {
+            func registerByOrNull(
+                name: String,
+                externalLinkName: String,
+                returnTypeBuilder: (TypeID) -> TypeID
+            ) {
                 let memberName = interner.intern(name)
                 let memberFQName = listFQName + [memberName]
                 guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+                let returnType = returnTypeBuilder(rType)
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                    [types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(rType)],
+                        nullability: .nonNull
+                    )))]
+                } else {
+                    []
+                }
                 let memberSymbol = symbols.define(
                     kind: .function,
                     name: memberName,
@@ -1097,17 +1120,34 @@ extension DataFlowSemaPhase {
                         receiverType: receiverType,
                         parameterTypes: [selectorType],
                         returnType: returnType,
-                        typeParameterSymbols: [listTypeParamSymbol],
+                        typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], comparableRBounds],
                         classTypeParameterCount: 1
                     ),
                     for: memberSymbol
                 )
             }
 
-            registerByOrNull(name: "maxByOrNull", externalLinkName: "kk_list_maxByOrNull", returnType: nullableElementType)
-            registerByOrNull(name: "minByOrNull", externalLinkName: "kk_list_minByOrNull", returnType: nullableElementType)
-            registerByOrNull(name: "maxOfOrNull", externalLinkName: "kk_list_maxOfOrNull", returnType: types.makeNullable(types.anyType))
-            registerByOrNull(name: "minOfOrNull", externalLinkName: "kk_list_minOfOrNull", returnType: types.makeNullable(types.anyType))
+            registerByOrNull(
+                name: "maxByOrNull",
+                externalLinkName: "kk_list_maxByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "minByOrNull",
+                externalLinkName: "kk_list_minByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "maxOfOrNull",
+                externalLinkName: "kk_list_maxOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
+            registerByOrNull(
+                name: "minOfOrNull",
+                externalLinkName: "kk_list_minOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
         }
 
         // random / randomOrNull (STDLIB-166)

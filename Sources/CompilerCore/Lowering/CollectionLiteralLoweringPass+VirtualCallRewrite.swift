@@ -765,10 +765,8 @@ extension CollectionLiteralLoweringPass {
             hofArgs = arguments
         }
 
-        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
-            kkName: kkName, receiver: receiver, arguments: hofArgs + [zeroExpr],
+            kkName: kkName, receiver: receiver, arguments: hofArgs,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody
