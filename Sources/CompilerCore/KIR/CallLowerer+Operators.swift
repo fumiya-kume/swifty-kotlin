@@ -170,7 +170,8 @@ extension CallLowerer {
         if (op == .add || op == .subtract), sema.bindings.isCollectionExpr(exprID) {
             let calleeName: String
             if op == .subtract {
-                calleeName = "kk_list_minus_element"
+                let rhsIsCollection = sema.bindings.isCollectionExpr(rhs)
+                calleeName = rhsIsCollection ? "kk_list_minus_collection" : "kk_list_minus_element"
             } else {
                 let rhsIsCollection = sema.bindings.isCollectionExpr(rhs)
                 calleeName = rhsIsCollection ? "kk_list_plus_collection" : "kk_list_plus_element"

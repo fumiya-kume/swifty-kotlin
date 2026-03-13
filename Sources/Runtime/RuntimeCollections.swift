@@ -456,6 +456,27 @@ public func kk_list_minus_element(_ listRaw: Int, _ element: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
+@_cdecl("kk_list_minus_collection")
+public func kk_list_minus_collection(_ listRaw: Int, _ otherRaw: Int) -> Int {
+    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
+        list.elements
+    } else {
+        []
+    }
+    let otherElements: [Int]
+    if let other = runtimeListBox(from: otherRaw) {
+        otherElements = other.elements
+    } else if let other = runtimeSetBox(from: otherRaw) {
+        otherElements = other.elements
+    } else {
+        otherElements = []
+    }
+    let result = elements.filter { element in
+        !otherElements.contains(where: { runtimeValuesEqual($0, element) })
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")

@@ -218,7 +218,8 @@ extension CollectionLiteralLoweringPass {
         // STDLIB-345: list plus/minus produce new lists
         if callee == lookup.kkListPlusElementName
             || callee == lookup.kkListPlusCollectionName
-            || callee == lookup.kkListMinusElementName,
+            || callee == lookup.kkListMinusElementName
+            || callee == lookup.kkListMinusCollectionName,
             listExprIDs.contains(src)
         {
             listExprIDs.insert(result.rawValue)

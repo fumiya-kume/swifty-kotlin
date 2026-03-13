@@ -374,6 +374,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_plus_element"),
             interner.intern("kk_list_plus_collection"),
             interner.intern("kk_list_minus_element"),
+            interner.intern("kk_list_minus_collection"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

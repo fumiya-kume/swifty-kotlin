@@ -172,6 +172,7 @@ public extension RuntimeABIExterns {
         kk_list_plus_element,
         kk_list_plus_collection,
         kk_list_minus_element,
+        kk_list_minus_collection,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1209,6 +1210,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_minus_element = ExternDecl(
         name: "kk_list_minus_element",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minus_collection = ExternDecl(
+        name: "kk_list_minus_collection",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
