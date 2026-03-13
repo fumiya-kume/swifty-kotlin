@@ -751,6 +751,23 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    if callee == lookup.containsAllName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if setExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSetContainsAllName,
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
                     if callee == lookup.containsKeyName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
