@@ -86,7 +86,7 @@ extension CallLowerer {
         "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -724,6 +724,33 @@ extension CallLowerer {
             }
         }
 
+        // Any?.toString() → kk_any_to_string (STDLIB-307)
+        // Handles nullable receiver toString() by routing through the runtime
+        // which returns "null" for null values.
+        if args.isEmpty, interner.resolve(calleeName) == "toString" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if nonNullReceiverType != receiverType {
+                let tag: Int64 = switch sema.types.kind(of: nonNullReceiverType) {
+                case .primitive(.boolean, _): 2
+                case .primitive(.string, _): 3
+                default: 1
+                }
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+                instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_any_to_string"),
+                    arguments: [loweredReceiverID, tagID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
         // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
@@ -1331,6 +1358,8 @@ extension CallLowerer {
                     "kk_sequence_drop"
                 case "zip":
                     "kk_sequence_zip"
+                case "sortedBy":
+                    "kk_sequence_sortedBy"
                 default:
                     nil
                 }
@@ -1582,6 +1611,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -2412,6 +2442,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
+                case "sortedBy":
+                    "kk_sequence_sortedBy"
             default:
                 break
             }
@@ -2482,6 +2514,14 @@ extension CallLowerer {
             return nil
         }
         switch memberName {
+        case "count":
+            return interner.intern("kk_map_count")
+        case "any":
+            return interner.intern("kk_map_any")
+        case "all":
+            return interner.intern("kk_map_all")
+        case "none":
+            return interner.intern("kk_map_none")
         case "getOrDefault":
             return interner.intern("kk_map_getOrDefault")
         case "getOrElse":
@@ -2882,3 +2922,4 @@ extension CallLowerer {
         }
     }
 }
+// TEST MARKER
