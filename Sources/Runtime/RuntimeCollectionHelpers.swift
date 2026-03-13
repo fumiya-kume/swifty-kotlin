@@ -37,6 +37,16 @@ func runtimeSetBox(from rawValue: Int) -> RuntimeSetBox? {
     return tryCast(ptr, to: RuntimeSetBox.self)
 }
 
+func runtimeCollectionElements(from rawValue: Int) -> [Int]? {
+    if let listBox = runtimeListBox(from: rawValue) {
+        return listBox.elements
+    }
+    if let setBox = runtimeSetBox(from: rawValue) {
+        return setBox.elements
+    }
+    return nil
+}
+
 func runtimeListIteratorBox(from rawValue: Int) -> RuntimeListIteratorBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil

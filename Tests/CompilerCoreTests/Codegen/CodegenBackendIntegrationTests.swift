@@ -394,6 +394,35 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenMutableSetAddAllAcceptsSetAndListCollections() throws {
+        let source = """
+        fun main() {
+            val values = mutableSetOf(1, 2)
+            println(values.addAll(listOf(2, 3, 4)))
+            println(values)
+            println(values.addAll(setOf(4, 5)))
+            println(values)
+            values.clear()
+            println(values)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "MutableSetAddAllRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "true\n[1, 2, 3, 4]\ntrue\n[1, 2, 3, 4, 5]\n[]\n")
+        }
+    }
+
     func testCodegenMutableMapBasicMutationsUseRuntimeMapBox() throws {
         let source = """
         fun main() {

@@ -735,6 +735,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         fun mutate(values: MutableSet<Int>) {
             values.add(1)
             values.remove(1)
+            values.addAll(listOf(2, 3))
         }
         """
 
@@ -761,6 +762,91 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     externalLinkName,
                     "Expected \(memberName) to resolve to \(externalLinkName)"
                 )
+            }
+
+            let addAllSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableSet"),
+                ctx.interner.intern("addAll"),
+            ]))
+            XCTAssertEqual(
+                sema.symbols.externalLinkName(for: addAllSymbol),
+                "kk_mutable_set_addAll",
+                "Expected addAll to resolve to kk_mutable_set_addAll"
+            )
+        }
+    }
+
+    func testMutableSetClearIsNotMarkedOperatorFunction() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let clearSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableSet"),
+                ctx.interner.intern("clear"),
+            ]))
+
+            XCTAssertFalse(sema.symbols.symbol(clearSymbol)?.flags.contains(.operatorFunction) == true)
+        }
+    }
+
+    func testMutableSetAddAllUsesCollectionParameterType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let addAllSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableSet"),
+                ctx.interner.intern("addAll"),
+            ]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: addAllSymbol))
+
+            guard let parameterType = signature.parameterTypes.first,
+                  case let .classType(classType) = sema.types.kind(of: parameterType)
+            else {
+                return XCTFail("Expected MutableSet.addAll to accept a collection type")
+            }
+
+            let parameterSymbol = classType.classSymbol
+            let parameterName = try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(parameterSymbol)?.name))
+            XCTAssertEqual(parameterName, "Collection")
+        }
+    }
+
+    func testMutableListBulkMutationMembersUseInvariantReceiverType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let mutableListFQName = [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("MutableList"),
+            ]
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
+                let symbol = try XCTUnwrap(sema.symbols.lookup(fqName: mutableListFQName + [ctx.interner.intern(memberName)]))
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbol))
+                let receiverType = try XCTUnwrap(signature.receiverType)
+
+                guard case let .classType(receiverClassType) = sema.types.kind(of: receiverType),
+                      let firstArg = receiverClassType.args.first
+                else {
+                    return XCTFail("Expected MutableList.\(memberName) receiver to be a class type")
+                }
+
+                guard case .invariant = firstArg else {
+                    return XCTFail("Expected MutableList.\(memberName) receiver to remain invariant")
+                }
             }
         }
     }
