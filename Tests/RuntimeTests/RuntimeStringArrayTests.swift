@@ -7,6 +7,16 @@ import XCTest
     import Darwin
 #endif
 
+private typealias RuntimeStringUnaryEntry = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
+
+private let runtimeReplaceFirstCharWithUppercaseB: RuntimeStringUnaryEntry = { _, _, _ in
+    kk_box_char(Int(Character("B").unicodeScalars.first!.value))
+}
+
+private let runtimeReplaceFirstCharWithInvalidScalar: RuntimeStringUnaryEntry = { _, _, _ in
+    Int.max
+}
+
 final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
     private func capturePrintln(_ block: () -> Void) -> String {
         let pipe = Pipe()
@@ -224,6 +234,29 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
             rawFromRuntimeString("z")
         )
         XCTAssertEqual(runtimeStringValue(replaced), "zbz")
+    }
+
+    func testStringReplaceFirstCharReplacesOnlyLeadingScalar() {
+        let replaced = kk_string_replaceFirstChar(
+            rawFromRuntimeString("abc"),
+            unsafeBitCast(runtimeReplaceFirstCharWithUppercaseB, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(runtimeStringValue(replaced), "Bbc")
+    }
+
+    func testStringReplaceFirstCharFallsBackToOriginalScalarForInvalidReplacement() {
+        let original = "éclair"
+        let replaced = kk_string_replaceFirstChar(
+            rawFromRuntimeString(original),
+            unsafeBitCast(runtimeReplaceFirstCharWithInvalidScalar, to: Int.self),
+            0,
+            nil
+        )
+
+        XCTAssertEqual(runtimeStringValue(replaced), original)
     }
 
     func testStringStartsWithEndsWithContains() {

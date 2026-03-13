@@ -287,14 +287,12 @@ public func kk_string_replaceFirstChar(
     let result = lambda(closureRaw, firstCharRaw, &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
     let mappedChar = maybeUnbox(result)
-    var newScalars: [UnicodeScalar] = []
-    if let scalar = runtimeUnicodeScalarFromRaw(mappedChar) {
-        newScalars.append(scalar)
-    }
-    if scalars.count > 1 {
-        newScalars.append(contentsOf: scalars[1...])
-    }
-    return runtimeMakeStringRaw(runtimeStringFromScalars(newScalars))
+    let replacement = runtimeUnicodeScalarFromRaw(mappedChar) ?? scalars[0]
+    let tail = scalars.dropFirst()
+    var rebuilt = String.UnicodeScalarView()
+    rebuilt.append(replacement)
+    rebuilt.append(contentsOf: tail)
+    return runtimeMakeStringRaw(String(rebuilt))
 }
 
 @_cdecl("kk_string_take")
