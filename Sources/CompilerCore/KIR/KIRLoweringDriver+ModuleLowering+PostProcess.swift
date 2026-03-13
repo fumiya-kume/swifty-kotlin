@@ -527,13 +527,16 @@ extension KIRLoweringDriver {
         guard let expr = ast.arena.expr(callee) else { return .custom }
         let observableID = interner.intern("observable")
         let vetoableID = interner.intern("vetoable")
+        let notNullID = interner.intern("notNull")
         switch expr {
         case let .memberCall(_, name, _, _, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
+            if name == notNullID { return .notNull }
         case let .nameRef(name, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
+            if name == notNullID { return .notNull }
         default: break
         }
         return .custom

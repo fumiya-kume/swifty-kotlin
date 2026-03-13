@@ -362,8 +362,4 @@ final class RuntimeVetoableBox {
 /// Throws `IllegalStateException` if accessed before being assigned.
 final class RuntimeNotNullBox {
     var currentValue: Int?
-
-    init() {
-        currentValue = nil
-    }
 }

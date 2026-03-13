@@ -1,7 +1,8 @@
 import kotlin.properties.Delegates
 
+var name: String by Delegates.notNull()
+
 fun main() {
-    var name: String by Delegates.notNull()
     name = "hello"
     println(name)
 }

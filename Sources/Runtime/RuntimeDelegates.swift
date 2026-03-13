@@ -3,6 +3,14 @@ import Foundation
 typealias KKCustomDelegateGetterEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKCustomDelegateSetterEntryPoint = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
+private let runtimeNotNullUninitializedMessage =
+    "IllegalStateException: Property delegate must be assigned before being accessed."
+
+@inline(__always)
+private func runtimeTrapNotNullUninitialized() -> Never {
+    fatalError(runtimeNotNullUninitializedMessage)
+}
+
 final class RuntimeCustomDelegateBox {
     let delegateHandle: Int
     let getValueFnPtr: Int
@@ -233,16 +241,16 @@ public func kk_notNull_create() -> Int {
 @_cdecl("kk_notNull_get_value")
 public func kk_notNull_get_value(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        fatalError("IllegalStateException: Property delegate must be assigned before being accessed.")
+        runtimeTrapNotNullUninitialized()
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        fatalError("IllegalStateException: Property delegate must be assigned before being accessed.")
+        runtimeTrapNotNullUninitialized()
     }
     guard let value = box.currentValue else {
-        fatalError("IllegalStateException: Property delegate must be assigned before being accessed.")
+        runtimeTrapNotNullUninitialized()
     }
     return value
 }
@@ -250,13 +258,13 @@ public func kk_notNull_get_value(_ handle: Int) -> Int {
 @_cdecl("kk_notNull_set_value")
 public func kk_notNull_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return newValue
+        runtimeTrapNotNullUninitialized()
     }
     let isObj = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
-        return newValue
+        runtimeTrapNotNullUninitialized()
     }
     box.currentValue = newValue
     return newValue
@@ -354,7 +362,7 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _: Int) -> Int {
     }
     if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
         guard let value = notNullBox.currentValue else {
-            fatalError("IllegalStateException: Property delegate must be assigned before being accessed.")
+            runtimeTrapNotNullUninitialized()
         }
         return value
     }
