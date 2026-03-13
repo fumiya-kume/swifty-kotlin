@@ -1097,8 +1097,8 @@ extension DataFlowSemaPhase {
 
             registerByOrNull(name: "maxByOrNull", externalLinkName: "kk_list_maxByOrNull", returnType: nullableElementType)
             registerByOrNull(name: "minByOrNull", externalLinkName: "kk_list_minByOrNull", returnType: nullableElementType)
-            registerByOrNull(name: "maxOfOrNull", externalLinkName: "kk_list_maxOfOrNull", returnType: types.make(.nullable(types.anyType)))
-            registerByOrNull(name: "minOfOrNull", externalLinkName: "kk_list_minOfOrNull", returnType: types.make(.nullable(types.anyType)))
+            registerByOrNull(name: "maxOfOrNull", externalLinkName: "kk_list_maxOfOrNull", returnType: types.makeNullable(types.anyType))
+            registerByOrNull(name: "minOfOrNull", externalLinkName: "kk_list_minOfOrNull", returnType: types.makeNullable(types.anyType))
         }
 
         // random / randomOrNull (STDLIB-166)
