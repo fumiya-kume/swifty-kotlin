@@ -7,6 +7,7 @@ extension ControlFlowLowerer {
         exceptionTypeSlot: KIRExprID,
         thrownTarget: Int32,
         sema: SemaModule,
+        interner: StringInterner,
         arena: KIRArena,
         emit instructions: inout KIRLoweringEmitContext
     ) {
@@ -16,6 +17,7 @@ extension ControlFlowLowerer {
             exceptionTypeSlot: exceptionTypeSlot,
             thrownTarget: thrownTarget,
             sema: sema,
+            interner: interner,
             arena: arena,
             instructions: &instructions.instructions
         )

@@ -207,7 +207,7 @@ extension BuildKIRRegressionTests {
                 }
                 return (index, token)
             }
-            let expectedTypeTokens = catchBindings.map { Int64($0.parameterType.rawValue) }
+            let expectedTypeTokens = catchBindings.map { RuntimeTypeCheckToken.encode(type: $0.parameterType, sema: sema, interner: ctx.interner) }
             let exactTypeComparisons = typeComparisons.filter { $0.typeToken != 0 }
             let unknownTypeComparisons = typeComparisons.filter { $0.typeToken == 0 }
             XCTAssertEqual(exactTypeComparisons.count, expectedTypeTokens.count, "Expected one exact type comparison per catch clause.")

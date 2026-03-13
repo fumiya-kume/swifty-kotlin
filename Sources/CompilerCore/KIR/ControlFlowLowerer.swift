@@ -330,6 +330,7 @@ final class ControlFlowLowerer {
             exceptionTypeSlot: exceptionTypeSlot,
             thrownTarget: catchDispatchLabel,
             sema: sema,
+            interner: interner,
             arena: arena,
             instructions: &instructions
         )
@@ -362,11 +363,12 @@ final class ControlFlowLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                    let encodedToken = RuntimeTypeCheckToken.encode(type: binding.parameterType, sema: sema, interner: interner)
+                    let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
                     let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
                     let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                     let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
                     instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                     instructions.append(.binary(
                         op: .equal,
@@ -416,6 +418,7 @@ final class ControlFlowLowerer {
                 exceptionTypeSlot: exceptionTypeSlot,
                 thrownTarget: finallyLabel,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions
             )
@@ -460,11 +463,12 @@ final class ControlFlowLowerer {
                             thrownResult: nil
                         ))
                     } else {
-                        let tokenExpr = arena.appendExpr(.intLiteral(Int64(binding.parameterType.rawValue)), type: intType)
+                        let encodedToken = RuntimeTypeCheckToken.encode(type: binding.parameterType, sema: sema, interner: interner)
+                        let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
                         let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
                         let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                         let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(Int64(binding.parameterType.rawValue))))
+                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
                         instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
                         instructions.append(.binary(
                             op: .equal,
@@ -516,6 +520,7 @@ final class ControlFlowLowerer {
                     exceptionTypeSlot: exceptionTypeSlot,
                     thrownTarget: finallyLabel,
                     sema: sema,
+                    interner: interner,
                     arena: arena,
                     instructions: &instructions
                 )
@@ -566,6 +571,7 @@ final class ControlFlowLowerer {
                 exceptionTypeSlot: exceptionTypeSlot,
                 thrownTarget: rethrowLabel,
                 sema: sema,
+                interner: interner,
                 arena: arena,
                 instructions: &instructions
             )
@@ -595,6 +601,7 @@ final class ControlFlowLowerer {
         exceptionTypeSlot: KIRExprID,
         thrownTarget: Int32,
         sema: SemaModule,
+        interner: StringInterner,
         arena: KIRArena,
         instructions: inout [KIRInstruction]
     ) {
@@ -669,7 +676,8 @@ final class ControlFlowLowerer {
                 instructions.append(.jumpIfNotNull(value: exceptionSlot, target: thrownTarget))
             case let .rethrow(value):
                 instructions.append(.copy(from: value, to: exceptionSlot))
-                let tokenValue = Int64((arena.exprType(value) ?? sema.types.anyType).rawValue)
+                let rethrowType = arena.exprType(value) ?? sema.types.anyType
+                let tokenValue = RuntimeTypeCheckToken.encode(type: rethrowType, sema: sema, interner: interner)
                 let thrownTypeToken = arena.appendExpr(.intLiteral(tokenValue), type: intType)
                 instructions.append(.constValue(result: thrownTypeToken, value: .intLiteral(tokenValue)))
                 instructions.append(.copy(from: thrownTypeToken, to: exceptionTypeSlot))
