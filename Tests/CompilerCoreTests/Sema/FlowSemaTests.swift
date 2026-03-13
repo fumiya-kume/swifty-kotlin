@@ -157,19 +157,24 @@ final class FlowSemaTests: XCTestCase {
             XCTAssertFalse(flowExprs.isEmpty, "Should have at least one flow expression")
 
             for flowExpr in flowExprs {
-                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else {
+                    XCTFail("Flow expression should have a bound type")
+                    continue
+                }
                 // The expression type should NOT be anyType or nullableAnyType
                 XCTAssertNotEqual(exprType, sema.types.anyType,
                     "Flow expression type should not be erased to Any")
                 XCTAssertNotEqual(exprType, sema.types.nullableAnyType,
                     "Flow expression type should not be erased to Any?")
                 // It should be a classType (Flow<...>)
-                if case .classType(let classType) = sema.types.kind(of: exprType) {
-                    let symbol = sema.symbols.symbol(classType.classSymbol)
-                    let name = symbol.map { ctx.interner.resolve($0.name) }
-                    XCTAssertEqual(name, "Flow", "Flow expression should have Flow class type")
-                    XCTAssertFalse(classType.args.isEmpty, "Flow type should have type arguments")
+                guard case .classType(let classType) = sema.types.kind(of: exprType) else {
+                    XCTFail("Flow expression type should be a classType, got \(sema.types.kind(of: exprType))")
+                    continue
                 }
+                let symbol = sema.symbols.symbol(classType.classSymbol)
+                let name = symbol.map { ctx.interner.resolve($0.name) }
+                XCTAssertEqual(name, "Flow", "Flow expression should have Flow class type")
+                XCTAssertFalse(classType.args.isEmpty, "Flow type should have type arguments")
             }
         }
     }
@@ -197,7 +202,10 @@ final class FlowSemaTests: XCTestCase {
                 "Should have flow builder + map as flow expressions")
 
             for flowExpr in flowExprs {
-                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else {
+                    XCTFail("Flow expression should have a bound type")
+                    continue
+                }
                 XCTAssertNotEqual(exprType, sema.types.anyType,
                     "Flow chain result should not be erased to Any")
             }
@@ -250,7 +258,10 @@ final class FlowSemaTests: XCTestCase {
 
             let flowExprs = sema.bindings.flowExprIDs
             for flowExpr in flowExprs {
-                guard let exprType = sema.bindings.exprType(for: flowExpr) else { continue }
+                guard let exprType = sema.bindings.exprType(for: flowExpr) else {
+                    XCTFail("Flow expression should have a bound type")
+                    continue
+                }
                 XCTAssertNotEqual(exprType, sema.types.anyType,
                     "Flow.take() result should not be erased to Any")
             }
