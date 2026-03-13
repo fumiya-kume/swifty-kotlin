@@ -146,6 +146,17 @@ private let mapEntryKeyPlusHundred: @convention(c) (Int, Int, UnsafeMutablePoint
     kk_pair_first(pairRaw) + 100
 }
 
+private let returnSeven: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
+    gHOFState.addCall()
+    return 7
+}
+
+private let throwForGetOrPut: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, outThrown in
+    gHOFState.addCall()
+    outThrown?.pointee = runtimeAllocateThrowable(message: "test getOrPut throw")
+    return 123
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -297,6 +308,47 @@ final class RuntimeCollectionHOFTests: XCTestCase {
             entries.map { kk_pair_second($0) },
             listElements(kk_map_values(map))
         )
+    }
+
+    func testMapPlusNormalizesMismatchedEntriesBeforeUpdate() {
+        let corruptedMap = registerRuntimeObject(RuntimeMapBox(keys: [1, 2, 3], values: [10, 20]))
+        let updated = kk_map_plus(corruptedMap, kk_pair_new(3, 99))
+
+        XCTAssertEqual(mapKeys(updated), [1, 2, 3])
+        XCTAssertEqual(listElements(kk_map_values(updated)), [10, 20, 99])
+    }
+
+    func testMapMinusNormalizesMismatchedEntriesBeforeRemoval() {
+        let corruptedMap = registerRuntimeObject(RuntimeMapBox(keys: [1, 2, 3], values: [10, 20]))
+        let updated = kk_map_minus(corruptedMap, 2)
+
+        XCTAssertEqual(mapKeys(updated), [1])
+        XCTAssertEqual(listElements(kk_map_values(updated)), [10])
+    }
+
+    func testMutableMapGetOrPutPreservesStoredRuntimeLongBoxAtNullSentinelValue() {
+        let boxedLongMin = registerRuntimeObject(RuntimeLongBox(runtimeNullSentinelInt))
+        let map = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [boxedLongMin]))
+
+        gHOFState.reset()
+        let result = kk_mutable_map_getOrPut(map, 1, unsafeBitCast(returnSeven, to: Int.self), 0, nil)
+
+        XCTAssertEqual(gHOFState.callsSnapshot(), 0)
+        XCTAssertEqual(result, boxedLongMin)
+        XCTAssertEqual(kk_map_get(map, 1), boxedLongMin)
+    }
+
+    func testMutableMapGetOrPutReturnsZeroWhenLambdaThrowsForExistingNullEntry() {
+        let map = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [runtimeNullSentinelInt]))
+
+        gHOFState.reset()
+        var thrown = 0
+        let result = kk_mutable_map_getOrPut(map, 1, unsafeBitCast(throwForGetOrPut, to: Int.self), 0, &thrown)
+
+        XCTAssertEqual(gHOFState.callsSnapshot(), 1)
+        XCTAssertEqual(result, 0)
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(kk_map_get(map, 1), runtimeNullSentinelInt)
     }
 
     func testBoolAbiForCollectionHelpersReturnsRaw() {

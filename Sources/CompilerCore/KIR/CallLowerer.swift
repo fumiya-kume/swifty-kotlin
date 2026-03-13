@@ -76,6 +76,32 @@ final class CallLowerer {
             return loweredArrayConstructor
         }
 
+        if let loweredEnumValues = lowerEnumValuesCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumValues
+        }
+
+        if let loweredEnumValueOf = lowerEnumValueOfCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumValueOf
+        }
+
         if let loweredComparison = lowerComparisonSpecialCallExpr(
             exprID,
             args: args,
