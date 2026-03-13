@@ -156,10 +156,14 @@ struct TypeCheckHelpers {
         case interner.intern("kk_array_set"):
             guard argumentCount == 3 else { return nil }
             return sema.types.unitType
-        // Flow (CORO-003): type-erase Flow<T> as nullableAnyType
+        // Flow (CORO-003): preserve Flow-ness in fallback paths as Flow<Any>
         case knownNames.flow:
             guard argumentCount == 1 else { return nil }
-            return sema.types.nullableAnyType
+            return makeFlowType(
+                elementType: sema.types.anyType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         case knownNames.emit:
             guard argumentCount == 1 else { return nil }
             return sema.types.unitType
@@ -168,7 +172,11 @@ struct TypeCheckHelpers {
             return sema.types.unitType
         case interner.intern("map"), interner.intern("filter"), interner.intern("take"):
             guard argumentCount == 1 || argumentCount == 2 else { return nil }
-            return sema.types.nullableAnyType
+            return makeFlowType(
+                elementType: sema.types.anyType,
+                sema: sema,
+                interner: interner
+            ) ?? sema.types.anyType
         default:
             return nil
         }
