@@ -89,4 +89,54 @@ extension ABIMismatchTests {
             )
         }
     }
+
+    // MARK: - Comparator trampoline signature consistency
+
+    func testComparatorTrampolinesHaveFourParameters() {
+        let trampolines = RuntimeABISpec.comparatorFunctions.filter {
+            $0.name.contains("trampoline")
+        }
+        XCTAssertFalse(trampolines.isEmpty, "Should have comparator trampoline functions")
+        for spec in trampolines {
+            XCTAssertEqual(
+                spec.parameters.count, 4,
+                "Comparator trampoline '\(spec.name)' should have 4 parameters (closureRaw, a, b, outThrown)"
+            )
+            XCTAssertEqual(
+                spec.parameters[0].name, "closureRaw",
+                "First parameter of '\(spec.name)' should be closureRaw"
+            )
+            XCTAssertEqual(
+                spec.parameters.last?.name, "outThrown",
+                "Last parameter of '\(spec.name)' should be outThrown"
+            )
+            XCTAssertEqual(
+                spec.parameters.last?.type, .nullableIntptrPointer,
+                "outThrown of '\(spec.name)' should be nullable intptr pointer"
+            )
+        }
+    }
+
+    // MARK: - HOF function fnPtr parameter consistency
+
+    func testCollectionHOFLambdaFunctionsHaveFnPtrParameter() {
+        // Builder thunk functions (kk_build_*) correctly use fnPtr without closureRaw
+        let builderThunks: Set<String> = [
+            "kk_build_string", "kk_build_list", "kk_build_list_with_capacity",
+            "kk_build_map", "kk_sequence_builder_build",
+        ]
+        let hofSections: Set<String> = ["Collection", "Sequence"]
+        let hofFunctions = RuntimeABISpec.allFunctions.filter {
+            hofSections.contains($0.section)
+                && $0.parameters.contains(where: { $0.name == "fnPtr" })
+                && !builderThunks.contains($0.name)
+        }
+        for spec in hofFunctions {
+            let hasClosure = spec.parameters.contains(where: { $0.name == "closureRaw" })
+            XCTAssertTrue(
+                hasClosure,
+                "HOF function '\(spec.name)' has fnPtr but missing closureRaw parameter"
+            )
+        }
+    }
 }

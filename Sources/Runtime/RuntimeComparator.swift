@@ -25,14 +25,13 @@ public func kk_comparator_from_selector_trampoline(
     guard isObj, let pairBox = tryCast(ptr, to: RuntimePairBox.self) else { return 0 }
     let selectorFn = pairBox.first
     let selectorClosure = pairBox.second
-    let lambda = unsafeBitCast(selectorFn, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
-    let keyA = lambda(selectorClosure, a, &thrown)
+    let keyA = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: a, outThrown: &thrown)
     if thrown != 0 {
         outThrown?.pointee = thrown
         return 0
     }
-    let keyB = lambda(selectorClosure, b, &thrown)
+    let keyB = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: b, outThrown: &thrown)
     if thrown != 0 {
         outThrown?.pointee = thrown
         return 0
@@ -59,8 +58,6 @@ public func kk_comparator_from_selector_descending(_ selectorFn: Int, _ selector
 }
 
 // MARK: - Chained comparators (STDLIB-176)
-
-typealias ComparatorLambda = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
 /// thenBy: first comparator, then selector for tie-breaker.
 @_cdecl("kk_comparator_then_by")
@@ -99,15 +96,13 @@ public func kk_comparator_then_by_trampoline(
           let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
           let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
     else { return 0 }
-    let c1Lambda = unsafeBitCast(inner1.first, to: ComparatorLambda.self)
     var thrown = 0
-    let r1 = c1Lambda(inner1.second, a, b, &thrown)
+    let r1 = runtimeInvokeCollectionLambda2(fnPtr: inner1.first, closureRaw: inner1.second, lhs: a, rhs: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     if r1 != 0 { return r1 }
-    let selLambda = unsafeBitCast(inner2.first, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    let keyA = selLambda(inner2.second, a, &thrown)
+    let keyA = runtimeInvokeCollectionLambda1(fnPtr: inner2.first, closureRaw: inner2.second, value: a, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-    let keyB = selLambda(inner2.second, b, &thrown)
+    let keyB = runtimeInvokeCollectionLambda1(fnPtr: inner2.first, closureRaw: inner2.second, value: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     return runtimeCompareValues(keyA, keyB)
 }
@@ -143,9 +138,8 @@ public func kk_comparator_reversed_trampoline(
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObj, let pairBox = tryCast(ptr, to: RuntimePairBox.self) else { return 0 }
-    let lambda = unsafeBitCast(pairBox.first, to: ComparatorLambda.self)
     var thrown = 0
-    let result = lambda(pairBox.second, a, b, &thrown)
+    let result = runtimeInvokeCollectionLambda2(fnPtr: pairBox.first, closureRaw: pairBox.second, lhs: a, rhs: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
     return result == 0 ? 0 : -result
 }

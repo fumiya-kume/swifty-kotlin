@@ -253,6 +253,7 @@ func runtimeElementToString(_ elem: Int) -> String {
 
 typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias ComparatorLambda = RuntimeCollectionLambda2
 
 /// Retains an object and registers it as a runtime handle.
 func runtimeRetainObjectHandle(_ object: AnyObject) -> Int {
@@ -293,6 +294,7 @@ func runtimeCollectionBool(_ value: Int) -> Bool {
     kk_unbox_bool(value) != 0
 }
 
+@inline(__always)
 func runtimeInvokeCollectionLambda1(
     fnPtr: Int,
     closureRaw: Int,
@@ -303,6 +305,7 @@ func runtimeInvokeCollectionLambda1(
     return fn(closureRaw, value, outThrown)
 }
 
+@inline(__always)
 func runtimeInvokeCollectionLambda2(
     fnPtr: Int,
     closureRaw: Int,
@@ -314,6 +317,7 @@ func runtimeInvokeCollectionLambda2(
     return fn(closureRaw, lhs, rhs, outThrown)
 }
 
+@inline(__always)
 func runtimeInvokeClosureThunk(
     fnPtr: Int,
     closureRaw: Int,
