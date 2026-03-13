@@ -190,7 +190,6 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
             assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
-
             let expectedExternalLinks = [
                 "sort": "kk_mutable_list_sort",
                 "sortBy": "kk_mutable_list_sortBy",
@@ -323,6 +322,36 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertFalse(
                 ctx.diagnostics.diagnostics.isEmpty,
                 "Expected diagnostics for immutable List.sort* calls"
+            )
+        }
+    }
+
+    func testMutableListMatchesTransitiveCollectionConstraint() throws {
+        let source = """
+        fun <T> consume(values: Collection<T>): T? = values.firstOrNull()
+
+        fun demo(values: MutableList<Int>): Int? = consume(values)
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            let consumeCall = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                guard case let .call(callee, _, _, _) = expr,
+                      case let .nameRef(name, _) = ast.arena.expr(callee)
+                else { return false }
+                return ctx.interner.resolve(name) == "consume"
+            }, "Expected consume(values) call in AST")
+
+            XCTAssertNotNil(
+                sema.bindings.callBinding(for: consumeCall)?.chosenCallee,
+                "Expected MutableList<Int> to satisfy Collection<T> through transitive lifting"
             )
         }
     }

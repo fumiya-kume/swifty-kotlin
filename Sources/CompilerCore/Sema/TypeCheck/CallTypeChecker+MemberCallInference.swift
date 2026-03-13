@@ -953,8 +953,8 @@ extension CallTypeChecker {
 
         // Infer argument types for the normal resolution path (scope functions and
         // collection HOFs infer their lambda args with expected type above and return).
-        let argTypes = args.map { arg in
-            driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        let argTypes = args.enumerated().map { _, arg in
+            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
         let hasLeadingLocaleArgument = calleeName == interner.intern("format")

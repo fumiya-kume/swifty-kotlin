@@ -493,10 +493,8 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var elems: [Int] = []
-    var keys: [Int] = []
-    elems.reserveCapacity(list.elements.count)
-    keys.reserveCapacity(list.elements.count)
+    var indexed: [(offset: Int, element: Int, key: Int)] = []
+    indexed.reserveCapacity(list.elements.count)
     for elem in list.elements {
         var thrown = 0
         let key = lambda(closureRaw, elem, &thrown)
@@ -504,15 +502,16 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
             outThrown?.pointee = thrown
             return registerRuntimeObject(RuntimeListBox(elements: []))
         }
-        elems.append(elem)
-        keys.append(maybeUnbox(key))
+        indexed.append((offset: indexed.count, element: elem, key: key))
     }
-    let indices = Array(elems.indices)
-    let sorted = indices.sorted { lhs, rhs in
-        if keys[lhs] != keys[rhs] { return keys[lhs] < keys[rhs] }
-        return lhs < rhs
+    let sorted = indexed.sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.key, rhs.key)
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs.offset < rhs.offset
     }
-    return registerRuntimeObject(RuntimeListBox(elements: sorted.map { elems[$0] }))
+    return registerRuntimeObject(RuntimeListBox(elements: sorted.map(\.element)))
 }
 
 @_cdecl("kk_list_count")
