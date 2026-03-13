@@ -222,10 +222,12 @@ extension CallTypeChecker {
 
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         guard isSupportedCollectionFallbackMember(
             calleeName,
             isMapReceiver: isMapReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableListReceiver: isMutableListReceiver,
             interner: interner
         ),
         isValidCollectionFallbackArity(
@@ -233,6 +235,7 @@ extension CallTypeChecker {
             argCount: args.count,
             isMapReceiver: isMapReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableListReceiver: isMutableListReceiver,
             interner: interner
         )
         else {
@@ -283,6 +286,7 @@ extension CallTypeChecker {
         _ memberName: InternedString,
         isMapReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -352,8 +356,16 @@ extension CallTypeChecker {
             interner.intern("plus"),
             interner.intern("minus"),
         ]
+        let mutableListOnlyMembers: Set = [
+            interner.intern("addAll"),
+            interner.intern("removeAll"),
+            interner.intern("retainAll"),
+        ]
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
+        }
+        if mutableListOnlyMembers.contains(memberName) {
+            return isMutableListReceiver
         }
         if memberName == knownNames.getOrPut {
             return isMutableMapReceiver
@@ -389,6 +401,7 @@ extension CallTypeChecker {
         argCount: Int,
         isMapReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -416,6 +429,8 @@ extension CallTypeChecker {
             return isMapReceiver && argCount == 1
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
+            return isMutableListReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
         case interner.intern("fold"), interner.intern("windowed"):
@@ -449,7 +464,8 @@ extension CallTypeChecker {
 
         let boolReturningMembers: Set = [
             knownNames.isEmpty, interner.intern("contains"), interner.intern("containsKey"),
-            interner.intern("any"), interner.intern("none"), interner.intern("all")
+            interner.intern("any"), interner.intern("none"), interner.intern("all"),
+            interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll")
         ]
         if boolReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.boolean, .nonNull))
@@ -794,6 +810,23 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isMutableMapSymbol(symbol) && classType.args.count == 2
+    }
+
+    private func isMutableListCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return (symbol.name == knownNames.mutableList
+            || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName)
+            && classType.args.count == 1
     }
 
     // MARK: - Array member fallback (STDLIB-087/088/089)

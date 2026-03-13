@@ -89,6 +89,7 @@ extension CallLowerer {
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "copyOf", "copyOfRange", "fill",
         "firstOrNull", "lastOrNull",
+        "addAll", "removeAll", "retainAll",
         "to", // FUNC-002
     ]
 
@@ -442,6 +443,21 @@ extension CallLowerer {
             return false
         }
         return knownNames.isConcreteListLikeSymbol(symbol)
+    }
+
+    private func isMutableListLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.name == knownNames.mutableList
+            || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
     private func isConcreteCollectionLikeType(
@@ -2350,6 +2366,19 @@ extension CallLowerer {
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            default:
+                break
+            }
+        }
+
+        if isMutableListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addAll":
+                return interner.intern("kk_mutable_list_addAll")
+            case "removeAll":
+                return interner.intern("kk_mutable_list_removeAll")
+            case "retainAll":
+                return interner.intern("kk_mutable_list_retainAll")
             default:
                 break
             }
