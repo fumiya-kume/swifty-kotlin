@@ -105,6 +105,16 @@ extension ExprTypeChecker {
         } else {
             []
         }
+        // STDLIB-345: List plus/minus operators
+        if !lhsIsPrimitive, operatorCandidates.isEmpty, (op == .add || op == .subtract) {
+            if driver.callChecker.isCollectionLikeType(lhs, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(lhsID)
+            {
+                sema.bindings.bindExprType(id, type: lhs)
+                sema.bindings.markCollectionExpr(id)
+                return lhs
+            }
+        }
         let lhsIsAny = lhs == sema.types.anyType || lhs == sema.types.nullableAnyType
         let rhsIsAny = rhs == sema.types.anyType || rhs == sema.types.nullableAnyType
         if !lhsIsPrimitive, !lhsIsAny, !rhsIsAny, operatorCandidates.isEmpty, lhs != sema.types.errorType, rhs != sema.types.errorType {

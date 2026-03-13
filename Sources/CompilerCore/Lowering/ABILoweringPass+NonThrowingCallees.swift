@@ -370,6 +370,10 @@ extension ABILoweringPass {
             interner.intern("kk_int_coerceIn"),
             interner.intern("kk_int_coerceAtLeast"),
             interner.intern("kk_int_coerceAtMost"),
+            // List plus/minus operators (STDLIB-345)
+            interner.intern("kk_list_plus_element"),
+            interner.intern("kk_list_plus_collection"),
+            interner.intern("kk_list_minus_element"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

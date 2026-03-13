@@ -415,6 +415,47 @@ public func kk_mutable_list_retainAll(_ listRaw: Int, _ collectionRaw: Int) -> I
     return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
 }
 
+// MARK: - List plus/minus operators (STDLIB-345)
+
+@_cdecl("kk_list_plus_element")
+public func kk_list_plus_element(_ listRaw: Int, _ element: Int) -> Int {
+    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
+        list.elements
+    } else {
+        []
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements + [element]))
+}
+
+@_cdecl("kk_list_plus_collection")
+public func kk_list_plus_collection(_ listRaw: Int, _ otherRaw: Int) -> Int {
+    let lhsElements: [Int] = if let list = runtimeListBox(from: listRaw) {
+        list.elements
+    } else {
+        []
+    }
+    let rhsElements: [Int] = if let other = runtimeListBox(from: otherRaw) {
+        other.elements
+    } else {
+        []
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: lhsElements + rhsElements))
+}
+
+@_cdecl("kk_list_minus_element")
+public func kk_list_minus_element(_ listRaw: Int, _ element: Int) -> Int {
+    let elements: [Int] = if let list = runtimeListBox(from: listRaw) {
+        list.elements
+    } else {
+        []
+    }
+    var result = elements
+    if let index = result.firstIndex(where: { runtimeValuesEqual($0, element) }) {
+        result.remove(at: index)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
 // MARK: - Set Functions (STDLIB-001)
 
 @_cdecl("kk_set_of")

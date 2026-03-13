@@ -169,6 +169,9 @@ public extension RuntimeABIExterns {
         kk_mutable_map_remove,
         kk_mutable_map_getOrPut,
         kk_mutable_map_putAll,
+        kk_list_plus_element,
+        kk_list_plus_collection,
+        kk_list_minus_element,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1187,6 +1190,25 @@ public extension RuntimeABIExterns {
 
     static let kk_mutable_map_putAll = ExternDecl(
         name: "kk_mutable_map_putAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// List plus/minus operators (STDLIB-345)
+    static let kk_list_plus_element = ExternDecl(
+        name: "kk_list_plus_element",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_plus_collection = ExternDecl(
+        name: "kk_list_plus_collection",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minus_element = ExternDecl(
+        name: "kk_list_minus_element",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
