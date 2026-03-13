@@ -156,7 +156,10 @@ struct TypeCheckHelpers {
         case interner.intern("kk_array_set"):
             guard argumentCount == 3 else { return nil }
             return sema.types.unitType
-        // Flow (CORO-003): preserve Flow-ness in fallback paths as Flow<Any>
+        // Flow (CORO-003): preserve `flow { ... }` fallback typing as Flow<Any>.
+        // Member-like names such as `map`/`filter`/`take` stay conservative here
+        // because this helper does not know whether the unresolved callee was
+        // invoked on an actual Flow receiver.
         case knownNames.flow:
             guard argumentCount == 1 else { return nil }
             return makeFlowType(
@@ -172,11 +175,7 @@ struct TypeCheckHelpers {
             return sema.types.unitType
         case interner.intern("map"), interner.intern("filter"), interner.intern("take"):
             guard argumentCount == 1 || argumentCount == 2 else { return nil }
-            return makeFlowType(
-                elementType: sema.types.anyType,
-                sema: sema,
-                interner: interner
-            ) ?? sema.types.anyType
+            return sema.types.nullableAnyType
         default:
             return nil
         }
