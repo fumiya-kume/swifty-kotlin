@@ -230,7 +230,7 @@ emit_summary() {
 if [[ ! -f "$REPORT_PATH" ]]; then
   tmp_body="$(mktemp -t kswiftk-diff-summary-empty-XXXXXX)"
   trap 'rm -f "$tmp_body"' EXIT
-  emit_summary 0 0 0 "$tmp_body"
+  emit_summary 0 0 0 "$tmp_body" "$tmp_body"
   exit 0
 fi
 
