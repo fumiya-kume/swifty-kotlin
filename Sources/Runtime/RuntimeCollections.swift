@@ -787,7 +787,11 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
         guard idx < other.values.count else { break }
         var found = false
         for (existIdx, existKey) in map.keys.enumerated() where runtimeValuesEqual(existKey, key) {
-            map.values[existIdx] = other.values[idx]
+            if existIdx < map.values.count {
+                map.values[existIdx] = other.values[idx]
+            } else {
+                map.values.append(other.values[idx])
+            }
             found = true
             break
         }
