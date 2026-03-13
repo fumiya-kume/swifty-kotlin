@@ -142,5 +142,33 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // Sorting operations (STDLIB-272)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_sorted",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_sortedBy",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_sortedDescending",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
     ]
 }

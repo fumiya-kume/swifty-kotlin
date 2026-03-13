@@ -415,6 +415,59 @@ public func kk_set_to_string(_ setRaw: Int) -> UnsafeMutableRawPointer {
     }
 }
 
+@_cdecl("kk_set_toList")
+public func kk_set_toList(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: set.elements))
+}
+
+// MARK: - Set Operations (STDLIB-266)
+
+@_cdecl("kk_set_intersect")
+public func kk_set_intersect(_ setRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
+    var otherElements: [Int] = []
+    if let otherSet = runtimeSetBox(from: otherRaw) {
+        otherElements = otherSet.elements
+    } else if let otherList = runtimeListBox(from: otherRaw) {
+        otherElements = otherList.elements
+    }
+    let result = selfElements.filter { elem in
+        otherElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}
+
+@_cdecl("kk_set_union")
+public func kk_set_union(_ setRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
+    var otherElements: [Int] = []
+    if let otherSet = runtimeSetBox(from: otherRaw) {
+        otherElements = otherSet.elements
+    } else if let otherList = runtimeListBox(from: otherRaw) {
+        otherElements = otherList.elements
+    }
+    let combined = selfElements + otherElements
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(combined)))
+}
+
+@_cdecl("kk_set_subtract")
+public func kk_set_subtract(_ setRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
+    var otherElements: [Int] = []
+    if let otherSet = runtimeSetBox(from: otherRaw) {
+        otherElements = otherSet.elements
+    } else if let otherList = runtimeListBox(from: otherRaw) {
+        otherElements = otherList.elements
+    }
+    let result = selfElements.filter { elem in
+        !otherElements.contains(where: { runtimeValuesEqual($0, elem) })
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}
+
 @_cdecl("kk_mutable_set_add")
 public func kk_mutable_set_add(_ setRaw: Int, _ elem: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
@@ -491,6 +544,26 @@ public func kk_mutable_map_remove(_ mapRaw: Int, _ key: Int) -> Int {
         return runtimeNullSentinelInt
     }
     return map.values.remove(at: index)
+}
+
+@_cdecl("kk_mutable_map_putAll")
+public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw),
+          let other = runtimeMapBox(from: otherMapRaw) else { return 0 }
+    for (idx, key) in other.keys.enumerated() {
+        guard idx < other.values.count else { break }
+        var found = false
+        for (existIdx, existKey) in map.keys.enumerated() where runtimeValuesEqual(existKey, key) {
+            map.values[existIdx] = other.values[idx]
+            found = true
+            break
+        }
+        if !found {
+            map.keys.append(key)
+            map.values.append(other.values[idx])
+        }
+    }
+    return 0
 }
 
 @_cdecl("kk_map_size")

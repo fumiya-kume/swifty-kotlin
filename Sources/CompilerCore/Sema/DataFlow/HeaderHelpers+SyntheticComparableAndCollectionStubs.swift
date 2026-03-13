@@ -1149,6 +1149,87 @@ extension DataFlowSemaPhase {
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
+        // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
+        do {
+            func registerByOrNull(
+                name: String,
+                externalLinkName: String,
+                returnTypeBuilder: (TypeID) -> TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+                let returnType = returnTypeBuilder(rType)
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                    [types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(rType)],
+                        nullability: .nonNull
+                    )))]
+                } else {
+                    []
+                }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [selectorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], comparableRBounds],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerByOrNull(
+                name: "maxByOrNull",
+                externalLinkName: "kk_list_maxByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "minByOrNull",
+                externalLinkName: "kk_list_minByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "maxOfOrNull",
+                externalLinkName: "kk_list_maxOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
+            registerByOrNull(
+                name: "minOfOrNull",
+                externalLinkName: "kk_list_minOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
+        }
+
         // random / randomOrNull (STDLIB-166)
         registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
         registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
@@ -1523,6 +1604,27 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        registerMutableListSortMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
+        registerMutableListSortByMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
+        registerMutableListSortByDescendingMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListAddAllMember(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
@@ -1547,27 +1649,6 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
-        registerMutableListSortMember(
-            symbols: symbols, types: types, interner: interner,
-            mutableListFQName: mutableListFQName,
-            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            mlTypeParamSymbol: mlTypeParamSymbol,
-            mlTypeParamType: mlTypeParamType
-        )
-        registerMutableListSortByMember(
-            symbols: symbols, types: types, interner: interner,
-            mutableListFQName: mutableListFQName,
-            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            mlTypeParamSymbol: mlTypeParamSymbol,
-            mlTypeParamType: mlTypeParamType
-        )
-        registerMutableListSortByDescendingMember(
-            symbols: symbols, types: types, interner: interner,
-            mutableListFQName: mutableListFQName,
-            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
-            mlTypeParamSymbol: mlTypeParamSymbol,
-            mlTypeParamType: mlTypeParamType
-        )
     }
 
     /// Register `operator fun set(index: Int, element: E): E` on MutableList.
@@ -1585,7 +1666,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: mlSetFQName) == nil else { return }
         let mlReceiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let mlSetSymbol = symbols.define(
@@ -1624,7 +1705,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1663,7 +1744,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1702,7 +1783,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let memberSymbol = symbols.define(
@@ -1797,6 +1878,135 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListSortMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("sort")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_sort", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListSortByMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("sortBy")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [mlTypeParamType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_sortBy", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [selectorType],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListSortByDescendingMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("sortByDescending")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [mlTypeParamType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_sortByDescending", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [selectorType],
                 returnType: types.unitType,
                 typeParameterSymbols: [mlTypeParamSymbol],
                 classTypeParameterCount: 1
@@ -1939,136 +2149,6 @@ extension DataFlowSemaPhase {
             for: memberSymbol
         )
     }
-
-    private func registerMutableListSortMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        mutableListFQName: [InternedString],
-        mutableListInterfaceSymbol: SymbolID,
-        mlTypeParamSymbol: SymbolID,
-        mlTypeParamType: TypeID
-    ) {
-        let memberName = interner.intern("sort")
-        let memberFQName = mutableListFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
-            nullability: .nonNull
-        )))
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_mutable_list_sort", for: memberSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: [],
-                returnType: types.unitType,
-                typeParameterSymbols: [mlTypeParamSymbol],
-                classTypeParameterCount: 1
-            ),
-            for: memberSymbol
-        )
-    }
-
-    private func registerMutableListSortByMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        mutableListFQName: [InternedString],
-        mutableListInterfaceSymbol: SymbolID,
-        mlTypeParamSymbol: SymbolID,
-        mlTypeParamType: TypeID
-    ) {
-        let memberName = interner.intern("sortBy")
-        let memberFQName = mutableListFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
-            nullability: .nonNull
-        )))
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [mlTypeParamType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .inlineFunction]
-        )
-        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_mutable_list_sortBy", for: memberSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: [selectorType],
-                returnType: types.unitType,
-                typeParameterSymbols: [mlTypeParamSymbol],
-                classTypeParameterCount: 1
-            ),
-            for: memberSymbol
-        )
-    }
-
-    private func registerMutableListSortByDescendingMember(
-        symbols: SymbolTable,
-        types: TypeSystem,
-        interner: StringInterner,
-        mutableListFQName: [InternedString],
-        mutableListInterfaceSymbol: SymbolID,
-        mlTypeParamSymbol: SymbolID,
-        mlTypeParamType: TypeID
-    ) {
-        let memberName = interner.intern("sortByDescending")
-        let memberFQName = mutableListFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
-        let receiverType = types.make(.classType(ClassType(
-            classSymbol: mutableListInterfaceSymbol,
-            args: [.invariant(mlTypeParamType)],
-            nullability: .nonNull
-        )))
-        let selectorType = types.make(.functionType(FunctionType(
-            params: [mlTypeParamType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .inlineFunction]
-        )
-        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
-        symbols.setExternalLinkName("kk_mutable_list_sortByDescending", for: memberSymbol)
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: [selectorType],
-                returnType: types.unitType,
-                typeParameterSymbols: [mlTypeParamSymbol],
-                classTypeParameterCount: 1
-            ),
-            for: memberSymbol
-        )
-    }
-
     private func registerSyntheticSetStub(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -2107,6 +2187,9 @@ extension DataFlowSemaPhase {
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: setInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: setInterfaceSymbol)
         symbols.setDirectSupertypes([collectionInterfaceSymbol], for: setInterfaceSymbol)
+        symbols.setSupertypeTypeArgs([.out(typeParamType)], for: setInterfaceSymbol, supertype: collectionInterfaceSymbol)
+        types.setNominalDirectSupertypes([collectionInterfaceSymbol], for: setInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: setInterfaceSymbol, supertype: collectionInterfaceSymbol)
 
         registerSetContainsMember(
             symbols: symbols, types: types, interner: interner,
@@ -3122,6 +3205,7 @@ extension DataFlowSemaPhase {
             ("put", [keyType, valueType], types.makeNullable(valueType), "kk_mutable_map_put", [.synthetic]),
             ("remove", [keyType], types.makeNullable(valueType), "kk_mutable_map_remove", [.synthetic]),
             ("getOrPut", [keyType, getOrPutLambdaType], valueType, "kk_mutable_map_getOrPut", [.synthetic, .inlineFunction]),
+            ("putAll", [types.make(.classType(ClassType(classSymbol: mapInterfaceSymbol, args: [.invariant(keyType), .invariant(valueType)], nullability: .nonNull)))], types.unitType, "kk_mutable_map_putAll", [.synthetic]),
         ]
 
         for member in members {

@@ -1137,6 +1137,46 @@ public extension RuntimeABISpec {
                 hofSpec("kk_list_sortedByDescending"),
                 hofSpec("kk_list_sortedWith"),
                 hofSpec("kk_list_partition"),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_maxByOrNull",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_minByOrNull",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_maxOfOrNull",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_minOfOrNull",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
             ]
     }()
 }

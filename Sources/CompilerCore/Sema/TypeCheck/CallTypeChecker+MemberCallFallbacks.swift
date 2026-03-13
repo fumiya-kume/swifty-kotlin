@@ -167,6 +167,8 @@ extension CallTypeChecker {
             regexType ?? sema.types.anyType
         case ("lines", 0):
             listStringType
+        case ("replaceFirstChar", 1):
+            sema.types.stringType
         case ("matches", 1), ("contains", 1):
             sema.types.booleanType
         case ("split", 1):
@@ -194,6 +196,35 @@ extension CallTypeChecker {
         }
         if memberName == "replace", args.indices.contains(1) {
             _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+        }
+        if memberName == "replaceFirstChar", args.indices.contains(0) {
+            let charType = sema.types.make(.primitive(.char, .nonNull))
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [charType],
+                returnType: charType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            if let lambdaExpr = ctx.ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            }
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: expectedType)
+            let fqName = [
+                interner.intern("kotlin"),
+                interner.intern("text"),
+                calleeName,
+            ]
+            if let chosen = sema.symbols.lookup(fqName: fqName) {
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: chosen,
+                        substitutedTypeArguments: [],
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            }
         }
 
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
@@ -422,7 +453,7 @@ extension CallTypeChecker {
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
         }
-        if memberName == knownNames.getOrPut {
+        if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
         }
         return collectionMembers.contains(memberName)
@@ -488,6 +519,8 @@ extension CallTypeChecker {
             return isMapReceiver && argCount == 1
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case knownNames.putAll:
+            return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
         case interner.intern("fold"), interner.intern("windowed"):
@@ -534,6 +567,10 @@ extension CallTypeChecker {
             memberName == interner.intern("sortBy") ||
             memberName == interner.intern("sortByDescending")
         {
+            return sema.types.unitType
+        }
+
+        if memberName == knownNames.putAll {
             return sema.types.unitType
         }
 
