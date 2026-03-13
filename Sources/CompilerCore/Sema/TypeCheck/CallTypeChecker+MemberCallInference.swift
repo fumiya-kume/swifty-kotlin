@@ -417,6 +417,7 @@ extension CallTypeChecker {
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
         let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
+        let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
         } else if case .nameRef = ast.arena.expr(receiverID),
@@ -441,10 +442,17 @@ extension CallTypeChecker {
         let isCollectionReceiver = sema.bindings.isCollectionExpr(receiverID)
             || isCollectionLikeType(receiverType, sema: sema, interner: interner)
         let isMapReceiver = isMapLikeCollectionType(receiverType, sema: sema, interner: interner)
+        let isMutableListReceiver = isMutableListType(receiverType, sema: sema, interner: interner)
         let isSyntheticSequenceReceiver = sema.bindings.isCollectionExpr(receiverID)
             && !isCollectionLikeType(receiverType, sema: sema, interner: interner)
             && !isMapReceiver
-        let activeCollectionHOFNames = collectionHOFNames.union(isMapReceiver ? mapOnlyCollectionHOFNames : [])
+        var activeCollectionHOFNames = collectionHOFNames
+        if !isMutableListReceiver {
+            activeCollectionHOFNames.subtract(mutableListOnlyCollectionHOFNames)
+        }
+        if isMapReceiver {
+            activeCollectionHOFNames.formUnion(mapOnlyCollectionHOFNames)
+        }
         let isCollectionHOF = activeCollectionHOFNames.contains(interner.resolve(calleeName))
             && isCollectionReceiver
 
@@ -2751,6 +2759,24 @@ extension CallTypeChecker {
             interner.intern("util"),
             interner.intern("Locale"),
         ]
+    }
+
+    private func isMutableListType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let symbolID = driver.helpers.nominalSymbol(
+            of: sema.types.makeNonNullable(type),
+            types: sema.types
+        ),
+            let symbol = sema.symbols.symbol(symbolID)
+        else {
+            return false
+        }
+        return symbol.name == knownNames.mutableList
+            || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
     private func isSyntheticStringFormatCandidate(

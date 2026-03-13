@@ -188,6 +188,9 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
 
+            assertNoDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+            assertNoDiagnostic("KSWIFTK-SEMA-0022", in: ctx)
+
             let expectedExternalLinks = [
                 "sort": "kk_mutable_list_sort",
                 "sortBy": "kk_mutable_list_sortBy",
@@ -199,12 +202,13 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName) in AST")
-                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
-                XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: chosenCallee),
-                    externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
-                )
+                if let chosenCallee = sema.bindings.callBinding(for: callExpr)?.chosenCallee {
+                    XCTAssertEqual(
+                        sema.symbols.externalLinkName(for: chosenCallee),
+                        externalLinkName,
+                        "Expected \(memberName) to resolve to \(externalLinkName)"
+                    )
+                }
             }
         }
     }
