@@ -422,7 +422,6 @@ extension CallTypeChecker {
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
             knownNames.getOrDefault,
-            knownNames.getOrElse,
             interner.intern("maxByOrNull"),
             interner.intern("minByOrNull"),
             interner.intern("plus"),
@@ -432,10 +431,10 @@ extension CallTypeChecker {
             return isListReceiver
         }
         if collectionSpecificMembers.contains(memberName) {
-            return !isMapReceiver
+            return isListReceiver
         }
         if memberName == knownNames.getOrElse {
-            return true
+            return isListReceiver || isMapReceiver
         }
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver

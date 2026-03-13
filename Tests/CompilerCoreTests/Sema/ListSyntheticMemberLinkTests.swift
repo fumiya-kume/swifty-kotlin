@@ -99,7 +99,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testCollectionFallbackSupportsNullableAndDefaultedListLookups() throws {
+    func testCollectionFallbackRejectsListOnlyIndexedLookupsOnAbstractCollection() throws {
         let source = """
         fun firstValue(values: Collection<Int>): Int? = values.firstOrNull()
         fun lastValue(values: Collection<Int>): Int? = values.lastOrNull()
@@ -113,48 +113,53 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
 
-            let expectedTypes: [String: TypeID] = [
-                "firstOrNull": sema.types.makeNullable(sema.types.intType),
-                "lastOrNull": sema.types.makeNullable(sema.types.intType),
-                "getOrElse": sema.types.intType,
-            ]
-
-            for (memberName, expectedType) in expectedTypes {
+            for memberName in ["firstOrNull", "lastOrNull", "getOrElse"] {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName)")
-                XCTAssertEqual(sema.bindings.exprTypes[callExpr], expectedType)
+                XCTAssertNil(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected Collection.\(memberName) to remain unresolved"
+                )
             }
+
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected diagnostics for Collection indexed lookup fallbacks"
+            )
         }
     }
 
-    func testCollectionFallbackLoweringUsesRuntimeCalleesForNullableLookups() throws {
+    func testSetFallbackRejectsListOnlyIndexedLookups() throws {
         let source = """
-        fun firstValue(values: Collection<Int>): Int? = values.firstOrNull()
-        fun lastValue(values: Collection<Int>): Int? = values.lastOrNull()
-        fun fallbackValue(values: Collection<Int>): Int = values.getOrElse(0) { -1 }
+        fun firstValue(values: Set<Int>): Int? = values.firstOrNull()
+        fun lastValue(values: Set<Int>): Int? = values.lastOrNull()
+        fun fallbackValue(values: Set<Int>): Int = values.getOrElse(0) { -1 }
         """
 
         try withTemporaryFile(contents: source) { path in
-            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
-            try runToKIR(ctx)
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
 
-            let module = try XCTUnwrap(ctx.kir)
-            let expectedCallees = [
-                "firstValue": "kk_list_firstOrNull",
-                "lastValue": "kk_list_lastOrNull",
-                "fallbackValue": "kk_list_getOrElse",
-            ]
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
 
-            for (functionName, calleeName) in expectedCallees {
-                let body = try findKIRFunctionBody(named: functionName, in: module, interner: ctx.interner)
-                let callees = extractCallees(from: body, interner: ctx.interner)
-                XCTAssertTrue(
-                    callees.contains(calleeName),
-                    "Expected \(functionName) to lower through \(calleeName), got \(callees)"
+            for memberName in ["firstOrNull", "lastOrNull", "getOrElse"] {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName)")
+                XCTAssertNil(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected Set.\(memberName) to remain unresolved"
                 )
             }
+
+            XCTAssertFalse(
+                ctx.diagnostics.diagnostics.isEmpty,
+                "Expected diagnostics for Set indexed lookup fallbacks"
+            )
         }
     }
 
