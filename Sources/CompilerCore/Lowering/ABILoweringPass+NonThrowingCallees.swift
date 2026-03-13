@@ -269,6 +269,8 @@ extension ABILoweringPass {
             interner.intern("kk_triple_toList"),
             interner.intern("kk_system_exitProcess"),
             interner.intern("kk_system_currentTimeMillis"),
+            interner.intern("kk_mutable_list_shuffle"),
+            interner.intern("kk_mutable_list_reverse"),
             interner.intern("kk_mutable_list_addAll"),
             interner.intern("kk_mutable_list_removeAll"),
             interner.intern("kk_mutable_list_retainAll"),

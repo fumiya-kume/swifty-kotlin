@@ -1509,6 +1509,20 @@ extension DataFlowSemaPhase {
             mlTypeParamSymbol: mlTypeParamSymbol,
             mlTypeParamType: mlTypeParamType
         )
+        registerMutableListShuffleMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
+        registerMutableListReverseMember(
+            symbols: symbols, types: types, interner: interner,
+            mutableListFQName: mutableListFQName,
+            mutableListInterfaceSymbol: mutableListInterfaceSymbol,
+            mlTypeParamSymbol: mlTypeParamSymbol,
+            mlTypeParamType: mlTypeParamType
+        )
         registerMutableListAddAllMember(
             symbols: symbols, types: types, interner: interner,
             mutableListFQName: mutableListFQName,
@@ -1701,6 +1715,84 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_clear", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListShuffleMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("shuffle")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_shuffle", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.unitType,
+                typeParameterSymbols: [mlTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    private func registerMutableListReverseMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        mutableListFQName: [InternedString],
+        mutableListInterfaceSymbol: SymbolID,
+        mlTypeParamSymbol: SymbolID,
+        mlTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("reverse")
+        let memberFQName = mutableListFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: mutableListInterfaceSymbol,
+            args: [.invariant(mlTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_mutable_list_reverse", for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,
