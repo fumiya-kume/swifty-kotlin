@@ -83,11 +83,18 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
-        "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
+        "getOrDefault", "getOrElse", "getOrPut", "putAll",
+        "maxByOrNull", "minByOrNull",
+        "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
-        "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
+        "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "replaceFirstChar",
+        "sort", "sortBy", "sortByDescending",
+        "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
+        "firstOrNull", "lastOrNull",
+        "addAll", "removeAll", "retainAll",
         "to", // FUNC-002
     ]
 
@@ -312,6 +319,66 @@ extension CallLowerer {
         } else {
             calleeName
         }
+        let safeReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullSafeReceiverType = sema.types.makeNonNullable(safeReceiverType)
+        let safeBooleanCallee = interner.resolve(effectiveCalleeName)
+        if sema.types.isSubtype(nonNullSafeReceiverType, sema.types.booleanType) {
+            let boolRuntimeCallee: InternedString? = switch safeBooleanCallee {
+            case "not" where args.isEmpty:
+                interner.intern("kk_op_not")
+            case "and" where args.count == 1:
+                interner.intern("kk_bitwise_and")
+            case "or" where args.count == 1:
+                interner.intern("kk_bitwise_or")
+            case "xor" where args.count == 1:
+                interner.intern("kk_bitwise_xor")
+            default:
+                nil
+            }
+            if let boolRuntimeCallee {
+                let boundType = sema.types.makeNullable(sema.types.booleanType)
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType
+                )
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                let nonNullLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiver, target: nonNullLabel))
+                let nullVal = arena.appendExpr(.unit, type: boundType)
+                instructions.append(.constValue(result: nullVal, value: .null))
+                instructions.append(.copy(from: nullVal, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nonNullLabel))
+                let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.booleanType)
+                let loweredArgIDs = args.map { argument in
+                    driver.lowerExpr(
+                        argument.expr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
+                let callArguments = [loweredReceiver] + loweredArgIDs
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: boolRuntimeCallee,
+                    arguments: callArguments,
+                    result: nonNullResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                instructions.append(.copy(from: nonNullResult, to: result))
+                instructions.append(.label(endLabel))
+                return result
+            }
+        }
+
         return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
@@ -441,6 +508,21 @@ extension CallLowerer {
             return false
         }
         return knownNames.isConcreteListLikeSymbol(symbol)
+    }
+
+    private func isMutableListLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.name == knownNames.mutableList
+            || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
     private func isConcreteCollectionLikeType(
@@ -622,6 +704,54 @@ extension CallLowerer {
             return result
         }
 
+        // Boolean.not() → kk_op_not (STDLIB-308)
+        if calleeName == interner.intern("not"),
+           args.isEmpty
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.booleanType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_not"),
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+        if args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.booleanType) {
+                let boolCallee: InternedString? = switch interner.resolve(calleeName) {
+                case "and":
+                    interner.intern("kk_bitwise_and")
+                case "or":
+                    interner.intern("kk_bitwise_or")
+                case "xor":
+                    interner.intern("kk_bitwise_xor")
+                default:
+                    nil
+                }
+                if let boolCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: boolCallee,
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)
         if args.count == 1,
            shouldLowerPrimitiveInv(receiverExpr: receiverExpr, sema: sema, nullableReceiverAllowed: requireNonNullableReceiverForConstFold)
@@ -703,23 +833,37 @@ extension CallLowerer {
             }
         }
 
-        // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
+        // Primitive member function: Int/Long.toString() → kk_any_to_string
+        // and Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
-           args.count == 1
+           args.count <= 1
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_int_toString_radix"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0]],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                if args.isEmpty {
+                    let tagID = arena.appendExpr(.intLiteral(1), type: intType)
+                    instructions.append(.constValue(result: tagID, value: .intLiteral(1)))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_any_to_string"),
+                        arguments: [loweredReceiverID, tagID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_int_toString_radix"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
                 return result
             }
         }
@@ -771,7 +915,9 @@ extension CallLowerer {
             case ("toInt", doubleType, intType): interner.intern("kk_double_to_int")
             case ("toInt", floatType, intType): interner.intern("kk_float_to_int")
             case ("toInt", longType, intType): interner.intern("kk_long_to_int")
+            case ("toInt", sema.types.charType, intType): nil // identity (Char is stored as Int)
             case ("toInt", intType, intType): nil // identity
+            case ("toChar", intType, sema.types.charType): nil // identity (Char is stored as Int)
             case ("toUInt", intType, uintType): interner.intern("kk_int_to_uint")
             case ("toUInt", longType, uintType): interner.intern("kk_long_to_uint")
             case ("toUInt", uintType, uintType), ("toUInt", ulongType, uintType): nil // identity
@@ -813,11 +959,14 @@ extension CallLowerer {
                 (calleeStr == "toLong" && nonNullReceiverType == ulongType && nonNullResultType == longType)
                     || (calleeStr == "toUInt" && nonNullReceiverType == ulongType && nonNullResultType == uintType)
                     || (calleeStr == "toULong" && nonNullReceiverType == longType && nonNullResultType == ulongType)
-            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble"].contains(calleeStr),
+                    || (calleeStr == "toInt" && nonNullReceiverType == sema.types.charType && nonNullResultType == intType)
+                    || (calleeStr == "toChar" && nonNullReceiverType == intType && nonNullResultType == sema.types.charType)
+            if ["toInt", "toUInt", "toLong", "toULong", "toFloat", "toDouble", "toChar"].contains(calleeStr),
                nonNullReceiverType == nonNullResultType || isRepresentationPreservingConversion,
                nonNullReceiverType == intType || nonNullReceiverType == longType
                || nonNullReceiverType == uintType || nonNullReceiverType == ulongType
                || nonNullReceiverType == floatType || nonNullReceiverType == doubleType
+               || nonNullReceiverType == sema.types.charType
             {
                 instructions.append(.copy(from: loweredReceiverID, to: result))
                 return result
@@ -866,6 +1015,11 @@ extension CallLowerer {
                         canThrow: false,
                         thrownResult: nil
                     ))
+                    return result
+                }
+                // Char.code → identity (Char is stored as its Int code point) (STDLIB-305)
+                if calleeStr == "code" {
+                    instructions.append(.copy(from: loweredReceiverID, to: result))
                     return result
                 }
             }
@@ -1164,6 +1318,8 @@ extension CallLowerer {
                     ("kk_string_matches_regex", [loweredReceiverID, loweredArgIDs[0]])
                 case "repeat":
                     ("kk_string_repeat", [loweredReceiverID, loweredArgIDs[0]])
+                case "replaceFirstChar":
+                    ("kk_string_replaceFirstChar", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -1181,7 +1337,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
-                        canThrow: calleeStr == "repeat",
+                        canThrow: calleeStr == "repeat" || calleeStr == "replaceFirstChar",
                         thrownResult: nil
                     ))
                     return result
@@ -1369,7 +1525,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
+                        canThrow: runtimeCallee == "kk_sequence_sortedBy",
                         thrownResult: nil
                     ))
                     return result
@@ -1475,6 +1631,10 @@ extension CallLowerer {
                     "kk_sequence_to_list"
                 case "distinct":
                     "kk_sequence_distinct"
+                case "sorted":
+                    "kk_sequence_sorted"
+                case "sortedDescending":
+                    "kk_sequence_sortedDescending"
                 default:
                     nil
                 }
@@ -1609,8 +1769,11 @@ extension CallLowerer {
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
             "getOrElse", "getOrPut",
+            "maxByOrNull", "minByOrNull",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "replaceFirstChar",
+            "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
@@ -2190,6 +2353,7 @@ extension CallLowerer {
             callArguments = []
         }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
+            || loweredCallee == interner.intern("kk_sequence_sortedBy")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2373,12 +2537,29 @@ extension CallLowerer {
 
         if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "firstOrNull":
+                return interner.intern("kk_list_firstOrNull")
+            case "lastOrNull":
+                return interner.intern("kk_list_lastOrNull")
             case "indexOf":
                 return interner.intern("kk_list_indexOf")
             case "lastIndexOf":
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            default:
+                break
+            }
+        }
+
+        if isMutableListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addAll":
+                return interner.intern("kk_mutable_list_addAll")
+            case "removeAll":
+                return interner.intern("kk_mutable_list_removeAll")
+            case "retainAll":
+                return interner.intern("kk_mutable_list_retainAll")
             default:
                 break
             }
@@ -2442,8 +2623,12 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
-                case "sortedBy":
-                    "kk_sequence_sortedBy"
+            case "sorted":
+                return interner.intern("kk_sequence_sorted")
+            case "sortedBy":
+                return interner.intern("kk_sequence_sortedBy")
+            case "sortedDescending":
+                return interner.intern("kk_sequence_sortedDescending")
             default:
                 break
             }
@@ -2535,6 +2720,11 @@ extension CallLowerer {
                 return nil
             }
             return interner.intern("kk_mutable_map_getOrPut")
+        case "putAll":
+            guard knownNames.isMutableMapSymbol(symbol) else {
+                return nil
+            }
+            return interner.intern("kk_mutable_map_putAll")
         default:
             return nil
         }

@@ -507,6 +507,96 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "split result should be recognized as list and routed through kk_list_to_string")
     }
 
+    func testRangeReversedRewrittenToKkRangeReversed() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let start = arena.appendExpr(.temporary(0))
+        let end = arena.appendExpr(.temporary(1))
+        let range = arena.appendExpr(.temporary(2))
+        let result = arena.appendExpr(.temporary(3))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_rangeTo"),
+                    arguments: [start, end],
+                    result: range,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("reversed"),
+                    arguments: [range],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("reversed"), "range.reversed should be rewritten")
+        XCTAssertTrue(callees.contains("kk_range_reversed"), "range.reversed should become kk_range_reversed")
+    }
+
+    func testRangeAsReversedIsNotRewrittenToKkRangeReversed() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let start = arena.appendExpr(.temporary(0))
+        let end = arena.appendExpr(.temporary(1))
+        let range = arena.appendExpr(.temporary(2))
+        let result = arena.appendExpr(.temporary(3))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_rangeTo"),
+                    arguments: [start, end],
+                    result: range,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("asReversed"),
+                    arguments: [range],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertTrue(callees.contains("asReversed"), "range.asReversed should remain unresolved for non-list receivers")
+        XCTAssertFalse(callees.contains("kk_range_reversed"), "range.asReversed must not become kk_range_reversed")
+    }
+
     func testShouldRunAlwaysReturnsTrue() {
         let interner = StringInterner()
         let arena = KIRArena()

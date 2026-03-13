@@ -90,6 +90,11 @@ extension DataFlowSemaPhase {
             path: [interner.intern("kotlin"), interner.intern("sequences")],
             symbols: symbols
         )
+        _ = registerSyntheticSequenceStub(
+            packageFQName: kotlinSequencesPkg,
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticVarargFunction(
             named: "sequenceOf",
@@ -463,5 +468,41 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerSyntheticSequenceStub(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = packageFQName + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = sequenceFQName + [typeParamName]
+        if symbols.lookup(fqName: typeParamFQName) == nil {
+            _ = symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+
+        return sequenceSymbol
     }
 }
