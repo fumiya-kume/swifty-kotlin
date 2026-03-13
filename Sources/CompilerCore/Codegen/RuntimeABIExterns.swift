@@ -1619,6 +1619,9 @@ public enum RuntimeABIExterns {
             kk_string_contains_str,
             kk_string_replace,
             kk_string_replaceFirst,
+            kk_any_to_string,
+            kk_any_hashCode,
+            kk_any_equals,
             kk_string_replaceRange,
             kk_string_substring,
             kk_string_split,
@@ -1839,9 +1842,6 @@ public enum RuntimeABIExterns {
             kk_op_shr,
             kk_op_ushr,
             kk_int_toString_radix,
-            kk_any_to_string,
-            kk_any_hashCode,
-            kk_any_equals,
         ]
         all += mathExterns
         all += randomExterns
