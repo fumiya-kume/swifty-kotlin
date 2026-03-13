@@ -412,7 +412,12 @@ extension OverloadResolver {
             )))
         }
         let substitutedArgs = mappedArgs.map {
-            substituteChildTypeArg($0, childSymbol: subtype.classSymbol, childArgs: subtype.args, typeSystem: typeSystem)
+            substituteChildTypeArg(
+                $0,
+                childSymbol: subtype.classSymbol,
+                childArgs: subtype.args,
+                typeSystem: typeSystem
+            )
         }
         return typeSystem.make(.classType(ClassType(
             classSymbol: superSymbol,

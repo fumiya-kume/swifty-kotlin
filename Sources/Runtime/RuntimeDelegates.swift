@@ -3,6 +3,14 @@ import Foundation
 typealias KKCustomDelegateGetterEntryPoint = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias KKCustomDelegateSetterEntryPoint = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 
+private let runtimeNotNullUninitializedMessage =
+    "IllegalStateException: Property delegate must be assigned before being accessed."
+
+@inline(__always)
+private func runtimeTrapNotNullUninitialized() -> Never {
+    fatalError(runtimeNotNullUninitializedMessage)
+}
+
 final class RuntimeCustomDelegateBox {
     let delegateHandle: Int
     let getValueFnPtr: Int
@@ -218,6 +226,50 @@ public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     return box.currentValue
 }
 
+// MARK: - NotNull Delegate (STDLIB-340)
+
+@_cdecl("kk_notNull_create")
+public func kk_notNull_create() -> Int {
+    let box = RuntimeNotNullBox()
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+@_cdecl("kk_notNull_get_value")
+public func kk_notNull_get_value(_ handle: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        runtimeTrapNotNullUninitialized()
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
+        runtimeTrapNotNullUninitialized()
+    }
+    guard let value = box.currentValue else {
+        runtimeTrapNotNullUninitialized()
+    }
+    return value
+}
+
+@_cdecl("kk_notNull_set_value")
+public func kk_notNull_set_value(_ handle: Int, _ newValue: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
+        runtimeTrapNotNullUninitialized()
+    }
+    let isObj = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObj, let box = tryCast(ptr, to: RuntimeNotNullBox.self) else {
+        runtimeTrapNotNullUninitialized()
+    }
+    box.currentValue = newValue
+    return newValue
+}
+
 // MARK: - Custom Delegate
 
 @_cdecl("kk_custom_delegate_create")
@@ -308,6 +360,12 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _: Int) -> Int {
     if let vetoableBox = tryCast(ptr, to: RuntimeVetoableBox.self) {
         return vetoableBox.currentValue
     }
+    if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
+        guard let value = notNullBox.currentValue else {
+            runtimeTrapNotNullUninitialized()
+        }
+        return value
+    }
     return 0
 }
 
@@ -353,6 +411,10 @@ public func kk_delegate_set_value(_ handle: Int, _: Int, _: Int, _ newValue: Int
             vetoableBox.currentValue = newValue
         }
         return vetoableBox.currentValue
+    }
+    if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
+        notNullBox.currentValue = newValue
+        return newValue
     }
     return newValue
 }

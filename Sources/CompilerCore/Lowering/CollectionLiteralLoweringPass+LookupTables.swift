@@ -80,6 +80,10 @@ struct CollectionLiteralLookupTables {
     let kkListSumOfName: InternedString
     let kkListMaxOrNullName: InternedString
     let kkListMinOrNullName: InternedString
+    let kkListMaxByOrNullName: InternedString
+    let kkListMinByOrNullName: InternedString
+    let kkListMaxOfOrNullName: InternedString
+    let kkListMinOfOrNullName: InternedString
     let kkListTakeName: InternedString
     let kkListDropName: InternedString
     let kkListReversedName: InternedString
@@ -127,6 +131,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceDropName: InternedString
     let kkSequenceDistinctName: InternedString
     let kkSequenceZipName: InternedString
+    let kkSequenceSortedName: InternedString
+    let kkSequenceSortedByName: InternedString
+    let kkSequenceSortedDescendingName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -232,8 +239,11 @@ struct CollectionLiteralLookupTables {
     let minOrNullName: InternedString
     let maxByOrNullName: InternedString
     let minByOrNullName: InternedString
+    let maxOfOrNullName: InternedString
+    let minOfOrNullName: InternedString
     let dropName: InternedString
     let reversedName: InternedString
+    let asReversedName: InternedString
     let sortedName: InternedString
     let distinctName: InternedString
     let shuffledName: InternedString
@@ -386,6 +396,10 @@ struct CollectionLiteralLookupTables {
         kkListSumOfName = interner.intern("kk_list_sumOf")
         kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
         kkListMinOrNullName = interner.intern("kk_list_minOrNull")
+        kkListMaxByOrNullName = interner.intern("kk_list_maxByOrNull")
+        kkListMinByOrNullName = interner.intern("kk_list_minByOrNull")
+        kkListMaxOfOrNullName = interner.intern("kk_list_maxOfOrNull")
+        kkListMinOfOrNullName = interner.intern("kk_list_minOfOrNull")
         kkListTakeName = interner.intern("kk_list_take")
         kkListDropName = interner.intern("kk_list_drop")
         kkListReversedName = interner.intern("kk_list_reversed")
@@ -430,6 +444,10 @@ struct CollectionLiteralLookupTables {
         kkSequenceDropName = interner.intern("kk_sequence_drop")
         kkSequenceDistinctName = interner.intern("kk_sequence_distinct")
         kkSequenceZipName = interner.intern("kk_sequence_zip")
+
+        kkSequenceSortedName = interner.intern("kk_sequence_sorted")
+        kkSequenceSortedByName = interner.intern("kk_sequence_sortedBy")
+        kkSequenceSortedDescendingName = interner.intern("kk_sequence_sortedDescending")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
@@ -529,8 +547,11 @@ struct CollectionLiteralLookupTables {
         minOrNullName = interner.intern("minOrNull")
         maxByOrNullName = interner.intern("maxByOrNull")
         minByOrNullName = interner.intern("minByOrNull")
+        maxOfOrNullName = interner.intern("maxOfOrNull")
+        minOfOrNullName = interner.intern("minOfOrNull")
         dropName = interner.intern("drop")
         reversedName = interner.intern("reversed")
+        asReversedName = interner.intern("asReversed")
         sortedName = interner.intern("sorted")
         distinctName = interner.intern("distinct")
         shuffledName = interner.intern("shuffled")

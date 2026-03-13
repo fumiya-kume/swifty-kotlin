@@ -37,7 +37,6 @@ jobs:
           build-mode: none
         - language: swift
           build-mode: manual
-
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'rust', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
@@ -55,14 +54,6 @@ jobs:
       uses: swift-actions/setup-swift@v2
       with:
         swift-version: "6.2"
-<<<<<<< HEAD
-    # Add any setup steps before running the `github/codeql-action/init` action.
-    # This includes steps like installing compilers or runtimes (`actions/setup-node`
-    # or others). This is typically only required for manual builds.
-    # - name: Setup runtime (example)
-    #   uses: actions/setup-example@v1
-=======
->>>>>>> master
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4

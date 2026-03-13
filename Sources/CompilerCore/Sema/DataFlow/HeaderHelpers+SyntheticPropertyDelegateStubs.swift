@@ -9,6 +9,7 @@ extension DataFlowSemaPhase {
         kotlinPropertiesPkg: [InternedString]
     ) {
         let anyType = types.anyType
+        let knownNames = KnownCompilerNames(interner: interner)
 
         // Register kotlin.properties.Lazy<T> interface stub.
         let lazyInterfaceSymbol = ensureInterfaceSymbol(
@@ -98,6 +99,23 @@ extension DataFlowSemaPhase {
                     receiverType: delegatesType, parameterTypes: [anyType], returnType: rwPropertyType
                 ),
                 for: funcSymbol
+            )
+        }
+
+        // Register Delegates.notNull<T>(): ReadWriteProperty<Any?, T>
+        let notNullName = knownNames.notNull
+        let notNullFQName = ownerSym.fqName + [notNullName]
+        if symbols.lookup(fqName: notNullFQName) == nil {
+            let notNullSymbol = symbols.define(
+                kind: .function, name: notNullName, fqName: notNullFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(delegatesSymbol, for: notNullSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: delegatesType, parameterTypes: [], returnType: rwPropertyType
+                ),
+                for: notNullSymbol
             )
         }
     }

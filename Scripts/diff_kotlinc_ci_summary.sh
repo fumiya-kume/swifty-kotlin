@@ -195,7 +195,7 @@ emit_summary() {
   local failed="$2"
   local skipped="$3"
   local body_file="$4"
-  local details_file="$5"
+  local details_file="${5:-}"
 
   local passed=$((total - failed - skipped))
   emit_output "## kotlinc diff regression"
@@ -216,9 +216,13 @@ emit_summary() {
     emit_output ""
     emit_output "### Failure details"
     emit_output ""
-    while IFS= read -r line || [[ -n "$line" ]]; do
-      emit_output "$line"
-    done <"$details_file"
+    if [[ -n "$details_file" && -f "$details_file" ]]; then
+      while IFS= read -r line || [[ -n "$line" ]]; do
+        emit_output "$line"
+      done <"$details_file"
+    else
+      emit_output "_Failure details are unavailable._"
+    fi
   fi
   emit_output ""
 }
