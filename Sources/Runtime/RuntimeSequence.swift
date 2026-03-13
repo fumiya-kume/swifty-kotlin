@@ -53,12 +53,11 @@ private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
 /// Applies a map transformation to elements using the given function pointer.
 /// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
 private func applyMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
     mapped.reserveCapacity(elements.count)
     for elem in elements {
         var thrown = 0
-        let result = lambda(closureRaw, elem, &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return [] }
         mapped.append(maybeUnbox(result))
     }
@@ -68,11 +67,10 @@ private func applyMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [In
 /// Applies a filter transformation to elements using the given function pointer.
 /// Lambda signature: (closureRaw, elem, outThrown) -> Int (same as list HOFs).
 private func applyFilterStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) -> [Int] {
-    let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filtered: [Int] = []
     for elem in elements {
         var thrown = 0
-        let result = predicate(closureRaw, elem, &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return [] }
         if maybeUnbox(result) != 0 {
             filtered.append(elem)
@@ -92,13 +90,12 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             break
         }
         if case let .generator(seed, fnPtr, closureRaw) = step {
-            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
             var current = seed
             var generated: [Int] = [current]
             let hardLimit = 100_000
             while generated.count < hardLimit {
                 var thrown = 0
-                let next = nextFn(closureRaw, current, &thrown)
+                let next = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: current, outThrown: &thrown)
                 if thrown != 0 { break }
                 let unboxed = maybeUnbox(next)
                 if unboxed == runtimeNullSentinelInt { break }
@@ -282,10 +279,9 @@ public func kk_sequence_zip(_ seqRaw: Int, _ otherRaw: Int) -> Int {
 @_cdecl("kk_sequence_forEach")
 public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in elements {
         var thrown = 0
-        _ = lambda(closureRaw, elem, &thrown)
+        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return 0 }
     }
     return 0
@@ -294,11 +290,10 @@ public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) 
 @_cdecl("kk_sequence_flatMap")
 public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var result: [Int] = []
     for elem in elements {
         var thrown = 0
-        let subRaw = lambda(closureRaw, elem, &thrown)
+        let subRaw = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { break }
         if let subList = runtimeListBox(from: subRaw) {
             result.append(contentsOf: subList.elements)
@@ -403,9 +398,8 @@ public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     let builder = RuntimeSequenceBuilderBox()
     let builderHandle = registerRuntimeObject(builder)
 
-    let builderBlock = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
-    _ = builderBlock(builderHandle, &thrown)
+    _ = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: builderHandle, outThrown: &thrown)
 
     let seq = RuntimeSequenceBox(steps: [.builder(elements: builder.elements)])
     return registerRuntimeObject(seq)
