@@ -347,6 +347,51 @@ final class CallTypeChecker {
             return anyType
         }
 
+        // --- Stdlib enumValues<T>() / enumValueOf<T>(name) (STDLIB-171) ---
+        if let calleeName,
+           let enumSpecialKind = enumStdlibSpecialCallKind(
+               calleeName: calleeName,
+               args: args,
+               explicitTypeArgs: explicitTypeArgs,
+               ctx: ctx,
+               locals: locals,
+               interner: interner,
+               sema: sema,
+               range: range
+           )
+        {
+            switch enumSpecialKind {
+            case let .enumValues(_, listType, stubSymbol):
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: explicitTypeArgs,
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumValues)
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: listType)
+                return listType
+            case let .enumValueOf(enumType, stubSymbol):
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: explicitTypeArgs,
+                        parameterMapping: [0: 0]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumValueOf)
+                sema.bindings.bindExprType(id, type: enumType)
+                return enumType
+            }
+        }
+
         if let calleeName,
            args.count == 2,
            let specialKind = comparisonSpecialCallKind(for: calleeName, ctx: ctx, locals: locals)
