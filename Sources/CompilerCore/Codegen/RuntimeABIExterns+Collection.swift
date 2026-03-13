@@ -22,6 +22,10 @@ public extension RuntimeABIExterns {
         kk_set_contains,
         kk_set_containsAll,
         kk_set_is_empty,
+        kk_set_toList,
+        kk_set_intersect,
+        kk_set_union,
+        kk_set_subtract,
         kk_set_to_string,
         kk_list_map,
         kk_list_filter,
@@ -277,6 +281,30 @@ public extension RuntimeABIExterns {
     static let kk_set_is_empty = ExternDecl(
         name: "kk_set_is_empty",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_toList = ExternDecl(
+        name: "kk_set_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_intersect = ExternDecl(
+        name: "kk_set_intersect",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_union = ExternDecl(
+        name: "kk_set_union",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_subtract = ExternDecl(
+        name: "kk_set_subtract",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -849,7 +877,6 @@ public extension RuntimeABIExterns {
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
-
     /// onEach / onEachIndexed (STDLIB-300)
     static let kk_list_onEach = ExternDecl(
         name: "kk_list_onEach",

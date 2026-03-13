@@ -234,8 +234,8 @@ extension CallTypeChecker {
             calleeName,
             argCount: args.count,
             isMapReceiver: isMapReceiver,
-            isMutableListReceiver: isMutableListReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableListReceiver: isMutableListReceiver,
             interner: interner
         )
         else {
@@ -406,6 +406,9 @@ extension CallTypeChecker {
             interner.intern("sort"),
             interner.intern("sortBy"),
             interner.intern("sortByDescending"),
+            interner.intern("addAll"),
+            interner.intern("removeAll"),
+            interner.intern("retainAll"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
@@ -458,8 +461,8 @@ extension CallTypeChecker {
         _ memberName: InternedString,
         argCount: Int,
         isMapReceiver: Bool,
-        isMutableListReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -490,6 +493,8 @@ extension CallTypeChecker {
             return isMapReceiver && argCount == 1
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
+            return isMutableListReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
         case interner.intern("fold"), interner.intern("windowed"):
@@ -524,7 +529,8 @@ extension CallTypeChecker {
         let boolReturningMembers: Set = [
             knownNames.isEmpty, interner.intern("contains"), interner.intern("containsAll"),
             interner.intern("containsKey"),
-            interner.intern("any"), interner.intern("none"), interner.intern("all")
+            interner.intern("any"), interner.intern("none"), interner.intern("all"),
+            interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"),
         ]
         if boolReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.boolean, .nonNull))
