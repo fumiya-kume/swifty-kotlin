@@ -387,11 +387,16 @@ extension OverloadResolver {
         to targetSymbol: SymbolID,
         typeSystem: TypeSystem
     ) -> TypeID? {
-        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol) else {
+        guard subtype.classSymbol != targetSymbol,
+              typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol)
+        else {
             return nil
         }
         let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: targetSymbol)
-        guard !mappedArgs.isEmpty else {
+        if mappedArgs.isEmpty {
+            guard typeSystem.nominalTypeParameterSymbols(for: targetSymbol).isEmpty else {
+                return nil
+            }
             return typeSystem.make(.classType(ClassType(
                 classSymbol: targetSymbol,
                 args: [],

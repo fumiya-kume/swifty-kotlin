@@ -551,6 +551,16 @@ extension CallTypeChecker {
             )))
         }
 
+        if (memberName == interner.intern("takeWhile") || memberName == interner.intern("dropWhile")),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
         if memberName == interner.intern("find") {
             return sema.types.makeNullable(receiverElementType)
         }
