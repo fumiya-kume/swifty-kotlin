@@ -17,9 +17,11 @@ public extension RuntimeABIExterns {
         kk_list_to_mutable_list,
         kk_list_joinToString,
         kk_list_to_set,
+        kk_list_toMap,
         kk_set_of,
         kk_set_size,
         kk_set_contains,
+        kk_set_containsAll,
         kk_set_is_empty,
         kk_set_to_string,
         kk_list_map,
@@ -50,6 +52,10 @@ public extension RuntimeABIExterns {
         kk_list_sumOf,
         kk_list_maxOrNull,
         kk_list_minOrNull,
+        kk_list_maxByOrNull,
+        kk_list_minByOrNull,
+        kk_list_maxOfOrNull,
+        kk_list_minOfOrNull,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -88,6 +94,9 @@ public extension RuntimeABIExterns {
         kk_map_values,
         kk_map_entries,
         kk_map_to_string,
+        kk_map_flatMap,
+        kk_map_maxByOrNull,
+        kk_map_minByOrNull,
         kk_map_count,
         kk_map_any,
         kk_map_all,
@@ -135,12 +144,18 @@ public extension RuntimeABIExterns {
         kk_mutable_list_retainAll,
         kk_mutable_list_removeAt,
         kk_mutable_list_clear,
+        kk_mutable_list_sort,
+        kk_mutable_list_sortBy,
+        kk_mutable_list_sortByDescending,
+        kk_mutable_list_shuffle,
+        kk_mutable_list_reverse,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_builder_map_put,
         kk_mutable_map_put,
         kk_mutable_map_remove,
         kk_mutable_map_getOrPut,
+        kk_mutable_map_putAll,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -241,6 +256,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_toMap = ExternDecl(
+        name: "kk_list_toMap",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_set_of = ExternDecl(
         name: "kk_set_of",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -255,6 +276,12 @@ public extension RuntimeABIExterns {
 
     static let kk_set_contains = ExternDecl(
         name: "kk_set_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_containsAll = ExternDecl(
+        name: "kk_set_containsAll",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -407,6 +434,24 @@ public extension RuntimeABIExterns {
         name: "kk_map_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    static let kk_map_flatMap = ExternDecl(
+        name: "kk_map_flatMap",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_maxByOrNull = ExternDecl(
+        name: "kk_map_maxByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_minByOrNull = ExternDecl(
+        name: "kk_map_minByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
     )
 
     static let kk_map_toList = ExternDecl(
@@ -684,6 +729,30 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_maxByOrNull = ExternDecl(
+        name: "kk_list_maxByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minByOrNull = ExternDecl(
+        name: "kk_list_minByOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOfOrNull = ExternDecl(
+        name: "kk_list_maxOfOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOfOrNull = ExternDecl(
+        name: "kk_list_minOfOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_list_take = ExternDecl(
         name: "kk_list_take",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -958,6 +1027,24 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_list_sort = ExternDecl(
+        name: "kk_mutable_list_sort",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_sortBy = ExternDecl(
+        name: "kk_mutable_list_sortBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_sortByDescending = ExternDecl(
+        name: "kk_mutable_list_sortByDescending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_set_add = ExternDecl(
         name: "kk_mutable_set_add",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -982,6 +1069,18 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_list_shuffle = ExternDecl(
+        name: "kk_mutable_list_shuffle",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_reverse = ExternDecl(
+        name: "kk_mutable_list_reverse",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_map_remove = ExternDecl(
         name: "kk_mutable_map_remove",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -991,6 +1090,12 @@ public extension RuntimeABIExterns {
     static let kk_mutable_map_getOrPut = ExternDecl(
         name: "kk_mutable_map_getOrPut",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_map_putAll = ExternDecl(
+        name: "kk_mutable_map_putAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 }

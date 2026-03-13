@@ -967,6 +967,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-315: String.replaceFirstChar ---
+        registerSyntheticStringExtensionFunction(
+            named: "replaceFirstChar",
+            externalLinkName: "kk_string_replaceFirstChar",
+            receiverType: stringType,
+            parameters: [("transform", charToCharType, false, false)],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-142: String.toBoolean / toBooleanStrict ---
 
         registerSyntheticStringExtensionFunction(

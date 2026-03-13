@@ -415,6 +415,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_replaceFirstChar = ExternDecl(
+        name: "kk_string_replaceFirstChar",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_isEmpty = ExternDecl(
         name: "kk_string_isEmpty",
         parameterTypes: ["intptr_t"],
@@ -1403,6 +1409,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_notNull_create = ExternDecl(
+        name: "kk_notNull_create",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_notNull_get_value = ExternDecl(
+        name: "kk_notNull_get_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_notNull_set_value = ExternDecl(
+        name: "kk_notNull_set_value",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_custom_delegate_create = ExternDecl(
         name: "kk_custom_delegate_create",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
@@ -1438,6 +1462,12 @@ public enum RuntimeABIExterns {
     public static let kk_bitwise_xor = ExternDecl(
         name: "kk_bitwise_xor",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_not = ExternDecl(
+        name: "kk_op_not",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -1668,6 +1698,7 @@ public enum RuntimeABIExterns {
             kk_string_any,
             kk_string_all,
             kk_string_none,
+            kk_string_replaceFirstChar,
             kk_string_take,
             kk_string_drop,
             kk_string_takeLast,
@@ -1828,6 +1859,9 @@ public enum RuntimeABIExterns {
             kk_vetoable_create,
             kk_vetoable_get_value,
             kk_vetoable_set_value,
+            kk_notNull_create,
+            kk_notNull_get_value,
+            kk_notNull_set_value,
             kk_custom_delegate_create,
             kk_custom_delegate_get_value,
             kk_custom_delegate_set_value,
@@ -1837,6 +1871,7 @@ public enum RuntimeABIExterns {
             kk_bitwise_and,
             kk_bitwise_or,
             kk_bitwise_xor,
+            kk_op_not,
             kk_op_inv,
             kk_op_shl,
             kk_op_shr,

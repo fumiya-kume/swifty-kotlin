@@ -846,6 +846,17 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_replaceFirstChar",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_take",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
@@ -2057,6 +2068,30 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Delegate"
         ),
+        // NotNull
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_create",
+            parameters: [],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_custom_delegate_create",
             parameters: [
@@ -2114,6 +2149,14 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
                 RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_op_not",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
             ],
             returnType: .intptr,
             section: "Bitwise"
