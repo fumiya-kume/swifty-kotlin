@@ -1785,7 +1785,7 @@ extension DataFlowSemaPhase {
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(mutableListInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_mutable_list_sort", for: memberSymbol)
@@ -2029,6 +2029,56 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerSetBinaryOperationMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID,
+        memberName: String,
+        externName: String
+    ) {
+        let internedMemberName = interner.intern(memberName)
+        let memberFQName = setFQName + [internedMemberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let paramType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: internedMemberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externName, for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [paramType],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
     private func registerSyntheticMutableSetStub(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -2553,6 +2603,39 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_map_filter",
             parameterTypes: [filterLambdaType],
             returnType: receiverType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+
+        registerMember(
+            name: "count",
+            externalLinkName: "kk_map_count",
+            parameterTypes: [filterLambdaType],
+            returnType: types.intType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "any",
+            externalLinkName: "kk_map_any",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "all",
+            externalLinkName: "kk_map_all",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
+            flags: [.synthetic, .inlineFunction]
+        )
+        registerMember(
+            name: "none",
+            externalLinkName: "kk_map_none",
+            parameterTypes: [filterLambdaType],
+            returnType: types.booleanType,
             typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
             flags: [.synthetic, .inlineFunction]
         )
