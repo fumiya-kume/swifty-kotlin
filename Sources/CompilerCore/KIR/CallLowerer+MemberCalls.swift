@@ -86,7 +86,7 @@ extension CallLowerer {
         "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -1379,6 +1379,8 @@ extension CallLowerer {
                     "kk_sequence_drop"
                 case "zip":
                     "kk_sequence_zip"
+                case "sortedBy":
+                    "kk_sequence_sortedBy"
                 default:
                     nil
                 }
@@ -1630,6 +1632,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -2460,6 +2463,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
+                case "sortedBy":
+                    "kk_sequence_sortedBy"
             default:
                 break
             }
@@ -2530,6 +2535,14 @@ extension CallLowerer {
             return nil
         }
         switch memberName {
+        case "count":
+            return interner.intern("kk_map_count")
+        case "any":
+            return interner.intern("kk_map_any")
+        case "all":
+            return interner.intern("kk_map_all")
+        case "none":
+            return interner.intern("kk_map_none")
         case "getOrDefault":
             return interner.intern("kk_map_getOrDefault")
         case "getOrElse":
@@ -2930,3 +2943,4 @@ extension CallLowerer {
         }
     }
 }
+// TEST MARKER
