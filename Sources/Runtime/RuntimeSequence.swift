@@ -88,7 +88,7 @@ private func applyTakeWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) 
     for elem in elements {
         var thrown = 0
         let predicateResult = predicate(closureRaw, elem, &thrown)
-        if thrown != 0 { return result }
+        if thrown != 0 { return [] }
         if maybeUnbox(predicateResult) == 0 {
             break
         }
@@ -106,7 +106,7 @@ private func applyDropWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int) 
         if dropping {
             var thrown = 0
             let predicateResult = predicate(closureRaw, elem, &thrown)
-            if thrown != 0 { return result }
+            if thrown != 0 { return [] }
             if maybeUnbox(predicateResult) == 0 {
                 dropping = false
                 result.append(elem)
@@ -320,19 +320,33 @@ public func kk_sequence_zip(_ seqRaw: Int, _ otherRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_takeWhile")
 public func kk_sequence_takeWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    let newSeq = RuntimeSequenceBox(steps: [
-        .source(elements: applyTakeWhileStep(sourceElements, fnPtr: fnPtr, closureRaw: closureRaw)),
-    ])
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.takeWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
 
 @_cdecl("kk_sequence_dropWhile")
 public func kk_sequence_dropWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    let newSeq = RuntimeSequenceBox(steps: [
-        .source(elements: applyDropWhileStep(sourceElements, fnPtr: fnPtr, closureRaw: closureRaw)),
-    ])
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
+    }
+    var newSteps = seq.steps
+    newSteps.append(.dropWhileStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
     return registerRuntimeObject(newSeq)
 }
 

@@ -2932,14 +2932,15 @@ extension CallTypeChecker {
             else {
                 return directElementType
             }
-            let calleeName = interner.resolve(name)
-            if calleeName == "sequenceOf" {
+            let sequenceOfName = interner.intern("sequenceOf")
+            if name == sequenceOfName {
                 let elementTypes = args.map { argument in
                     driver.inferExpr(argument.expr, ctx: ctx, locals: &locals, expectedType: nil)
                 }
                 return elementTypes.isEmpty ? sema.types.anyType : sema.types.lub(elementTypes)
             }
-            if calleeName == "generateSequence", let firstArg = args.first {
+            let generateSequenceName = interner.intern("generateSequence")
+            if name == generateSequenceName, let firstArg = args.first {
                 return driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
             }
             return directElementType

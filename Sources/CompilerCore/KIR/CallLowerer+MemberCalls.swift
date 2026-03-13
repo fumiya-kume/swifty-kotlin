@@ -1342,30 +1342,39 @@ extension CallLowerer {
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
-                let calleeStr = interner.resolve(calleeName)
-                let runtimeCallee: String? = switch calleeStr {
-                case "map":
-                    "kk_sequence_map"
-                case "filter":
-                    "kk_sequence_filter"
-                case "take":
-                    "kk_sequence_take"
-                case "forEach":
-                    "kk_sequence_forEach"
-                case "flatMap":
-                    "kk_sequence_flatMap"
-                case "drop":
-                    "kk_sequence_drop"
-                case "zip":
-                    "kk_sequence_zip"
-                case "takeWhile":
-                    "kk_sequence_takeWhile"
-                case "dropWhile":
-                    "kk_sequence_dropWhile"
-                case "sortedBy":
-                    "kk_sequence_sortedBy"
-                default:
-                    nil
+                let runtimeCallee: String?
+                let mapName = interner.intern("map")
+                let filterName = interner.intern("filter")
+                let takeName = interner.intern("take")
+                let forEachName = interner.intern("forEach")
+                let flatMapName = interner.intern("flatMap")
+                let dropName = interner.intern("drop")
+                let zipName = interner.intern("zip")
+                let takeWhileName = interner.intern("takeWhile")
+                let dropWhileName = interner.intern("dropWhile")
+                let sortedByName = interner.intern("sortedBy")
+                if calleeName == mapName {
+                    runtimeCallee = "kk_sequence_map"
+                } else if calleeName == filterName {
+                    runtimeCallee = "kk_sequence_filter"
+                } else if calleeName == takeName {
+                    runtimeCallee = "kk_sequence_take"
+                } else if calleeName == forEachName {
+                    runtimeCallee = "kk_sequence_forEach"
+                } else if calleeName == flatMapName {
+                    runtimeCallee = "kk_sequence_flatMap"
+                } else if calleeName == dropName {
+                    runtimeCallee = "kk_sequence_drop"
+                } else if calleeName == zipName {
+                    runtimeCallee = "kk_sequence_zip"
+                } else if calleeName == takeWhileName {
+                    runtimeCallee = "kk_sequence_takeWhile"
+                } else if calleeName == dropWhileName {
+                    runtimeCallee = "kk_sequence_dropWhile"
+                } else if calleeName == sortedByName {
+                    runtimeCallee = "kk_sequence_sortedBy"
+                } else {
+                    runtimeCallee = nil
                 }
                 if let runtimeCallee {
                     instructions.append(.call(
@@ -2427,30 +2436,43 @@ extension CallLowerer {
         if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
             || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
         {
-            switch memberName {
-            case "map":
+            let internedMemberName = interner.intern(memberName)
+            let mapName = interner.intern("map")
+            let filterName = interner.intern("filter")
+            let takeName = interner.intern("take")
+            let toListName = interner.intern("toList")
+            let forEachName = interner.intern("forEach")
+            let flatMapName = interner.intern("flatMap")
+            let dropName = interner.intern("drop")
+            let distinctName = interner.intern("distinct")
+            let zipName = interner.intern("zip")
+            let takeWhileName = interner.intern("takeWhile")
+            let dropWhileName = interner.intern("dropWhile")
+            let sortedByName = interner.intern("sortedBy")
+            switch internedMemberName {
+            case mapName:
                 return interner.intern("kk_sequence_map")
-            case "filter":
+            case filterName:
                 return interner.intern("kk_sequence_filter")
-            case "take":
+            case takeName:
                 return interner.intern("kk_sequence_take")
-            case "toList":
+            case toListName:
                 return interner.intern("kk_sequence_to_list")
-            case "forEach":
+            case forEachName:
                 return interner.intern("kk_sequence_forEach")
-            case "flatMap":
+            case flatMapName:
                 return interner.intern("kk_sequence_flatMap")
-            case "drop":
+            case dropName:
                 return interner.intern("kk_sequence_drop")
-            case "distinct":
+            case distinctName:
                 return interner.intern("kk_sequence_distinct")
-            case "zip":
+            case zipName:
                 return interner.intern("kk_sequence_zip")
-            case "takeWhile":
+            case takeWhileName:
                 return interner.intern("kk_sequence_takeWhile")
-            case "dropWhile":
+            case dropWhileName:
                 return interner.intern("kk_sequence_dropWhile")
-            case "sortedBy":
+            case sortedByName:
                 return interner.intern("kk_sequence_sortedBy")
             default:
                 break

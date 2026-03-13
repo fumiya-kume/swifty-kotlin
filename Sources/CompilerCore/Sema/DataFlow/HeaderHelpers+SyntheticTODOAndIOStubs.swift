@@ -93,6 +93,7 @@ extension DataFlowSemaPhase {
         _ = registerSyntheticSequenceStub(
             packageFQName: kotlinSequencesPkg,
             symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -473,6 +474,7 @@ extension DataFlowSemaPhase {
     private func registerSyntheticSequenceStub(
         packageFQName: [InternedString],
         symbols: SymbolTable,
+        types: TypeSystem,
         interner: StringInterner
     ) -> SymbolID {
         let sequenceName = interner.intern("Sequence")
@@ -492,8 +494,10 @@ extension DataFlowSemaPhase {
 
         let typeParamName = interner.intern("T")
         let typeParamFQName = sequenceFQName + [typeParamName]
-        if symbols.lookup(fqName: typeParamFQName) == nil {
-            _ = symbols.define(
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
                 kind: .typeParameter,
                 name: typeParamName,
                 fqName: typeParamFQName,
@@ -502,6 +506,8 @@ extension DataFlowSemaPhase {
                 flags: []
             )
         }
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sequenceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
 
         return sequenceSymbol
     }
