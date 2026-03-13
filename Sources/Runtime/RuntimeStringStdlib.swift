@@ -272,6 +272,31 @@ public func kk_string_none(
     return 1
 }
 
+// MARK: - STDLIB-315: String.replaceFirstChar
+
+@_cdecl("kk_string_replaceFirstChar")
+public func kk_string_replaceFirstChar(
+    _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard !scalars.isEmpty else { return runtimeMakeStringRaw("") }
+    guard fnPtr != 0 else { return strRaw }
+    let firstCharRaw = kk_box_char(Int(scalars[0].value))
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, firstCharRaw, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
+    let mappedChar = maybeUnbox(result)
+    var newScalars: [UnicodeScalar] = []
+    if let scalar = runtimeUnicodeScalarFromRaw(mappedChar) {
+        newScalars.append(scalar)
+    }
+    if scalars.count > 1 {
+        newScalars.append(contentsOf: scalars[1...])
+    }
+    return runtimeMakeStringRaw(runtimeStringFromScalars(newScalars))
+}
+
 @_cdecl("kk_string_take")
 public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
     let source = runtimeStringFromRaw(strRaw) ?? ""

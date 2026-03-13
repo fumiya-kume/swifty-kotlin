@@ -415,6 +415,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_replaceFirstChar = ExternDecl(
+        name: "kk_string_replaceFirstChar",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_isEmpty = ExternDecl(
         name: "kk_string_isEmpty",
         parameterTypes: ["intptr_t"],
@@ -1645,6 +1651,7 @@ public enum RuntimeABIExterns {
             kk_string_any,
             kk_string_all,
             kk_string_none,
+            kk_string_replaceFirstChar,
             kk_string_take,
             kk_string_drop,
             kk_string_takeLast,
