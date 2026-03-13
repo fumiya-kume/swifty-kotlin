@@ -300,9 +300,9 @@ extension LoweringPassRegressionTests {
         }
         XCTAssertTrue(redNameConsts.contains(interner.intern("RED")), "RED name function should return \"RED\"")
 
-        // Verify valueOf has parameter
+        // Verify valueOf has receiver + name parameter (companion member)
         let valueOfFn = try findKIRFunction(named: "valueOf", in: module, interner: interner)
-        XCTAssertEqual(valueOfFn.params.count, 1, "valueOf should have 1 parameter")
+        XCTAssertEqual(valueOfFn.params.count, 2, "valueOf should have receiver + 1 name parameter")
 
         // Verify valueOf body contains string comparison calls
         let valueOfCallees = extractCallees(from: valueOfFn.body, interner: interner)
