@@ -769,6 +769,90 @@ public func kk_list_minOrNull(_ listRaw: Int) -> Int {
     return best
 }
 
+@_cdecl("kk_list_maxByOrNull")
+public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestElem = list.elements[0]
+    var thrown = 0
+    var bestKey = lambda(bestElem, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let key = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(key, bestKey) > 0 {
+            bestElem = elem
+            bestKey = key
+        }
+    }
+    return bestElem
+}
+
+@_cdecl("kk_list_minByOrNull")
+public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var bestElem = list.elements[0]
+    var thrown = 0
+    var bestKey = lambda(bestElem, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let key = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(key, bestKey) < 0 {
+            bestElem = elem
+            bestKey = key
+        }
+    }
+    return bestElem
+}
+
+@_cdecl("kk_list_maxOfOrNull")
+public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    var bestValue = lambda(list.elements[0], &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(value, bestValue) > 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+@_cdecl("kk_list_minOfOrNull")
+public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    var bestValue = lambda(list.elements[0], &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = lambda(elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if runtimeCompareValues(value, bestValue) < 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
 @_cdecl("kk_list_take")
 public func kk_list_take(_ listRaw: Int, _ count: Int) -> Int {
     let elements = runtimeListBox(from: listRaw)?.elements ?? []

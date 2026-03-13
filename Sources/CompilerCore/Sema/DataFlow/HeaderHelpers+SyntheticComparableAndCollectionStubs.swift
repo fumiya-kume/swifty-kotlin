@@ -1149,6 +1149,87 @@ extension DataFlowSemaPhase {
         registerComparableMember(name: "maxOrNull", externalLinkName: "kk_list_maxOrNull")
         registerComparableMember(name: "minOrNull", externalLinkName: "kk_list_minOrNull")
 
+        // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
+        do {
+            func registerByOrNull(
+                name: String,
+                externalLinkName: String,
+                returnTypeBuilder: (TypeID) -> TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+                let returnType = returnTypeBuilder(rType)
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                    [types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(rType)],
+                        nullability: .nonNull
+                    )))]
+                } else {
+                    []
+                }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [selectorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], comparableRBounds],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerByOrNull(
+                name: "maxByOrNull",
+                externalLinkName: "kk_list_maxByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "minByOrNull",
+                externalLinkName: "kk_list_minByOrNull",
+                returnTypeBuilder: { _ in nullableElementType }
+            )
+            registerByOrNull(
+                name: "maxOfOrNull",
+                externalLinkName: "kk_list_maxOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
+            registerByOrNull(
+                name: "minOfOrNull",
+                externalLinkName: "kk_list_minOfOrNull",
+                returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
+            )
+        }
+
         // random / randomOrNull (STDLIB-166)
         registerSimpleMember(name: "random", returnType: listTypeParamType, externalLinkName: "kk_list_random")
         registerSimpleMember(name: "randomOrNull", returnType: nullableElementType, externalLinkName: "kk_list_randomOrNull")
