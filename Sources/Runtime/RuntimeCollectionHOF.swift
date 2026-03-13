@@ -143,6 +143,59 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     return registerRuntimeObject(RuntimeMapBox(keys: filteredKeys, values: filteredValues))
 }
 
+@_cdecl("kk_map_count")
+public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var count = 0
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { count += 1 }
+    }
+    return count
+}
+
+@_cdecl("kk_map_any")
+public func kk_map_any(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { return 1 }
+    }
+    return 0
+}
+
+@_cdecl("kk_map_all")
+public func kk_map_all(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { return 1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) == 0 { return 0 }
+    }
+    return 1
+}
+
+@_cdecl("kk_map_none")
+public func kk_map_none(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else { return 1 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (key, value) in zip(map.keys, map.values) {
+        var thrown = 0
+        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if maybeUnbox(result) != 0 { return 0 }
+    }
+    return 1
+}
+
 @_cdecl("kk_map_getOrElse")
 public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let map = runtimeMapBox(from: mapRaw) {
@@ -858,6 +911,32 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     }.map(\.element)
     if hadThrow { return registerRuntimeObject(RuntimeListBox(elements: [])) }
     return registerRuntimeObject(RuntimeListBox(elements: sorted))
+}
+
+// MARK: - onEach / onEachIndexed (STDLIB-300)
+
+@_cdecl("kk_list_onEach")
+public func kk_list_onEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for elem in list.elements {
+        var thrown = 0
+        _ = lambda(closureRaw, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+    }
+    return listRaw
+}
+
+@_cdecl("kk_list_onEachIndexed")
+public func kk_list_onEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        _ = lambda(closureRaw, idx, elem, &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+    }
+    return listRaw
 }
 
 // MARK: - Partition (STDLIB-112)
