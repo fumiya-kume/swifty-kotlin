@@ -70,6 +70,8 @@ public extension RuntimeABIExterns {
         kk_list_sortedByDescending,
         kk_list_sortedWith,
         kk_list_partition,
+        kk_list_onEach,
+        kk_list_onEachIndexed,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -86,6 +88,10 @@ public extension RuntimeABIExterns {
         kk_map_values,
         kk_map_entries,
         kk_map_to_string,
+        kk_map_count,
+        kk_map_any,
+        kk_map_all,
+        kk_map_none,
         kk_map_toList,
         kk_map_plus,
         kk_map_minus,
@@ -328,6 +334,30 @@ public extension RuntimeABIExterns {
 
     static let kk_map_filter = ExternDecl(
         name: "kk_map_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_count = ExternDecl(
+        name: "kk_map_count",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_any = ExternDecl(
+        name: "kk_map_any",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_all = ExternDecl(
+        name: "kk_map_all",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_none = ExternDecl(
+        name: "kk_map_none",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
@@ -771,6 +801,19 @@ public extension RuntimeABIExterns {
 
     static let kk_list_partition = ExternDecl(
         name: "kk_list_partition",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// onEach / onEachIndexed (STDLIB-300)
+    static let kk_list_onEach = ExternDecl(
+        name: "kk_list_onEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_onEachIndexed = ExternDecl(
+        name: "kk_list_onEachIndexed",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
