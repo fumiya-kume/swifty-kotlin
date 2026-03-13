@@ -145,6 +145,8 @@ enum RuntimeTypeCheckToken {
         case let .nominal(symbolID):
             let nominalTypeID = stableNominalTypeID(symbol: symbolID, sema: sema, interner: interner)
             return encode(base: descriptor.category.base, nullable: descriptor.nullable, payload: nominalTypeID)
+        case .null:
+            return nullBase
         default:
             return encode(base: descriptor.category.base, nullable: descriptor.nullable)
         }
@@ -160,6 +162,8 @@ enum RuntimeTypeCheckToken {
         // Handle primitives not covered by RuntimeTypeCategory (char, long, float, double)
         // and nominal types that need symbol resolution.
         switch sema.types.kind(of: type) {
+        case .nothing:
+            return "Nothing"
         case .primitive(.long, _):
             return PrimitiveType.long.kotlinName
         case .primitive(.char, _):

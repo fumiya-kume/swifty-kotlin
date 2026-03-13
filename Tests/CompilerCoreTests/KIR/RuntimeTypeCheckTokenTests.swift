@@ -138,7 +138,6 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
             .primitive(.ulong, .nonNull),
             .primitive(.ubyte, .nonNull),
             .primitive(.ushort, .nonNull),
-            .nothing(.nullable),
         ]
 
         for kind in testTypes {
@@ -155,6 +154,29 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
                 "encode(type:) and classify()+encode(base:) should produce the same token for \(kind)"
             )
         }
+    }
+
+    func testEncodeNothingUsesCanonicalLegacyTokens() {
+        let interner = StringInterner()
+        let types = TypeSystem()
+        let sema = SemaModule(
+            symbols: SymbolTable(),
+            types: types,
+            bindings: BindingTable(),
+            diagnostics: DiagnosticEngine()
+        )
+
+        let nothingNonNull = types.make(.nothing(.nonNull))
+        XCTAssertEqual(
+            RuntimeTypeCheckToken.encode(type: nothingNonNull, sema: sema, interner: interner),
+            RuntimeTypeCheckToken.unknownBase
+        )
+
+        let nothingNullable = types.make(.nothing(.nullable))
+        XCTAssertEqual(
+            RuntimeTypeCheckToken.encode(type: nothingNullable, sema: sema, interner: interner),
+            RuntimeTypeCheckToken.nullBase
+        )
     }
 
     func testEncodeNominalConsistencyWithClassify() {
@@ -215,6 +237,8 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
             (.primitive(.ulong, .nonNull), "ULong"),
             (.primitive(.ubyte, .nonNull), "UByte"),
             (.primitive(.ushort, .nonNull), "UShort"),
+            (.nothing(.nonNull), "Nothing"),
+            (.nothing(.nullable), "Nothing"),
         ]
 
         for (kind, expectedName) in testCases {
@@ -222,8 +246,10 @@ final class RuntimeTypeCheckTokenTests: XCTestCase {
             let simpleName = RuntimeTypeCheckToken.simpleName(of: typeID, sema: sema, interner: interner)
             let descriptor = RuntimeTypeCheckToken.classify(type: typeID, sema: sema, interner: interner)
             XCTAssertEqual(simpleName, expectedName, "simpleName mismatch for \(kind)")
-            XCTAssertEqual(descriptor.category.simpleName, expectedName, "category.simpleName mismatch for \(kind)")
-            XCTAssertEqual(simpleName, descriptor.category.simpleName, "simpleName and category.simpleName should be equal for \(kind)")
+            if descriptor.category.simpleName != nil {
+                XCTAssertEqual(descriptor.category.simpleName, expectedName, "category.simpleName mismatch for \(kind)")
+                XCTAssertEqual(simpleName, descriptor.category.simpleName, "simpleName and category.simpleName should be equal for \(kind)")
+            }
         }
     }
 
