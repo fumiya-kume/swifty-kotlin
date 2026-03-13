@@ -422,7 +422,7 @@ extension CallTypeChecker {
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
         }
-        if memberName == knownNames.getOrPut {
+        if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
         }
         return collectionMembers.contains(memberName)
@@ -488,6 +488,8 @@ extension CallTypeChecker {
             return isMapReceiver && argCount == 1
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case knownNames.putAll:
+            return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
         case interner.intern("fold"), interner.intern("windowed"):
@@ -534,6 +536,10 @@ extension CallTypeChecker {
             memberName == interner.intern("sortBy") ||
             memberName == interner.intern("sortByDescending")
         {
+            return sema.types.unitType
+        }
+
+        if memberName == knownNames.putAll {
             return sema.types.unitType
         }
 
