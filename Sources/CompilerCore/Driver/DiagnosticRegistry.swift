@@ -417,7 +417,7 @@ public enum DiagnosticRegistry {
             code: "KSWIFTK-SEMA-0087",
             pass: "SEMA",
             defaultSeverity: .error,
-            summary: "Iterable element type does not support destructuring with componentN()."
+            summary: "Destructuring declaration error: element type cannot be determined or does not support componentN()."
         ),
         DiagnosticDescriptor(
             code: "KSWIFTK-SEMA-0096",
