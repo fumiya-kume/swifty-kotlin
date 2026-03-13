@@ -23,6 +23,18 @@ public func kk_any_to_string(_ value: Int, _ tag: Int32) -> UnsafeMutableRawPoin
     return runtimeMakeStringPointer(runtimeElementToString(value))
 }
 
+/// Any.hashCode() — returns the value itself for Int (mirrors Kotlin semantics).
+@_cdecl("kk_any_hashCode")
+public func kk_any_hashCode(_ value: Int) -> Int {
+    value
+}
+
+/// Any.equals(other) — structural equality for primitive values.
+@_cdecl("kk_any_equals")
+public func kk_any_equals(_ lhs: Int, _ rhs: Int) -> Int {
+    lhs == rhs ? 1 : 0
+}
+
 @_cdecl("kk_float_to_bits")
 public func kk_float_to_bits(_ value: Float) -> Int {
     Int(value.bitPattern)

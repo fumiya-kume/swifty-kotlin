@@ -190,6 +190,8 @@ extension ABILoweringPass {
             interner.intern("kk_int_to_double_bits"),
             interner.intern("kk_float_to_double_bits"),
             interner.intern("kk_any_to_string"),
+            interner.intern("kk_any_hashCode"),
+            interner.intern("kk_any_equals"),
             interner.intern("kk_throwable_is_cancellation"),
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),

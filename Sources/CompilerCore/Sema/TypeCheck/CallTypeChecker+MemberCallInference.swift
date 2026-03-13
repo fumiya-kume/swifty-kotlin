@@ -987,6 +987,33 @@ extension CallTypeChecker {
             }
         }
 
+        // Any.hashCode(): Int (STDLIB-306)
+        if interner.resolve(calleeName) == "hashCode", args.isEmpty {
+            let finalType = safeCall ? sema.types.makeNullable(sema.types.intType) : sema.types.intType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        // Any.toString(): String — fallback for all non-Int/Long receivers (STDLIB-306)
+        if interner.resolve(calleeName) == "toString", args.isEmpty {
+            let stringType = sema.types.make(.primitive(.string, .nonNull))
+            let finalType = safeCall ? sema.types.makeNullable(stringType) : stringType
+            sema.bindings.bindExprType(id, type: finalType)
+            return finalType
+        }
+
+        // Any.equals(other: Any?): Boolean — fallback for non-String receivers (STDLIB-306)
+        if interner.resolve(calleeName) == "equals", args.count == 1 {
+            let receiverTypeForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if !sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                let finalType = safeCall ? sema.types.makeNullable(sema.types.booleanType) : sema.types.booleanType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
         // toFloat(), toDouble(), toByte(), toShort() (TYPE-005, STDLIB-151)
         if args.isEmpty {
