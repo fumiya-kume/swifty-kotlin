@@ -424,7 +424,7 @@ extension CallTypeChecker {
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast",
-            "sortedByDescending", "sortedWith", "partition",
+            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
@@ -503,7 +503,7 @@ extension CallTypeChecker {
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys", "onEach":
+                 "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -514,7 +514,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "any", "none", "all": sema.types.booleanType
+                    case "filter", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull": sema.types.nullableAnyType
@@ -549,6 +549,8 @@ extension CallTypeChecker {
                         }
                     case "filter":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
+                    case "takeWhile", "dropWhile":
+                        resultType = receiverType
                     case "forEach": resultType = sema.types.unitType
                     case "onEach": resultType = receiverType
                     case "flatMap":
@@ -916,7 +918,7 @@ extension CallTypeChecker {
 
             let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
             if isSyntheticSequenceReceiver,
-               ["map", "filter", "flatMap", "sortedBy", "sortedByDescending", "onEach", "onEachIndexed"].contains(calleeStr)
+               ["map", "filter", "flatMap", "sortedBy", "sortedByDescending", "takeWhile", "dropWhile", "onEach", "onEachIndexed"].contains(calleeStr)
             {
                 sema.bindings.markCollectionExpr(id)
             }
@@ -3154,14 +3156,15 @@ extension CallTypeChecker {
             else {
                 return directElementType
             }
-            let calleeName = interner.resolve(name)
-            if calleeName == "sequenceOf" {
+            let sequenceOfName = interner.intern("sequenceOf")
+            if name == sequenceOfName {
                 let elementTypes = args.map { argument in
                     driver.inferExpr(argument.expr, ctx: ctx, locals: &locals, expectedType: nil)
                 }
                 return elementTypes.isEmpty ? sema.types.anyType : sema.types.lub(elementTypes)
             }
-            if calleeName == "generateSequence", let firstArg = args.first {
+            let generateSequenceName = interner.intern("generateSequence")
+            if name == generateSequenceName, let firstArg = args.first {
                 return driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
             }
             return directElementType

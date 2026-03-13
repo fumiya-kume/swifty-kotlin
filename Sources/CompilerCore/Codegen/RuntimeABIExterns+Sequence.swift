@@ -17,6 +17,8 @@ public extension RuntimeABIExterns {
         kk_sequence_drop,
         kk_sequence_distinct,
         kk_sequence_zip,
+        kk_sequence_takeWhile,
+        kk_sequence_dropWhile,
         kk_sequence_sorted,
         kk_sequence_sortedBy,
         kk_sequence_sortedDescending,
@@ -112,6 +114,19 @@ public extension RuntimeABIExterns {
     static let kk_sequence_zip = ExternDecl(
         name: "kk_sequence_zip",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-270: takeWhile / dropWhile
+    static let kk_sequence_takeWhile = ExternDecl(
+        name: "kk_sequence_takeWhile",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_dropWhile = ExternDecl(
+        name: "kk_sequence_dropWhile",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

@@ -257,6 +257,8 @@ enum SequenceStepKind {
     case dropStep(count: Int)
     case distinctStep
     case zipStep(otherElements: [Int])
+    case takeWhileStep(fnPtr: Int, closureRaw: Int)
+    case dropWhileStep(fnPtr: Int, closureRaw: Int)
 }
 
 /// Runtime box for `Sequence<T>`.
