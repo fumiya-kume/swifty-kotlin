@@ -83,10 +83,14 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
-        "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
+        "getOrDefault", "getOrElse", "getOrPut",
+        "maxByOrNull", "minByOrNull",
+        "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sort", "sortBy", "sortByDescending",
+        "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -703,23 +707,37 @@ extension CallLowerer {
             }
         }
 
-        // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
+        // Primitive member function: Int/Long.toString() → kk_any_to_string
+        // and Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if calleeName == interner.intern("toString"),
-           args.count == 1
+           args.count <= 1
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_int_toString_radix"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0]],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                if args.isEmpty {
+                    let tagID = arena.appendExpr(.intLiteral(1), type: intType)
+                    instructions.append(.constValue(result: tagID, value: .intLiteral(1)))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_any_to_string"),
+                        arguments: [loweredReceiverID, tagID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_int_toString_radix"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
                 return result
             }
         }
@@ -1619,8 +1637,10 @@ extension CallLowerer {
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
             "getOrElse", "getOrPut",
+            "maxByOrNull", "minByOrNull",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
