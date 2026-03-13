@@ -155,6 +155,207 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_map_of"), "emptyMap should become kk_map_of")
     }
 
+    func testMapCountRewriteToKkMapCount() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let entry0 = arena.appendExpr(.temporary(0))
+        let entry1 = arena.appendExpr(.temporary(1))
+        let entry2 = arena.appendExpr(.temporary(2))
+        let entry3 = arena.appendExpr(.temporary(3))
+        let lambda = arena.appendExpr(.temporary(4))
+        let mapExpr = arena.appendExpr(.temporary(5))
+        let countResult = arena.appendExpr(.temporary(6))
+        let closureRaw = arena.appendExpr(.intLiteral(0), type: nil)
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("mapOf"),
+                    arguments: [entry0, entry1, entry2, entry3],
+                    result: mapExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("count"),
+                    arguments: [mapExpr, lambda, closureRaw],
+                    result: countResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf should be rewritten")
+        XCTAssertFalse(callees.contains("count"), "map.count should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_map_count"), "count on map should become kk_map_count")
+    }
+
+    func testMapAnyRewriteToKkMapAny() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let entry0 = arena.appendExpr(.temporary(0))
+        let entry1 = arena.appendExpr(.temporary(1))
+        let entry2 = arena.appendExpr(.temporary(2))
+        let entry3 = arena.appendExpr(.temporary(3))
+        let lambda = arena.appendExpr(.temporary(4))
+        let mapExpr = arena.appendExpr(.temporary(5))
+        let anyResult = arena.appendExpr(.temporary(6))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("mapOf"),
+                    arguments: [entry0, entry1, entry2, entry3],
+                    result: mapExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("any"),
+                    arguments: [mapExpr, lambda],
+                    result: anyResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf should be rewritten")
+        XCTAssertFalse(callees.contains("any"), "map.any should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_map_any"), "any on map should become kk_map_any")
+    }
+
+    func testMapAllRewriteToKkMapAll() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let entry0 = arena.appendExpr(.temporary(0))
+        let entry1 = arena.appendExpr(.temporary(1))
+        let entry2 = arena.appendExpr(.temporary(2))
+        let entry3 = arena.appendExpr(.temporary(3))
+        let lambda = arena.appendExpr(.temporary(4))
+        let mapExpr = arena.appendExpr(.temporary(5))
+        let allResult = arena.appendExpr(.temporary(6))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("mapOf"),
+                    arguments: [entry0, entry1, entry2, entry3],
+                    result: mapExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("all"),
+                    arguments: [mapExpr, lambda],
+                    result: allResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf should be rewritten")
+        XCTAssertFalse(callees.contains("all"), "map.all should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_map_all"), "all on map should become kk_map_all")
+    }
+
+    func testMapNoneRewriteToKkMapNone() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let entry0 = arena.appendExpr(.temporary(0))
+        let entry1 = arena.appendExpr(.temporary(1))
+        let entry2 = arena.appendExpr(.temporary(2))
+        let entry3 = arena.appendExpr(.temporary(3))
+        let lambda = arena.appendExpr(.temporary(4))
+        let mapExpr = arena.appendExpr(.temporary(5))
+        let noneResult = arena.appendExpr(.temporary(6))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("mapOf"),
+                    arguments: [entry0, entry1, entry2, entry3],
+                    result: mapExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("none"),
+                    arguments: [mapExpr, lambda],
+                    result: noneResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf should be rewritten")
+        XCTAssertFalse(callees.contains("none"), "map.none should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_map_none"), "none on map should become kk_map_none")
+    }
+
     // MARK: - setOf rewriting
 
     func testSetOfRewrittenToKkSetOf() throws {
@@ -304,6 +505,96 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertTrue(callees.contains("kk_string_split"))
         XCTAssertTrue(callees.contains("kk_list_to_string"),
                       "split result should be recognized as list and routed through kk_list_to_string")
+    }
+
+    func testRangeReversedRewrittenToKkRangeReversed() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let start = arena.appendExpr(.temporary(0))
+        let end = arena.appendExpr(.temporary(1))
+        let range = arena.appendExpr(.temporary(2))
+        let result = arena.appendExpr(.temporary(3))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_rangeTo"),
+                    arguments: [start, end],
+                    result: range,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("reversed"),
+                    arguments: [range],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("reversed"), "range.reversed should be rewritten")
+        XCTAssertTrue(callees.contains("kk_range_reversed"), "range.reversed should become kk_range_reversed")
+    }
+
+    func testRangeAsReversedIsNotRewrittenToKkRangeReversed() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let start = arena.appendExpr(.temporary(0))
+        let end = arena.appendExpr(.temporary(1))
+        let range = arena.appendExpr(.temporary(2))
+        let result = arena.appendExpr(.temporary(3))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_rangeTo"),
+                    arguments: [start, end],
+                    result: range,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("asReversed"),
+                    arguments: [range],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertTrue(callees.contains("asReversed"), "range.asReversed should remain unresolved for non-list receivers")
+        XCTAssertFalse(callees.contains("kk_range_reversed"), "range.asReversed must not become kk_range_reversed")
     }
 
     func testShouldRunAlwaysReturnsTrue() {

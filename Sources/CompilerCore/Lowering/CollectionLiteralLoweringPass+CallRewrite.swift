@@ -104,6 +104,37 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // map.count(predicate) on map literals
+                    if callee == lookup.countName && (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if mapExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkMapCountName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of ---
                     if lookup.setFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -751,6 +782,23 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    if callee == lookup.containsAllName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if setExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSetContainsAllName,
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
                     if callee == lookup.containsKeyName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
@@ -1028,7 +1076,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.reversedName, arguments.count == 1 {
+                    if callee == lookup.reversedName || callee == lookup.asReversedName, arguments.count == 1 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
@@ -1049,7 +1097,7 @@ extension CollectionLiteralLoweringPass {
                             }
                             continue
                         }
-                        if rangeExprIDs.contains(receiverID.rawValue) {
+                        if callee == lookup.reversedName, rangeExprIDs.contains(receiverID.rawValue) {
                             let transformResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
@@ -1337,7 +1385,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
-                    if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName
+                    if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName || callee == lookup.onEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
                         || callee == lookup.allName || callee == lookup.mapValuesName || callee == lookup.mapKeysName
                         || callee == lookup.toListName
@@ -1382,6 +1430,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.filterName: lookup.kkListFilterName
                                 case lookup.mapNotNullName: lookup.kkListMapNotNullName
                                 case lookup.forEachName: lookup.kkListForEachName
+                                case lookup.onEachName: lookup.kkListOnEachName
                                 case lookup.flatMapName: lookup.kkListFlatMapName
                                 case lookup.anyName: lookup.kkListAnyName
                                 case lookup.noneName: lookup.kkListNoneName
@@ -1392,6 +1441,7 @@ extension CollectionLiteralLoweringPass {
                                     || callee == lookup.mapNotNullName
                                     || callee == lookup.flatMapName
                                     || callee == lookup.filterName
+                                    || callee == lookup.onEachName
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
@@ -1415,6 +1465,10 @@ extension CollectionLiteralLoweringPass {
                             if mapExprIDs.contains(receiverID.rawValue),
                                callee == lookup.mapName || callee == lookup.filterName || callee == lookup.forEachName
                                || callee == lookup.mapValuesName || callee == lookup.mapKeysName
+                               || callee == lookup.flatMapName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+                               || callee == lookup.anyName || callee == lookup.allName
+                               || callee == lookup.noneName
+                               || callee == lookup.flatMapName || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
                             {
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
@@ -1430,6 +1484,15 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.forEachName: lookup.kkMapForEachName
                                 case lookup.mapValuesName: lookup.kkMapMapValuesName
                                 case lookup.mapKeysName: lookup.kkMapMapKeysName
+                                case lookup.flatMapName: lookup.kkMapFlatMapName
+                                case lookup.maxByOrNullName: lookup.kkMapMaxByOrNullName
+                                case lookup.minByOrNullName: lookup.kkMapMinByOrNullName
+                                case lookup.anyName: lookup.kkMapAnyName
+                                case lookup.allName: lookup.kkMapAllName
+                                case lookup.noneName: lookup.kkMapNoneName
+                                case lookup.flatMapName: lookup.kkMapFlatMapName
+                                case lookup.maxByOrNullName: lookup.kkMapMaxByOrNullName
+                                case lookup.minByOrNullName: lookup.kkMapMinByOrNullName
                                 default: callee
                                 }
                                 let hofResult = module.arena.appendExpr(
@@ -1443,7 +1506,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapName, let result {
+                                if callee == lookup.mapName || callee == lookup.flatMapName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }
@@ -1687,14 +1750,19 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName {
+                    if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
                             let lambdaID = arguments[1]
                             if listExprIDs.contains(receiverID.rawValue) {
-                                let kkName: InternedString = callee == lookup.forEachIndexedName
-                                    ? lookup.kkListForEachIndexedName
-                                    : lookup.kkListMapIndexedName
+                                let kkName: InternedString
+                                if callee == lookup.forEachIndexedName {
+                                    kkName = lookup.kkListForEachIndexedName
+                                } else if callee == lookup.onEachIndexedName {
+                                    kkName = lookup.kkListOnEachIndexedName
+                                } else {
+                                    kkName = lookup.kkListMapIndexedName
+                                }
                                 let closureRawID: KIRExprID
                                 if arguments.count == 3 {
                                     closureRawID = arguments[2]
@@ -1714,7 +1782,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.mapIndexedName, let result {
+                                if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }
@@ -1783,6 +1851,47 @@ extension CollectionLiteralLoweringPass {
                             }
                         }
                     }
+                    // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
+                    if callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+                        || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
+                    {
+                        if arguments.count == 2 || arguments.count == 3 {
+                            let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let kkName: InternedString = switch callee {
+                                case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
+                                case lookup.minByOrNullName: lookup.kkListMinByOrNullName
+                                case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
+                                default: lookup.kkListMinOfOrNullName
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
                     // count/first/last with predicate: [receiver, lambda, closureRaw?]
                     if callee == lookup.countName || callee == lookup.firstName || callee == lookup.lastName {
                         if arguments.count == 2 || arguments.count == 3 {
