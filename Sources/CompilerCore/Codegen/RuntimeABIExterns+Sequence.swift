@@ -17,6 +17,9 @@ public extension RuntimeABIExterns {
         kk_sequence_drop,
         kk_sequence_distinct,
         kk_sequence_zip,
+        kk_sequence_sorted,
+        kk_sequence_sortedBy,
+        kk_sequence_sortedDescending,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -109,6 +112,25 @@ public extension RuntimeABIExterns {
     static let kk_sequence_zip = ExternDecl(
         name: "kk_sequence_zip",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-272: Sorting operations
+    static let kk_sequence_sorted = ExternDecl(
+        name: "kk_sequence_sorted",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_sortedBy = ExternDecl(
+        name: "kk_sequence_sortedBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_sortedDescending = ExternDecl(
+        name: "kk_sequence_sortedDescending",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 }

@@ -86,7 +86,7 @@ extension CallLowerer {
         "getOrDefault", "getOrElse", "getOrPut", "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
-        "sortedDescending", "sortedByDescending", "sortedWith", "partition",
+        "sortedDescending", "sortedByDescending", "sortedWith", "partition", "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
         "to", // FUNC-002
     ]
@@ -724,6 +724,54 @@ extension CallLowerer {
             }
         }
 
+        // Any.toString(): String — no-arg fallback via kk_any_to_string (STDLIB-306)
+        if args.isEmpty, interner.resolve(calleeName) == "toString" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let tag: Int64 = switch sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            case .primitive(.boolean, _): 2
+            case .primitive(.string, _): 3
+            default: 1
+            }
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+            instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_to_string"),
+                arguments: [loweredReceiverID, tagID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
+        // Any.hashCode(): Int — via kk_any_hashCode (STDLIB-306)
+        if args.isEmpty, interner.resolve(calleeName) == "hashCode" {
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_hashCode"),
+                arguments: [loweredReceiverID],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
+        // Any.equals(other: Any?): Boolean — via kk_any_equals (STDLIB-306)
+        if args.count == 1, interner.resolve(calleeName) == "equals" {
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_equals"),
+                arguments: [loweredReceiverID, loweredArgIDs[0]],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+
         // Primitive conversion: toInt(), toUInt(), toLong(), toULong(),
         // toFloat(), toByte(), toShort() (TYPE-005)
         if args.isEmpty {
@@ -1331,6 +1379,8 @@ extension CallLowerer {
                     "kk_sequence_drop"
                 case "zip":
                     "kk_sequence_zip"
+                case "sortedBy":
+                    "kk_sequence_sortedBy"
                 default:
                     nil
                 }
@@ -1446,6 +1496,10 @@ extension CallLowerer {
                     "kk_sequence_to_list"
                 case "distinct":
                     "kk_sequence_distinct"
+                case "sorted":
+                    "kk_sequence_sorted"
+                case "sortedDescending":
+                    "kk_sequence_sortedDescending"
                 default:
                     nil
                 }
@@ -1582,6 +1636,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition",
+            "onEach", "onEachIndexed",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -2412,6 +2467,12 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_distinct")
             case "zip":
                 return interner.intern("kk_sequence_zip")
+            case "sorted":
+                return interner.intern("kk_sequence_sorted")
+            case "sortedBy":
+                return interner.intern("kk_sequence_sortedBy")
+            case "sortedDescending":
+                return interner.intern("kk_sequence_sortedDescending")
             default:
                 break
             }
