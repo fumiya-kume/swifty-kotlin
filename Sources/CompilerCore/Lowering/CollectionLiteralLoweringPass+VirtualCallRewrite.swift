@@ -604,7 +604,7 @@ extension CollectionLiteralLoweringPass {
         }
 
         guard callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName
-            || callee == lookup.forEachName
+            || callee == lookup.forEachName || callee == lookup.onEachName
             || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
         else { return false }
@@ -615,6 +615,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.filterName: lookup.kkListFilterName
         case lookup.mapNotNullName: lookup.kkListMapNotNullName
         case lookup.forEachName: lookup.kkListForEachName
+        case lookup.onEachName: lookup.kkListOnEachName
         case lookup.flatMapName: lookup.kkListFlatMapName
         case lookup.anyName: lookup.kkListAnyName
         case lookup.noneName: lookup.kkListNoneName
@@ -624,6 +625,7 @@ extension CollectionLiteralLoweringPass {
         let needsListTag = callee == lookup.mapName
             || callee == lookup.mapNotNullName
             || callee == lookup.flatMapName || callee == lookup.filterName
+            || callee == lookup.onEachName
         let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
         loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
@@ -843,10 +845,15 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName, arguments.count == 1 {
-            let kkName = callee == lookup.forEachIndexedName
-                ? lookup.kkListForEachIndexedName
-                : lookup.kkListMapIndexedName
+        if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, arguments.count == 1 {
+            let kkName: InternedString
+            if callee == lookup.forEachIndexedName {
+                kkName = lookup.kkListForEachIndexedName
+            } else if callee == lookup.onEachIndexedName {
+                kkName = lookup.kkListOnEachIndexedName
+            } else {
+                kkName = lookup.kkListMapIndexedName
+            }
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
@@ -859,7 +866,7 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            if callee == lookup.mapIndexedName, let result {
+            if callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, let result {
                 listExprIDs.insert(result.rawValue)
                 listExprIDs.insert(hofResult.rawValue)
             }

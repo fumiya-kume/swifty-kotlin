@@ -33,6 +33,7 @@ struct CollectionLiteralLookupTables {
     let kkSetOfName: InternedString
     let kkSetSizeName: InternedString
     let kkSetContainsName: InternedString
+    let kkSetContainsAllName: InternedString
     let kkSetIsEmptyName: InternedString
     let kkSetToStringName: InternedString
     let kkStringSplitName: InternedString
@@ -73,6 +74,8 @@ struct CollectionLiteralLookupTables {
     let kkListUnzipName: InternedString
     let kkListWithIndexName: InternedString
     let kkListForEachIndexedName: InternedString
+    let kkListOnEachName: InternedString
+    let kkListOnEachIndexedName: InternedString
     let kkListMapIndexedName: InternedString
     let kkListSumOfName: InternedString
     let kkListMaxOrNullName: InternedString
@@ -139,6 +142,13 @@ struct CollectionLiteralLookupTables {
     let kkMapFilterName: InternedString
     let kkMapMapValuesName: InternedString
     let kkMapMapKeysName: InternedString
+    let kkMapCountName: InternedString
+    let kkMapAnyName: InternedString
+    let kkMapAllName: InternedString
+    let kkMapNoneName: InternedString
+    let kkMapFlatMapName: InternedString
+    let kkMapMaxByOrNullName: InternedString
+    let kkMapMinByOrNullName: InternedString
     let kkMapToListName: InternedString
     let kkMapToStringName: InternedString
     let kkMapIteratorName: InternedString
@@ -185,6 +195,7 @@ struct CollectionLiteralLookupTables {
     let sizeName: InternedString
     let getName: InternedString
     let containsName: InternedString
+    let containsAllName: InternedString
     let containsKeyName: InternedString
     let isEmptyName: InternedString
     let countName: InternedString
@@ -217,6 +228,8 @@ struct CollectionLiteralLookupTables {
     let unzipName: InternedString
     let withIndexName: InternedString
     let forEachIndexedName: InternedString
+    let onEachName: InternedString
+    let onEachIndexedName: InternedString
     let mapIndexedName: InternedString
     let sumOfName: InternedString
     let maxOrNullName: InternedString
@@ -334,6 +347,7 @@ struct CollectionLiteralLookupTables {
         kkSetOfName = interner.intern("kk_set_of")
         kkSetSizeName = interner.intern("kk_set_size")
         kkSetContainsName = interner.intern("kk_set_contains")
+        kkSetContainsAllName = interner.intern("kk_set_containsAll")
         kkSetIsEmptyName = interner.intern("kk_set_is_empty")
         kkSetToStringName = interner.intern("kk_set_to_string")
         kkStringSplitName = interner.intern("kk_string_split")
@@ -372,6 +386,8 @@ struct CollectionLiteralLookupTables {
         kkListUnzipName = interner.intern("kk_list_unzip")
         kkListWithIndexName = interner.intern("kk_list_withIndex")
         kkListForEachIndexedName = interner.intern("kk_list_forEachIndexed")
+        kkListOnEachName = interner.intern("kk_list_onEach")
+        kkListOnEachIndexedName = interner.intern("kk_list_onEachIndexed")
         kkListMapIndexedName = interner.intern("kk_list_mapIndexed")
         kkListSumOfName = interner.intern("kk_list_sumOf")
         kkListMaxOrNullName = interner.intern("kk_list_maxOrNull")
@@ -435,6 +451,13 @@ struct CollectionLiteralLookupTables {
         kkMapFilterName = interner.intern("kk_map_filter")
         kkMapMapValuesName = interner.intern("kk_map_mapValues")
         kkMapMapKeysName = interner.intern("kk_map_mapKeys")
+        kkMapCountName = interner.intern("kk_map_count")
+        kkMapAnyName = interner.intern("kk_map_any")
+        kkMapAllName = interner.intern("kk_map_all")
+        kkMapNoneName = interner.intern("kk_map_none")
+        kkMapFlatMapName = interner.intern("kk_map_flatMap")
+        kkMapMaxByOrNullName = interner.intern("kk_map_maxByOrNull")
+        kkMapMinByOrNullName = interner.intern("kk_map_minByOrNull")
         kkMapToListName = interner.intern("kk_map_toList")
         kkMapToStringName = interner.intern("kk_map_to_string")
         kkMapIteratorName = interner.intern("kk_map_iterator")
@@ -477,6 +500,7 @@ struct CollectionLiteralLookupTables {
         sizeName = interner.intern("size")
         getName = interner.intern("get")
         containsName = interner.intern("contains")
+        containsAllName = interner.intern("containsAll")
         containsKeyName = interner.intern("containsKey")
         isEmptyName = interner.intern("isEmpty")
         countName = interner.intern("count")
@@ -507,6 +531,8 @@ struct CollectionLiteralLookupTables {
         unzipName = interner.intern("unzip")
         withIndexName = interner.intern("withIndex")
         forEachIndexedName = interner.intern("forEachIndexed")
+        onEachName = interner.intern("onEach")
+        onEachIndexedName = interner.intern("onEachIndexed")
         mapIndexedName = interner.intern("mapIndexed")
         sumOfName = interner.intern("sumOf")
         maxOrNullName = interner.intern("maxOrNull")
