@@ -252,6 +252,7 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.add(1)
+            values.add(1, 0)
             values.addAll(listOf(2, 3))
             values.removeAll(listOf(4))
             values.retainAll(listOf(5))
@@ -267,35 +268,26 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             let ast = try XCTUnwrap(ctx.ast)
             let sema = try XCTUnwrap(ctx.sema)
 
-            let expectedExternalLinks = [
-                "add": "kk_mutable_list_add",
-                "addAll": "kk_mutable_list_addAll",
-                "removeAll": "kk_mutable_list_removeAll",
-                "retainAll": "kk_mutable_list_retainAll",
-                "removeAt": "kk_mutable_list_removeAt",
-                "clear": "kk_mutable_list_clear",
+            let expectedExternalLinks: [(String, Int, String)] = [
+                ("add", 1, "kk_mutable_list_add"),
+                ("add", 2, "kk_mutable_list_add_at"),
+                ("addAll", 1, "kk_mutable_list_addAll"),
+                ("removeAll", 1, "kk_mutable_list_removeAll"),
+                ("retainAll", 1, "kk_mutable_list_retainAll"),
+                ("removeAt", 1, "kk_mutable_list_removeAt"),
+                ("clear", 0, "kk_mutable_list_clear"),
             ]
 
-            for (memberName, externalLinkName) in expectedExternalLinks {
-                _ = try XCTUnwrap(firstExprID(in: ast) { _, expr in
-                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
-                    return ctx.interner.resolve(callee) == memberName
-                }, "Expected member call to \(memberName) in AST")
-                let symbolID = try XCTUnwrap(
-                    sema.symbols.lookup(
-                        fqName: [
-                            ctx.interner.intern("kotlin"),
-                            ctx.interner.intern("collections"),
-                            ctx.interner.intern("MutableList"),
-                            ctx.interner.intern(memberName),
-                        ]
-                    ),
-                    "Expected synthetic MutableList member \(memberName) to be registered"
-                )
+            for (memberName, argumentCount, externalLinkName) in expectedExternalLinks {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, valueArgs, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName && valueArgs.count == argumentCount
+                }, "Expected member call to \(memberName) with \(argumentCount) arguments in AST")
+                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
                 XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: symbolID),
+                    sema.symbols.externalLinkName(for: chosenCallee),
                     externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                    "Expected \(memberName)/\(argumentCount) to resolve to \(externalLinkName)"
                 )
             }
         }
@@ -529,6 +521,22 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                 ctx.diagnostics.diagnostics.isEmpty,
                 "Expected diagnostics for immutable List.sort* calls"
             )
+        }
+    }
+
+    func testMutableListBulkOperationsAcceptListArguments() throws {
+        let source = """
+        fun mutate(values: MutableList<Int>) {
+            values.addAll(listOf(1, 2))
+            values.removeAll(listOf(1))
+            values.retainAll(listOf(2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
         }
     }
 

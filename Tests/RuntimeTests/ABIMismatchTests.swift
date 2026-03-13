@@ -269,6 +269,34 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters.count, 0)
     }
 
+    func testKKMutableListAddAtSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_add_at")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "index")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "element")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+    }
+
+    func testKKMutableListSetSignature() throws {
+        let spec = try requireSpec("kk_mutable_list_set")
+        XCTAssertEqual(spec.returnType, .intptr)
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "index")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "element")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+    }
+
     // MARK: - C Declaration Generation
 
     func testCDeclarationForKKAlloc() throws {

@@ -290,6 +290,41 @@ public func kk_mutable_list_clear(_ listRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_mutable_list_add_at")
+public func kk_mutable_list_add_at(_ listRaw: Int, _ index: Int, _ element: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "MutableList reference is null.")
+        return 0
+    }
+    guard (0...list.elements.count).contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "MutableList index \(index) out of bounds for length \(list.elements.count)."
+        )
+        return 0
+    }
+    list.elements.insert(element, at: index)
+    return 0
+}
+
+@_cdecl("kk_mutable_list_set")
+public func kk_mutable_list_set(_ listRaw: Int, _ index: Int, _ element: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let list = runtimeListBox(from: listRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "MutableList reference is null.")
+        return 0
+    }
+    guard list.elements.indices.contains(index) else {
+        outThrown?.pointee = runtimeAllocateThrowable(
+            message: "MutableList index \(index) out of bounds for length \(list.elements.count)."
+        )
+        return 0
+    }
+    let old = list.elements[index]
+    list.elements[index] = element
+    return old
+}
+
 // MARK: - MutableList shuffle/reverse (STDLIB-206)
 
 @_cdecl("kk_mutable_list_shuffle")

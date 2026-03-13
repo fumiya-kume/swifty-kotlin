@@ -156,6 +156,8 @@ public extension RuntimeABIExterns {
         kk_mutable_list_sort,
         kk_mutable_list_sortBy,
         kk_mutable_list_sortByDescending,
+        kk_mutable_list_add_at,
+        kk_mutable_list_set,
         kk_mutable_list_shuffle,
         kk_mutable_list_reverse,
         kk_mutable_set_add,
@@ -1061,11 +1063,17 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    static let kk_mutable_list_addAll = ExternDecl(
-        name: "kk_mutable_list_addAll",
-        parameterTypes: ["intptr_t", "intptr_t"],
+    static let kk_mutable_list_add_at = ExternDecl(
+        name: "kk_mutable_list_add_at",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
+
+     static let kk_mutable_list_addAll = ExternDecl(
+         name: "kk_mutable_list_addAll",
+         parameterTypes: ["intptr_t", "intptr_t"],
+         returnType: "intptr_t"
+     )
 
     static let kk_mutable_list_removeAll = ExternDecl(
         name: "kk_mutable_list_removeAll",
@@ -1073,11 +1081,11 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    static let kk_mutable_list_retainAll = ExternDecl(
-        name: "kk_mutable_list_retainAll",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
+     static let kk_mutable_list_retainAll = ExternDecl(
+         name: "kk_mutable_list_retainAll",
+         parameterTypes: ["intptr_t", "intptr_t"],
+         returnType: "intptr_t"
+     )
 
     static let kk_mutable_list_removeAt = ExternDecl(
         name: "kk_mutable_list_removeAt",
@@ -1105,6 +1113,12 @@ public extension RuntimeABIExterns {
 
     static let kk_mutable_list_sortByDescending = ExternDecl(
         name: "kk_mutable_list_sortByDescending",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_set = ExternDecl(
+        name: "kk_mutable_list_set",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
