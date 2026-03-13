@@ -1441,6 +1441,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_op_not = ExternDecl(
+        name: "kk_op_not",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_inv = ExternDecl(
         name: "kk_op_inv",
         parameterTypes: ["intptr_t"],
@@ -1814,6 +1820,7 @@ public enum RuntimeABIExterns {
             kk_bitwise_and,
             kk_bitwise_or,
             kk_bitwise_xor,
+            kk_op_not,
             kk_op_inv,
             kk_op_shl,
             kk_op_shr,

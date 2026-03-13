@@ -316,6 +316,66 @@ extension CallLowerer {
         } else {
             calleeName
         }
+        let safeReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        let nonNullSafeReceiverType = sema.types.makeNonNullable(safeReceiverType)
+        let safeBooleanCallee = interner.resolve(effectiveCalleeName)
+        if sema.types.isSubtype(nonNullSafeReceiverType, sema.types.booleanType) {
+            let boolRuntimeCallee: InternedString? = switch safeBooleanCallee {
+            case "not" where args.isEmpty:
+                interner.intern("kk_op_not")
+            case "and" where args.count == 1:
+                interner.intern("kk_bitwise_and")
+            case "or" where args.count == 1:
+                interner.intern("kk_bitwise_or")
+            case "xor" where args.count == 1:
+                interner.intern("kk_bitwise_xor")
+            default:
+                nil
+            }
+            if let boolRuntimeCallee {
+                let boundType = sema.types.makeNullable(sema.types.booleanType)
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType
+                )
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                let nonNullLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiver, target: nonNullLabel))
+                let nullVal = arena.appendExpr(.unit, type: boundType)
+                instructions.append(.constValue(result: nullVal, value: .null))
+                instructions.append(.copy(from: nullVal, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nonNullLabel))
+                let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.booleanType)
+                let loweredArgIDs = args.map { argument in
+                    driver.lowerExpr(
+                        argument.expr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
+                let callArguments = [loweredReceiver] + loweredArgIDs
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: boolRuntimeCallee,
+                    arguments: callArguments,
+                    result: nonNullResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                instructions.append(.copy(from: nonNullResult, to: result))
+                instructions.append(.label(endLabel))
+                return result
+            }
+        }
+
         return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
@@ -624,6 +684,54 @@ extension CallLowerer {
                 thrownResult: nil
             ))
             return result
+        }
+
+        // Boolean.not() → kk_op_not (STDLIB-308)
+        if calleeName == interner.intern("not"),
+           args.isEmpty
+        {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.booleanType) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_not"),
+                    arguments: [loweredReceiverID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+        if args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.booleanType) {
+                let boolCallee: InternedString? = switch interner.resolve(calleeName) {
+                case "and":
+                    interner.intern("kk_bitwise_and")
+                case "or":
+                    interner.intern("kk_bitwise_or")
+                case "xor":
+                    interner.intern("kk_bitwise_xor")
+                default:
+                    nil
+                }
+                if let boolCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: boolCallee,
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
         }
 
         // Primitive infix member functions: Int/Long/UInt/ULong.and|or|xor|shl|shr|ushr (EXPR-003, TYPE-005)

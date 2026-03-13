@@ -1692,6 +1692,28 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // Boolean.not() / Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+            do {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.booleanType) {
+                    let calleeStr = interner.resolve(calleeName)
+                    if calleeStr == "not" && args.isEmpty {
+                        let resultType = sema.types.booleanType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                    if (calleeStr == "and" || calleeStr == "or" || calleeStr == "xor") && args.count == 1 {
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
+                        let resultType = sema.types.booleanType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             // String stdlib: nullable-receiver 0-arg methods (NULL-002)
             // isNullOrEmpty/isNullOrBlank accept String? receiver directly (no safe-call needed).
             if args.isEmpty {
