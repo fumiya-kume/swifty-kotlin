@@ -359,6 +359,15 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(kk_map_values(updated)), [10])
     }
 
+    func testListPlusCollectionAppendsSetElements() {
+        let list = makeList([1, 2])
+        let set = kk_set_of(makeArray([3, 4]), 2)
+
+        let combined = kk_list_plus_collection(list, set)
+
+        XCTAssertEqual(listElements(combined), [1, 2, 3, 4])
+    }
+
     func testMutableMapGetOrPutPreservesStoredRuntimeLongBoxAtNullSentinelValue() {
         let boxedLongMin = registerRuntimeObject(RuntimeLongBox(runtimeNullSentinelInt))
         let map = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [boxedLongMin]))
