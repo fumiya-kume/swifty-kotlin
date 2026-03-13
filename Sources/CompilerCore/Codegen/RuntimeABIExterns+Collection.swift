@@ -74,6 +74,8 @@ public extension RuntimeABIExterns {
         kk_list_sortedByDescending,
         kk_list_sortedWith,
         kk_list_partition,
+        kk_list_onEach,
+        kk_list_onEachIndexed,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -814,6 +816,16 @@ public extension RuntimeABIExterns {
     static let kk_list_lastOrNull = ExternDecl(
         name: "kk_list_lastOrNull",
         parameterTypes: ["intptr_t"],
+    /// onEach / onEachIndexed (STDLIB-300)
+    static let kk_list_onEach = ExternDecl(
+        name: "kk_list_onEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_onEachIndexed = ExternDecl(
+        name: "kk_list_onEachIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
