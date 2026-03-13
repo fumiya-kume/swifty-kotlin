@@ -702,6 +702,8 @@ extension CollectionLiteralLoweringPass {
         guard callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
             || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
+            || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
+            || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
         else {
             return false
         }
@@ -718,6 +720,10 @@ extension CollectionLiteralLoweringPass {
         case lookup.associateByName: lookup.kkListAssociateByName
         case lookup.associateWithName: lookup.kkListAssociateWithName
         case lookup.associateName: lookup.kkListAssociateName
+        case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
+        case lookup.minByOrNullName: lookup.kkListMinByOrNullName
+        case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
+        case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
         default: callee
         }
 
@@ -758,11 +764,16 @@ extension CollectionLiteralLoweringPass {
         } else {
             hofArgs = arguments
         }
+        let needsClosureRaw = callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
+            && callee != lookup.maxOfOrNullName && callee != lookup.minOfOrNullName
+        if needsClosureRaw {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            hofArgs.append(zeroExpr)
+        }
 
-        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(
-            kkName: kkName, receiver: receiver, arguments: hofArgs + [zeroExpr],
+            kkName: kkName, receiver: receiver, arguments: hofArgs,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody

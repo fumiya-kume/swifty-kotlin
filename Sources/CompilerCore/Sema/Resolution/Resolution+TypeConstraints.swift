@@ -387,11 +387,51 @@ extension OverloadResolver {
         to targetSymbol: SymbolID,
         typeSystem: TypeSystem
     ) -> TypeID? {
-        guard subtype.classSymbol != targetSymbol,
-              typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol)
-        else {
+        guard subtype.classSymbol != targetSymbol else {
             return nil
         }
+        return liftClassType(subtype, to: targetSymbol, typeSystem: typeSystem, visited: [])
+    }
+
+    private func liftClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem,
+        visited: Set<SymbolID>
+    ) -> TypeID? {
+        var visited = visited
+        guard visited.insert(subtype.classSymbol).inserted else {
+            return nil
+        }
+        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol) else {
+            return nil
+        }
+        if let directLift = liftDirectClassType(subtype, to: targetSymbol, typeSystem: typeSystem) {
+            return directLift
+        }
+        for directSupertype in typeSystem.directNominalSupertypes(for: subtype.classSymbol) {
+            guard let directLift = liftDirectClassType(subtype, to: directSupertype, typeSystem: typeSystem),
+                  case let .classType(liftedClassType) = typeSystem.kind(of: directLift)
+            else {
+                continue
+            }
+            if let transitiveLift = liftClassType(
+                liftedClassType,
+                to: targetSymbol,
+                typeSystem: typeSystem,
+                visited: visited
+            ) {
+                return transitiveLift
+            }
+        }
+        return nil
+    }
+
+    private func liftDirectClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem
+    ) -> TypeID? {
         let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: targetSymbol)
         if mappedArgs.isEmpty {
             guard typeSystem.nominalTypeParameterSymbols(for: targetSymbol).isEmpty else {
@@ -404,7 +444,12 @@ extension OverloadResolver {
             )))
         }
         let substitutedArgs = mappedArgs.map {
-            substituteChildTypeArg($0, childSymbol: subtype.classSymbol, childArgs: subtype.args, typeSystem: typeSystem)
+            substituteChildTypeArg(
+                $0,
+                childSymbol: subtype.classSymbol,
+                childArgs: subtype.args,
+                typeSystem: typeSystem
+            )
         }
         return typeSystem.make(.classType(ClassType(
             classSymbol: targetSymbol,

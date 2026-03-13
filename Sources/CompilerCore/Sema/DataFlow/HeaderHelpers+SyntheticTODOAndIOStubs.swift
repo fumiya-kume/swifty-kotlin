@@ -498,6 +498,8 @@ extension DataFlowSemaPhase {
             existing
         } else {
             symbols.define(
+        if symbols.lookup(fqName: typeParamFQName) == nil {
+            _ = symbols.define(
                 kind: .typeParameter,
                 name: typeParamName,
                 fqName: typeParamFQName,

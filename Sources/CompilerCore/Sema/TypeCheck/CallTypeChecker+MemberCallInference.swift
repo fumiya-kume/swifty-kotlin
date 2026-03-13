@@ -413,7 +413,7 @@ extension CallTypeChecker {
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast",
-            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile",
+            "sortedByDescending", "sortedWith", "partition",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
@@ -492,7 +492,7 @@ extension CallTypeChecker {
             switch calleeStr {
             case "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
                  "count", "first", "last", "find", "associateBy", "associateWith", "associate",
-                 "mapValues", "mapKeys", "takeWhile", "dropWhile", "onEach":
+                 "mapValues", "mapKeys", "onEach":
                 // any(), none(), count(), first(), last() can be called with no args
                 if args.isEmpty {
                     switch calleeStr {
@@ -503,7 +503,7 @@ extension CallTypeChecker {
                     }
                 } else {
                     let lambdaReturnType: TypeID = switch calleeStr {
-                    case "filter", "any", "none", "all", "takeWhile", "dropWhile": sema.types.booleanType
+                    case "filter", "any", "none", "all": sema.types.booleanType
                     case "forEach", "onEach": sema.types.unitType
                     case "count": sema.types.booleanType
                     case "mapNotNull": sema.types.nullableAnyType
@@ -537,8 +537,6 @@ extension CallTypeChecker {
                             )))
                         }
                     case "filter":
-                        resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
-                    case "takeWhile", "dropWhile":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "forEach": resultType = sema.types.unitType
                     case "onEach": resultType = receiverType
@@ -962,8 +960,8 @@ extension CallTypeChecker {
 
         // Infer argument types for the normal resolution path (scope functions and
         // collection HOFs infer their lambda args with expected type above and return).
-        let argTypes = args.map { arg in
-            driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
+        let argTypes = args.enumerated().map { _, arg in
+            return driver.inferExpr(arg.expr, ctx: ctx, locals: &locals)
         }
 
         let hasLeadingLocaleArgument = calleeName == interner.intern("format")
@@ -1121,13 +1119,14 @@ extension CallTypeChecker {
                 : lookupReceiverType
             let calleeStr = interner.resolve(calleeName)
             let (targetType, matches): (TypeID, Bool) = switch calleeStr {
-            case "toInt": (intType, receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == floatType || receiverForCheck == doubleType)
+            case "toInt": (intType, receiverForCheck == uintType || receiverForCheck == ulongType || receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == floatType || receiverForCheck == doubleType || receiverForCheck == sema.types.charType)
             case "toUInt": (uintType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
             case "toLong": (longType, receiverForCheck == intType || receiverForCheck == uintType || receiverForCheck == longType || receiverForCheck == ulongType || receiverForCheck == floatType || receiverForCheck == doubleType)
             case "toULong": (ulongType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == uintType || receiverForCheck == ulongType)
             case "toFloat": (floatType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == doubleType || receiverForCheck == floatType)
             case "toDouble": (doubleType, receiverForCheck == intType || receiverForCheck == longType || receiverForCheck == floatType || receiverForCheck == doubleType)
             case "toByte", "toShort": (intType, receiverForCheck == intType || receiverForCheck == longType)
+            case "toChar": (sema.types.charType, receiverForCheck == intType)
             default: (sema.types.errorType, false)
             }
             if matches {
@@ -1700,6 +1699,28 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // Boolean.not() / Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
+            do {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.booleanType) {
+                    let calleeStr = interner.resolve(calleeName)
+                    if calleeStr == "not" && args.isEmpty {
+                        let resultType = sema.types.booleanType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                    if (calleeStr == "and" || calleeStr == "or" || calleeStr == "xor") && args.count == 1 {
+                        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
+                        let resultType = sema.types.booleanType
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             // String stdlib: nullable-receiver 0-arg methods (NULL-002)
             // isNullOrEmpty/isNullOrBlank accept String? receiver directly (no safe-call needed).
             if args.isEmpty {
@@ -2124,6 +2145,61 @@ extension CallTypeChecker {
                         return boundType
                     }
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            // String stdlib: replaceFirstChar(transform) (STDLIB-315)
+            if args.count == 1, interner.resolve(calleeName) == "replaceFirstChar" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [charType],
+                        returnType: charType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let resolvedArgTypes = zip(args.indices, argTypes).map { index, originalType in
+                        sema.bindings.exprTypes[args[index].expr] ?? originalType
+                    }
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: resolvedArgTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let stringMemberFQName = [
+                        interner.intern("kotlin"),
+                        interner.intern("text"),
+                        calleeName,
+                    ]
+                    if let chosen = sema.symbols.lookup(fqName: stringMemberFQName) {
+                        sema.bindings.bindCall(
+                            id,
+                            binding: CallBinding(
+                                chosenCallee: chosen,
+                                substitutedTypeArguments: [],
+                                parameterMapping: [0: 0]
+                            )
+                        )
+                        sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }
@@ -3041,15 +3117,14 @@ extension CallTypeChecker {
             else {
                 return directElementType
             }
-            let sequenceOfName = interner.intern("sequenceOf")
-            if name == sequenceOfName {
+            let calleeName = interner.resolve(name)
+            if calleeName == "sequenceOf" {
                 let elementTypes = args.map { argument in
                     driver.inferExpr(argument.expr, ctx: ctx, locals: &locals, expectedType: nil)
                 }
                 return elementTypes.isEmpty ? sema.types.anyType : sema.types.lub(elementTypes)
             }
-            let generateSequenceName = interner.intern("generateSequence")
-            if name == generateSequenceName, let firstArg = args.first {
+            if calleeName == "generateSequence", let firstArg = args.first {
                 return driver.inferExpr(firstArg.expr, ctx: ctx, locals: &locals, expectedType: nil)
             }
             return directElementType
