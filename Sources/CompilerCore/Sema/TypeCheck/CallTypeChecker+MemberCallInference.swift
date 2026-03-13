@@ -539,7 +539,7 @@ extension CallTypeChecker {
                     case "filter":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "takeWhile", "dropWhile":
-                        resultType = receiverType
+                        resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
                     case "forEach": resultType = sema.types.unitType
                     case "onEach": resultType = receiverType
                     case "flatMap":
