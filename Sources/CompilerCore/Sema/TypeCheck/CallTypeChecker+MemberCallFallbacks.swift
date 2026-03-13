@@ -325,6 +325,8 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("maxOrNull"),
             interner.intern("minOrNull"),
+            interner.intern("onEach"),
+            interner.intern("onEachIndexed"),
             interner.intern("asSequence"),
             interner.intern("toList"),
             interner.intern("toTypedArray"),
@@ -371,6 +373,7 @@ extension CallTypeChecker {
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
+            interner.intern("onEach"), interner.intern("onEachIndexed"),
             interner.intern("filterIsInstance"),
         ]
         if memberName == interner.intern("mapValues") ||
@@ -403,7 +406,7 @@ extension CallTypeChecker {
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
-             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"),
+             interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"):
             return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
@@ -456,6 +459,16 @@ extension CallTypeChecker {
 
         if memberName == interner.intern("forEach") || memberName == interner.intern("forEachIndexed") {
             return sema.types.unitType
+        }
+
+        if (memberName == interner.intern("onEach") || memberName == interner.intern("onEachIndexed")),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
         }
 
         if memberName == interner.intern("find") {
@@ -584,6 +597,7 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
+            interner.intern("onEach"),
         ]
         if memberName == mapValues || memberName == mapKeys {
             guard isMapReceiver, argCount == 1 else {
@@ -605,8 +619,10 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == interner.intern("forEachIndexed") || memberName == interner.intern("mapIndexed"), argCount == 1 {
-            let lambdaReturnType = memberName == interner.intern("forEachIndexed") ? sema.types.unitType : sema.types.anyType
+        if memberName == interner.intern("forEachIndexed") || memberName == interner.intern("mapIndexed") || memberName == interner.intern("onEachIndexed"), argCount == 1 {
+            let lambdaReturnType = memberName == interner.intern("forEachIndexed") || memberName == interner.intern("onEachIndexed")
+                ? sema.types.unitType
+                : sema.types.anyType
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType, receiverElementType],
                 returnType: lambdaReturnType,
