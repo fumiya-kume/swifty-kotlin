@@ -9,8 +9,10 @@ private struct DelegateRuntimeNames {
     let observableGetValue: InternedString
     let vetoableGetValue: InternedString
     let customGetValue: InternedString
+    let notNullGetValue: InternedString
     let observableSetValue: InternedString
     let vetoableSetValue: InternedString
+    let notNullSetValue: InternedString
     let customSetValue: InternedString
 
     init(interner: StringInterner) {
@@ -20,8 +22,10 @@ private struct DelegateRuntimeNames {
         observableGetValue = interner.intern("kk_observable_get_value")
         vetoableGetValue = interner.intern("kk_vetoable_get_value")
         customGetValue = interner.intern("kk_custom_delegate_get_value")
+        notNullGetValue = interner.intern("kk_notNull_get_value")
         observableSetValue = interner.intern("kk_observable_set_value")
         vetoableSetValue = interner.intern("kk_vetoable_set_value")
+        notNullSetValue = interner.intern("kk_notNull_set_value")
         customSetValue = interner.intern("kk_custom_delegate_set_value")
     }
 }
@@ -329,6 +333,7 @@ extension KIRLoweringDriver {
         case .lazy: names.lazyGetValue
         case .observable: names.observableGetValue
         case .vetoable: names.vetoableGetValue
+        case .notNull: names.notNullGetValue
         case .custom, nil: names.customGetValue
         }
         let arguments: [KIRExprID] = if kindMap[propSym] == .custom || kindMap[propSym] == nil {
@@ -365,6 +370,7 @@ extension KIRLoweringDriver {
         let name: InternedString = switch kind {
         case .observable: names.observableSetValue
         case .vetoable: names.vetoableSetValue
+        case .notNull: names.notNullSetValue
         case .custom, nil: names.customSetValue
         case .lazy: preconditionFailure("lazy delegate setValue is not supported")
         }
@@ -488,6 +494,7 @@ extension KIRLoweringDriver {
         let lazyID = interner.intern("lazy")
         let observableID = interner.intern("observable")
         let vetoableID = interner.intern("vetoable")
+        let notNullID = interner.intern("notNull")
         switch expr {
         case let .nameRef(name, _):
             if name == lazyID { return .lazy }
@@ -498,6 +505,7 @@ extension KIRLoweringDriver {
                 case let .nameRef(name, _):
                     if name == observableID { return .observable }
                     if name == vetoableID { return .vetoable }
+                    if name == notNullID { return .notNull }
                     if name == lazyID { return .lazy }
                 default: break
                 }
@@ -506,6 +514,7 @@ extension KIRLoweringDriver {
         case let .memberCall(_, callee, _, _, _):
             if callee == observableID { return .observable }
             if callee == vetoableID { return .vetoable }
+            if callee == notNullID { return .notNull }
             return .custom
         default:
             return .custom
@@ -518,13 +527,16 @@ extension KIRLoweringDriver {
         guard let expr = ast.arena.expr(callee) else { return .custom }
         let observableID = interner.intern("observable")
         let vetoableID = interner.intern("vetoable")
+        let notNullID = interner.intern("notNull")
         switch expr {
         case let .memberCall(_, name, _, _, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
+            if name == notNullID { return .notNull }
         case let .nameRef(name, _):
             if name == observableID { return .observable }
             if name == vetoableID { return .vetoable }
+            if name == notNullID { return .notNull }
         default: break
         }
         return .custom

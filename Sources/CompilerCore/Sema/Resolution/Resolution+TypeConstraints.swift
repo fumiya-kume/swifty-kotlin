@@ -283,6 +283,21 @@ extension OverloadResolver {
                 }
                 return result
             }
+            if case let .classType(subClass) = subtypeKind,
+               let liftedSubtype = liftClassType(
+                   subClass,
+                   to: superClass.classSymbol,
+                   typeSystem: typeSystem
+               )
+            {
+                return decomposeSubtypeConstraint(
+                    subtype: liftedSubtype,
+                    supertype: supertype,
+                    typeVarBySymbol: typeVarBySymbol,
+                    typeSystem: typeSystem,
+                    blameRange: blameRange
+                )
+            }
             // Different class symbols or mismatched arity – fall through to
             // simple constraint which will use isSubtype.
         }
@@ -365,6 +380,123 @@ extension OverloadResolver {
             right: .type(supertype),
             blameRange: blameRange
         )]
+    }
+
+    func liftClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem
+    ) -> TypeID? {
+        guard subtype.classSymbol != targetSymbol else {
+            return nil
+        }
+        return liftClassType(subtype, to: targetSymbol, typeSystem: typeSystem, visited: [])
+    }
+
+    private func liftClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem,
+        visited: Set<SymbolID>
+    ) -> TypeID? {
+        var visited = visited
+        guard visited.insert(subtype.classSymbol).inserted else {
+            return nil
+        }
+        guard typeSystem.isNominalSubtypeSymbol(subtype.classSymbol, of: targetSymbol) else {
+            return nil
+        }
+        if let directLift = liftDirectClassType(subtype, to: targetSymbol, typeSystem: typeSystem) {
+            return directLift
+        }
+        for directSupertype in typeSystem.directNominalSupertypes(for: subtype.classSymbol) {
+            guard let directLift = liftDirectClassType(subtype, to: directSupertype, typeSystem: typeSystem),
+                  case let .classType(liftedClassType) = typeSystem.kind(of: directLift)
+            else {
+                continue
+            }
+            if let transitiveLift = liftClassType(
+                liftedClassType,
+                to: targetSymbol,
+                typeSystem: typeSystem,
+                visited: visited
+            ) {
+                return transitiveLift
+            }
+        }
+        return nil
+    }
+
+    private func liftDirectClassType(
+        _ subtype: ClassType,
+        to targetSymbol: SymbolID,
+        typeSystem: TypeSystem
+    ) -> TypeID? {
+        let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: targetSymbol)
+        if mappedArgs.isEmpty {
+            guard typeSystem.nominalTypeParameterSymbols(for: targetSymbol).isEmpty else {
+                return nil
+            }
+            return typeSystem.make(.classType(ClassType(
+                classSymbol: targetSymbol,
+                args: [],
+                nullability: subtype.nullability
+            )))
+        }
+        let substitutedArgs = mappedArgs.map {
+            substituteChildTypeArg(
+                $0,
+                childSymbol: subtype.classSymbol,
+                childArgs: subtype.args,
+                typeSystem: typeSystem
+            )
+        }
+        return typeSystem.make(.classType(ClassType(
+            classSymbol: targetSymbol,
+            args: substitutedArgs,
+            nullability: subtype.nullability
+        )))
+    }
+
+    func substituteChildTypeArg(
+        _ arg: TypeArg,
+        childSymbol: SymbolID,
+        childArgs: [TypeArg],
+        typeSystem: TypeSystem
+    ) -> TypeArg {
+        switch arg {
+        case let .invariant(type):
+            .invariant(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case let .out(type):
+            .out(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case let .in(type):
+            .in(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
+        case .star:
+            .star
+        }
+    }
+
+    func substituteChildTypeParam(
+        _ type: TypeID,
+        childSymbol: SymbolID,
+        childArgs: [TypeArg],
+        typeSystem: TypeSystem
+    ) -> TypeID {
+        guard case let .typeParam(typeParam) = typeSystem.kind(of: type) else {
+            return type
+        }
+        let childTypeParams = typeSystem.nominalTypeParameterSymbols(for: childSymbol)
+        guard let index = childTypeParams.firstIndex(of: typeParam.symbol),
+              index < childArgs.count
+        else {
+            return type
+        }
+        switch childArgs[index] {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            return inner
+        case .star:
+            return typeSystem.nullableAnyType
+        }
     }
 
     /// Decomposes a pair of type arguments into constraints respecting variance.

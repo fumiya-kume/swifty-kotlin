@@ -49,12 +49,6 @@ extension CallLowerer {
             receiverExpr,
             shared: shared, emit: &instructions
         )
-        let loweredArgIDs = args.map { argument in
-            driver.lowerExpr(
-                argument.expr,
-                shared: shared, emit: &instructions
-            )
-        }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
         let safeReceiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
         let nonNullSafeReceiverType = sema.types.makeNonNullable(safeReceiverType)
@@ -67,6 +61,66 @@ extension CallLowerer {
             interner.intern("invoke")
         } else {
             calleeName
+        }
+
+        // Boolean safe calls: return null on null receiver and only evaluate
+        // arguments on the non-null path.
+        if sema.types.isSubtype(nonNullSafeReceiverType, sema.types.booleanType) {
+            let calleeStr = interner.resolve(effectiveCalleeName)
+            let boolCallee: InternedString? = switch calleeStr {
+            case "not" where args.isEmpty:
+                interner.intern("kk_op_not")
+            case "and" where args.count == 1:
+                interner.intern("kk_bitwise_and")
+            case "or" where args.count == 1:
+                interner.intern("kk_bitwise_or")
+            case "xor" where args.count == 1:
+                interner.intern("kk_bitwise_xor")
+            default:
+                nil
+            }
+            if let boolCallee {
+                let nonNullLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: nonNullLabel))
+                let nullableBooleanType = sema.types.makeNullable(sema.types.booleanType)
+                let nullValue = arena.appendExpr(.unit, type: nullableBooleanType)
+                instructions.append(.constValue(result: nullValue, value: .null))
+                let nullableResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nullableBooleanType)
+                instructions.append(.copy(from: nullValue, to: nullableResult))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(nonNullLabel))
+                let nonNullResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.booleanType)
+                let argumentIDs: [KIRExprID]
+                if args.isEmpty {
+                    argumentIDs = []
+                } else {
+                    argumentIDs = [
+                        driver.lowerExpr(
+                            args[0].expr,
+                            shared: shared, emit: &instructions
+                        ),
+                    ]
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: boolCallee,
+                    arguments: [loweredReceiverID] + argumentIDs,
+                    result: nonNullResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                instructions.append(.copy(from: nonNullResult, to: nullableResult))
+                instructions.append(.label(endLabel))
+                return nullableResult
+            }
+        }
+
+        let loweredArgIDs = args.map { argument in
+            driver.lowerExpr(
+                argument.expr,
+                shared: shared, emit: &instructions
+            )
         }
 
         // Primitive member function: Int/Long/UInt/ULong.inv() → kk_op_inv (P5-103, TYPE-005)
@@ -133,23 +187,37 @@ extension CallLowerer {
             }
         }
 
-        // Primitive member function: Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
+        // Primitive member function: Int/Long.toString() → kk_any_to_string
+        // and Int/Long.toString(radix: Int) → kk_int_toString_radix (EXPR-003)
         if interner.resolve(effectiveCalleeName) == "toString",
-           args.count == 1
+           args.count <= 1
         {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if nonNullReceiverType == intType || nonNullReceiverType == longType {
-                instructions.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_int_toString_radix"),
-                    arguments: [loweredReceiverID, loweredArgIDs[0]],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                if args.isEmpty {
+                    let tagID = arena.appendExpr(.intLiteral(1), type: intType)
+                    instructions.append(.constValue(result: tagID, value: .intLiteral(1)))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_any_to_string"),
+                        arguments: [loweredReceiverID, tagID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_int_toString_radix"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
                 return result
             }
         }
