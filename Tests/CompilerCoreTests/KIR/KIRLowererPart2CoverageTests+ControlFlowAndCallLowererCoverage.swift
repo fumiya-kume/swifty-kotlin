@@ -164,6 +164,7 @@ extension KIRLowererPart2CoverageTests {
             exceptionTypeSlot: exceptionTypeSlot,
             thrownTarget: 999,
             sema: fixture.sema,
+            interner: fixture.interner,
             arena: fixture.kirArena,
             emit: &emitted
         )
