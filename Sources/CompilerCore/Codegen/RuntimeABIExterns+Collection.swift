@@ -23,6 +23,10 @@ public extension RuntimeABIExterns {
         kk_set_contains,
         kk_set_containsAll,
         kk_set_is_empty,
+        kk_set_toList,
+        kk_set_intersect,
+        kk_set_union,
+        kk_set_subtract,
         kk_set_to_string,
         kk_list_map,
         kk_list_filter,
@@ -138,6 +142,8 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_string_builder_append,
         kk_builder_list_add,
+        kk_list_firstOrNull,
+        kk_list_lastOrNull,
         kk_mutable_list_add,
         kk_mutable_list_addAll,
         kk_mutable_list_removeAll,
@@ -289,6 +295,30 @@ public extension RuntimeABIExterns {
     static let kk_set_is_empty = ExternDecl(
         name: "kk_set_is_empty",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_toList = ExternDecl(
+        name: "kk_set_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_intersect = ExternDecl(
+        name: "kk_set_intersect",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_union = ExternDecl(
+        name: "kk_set_union",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_subtract = ExternDecl(
+        name: "kk_set_subtract",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -870,6 +900,19 @@ public extension RuntimeABIExterns {
     static let kk_list_partition = ExternDecl(
         name: "kk_list_partition",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-210: firstOrNull / lastOrNull (no-predicate)
+    static let kk_list_firstOrNull = ExternDecl(
+        name: "kk_list_firstOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_lastOrNull = ExternDecl(
+        name: "kk_list_lastOrNull",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

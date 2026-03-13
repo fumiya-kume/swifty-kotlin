@@ -265,8 +265,8 @@ extension CallTypeChecker {
             calleeName,
             argCount: args.count,
             isMapReceiver: isMapReceiver,
-            isMutableListReceiver: isMutableListReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
+            isMutableListReceiver: isMutableListReceiver,
             interner: interner
         )
         else {
@@ -430,11 +430,16 @@ extension CallTypeChecker {
             interner.intern("sortedWith"),
             interner.intern("partition"),
             interner.intern("filterIsInstance"),
+            interner.intern("firstOrNull"),
+            interner.intern("lastOrNull"),
         ]
         let mutableListOnlyMembers: Set = [
             interner.intern("sort"),
             interner.intern("sortBy"),
             interner.intern("sortByDescending"),
+            interner.intern("addAll"),
+            interner.intern("removeAll"),
+            interner.intern("retainAll"),
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
@@ -487,8 +492,8 @@ extension CallTypeChecker {
         _ memberName: InternedString,
         argCount: Int,
         isMapReceiver: Bool,
-        isMutableListReceiver: Bool,
         isMutableMapReceiver: Bool,
+        isMutableListReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
@@ -497,7 +502,7 @@ extension CallTypeChecker {
              interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("reversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
-             interner.intern("sort"):
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"):
             return argCount == 0
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
@@ -519,6 +524,8 @@ extension CallTypeChecker {
             return isMapReceiver && argCount == 1
         case knownNames.getOrPut:
             return isMutableMapReceiver && argCount == 2
+        case interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"):
+            return isMutableListReceiver && argCount == 1
         case knownNames.putAll:
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
@@ -555,7 +562,8 @@ extension CallTypeChecker {
         let boolReturningMembers: Set = [
             knownNames.isEmpty, interner.intern("contains"), interner.intern("containsAll"),
             interner.intern("containsKey"),
-            interner.intern("any"), interner.intern("none"), interner.intern("all")
+            interner.intern("any"), interner.intern("none"), interner.intern("all"),
+            interner.intern("addAll"), interner.intern("removeAll"), interner.intern("retainAll"),
         ]
         if boolReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.boolean, .nonNull))
@@ -623,8 +631,12 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == interner.intern("maxOrNull") || memberName == interner.intern("minOrNull")
-            || memberName == interner.intern("maxByOrNull") || memberName == interner.intern("minByOrNull")
+        if memberName == interner.intern("maxOrNull")
+            || memberName == interner.intern("minOrNull")
+            || memberName == interner.intern("maxByOrNull")
+            || memberName == interner.intern("minByOrNull")
+            || memberName == interner.intern("firstOrNull")
+            || memberName == interner.intern("lastOrNull")
         {
             return sema.types.makeNullable(receiverElementType)
         }

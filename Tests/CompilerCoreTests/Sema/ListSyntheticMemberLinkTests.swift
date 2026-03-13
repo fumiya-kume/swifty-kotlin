@@ -79,6 +79,54 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testListFirstOrNullAndLastOrNullReturnNullableElementsWithoutCollectionMarking() throws {
+        let source = """
+        fun probe(values: List<Int>) {
+            values.firstOrNull()
+            values.lastOrNull()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedMembers = [
+                "firstOrNull": "kk_list_firstOrNull",
+                "lastOrNull": "kk_list_lastOrNull",
+            ]
+            let nullableIntType = sema.types.makeNullable(sema.types.intType)
+
+            for (memberName, externalLinkName) in expectedMembers {
+                let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let chosenCallee = try XCTUnwrap(
+                    sema.bindings.callBinding(for: callExpr)?.chosenCallee,
+                    "Expected call binding for \(memberName)"
+                )
+
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: chosenCallee),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    nullableIntType,
+                    "Expected \(memberName) to return a nullable element type"
+                )
+                XCTAssertFalse(
+                    sema.bindings.isCollectionExpr(callExpr),
+                    "Expected \(memberName) result to avoid collection-expression marking"
+                )
+            }
+        }
+    }
+
     func testListMaxOrNullAndMinOrNullRequireComparableElements() throws {
         let source = """
         class Box
@@ -140,6 +188,9 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         let source = """
         fun mutate(values: MutableList<Int>) {
             values.add(1)
+            values.addAll(listOf(2, 3))
+            values.removeAll(listOf(4))
+            values.retainAll(listOf(5))
             values.removeAt(0)
             values.clear()
         }
@@ -154,20 +205,85 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
 
             let expectedExternalLinks = [
                 "add": "kk_mutable_list_add",
+                "addAll": "kk_mutable_list_addAll",
+                "removeAll": "kk_mutable_list_removeAll",
+                "retainAll": "kk_mutable_list_retainAll",
                 "removeAt": "kk_mutable_list_removeAt",
                 "clear": "kk_mutable_list_clear",
             ]
 
             for (memberName, externalLinkName) in expectedExternalLinks {
+                _ = try XCTUnwrap(firstExprID(in: ast) { _, expr in
+                    guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
+                    return ctx.interner.resolve(callee) == memberName
+                }, "Expected member call to \(memberName) in AST")
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("collections"),
+                            ctx.interner.intern("MutableList"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+                XCTAssertEqual(
+                    sema.symbols.externalLinkName(for: symbolID),
+                    externalLinkName,
+                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                )
+            }
+        }
+    }
+
+    func testMutableListBulkMutationFallbacksReturnBoolean() throws {
+        let source = """
+        fun mutate(): Boolean {
+            val values = listOf(1, 2, 3).toMutableList()
+            return values.addAll(listOf(4))
+                || values.removeAll(listOf(5))
+                || values.retainAll(listOf(1, 2))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
                 let callExpr = try XCTUnwrap(firstExprID(in: ast) { _, expr in
                     guard case let .memberCall(_, callee, _, _, _) = expr else { return false }
                     return ctx.interner.resolve(callee) == memberName
                 }, "Expected member call to \(memberName) in AST")
-                let chosenCallee = try XCTUnwrap(sema.bindings.callBinding(for: callExpr)?.chosenCallee)
+                let symbolID = try XCTUnwrap(
+                    sema.symbols.lookup(
+                        fqName: [
+                            ctx.interner.intern("kotlin"),
+                            ctx.interner.intern("collections"),
+                            ctx.interner.intern("MutableList"),
+                            ctx.interner.intern(memberName),
+                        ]
+                    ),
+                    "Expected synthetic MutableList member \(memberName) to be registered"
+                )
+
                 XCTAssertEqual(
-                    sema.symbols.externalLinkName(for: chosenCallee),
-                    externalLinkName,
-                    "Expected \(memberName) to resolve to \(externalLinkName)"
+                    sema.symbols.externalLinkName(for: symbolID),
+                    "kk_mutable_list_\(memberName)",
+                    "Expected \(memberName) to resolve to runtime extern"
+                )
+                XCTAssertEqual(
+                    sema.bindings.exprTypes[callExpr],
+                    sema.types.booleanType,
+                    "Expected \(memberName) to return Boolean"
+                )
+                XCTAssertFalse(
+                    sema.bindings.isCollectionExpr(callExpr),
+                    "Expected \(memberName) result to remain a scalar Boolean"
                 )
             }
         }
