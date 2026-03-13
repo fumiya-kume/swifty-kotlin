@@ -32,6 +32,7 @@ public enum BuilderDSLKind: Equatable {
     case buildString
     case buildList
     case buildMap
+    case buildSet
 }
 
 /// Identifies the kind of scope function (STDLIB-004).

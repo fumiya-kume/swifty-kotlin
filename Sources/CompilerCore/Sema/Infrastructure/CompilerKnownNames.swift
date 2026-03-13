@@ -104,6 +104,7 @@ struct KnownCompilerNames {
     let vetoable: InternedString
     let buildList: InternedString
     let buildMap: InternedString
+    let buildSet: InternedString
     let buildString: InternedString
     let className: InternedString
     let isInitialized: InternedString
@@ -195,6 +196,7 @@ struct KnownCompilerNames {
         vetoable = interner.intern("vetoable")
         buildList = interner.intern("buildList")
         buildMap = interner.intern("buildMap")
+        buildSet = interner.intern("buildSet")
         buildString = interner.intern("buildString")
         className = interner.intern("class")
         isInitialized = interner.intern("isInitialized")

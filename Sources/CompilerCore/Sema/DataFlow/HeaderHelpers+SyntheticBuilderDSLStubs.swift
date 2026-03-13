@@ -21,10 +21,14 @@ extension DataFlowSemaPhase {
         let mutableListName = interner.intern("MutableList")
         let mapName = interner.intern("Map")
         let mutableMapName = interner.intern("MutableMap")
+        let setName = interner.intern("Set")
+        let mutableSetName = interner.intern("MutableSet")
         guard let listSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [listName]),
               let mutableListSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mutableListName]),
               let mapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mapName]),
-              let mutableMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mutableMapName])
+              let mutableMapSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mutableMapName]),
+              let setSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [setName]),
+              let mutableSetSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mutableSetName])
         else {
             return
         }
@@ -45,6 +49,7 @@ extension DataFlowSemaPhase {
             mapSymbol: mapSymbol,
             mutableMapSymbol: mutableMapSymbol
         )
+        registerSyntheticBuildSetStub(symbols: symbols, types: types, interner: interner, kotlinCollectionsPkg: kotlinCollectionsPkg, setSymbol: setSymbol, mutableSetSymbol: mutableSetSymbol)
     }
 
     private func registerSyntheticBuildListStub(
@@ -195,6 +200,29 @@ extension DataFlowSemaPhase {
             ),
             for: buildListSymbol
         )
+    }
+
+    private func registerSyntheticBuildSetStub(symbols: SymbolTable, types: TypeSystem, interner: StringInterner, kotlinCollectionsPkg: [InternedString], setSymbol: SymbolID, mutableSetSymbol: SymbolID) {
+        let buildSetName = interner.intern("buildSet")
+        let buildSetFQName = kotlinCollectionsPkg + [buildSetName]
+        let existingBuildSet = symbols.lookupAll(fqName: buildSetFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID), symbol.kind == .function, let signature = symbols.functionSignature(for: symbolID) else { return false }
+            return signature.parameterTypes.count == 1 && signature.typeParameterSymbols.count == 1 && signature.receiverType == nil
+        }
+        if existingBuildSet { return }
+        let eName = interner.intern("E")
+        let eSymbol = symbols.define(kind: .typeParameter, name: eName, fqName: buildSetFQName + [eName], declSite: nil, visibility: .private, flags: [])
+        let eType = types.make(.typeParam(TypeParamType(symbol: eSymbol, nullability: .nonNull)))
+        let mutableSetOfEType = types.make(.classType(ClassType(classSymbol: mutableSetSymbol, args: [.invariant(eType)], nullability: .nonNull)))
+        let setOfEType = types.make(.classType(ClassType(classSymbol: setSymbol, args: [.out(eType)], nullability: .nonNull)))
+        let builderActionType = types.make(.functionType(FunctionType(receiver: mutableSetOfEType, params: [], returnType: types.unitType, isSuspend: false, nullability: .nonNull)))
+        let builderActionName = interner.intern("builderAction")
+        let builderActionSymbol = symbols.define(kind: .valueParameter, name: builderActionName, fqName: buildSetFQName + [builderActionName], declSite: nil, visibility: .private, flags: [.synthetic])
+        let buildSetSymbol = symbols.define(kind: .function, name: buildSetName, fqName: buildSetFQName, declSite: nil, visibility: .public, flags: [.synthetic])
+        if let packageSymbol = symbols.lookup(fqName: kotlinCollectionsPkg) { symbols.setParentSymbol(packageSymbol, for: buildSetSymbol) }
+        symbols.setParentSymbol(buildSetSymbol, for: eSymbol)
+        symbols.setParentSymbol(buildSetSymbol, for: builderActionSymbol)
+        symbols.setFunctionSignature(FunctionSignature(parameterTypes: [builderActionType], returnType: setOfEType, isSuspend: false, valueParameterSymbols: [builderActionSymbol], valueParameterHasDefaultValues: [false], valueParameterIsVararg: [false], typeParameterSymbols: [eSymbol], classTypeParameterCount: 0), for: buildSetSymbol)
     }
 
     private func registerSyntheticBuildMapStub(

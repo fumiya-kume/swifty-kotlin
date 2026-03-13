@@ -15,6 +15,8 @@ extension CallTypeChecker {
             return .buildList
         case knownNames.buildMap:
             return .buildMap
+        case knownNames.buildSet:
+            return .buildSet
         default:
             return nil
         }
@@ -104,6 +106,11 @@ extension CallTypeChecker {
                 args: [.invariant(keyType), .invariant(valueType)],
                 nullability: .nonNull
             )))
+        case .buildSet:
+            let elementType = builderDSLSetElementType(lambdaExprID: lambdaExprID, expectedType: expectedType, ctx: ctx, locals: locals, sema: sema, interner: interner)
+            let mutableSetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("MutableSet")]
+            guard let mutableSetSymbol = sema.symbols.lookup(fqName: mutableSetFQName) else { return sema.types.anyType }
+            return sema.types.make(.classType(ClassType(classSymbol: mutableSetSymbol, args: [.invariant(elementType)], nullability: .nonNull)))
         }
     }
 
@@ -253,7 +260,7 @@ extension CallTypeChecker {
         switch kind {
         case .buildString:
             return .unary([])
-        case .buildList:
+        case .buildList, .buildSet:
             let argumentTypes = unaryArgumentExprs.compactMap { exprID -> TypeID? in
                 let inferredType = driver.inferExpr(exprID, ctx: ctx, locals: &previewLocals)
                 return inferredType == sema.types.errorType ? nil : inferredType
@@ -290,7 +297,7 @@ extension CallTypeChecker {
             if case let .nameRef(name, _) = ast.arena.expr(callee),
                isMatchingBuilderDSLFunctionName(interner.resolve(name), kind: kind)
             {
-                if kind == .buildList, let first = args.first {
+                if (kind == .buildList || kind == .buildSet), let first = args.first {
                     unary.append(first.expr)
                 } else if kind == .buildMap, args.count >= 2 {
                     keyed.append((args[0].expr, args[1].expr))
@@ -304,7 +311,7 @@ extension CallTypeChecker {
             if isMatchingBuilderDSLFunctionName(interner.resolve(callee), kind: kind),
                case .thisRef = ast.arena.expr(receiver)
             {
-                if kind == .buildList, let first = args.first {
+                if (kind == .buildList || kind == .buildSet), let first = args.first {
                     unary.append(first.expr)
                 } else if kind == .buildMap, args.count >= 2 {
                     keyed.append((args[0].expr, args[1].expr))
@@ -379,7 +386,7 @@ extension CallTypeChecker {
         switch kind {
         case .buildString:
             name == "append"
-        case .buildList:
+        case .buildList, .buildSet:
             name == "add"
         case .buildMap:
             name == "put"
@@ -459,6 +466,37 @@ extension CallTypeChecker {
             args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    /// Returns `Set<E>` for `buildSet` where E is extracted from `MutableSet<E>` receiver type.
+    func builderDSLBuildSetReturnType(receiverType: TypeID, sema: SemaModule, interner: StringInterner) -> TypeID {
+        let mutableSetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("MutableSet")]
+        let setFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("collections"), interner.intern("Set")]
+        guard let mutableSetSymbol = sema.symbols.lookup(fqName: mutableSetFQName),
+              let setSymbol = sema.symbols.lookup(fqName: setFQName) else { return sema.types.anyType }
+        let elementType: TypeID = if case let .classType(ct) = sema.types.kind(of: receiverType),
+                                     ct.classSymbol == mutableSetSymbol, let firstArg = ct.args.first,
+                                     case let .invariant(elemType) = firstArg { elemType } else { sema.types.anyType }
+        return sema.types.make(.classType(ClassType(classSymbol: setSymbol, args: [.out(elementType)], nullability: .nonNull)))
+    }
+
+    private func builderDSLSetElementType(lambdaExprID: ExprID, expectedType: TypeID?, ctx: TypeInferenceContext, locals: LocalBindings, sema: SemaModule, interner: StringInterner) -> TypeID {
+        if let expectedElementType = builderDSLExpectedSetElementType(expectedType, sema: sema, interner: interner) { return expectedElementType }
+        guard case let .unary(argumentTypes) = builderDSLArgumentShape(kind: .buildSet, lambdaExprID: lambdaExprID, ctx: ctx, locals: locals, sema: sema, interner: interner), !argumentTypes.isEmpty else { return sema.types.anyType }
+        return sema.types.lub(argumentTypes)
+    }
+
+    private func builderDSLExpectedSetElementType(_ expectedType: TypeID?, sema: SemaModule, interner: StringInterner) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let expectedType else { return nil }
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(expectedType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              symbol.fqName == knownNames.kotlinCollectionsSetFQName || symbol.fqName == knownNames.kotlinCollectionsMutableSetFQName,
+              let firstArg = classType.args.first else { return nil }
+        switch firstArg {
+        case let .invariant(type), let .out(type), let .in(type): return type
+        case .star: return sema.types.anyType
+        }
     }
 
     func ensureSyntheticStringBuilderType(

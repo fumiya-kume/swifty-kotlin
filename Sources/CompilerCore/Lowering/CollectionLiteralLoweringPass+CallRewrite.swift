@@ -355,6 +355,7 @@ extension CollectionLiteralLoweringPass {
                         case lookup.buildListName:
                             arguments.count == 2 ? lookup.kkBuildListWithCapacityName : lookup.kkBuildListName
                         case lookup.buildMapName: lookup.kkBuildMapName
+                        case lookup.buildSetName: lookup.kkBuildSetName
                         default: callee
                         }
                         let builderResult = module.arena.appendExpr(
@@ -376,6 +377,10 @@ extension CollectionLiteralLoweringPass {
                             mapExprIDs.insert(result.rawValue)
                             mapExprIDs.insert(builderResult.rawValue)
                         }
+                        if callee == lookup.buildSetName, let result {
+                            setExprIDs.insert(result.rawValue)
+                            setExprIDs.insert(builderResult.rawValue)
+                        }
                         if let result {
                             loweredBody.append(.copy(from: builderResult, to: result))
                         }
@@ -391,6 +396,8 @@ extension CollectionLiteralLoweringPass {
                             rewrittenCallee = lookup.kkStringBuilderAppendName
                         } else if builderCallee == lookup.buildListName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderListAddName
+                        } else if builderCallee == lookup.buildSetName, callee == lookup.addName, arguments.count == 1 {
+                            rewrittenCallee = lookup.kkBuilderSetAddName
                         } else if builderCallee == lookup.buildMapName, callee == lookup.putName, arguments.count == 2 {
                             rewrittenCallee = lookup.kkBuilderMapPutName
                         }
