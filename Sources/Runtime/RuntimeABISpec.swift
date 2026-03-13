@@ -2028,6 +2028,30 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Delegate"
         ),
+        // NotNull
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_create",
+            parameters: [],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_get_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_notNull_set_value",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "newValue", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Delegate"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_custom_delegate_create",
             parameters: [
