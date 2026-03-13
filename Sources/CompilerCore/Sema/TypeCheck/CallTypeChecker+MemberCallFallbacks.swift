@@ -609,7 +609,10 @@ extension CallTypeChecker {
             return sema.types.anyType
         }
 
-        if memberName == knownNames.getOrDefault || memberName == knownNames.getOrElse || memberName == knownNames.getOrPut {
+        if memberName == knownNames.getOrDefault
+            || memberName == knownNames.getOrPut
+            || (memberName == knownNames.getOrElse && isMapReceiver)
+        {
             if case let .classType(classType) = sema.types.kind(of: receiverElementType),
                classType.args.count >= 2
             {

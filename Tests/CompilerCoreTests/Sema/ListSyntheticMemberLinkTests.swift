@@ -129,6 +129,35 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testCollectionFallbackLoweringUsesRuntimeCalleesForNullableLookups() throws {
+        let source = """
+        fun firstValue(values: Collection<Int>): Int? = values.firstOrNull()
+        fun lastValue(values: Collection<Int>): Int? = values.lastOrNull()
+        fun fallbackValue(values: Collection<Int>): Int = values.getOrElse(0) { -1 }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let expectedCallees = [
+                "firstValue": "kk_list_firstOrNull",
+                "lastValue": "kk_list_lastOrNull",
+                "fallbackValue": "kk_list_getOrElse",
+            ]
+
+            for (functionName, calleeName) in expectedCallees {
+                let body = try findKIRFunctionBody(named: functionName, in: module, interner: ctx.interner)
+                let callees = extractCallees(from: body, interner: ctx.interner)
+                XCTAssertTrue(
+                    callees.contains(calleeName),
+                    "Expected \(functionName) to lower through \(calleeName), got \(callees)"
+                )
+            }
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {
@@ -243,6 +272,32 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testMutableListBulkMutationMembersUseInvariantReceiverTypes() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let interner = ctx.interner
+            let ownerFQName = [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("MutableList"),
+            ]
+
+            for memberName in ["addAll", "removeAll", "retainAll"] {
+                let symbolID = try XCTUnwrap(sema.symbols.lookup(fqName: ownerFQName + [interner.intern(memberName)]))
+                let signature = try XCTUnwrap(sema.symbols.functionSignature(for: symbolID))
+                guard case let .classType(receiverType) = sema.types.kind(of: try XCTUnwrap(signature.receiverType)) else {
+                    return XCTFail("Expected \(memberName) to use MutableList receiver type")
+                }
+                guard case .invariant = try XCTUnwrap(receiverType.args.first) else {
+                    return XCTFail("Expected \(memberName) receiver projection to remain invariant")
+                }
+            }
+        }
+    }
+
     func testMutableListBulkCollectionMembersAcceptCollectionOfSameElementType() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {
@@ -315,7 +370,6 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             )
         }
     }
-
     /// Regression: listOf(...).contains/isEmpty must not emit KSWIFTK-SEMA-VAR-OUT.
     /// The synthetic List type uses .out projection; variance relaxation must apply.
     func testListOfContainsAndIsEmptyDoNotEmitVarOut() throws {

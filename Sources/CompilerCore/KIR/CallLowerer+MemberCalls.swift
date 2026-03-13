@@ -2447,6 +2447,10 @@ extension CallLowerer {
             return interner.intern("kk_list_indexOf")
         case "lastIndexOf":
             return interner.intern("kk_list_lastIndexOf")
+        case "firstOrNull":
+            return interner.intern("kk_list_firstOrNull")
+        case "lastOrNull":
+            return interner.intern("kk_list_lastOrNull")
         case "getOrNull":
             return interner.intern("kk_list_getOrNull")
         case "elementAtOrNull":
