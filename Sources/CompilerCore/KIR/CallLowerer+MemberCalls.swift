@@ -83,7 +83,8 @@ extension CallLowerer {
         "any", "none", "all",
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
-        "getOrDefault", "getOrElse", "getOrPut", "putAll",
+        "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
+        "putAll",
         "maxByOrNull", "minByOrNull",
         "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
@@ -1589,6 +1590,10 @@ extension CallLowerer {
                     "kk_list_lastIndexOf"
                 case "partition":
                     "kk_list_partition"
+                case "getOrNull":
+                    "kk_list_getOrNull"
+                case "elementAtOrNull":
+                    "kk_list_elementAtOrNull"
                 default:
                     nil
                 }
@@ -2596,6 +2601,12 @@ extension CallLowerer {
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            case "getOrNull":
+                return interner.intern("kk_list_getOrNull")
+            case "elementAtOrNull":
+                return interner.intern("kk_list_elementAtOrNull")
+            case "getOrElse":
+                return interner.intern("kk_list_getOrElse")
             default:
                 break
             }
@@ -2646,6 +2657,16 @@ extension CallLowerer {
             return interner.intern("kk_list_indexOf")
         case "lastIndexOf":
             return interner.intern("kk_list_lastIndexOf")
+        case "firstOrNull":
+            return interner.intern("kk_list_firstOrNull")
+        case "lastOrNull":
+            return interner.intern("kk_list_lastOrNull")
+        case "getOrNull":
+            return interner.intern("kk_list_getOrNull")
+        case "elementAtOrNull":
+            return interner.intern("kk_list_elementAtOrNull")
+        case "getOrElse":
+            return interner.intern("kk_list_getOrElse")
         default:
             break
         }

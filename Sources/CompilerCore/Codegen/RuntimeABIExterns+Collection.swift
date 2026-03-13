@@ -142,6 +142,9 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_string_builder_append,
         kk_builder_list_add,
+        kk_list_getOrNull,
+        kk_list_elementAtOrNull,
+        kk_list_getOrElse,
         kk_list_firstOrNull,
         kk_list_lastOrNull,
         kk_mutable_list_add,
@@ -903,6 +906,24 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-212: getOrNull / elementAtOrNull / getOrElse
+    static let kk_list_getOrNull = ExternDecl(
+        name: "kk_list_getOrNull",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_elementAtOrNull = ExternDecl(
+        name: "kk_list_elementAtOrNull",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_getOrElse = ExternDecl(
+        name: "kk_list_getOrElse",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
     /// STDLIB-210: firstOrNull / lastOrNull (no-predicate)
     static let kk_list_firstOrNull = ExternDecl(
         name: "kk_list_firstOrNull",

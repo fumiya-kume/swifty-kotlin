@@ -17,6 +17,22 @@ private func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
     return raw
 }
 
+// MARK: - List getOrElse (STDLIB-212)
+
+@_cdecl("kk_list_getOrElse")
+public func kk_list_getOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let list = runtimeListBox(from: listRaw),
+       list.elements.indices.contains(index)
+    {
+        return list.elements[index]
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, index, &thrown)
+    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    return result
+}
+
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {

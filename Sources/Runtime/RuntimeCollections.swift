@@ -223,6 +223,23 @@ public func kk_list_to_set(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
+// MARK: - List getOrNull / elementAtOrNull (STDLIB-212)
+
+@_cdecl("kk_list_getOrNull")
+public func kk_list_getOrNull(_ listRaw: Int, _ index: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          list.elements.indices.contains(index)
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements[index]
+}
+
+@_cdecl("kk_list_elementAtOrNull")
+public func kk_list_elementAtOrNull(_ listRaw: Int, _ index: Int) -> Int {
+    kk_list_getOrNull(listRaw, index)
+}
+
 // MARK: - STDLIB-210: List.firstOrNull() / lastOrNull()
 
 @_cdecl("kk_list_firstOrNull")
