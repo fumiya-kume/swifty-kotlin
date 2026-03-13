@@ -252,6 +252,24 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testBinarySearchIsRejectedForSetReceiver() throws {
+        let source = """
+        fun probe(values: Set<Int>): Int {
+            return values.binarySearch(2)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            XCTAssertTrue(
+                ctx.diagnostics.hasError,
+                "Expected Set.binarySearch to be rejected by collection fallback gating"
+            )
+        }
+    }
+
     func testListConversionMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun convert(values: List<Int>) {
