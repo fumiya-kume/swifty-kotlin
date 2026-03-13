@@ -1585,7 +1585,7 @@ extension CallTypeChecker {
                 let receiverTypeForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
-                if receiverTypeForCheck == sema.types.booleanType {
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.booleanType) {
                     let calleeStr = interner.resolve(calleeName)
                     if calleeStr == "not" && args.isEmpty {
                         let resultType = sema.types.booleanType

@@ -1197,16 +1197,24 @@ final class CallTypeChecker {
 
             // Boolean.not() / Boolean.and(other) / Boolean.or(other) / Boolean.xor(other) (STDLIB-308)
             if sema.types.isSubtype(nonNullReceiver, sema.types.booleanType) {
-                let boolMethodNames: Set = ["not", "and", "or", "xor"]
-                if boolMethodNames.contains(name) {
-                    if (name == "not" && args.isEmpty) || (name != "not" && args.count == 1) {
-                        for arg in args {
-                            _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
-                        }
-                        let resultType = sema.types.booleanType
-                        sema.bindings.bindExprType(id, type: resultType)
-                        return resultType
+                let resultType = sema.types.booleanType
+                let finalType = receiverType == nonNullReceiver
+                    ? resultType
+                    : sema.types.makeNullable(resultType)
+                switch name {
+                case "not" where args.isEmpty:
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                case "and" where args.count == 1,
+                     "or" where args.count == 1,
+                     "xor" where args.count == 1:
+                    for arg in args {
+                        _ = driver.inferExpr(arg.expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
                     }
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                default:
+                    break
                 }
             }
 

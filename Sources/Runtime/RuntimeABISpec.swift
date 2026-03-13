@@ -2090,6 +2090,14 @@ public enum RuntimeABISpec {
             section: "Bitwise"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_op_not",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_op_inv",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
