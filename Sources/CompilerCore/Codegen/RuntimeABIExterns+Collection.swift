@@ -17,6 +17,7 @@ public extension RuntimeABIExterns {
         kk_list_to_mutable_list,
         kk_list_joinToString,
         kk_list_to_set,
+        kk_list_toMap,
         kk_set_of,
         kk_set_size,
         kk_set_contains,
@@ -142,12 +143,15 @@ public extension RuntimeABIExterns {
         kk_mutable_list_sort,
         kk_mutable_list_sortBy,
         kk_mutable_list_sortByDescending,
+        kk_mutable_list_shuffle,
+        kk_mutable_list_reverse,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_builder_map_put,
         kk_mutable_map_put,
         kk_mutable_map_remove,
         kk_mutable_map_getOrPut,
+        kk_mutable_map_putAll,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -244,6 +248,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_to_set = ExternDecl(
         name: "kk_list_to_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_toMap = ExternDecl(
+        name: "kk_list_toMap",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1031,6 +1041,18 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_list_shuffle = ExternDecl(
+        name: "kk_mutable_list_shuffle",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_list_reverse = ExternDecl(
+        name: "kk_mutable_list_reverse",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_map_remove = ExternDecl(
         name: "kk_mutable_map_remove",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -1040,6 +1062,12 @@ public extension RuntimeABIExterns {
     static let kk_mutable_map_getOrPut = ExternDecl(
         name: "kk_mutable_map_getOrPut",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_mutable_map_putAll = ExternDecl(
+        name: "kk_mutable_map_putAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 }
