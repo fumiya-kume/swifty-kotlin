@@ -2578,7 +2578,7 @@ extension CallTypeChecker {
                 let name = interner.resolve(calleeName)
                 let isBuilderMember: Bool = switch activeBuilderKind {
                 case .buildString: name == "append" && args.count == 1
-                case .buildList: name == "add" && args.count == 1
+                case .buildList, .buildSet: name == "add" && args.count == 1
                 case .buildMap: name == "put" && args.count == 2
                 }
                 if isBuilderMember {

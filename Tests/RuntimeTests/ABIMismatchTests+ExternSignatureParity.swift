@@ -123,7 +123,7 @@ extension ABIMismatchTests {
         // Builder thunk functions (kk_build_*) correctly use fnPtr without closureRaw
         let builderThunks: Set<String> = [
             "kk_build_string", "kk_build_list", "kk_build_list_with_capacity",
-            "kk_build_map", "kk_sequence_builder_build",
+            "kk_build_set", "kk_build_map", "kk_sequence_builder_build",
         ]
         let hofSections: Set<String> = ["Collection", "Sequence"]
         let hofFunctions = RuntimeABISpec.allFunctions.filter {

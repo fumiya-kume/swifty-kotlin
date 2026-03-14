@@ -142,8 +142,10 @@ public extension RuntimeABIExterns {
         kk_build_list,
         kk_build_list_with_capacity,
         kk_build_map,
+        kk_build_set,
         kk_string_builder_append,
         kk_builder_list_add,
+        kk_builder_set_add,
         kk_list_getOrNull,
         kk_list_elementAtOrNull,
         kk_list_getOrElse,
@@ -1102,6 +1104,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_build_set = ExternDecl(
+        name: "kk_build_set",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_string_builder_append = ExternDecl(
         name: "kk_string_builder_append",
         parameterTypes: ["intptr_t"],
@@ -1110,6 +1118,12 @@ public extension RuntimeABIExterns {
 
     static let kk_builder_list_add = ExternDecl(
         name: "kk_builder_list_add",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_builder_set_add = ExternDecl(
+        name: "kk_builder_set_add",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

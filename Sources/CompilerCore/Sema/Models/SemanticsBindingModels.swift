@@ -31,6 +31,7 @@ public struct CallableValueCallBinding {
 public enum BuilderDSLKind: Equatable {
     case buildString
     case buildList
+    case buildSet
     case buildMap
 }
 
