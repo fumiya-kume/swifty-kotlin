@@ -17,6 +17,15 @@ private func runtimeIndexedValueNew(index: Int, value: Int) -> Int {
     return raw
 }
 
+private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let outThrown = outThrown {
+        outThrown.pointee = thrown
+        return runtimeExceptionCaughtSentinel
+    } else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Uncaught exception in collection HOF lambda. outThrown was nil.")
+    }
+}
+
 // MARK: - List getOrElse (STDLIB-212)
 
 @_cdecl("kk_list_getOrElse")
@@ -29,7 +38,7 @@ public func kk_list_getOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ clos
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     let result = lambda(closureRaw, index, &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     return result
 }
 
@@ -43,7 +52,7 @@ public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
@@ -58,7 +67,7 @@ public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { filtered.append(elem) }
     }
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
@@ -73,10 +82,7 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeListBox(elements: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let normalized = maybeUnbox(result)
         if normalized != runtimeNullSentinelInt {
             mapped.append(normalized)
@@ -100,7 +106,7 @@ public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     for elem in list.elements {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return 0
 }
@@ -111,10 +117,7 @@ public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return 0
 }
@@ -127,7 +130,7 @@ public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
@@ -143,7 +146,7 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 {
             filteredKeys.append(key)
             filteredValues.append(value)
@@ -160,7 +163,7 @@ public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { count += 1 }
     }
     return count
@@ -173,7 +176,7 @@ public func kk_map_any(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 1 }
     }
     return 0
@@ -186,7 +189,7 @@ public func kk_map_all(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) == 0 { return 0 }
     }
     return 1
@@ -199,7 +202,7 @@ public func kk_map_none(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThr
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 0 }
     }
     return 1
@@ -215,7 +218,7 @@ public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureR
     }
     var thrown = 0
     let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     return result
 }
 
@@ -230,7 +233,7 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
                 }
                 var thrown = 0
                 let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-                if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+                if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
                 map.values[idx] = result
                 return result
             }
@@ -240,7 +243,7 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
 
     var thrown = 0
     let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     if let map = runtimeMapBox(from: mapRaw) {
         map.keys.append(key)
         map.values.append(result)
@@ -256,7 +259,7 @@ public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mappedValues.append(maybeUnbox(result))
     }
     let normalized = runtimeNormalizeMapEntries(keys: map.keys, values: mappedValues)
@@ -271,7 +274,7 @@ public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mappedKeys.append(maybeUnbox(result))
     }
     let normalized = runtimeNormalizeMapEntries(keys: mappedKeys, values: map.values)
@@ -299,7 +302,7 @@ public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         let subListRaw = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if let subList = runtimeListBox(from: subListRaw) {
             result.append(contentsOf: subList.elements)
         }
@@ -321,13 +324,13 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     var bestValue = map.values[0]
     var thrown = 0
     var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0
         let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(selector, bestSelector) > 0 {
             bestKey = key
             bestValue = value
@@ -351,13 +354,13 @@ public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     var bestValue = map.values[0]
     var thrown = 0
     var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0
         let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(selector, bestSelector) < 0 {
             bestKey = key
             bestValue = value
@@ -376,7 +379,7 @@ public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     for elem in list.elements {
         var thrown = 0
         let subListRaw = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if let subList = runtimeListBox(from: subListRaw) {
             result.append(contentsOf: subList.elements)
         }
@@ -393,7 +396,7 @@ public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 1 }
     }
     return 0
@@ -408,7 +411,7 @@ public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 0 }
     }
     return 1
@@ -420,7 +423,7 @@ public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) == 0 { return 0 }
     }
     return 1
@@ -436,7 +439,7 @@ public func kk_list_fold(
     for elem in list.elements {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: elem, outThrown: &thrown))
-        if thrown != 0 { outThrown?.pointee = thrown; return initial }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return acc
 }
@@ -444,14 +447,13 @@ public func kk_list_fold(
 @_cdecl("kk_list_reduce")
 public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty collection can't be reduced.")
-        return 0
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
     }
     var acc = list.elements[0]
     for idx in 1 ..< list.elements.count {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return acc
 }
@@ -467,10 +469,7 @@ public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
         if let grpIdx = keyToIndex[unboxedKey] {
             groupElements[grpIdx].append(elem)
@@ -496,10 +495,7 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeListBox(elements: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         indexed.append((offset: indexed.count, element: elem, key: key))
     }
     let sorted = indexed.sorted { lhs, rhs in
@@ -522,7 +518,7 @@ public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { count += 1 }
     }
     return count
@@ -531,8 +527,7 @@ public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 @_cdecl("kk_list_first")
 public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Collection is empty.")
-        return 0
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Collection is empty."), outThrown)
     }
     if fnPtr == 0 {
         return list.elements[0]
@@ -540,20 +535,19 @@ public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return elem }
     }
     outThrown?.pointee = runtimeAllocateThrowable(
         message: "Collection contains no element matching the predicate."
     )
-    return 0
+    return handleCollectionLambdaThrow(outThrown!.pointee, outThrown)
 }
 
 @_cdecl("kk_list_last")
 public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Collection is empty.")
-        return 0
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Collection is empty."), outThrown)
     }
     if fnPtr == 0 {
         return list.elements.last!
@@ -562,14 +556,14 @@ public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { lastMatch = elem }
     }
     if let match = lastMatch { return match }
     outThrown?.pointee = runtimeAllocateThrowable(
         message: "Collection contains no element matching the predicate."
     )
-    return 0
+    return handleCollectionLambdaThrow(outThrown!.pointee, outThrown)
 }
 
 @_cdecl("kk_list_find")
@@ -581,7 +575,7 @@ public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return elem }
     }
     return runtimeNullSentinelInt
@@ -597,10 +591,7 @@ public func kk_list_associateBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(maybeUnbox(key))
         values.append(elem)
     }
@@ -618,10 +609,7 @@ public func kk_list_associateWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
     for elem in list.elements {
         var thrown = 0
         let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(elem)
         values.append(maybeUnbox(value))
     }
@@ -639,10 +627,7 @@ public func kk_list_associate(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     for elem in list.elements {
         var thrown = 0
         let pair = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(kk_pair_first(pair))
         values.append(kk_pair_second(pair))
     }
@@ -692,10 +677,7 @@ public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
         var thrown = 0
         // Pass index as raw Int (Kotlin primitive); elem stays boxed per ABI.
         _ = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return 0
 }
@@ -711,7 +693,7 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         var thrown = 0
         // Pass index as raw Int (Kotlin primitive); elem stays boxed per ABI.
         let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
@@ -724,10 +706,7 @@ public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return 0
-        }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         total += maybeUnbox(result)
     }
     return total
@@ -766,11 +745,11 @@ public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
     var bestElem = list.elements[0]
     var thrown = 0
     var bestKey = lambda(bestElem, &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
         let key = lambda(elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(key, bestKey) > 0 {
             bestElem = elem
             bestKey = key
@@ -788,11 +767,11 @@ public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
     var bestElem = list.elements[0]
     var thrown = 0
     var bestKey = lambda(bestElem, &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
         let key = lambda(elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(key, bestKey) < 0 {
             bestElem = elem
             bestKey = key
@@ -809,11 +788,11 @@ public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     var bestValue = lambda(list.elements[0], &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
         let value = lambda(elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(value, bestValue) > 0 {
             bestValue = value
         }
@@ -829,11 +808,11 @@ public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     var bestValue = lambda(list.elements[0], &thrown)
-    if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
         let value = lambda(elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return runtimeNullSentinelInt }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(value, bestValue) < 0 {
             bestValue = value
         }
@@ -891,8 +870,7 @@ public func kk_list_shuffled(_ listRaw: Int) -> Int {
 public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "NoSuchElementException: List is empty.")
-        return 0
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
     }
     return list.elements.randomElement()!
 }
@@ -972,7 +950,7 @@ public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     for (index, elem) in list.elements.enumerated() {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return -1 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return index }
     }
     return -1
@@ -985,7 +963,7 @@ public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     for (index, elem) in list.elements.enumerated() {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return -1 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { lastIdx = index }
     }
     return lastIdx
@@ -1028,7 +1006,7 @@ public func kk_list_sortedByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRa
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(key)
     }
     let indexed = list.elements.enumerated().map { ($0.offset, $0.element, keys[$0.offset]) }
@@ -1050,7 +1028,7 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         guard !hadThrow else { return false }
         var thrown = 0
         let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: lhs.element, rhs: rhs.element, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; hadThrow = true; return false }
+        if thrown != 0 { _ = handleCollectionLambdaThrow(thrown, outThrown); hadThrow = true; return false }
         if result != 0 { return result < 0 }
         return lhs.offset < rhs.offset
     }.map(\.element)
@@ -1067,7 +1045,7 @@ public func kk_list_onEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     for elem in list.elements {
         var thrown = 0
         _ = lambda(closureRaw, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return listRaw
 }
@@ -1079,7 +1057,7 @@ public func kk_list_onEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
     for (idx, elem) in list.elements.enumerated() {
         var thrown = 0
         _ = lambda(closureRaw, idx, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return listRaw }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return listRaw
 }
@@ -1098,9 +1076,7 @@ public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            let emptyList = registerRuntimeObject(RuntimeListBox(elements: []))
-            return kk_pair_new(emptyList, emptyList)
+            return handleCollectionLambdaThrow(thrown, outThrown)
         }
         if maybeUnbox(result) != 0 {
             matching.append(elem)
@@ -1138,7 +1114,7 @@ public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
     for elem in list.elements {
         var thrown = 0
         let key = lambda(closureRaw, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(maybeUnbox(key))
     }
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
@@ -1160,7 +1136,7 @@ public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ clo
     for elem in list.elements {
         var thrown = 0
         let key = lambda(closureRaw, elem, &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         keys.append(maybeUnbox(key))
     }
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
@@ -1185,7 +1161,7 @@ public func kk_array_map(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for elem in array.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
@@ -1200,7 +1176,7 @@ public func kk_array_filter(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
     for elem in array.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return registerRuntimeObject(RuntimeListBox(elements: [])) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { filtered.append(elem) }
     }
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
@@ -1212,7 +1188,7 @@ public func kk_array_forEach(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     for elem in array.elements {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return 0
 }
@@ -1225,7 +1201,7 @@ public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     for elem in array.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(0) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return kk_box_bool(1) }
     }
     return kk_box_bool(0)
@@ -1239,7 +1215,7 @@ public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     for elem in array.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 { outThrown?.pointee = thrown; return kk_box_bool(1) }
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return kk_box_bool(0) }
     }
     return kk_box_bool(1)

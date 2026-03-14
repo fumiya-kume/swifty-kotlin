@@ -130,6 +130,7 @@ func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
 
 let runtimeNullSentinelInt64 = Int64.min
 let runtimeNullSentinelInt = Int(truncatingIfNeeded: runtimeNullSentinelInt64)
+let runtimeExceptionCaughtSentinel = Int(truncatingIfNeeded: Int64.min + 1)
 
 func normalizeNullableRuntimePointer(_ ptr: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
     guard let ptr else {
