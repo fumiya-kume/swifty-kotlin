@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-12
+最終更新: 2026-03-14
 
 ## 運用ルール
 
@@ -77,51 +77,25 @@
 
 ### 📦 Stdlib — MutableList 高度操作
 
+- `MutableList.shuffle()` / `reverse()` / `addAll()` / `removeAll()` / `retainAll()` / `add(index)` / `set(index)` は既存実装済み
+
 - [ ] STDLIB-205: `MutableList.sort()` / `MutableList.sortBy {}` / `MutableList.sortByDescending {}` を実装する
   - [ ] Sema に `MutableList<T>.sort()` / `sortBy` / `sortByDescending` stub を登録する（in-place sort）
   - [ ] Runtime に `kk_mutable_list_sort` / `kk_mutable_list_sortBy` を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `val l = mutableListOf(3,1,2); l.sort(); println(l)` → `[1, 2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-206: `MutableList.shuffle()` / `MutableList.reverse()` を実装する
-  - [ ] Sema に `MutableList<T>.shuffle()` / `reverse()` stub を登録する（in-place 操作）
-  - [ ] Runtime に `kk_mutable_list_shuffle` / `kk_mutable_list_reverse` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val l = mutableListOf(1,2,3); l.reverse(); println(l)` → `[3, 2, 1]` が `kotlinc` と一致する
-
-- [ ] STDLIB-207: `MutableList.addAll(collection)` / `MutableList.removeAll(collection)` / `MutableList.retainAll(collection)` を実装する
-  - [ ] Sema に `addAll(Collection<E>): Boolean` / `removeAll(Collection<E>): Boolean` / `retainAll(Collection<E>): Boolean` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val l = mutableListOf(1,2); l.addAll(listOf(3,4)); println(l)` → `[1, 2, 3, 4]` が `kotlinc` と一致する
-
-- [ ] STDLIB-208: `MutableList.add(index, element)` / `MutableList.set(index, element)` / `MutableList[index] = value` を実装する
-  - [ ] Sema に `add(Int, E)` / `set(Int, E): E` / `operator set(Int, E)` stub を登録する
-  - [ ] Runtime に `kk_mutable_list_add_at` / `kk_mutable_list_set` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val l = mutableListOf(1,3); l.add(1, 2); println(l)` → `[1, 2, 3]` が `kotlinc` と一致する
-
 ---
 
 ### 📦 Stdlib — Collection ユーティリティ
 
-- [ ] STDLIB-210: `List.firstOrNull()` / `List.lastOrNull()` 引数なし版を実装する
-  - [ ] Sema に `List<T>.firstOrNull(): T?` / `List<T>.lastOrNull(): T?` stub を登録する（predicate なし）
-  - [ ] Runtime に `kk_list_firstOrNull` / `kk_list_lastOrNull` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `emptyList<Int>().firstOrNull()` → `null` が `kotlinc` と一致する
+- `List.firstOrNull()` / `lastOrNull()` / `getOrNull()` / `getOrElse()` / `elementAtOrNull()` / `asReversed()` は既存実装済み
 
 - [ ] STDLIB-211: `List.single()` / `List.singleOrNull()` を実装する
   - [ ] Sema に `single(): T` / `singleOrNull(): T?` stub を登録する
   - [ ] Runtime で要素数が 1 でない場合に `IllegalArgumentException` を throw する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `listOf(42).single()` → `42` が `kotlinc` と一致する
-
-- [ ] STDLIB-212: `List.getOrNull(index)` / `List.getOrElse(index) { default }` / `List.elementAtOrNull(index)` を実装する
-  - [ ] Sema に `getOrNull(Int): T?` / `getOrElse(Int, (Int) -> T): T` / `elementAtOrNull(Int): T?` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1,2,3).getOrNull(5)` → `null` が `kotlinc` と一致する
 
 - [ ] STDLIB-213: `List.subList(fromIndex, toIndex)` を実装する
   - [ ] Sema に `List<T>.subList(Int, Int): List<T>` stub を登録する
@@ -134,12 +108,6 @@
   - [ ] Runtime に `kk_list_binarySearch` を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `listOf(1,2,3,4,5).binarySearch(3)` → `2` が `kotlinc` と一致する
-
-- [ ] STDLIB-215: `List.asReversed()` / `List.asSequence()` 拡張を実装する
-  - [ ] Sema に `asReversed(): List<T>` / `asSequence(): Sequence<T>` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1,2,3).asReversed()` → `[3, 2, 1]` が `kotlinc` と一致する
 
 ---
 
@@ -438,12 +406,7 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `val m = mutableMapOf("a" to 1); m.clear(); println(m)` → `{}` が `kotlinc` と一致する
 
-- [ ] STDLIB-261: `MutableMap.putAll(map)` を実装する
-  - `MutableMap[key] = value` operator set は既存実装済み
-  - [ ] Sema に `MutableMap<K,V>.putAll(Map<K,V>)` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val m = mutableMapOf("a" to 1); m.putAll(mapOf("b" to 2)); println(m)` → `{a=1, b=2}` が `kotlinc` と一致する
+- `MutableMap.putAll()` は既存実装済み
 
 - [ ] STDLIB-262: `Map.getValue(key)` を実装する
   - [ ] Sema に `Map<K,V>.getValue(K): V` stub を登録する（キー不在時 `NoSuchElementException` throw）
@@ -455,24 +418,13 @@
 
 ### 📦 Stdlib — MutableSet / Set 操作
 
-- [ ] STDLIB-265: `MutableSet.clear()` / `MutableSet.addAll(collection)` を実装する
-  - `MutableSet.add(element)` / `MutableSet.remove(element)` は既存実装済み
-  - [ ] Sema に `MutableSet<E>.clear()` / `addAll(Collection<E>): Boolean` stub を登録する
-  - [ ] Runtime に `kk_mutable_set_clear` / `kk_mutable_set_addAll` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val s = mutableSetOf(1, 2); s.clear(); s.addAll(setOf(2, 3)); println(s)` → `[2, 3]` が `kotlinc` と一致する
+- `MutableSet.clear()` / `addAll()` / `Set.contains()` / `containsAll()` / `isEmpty()` / `size` は既存実装済み
 
 - [ ] STDLIB-266: `Set.intersect(other)` / `Set.union(other)` / `Set.subtract(other)` を実装する
   - [ ] Sema に `Set<T>.intersect(Iterable<T>): Set<T>` / `union` / `subtract` stub を登録する
   - [ ] Runtime に `kk_set_intersect` / `kk_set_union` / `kk_set_subtract` を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `setOf(1,2,3).intersect(setOf(2,3,4))` → `[2, 3]` が `kotlinc` と一致する
-
-- [ ] STDLIB-267: `Set.contains(element)` / `Set.containsAll(elements)` / `Set.isEmpty()` / `Set.size` を実装する
-  - [ ] Sema に `Set<E>` の基本プロパティ / メソッド stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `setOf(1, 2, 3).contains(2)` → `true` が `kotlinc` と一致する
 
 - [ ] STDLIB-268: `Set.map {}` / `Set.filter {}` / `Set.forEach {}` / `Set.toList()` を実装する
   - [ ] Sema に `Set<T>` の HOF stub を登録する
@@ -484,23 +436,13 @@
 
 ### 📦 Stdlib — Sequence 高度操作
 
-- [ ] STDLIB-270: `Sequence.takeWhile {}` / `Sequence.dropWhile {}` を実装する
-  - [ ] Sema に `Sequence<T>.takeWhile((T) -> Boolean): Sequence<T>` / `dropWhile` stub を登録する
-  - [ ] Runtime に lazy ステップとして `kk_sequence_takeWhile` / `kk_sequence_dropWhile` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `sequenceOf(1,2,3,4,5).takeWhile { it < 4 }.toList()` → `[1, 2, 3]` が `kotlinc` と一致する
+- `Sequence.takeWhile()` / `dropWhile()` / `sorted()` / `sortedBy()` / `sortedDescending()` は既存実装済み
 
 - [ ] STDLIB-271: `Sequence.mapNotNull {}` / `Sequence.filterNotNull()` / `Sequence.mapIndexed {}` / `Sequence.withIndex()` を実装する
   - [ ] Sema に各 stub を登録する
   - [ ] Runtime に対応する lazy ステップを追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `sequenceOf(1, null, 3).filterNotNull().toList()` → `[1, 3]` が `kotlinc` と一致する
-
-- [ ] STDLIB-272: `Sequence.sorted()` / `Sequence.sortedBy {}` / `Sequence.sortedDescending()` を実装する
-  - [ ] Sema に各 stub を登録する（terminal 化して list 経由でソート）
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `sequenceOf(3,1,2).sorted().toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
 - [ ] STDLIB-273: `Sequence.first()` / `Sequence.firstOrNull()` / `Sequence.last()` / `Sequence.count()` を実装する
   - [ ] Sema に各 terminal operation stub を登録する
@@ -610,48 +552,6 @@
 
 ---
 
-### 📦 Stdlib — onEach / maxByOrNull / minByOrNull
-
-- [ ] STDLIB-300: `Iterable.onEach {}` / `Iterable.onEachIndexed {}` を実装する
-  - [ ] Sema に `Iterable<T>.onEach((T) -> Unit): Iterable<T>` / `onEachIndexed((Int, T) -> Unit): Iterable<T>` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf(1,2,3).onEach { print(it) }` → `123` を出力しリストを返す
-
-- [ ] STDLIB-301: `Iterable.maxByOrNull {}` / `Iterable.minByOrNull {}` / `Iterable.maxOfOrNull {}` / `Iterable.minOfOrNull {}` を実装する
-  - [ ] Sema に `maxByOrNull` / `minByOrNull` / `maxOfOrNull` / `minOfOrNull` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `listOf("a","bbb","cc").maxByOrNull { it.length }` → `"bbb"` が `kotlinc` と一致する
-
----
-
-### 📦 Stdlib — Char / Int / Any 変換
-
-- [ ] STDLIB-305: `Char.toInt()` / `Int.toChar()` を実装する
-  - [ ] Sema に `Char.code: Int` (既出) に加え `Char.toInt(): Int` / `Int.toChar(): Char` stub を登録する
-  - [ ] Lowering で直接の整数変換命令に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `'A'.toInt()` → `65`, `65.toChar()` → `'A'` が `kotlinc` と一致する
-
-- [ ] STDLIB-306: `Any.hashCode()` / `Any.toString()` / `Any.equals(other)` を実装する
-  - [ ] Sema に `Any` の member method stub (`hashCode(): Int`, `toString(): String`, `equals(Any?): Boolean`) を登録する
-  - [ ] Runtime に `kk_any_hashCode` / `kk_any_equals` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `42.hashCode()` / `42.toString()` が `kotlinc` と同一出力になる
-
-- [ ] STDLIB-307: `Any?.toString()` safe call 版を実装する
-  - [ ] Sema で nullable receiver の `toString()` 呼び出しを `"null"` 返却にフォールバックする
-  - [ ] Runtime でnull sentinel を `"null"` に変換する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `val x: Int? = null; println(x.toString())` → `"null"` が `kotlinc` と一致する
-
-- [ ] STDLIB-308: `Boolean.not()` / `Boolean.and(other)` / `Boolean.or(other)` / `Boolean.xor(other)` を実装する
-  - [ ] Sema に `Boolean` の member method stub を登録する
-  - [ ] Lowering でビット演算命令に展開する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `true.and(false)` → `false` が `kotlinc` と一致する
-
 ---
 
 ### 📦 Stdlib — buildSet / buildString 拡張
@@ -671,11 +571,7 @@
 
 ### 📦 Stdlib — String 追加 II
 
-- [ ] STDLIB-315: `String.replaceFirstChar {}` を実装する
-  - [ ] Sema に `String.replaceFirstChar((Char) -> Char): String` stub を登録する
-  - [ ] Runtime に `kk_string_replaceFirstChar` を追加する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `"hello".replaceFirstChar { it.uppercaseChar() }` → `"Hello"` が `kotlinc` と一致する
+- `String.replaceFirstChar()` は既存実装済み
 
 - [ ] STDLIB-316: `String.chunked(size)` / `String.windowed(size, step)` / `String.zipWithNext()` を実装する
   - [ ] Sema に各 stub を登録する
@@ -768,14 +664,6 @@
 
 ---
 
-### 📦 Stdlib — Delegates 拡張
-
-- [ ] STDLIB-340: `Delegates.notNull<T>()` を実装する
-  - [ ] Sema に `Delegates.notNull<T>(): ReadWriteProperty<Any?, T>` stub を登録する
-  - [ ] Runtime で未初期化アクセス時に `IllegalStateException` を throw する
-  - [ ] diff/golden ケースを追加する
-  - **完了条件**: `var x: String by Delegates.notNull()` が代入前アクセスで例外を投げ `kotlinc` と一致する
-
 ---
 
 ### 📦 Stdlib — List / Map 演算子
@@ -860,59 +748,7 @@
   - [ ] helper 導入後も既存診断文言が崩れないことを確認するテストを追加する
   - **完了条件**: 主要な type inference / stub 生成コードから `first!` が消え、失敗理由が追える
 
-- [ ] TYPE-107: runtime comparator / collection HOF の生 `Int` 関数ポインタ運用を型付き ABI wrapper で局所化する
-  - [ ] `RuntimeComparator.swift` / `RuntimeCollectionHOF.swift` / `RuntimeSequence.swift` の `unsafeBitCast` 利用をシグネチャ別に分類する
-  - [ ] comparator selector、comparator lambda、collection unary/binary lambda ごとの wrapper typealias / decode helper を定義する
-  - [ ] `closureRaw` と `fnPtr` の妥当性確認を共通 helper に集約し、失敗時の戻り値ポリシーを統一する
-  - [ ] ABI spec / extern 宣言 / runtime 実装のシグネチャ差異を検出するテストを追加する
-  - [ ] comparator 系の正常系と ABI mismatch 系テストを拡充する
-  - **完了条件**: `unsafeBitCast` は wrapper helper の内部に閉じ込められ、各 runtime 関数本体では生シグネチャを直接扱わない
-
-- [ ] TYPE-108: type safety 回帰を継続検知するテスト束を追加する
-  - [ ] `mapIndexed` / `flatMap` / `associate*` / `groupBy` / `partition` の推論結果を固定する golden ケースを追加する
-  - [ ] array erase heuristic が再導入されていないことを確認する negative ケースを追加する
-  - [ ] typed manifest decode の異常系 fixture を追加する
-  - [ ] delegate lowering 前提違反と runtime ABI mismatch の回帰テストを追加する
-  - [ ] `Scripts/test_case_registry.json` に今回の TYPE タスク用テンプレートを登録する
-  - **完了条件**: 今回洗い出した型安全性の穴に対応する回帰テストが一通り揃い、再発を CI で検知できる
-
-- [ ] TYPE-109: runtime type check の文字列ベース型判定を型付き表現へ置き換える
-  - [ ] `RuntimeTypeCheckToken.swift` と `ControlFlowLowerer+ThrowCatchAndWhen.swift` で `"Any"` などの型名文字列に依存している箇所を棚卸しする
-  - [ ] builtin type / nominal type / unknown type を表す内部 enum または typed descriptor を導入する
-  - [ ] `encodeBuiltinTypeName(_:)` と `simpleName(of:)` を、文字列 switch のまま外へ漏らさず typed API の内部実装へ閉じ込める
-  - [ ] catch / `is` / `!is` / reified token 経路が同じ typed descriptor を使うように揃える
-  - [ ] 型 alias や未解決 nominal 型で名前一致だけで誤判定しないことを確認するテストを追加する
-  - **完了条件**: runtime type check の主要分岐から型名文字列比較が消え、型判定が `TypeID` / symbol ベースで一貫する
-
-- [ ] TYPE-110: unresolved 型を `Any` に落とす制御フロー型推論を診断主導に置き換える
-  - [ ] `ControlFlowLowerer+ThrowCatchAndWhen.swift` の unknown type → `Any` fallback を調査し、どの経路がユーザー入力起因か分類する
-  - [ ] `catch` 節、`when is` 条件、destructuring 推論で unresolved component/type を `Any` 扱いせず、`invalid` または専用エラー経路へ寄せる
-  - [ ] `ControlFlowTypeChecker+DestructuringInference.swift` の `componentType = anyType` fallback を見直す
-  - [ ] 誤って広い `catch` や destructuring が通ってしまう negative golden を追加する
-  - **完了条件**: 未解決型や `componentN` 解決失敗が `Any` に吸収されず、診断として表面化する
-
-- [ ] TYPE-111: object literal / callable reference / lambda 文脈推論の `anyType` 退避を縮小する
-  - [ ] `ExprTypeChecker+ObjectLiteralInference.swift` と `ExprTypeChecker+NameLambdaAndCallableRefInference.swift` の `?? sema.types.anyType` を棚卸しする
-  - [ ] 文脈型が取れないケースと本当に `Any` が正しいケースを分離し、前者は未解決状態を保持できるようにする
-  - [ ] callable reference のパラメータ型・戻り型が取れない場合に、後段の解決へ渡す placeholder type を `Any` 以外で表現する
-  - [ ] object literal の supertype 解決失敗時に過剰に `Any` object と見なさないようにする
-  - [ ] diff/golden と negative ケースを追加する
-  - **完了条件**: object literal / callable reference / lambda 推論で `Any` への早すぎる退避が減り、型エラー位置が `kotlinc` に近づく
-
-- [ ] TYPE-112: internal JSON export を typed report に置き換える
-  - [ ] `PhaseTimer.exportJSON()` の `[[String: Any]]` を `Codable` な report struct 配列へ置き換える
-  - [ ] 既存呼び出し側が必要とする JSON shape を確認し、外部互換を保つ encoder 層を追加する
-  - [ ] sub-phase も含めて key typo や数値型揺れが起きないようにする
-  - [ ] export 形式の snapshot テストを追加する
-  - **完了条件**: timing report の内部表現から `[String: Any]` が消え、JSON 出力が typed model 経由で生成される
-
-- [ ] TYPE-113: coroutine / flow まわりの `Any` 型消去ポイントを棚卸しして縮小する
-  - [ ] `Sema/TypeCheck/Helpers.swift` の `Flow<T>` を `nullableAnyType` に erase している箇所と、その依存先を洗い出す
-  - [ ] `CallTypeChecker.swift` / `MemberCallInference.swift` / coroutine lowering で continuation や collector/emitter の型を `Any` に落としている箇所を分類する
-  - [ ] 「現状必要な ABI 上の erase」と「Sema 内でも不要に erase している箇所」を切り分ける
-  - [ ] まずは Sema 内で保持可能な generic 情報を残す最小変更を設計する
-  - [ ] 代表ケースの golden と runtime 回帰テストを追加する
-  - **完了条件**: coroutine / flow 系で不要な `Any` / `Any?` 退避が減り、少なくとも Sema レイヤでは要素型 `T` を追跡できる範囲が広がる
+- TYPE-107 〜 TYPE-113 は既存実装済み（PR #276-282）
 
 ## 🧪 テストケース一括管理
 
