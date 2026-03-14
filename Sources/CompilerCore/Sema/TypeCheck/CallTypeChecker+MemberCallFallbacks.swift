@@ -442,8 +442,6 @@ extension CallTypeChecker {
         ]
         let listOnlyMembers: Set = [
             interner.intern("subList"),
-        ]
-        let listOnlyMembers: Set = [
             interner.intern("getOrNull"),
             interner.intern("elementAtOrNull"),
         ]
@@ -483,9 +481,6 @@ extension CallTypeChecker {
         }
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
-        }
-        if listOnlyMembers.contains(memberName) {
-            return !isMapReceiver
         }
         if memberName == knownNames.getOrPut || memberName == knownNames.putAll {
             return isMutableMapReceiver
