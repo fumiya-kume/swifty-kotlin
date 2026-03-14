@@ -37,78 +37,78 @@
 
 ### 📦 Stdlib — Map 高度操作
 
-- [ ] STDLIB-195: `Map.getOrDefault(key, defaultValue)` / `Map.getOrElse(key) { defaultValue }` を実装する
-  - [ ] Sema に `Map<K,V>.getOrDefault(K, V): V` / `Map<K,V>.getOrElse(K, () -> V): V` stub を登録する
-  - [ ] Runtime に `kk_map_getOrDefault` / `kk_map_getOrElse` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-195: `Map.getOrDefault(key, defaultValue)` / `Map.getOrElse(key) { defaultValue }` を実装する
+  - [x] Sema に `Map<K,V>.getOrDefault(K, V): V` / `Map<K,V>.getOrElse(K, () -> V): V` stub を登録する
+  - [x] Runtime に `kk_map_getOrDefault` / `kk_map_getOrElse` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mapOf("a" to 1).getOrDefault("b", 0)` → `0` が `kotlinc` と一致する
 
-- [ ] STDLIB-196: `MutableMap.getOrPut(key) { defaultValue }` を実装する
-  - [ ] Sema に `MutableMap<K,V>.getOrPut(K, () -> V): V` stub を登録する
-  - [ ] Runtime でキーが存在しない場合に default を挿入する処理を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-196: `MutableMap.getOrPut(key) { defaultValue }` を実装する
+  - [x] Sema に `MutableMap<K,V>.getOrPut(K, () -> V): V` stub を登録する
+  - [x] Runtime でキーが存在しない場合に default を挿入する処理を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mutableMapOf("a" to 1).getOrPut("b") { 2 }` → `2` が `kotlinc` と一致する
 
-- [ ] STDLIB-197: `Map.plus(pair)` / `Map.minus(key)` operator を実装する
-  - [ ] Sema に `Map<K,V>.plus(Pair<K,V>): Map<K,V>` / `Map<K,V>.minus(K): Map<K,V>` operator stub を登録する
-  - [ ] Runtime に新しい Map を生成する `kk_map_plus` / `kk_map_minus` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-197: `Map.plus(pair)` / `Map.minus(key)` operator を実装する
+  - [x] Sema に `Map<K,V>.plus(Pair<K,V>): Map<K,V>` / `Map<K,V>.minus(K): Map<K,V>` operator stub を登録する
+  - [x] Runtime に新しい Map を生成する `kk_map_plus` / `kk_map_minus` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mapOf("a" to 1) + ("b" to 2)` → `{a=1, b=2}` が `kotlinc` と一致する
 
-- [ ] STDLIB-198: `Map.count {}` / `Map.any {}` / `Map.all {}` / `Map.none {}` を実装する
-  - [ ] Sema に `Map<K,V>` の述語 HOF stub を登録する
-  - [ ] Runtime に `kk_map_count` / `kk_map_any` / `kk_map_all` / `kk_map_none` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-198: `Map.count {}` / `Map.any {}` / `Map.all {}` / `Map.none {}` を実装する
+  - [x] Sema に `Map<K,V>` の述語 HOF stub を登録する
+  - [x] Runtime に `kk_map_count` / `kk_map_any` / `kk_map_all` / `kk_map_none` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mapOf("a" to 1, "b" to 2).count { it.value > 1 }` → `1` が `kotlinc` と一致する
 
-- [ ] STDLIB-199: `Map.flatMap {}` / `Map.maxByOrNull {}` / `Map.minByOrNull {}` を実装する
-  - [ ] Sema に `Map<K,V>` の `flatMap` / `maxByOrNull` / `minByOrNull` stub を登録する
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-199: `Map.flatMap {}` / `Map.maxByOrNull {}` / `Map.minByOrNull {}` を実装する
+  - [x] Sema に `Map<K,V>` の `flatMap` / `maxByOrNull` / `minByOrNull` stub を登録する
+  - [x] Runtime に対応ランタイム関数を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `mapOf("a" to 1, "b" to 2).maxByOrNull { it.value }?.key` → `"b"` が `kotlinc` と一致する
 
-- [ ] STDLIB-200: `List<Pair<K,V>>.toMap()` / `Iterable<Pair<K,V>>.toMap()` を実装する
-  - [ ] Sema に `Iterable<Pair<K,V>>.toMap(): Map<K,V>` stub を登録する
-  - [ ] Runtime に `kk_list_toMap` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-200: `List<Pair<K,V>>.toMap()` / `Iterable<Pair<K,V>>.toMap()` を実装する
+  - [x] Sema に `Iterable<Pair<K,V>>.toMap(): Map<K,V>` stub を登録する
+  - [x] Runtime に `kk_list_toMap` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `listOf("a" to 1, "b" to 2).toMap()` → `{a=1, b=2}` が `kotlinc` と一致する
 
 ---
 
 ### 📦 Stdlib — MutableList 高度操作
 
-- [ ] STDLIB-205: `MutableList.sort()` / `MutableList.sortBy {}` / `MutableList.sortByDescending {}` を実装する
-  - [ ] Sema に `MutableList<T>.sort()` / `sortBy` / `sortByDescending` stub を登録する（in-place sort）
-  - [ ] Runtime に `kk_mutable_list_sort` / `kk_mutable_list_sortBy` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-205: `MutableList.sort()` / `MutableList.sortBy {}` / `MutableList.sortByDescending {}` を実装する
+  - [x] Sema に `MutableList<T>.sort()` / `sortBy` / `sortByDescending` stub を登録する（in-place sort）
+  - [x] Runtime に `kk_mutable_list_sort` / `kk_mutable_list_sortBy` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val l = mutableListOf(3,1,2); l.sort(); println(l)` → `[1, 2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-206: `MutableList.shuffle()` / `MutableList.reverse()` を実装する
-  - [ ] Sema に `MutableList<T>.shuffle()` / `reverse()` stub を登録する（in-place 操作）
-  - [ ] Runtime に `kk_mutable_list_shuffle` / `kk_mutable_list_reverse` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-206: `MutableList.shuffle()` / `MutableList.reverse()` を実装する
+  - [x] Sema に `MutableList<T>.shuffle()` / `reverse()` stub を登録する（in-place 操作）
+  - [x] Runtime に `kk_mutable_list_shuffle` / `kk_mutable_list_reverse` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val l = mutableListOf(1,2,3); l.reverse(); println(l)` → `[3, 2, 1]` が `kotlinc` と一致する
 
-- [ ] STDLIB-207: `MutableList.addAll(collection)` / `MutableList.removeAll(collection)` / `MutableList.retainAll(collection)` を実装する
-  - [ ] Sema に `addAll(Collection<E>): Boolean` / `removeAll(Collection<E>): Boolean` / `retainAll(Collection<E>): Boolean` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-207: `MutableList.addAll(collection)` / `MutableList.removeAll(collection)` / `MutableList.retainAll(collection)` を実装する
+  - [x] Sema に `addAll(Collection<E>): Boolean` / `removeAll(Collection<E>): Boolean` / `retainAll(Collection<E>): Boolean` stub を登録する
+  - [x] Runtime に対応ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val l = mutableListOf(1,2); l.addAll(listOf(3,4)); println(l)` → `[1, 2, 3, 4]` が `kotlinc` と一致する
 
-- [ ] STDLIB-208: `MutableList.add(index, element)` / `MutableList.set(index, element)` / `MutableList[index] = value` を実装する
-  - [ ] Sema に `add(Int, E)` / `set(Int, E): E` / `operator set(Int, E)` stub を登録する
-  - [ ] Runtime に `kk_mutable_list_add_at` / `kk_mutable_list_set` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-208: `MutableList.add(index, element)` / `MutableList.set(index, element)` / `MutableList[index] = value` を実装する
+  - [x] Sema に `add(Int, E)` / `set(Int, E): E` / `operator set(Int, E)` stub を登録する
+  - [x] Runtime に `kk_mutable_list_add_at` / `kk_mutable_list_set` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val l = mutableListOf(1,3); l.add(1, 2); println(l)` → `[1, 2, 3]` が `kotlinc` と一致する
 
 ---
 
 ### 📦 Stdlib — Collection ユーティリティ
 
-- [ ] STDLIB-210: `List.firstOrNull()` / `List.lastOrNull()` 引数なし版を実装する
-  - [ ] Sema に `List<T>.firstOrNull(): T?` / `List<T>.lastOrNull(): T?` stub を登録する（predicate なし）
-  - [ ] Runtime に `kk_list_firstOrNull` / `kk_list_lastOrNull` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-210: `List.firstOrNull()` / `List.lastOrNull()` 引数なし版を実装する
+  - [x] Sema に `List<T>.firstOrNull(): T?` / `List<T>.lastOrNull(): T?` stub を登録する（predicate なし）
+  - [x] Runtime に `kk_list_firstOrNull` / `kk_list_lastOrNull` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `emptyList<Int>().firstOrNull()` → `null` が `kotlinc` と一致する
 
 - [ ] STDLIB-211: `List.single()` / `List.singleOrNull()` を実装する
@@ -117,10 +117,10 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `listOf(42).single()` → `42` が `kotlinc` と一致する
 
-- [ ] STDLIB-212: `List.getOrNull(index)` / `List.getOrElse(index) { default }` / `List.elementAtOrNull(index)` を実装する
-  - [ ] Sema に `getOrNull(Int): T?` / `getOrElse(Int, (Int) -> T): T` / `elementAtOrNull(Int): T?` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-212: `List.getOrNull(index)` / `List.getOrElse(index) { default }` / `List.elementAtOrNull(index)` を実装する
+  - [x] Sema に `getOrNull(Int): T?` / `getOrElse(Int, (Int) -> T): T` / `elementAtOrNull(Int): T?` stub を登録する
+  - [x] Runtime に対応ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `listOf(1,2,3).getOrNull(5)` → `null` が `kotlinc` と一致する
 
 - [ ] STDLIB-213: `List.subList(fromIndex, toIndex)` を実装する
@@ -438,11 +438,11 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `val m = mutableMapOf("a" to 1); m.clear(); println(m)` → `{}` が `kotlinc` と一致する
 
-- [ ] STDLIB-261: `MutableMap.putAll(map)` を実装する
+- [x] STDLIB-261: `MutableMap.putAll(map)` を実装する
   - `MutableMap[key] = value` operator set は既存実装済み
-  - [ ] Sema に `MutableMap<K,V>.putAll(Map<K,V>)` stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+  - [x] Sema に `MutableMap<K,V>.putAll(Map<K,V>)` stub を登録する
+  - [x] Runtime に対応ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val m = mutableMapOf("a" to 1); m.putAll(mapOf("b" to 2)); println(m)` → `{a=1, b=2}` が `kotlinc` と一致する
 
 - [ ] STDLIB-262: `Map.getValue(key)` を実装する
@@ -455,23 +455,23 @@
 
 ### 📦 Stdlib — MutableSet / Set 操作
 
-- [ ] STDLIB-265: `MutableSet.clear()` / `MutableSet.addAll(collection)` を実装する
+- [x] STDLIB-265: `MutableSet.clear()` / `MutableSet.addAll(collection)` を実装する
   - `MutableSet.add(element)` / `MutableSet.remove(element)` は既存実装済み
-  - [ ] Sema に `MutableSet<E>.clear()` / `addAll(Collection<E>): Boolean` stub を登録する
-  - [ ] Runtime に `kk_mutable_set_clear` / `kk_mutable_set_addAll` を追加する
-  - [ ] diff/golden ケースを追加する
+  - [x] Sema に `MutableSet<E>.clear()` / `addAll(Collection<E>): Boolean` stub を登録する
+  - [x] Runtime に `kk_mutable_set_clear` / `kk_mutable_set_addAll` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val s = mutableSetOf(1, 2); s.clear(); s.addAll(setOf(2, 3)); println(s)` → `[2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-266: `Set.intersect(other)` / `Set.union(other)` / `Set.subtract(other)` を実装する
-  - [ ] Sema に `Set<T>.intersect(Iterable<T>): Set<T>` / `union` / `subtract` stub を登録する
-  - [ ] Runtime に `kk_set_intersect` / `kk_set_union` / `kk_set_subtract` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-266: `Set.intersect(other)` / `Set.union(other)` / `Set.subtract(other)` を実装する
+  - [x] Sema に `Set<T>.intersect(Iterable<T>): Set<T>` / `union` / `subtract` stub を登録する
+  - [x] Runtime に `kk_set_intersect` / `kk_set_union` / `kk_set_subtract` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `setOf(1,2,3).intersect(setOf(2,3,4))` → `[2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-267: `Set.contains(element)` / `Set.containsAll(elements)` / `Set.isEmpty()` / `Set.size` を実装する
-  - [ ] Sema に `Set<E>` の基本プロパティ / メソッド stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-267: `Set.contains(element)` / `Set.containsAll(elements)` / `Set.isEmpty()` / `Set.size` を実装する
+  - [x] Sema に `Set<E>` の基本プロパティ / メソッド stub を登録する
+  - [x] Runtime に対応ヘルパーを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `setOf(1, 2, 3).contains(2)` → `true` が `kotlinc` と一致する
 
 - [ ] STDLIB-268: `Set.map {}` / `Set.filter {}` / `Set.forEach {}` / `Set.toList()` を実装する
@@ -484,10 +484,10 @@
 
 ### 📦 Stdlib — Sequence 高度操作
 
-- [ ] STDLIB-270: `Sequence.takeWhile {}` / `Sequence.dropWhile {}` を実装する
-  - [ ] Sema に `Sequence<T>.takeWhile((T) -> Boolean): Sequence<T>` / `dropWhile` stub を登録する
-  - [ ] Runtime に lazy ステップとして `kk_sequence_takeWhile` / `kk_sequence_dropWhile` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-270: `Sequence.takeWhile {}` / `Sequence.dropWhile {}` を実装する
+  - [x] Sema に `Sequence<T>.takeWhile((T) -> Boolean): Sequence<T>` / `dropWhile` stub を登録する
+  - [x] Runtime に lazy ステップとして `kk_sequence_takeWhile` / `kk_sequence_dropWhile` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `sequenceOf(1,2,3,4,5).takeWhile { it < 4 }.toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
 - [ ] STDLIB-271: `Sequence.mapNotNull {}` / `Sequence.filterNotNull()` / `Sequence.mapIndexed {}` / `Sequence.withIndex()` を実装する
@@ -496,10 +496,10 @@
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `sequenceOf(1, null, 3).filterNotNull().toList()` → `[1, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-272: `Sequence.sorted()` / `Sequence.sortedBy {}` / `Sequence.sortedDescending()` を実装する
-  - [ ] Sema に各 stub を登録する（terminal 化して list 経由でソート）
-  - [ ] Runtime に対応ランタイム関数を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-272: `Sequence.sorted()` / `Sequence.sortedBy {}` / `Sequence.sortedDescending()` を実装する
+  - [x] Sema に各 stub を登録する（terminal 化して list 経由でソート）
+  - [x] Runtime に対応ランタイム関数を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `sequenceOf(3,1,2).sorted().toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
 - [ ] STDLIB-273: `Sequence.first()` / `Sequence.firstOrNull()` / `Sequence.last()` / `Sequence.count()` を実装する
@@ -671,10 +671,10 @@
 
 ### 📦 Stdlib — String 追加 II
 
-- [ ] STDLIB-315: `String.replaceFirstChar {}` を実装する
-  - [ ] Sema に `String.replaceFirstChar((Char) -> Char): String` stub を登録する
-  - [ ] Runtime に `kk_string_replaceFirstChar` を追加する
-  - [ ] diff/golden ケースを追加する
+- [x] STDLIB-315: `String.replaceFirstChar {}` を実装する
+  - [x] Sema に `String.replaceFirstChar((Char) -> Char): String` stub を登録する
+  - [x] Runtime に `kk_string_replaceFirstChar` を追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `"hello".replaceFirstChar { it.uppercaseChar() }` → `"Hello"` が `kotlinc` と一致する
 
 - [ ] STDLIB-316: `String.chunked(size)` / `String.windowed(size, step)` / `String.zipWithNext()` を実装する
