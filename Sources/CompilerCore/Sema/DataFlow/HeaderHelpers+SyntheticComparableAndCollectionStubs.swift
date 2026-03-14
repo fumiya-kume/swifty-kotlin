@@ -767,6 +767,32 @@ extension DataFlowSemaPhase {
                 for: isEmptySymbol
             )
         }
+
+        // STDLIB-346: containsAll(collection)
+        let containsAllName = interner.intern("containsAll")
+        let containsAllFQName = listFQName + [containsAllName]
+        if symbols.lookup(fqName: containsAllFQName) == nil {
+            let containsAllSymbol = symbols.define(
+                kind: .function,
+                name: containsAllName,
+                fqName: containsAllFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: containsAllSymbol)
+            symbols.setExternalLinkName("kk_list_containsAll", for: containsAllSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [types.anyType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsAllSymbol
+            )
+        }
     }
 
     private func registerListToMutableListMember(
@@ -1363,6 +1389,32 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_lastIndexOf", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [listTypeParamType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // STDLIB-214: binarySearch(element) — non-HOF, element argument
+        let binarySearchName = interner.intern("binarySearch")
+        let binarySearchFQName = listFQName + [binarySearchName]
+        if symbols.lookup(fqName: binarySearchFQName) == nil {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: binarySearchName,
+                fqName: binarySearchFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_binarySearch", for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,

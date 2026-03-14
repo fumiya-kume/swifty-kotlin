@@ -25,6 +25,8 @@ struct CollectionLiteralLookupTables {
     let kkListSizeName: InternedString
     let kkListGetName: InternedString
     let kkListContainsName: InternedString
+    let kkListContainsAllName: InternedString
+    let kkListBinarySearchName: InternedString
     let kkListIsEmptyName: InternedString
     let kkListIteratorName: InternedString
     let kkListIteratorHasNextName: InternedString
@@ -359,6 +361,8 @@ struct CollectionLiteralLookupTables {
         kkListSizeName = interner.intern("kk_list_size")
         kkListGetName = interner.intern("kk_list_get")
         kkListContainsName = interner.intern("kk_list_contains")
+        kkListContainsAllName = interner.intern("kk_list_containsAll")
+        kkListBinarySearchName = interner.intern("kk_list_binarySearch")
         kkListIsEmptyName = interner.intern("kk_list_is_empty")
         kkListIteratorName = interner.intern("kk_list_iterator")
         kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")

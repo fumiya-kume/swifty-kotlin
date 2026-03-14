@@ -97,6 +97,7 @@ extension CallLowerer {
         "firstOrNull", "lastOrNull",
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
+        "containsAll", "binarySearch",
         "to", // FUNC-002
     ]
 
@@ -1630,6 +1631,10 @@ extension CallLowerer {
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
                     "kk_list_elementAtOrNull"
+                case "containsAll":
+                    "kk_list_containsAll"
+                case "binarySearch":
+                    "kk_list_binarySearch"
                 default:
                     nil
                 }
@@ -2653,6 +2658,10 @@ extension CallLowerer {
                 return interner.intern("kk_list_getOrElse")
             case "subList":
                 return interner.intern("kk_list_subList")
+            case "containsAll":
+                return interner.intern("kk_list_containsAll")
+            case "binarySearch":
+                return interner.intern("kk_list_binarySearch")
             default:
                 break
             }
@@ -2713,6 +2722,10 @@ extension CallLowerer {
             return interner.intern("kk_list_elementAtOrNull")
         case "getOrElse":
             return interner.intern("kk_list_getOrElse")
+        case "containsAll":
+            return interner.intern("kk_list_containsAll")
+        case "binarySearch":
+            return interner.intern("kk_list_binarySearch")
         default:
             break
         }
