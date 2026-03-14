@@ -315,10 +315,12 @@ struct CollectionLiteralLookupTables {
     // Builder DSL names (STDLIB-002)
     let buildStringName: InternedString
     let buildListName: InternedString
+    let buildSetName: InternedString
     let buildMapName: InternedString
     let kkBuildStringName: InternedString
     let kkBuildListName: InternedString
     let kkBuildListWithCapacityName: InternedString
+    let kkBuildSetName: InternedString
     let kkBuildMapName: InternedString
 
     // Builder member function names (STDLIB-002)
@@ -326,6 +328,7 @@ struct CollectionLiteralLookupTables {
     let putName: InternedString
     let kkStringBuilderAppendName: InternedString
     let kkBuilderListAddName: InternedString
+    let kkBuilderSetAddName: InternedString
     let kkBuilderMapPutName: InternedString
     let kkMutableSetAddName: InternedString
     let kkMutableSetRemoveName: InternedString
@@ -632,16 +635,19 @@ struct CollectionLiteralLookupTables {
 
         buildStringName = interner.intern("buildString")
         buildListName = interner.intern("buildList")
+        buildSetName = interner.intern("buildSet")
         buildMapName = interner.intern("buildMap")
         kkBuildStringName = interner.intern("kk_build_string")
         kkBuildListName = interner.intern("kk_build_list")
         kkBuildListWithCapacityName = interner.intern("kk_build_list_with_capacity")
+        kkBuildSetName = interner.intern("kk_build_set")
         kkBuildMapName = interner.intern("kk_build_map")
 
         appendName = interner.intern("append")
         putName = interner.intern("put")
         kkStringBuilderAppendName = interner.intern("kk_string_builder_append")
         kkBuilderListAddName = interner.intern("kk_builder_list_add")
+        kkBuilderSetAddName = interner.intern("kk_builder_set_add")
         kkBuilderMapPutName = interner.intern("kk_builder_map_put")
         kkMutableSetAddName = interner.intern("kk_mutable_set_add")
         kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
@@ -651,7 +657,7 @@ struct CollectionLiteralLookupTables {
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
-        builderDSLNames = [buildStringName, buildListName, buildMapName]
+        builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 
         stringProducingCallees = [
             interner.intern("kk_string_concat"),

@@ -1,7 +1,8 @@
 import Foundation
 
-/// Synthetic stdlib stubs for buildList (STDLIB-070), buildMap (STDLIB-071), and related builder DSL functions.
+/// Synthetic stdlib stubs for buildList (STDLIB-070), buildSet (STDLIB-310), buildMap (STDLIB-071), and related builder DSL functions.
 /// buildList<E>(builderAction: MutableList<E>.() -> Unit): List<E>
+/// buildSet<E>(builderAction: MutableSet<E>.() -> Unit): Set<E>
 /// buildMap<K,V>(builderAction: MutableMap<K,V>.() -> Unit): Map<K,V>
 /// Lowering rewrites these to kk_build_* runtime calls.
 extension DataFlowSemaPhase {
@@ -19,6 +20,8 @@ extension DataFlowSemaPhase {
         }
         let listName = interner.intern("List")
         let mutableListName = interner.intern("MutableList")
+        let setName = interner.intern("Set")
+        let mutableSetName = interner.intern("MutableSet")
         let mapName = interner.intern("Map")
         let mutableMapName = interner.intern("MutableMap")
         guard let listSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [listName]),
@@ -37,6 +40,18 @@ extension DataFlowSemaPhase {
             listSymbol: listSymbol,
             mutableListSymbol: mutableListSymbol
         )
+        if let setSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [setName]),
+           let mutableSetSymbol = symbols.lookup(fqName: kotlinCollectionsPkg + [mutableSetName])
+        {
+            registerSyntheticBuildSetStub(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                kotlinCollectionsPkg: kotlinCollectionsPkg,
+                setSymbol: setSymbol,
+                mutableSetSymbol: mutableSetSymbol
+            )
+        }
         registerSyntheticBuildMapStub(
             symbols: symbols,
             types: types,
@@ -194,6 +209,100 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 0
             ),
             for: buildListSymbol
+        )
+    }
+
+    private func registerSyntheticBuildSetStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        setSymbol: SymbolID,
+        mutableSetSymbol: SymbolID
+    ) {
+        let buildSetName = interner.intern("buildSet")
+        let buildSetFQName = kotlinCollectionsPkg + [buildSetName]
+        let eName = interner.intern("E")
+
+        let alreadyDefined = symbols.lookupAll(fqName: buildSetFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .function,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.receiverType == nil
+                && signature.parameterTypes.count == 1
+                && signature.typeParameterSymbols.count == 1
+        }
+        if alreadyDefined {
+            return
+        }
+
+        let eFQName = buildSetFQName + [eName]
+        let eSymbol = symbols.define(
+            kind: .typeParameter,
+            name: eName,
+            fqName: eFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let eType = types.make(.typeParam(TypeParamType(symbol: eSymbol, nullability: .nonNull)))
+        let mutableSetOfEType = types.make(.classType(ClassType(
+            classSymbol: mutableSetSymbol,
+            args: [.invariant(eType)],
+            nullability: .nonNull
+        )))
+        let setOfEType = types.make(.classType(ClassType(
+            classSymbol: setSymbol,
+            args: [.out(eType)],
+            nullability: .nonNull
+        )))
+        let builderActionType = types.make(.functionType(FunctionType(
+            receiver: mutableSetOfEType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let builderActionName = interner.intern("builderAction")
+        let builderActionSymbol = symbols.define(
+            kind: .valueParameter,
+            name: builderActionName,
+            fqName: buildSetFQName + [builderActionName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+
+        let buildSetSymbol = symbols.define(
+            kind: .function,
+            name: buildSetName,
+            fqName: buildSetFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinCollectionsPkg) {
+            symbols.setParentSymbol(packageSymbol, for: buildSetSymbol)
+        }
+        symbols.setParentSymbol(buildSetSymbol, for: eSymbol)
+        symbols.setParentSymbol(buildSetSymbol, for: builderActionSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [builderActionType],
+                returnType: setOfEType,
+                isSuspend: false,
+                valueParameterSymbols: [builderActionSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [eSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: buildSetSymbol
         )
     }
 

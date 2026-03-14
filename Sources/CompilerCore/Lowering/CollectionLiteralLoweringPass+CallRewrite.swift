@@ -385,6 +385,7 @@ extension CollectionLiteralLoweringPass {
                         case lookup.buildStringName: lookup.kkBuildStringName
                         case lookup.buildListName:
                             arguments.count == 2 ? lookup.kkBuildListWithCapacityName : lookup.kkBuildListName
+                        case lookup.buildSetName: lookup.kkBuildSetName
                         case lookup.buildMapName: lookup.kkBuildMapName
                         default: callee
                         }
@@ -402,6 +403,10 @@ extension CollectionLiteralLoweringPass {
                         if callee == lookup.buildListName, let result {
                             listExprIDs.insert(result.rawValue)
                             listExprIDs.insert(builderResult.rawValue)
+                        }
+                        if callee == lookup.buildSetName, let result {
+                            setExprIDs.insert(result.rawValue)
+                            setExprIDs.insert(builderResult.rawValue)
                         }
                         if callee == lookup.buildMapName, let result {
                             mapExprIDs.insert(result.rawValue)
@@ -422,6 +427,8 @@ extension CollectionLiteralLoweringPass {
                             rewrittenCallee = lookup.kkStringBuilderAppendName
                         } else if builderCallee == lookup.buildListName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderListAddName
+                        } else if builderCallee == lookup.buildSetName, callee == lookup.addName, arguments.count == 1 {
+                            rewrittenCallee = lookup.kkBuilderSetAddName
                         } else if builderCallee == lookup.buildMapName, callee == lookup.putName, arguments.count == 2 {
                             rewrittenCallee = lookup.kkBuilderMapPutName
                         }

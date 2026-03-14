@@ -39,7 +39,7 @@ final class CallTypeChecker {
                shouldUseBuilderDSLSpecialHandling(calleeName: calleeName, ctx: ctx, locals: locals)
             {
                 let lambdaArgumentIndex: Int? = switch builderKind {
-                case .buildString, .buildMap:
+                case .buildString, .buildSet, .buildMap:
                     args.count == 1 ? 0 : nil
                 case .buildList:
                     switch args.count {
@@ -85,6 +85,8 @@ final class CallTypeChecker {
                     sema.types.stringType
                 case .buildList:
                     builderDSLBuildListReturnType(receiverType: receiverType, sema: sema, interner: interner)
+                case .buildSet:
+                    builderDSLBuildSetReturnType(receiverType: receiverType, sema: sema, interner: interner)
                 case .buildMap:
                     builderDSLBuildMapReturnType(receiverType: receiverType, sema: sema, interner: interner)
                 }
@@ -924,7 +926,7 @@ final class CallTypeChecker {
             let name = interner.resolve(calleeName)
             let isBuilderMember: Bool = switch activeBuilderKind {
             case .buildString: name == "append" && args.count == 1
-            case .buildList: name == "add" && args.count == 1
+            case .buildList, .buildSet: name == "add" && args.count == 1
             case .buildMap: name == "put" && args.count == 2
             }
             if isBuilderMember {
