@@ -28,9 +28,6 @@ public extension RuntimeABIExterns {
         kk_set_union,
         kk_set_subtract,
         kk_set_to_string,
-        kk_set_intersect,
-        kk_set_union,
-        kk_set_subtract,
         kk_list_map,
         kk_list_filter,
         kk_list_mapNotNull,
@@ -336,25 +333,6 @@ public extension RuntimeABIExterns {
         name: "kk_set_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
-    )
-
-    /// Set operations (STDLIB-266)
-    static let kk_set_intersect = ExternDecl(
-        name: "kk_set_intersect",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    static let kk_set_union = ExternDecl(
-        name: "kk_set_union",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    static let kk_set_subtract = ExternDecl(
-        name: "kk_set_subtract",
-        parameterTypes: ["intptr_t", "intptr_t"],
-        returnType: "intptr_t"
     )
 
     static let kk_list_associateBy = ExternDecl(
