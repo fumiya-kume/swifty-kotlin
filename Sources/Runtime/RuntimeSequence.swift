@@ -591,6 +591,76 @@ public func kk_sequence_dropWhile(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     return registerRuntimeObject(newSeq)
 }
 
+// MARK: - Sequence Higher-Order Operations (STDLIB-271)
+
+@_cdecl("kk_sequence_mapNotNull")
+public func kk_sequence_mapNotNull(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    var mapped: [Int] = []
+    for elem in elements {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        let normalized = maybeUnbox(result)
+        if normalized != runtimeNullSentinelInt {
+            mapped.append(normalized)
+        }
+    }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: mapped)])
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_filterNotNull")
+public func kk_sequence_filterNotNull(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let filtered = elements.filter { maybeUnbox($0) != runtimeNullSentinelInt }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: filtered)])
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_mapIndexed")
+public func kk_sequence_mapIndexed(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    var mapped: [Int] = []
+    mapped.reserveCapacity(elements.count)
+    for (idx, elem) in elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        mapped.append(maybeUnbox(result))
+    }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: mapped)])
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_withIndex")
+public func kk_sequence_withIndex(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    var pairs: [Int] = []
+    pairs.reserveCapacity(elements.count)
+    for (idx, elem) in elements.enumerated() {
+        pairs.append(kk_pair_new(idx, elem))
+    }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: pairs)])
+    return registerRuntimeObject(newSeq)
+}
+
 // MARK: - Sequence Terminal Operations
 
 @_cdecl("kk_sequence_forEach")

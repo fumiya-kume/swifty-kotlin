@@ -1595,16 +1595,23 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_dropWhile"
                 } else if calleeName == sortedByName {
                     runtimeCallee = "kk_sequence_sortedBy"
+                } else if calleeName == interner.intern("mapNotNull") {
+                    runtimeCallee = "kk_sequence_mapNotNull"
+                } else if calleeName == interner.intern("mapIndexed") {
+                    runtimeCallee = "kk_sequence_mapIndexed"
                 } else {
                     runtimeCallee = nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == "kk_sequence_sortedBy"
+                        || runtimeCallee == "kk_sequence_mapNotNull"
+                        || runtimeCallee == "kk_sequence_mapIndexed"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: runtimeCallee == "kk_sequence_sortedBy",
+                        canThrow: canThrow,
                         thrownResult: nil
                     ))
                     return result
@@ -1718,6 +1725,10 @@ extension CallLowerer {
                     "kk_sequence_sorted"
                 case "sortedDescending":
                     "kk_sequence_sortedDescending"
+                case "filterNotNull":
+                    "kk_sequence_filterNotNull"
+                case "withIndex":
+                    "kk_sequence_withIndex"
                 default:
                     nil
                 }
@@ -2439,6 +2450,8 @@ extension CallLowerer {
         let canThrow = loweredCallee == interner.intern("kk_list_random")
             || loweredCallee == interner.intern("kk_sequence_sortedBy")
             || loweredCallee == interner.intern("kk_map_getValue")
+            || loweredCallee == interner.intern("kk_sequence_mapNotNull")
+            || loweredCallee == interner.intern("kk_sequence_mapIndexed")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2751,6 +2764,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sortedBy")
             case sortedDescendingName:
                 return interner.intern("kk_sequence_sortedDescending")
+            case interner.intern("mapNotNull"):
+                return interner.intern("kk_sequence_mapNotNull")
+            case interner.intern("filterNotNull"):
+                return interner.intern("kk_sequence_filterNotNull")
+            case interner.intern("mapIndexed"):
+                return interner.intern("kk_sequence_mapIndexed")
+            case interner.intern("withIndex"):
+                return interner.intern("kk_sequence_withIndex")
             default:
                 break
             }

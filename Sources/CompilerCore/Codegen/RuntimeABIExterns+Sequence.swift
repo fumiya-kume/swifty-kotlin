@@ -22,6 +22,10 @@ public extension RuntimeABIExterns {
         kk_sequence_sorted,
         kk_sequence_sortedBy,
         kk_sequence_sortedDescending,
+        kk_sequence_mapNotNull,
+        kk_sequence_filterNotNull,
+        kk_sequence_mapIndexed,
+        kk_sequence_withIndex,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -145,6 +149,31 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_sortedDescending = ExternDecl(
         name: "kk_sequence_sortedDescending",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-271: Higher-order operations (mapNotNull, filterNotNull, mapIndexed, withIndex)
+    static let kk_sequence_mapNotNull = ExternDecl(
+        name: "kk_sequence_mapNotNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_filterNotNull = ExternDecl(
+        name: "kk_sequence_filterNotNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_mapIndexed = ExternDecl(
+        name: "kk_sequence_mapIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_withIndex = ExternDecl(
+        name: "kk_sequence_withIndex",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
