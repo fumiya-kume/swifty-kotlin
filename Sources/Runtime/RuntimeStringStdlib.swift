@@ -840,6 +840,41 @@ public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
     return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
+// MARK: - STDLIB-316: String.chunked / String.windowed
+
+@_cdecl("kk_string_chunked")
+public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    guard size > 0 else {
+        return runtimeMakeStringListRaw([])
+    }
+    let scalars = Array(source.unicodeScalars)
+    var chunks: [String] = []
+    var i = 0
+    while i < scalars.count {
+        let end = Swift.min(i + size, scalars.count)
+        chunks.append(runtimeStringFromScalars(scalars[i ..< end]))
+        i = end
+    }
+    return runtimeMakeStringListRaw(chunks)
+}
+
+@_cdecl("kk_string_windowed")
+public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    guard size > 0, step > 0 else {
+        return runtimeMakeStringListRaw([])
+    }
+    let scalars = Array(source.unicodeScalars)
+    var windows: [String] = []
+    var i = 0
+    while i + size <= scalars.count {
+        windows.append(runtimeStringFromScalars(scalars[i ..< i + size]))
+        i += step
+    }
+    return runtimeMakeStringListRaw(windows)
+}
+
 // MARK: - STDLIB-192: equals(other, ignoreCase)
 
 @_cdecl("kk_string_equalsIgnoreCase")

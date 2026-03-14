@@ -1378,6 +1378,8 @@ extension CallLowerer {
                     ("kk_string_takeLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "dropLast":
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
+                case "chunked":
+                    ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -1400,6 +1402,19 @@ extension CallLowerer {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             let calleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "windowed"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_windowed"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "compareTo"
             {
@@ -3220,4 +3235,3 @@ extension CallLowerer {
         }
     }
 }
-// TEST MARKER

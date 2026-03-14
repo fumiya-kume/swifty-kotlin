@@ -175,6 +175,10 @@ extension CallTypeChecker {
             listStringType
         case ("replace", 2):
             sema.types.stringType
+        case ("chunked", 1):
+            listStringType
+        case ("windowed", 2):
+            listStringType
         default:
             nil
         }
@@ -224,6 +228,17 @@ extension CallTypeChecker {
                     )
                 )
                 sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            }
+        }
+        if memberName == "chunked", args.indices.contains(0) {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+        }
+        if memberName == "windowed" {
+            if args.indices.contains(0) {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            }
+            if args.indices.contains(1) {
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
             }
         }
 

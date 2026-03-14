@@ -159,6 +159,8 @@ extension CollectionLiteralLoweringPass {
         guard let result else { return }
         if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName
             || callee == lookup.kkStringSplitName
+            || callee == lookup.kkStringChunkedName
+            || callee == lookup.kkStringWindowedName
         {
             listExprIDs.insert(result.rawValue)
         } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
@@ -242,7 +244,10 @@ extension CollectionLiteralLoweringPass {
             if let result { sequenceExprIDs.insert(result.rawValue) }
             return
         }
-        if callee == lookup.kkStringSplitName {
+        if callee == lookup.kkStringSplitName
+            || callee == lookup.kkStringChunkedName
+            || callee == lookup.kkStringWindowedName
+        {
             if let result { listExprIDs.insert(result.rawValue) }
             return
         }

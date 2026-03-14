@@ -655,6 +655,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-316: String.chunked / String.windowed
+    public static let kk_string_chunked = ExternDecl(
+        name: "kk_string_chunked",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_windowed = ExternDecl(
+        name: "kk_string_windowed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -1725,6 +1738,8 @@ public enum RuntimeABIExterns {
             kk_string_substringAfter,
             kk_string_substringBeforeLast,
             kk_string_substringAfterLast,
+            kk_string_chunked,
+            kk_string_windowed,
             // Print / Println
             kk_print_any,
             kk_println_any,
