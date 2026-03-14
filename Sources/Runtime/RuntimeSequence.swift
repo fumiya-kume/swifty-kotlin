@@ -41,6 +41,250 @@ private func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
     return nil
 }
 
+private final class SequenceTraversalState {
+    var stop = false
+    var takeCounts: [Int: Int] = [:]
+    var dropCounts: [Int: Int] = [:]
+    var distinctSeen: [Int: [Int]] = [:]
+    var zipIndices: [Int: Int] = [:]
+}
+
+private func runtimeSequenceTransformElement(
+    _ element: Int,
+    steps: [SequenceStepKind],
+    stepIndex: Int,
+    state: SequenceTraversalState,
+    outThrown: UnsafeMutablePointer<Int>?,
+    yield: @escaping (Int) -> Bool
+) {
+    if state.stop { return }
+    if stepIndex >= steps.count {
+        state.stop = !yield(element)
+        return
+    }
+
+    switch steps[stepIndex] {
+    case let .mapStep(fnPtr, closureRaw):
+        let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        let mapped = lambda(closureRaw, element, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            maybeUnbox(mapped),
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .filterStep(fnPtr, closureRaw):
+        let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, element, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        if maybeUnbox(predicateResult) != 0 {
+            runtimeSequenceTransformElement(
+                element,
+                steps: steps,
+                stepIndex: stepIndex + 1,
+                state: state,
+                outThrown: outThrown,
+                yield: yield
+            )
+        }
+    case let .takeStep(count):
+        let emitted = state.takeCounts[stepIndex, default: 0]
+        if emitted >= count {
+            state.stop = true
+            return
+        }
+        state.takeCounts[stepIndex] = emitted + 1
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .dropStep(count):
+        let skipped = state.dropCounts[stepIndex, default: 0]
+        if skipped < count {
+            state.dropCounts[stepIndex] = skipped + 1
+            return
+        }
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case .distinctStep:
+        var seen = state.distinctSeen[stepIndex] ?? []
+        if seen.contains(where: { runtimeValuesEqual($0, element) }) {
+            return
+        }
+        seen.append(element)
+        state.distinctSeen[stepIndex] = seen
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .zipStep(otherElements):
+        let index = state.zipIndices[stepIndex, default: 0]
+        if index >= otherElements.count {
+            state.stop = true
+            return
+        }
+        state.zipIndices[stepIndex] = index + 1
+        runtimeSequenceTransformElement(
+            kk_pair_new(element, otherElements[index]),
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    case let .takeWhileStep(fnPtr, closureRaw):
+        let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        let predicateResult = predicate(closureRaw, element, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        if maybeUnbox(predicateResult) != 0 {
+            runtimeSequenceTransformElement(
+                element,
+                steps: steps,
+                stepIndex: stepIndex + 1,
+                state: state,
+                outThrown: outThrown,
+                yield: yield
+            )
+        } else {
+            state.stop = true
+        }
+    case let .dropWhileStep(fnPtr, closureRaw):
+        let dropping = state.dropCounts[stepIndex, default: 1] != 0
+        if dropping {
+            let predicate = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var thrown = 0
+            let predicateResult = predicate(closureRaw, element, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                state.stop = true
+                return
+            }
+            if maybeUnbox(predicateResult) == 0 {
+                state.dropCounts[stepIndex] = 0
+                runtimeSequenceTransformElement(
+                    element,
+                    steps: steps,
+                    stepIndex: stepIndex + 1,
+                    state: state,
+                    outThrown: outThrown,
+                    yield: yield
+                )
+            }
+        } else {
+            runtimeSequenceTransformElement(
+                element,
+                steps: steps,
+                stepIndex: stepIndex + 1,
+                state: state,
+                outThrown: outThrown,
+                yield: yield
+            )
+        }
+    case .source, .builder, .generator:
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    }
+}
+
+private func runtimeTraverseSequence(
+    _ seq: RuntimeSequenceBox,
+    outThrown: UnsafeMutablePointer<Int>?,
+    yield: @escaping (Int) -> Bool
+) {
+    let transformSteps = seq.steps.filter {
+        switch $0 {
+        case .source, .builder, .generator:
+            false
+        default:
+            true
+        }
+    }
+    let state = SequenceTraversalState()
+    let emit: (Int) -> Void = { element in
+        runtimeSequenceTransformElement(
+            element,
+            steps: transformSteps,
+            stepIndex: 0,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
+    }
+
+    for step in seq.steps {
+        switch step {
+        case let .source(sourceElements), let .builder(sourceElements):
+            for element in sourceElements {
+                emit(element)
+                if state.stop { return }
+            }
+            return
+        case let .generator(seed, fnPtr, closureRaw):
+            let nextFn = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            var current = seed
+            emit(current)
+            if state.stop { return }
+
+            let hardLimit = 100_000
+            var generatedCount = 1
+            while generatedCount < hardLimit, !state.stop {
+                var thrown = 0
+                let next = nextFn(closureRaw, current, &thrown)
+                if thrown != 0 {
+                    outThrown?.pointee = thrown
+                    return
+                }
+                let unboxed = maybeUnbox(next)
+                if unboxed == runtimeNullSentinelInt { return }
+                emit(unboxed)
+                current = unboxed
+                generatedCount += 1
+            }
+            return
+        case .mapStep, .filterStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep:
+            continue
+        }
+    }
+}
+
 /// Extracts source elements from a sequence step, if applicable.
 private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
     switch step {
@@ -447,6 +691,216 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
     }.map(\.element)
     let seq = RuntimeSequenceBox(steps: [.source(elements: sorted)])
     return registerRuntimeObject(seq)
+}
+// MARK: - Sequence Terminal Operations: any/all/none/fold/reduce (STDLIB-274)
+
+@_cdecl("kk_sequence_any")
+public func kk_sequence_any(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    if fnPtr == 0 {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        return kk_box_bool(elements.isEmpty ? 0 : 1)
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var matched = false
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            matched = maybeUnbox(result) != 0
+            return !matched
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return kk_box_bool(0)
+            }
+            if maybeUnbox(result) != 0 {
+                matched = true
+                break
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(matched ? 1 : 0)
+}
+
+@_cdecl("kk_sequence_all")
+public func kk_sequence_all(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var allMatched = true
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            if maybeUnbox(result) == 0 {
+                allMatched = false
+                return false
+            }
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return kk_box_bool(0)
+            }
+            if maybeUnbox(result) == 0 {
+                allMatched = false
+                break
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(allMatched ? 1 : 0)
+}
+
+@_cdecl("kk_sequence_none")
+public func kk_sequence_none(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    if fnPtr == 0 {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        return kk_box_bool(elements.isEmpty ? 1 : 0)
+    }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var foundMatch = false
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            foundMatch = maybeUnbox(result) != 0
+            return !foundMatch
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return kk_box_bool(1)
+            }
+            if maybeUnbox(result) != 0 {
+                foundMatch = true
+                break
+            }
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(foundMatch ? 0 : 1)
+}
+
+@_cdecl("kk_sequence_fold")
+public func kk_sequence_fold(
+    _ seqRaw: Int,
+    _ initial: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var acc = initial
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let nextAcc = lambda(closureRaw, acc, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            acc = maybeUnbox(nextAcc)
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let nextAcc = lambda(closureRaw, acc, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return initial
+            }
+            acc = maybeUnbox(nextAcc)
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return initial }
+    return acc
+}
+
+@_cdecl("kk_sequence_reduce")
+public func kk_sequence_reduce(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var hasAccumulator = false
+    var acc = 0
+    let visit: (Int) -> Bool = { elem in
+        if !hasAccumulator {
+            hasAccumulator = true
+            acc = elem
+            return true
+        }
+        var thrown = 0
+        let nextAcc = lambda(closureRaw, acc, elem, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return false
+        }
+        acc = maybeUnbox(nextAcc)
+        return true
+    }
+
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown, yield: visit)
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            if !visit(elem) { break }
+        }
+    }
+
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if !hasAccumulator {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty sequence can't be reduced.")
+        return 0
+    }
+    return acc
 }
 
 // MARK: - Sequence Builder (sequence { yield(x) })
