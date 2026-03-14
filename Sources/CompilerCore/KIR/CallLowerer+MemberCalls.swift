@@ -1833,16 +1833,25 @@ extension CallLowerer {
                     "kk_sequence_filterNotNull"
                 case "withIndex":
                     "kk_sequence_withIndex"
+                case "first":
+                    "kk_sequence_first"
+                case "firstOrNull":
+                    "kk_sequence_firstOrNull"
+                case "last":
+                    "kk_sequence_last"
+                case "count":
+                    "kk_sequence_count"
                 default:
                     nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == "kk_sequence_first" || runtimeCallee == "kk_sequence_last"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID],
                         result: result,
-                        canThrow: false,
+                        canThrow: canThrow,
                         thrownResult: nil
                     ))
                     return result
@@ -2569,6 +2578,8 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_map_getValue")
             || loweredCallee == interner.intern("kk_sequence_mapNotNull")
             || loweredCallee == interner.intern("kk_sequence_mapIndexed")
+            || loweredCallee == interner.intern("kk_sequence_first")
+            || loweredCallee == interner.intern("kk_sequence_last")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2889,6 +2900,10 @@ extension CallLowerer {
             let sumOfName = interner.intern("sumOf")
             let associateName = interner.intern("associate")
             let associateByName = interner.intern("associateBy")
+            let firstName = interner.intern("first")
+            let firstOrNullName = interner.intern("firstOrNull")
+            let lastName = interner.intern("last")
+            let countName = interner.intern("count")
             switch internedMemberName {
             case mapName:
                 return interner.intern("kk_sequence_map")
@@ -2940,6 +2955,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_windowed")
             case interner.intern("onEach"):
                 return interner.intern("kk_sequence_onEach")
+            case firstName:
+                return interner.intern("kk_sequence_first")
+            case firstOrNullName:
+                return interner.intern("kk_sequence_firstOrNull")
+            case lastName:
+                return interner.intern("kk_sequence_last")
+            case countName:
+                return interner.intern("kk_sequence_count")
             default:
                 break
             }
