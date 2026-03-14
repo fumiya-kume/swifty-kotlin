@@ -692,6 +692,43 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.source(elements: sorted)])
     return registerRuntimeObject(seq)
 }
+// MARK: - Sequence Terminal Operations: first/firstOrNull/last/count (STDLIB-273)
+
+@_cdecl("kk_sequence_first")
+public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    if elements.isEmpty {
+        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
+        outThrown?.pointee = err
+        return 0
+    }
+    return elements[0]
+}
+
+@_cdecl("kk_sequence_firstOrNull")
+public func kk_sequence_firstOrNull(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    if elements.isEmpty { return runtimeNullSentinelInt }
+    return elements[0]
+}
+
+@_cdecl("kk_sequence_last")
+public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    if elements.isEmpty {
+        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
+        outThrown?.pointee = err
+        return 0
+    }
+    return elements[elements.count - 1]
+}
+
+@_cdecl("kk_sequence_count")
+public func kk_sequence_count(_ seqRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    return elements.count
+}
+
 // MARK: - Sequence Terminal Operations: any/all/none/fold/reduce (STDLIB-274)
 
 @_cdecl("kk_sequence_any")
