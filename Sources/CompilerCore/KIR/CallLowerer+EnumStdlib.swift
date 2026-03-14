@@ -25,7 +25,44 @@ extension CallLowerer {
         let intType = sema.types.intType
         let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
 
-        // Look up Color$enumValuesCount or values() to get the count
+        let entries = sema.symbols.children(ofFQName: nominalSymbol.fqName)
+            .compactMap { sema.symbols.symbol($0) }
+            .filter { $0.kind == .field }
+            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+
+        let entryType = sema.types.make(.classType(ClassType(
+            classSymbol: nominalSymbol.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let enumValuesArray = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        let entriesCountExpr = arena.appendExpr(.intLiteral(Int64(entries.count)), type: intType)
+        instructions.append(.constValue(result: entriesCountExpr, value: .intLiteral(Int64(entries.count))))
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [entriesCountExpr],
+            result: enumValuesArray,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, entry) in entries.enumerated() {
+            let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
+            let entryExpr = arena.appendExpr(.symbolRef(entry.id), type: entryType)
+            instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
+            instructions.append(.constValue(result: entryExpr, value: .symbolRef(entry.id)))
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [enumValuesArray, indexExpr, entryExpr],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        // Look up Color$enumValuesCount or fallback to the enum field count.
         let enumName = interner.resolve(nominalSymbol.name)
         let countHelperName = interner.intern("\(enumName)$enumValuesCount")
         let countHelperFQName = nominalSymbol.fqName + [countHelperName]
@@ -45,9 +82,6 @@ extension CallLowerer {
             countExpr = countResult
         } else {
             // Fallback: use entries count from children
-            let entries = sema.symbols.children(ofFQName: nominalSymbol.fqName)
-                .compactMap { sema.symbols.symbol($0) }
-                .filter { $0.kind == .field }
             let countLiteral = arena.appendExpr(.intLiteral(Int64(entries.count)), type: intType)
             instructions.append(.constValue(result: countLiteral, value: .intLiteral(Int64(entries.count))))
             countExpr = countLiteral
@@ -58,7 +92,7 @@ extension CallLowerer {
         instructions.append(.call(
             symbol: nil,
             callee: kkEnumMakeValuesArray,
-            arguments: [countExpr],
+            arguments: [enumValuesArray, countExpr],
             result: result,
             canThrow: false,
             thrownResult: nil
@@ -82,14 +116,15 @@ extension CallLowerer {
               let typeArg = callBinding.substitutedTypeArguments.first,
               case let .classType(classType) = sema.types.kind(of: typeArg),
               let nominalSymbol = sema.symbols.symbol(classType.classSymbol),
-              nominalSymbol.kind == .enumClass,
-              let companionSymbol = sema.symbols.companionObjectSymbol(for: classType.classSymbol)
+              nominalSymbol.kind == .enumClass
         else {
             return nil
         }
 
         let valueOfName = interner.intern("valueOf")
-        let companionFQName = nominalSymbol.fqName + [interner.intern("Companion")]
+        let companionSymbol = sema.symbols.companionObjectSymbol(for: classType.classSymbol) ?? nominalSymbol.id
+        let companionSymbolLookup = sema.symbols.symbol(companionSymbol)
+        let companionFQName = (companionSymbolLookup?.fqName ?? nominalSymbol.fqName)
         let valueOfFQName = companionFQName + [valueOfName]
         let valueOfSymbol = sema.symbols.lookupAll(fqName: valueOfFQName).first
         guard let valueOfSymbol else {

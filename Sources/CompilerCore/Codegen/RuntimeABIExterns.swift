@@ -608,10 +608,10 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    /// STDLIB-171: enumValues<T>() — creates List of enum ordinals
+    /// STDLIB-171: enumValues<T>() — creates List of enum instances
     public static let kk_enum_make_values_array = ExternDecl(
         name: "kk_enum_make_values_array",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

@@ -23,14 +23,16 @@ public func kk_enum_valueOf_throw(_ nameRaw: Int, _ outThrown: UnsafeMutablePoin
     return 0
 }
 
-/// Creates a List of enum ordinals [0, 1, ..., count-1] for enumValues<T>().
-/// Each element is a boxed Int (ordinal). Used by enumValues<Color>().map { it.name } etc.
+/// Creates a `List` of enum instances for `enumValues<T>()`.
+///
+/// The lowering stage builds an array of enum singleton objects (`RuntimeArrayBox`) and
+/// passes it to this runtime helper together with the declared size.
 @_cdecl("kk_enum_make_values_array")
-public func kk_enum_make_values_array(_ count: Int) -> Int {
-    var elements: [Int] = []
-    elements.reserveCapacity(max(0, count))
-    for i in 0 ..< max(0, count) {
-        elements.append(kk_box_int(i))
+public func kk_enum_make_values_array(_ valuesRaw: Int, _ count: Int) -> Int {
+    guard let values = runtimeArrayBox(from: valuesRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    return registerRuntimeObject(RuntimeListBox(elements: elements))
+
+    let safeCount = max(0, min(count, values.elements.count))
+    return registerRuntimeObject(RuntimeListBox(elements: Array(values.elements.prefix(safeCount))))
 }

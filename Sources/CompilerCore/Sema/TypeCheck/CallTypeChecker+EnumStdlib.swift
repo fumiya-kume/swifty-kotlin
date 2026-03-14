@@ -16,21 +16,40 @@ extension CallTypeChecker {
         sema: SemaModule,
         range: SourceRange
     ) -> EnumStdlibSpecialCallResult? {
-        let name = interner.resolve(calleeName)
-        guard name == "enumValues" || name == "enumValueOf" else {
+        let enumValuesName = interner.intern("enumValues")
+        let enumValueOfName = interner.intern("enumValueOf")
+        guard calleeName == enumValuesName || calleeName == enumValueOfName else {
             return nil
         }
-        if locals[calleeName] != nil {
+        let (visibleCandidates, _) = ctx.filterByVisibility(ctx.cachedScopeLookup(calleeName))
+        let hasNonSyntheticUserCandidate = visibleCandidates.contains { candidate in
+            guard let symbol = ctx.cachedSymbol(candidate) else {
+                return false
+            }
+            return !symbol.flags.contains(.synthetic)
+        }
+        if locals[calleeName] != nil || hasNonSyntheticUserCandidate {
             return nil
         }
         guard explicitTypeArgs.count == 1 else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0002",
+                "Expected exactly one type argument for `\(interner.resolve(calleeName))`.",
+                range: range
+            )
             return nil
         }
         let typeArg = explicitTypeArgs[0]
         guard case let .classType(classType) = sema.types.kind(of: typeArg),
+              classType.nullability == .nonNull,
               let nominalSymbol = sema.symbols.symbol(classType.classSymbol),
               nominalSymbol.kind == .enumClass
         else {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-0002",
+                "`\(interner.resolve(calleeName))` requires exactly one non-nullable enum type argument.",
+                range: range
+            )
             return nil
         }
 
@@ -40,7 +59,7 @@ extension CallTypeChecker {
             nullability: .nonNull
         )))
 
-        if name == "enumValues" {
+        if calleeName == enumValuesName {
             guard args.isEmpty else {
                 return nil
             }
@@ -67,7 +86,7 @@ extension CallTypeChecker {
             return .enumValues(enumType: enumType, listType: listType, stubSymbol: stubSymbol)
         }
 
-        if name == "enumValueOf" {
+        if calleeName == enumValueOfName {
             guard args.count == 1 else {
                 return nil
             }
