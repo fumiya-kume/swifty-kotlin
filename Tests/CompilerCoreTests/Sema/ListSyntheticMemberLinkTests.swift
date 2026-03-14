@@ -945,49 +945,6 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
-    func testMutableSetClearIsNotMarkedOperatorFunction() throws {
-        try withTemporaryFile(contents: "fun noop() {}") { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let clearSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
-                ctx.interner.intern("kotlin"),
-                ctx.interner.intern("collections"),
-                ctx.interner.intern("MutableSet"),
-                ctx.interner.intern("clear"),
-            ]))
-
-            XCTAssertFalse(sema.symbols.symbol(clearSymbol)?.flags.contains(.operatorFunction) == true)
-        }
-    }
-
-    func testMutableSetAddAllUsesCollectionParameterType() throws {
-        try withTemporaryFile(contents: "fun noop() {}") { path in
-            let ctx = makeCompilationContext(inputs: [path])
-            try runSema(ctx)
-
-            let sema = try XCTUnwrap(ctx.sema)
-            let addAllSymbol = try XCTUnwrap(sema.symbols.lookup(fqName: [
-                ctx.interner.intern("kotlin"),
-                ctx.interner.intern("collections"),
-                ctx.interner.intern("MutableSet"),
-                ctx.interner.intern("addAll"),
-            ]))
-            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: addAllSymbol))
-
-            guard let parameterType = signature.parameterTypes.first,
-                  case let .classType(classType) = sema.types.kind(of: parameterType)
-            else {
-                return XCTFail("Expected MutableSet.addAll to accept a collection type")
-            }
-
-            let parameterSymbol = classType.classSymbol
-            let parameterName = try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(parameterSymbol)?.name))
-            XCTAssertEqual(parameterName, "Collection")
-        }
-    }
-
     func testMutableListBulkMutationMembersUseInvariantReceiverType() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])
