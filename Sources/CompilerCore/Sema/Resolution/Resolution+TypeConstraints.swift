@@ -275,6 +275,31 @@ extension OverloadResolver {
                case let .classType(alignedClass) = typeSystem.kind(of: alignedSubtype),
                alignedClass.args.count == superClass.args.count
             {
+                if subClass.classSymbol != superClass.classSymbol,
+                   let liftedSubtype = liftClassType(
+                       subClass,
+                       to: superClass.classSymbol,
+                       typeSystem: typeSystem
+                   )
+                {
+                    return decomposeSubtypeConstraint(
+                        subtype: liftedSubtype,
+                        supertype: supertype,
+                        typeVarBySymbol: typeVarBySymbol,
+                        typeSystem: typeSystem,
+                        blameRange: blameRange
+                    )
+                }
+                guard subClass.classSymbol == superClass.classSymbol,
+                      subClass.args.count == superClass.args.count
+                else {
+                    return [VariableConstraint(
+                        kind: .subtype,
+                        left: .type(subtype),
+                        right: .type(supertype),
+                        blameRange: blameRange
+                    )]
+                }
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(alignedClass.args, superClass.args) {
                     let decomposed = decomposeTypeArgConstraint(

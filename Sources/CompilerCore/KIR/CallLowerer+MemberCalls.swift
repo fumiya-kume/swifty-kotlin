@@ -88,7 +88,7 @@ extension CallLowerer {
         "maxByOrNull", "minByOrNull",
         "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
-        "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect",
+        "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "replaceFirstChar",
         "sort", "sortBy", "sortByDescending",
@@ -2622,6 +2622,8 @@ extension CallLowerer {
                 return interner.intern("kk_list_elementAtOrNull")
             case "getOrElse":
                 return interner.intern("kk_list_getOrElse")
+            case "subList":
+                return interner.intern("kk_list_subList")
             default:
                 break
             }

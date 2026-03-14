@@ -313,6 +313,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_lastIndexOf"),
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
+            interner.intern("kk_list_subList"),
             interner.intern("kk_array_of"),
             interner.intern("kk_array_size"),
             // Bitwise/shift (P5-103)
