@@ -978,6 +978,20 @@ extension CallTypeChecker {
         return knownNames.isCollectionLikeSymbol(symbol)
     }
 
+    func isListLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isConcreteListLikeSymbol(symbol)
+    }
+
     private func isMapLikeCollectionReceiver(receiverID: ExprID, sema: SemaModule, interner: StringInterner) -> Bool {
         let knownNames = KnownCompilerNames(interner: interner)
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType

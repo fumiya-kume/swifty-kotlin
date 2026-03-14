@@ -507,6 +507,63 @@ final class CollectionLiteralLoweringTests: XCTestCase {
                       "split result should be recognized as list and routed through kk_list_to_string")
     }
 
+    func testListMinusCollectionResultIsTreatedAsListForPrintlnRewrite() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let listInput = arena.appendExpr(.temporary(0))
+        let listExpr = arena.appendExpr(.temporary(1))
+        let rhsExpr = arena.appendExpr(.temporary(2))
+        let minusResult = arena.appendExpr(.temporary(3))
+        let printlnResult = arena.appendExpr(.temporary(4))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_list_of"),
+                    arguments: [listInput],
+                    result: listExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_list_minus_collection"),
+                    arguments: [listExpr, rhsExpr],
+                    result: minusResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .call(
+                    symbol: nil,
+                    callee: interner.intern("kk_println_any"),
+                    arguments: [minusResult],
+                    result: printlnResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertTrue(callees.contains("kk_list_minus_collection"))
+        XCTAssertTrue(
+            callees.contains("kk_list_to_string"),
+            "list minus collection result should be recognized as list and routed through kk_list_to_string"
+        )
+    }
+
     func testRangeReversedRewrittenToKkRangeReversed() throws {
         let interner = StringInterner()
         let arena = KIRArena()
