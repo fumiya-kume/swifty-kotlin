@@ -9,6 +9,7 @@ public extension RuntimeABIExterns {
         kk_list_component4,
         kk_list_component5,
         kk_list_contains,
+        kk_list_containsAll,
         kk_list_is_empty,
         kk_list_iterator,
         kk_list_iterator_hasNext,
@@ -230,6 +231,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_contains = ExternDecl(
         name: "kk_list_contains",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_containsAll = ExternDecl(
+        name: "kk_list_containsAll",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )

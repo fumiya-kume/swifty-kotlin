@@ -587,7 +587,8 @@ extension DataFlowSemaPhase {
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
-            listTypeParamType: listTypeParamType
+            listTypeParamType: listTypeParamType,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         registerListJoinToStringMember(
             symbols: symbols, types: types, interner: interner,
@@ -710,7 +711,8 @@ extension DataFlowSemaPhase {
         listFQName: [InternedString],
         listInterfaceSymbol: SymbolID,
         listTypeParamSymbol: SymbolID,
-        listTypeParamType: TypeID
+        listTypeParamType: TypeID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let listReceiverType = types.make(.classType(ClassType(
             classSymbol: listInterfaceSymbol,
@@ -740,6 +742,36 @@ extension DataFlowSemaPhase {
                     classTypeParameterCount: 1
                 ),
                 for: containsSymbol
+            )
+        }
+
+        let containsAllName = interner.intern("containsAll")
+        let containsAllFQName = listFQName + [containsAllName]
+        if symbols.lookup(fqName: containsAllFQName) == nil {
+            let containsAllSymbol = symbols.define(
+                kind: .function,
+                name: containsAllName,
+                fqName: containsAllFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: containsAllSymbol)
+            symbols.setExternalLinkName("kk_list_containsAll", for: containsAllSymbol)
+            let collectionParamType = types.make(.classType(ClassType(
+                classSymbol: collectionInterfaceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listReceiverType,
+                    parameterTypes: [collectionParamType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsAllSymbol
             )
         }
 
@@ -2408,7 +2440,8 @@ extension DataFlowSemaPhase {
             setFQName: setFQName,
             setInterfaceSymbol: setInterfaceSymbol,
             typeParamSymbol: typeParamSymbol,
-            typeParamType: typeParamType
+            typeParamType: typeParamType,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
         for (memberName, externName) in [
             ("intersect", "kk_set_intersect"),
@@ -2518,7 +2551,8 @@ extension DataFlowSemaPhase {
         setFQName: [InternedString],
         setInterfaceSymbol: SymbolID,
         typeParamSymbol: SymbolID,
-        typeParamType: TypeID
+        typeParamType: TypeID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         let memberName = interner.intern("containsAll")
         let memberFQName = setFQName + [memberName]
@@ -2528,7 +2562,11 @@ extension DataFlowSemaPhase {
             args: [.out(typeParamType)],
             nullability: .nonNull
         )))
-        let collectionType = types.anyType
+        let collectionType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,

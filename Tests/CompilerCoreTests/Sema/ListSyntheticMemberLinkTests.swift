@@ -738,6 +738,65 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testContainsAllMembersUseCollectionRuntimeExternalLinks() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let listContainsAll = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("List"),
+                ctx.interner.intern("containsAll"),
+            ]))
+            let setContainsAll = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Set"),
+                ctx.interner.intern("containsAll"),
+            ]))
+
+            XCTAssertEqual(sema.symbols.externalLinkName(for: listContainsAll), "kk_list_containsAll")
+            XCTAssertEqual(sema.symbols.externalLinkName(for: setContainsAll), "kk_set_containsAll")
+        }
+    }
+
+    func testSetContainsAllUsesCollectionParameterType() throws {
+        try withTemporaryFile(contents: "fun noop() {}") { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let setContainsAll = try XCTUnwrap(sema.symbols.lookup(fqName: [
+                ctx.interner.intern("kotlin"),
+                ctx.interner.intern("collections"),
+                ctx.interner.intern("Set"),
+                ctx.interner.intern("containsAll"),
+            ]))
+            let signature = try XCTUnwrap(sema.symbols.functionSignature(for: setContainsAll))
+            let parameterType = try XCTUnwrap(signature.parameterTypes.first)
+
+            guard case let .classType(collectionType) = sema.types.kind(of: parameterType) else {
+                return XCTFail("Set.containsAll should accept Collection<E>")
+            }
+
+            XCTAssertEqual(
+                try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(collectionType.classSymbol)?.name)),
+                "Collection"
+            )
+            guard case let .out(elementType) = try XCTUnwrap(collectionType.args.first) else {
+                return XCTFail("Collection parameter should preserve the element projection")
+            }
+            let typeParamSymbol = try XCTUnwrap(signature.typeParameterSymbols.first)
+            let expectedElementType = sema.types.make(.typeParam(TypeParamType(
+                symbol: typeParamSymbol,
+                nullability: .nonNull
+            )))
+            XCTAssertEqual(elementType, expectedElementType)
+        }
+    }
+
     func testContainsMembersAreMarkedOperatorFunctions() throws {
         try withTemporaryFile(contents: "fun noop() {}") { path in
             let ctx = makeCompilationContext(inputs: [path])

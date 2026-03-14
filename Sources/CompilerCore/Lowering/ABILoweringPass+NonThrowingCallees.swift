@@ -223,6 +223,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_component4"),
             interner.intern("kk_list_component5"),
             interner.intern("kk_list_contains"),
+            interner.intern("kk_list_containsAll"),
             interner.intern("kk_list_is_empty"),
             interner.intern("kk_list_iterator"),
             interner.intern("kk_list_iterator_hasNext"),
