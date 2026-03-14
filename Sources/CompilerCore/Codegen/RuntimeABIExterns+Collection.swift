@@ -149,6 +149,8 @@ public extension RuntimeABIExterns {
         kk_list_getOrElse,
         kk_list_firstOrNull,
         kk_list_lastOrNull,
+        kk_list_single,
+        kk_list_singleOrNull,
         kk_mutable_list_add,
         kk_mutable_list_addAll,
         kk_mutable_list_removeAll,
