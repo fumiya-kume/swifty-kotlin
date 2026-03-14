@@ -497,7 +497,7 @@ extension CallLowerer {
         return knownNames.isSequenceSymbol(symbol)
     }
 
-    private func isConcreteListLikeType(
+    func isConcreteListLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
         interner: StringInterner

@@ -168,7 +168,7 @@ extension CallLowerer {
         }
         // STDLIB-345: List plus/minus operators
         if (op == .add || op == .subtract), sema.bindings.isCollectionExpr(exprID),
-           isConcreteListLikeType(sema.bindings.exprTypes[lhsID] ?? sema.types.anyType, sema: sema, interner: interner) {
+           isConcreteListLikeType(sema.bindings.exprTypes[lhs] ?? sema.types.anyType, sema: sema, interner: interner) {
             let calleeName: String
             if op == .subtract {
                 let rhsIsCollection = sema.bindings.isCollectionExpr(rhs)

@@ -1346,6 +1346,7 @@ public extension RuntimeABISpec {
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
+                    section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
                     name: "kk_list_plus_element",
