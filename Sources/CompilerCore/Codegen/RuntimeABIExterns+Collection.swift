@@ -151,6 +151,8 @@ public extension RuntimeABIExterns {
         kk_list_lastOrNull,
         kk_list_single,
         kk_list_singleOrNull,
+        kk_list_containsAll,
+        kk_list_binarySearch,
         kk_mutable_list_add,
         kk_mutable_list_addAll,
         kk_mutable_list_removeAll,
@@ -1006,6 +1008,20 @@ public extension RuntimeABIExterns {
     static let kk_list_singleOrNull = ExternDecl(
         name: "kk_list_singleOrNull",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-346: List.containsAll(collection)
+    static let kk_list_containsAll = ExternDecl(
+        name: "kk_list_containsAll",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-214: List.binarySearch(element)
+    static let kk_list_binarySearch = ExternDecl(
+        name: "kk_list_binarySearch",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

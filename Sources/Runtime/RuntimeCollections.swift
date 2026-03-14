@@ -428,6 +428,53 @@ public func kk_mutable_list_retainAll(_ listRaw: Int, _ collectionRaw: Int) -> I
     return kk_box_bool(list.elements.count != originalCount ? 1 : 0)
 }
 
+// MARK: - List containsAll (STDLIB-346)
+
+@_cdecl("kk_list_containsAll")
+public func kk_list_containsAll(_ listRaw: Int, _ otherListRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return kk_box_bool(0)
+    }
+    let otherElements: [Int]
+    if let otherList = runtimeListBox(from: otherListRaw) {
+        otherElements = otherList.elements
+    } else if let otherSet = runtimeSetBox(from: otherListRaw) {
+        otherElements = otherSet.elements
+    } else {
+        return kk_box_bool(0)
+    }
+    for element in otherElements {
+        if !list.elements.contains(where: { runtimeValuesEqual($0, element) }) {
+            return kk_box_bool(0)
+        }
+    }
+    return kk_box_bool(1)
+}
+
+// MARK: - List binarySearch (STDLIB-214)
+
+@_cdecl("kk_list_binarySearch")
+public func kk_list_binarySearch(_ listRaw: Int, _ element: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return -1
+    }
+    var low = 0
+    var high = list.elements.count - 1
+    while low <= high {
+        let mid = (low + high) / 2
+        let midVal = list.elements[mid]
+        let cmp = runtimeCompareValues(midVal, element)
+        if cmp < 0 {
+            low = mid + 1
+        } else if cmp > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
+}
+
 // MARK: - List plus/minus operators (STDLIB-345)
 
 @_cdecl("kk_list_plus_element")

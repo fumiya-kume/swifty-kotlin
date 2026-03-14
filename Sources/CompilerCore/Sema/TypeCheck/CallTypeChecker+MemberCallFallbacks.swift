@@ -474,6 +474,7 @@ extension CallTypeChecker {
             interner.intern("subList"),
             interner.intern("getOrNull"),
             interner.intern("elementAtOrNull"),
+            interner.intern("binarySearch"),
         ]
         let collectionSpecificMembers: Set = [
             interner.intern("firstOrNull"),
@@ -579,7 +580,7 @@ extension CallTypeChecker {
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
-             interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"),
+             interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
              interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
@@ -635,6 +636,7 @@ extension CallTypeChecker {
             interner.intern("indexOfLast"),
             interner.intern("count"),
             interner.intern("sumOf"),
+            interner.intern("binarySearch"),
         ]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))

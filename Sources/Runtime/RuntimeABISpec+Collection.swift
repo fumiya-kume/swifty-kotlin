@@ -1404,6 +1404,24 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_containsAll",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "otherListRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_binarySearch",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
             ]
     }()
 }
