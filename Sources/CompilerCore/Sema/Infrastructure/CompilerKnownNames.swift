@@ -112,6 +112,7 @@ struct KnownCompilerNames {
     let qualifiedName: InternedString
     let size: InternedString
     let isEmpty: InternedString
+    let getValue: InternedString
     let getOrDefault: InternedString
     let getOrElse: InternedString
     let getOrPut: InternedString
@@ -205,6 +206,7 @@ struct KnownCompilerNames {
         qualifiedName = interner.intern("qualifiedName")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
+        getValue = interner.intern("getValue")
         getOrDefault = interner.intern("getOrDefault")
         getOrElse = interner.intern("getOrElse")
         getOrPut = interner.intern("getOrPut")

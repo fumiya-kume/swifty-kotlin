@@ -3194,6 +3194,14 @@ extension DataFlowSemaPhase {
         )
 
         registerMember(
+            name: "getValue",
+            externalLinkName: "kk_map_getValue",
+            parameterTypes: [keyType],
+            returnType: valueType,
+            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol]
+        )
+
+        registerMember(
             name: "getOrDefault",
             externalLinkName: "kk_map_getOrDefault",
             parameterTypes: [keyType, valueType],
