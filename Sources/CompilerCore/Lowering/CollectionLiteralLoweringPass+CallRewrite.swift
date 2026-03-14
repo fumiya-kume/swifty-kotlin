@@ -1411,6 +1411,25 @@ extension CollectionLiteralLoweringPass {
                                 }
                                 continue
                             }
+                            if setExprIDs.contains(receiverID.rawValue) {
+                                let toListResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSetToListName,
+                                    arguments: [receiverID],
+                                    result: toListResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                if let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(toListResult.rawValue)
+                                    loweredBody.append(.copy(from: toListResult, to: result))
+                                }
+                                continue
+                            }
                         }
                         // args = [receiver, lambda, closureRaw?]; Runtime expects (listRaw, fnPtr, closureRaw, outThrown)
                         if arguments.count == 2 || arguments.count == 3 {
@@ -1575,6 +1594,45 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.forEachName: lookup.kkArrayForEachName
                                 case lookup.anyName: lookup.kkArrayAnyName
                                 case lookup.noneName: lookup.kkArrayNoneName
+                                default: callee
+                                }
+                                let needsListTag = callee == lookup.mapName || callee == lookup.filterName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if needsListTag, let result {
+                                    listExprIDs.insert(result.rawValue)
+                                    listExprIDs.insert(hofResult.rawValue)
+                                }
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                            if setExprIDs.contains(receiverID.rawValue),
+                               callee == lookup.mapName || callee == lookup.filterName
+                               || callee == lookup.forEachName
+                            {
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let kkName: InternedString = switch callee {
+                                case lookup.mapName: lookup.kkSetMapName
+                                case lookup.filterName: lookup.kkSetFilterName
+                                case lookup.forEachName: lookup.kkSetForEachName
                                 default: callee
                                 }
                                 let needsListTag = callee == lookup.mapName || callee == lookup.filterName

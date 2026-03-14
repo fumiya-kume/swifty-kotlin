@@ -149,6 +149,8 @@ public extension RuntimeABIExterns {
         kk_list_getOrElse,
         kk_list_firstOrNull,
         kk_list_lastOrNull,
+        kk_list_single,
+        kk_list_singleOrNull,
         kk_mutable_list_add,
         kk_mutable_list_addAll,
         kk_mutable_list_removeAll,
@@ -162,6 +164,9 @@ public extension RuntimeABIExterns {
         kk_mutable_list_set,
         kk_mutable_list_shuffle,
         kk_mutable_list_reverse,
+        kk_set_map,
+        kk_set_filter,
+        kk_set_forEach,
         kk_mutable_set_add,
         kk_mutable_set_remove,
         kk_mutable_set_clear,
@@ -345,6 +350,25 @@ public extension RuntimeABIExterns {
         name: "kk_set_to_string",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    /// Set higher-order functions (STDLIB-268)
+    static let kk_set_map = ExternDecl(
+        name: "kk_set_map",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_filter = ExternDecl(
+        name: "kk_set_filter",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_forEach = ExternDecl(
+        name: "kk_set_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
     )
 
     static let kk_list_associateBy = ExternDecl(
@@ -969,6 +993,19 @@ public extension RuntimeABIExterns {
     static let kk_list_onEachIndexed = ExternDecl(
         name: "kk_list_onEachIndexed",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-211: single / singleOrNull
+    static let kk_list_single = ExternDecl(
+        name: "kk_list_single",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_singleOrNull = ExternDecl(
+        name: "kk_list_singleOrNull",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

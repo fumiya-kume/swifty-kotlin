@@ -248,6 +248,62 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
         }
     }
 
+    func testSetBinaryMembersKeepSetResultTypeInFallbackPath() throws {
+        let source = """
+        fun combine(values: Set<Int>, other: Set<Int>) {
+            val left = values.intersect(other)
+            val middle = values.union(other)
+            val right = values.subtract(other)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let ast = try XCTUnwrap(ctx.ast)
+            let sema = try XCTUnwrap(ctx.sema)
+            let expectedMembers = Set(["intersect", "union", "subtract"])
+            let setResultTypes: [String: TypeID] = Dictionary(uniqueKeysWithValues: ast.arena.exprs.indices.compactMap { index in
+                let exprID = ExprID(rawValue: Int32(index))
+                guard let expr = ast.arena.expr(exprID),
+                      case let .memberCall(_, callee, _, _, _) = expr
+                else {
+                    return nil
+                }
+                let memberName = ctx.interner.resolve(callee)
+                guard expectedMembers.contains(memberName),
+                      let type = sema.bindings.exprType(for: exprID)
+                else {
+                    return nil
+                }
+                return (memberName, type)
+            })
+
+            XCTAssertEqual(setResultTypes.keys.count, expectedMembers.count)
+
+            for memberName in expectedMembers {
+                let type = try XCTUnwrap(setResultTypes[memberName], "Expected inferred type for \(memberName)")
+                guard case let .classType(classType) = sema.types.kind(of: type) else {
+                    return XCTFail("Expected \(memberName) to infer as Set<Int>, got \(sema.types.kind(of: type))")
+                }
+                XCTAssertEqual(
+                    try ctx.interner.resolve(XCTUnwrap(sema.symbols.symbol(classType.classSymbol)?.name)),
+                    "Set"
+                )
+                XCTAssertEqual(classType.args.count, 1, "Expected Set<Int> type argument for \(memberName)")
+                let elementType: TypeID
+                switch classType.args[0] {
+                case let .invariant(type), let .out(type), let .in(type):
+                    elementType = type
+                case .star:
+                    return XCTFail("Expected concrete Set element projection for \(memberName)")
+                }
+                XCTAssertEqual(sema.types.kind(of: elementType), .primitive(.int, .nonNull))
+            }
+        }
+    }
+
     func testMutableListMutationMembersUseRuntimeExternalLinks() throws {
         let source = """
         fun mutate(values: MutableList<Int>) {
@@ -487,6 +543,25 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
                     )
                 }
             }
+        }
+    }
+
+    func testOutProjectedMutableListBlocksBulkMutationMembers() throws {
+        let source = """
+        fun mutate(values: MutableList<out Number>) {
+            values.addAll(listOf(1, 2))
+            values.removeAll(listOf(3, 4))
+            values.retainAll(listOf(5, 6))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runSema(ctx)
+
+            let diagnostics = ctx.diagnostics.diagnostics.filter { $0.code == "KSWIFTK-SEMA-VAR-OUT" }
+            XCTAssertEqual(diagnostics.count, 3, "Expected projected MutableList bulk writes to be rejected")
+            assertNoDiagnostic("KSWIFTK-TYPE-0001", in: ctx)
         }
     }
 

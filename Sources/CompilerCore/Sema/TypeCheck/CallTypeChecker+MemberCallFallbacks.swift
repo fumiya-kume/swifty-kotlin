@@ -538,6 +538,7 @@ extension CallTypeChecker {
             interner.intern("filterIsInstance"),
             interner.intern("takeWhile"), interner.intern("dropWhile"),
             interner.intern("subList"),
+            interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
         ]
         let setReturningMembers: Set = [
             interner.intern("intersect"),
@@ -585,7 +586,8 @@ extension CallTypeChecker {
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
-             interner.intern("sortBy"), interner.intern("sortByDescending"):
+             interner.intern("sortBy"), interner.intern("sortByDescending"),
+             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return argCount == 1
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1

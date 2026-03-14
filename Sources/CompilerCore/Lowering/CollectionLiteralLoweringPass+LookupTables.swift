@@ -36,6 +36,12 @@ struct CollectionLiteralLookupTables {
     let kkSetContainsAllName: InternedString
     let kkSetIsEmptyName: InternedString
     let kkSetToStringName: InternedString
+    // Set higher-order function ABI names (STDLIB-268)
+    let kkSetMapName: InternedString
+    let kkSetFilterName: InternedString
+    let kkSetForEachName: InternedString
+    let kkSetToListName: InternedString
+
     let kkStringSplitName: InternedString
     let kkStringChunkedName: InternedString
     let kkStringWindowedName: InternedString
@@ -360,6 +366,10 @@ struct CollectionLiteralLookupTables {
         kkSetContainsAllName = interner.intern("kk_set_containsAll")
         kkSetIsEmptyName = interner.intern("kk_set_is_empty")
         kkSetToStringName = interner.intern("kk_set_to_string")
+        kkSetMapName = interner.intern("kk_set_map")
+        kkSetFilterName = interner.intern("kk_set_filter")
+        kkSetForEachName = interner.intern("kk_set_forEach")
+        kkSetToListName = interner.intern("kk_set_toList")
         kkStringSplitName = interner.intern("kk_string_split")
         kkStringChunkedName = interner.intern("kk_string_chunked")
         kkStringWindowedName = interner.intern("kk_string_windowed")
