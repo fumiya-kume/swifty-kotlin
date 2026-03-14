@@ -267,6 +267,7 @@ extension CallTypeChecker {
         }
 
         let isMapReceiver = isMapLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        let isSetReceiver = isSetLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableListReceiver = isMutableListCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isMutableMapReceiver = isMutableMapCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
         let isListReceiver = isConcreteListLikeCollectionReceiver(receiverID: receiverID, sema: sema, interner: interner)
@@ -274,6 +275,7 @@ extension CallTypeChecker {
             calleeName,
             isListReceiver: isListReceiver,
             isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver,
             isMutableListReceiver: isMutableListReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             interner: interner
@@ -282,6 +284,7 @@ extension CallTypeChecker {
             calleeName,
             argCount: args.count,
             isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver,
             isMutableMapReceiver: isMutableMapReceiver,
             isMutableListReceiver: isMutableListReceiver,
             interner: interner
@@ -315,7 +318,12 @@ extension CallTypeChecker {
             )
         }
 
-        if isCollectionReturningMember(calleeName, isMapReceiver: isMapReceiver, interner: interner) {
+        if isCollectionReturningMember(
+            calleeName,
+            isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver,
+            interner: interner
+        ) {
             sema.bindings.markCollectionExpr(id)
         }
 
@@ -339,6 +347,7 @@ extension CallTypeChecker {
             memberName: calleeName,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
+            isSetReceiver: isSetReceiver,
             sema: sema,
             interner: interner
         )
@@ -387,6 +396,7 @@ extension CallTypeChecker {
         _ memberName: InternedString,
         isListReceiver: Bool,
         isMapReceiver: Bool,
+        isSetReceiver: Bool,
         isMutableListReceiver: Bool,
         isMutableMapReceiver: Bool,
         interner: StringInterner
@@ -455,6 +465,11 @@ extension CallTypeChecker {
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
         ]
+        let setOnlyMembers: Set = [
+            interner.intern("intersect"),
+            interner.intern("union"),
+            interner.intern("subtract"),
+        ]
         let listOnlyMembers: Set = [
             interner.intern("subList"),
             interner.intern("getOrNull"),
@@ -495,6 +510,9 @@ extension CallTypeChecker {
         if mapOnlyMembers.contains(memberName) {
             return isMapReceiver
         }
+        if setOnlyMembers.contains(memberName) {
+            return isSetReceiver
+        }
         if mutableListOnlyMembers.contains(memberName) {
             return isMutableListReceiver
         }
@@ -507,6 +525,7 @@ extension CallTypeChecker {
     func isCollectionReturningMember(
         _ memberName: InternedString,
         isMapReceiver: Bool,
+        isSetReceiver: Bool,
         interner: StringInterner
     ) -> Bool {
         let collectionReturningMembers: Set = [
@@ -520,12 +539,20 @@ extension CallTypeChecker {
             interner.intern("takeWhile"), interner.intern("dropWhile"),
             interner.intern("subList"),
         ]
+        let setReturningMembers: Set = [
+            interner.intern("intersect"),
+            interner.intern("union"),
+            interner.intern("subtract"),
+        ]
         if memberName == interner.intern("mapValues") ||
             memberName == interner.intern("mapKeys") ||
             memberName == interner.intern("plus") ||
             memberName == interner.intern("minus")
         {
             return isMapReceiver
+        }
+        if setReturningMembers.contains(memberName) {
+            return isSetReceiver
         }
         return collectionReturningMembers.contains(memberName)
     }
@@ -534,6 +561,7 @@ extension CallTypeChecker {
         _ memberName: InternedString,
         argCount: Int,
         isMapReceiver: Bool,
+        isSetReceiver: Bool,
         isMutableMapReceiver: Bool,
         isMutableListReceiver: Bool,
         interner: StringInterner
@@ -559,6 +587,8 @@ extension CallTypeChecker {
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"):
             return argCount == 1
+        case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
+            return isSetReceiver && argCount == 1
         case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return isMapReceiver && argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
@@ -590,6 +620,7 @@ extension CallTypeChecker {
         memberName: InternedString,
         receiverElementType: TypeID,
         isMapReceiver: Bool,
+        isSetReceiver: Bool,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
@@ -710,6 +741,23 @@ extension CallTypeChecker {
         {
             return sema.types.make(.classType(ClassType(
                 classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        if isSetReceiver,
+           (memberName == interner.intern("intersect") ||
+               memberName == interner.intern("union") ||
+               memberName == interner.intern("subtract")),
+           let setSymbol = sema.symbols.lookup(fqName: [
+               interner.intern("kotlin"),
+               interner.intern("collections"),
+               interner.intern("Set"),
+           ])
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: setSymbol,
                 args: [.invariant(receiverElementType)],
                 nullability: .nonNull
             )))
@@ -1070,6 +1118,21 @@ extension CallTypeChecker {
             return false
         }
         return knownNames.isConcreteListLikeSymbol(symbol) && !knownNames.isMapLikeSymbol(symbol)
+    }
+
+    private func isSetLikeCollectionReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.collectionKind(of: symbol) == .set && classType.args.count == 1
     }
 
     // MARK: - Array member fallback (STDLIB-087/088/089)
