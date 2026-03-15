@@ -1028,7 +1028,10 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_first")
+    }
     return pairBox.first
 }
 
@@ -1040,7 +1043,10 @@ public func component1(_ pairRaw: Int) -> Int {
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_second")
+    }
     return pairBox.second
 }
 
@@ -1054,11 +1060,7 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
-        let str = "(null, null)"
-        let utf8 = Array(str.utf8)
-        return utf8.withUnsafeBufferPointer { buf in
-            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
-        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_to_string")
     }
     let firstStr = runtimeElementToString(pairBox.first)
     let secondStr = runtimeElementToString(pairBox.second)
@@ -1080,21 +1082,30 @@ public func kk_triple_new(_ first: Int, _ second: Int, _ third: Int) -> Int {
 @_cdecl("kk_triple_first")
 public func kk_triple_first(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_first")
+    }
     return tripleBox.first
 }
 
 @_cdecl("kk_triple_second")
 public func kk_triple_second(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_second")
+    }
     return tripleBox.second
 }
 
 @_cdecl("kk_triple_third")
 public func kk_triple_third(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_third")
+    }
     return tripleBox.third
 }
 
@@ -1103,11 +1114,7 @@ public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
           let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
     else {
-        let str = "(null, null, null)"
-        let utf8 = Array(str.utf8)
-        return utf8.withUnsafeBufferPointer { buf in
-            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
-        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_to_string")
     }
     let firstStr = runtimeElementToString(tripleBox.first)
     let secondStr = runtimeElementToString(tripleBox.second)
@@ -1125,7 +1132,9 @@ public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
 public func kk_pair_toList(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
-    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_toList")
+    }
     return registerRuntimeObject(RuntimeListBox(elements: [pairBox.first, pairBox.second]))
 }
 
@@ -1133,7 +1142,9 @@ public func kk_pair_toList(_ pairRaw: Int) -> Int {
 public func kk_triple_toList(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
           let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
-    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_toList")
+    }
     return registerRuntimeObject(RuntimeListBox(elements: [tripleBox.first, tripleBox.second, tripleBox.third]))
 }
 
