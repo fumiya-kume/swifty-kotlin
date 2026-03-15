@@ -208,6 +208,11 @@ extension DataFlowSemaPhase {
             valueTypeParamSymbol: mapSymbols.valueTypeParamSymbol,
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
+
+        registerSyntheticArrayDequeStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
     }
 
     private func registerSyntheticPairStub(
@@ -3799,5 +3804,197 @@ extension DataFlowSemaPhase {
         registerPropertyGetter(name: "value", ret: tType, externalLinkName: "kk_pair_second")
 
         return symbol
+    }
+
+    // MARK: - ArrayDeque (STDLIB-240)
+
+    private func registerSyntheticArrayDequeStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) {
+        let arrayDequeName = interner.intern("ArrayDeque")
+        let arrayDequeFQName = kotlinCollectionsPkg + [arrayDequeName]
+        let arrayDequeSymbol: SymbolID = if let existing = symbols.lookup(fqName: arrayDequeFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: arrayDequeName,
+                fqName: arrayDequeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Define type parameter E for ArrayDeque<E>
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = arrayDequeFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: arrayDequeSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: arrayDequeSymbol)
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: arrayDequeSymbol,
+            args: [.invariant(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        // Constructor: ArrayDeque() → kk_arraydeque_new
+        let initName = interner.intern("<init>")
+        let initFQName = arrayDequeFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arrayDequeSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_arraydeque_new", for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [],
+                    returnType: receiverType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: initSymbol
+            )
+        }
+
+        // addFirst(element: E): Unit
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "addFirst", externalName: "kk_arraydeque_addFirst",
+            parameterTypes: [typeParamType], returnType: types.unitType
+        )
+
+        // addLast(element: E): Unit
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "addLast", externalName: "kk_arraydeque_addLast",
+            parameterTypes: [typeParamType], returnType: types.unitType
+        )
+
+        // removeFirst(): E (can throw)
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "removeFirst", externalName: "kk_arraydeque_removeFirst",
+            parameterTypes: [], returnType: typeParamType
+        )
+
+        // removeLast(): E (can throw)
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "removeLast", externalName: "kk_arraydeque_removeLast",
+            parameterTypes: [], returnType: typeParamType
+        )
+
+        // first(): E (can throw)
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "first", externalName: "kk_arraydeque_first",
+            parameterTypes: [], returnType: typeParamType
+        )
+
+        // last(): E (can throw)
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "last", externalName: "kk_arraydeque_last",
+            parameterTypes: [], returnType: typeParamType
+        )
+
+        // size: Int (property-like)
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "size", externalName: "kk_arraydeque_size",
+            parameterTypes: [], returnType: types.intType
+        )
+
+        // isEmpty(): Boolean
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "isEmpty", externalName: "kk_arraydeque_isEmpty",
+            parameterTypes: [], returnType: types.booleanType
+        )
+
+        // toString(): String
+        registerArrayDequeMember(
+            symbols: symbols, types: types, interner: interner,
+            fqName: arrayDequeFQName, parentSymbol: arrayDequeSymbol,
+            receiverType: receiverType, typeParamSymbol: typeParamSymbol,
+            memberName: "toString", externalName: "kk_arraydeque_toString",
+            parameterTypes: [], returnType: types.stringType
+        )
+    }
+
+    private func registerArrayDequeMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        fqName: [InternedString],
+        parentSymbol: SymbolID,
+        receiverType: TypeID,
+        typeParamSymbol: SymbolID,
+        memberName: String,
+        externalName: String,
+        parameterTypes: [TypeID],
+        returnType: TypeID
+    ) {
+        let internedName = interner.intern(memberName)
+        let memberFQName = fqName + [internedName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: internedName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(parentSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalName, for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 }

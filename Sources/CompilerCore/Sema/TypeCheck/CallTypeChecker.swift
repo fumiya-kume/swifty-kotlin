@@ -1165,6 +1165,40 @@ final class CallTypeChecker {
                 }
                 sema.bindings.bindExprType(id, type: regexType)
                 return regexType
+            case "ArrayDeque":
+                // ArrayDeque() — zero-arg constructor
+                let elementType: TypeID
+                if let explicitTypeArg = explicitTypeArgs.first {
+                    elementType = explicitTypeArg
+                } else if let expectedType,
+                          case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                          let firstArg = expectedClassType.args.first
+                {
+                    switch firstArg {
+                    case let .invariant(type), let .in(type), let .out(type):
+                        elementType = type
+                    case .star:
+                        elementType = sema.types.anyType
+                    }
+                } else {
+                    elementType = sema.types.anyType
+                }
+                let arrayDequeType: TypeID = if let adSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("collections"),
+                    interner.intern("ArrayDeque"),
+                ]) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: adSymbol,
+                        args: [.invariant(elementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: arrayDequeType)
+                return arrayDequeType
             default:
                 break
             }

@@ -72,6 +72,7 @@ struct KnownCompilerNames {
     let set: InternedString
     let mutableSet: InternedString
     let collection: InternedString
+    let arrayDeque: InternedString
     let array: InternedString
     let intArray: InternedString
     let longArray: InternedString
@@ -131,6 +132,7 @@ struct KnownCompilerNames {
     let kotlinCollectionsMutableSetFQName: [InternedString]
     let kotlinCollectionsMapFQName: [InternedString]
     let kotlinCollectionsMutableMapFQName: [InternedString]
+    let kotlinCollectionsArrayDequeFQName: [InternedString]
     let kotlinCollectionsCollectionFQName: [InternedString]
     let kotlinxCoroutinesJobFQName: [InternedString]
     let kotlinxCoroutinesDeferredFQName: [InternedString]
@@ -167,6 +169,7 @@ struct KnownCompilerNames {
         set = interner.intern("Set")
         mutableSet = interner.intern("MutableSet")
         collection = interner.intern("Collection")
+        arrayDeque = interner.intern("ArrayDeque")
         array = interner.intern("Array")
         intArray = interner.intern("IntArray")
         longArray = interner.intern("LongArray")
@@ -235,6 +238,7 @@ struct KnownCompilerNames {
         kotlinCollectionsMutableSetFQName = [kotlin, kotlinCollections, mutableSet]
         kotlinCollectionsMapFQName = [kotlin, kotlinCollections, map]
         kotlinCollectionsMutableMapFQName = [kotlin, kotlinCollections, mutableMap]
+        kotlinCollectionsArrayDequeFQName = [kotlin, kotlinCollections, arrayDeque]
         kotlinCollectionsCollectionFQName = [kotlin, kotlinCollections, collection]
         kotlinxCoroutinesJobFQName = [kotlinx, coroutines, job]
         kotlinxCoroutinesDeferredFQName = [kotlinx, coroutines, deferred]
@@ -341,6 +345,10 @@ struct KnownCompilerNames {
 
     func isMutableListSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == mutableList || symbolMatches(symbol, fqName: kotlinCollectionsMutableListFQName)
+    }
+
+    func isArrayDequeSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == arrayDeque || symbolMatches(symbol, fqName: kotlinCollectionsArrayDequeFQName)
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {

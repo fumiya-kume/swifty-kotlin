@@ -387,6 +387,13 @@ extension ABILoweringPass {
             interner.intern("kk_list_plus_collection"),
             interner.intern("kk_list_minus_element"),
             interner.intern("kk_list_minus_collection"),
+            // ArrayDeque (STDLIB-240) — non-throwing subset
+            interner.intern("kk_arraydeque_new"),
+            interner.intern("kk_arraydeque_addFirst"),
+            interner.intern("kk_arraydeque_addLast"),
+            interner.intern("kk_arraydeque_size"),
+            interner.intern("kk_arraydeque_isEmpty"),
+            interner.intern("kk_arraydeque_toString"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

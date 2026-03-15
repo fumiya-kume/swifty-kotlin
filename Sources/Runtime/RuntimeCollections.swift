@@ -1167,6 +1167,122 @@ public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - ArrayDeque Functions (STDLIB-240)
+
+@_cdecl("kk_arraydeque_new")
+public func kk_arraydeque_new() -> Int {
+    registerRuntimeObject(RuntimeArrayDequeBox(elements: []))
+}
+
+@_cdecl("kk_arraydeque_addFirst")
+public func kk_arraydeque_addFirst(_ dequeRaw: Int, _ element: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    deque.elements.insert(element, at: 0)
+    return 0
+}
+
+@_cdecl("kk_arraydeque_addLast")
+public func kk_arraydeque_addLast(_ dequeRaw: Int, _ element: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    deque.elements.append(element)
+    return 0
+}
+
+@_cdecl("kk_arraydeque_removeFirst")
+public func kk_arraydeque_removeFirst(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements.removeFirst()
+}
+
+@_cdecl("kk_arraydeque_removeLast")
+public func kk_arraydeque_removeLast(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements.removeLast()
+}
+
+@_cdecl("kk_arraydeque_first")
+public func kk_arraydeque_first(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements[0]
+}
+
+@_cdecl("kk_arraydeque_last")
+public func kk_arraydeque_last(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements[deque.elements.count - 1]
+}
+
+@_cdecl("kk_arraydeque_size")
+public func kk_arraydeque_size(_ dequeRaw: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    return deque.elements.count
+}
+
+@_cdecl("kk_arraydeque_isEmpty")
+public func kk_arraydeque_isEmpty(_ dequeRaw: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(deque.elements.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_arraydeque_toString")
+public func kk_arraydeque_toString(_ dequeRaw: Int) -> UnsafeMutableRawPointer {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        let str = "[]"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let parts = deque.elements.map { elem -> String in
+        runtimeElementToString(elem)
+    }
+    let str = "[" + parts.joined(separator: ", ") + "]"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
 // MARK: - Array utility functions (STDLIB-089)
 
 @_cdecl("kk_array_copyOf")

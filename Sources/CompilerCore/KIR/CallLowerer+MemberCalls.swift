@@ -98,6 +98,7 @@ extension CallLowerer {
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
         "containsAll", "binarySearch",
+        "addFirst", "addLast",
         "to", // FUNC-002
     ]
 
@@ -526,6 +527,20 @@ extension CallLowerer {
         }
         return symbol.name == knownNames.mutableList
             || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
+    }
+
+    private func isArrayDequeLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isArrayDequeSymbol(symbol)
     }
 
     private func isConcreteCollectionLikeType(
@@ -2388,6 +2403,16 @@ extension CallLowerer {
            Self.unresolvedChannelMemberNames.contains(calleeText)
         {
             arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        // removeFirst/removeLast are scoped to ArrayDeque receivers only;
+        // they must NOT go through the general unresolvedCollectionMemberNames
+        // path because MutableList also has these methods and would get
+        // incorrect callee mapping.
+        if (calleeText == "removeFirst" || calleeText == "removeLast"),
+           isArrayDequeLikeType(receiverType, sema: sema, interner: interner)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
         }
     }
 
@@ -2719,6 +2744,31 @@ extension CallLowerer {
                 return interner.intern("kk_mutable_list_removeAll")
             case "retainAll":
                 return interner.intern("kk_mutable_list_retainAll")
+            default:
+                break
+            }
+        }
+
+        if isArrayDequeLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addFirst":
+                return interner.intern("kk_arraydeque_addFirst")
+            case "addLast":
+                return interner.intern("kk_arraydeque_addLast")
+            case "removeFirst":
+                return interner.intern("kk_arraydeque_removeFirst")
+            case "removeLast":
+                return interner.intern("kk_arraydeque_removeLast")
+            case "first":
+                return interner.intern("kk_arraydeque_first")
+            case "last":
+                return interner.intern("kk_arraydeque_last")
+            case "size":
+                return interner.intern("kk_arraydeque_size")
+            case "isEmpty":
+                return interner.intern("kk_arraydeque_isEmpty")
+            case "toString":
+                return interner.intern("kk_arraydeque_toString")
             default:
                 break
             }
