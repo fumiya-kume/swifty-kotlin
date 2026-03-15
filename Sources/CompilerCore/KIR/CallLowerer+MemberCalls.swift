@@ -1298,7 +1298,7 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                if calleeStr == "zipWithNext" {
+                if calleeName == interner.intern("zipWithNext") {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_zipWithNext"),

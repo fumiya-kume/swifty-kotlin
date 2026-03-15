@@ -1091,6 +1091,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let printlnFunctions: [RuntimeABIFunctionSpec] = [
@@ -2320,15 +2329,6 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "str", type: .intptr),
                 RuntimeABIParameter(name: "size", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "String"
-        ),
-        // STDLIB-316: String.zipWithNext()
-        RuntimeABIFunctionSpec(
-            name: "kk_string_zipWithNext",
-            parameters: [
-                RuntimeABIParameter(name: "str", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"

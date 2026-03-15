@@ -1102,12 +1102,33 @@ extension DataFlowSemaPhase {
 
         // --- STDLIB-316: String.zipWithNext ---
 
+        let pairFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Pair"),
+        ]
+        let pairCharCharType: TypeID
+        if let pairSymbol = symbols.lookup(fqName: pairFQName) {
+            pairCharCharType = types.make(.classType(ClassType(
+                classSymbol: pairSymbol,
+                args: [.out(charType), .out(charType)],
+                nullability: .nonNull
+            )))
+        } else {
+            pairCharCharType = types.anyType
+        }
+        let listPairCharCharType = makeListType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: pairCharCharType
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "zipWithNext",
             externalLinkName: "kk_string_zipWithNext",
             receiverType: stringType,
             parameters: [],
-            returnType: types.anyType,
+            returnType: listPairCharCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
