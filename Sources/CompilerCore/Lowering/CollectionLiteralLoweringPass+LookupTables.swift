@@ -156,6 +156,8 @@ struct CollectionLiteralLookupTables {
     let kkSequenceSumOfName: InternedString
     let kkSequenceAssociateName: InternedString
     let kkSequenceAssociateByName: InternedString
+    let kkEmptySequenceName: InternedString
+    let kkSequenceIfEmptyName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -493,6 +495,8 @@ struct CollectionLiteralLookupTables {
         kkSequenceSumOfName = interner.intern("kk_sequence_sumOf")
         kkSequenceAssociateName = interner.intern("kk_sequence_associate")
         kkSequenceAssociateByName = interner.intern("kk_sequence_associateBy")
+        kkEmptySequenceName = interner.intern("kk_empty_sequence")
+        kkSequenceIfEmptyName = interner.intern("kk_sequence_ifEmpty")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
