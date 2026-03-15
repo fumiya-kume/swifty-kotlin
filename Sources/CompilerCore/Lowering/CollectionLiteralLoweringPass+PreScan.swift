@@ -77,6 +77,10 @@ extension CollectionLiteralLoweringPass {
                 }
             case let .constValue(result, .charLiteral):
                 charValuedExprIDs.insert(result.rawValue)
+            case let .copy(from, to):
+                if charValuedExprIDs.contains(from.rawValue) {
+                    charValuedExprIDs.insert(to.rawValue)
+                }
             default:
                 break
             }

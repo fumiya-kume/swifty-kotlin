@@ -63,7 +63,7 @@ extension CallTypeChecker {
             }
         }
 
-        let resultType = rangeMemberResultType(memberName: memberName, sema: sema)
+        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange)
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -93,9 +93,11 @@ extension CallTypeChecker {
         ["toList", "map"].contains(memberName)
     }
 
-    private func rangeMemberResultType(memberName: String, sema: SemaModule) -> TypeID {
+    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false) -> TypeID {
         switch memberName {
-        case "first", "last", "count":
+        case "first", "last":
+            isCharRange ? sema.types.charType : sema.types.intType
+        case "count":
             sema.types.intType
         case "contains":
             sema.types.booleanType

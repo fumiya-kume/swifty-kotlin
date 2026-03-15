@@ -2233,6 +2233,9 @@ extension CollectionLiteralLoweringPass {
                     if rangeExprIDs.contains(from.rawValue) {
                         rangeExprIDs.insert(to.rawValue)
                     }
+                    if charRangeExprIDs.contains(from.rawValue) {
+                        charRangeExprIDs.insert(to.rawValue)
+                    }
                     if stringExprIDs.contains(from.rawValue) {
                         stringExprIDs.insert(to.rawValue)
                     }
