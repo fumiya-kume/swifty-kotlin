@@ -97,6 +97,7 @@ struct KnownCompilerNames {
 
     let regex: InternedString
     let sequence: InternedString
+    let grouping: InternedString
     let channel: InternedString
     let job: InternedString
     let deferred: InternedString
@@ -141,6 +142,7 @@ struct KnownCompilerNames {
 
     let kotlinRegexFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
+    let kotlinCollectionsGroupingFQName: [InternedString]
     let kotlinCollectionsListFQName: [InternedString]
     let kotlinCollectionsMutableListFQName: [InternedString]
     let kotlinCollectionsSetFQName: [InternedString]
@@ -194,6 +196,7 @@ struct KnownCompilerNames {
 
         regex = interner.intern("Regex")
         sequence = interner.intern("Sequence")
+        grouping = interner.intern("Grouping")
         channel = interner.intern("Channel")
         job = interner.intern("Job")
         deferred = interner.intern("Deferred")
@@ -247,6 +250,7 @@ struct KnownCompilerNames {
 
         kotlinRegexFQName = [kotlin, kotlinText, regex]
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
+        kotlinCollectionsGroupingFQName = [kotlin, kotlinCollections, grouping]
         kotlinCollectionsListFQName = [kotlin, kotlinCollections, list]
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
         kotlinCollectionsSetFQName = [kotlin, kotlinCollections, set]
@@ -313,6 +317,10 @@ struct KnownCompilerNames {
 
     func isSequenceSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == sequence || symbolMatches(symbol, fqName: kotlinSequenceFQName)
+    }
+
+    func isGroupingSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == grouping || symbolMatches(symbol, fqName: kotlinCollectionsGroupingFQName)
     }
 
     func isCoroutineHandleSymbol(_ symbol: SemanticSymbol) -> Bool {
