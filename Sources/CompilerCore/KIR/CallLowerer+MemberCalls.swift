@@ -2504,6 +2504,7 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_map_getValue")
             || loweredCallee == interner.intern("kk_sequence_mapNotNull")
             || loweredCallee == interner.intern("kk_sequence_mapIndexed")
+            || loweredCallee == interner.intern("kk_sequence_ifEmpty")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
