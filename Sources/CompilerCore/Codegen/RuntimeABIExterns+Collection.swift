@@ -184,6 +184,7 @@ public extension RuntimeABIExterns {
         kk_list_plus_collection,
         kk_list_minus_element,
         kk_list_minus_collection,
+        kk_use,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1297,6 +1298,14 @@ public extension RuntimeABIExterns {
     static let kk_list_minus_collection = ExternDecl(
         name: "kk_list_minus_collection",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Closeable.use {} (STDLIB-250)
+    /// Runtime signature: kk_use(resourceRaw, fnPtr, closureRaw, outThrown) -> R
+    static let kk_use = ExternDecl(
+        name: "kk_use",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
