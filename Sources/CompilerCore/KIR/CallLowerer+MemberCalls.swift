@@ -1739,7 +1739,7 @@ extension CallLowerer {
         }
 
         // Sequence windowed: 1-3 args (size, step=1, partialWindows=false) — STDLIB-276
-        if (1...3).contains(args.count), interner.resolve(calleeName) == "windowed" {
+        if (1...3).contains(args.count), calleeName == interner.intern("windowed") {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)

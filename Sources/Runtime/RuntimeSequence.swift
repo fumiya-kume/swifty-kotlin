@@ -212,6 +212,23 @@ private func runtimeSequenceTransformElement(
                 yield: yield
             )
         }
+    case let .onEachStep(fnPtr, closureRaw):
+        let action = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        var thrown = 0
+        _ = action(closureRaw, element, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            state.stop = true
+            return
+        }
+        runtimeSequenceTransformElement(
+            element,
+            steps: steps,
+            stepIndex: stepIndex + 1,
+            state: state,
+            outThrown: outThrown,
+            yield: yield
+        )
     case .source, .builder, .generator:
         runtimeSequenceTransformElement(
             element,
@@ -279,7 +296,7 @@ private func runtimeTraverseSequence(
                 generatedCount += 1
             }
             return
-        case .mapStep, .filterStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep:
+        case .mapStep, .filterStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep:
             continue
         }
     }
@@ -422,6 +439,13 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             elements = applyTakeWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
         case let .dropWhileStep(fnPtr, closureRaw):
             elements = applyDropWhileStep(elements, fnPtr: fnPtr, closureRaw: closureRaw)
+        case let .onEachStep(fnPtr, closureRaw):
+            let action = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+            for elem in elements {
+                var thrown = 0
+                _ = action(closureRaw, elem, &thrown)
+                if thrown != 0 { return [] }
+            }
         }
     }
 
@@ -1110,13 +1134,33 @@ public func kk_sequence_associateBy(
 
 @_cdecl("kk_sequence_chunked")
 public func kk_sequence_chunked(_ seqRaw: Int, _ size: Int) -> Int {
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     let chunkSize = max(1, size)
+    // Lazily traverse upstream to build chunks on the fly
     var chunks: [Int] = []
-    for i in stride(from: 0, to: elements.count, by: chunkSize) {
-        let end = min(i + chunkSize, elements.count)
-        let chunk = Array(elements[i..<end])
-        let chunkList = RuntimeListBox(elements: chunk)
+    var currentChunk: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            currentChunk.append(elem)
+            if currentChunk.count == chunkSize {
+                let chunkList = RuntimeListBox(elements: currentChunk)
+                chunks.append(registerRuntimeObject(chunkList))
+                currentChunk = []
+            }
+            return true
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        for elem in elements {
+            currentChunk.append(elem)
+            if currentChunk.count == chunkSize {
+                let chunkList = RuntimeListBox(elements: currentChunk)
+                chunks.append(registerRuntimeObject(chunkList))
+                currentChunk = []
+            }
+        }
+    }
+    if !currentChunk.isEmpty {
+        let chunkList = RuntimeListBox(elements: currentChunk)
         chunks.append(registerRuntimeObject(chunkList))
     }
     let resultSeq = RuntimeSequenceBox(steps: [.source(elements: chunks)])
@@ -1125,20 +1169,47 @@ public func kk_sequence_chunked(_ seqRaw: Int, _ size: Int) -> Int {
 
 @_cdecl("kk_sequence_windowed")
 public func kk_sequence_windowed(_ seqRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     let clampedSize = max(1, size)
     let clampedStep = max(1, step)
     let includePartial = partialWindows != 0
+    // Lazily traverse upstream to build windows on the fly
+    var buffer: [Int] = []
     var windows: [Int] = []
-    var i = 0
-    while i < elements.count {
-        let end = min(i + clampedSize, elements.count)
-        let window = Array(elements[i..<end])
-        if window.count == clampedSize || includePartial {
+    var elementIndex = 0
+    var nextWindowStart = 0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            buffer.append(elem)
+            elementIndex += 1
+            // Emit windows whose start position we've passed
+            while nextWindowStart + clampedSize <= elementIndex {
+                let window = Array(buffer[nextWindowStart..<(nextWindowStart + clampedSize)])
+                let windowList = RuntimeListBox(elements: window)
+                windows.append(registerRuntimeObject(windowList))
+                nextWindowStart += clampedStep
+            }
+            return true
+        }
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        buffer = elements
+        elementIndex = elements.count
+        while nextWindowStart + clampedSize <= elementIndex {
+            let window = Array(buffer[nextWindowStart..<(nextWindowStart + clampedSize)])
             let windowList = RuntimeListBox(elements: window)
             windows.append(registerRuntimeObject(windowList))
+            nextWindowStart += clampedStep
         }
-        i += clampedStep
+    }
+    // Handle partial windows at the end
+    if includePartial {
+        while nextWindowStart < elementIndex {
+            let end = min(nextWindowStart + clampedSize, elementIndex)
+            let window = Array(buffer[nextWindowStart..<end])
+            let windowList = RuntimeListBox(elements: window)
+            windows.append(registerRuntimeObject(windowList))
+            nextWindowStart += clampedStep
+        }
     }
     let resultSeq = RuntimeSequenceBox(steps: [.source(elements: windows)])
     return registerRuntimeObject(resultSeq)
@@ -1151,17 +1222,18 @@ public func kk_sequence_onEach(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    for elem in elements {
-        var thrown = 0
-        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
-            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
-        }
+    guard let seq = runtimeSequenceBox(from: seqRaw) else {
+        let sourceElements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        let newSeq = RuntimeSequenceBox(steps: [
+            .source(elements: sourceElements),
+            .onEachStep(fnPtr: fnPtr, closureRaw: closureRaw),
+        ])
+        return registerRuntimeObject(newSeq)
     }
-    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: elements)])
-    return registerRuntimeObject(resultSeq)
+    var newSteps = seq.steps
+    newSteps.append(.onEachStep(fnPtr: fnPtr, closureRaw: closureRaw))
+    let newSeq = RuntimeSequenceBox(steps: newSteps)
+    return registerRuntimeObject(newSeq)
 }
 
 // MARK: - Sequence Builder (sequence { yield(x) })
