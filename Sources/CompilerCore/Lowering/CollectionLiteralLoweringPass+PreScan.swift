@@ -336,7 +336,9 @@ extension CollectionLiteralLoweringPass {
         charRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
-        if callee == lookup.asSequenceName {
+        if callee == lookup.asSequenceName
+            || callee == lookup.kkStringAsSequenceName
+        {
             if let result { sequenceExprIDs.insert(result.rawValue) }
             return
         }
