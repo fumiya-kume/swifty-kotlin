@@ -773,7 +773,10 @@ final class CallTypeChecker {
                      "mapOf", "mutableMapOf", "emptyMap",
                      "setOf", "mutableSetOf", "emptySet",
                      "listOfNotNull",
-                     "sequenceOf":
+                     "sequenceOf",
+                     "ArrayList",
+                     "HashMap", "LinkedHashMap",
+                     "HashSet", "LinkedHashSet":
                     sema.bindings.markCollectionExpr(id)
                 default:
                     break
@@ -947,7 +950,10 @@ final class CallTypeChecker {
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull",
-                 "sequenceOf", "generateSequence":
+                 "sequenceOf", "generateSequence",
+                 "ArrayList",
+                 "HashMap", "LinkedHashMap",
+                 "HashSet", "LinkedHashSet":
                 sema.bindings.markCollectionExpr(id)
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
@@ -1117,6 +1123,59 @@ final class CallTypeChecker {
                         )
                     } else {
                         makeSyntheticMapType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            keyType: sema.types.anyType,
+                            valueType: sema.types.anyType
+                        )
+                    }
+                // --- Type alias constructors: ArrayList, HashSet, LinkedHashSet, HashMap, LinkedHashMap ---
+                // These constructors take capacity or collection args, NOT element varargs.
+                // Always produce a mutable collection; use explicit type arg or Any? element type.
+                } else if name == "ArrayList" {
+                    if let explicitTypeArg = explicitTypeArgs.first {
+                        collectionType = makeSyntheticMutableListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: explicitTypeArg
+                        )
+                    } else {
+                        collectionType = makeSyntheticMutableListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.anyType
+                        )
+                    }
+                } else if name == "HashSet" || name == "LinkedHashSet" {
+                    if let explicitTypeArg = explicitTypeArgs.first {
+                        collectionType = makeSyntheticMutableSetType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: explicitTypeArg
+                        )
+                    } else {
+                        collectionType = makeSyntheticMutableSetType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.anyType
+                        )
+                    }
+                } else if name == "HashMap" || name == "LinkedHashMap" {
+                    if explicitTypeArgs.count == 2 {
+                        collectionType = makeSyntheticMutableMapType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            keyType: explicitTypeArgs[0],
+                            valueType: explicitTypeArgs[1]
+                        )
+                    } else {
+                        collectionType = makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
                             interner: interner,
