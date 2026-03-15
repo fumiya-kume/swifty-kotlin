@@ -20,6 +20,13 @@ struct CollectionLiteralLookupTables {
     let mutableSetOfName: InternedString
     let emptySetName: InternedString
 
+    // Type alias constructor names (STDLIB-245)
+    let arrayListName: InternedString
+    let hashMapName: InternedString
+    let hashSetName: InternedString
+    let linkedHashMapName: InternedString
+    let linkedHashSetName: InternedString
+
     // Runtime ABI names
     let kkListOfName: InternedString
     let kkListSizeName: InternedString
@@ -364,6 +371,12 @@ struct CollectionLiteralLookupTables {
         mutableSetOfName = interner.intern("mutableSetOf")
         emptySetName = interner.intern("emptySet")
 
+        arrayListName = interner.intern("ArrayList")
+        hashMapName = interner.intern("HashMap")
+        hashSetName = interner.intern("HashSet")
+        linkedHashMapName = interner.intern("LinkedHashMap")
+        linkedHashSetName = interner.intern("LinkedHashSet")
+
         kkListOfName = interner.intern("kk_list_of")
         kkListSizeName = interner.intern("kk_list_size")
         kkListGetName = interner.intern("kk_list_get")
@@ -661,9 +674,9 @@ struct CollectionLiteralLookupTables {
         kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
         kkMutableMapPutName = interner.intern("kk_mutable_map_put")
 
-        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
-        setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
-        mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
+        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName, arrayListName]
+        setFactoryNames = [setOfName, mutableSetOfName, emptySetName, hashSetName, linkedHashSetName]
+        mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName, hashMapName, linkedHashMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 

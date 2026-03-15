@@ -773,7 +773,10 @@ final class CallTypeChecker {
                      "mapOf", "mutableMapOf", "emptyMap",
                      "setOf", "mutableSetOf", "emptySet",
                      "listOfNotNull",
-                     "sequenceOf":
+                     "sequenceOf",
+                     "ArrayList",
+                     "HashMap", "LinkedHashMap",
+                     "HashSet", "LinkedHashSet":
                     sema.bindings.markCollectionExpr(id)
                 default:
                     break
@@ -947,7 +950,10 @@ final class CallTypeChecker {
                  "mapOf", "mutableMapOf", "emptyMap",
                  "setOf", "mutableSetOf", "emptySet",
                  "listOfNotNull",
-                 "sequenceOf", "generateSequence":
+                 "sequenceOf", "generateSequence",
+                 "ArrayList",
+                 "HashMap", "LinkedHashMap",
+                 "HashSet", "LinkedHashSet":
                 sema.bindings.markCollectionExpr(id)
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
@@ -971,7 +977,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableListOf"
+                          name == "mutableListOf" || name == "ArrayList"
                 {
                     collectionType = makeSyntheticMutableListType(
                         symbols: sema.symbols,
@@ -999,12 +1005,12 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
-                          name == "listOf" || name == "listOfNotNull" || name == "emptyList" || name == "mutableListOf"
+                          name == "listOf" || name == "listOfNotNull" || name == "emptyList" || name == "mutableListOf" || name == "ArrayList"
                 {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
                     let elementType = sema.types.lub(argTypes)
-                    collectionType = if name == "mutableListOf" {
+                    collectionType = if name == "mutableListOf" || name == "ArrayList" {
                         makeSyntheticMutableListType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -1029,7 +1035,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "mutableSetOf"
+                          name == "mutableSetOf" || name == "HashSet" || name == "LinkedHashSet"
                 {
                     collectionType = makeSyntheticMutableSetType(
                         symbols: sema.symbols,
@@ -1038,10 +1044,10 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || name == "emptySet" || name == "mutableSetOf"
+                          name == "setOf" || name == "emptySet" || name == "mutableSetOf" || name == "HashSet" || name == "LinkedHashSet"
                 {
                     let elementType = sema.types.lub(argTypes)
-                    collectionType = if name == "mutableSetOf" {
+                    collectionType = if name == "mutableSetOf" || name == "HashSet" || name == "LinkedHashSet" {
                         makeSyntheticMutableSetType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -1059,7 +1065,7 @@ final class CallTypeChecker {
                 } else if let expectedType, expectedType != sema.types.errorType,
                           case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                           expectedClassType.args.count == 2,
-                          name == "mapOf" || name == "mutableMapOf" || name == "emptyMap"
+                          name == "mapOf" || name == "mutableMapOf" || name == "emptyMap" || name == "HashMap" || name == "LinkedHashMap"
                 {
                     collectionType = expectedType
                 } else if explicitTypeArgs.count == 2,
@@ -1073,7 +1079,7 @@ final class CallTypeChecker {
                         valueType: explicitTypeArgs[1]
                     )
                 } else if explicitTypeArgs.count == 2,
-                          name == "mutableMapOf"
+                          name == "mutableMapOf" || name == "HashMap" || name == "LinkedHashMap"
                 {
                     collectionType = makeSyntheticMutableMapType(
                         symbols: sema.symbols,
@@ -1087,9 +1093,9 @@ final class CallTypeChecker {
                     ctx: ctx,
                     locals: &locals
                 ),
-                    name == "mapOf" || name == "mutableMapOf"
+                    name == "mapOf" || name == "mutableMapOf" || name == "HashMap" || name == "LinkedHashMap"
                 {
-                    collectionType = if name == "mutableMapOf" {
+                    collectionType = if name == "mutableMapOf" || name == "HashMap" || name == "LinkedHashMap" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
@@ -1106,8 +1112,8 @@ final class CallTypeChecker {
                             valueType: inferredMapTypes.valueType
                         )
                     }
-                } else if name == "mapOf" || name == "emptyMap" || name == "mutableMapOf" {
-                    collectionType = if name == "mutableMapOf" {
+                } else if name == "mapOf" || name == "emptyMap" || name == "mutableMapOf" || name == "HashMap" || name == "LinkedHashMap" {
+                    collectionType = if name == "mutableMapOf" || name == "HashMap" || name == "LinkedHashMap" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,
                             types: sema.types,
