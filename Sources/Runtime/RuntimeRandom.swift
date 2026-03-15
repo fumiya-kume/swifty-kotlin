@@ -8,17 +8,21 @@ public func kk_random_nextInt(_: Int) -> Int {
 }
 
 @_cdecl("kk_random_nextInt_until")
-public func kk_random_nextInt_until(_: Int, _ until: Int) -> Int {
+public func kk_random_nextInt_until(_: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard until > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
         return 0
     }
     return Int.random(in: 0 ..< until)
 }
 
 @_cdecl("kk_random_nextInt_range")
-public func kk_random_nextInt_range(_: Int, _ from: Int, _ until: Int) -> Int {
+public func kk_random_nextInt_range(_: Int, _ from: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
     guard until > from else {
-        return from
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
+        return 0
     }
     return Int.random(in: from ..< until)
 }
