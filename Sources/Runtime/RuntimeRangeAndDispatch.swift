@@ -101,19 +101,25 @@ public func kk_range_next(_ iterRaw: Int) -> Int {
 
 @_cdecl("kk_range_first")
 public func kk_range_first(_ rangeRaw: Int) -> Int {
-    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_first")
+    }
     return range.first
 }
 
 @_cdecl("kk_range_last")
 public func kk_range_last(_ rangeRaw: Int) -> Int {
-    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_last")
+    }
     return range.last
 }
 
 @_cdecl("kk_range_count")
 public func kk_range_count(_ rangeRaw: Int) -> Int {
-    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_count")
+    }
     if range.step > 0 {
         guard range.first <= range.last else { return 0 }
         return (range.last - range.first) / range.step + 1
@@ -129,7 +135,7 @@ public func kk_range_count(_ rangeRaw: Int) -> Int {
 @_cdecl("kk_range_toList")
 public func kk_range_toList(_ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_toList")
     }
     var elements: [Int] = []
     var current = range.first
@@ -177,7 +183,7 @@ public func kk_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                          _ outThrown: UnsafeMutablePointer<Int>?) -> Int
 {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_map")
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
@@ -206,7 +212,9 @@ public func kk_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 
 @_cdecl("kk_range_reversed")
 public func kk_range_reversed(_ rangeRaw: Int) -> Int {
-    guard let range = runtimeRangeBox(from: rangeRaw) else { return rangeRaw }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_reversed")
+    }
     return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: -range.step))
 }
 
@@ -215,11 +223,11 @@ public func kk_vtable_lookup(_ receiver: Int, _ slot: Int) -> Int {
     guard slot >= 0,
           let typeInfo = runtimeTypeInfo(from: receiver)
     else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: vtable lookup failed — invalid receiver (0x\(String(receiver, radix: 16))) or negative slot (\(slot))")
     }
     let descriptor = typeInfo.pointee
     guard slot < Int(descriptor.vtableSize) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: vtable lookup failed — slot \(slot) out of range (vtableSize=\(descriptor.vtableSize))")
     }
     return Int(bitPattern: descriptor.vtable[slot])
 }
