@@ -1298,6 +1298,28 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "asSequence" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_asSequence"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "asIterable" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_asIterable"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 

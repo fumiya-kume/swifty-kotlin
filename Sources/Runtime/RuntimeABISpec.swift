@@ -2324,6 +2324,23 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-317: String.asSequence / asIterable
+        RuntimeABIFunctionSpec(
+            name: "kk_string_asSequence",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_asIterable",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =
