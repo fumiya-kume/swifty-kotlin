@@ -1099,6 +1099,30 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-317: String.asSequence / asIterable ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "asSequence",
+            externalLinkName: "kk_string_asSequence",
+            receiverType: stringType,
+            parameters: [],
+            returnType: types.anyType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "asIterable",
+            externalLinkName: "kk_string_asIterable",
+            receiverType: stringType,
+            parameters: [],
+            returnType: types.anyType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

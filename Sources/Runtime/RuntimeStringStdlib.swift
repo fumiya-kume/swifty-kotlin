@@ -142,6 +142,21 @@ public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     return runtimeMakeArrayRaw(charRaws)
 }
 
+// MARK: - STDLIB-317: String.asSequence / String.asIterable
+
+@_cdecl("kk_string_asSequence")
+public func kk_string_asSequence(_ strRaw: Int) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: charRaws)])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_string_asIterable")
+public func kk_string_asIterable(_ strRaw: Int) -> Int {
+    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    return runtimeMakeListRaw(charRaws)
+}
+
 // MARK: - STDLIB-189: String iterator and HOF (filter, map, count, any, all, none)
 
 @_cdecl("kk_string_iterator")

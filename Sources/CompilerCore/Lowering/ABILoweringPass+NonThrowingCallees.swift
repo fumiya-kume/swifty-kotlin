@@ -40,6 +40,8 @@ extension ABILoweringPass {
             interner.intern("kk_string_split"),
             interner.intern("kk_string_chunked"),
             interner.intern("kk_string_windowed"),
+            interner.intern("kk_string_asSequence"),
+            interner.intern("kk_string_asIterable"),
             interner.intern("kk_string_isNullOrEmpty"),
             interner.intern("kk_string_isNullOrBlank"),
             interner.intern("kk_string_compareTo_member"),
