@@ -973,6 +973,139 @@ public func kk_sequence_reduce(
     return acc
 }
 
+// MARK: - Sequence Terminal Operations: joinToString/sumOf/associate/associateBy (STDLIB-275)
+
+@_cdecl("kk_sequence_joinToString")
+public func kk_sequence_joinToString(_ seqRaw: Int, _ separatorRaw: Int, _ prefixRaw: Int, _ postfixRaw: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
+    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
+    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
+    let joined = elements.map(runtimeElementToString).joined(separator: separator)
+    let stringValue = prefix + joined + postfix
+    let utf8 = Array(stringValue.utf8)
+    return Int(bitPattern: utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    })
+}
+
+@_cdecl("kk_sequence_sumOf")
+public func kk_sequence_sumOf(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var total = 0
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            total += maybeUnbox(result)
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let result = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return 0
+            }
+            total += maybeUnbox(result)
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    return total
+}
+
+@_cdecl("kk_sequence_associate")
+public func kk_sequence_associate(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    var values: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let pair = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            keys.append(kk_pair_first(pair))
+            values.append(kk_pair_second(pair))
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let pair = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+            }
+            keys.append(kk_pair_first(pair))
+            values.append(kk_pair_second(pair))
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: keys, values: values)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
+@_cdecl("kk_sequence_associateBy")
+public func kk_sequence_associateBy(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var keys: [Int] = []
+    var values: [Int] = []
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            var thrown = 0
+            let key = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return false
+            }
+            keys.append(maybeUnbox(key))
+            values.append(elem)
+            return true
+        }
+    } else {
+        for elem in runtimeSequenceSourceElements(from: seqRaw) ?? [] {
+            var thrown = 0
+            let key = lambda(closureRaw, elem, &thrown)
+            if thrown != 0 {
+                outThrown?.pointee = thrown
+                return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+            }
+            keys.append(maybeUnbox(key))
+            values.append(elem)
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    let normalized = runtimeNormalizeMapEntries(keys: keys, values: values)
+    return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
+}
+
 // MARK: - Sequence Builder (sequence { yield(x) })
 
 @_cdecl("kk_sequence_builder_create")
