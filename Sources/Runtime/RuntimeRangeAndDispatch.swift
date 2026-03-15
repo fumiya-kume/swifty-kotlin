@@ -202,6 +202,61 @@ public func kk_range_map(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+// MARK: - CharRange HOFs (STDLIB-290)
+
+@_cdecl("kk_char_range_toList")
+public func kk_char_range_toList(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    var elements: [Int] = []
+    if range.step > 0 {
+        var current = first
+        while current <= last {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        var current = first
+        while current >= last {
+            elements.append(kk_box_char(current))
+            current &+= range.step
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
+@_cdecl("kk_char_range_forEach")
+public func kk_char_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
+                                  _ outThrown: UnsafeMutablePointer<Int>?) -> Int
+{
+    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    let first = kk_unbox_char(range.first)
+    let last = kk_unbox_char(range.last)
+    if range.step > 0 {
+        var current = first
+        while current <= last {
+            var thrown = 0
+            // Pass raw char value (Unicode scalar) — the lambda expects Char-typed values
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        var current = first
+        while current >= last {
+            var thrown = 0
+            _ = lambda(closureRaw, current, &thrown)
+            if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+            current &+= range.step
+        }
+    }
+    return 0
+}
+
 // MARK: - IntRange reversed (STDLIB-093)
 
 @_cdecl("kk_range_reversed")
