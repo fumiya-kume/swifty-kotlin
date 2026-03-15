@@ -1638,6 +1638,10 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
                     runtimeCallee = "kk_sequence_mapIndexed"
+                } else if calleeName == interner.intern("chunked") {
+                    runtimeCallee = "kk_sequence_chunked"
+                } else if calleeName == interner.intern("onEach") {
+                    runtimeCallee = "kk_sequence_onEach"
                 } else {
                     runtimeCallee = nil
                 }
@@ -1648,6 +1652,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
+                        || runtimeCallee == "kk_sequence_onEach"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
@@ -1725,6 +1730,40 @@ extension CallLowerer {
                     symbol: nil,
                     callee: interner.intern("kk_array_copyOfRange"),
                     arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Sequence windowed: 1-3 args (size, step=1, partialWindows=false) — STDLIB-276
+        if (1...3).contains(args.count), interner.resolve(calleeName) == "windowed" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let sizeArg = normalizedArgIDs[0]
+                let stepArg: KIRExprID
+                if args.count >= 2 {
+                    stepArg = normalizedArgIDs[1]
+                } else {
+                    stepArg = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                    instructions.append(.constValue(result: stepArg, value: .intLiteral(1)))
+                }
+                let partialArg: KIRExprID
+                if args.count >= 3 {
+                    partialArg = normalizedArgIDs[2]
+                } else {
+                    partialArg = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: partialArg, value: .intLiteral(0)))
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_sequence_windowed"),
+                    arguments: [loweredReceiverID, sizeArg, stepArg, partialArg],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
@@ -2841,6 +2880,12 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_mapIndexed")
             case interner.intern("withIndex"):
                 return interner.intern("kk_sequence_withIndex")
+            case interner.intern("chunked"):
+                return interner.intern("kk_sequence_chunked")
+            case interner.intern("windowed"):
+                return interner.intern("kk_sequence_windowed")
+            case interner.intern("onEach"):
+                return interner.intern("kk_sequence_onEach")
             default:
                 break
             }

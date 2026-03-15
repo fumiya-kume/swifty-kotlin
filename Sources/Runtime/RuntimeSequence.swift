@@ -1106,6 +1106,64 @@ public func kk_sequence_associateBy(
     return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
 }
 
+// MARK: - Sequence Operations: chunked/windowed/onEach (STDLIB-276)
+
+@_cdecl("kk_sequence_chunked")
+public func kk_sequence_chunked(_ seqRaw: Int, _ size: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let chunkSize = max(1, size)
+    var chunks: [Int] = []
+    for i in stride(from: 0, to: elements.count, by: chunkSize) {
+        let end = min(i + chunkSize, elements.count)
+        let chunk = Array(elements[i..<end])
+        let chunkList = RuntimeListBox(elements: chunk)
+        chunks.append(registerRuntimeObject(chunkList))
+    }
+    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: chunks)])
+    return registerRuntimeObject(resultSeq)
+}
+
+@_cdecl("kk_sequence_windowed")
+public func kk_sequence_windowed(_ seqRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let includePartial = partialWindows != 0
+    var windows: [Int] = []
+    var i = 0
+    while i < elements.count {
+        let end = min(i + clampedSize, elements.count)
+        let window = Array(elements[i..<end])
+        if window.count == clampedSize || includePartial {
+            let windowList = RuntimeListBox(elements: window)
+            windows.append(registerRuntimeObject(windowList))
+        }
+        i += clampedStep
+    }
+    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: windows)])
+    return registerRuntimeObject(resultSeq)
+}
+
+@_cdecl("kk_sequence_onEach")
+public func kk_sequence_onEach(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    for elem in elements {
+        var thrown = 0
+        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+    }
+    let resultSeq = RuntimeSequenceBox(steps: [.source(elements: elements)])
+    return registerRuntimeObject(resultSeq)
+}
+
 // MARK: - Sequence Builder (sequence { yield(x) })
 
 @_cdecl("kk_sequence_builder_create")
