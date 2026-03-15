@@ -174,8 +174,11 @@ public func kk_string_builder_append(_ strRaw: Int) -> Int {
 @_cdecl("kk_build_string")
 public func kk_build_string(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard fnPtr != 0, runtimeBuilderState.pushStringFrame() else {
-        return runtimeMakeStringRaw("")
+    guard fnPtr != 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_string called with null function pointer")
+    }
+    guard runtimeBuilderState.pushStringFrame() else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_string nesting depth exceeded (max 16)")
     }
 
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self)
@@ -199,8 +202,11 @@ public func kk_builder_list_add(_ elem: Int) -> Int {
 @_cdecl("kk_build_list")
 public func kk_build_list(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard fnPtr != 0, runtimeBuilderState.pushListFrame() else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+    guard fnPtr != 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_list called with null function pointer")
+    }
+    guard runtimeBuilderState.pushListFrame() else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_list nesting depth exceeded (max 16)")
     }
 
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self)
@@ -263,8 +269,11 @@ public func kk_builder_map_put(_ key: Int, _ value: Int) -> Int {
 @_cdecl("kk_build_map")
 public func kk_build_map(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard fnPtr != 0, runtimeBuilderState.pushMapFrame() else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    guard fnPtr != 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_map called with null function pointer")
+    }
+    guard runtimeBuilderState.pushMapFrame() else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_map nesting depth exceeded (max 16)")
     }
 
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self)
