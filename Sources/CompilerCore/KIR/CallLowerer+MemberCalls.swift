@@ -1731,13 +1731,18 @@ extension CallLowerer {
                 }
                 if let runtimeCallee {
                     let canThrow = runtimeCallee == "kk_sequence_first" || runtimeCallee == "kk_sequence_last"
+                        || runtimeCallee == "kk_sequence_firstOrNull" || runtimeCallee == "kk_sequence_count"
+                    let thrownResult: KIRExprID? = canThrow ? arena.appendExpr(
+                        .temporary(Int32(arena.expressions.count)),
+                        type: sema.types.nullableAnyType
+                    ) : nil
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: canThrow,
-                        thrownResult: nil
+                        thrownResult: thrownResult
                     ))
                     return result
                 }
@@ -2450,13 +2455,19 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_map_getValue")
             || loweredCallee == interner.intern("kk_sequence_first")
             || loweredCallee == interner.intern("kk_sequence_last")
+            || loweredCallee == interner.intern("kk_sequence_firstOrNull")
+            || loweredCallee == interner.intern("kk_sequence_count")
+        let thrownResult: KIRExprID? = canThrow ? arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: sema.types.nullableAnyType
+        ) : nil
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
             arguments: callArguments,
             result: result,
             canThrow: canThrow,
-            thrownResult: nil,
+            thrownResult: thrownResult,
             isSuperCall: isSuperCall
         ))
     }

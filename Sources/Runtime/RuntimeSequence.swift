@@ -696,6 +696,18 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_first")
 public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        var firstElement: Int? = nil
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            firstElement = elem
+            return false // stop after first element
+        }
+        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
+        if let first = firstElement { return first }
+        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
+        outThrown?.pointee = err
+        return 0
+    }
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     if elements.isEmpty {
         let err = runtimeAllocateThrowable(message: "Sequence is empty.")
@@ -706,7 +718,16 @@ public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<I
 }
 
 @_cdecl("kk_sequence_firstOrNull")
-public func kk_sequence_firstOrNull(_ seqRaw: Int) -> Int {
+public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        var firstElement: Int? = nil
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            firstElement = elem
+            return false // stop after first element
+        }
+        if let thrown = outThrown?.pointee, thrown != 0 { return runtimeNullSentinelInt }
+        return firstElement ?? runtimeNullSentinelInt
+    }
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     if elements.isEmpty { return runtimeNullSentinelInt }
     return elements[0]
@@ -714,6 +735,18 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_last")
 public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        var lastElement: Int? = nil
+        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+            lastElement = elem
+            return true // continue to find last element
+        }
+        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
+        if let last = lastElement { return last }
+        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
+        outThrown?.pointee = err
+        return 0
+    }
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     if elements.isEmpty {
         let err = runtimeAllocateThrowable(message: "Sequence is empty.")
@@ -724,7 +757,16 @@ public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<In
 }
 
 @_cdecl("kk_sequence_count")
-public func kk_sequence_count(_ seqRaw: Int) -> Int {
+public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        var count = 0
+        runtimeTraverseSequence(seq, outThrown: outThrown) { _ in
+            count += 1
+            return true // continue counting
+        }
+        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
+        return count
+    }
     let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
     return elements.count
 }

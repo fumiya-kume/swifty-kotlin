@@ -162,7 +162,7 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_firstOrNull = ExternDecl(
         name: "kk_sequence_firstOrNull",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -174,7 +174,7 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_count = ExternDecl(
         name: "kk_sequence_count",
-        parameterTypes: ["intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
