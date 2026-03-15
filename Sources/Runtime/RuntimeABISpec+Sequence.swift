@@ -209,5 +209,50 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-275: joinToString, sumOf, associate, associateBy
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_joinToString",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "separatorRaw", type: .intptr),
+                RuntimeABIParameter(name: "prefixRaw", type: .intptr),
+                RuntimeABIParameter(name: "postfixRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_sumOf",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_associate",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_associateBy",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
     ]
 }

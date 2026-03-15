@@ -1529,6 +1529,35 @@ extension CallLowerer {
             }
         }
 
+        // Sequence joinToString (STDLIB-275): 0-3 args, non-HOF, non-throwing
+        if args.count <= 3, interner.resolve(calleeName) == "joinToString" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let stringType = sema.types.stringType
+                let defaults = [", ", "", ""]
+                var joinArgs = loweredArgIDs
+                // Materialize defaults for any missing positional arguments
+                for paramIndex in joinArgs.count ..< 3 {
+                    let interned = interner.intern(defaults[paramIndex])
+                    let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
+                    instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
+                    joinArgs.append(exprID)
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_sequence_joinToString"),
+                    arguments: [loweredReceiverID] + joinArgs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         if args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -1576,6 +1605,9 @@ extension CallLowerer {
                 let takeWhileName = interner.intern("takeWhile")
                 let dropWhileName = interner.intern("dropWhile")
                 let sortedByName = interner.intern("sortedBy")
+                let sumOfName = interner.intern("sumOf")
+                let associateName = interner.intern("associate")
+                let associateByName = interner.intern("associateBy")
                 if calleeName == mapName {
                     runtimeCallee = "kk_sequence_map"
                 } else if calleeName == filterName {
@@ -1596,6 +1628,12 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_dropWhile"
                 } else if calleeName == sortedByName {
                     runtimeCallee = "kk_sequence_sortedBy"
+                } else if calleeName == sumOfName {
+                    runtimeCallee = "kk_sequence_sumOf"
+                } else if calleeName == associateName {
+                    runtimeCallee = "kk_sequence_associate"
+                } else if calleeName == associateByName {
+                    runtimeCallee = "kk_sequence_associateBy"
                 } else if calleeName == interner.intern("mapNotNull") {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
@@ -1605,6 +1643,9 @@ extension CallLowerer {
                 }
                 if let runtimeCallee {
                     let canThrow = runtimeCallee == "kk_sequence_sortedBy"
+                        || runtimeCallee == "kk_sequence_sumOf"
+                        || runtimeCallee == "kk_sequence_associate"
+                        || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                     instructions.append(.call(
@@ -2454,6 +2495,9 @@ extension CallLowerer {
         }
         let canThrow = loweredCallee == interner.intern("kk_list_random")
             || loweredCallee == interner.intern("kk_sequence_sortedBy")
+            || loweredCallee == interner.intern("kk_sequence_sumOf")
+            || loweredCallee == interner.intern("kk_sequence_associate")
+            || loweredCallee == interner.intern("kk_sequence_associateBy")
             || loweredCallee == interner.intern("kk_map_getValue")
             || loweredCallee == interner.intern("kk_sequence_mapNotNull")
             || loweredCallee == interner.intern("kk_sequence_mapIndexed")
@@ -2748,6 +2792,10 @@ extension CallLowerer {
             let sortedName = interner.intern("sorted")
             let sortedByName = interner.intern("sortedBy")
             let sortedDescendingName = interner.intern("sortedDescending")
+            let joinToStringName = interner.intern("joinToString")
+            let sumOfName = interner.intern("sumOf")
+            let associateName = interner.intern("associate")
+            let associateByName = interner.intern("associateBy")
             switch internedMemberName {
             case mapName:
                 return interner.intern("kk_sequence_map")
@@ -2777,6 +2825,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_sortedBy")
             case sortedDescendingName:
                 return interner.intern("kk_sequence_sortedDescending")
+            case joinToStringName:
+                return interner.intern("kk_sequence_joinToString")
+            case sumOfName:
+                return interner.intern("kk_sequence_sumOf")
+            case associateName:
+                return interner.intern("kk_sequence_associate")
+            case associateByName:
+                return interner.intern("kk_sequence_associateBy")
             case interner.intern("mapNotNull"):
                 return interner.intern("kk_sequence_mapNotNull")
             case interner.intern("filterNotNull"):

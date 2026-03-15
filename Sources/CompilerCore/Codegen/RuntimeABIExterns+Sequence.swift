@@ -26,6 +26,10 @@ public extension RuntimeABIExterns {
         kk_sequence_filterNotNull,
         kk_sequence_mapIndexed,
         kk_sequence_withIndex,
+        kk_sequence_joinToString,
+        kk_sequence_sumOf,
+        kk_sequence_associate,
+        kk_sequence_associateBy,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -175,6 +179,31 @@ public extension RuntimeABIExterns {
     static let kk_sequence_withIndex = ExternDecl(
         name: "kk_sequence_withIndex",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-275: joinToString, sumOf, associate, associateBy
+    static let kk_sequence_joinToString = ExternDecl(
+        name: "kk_sequence_joinToString",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_sumOf = ExternDecl(
+        name: "kk_sequence_sumOf",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_associate = ExternDecl(
+        name: "kk_sequence_associate",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_associateBy = ExternDecl(
+        name: "kk_sequence_associateBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
