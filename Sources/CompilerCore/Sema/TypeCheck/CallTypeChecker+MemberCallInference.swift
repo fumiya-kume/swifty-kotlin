@@ -405,6 +405,7 @@ extension CallTypeChecker {
                     }
                     let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
 
