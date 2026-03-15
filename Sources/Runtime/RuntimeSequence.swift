@@ -720,14 +720,9 @@ public func kk_sequence_joinToString(
     }
     let stringValue = prefix + rendered + postfix
     let utf8 = Array(stringValue.utf8)
-    if utf8.isEmpty {
-        var emptyByte: UInt8 = 0
-        return withUnsafePointer(to: &emptyByte) { ptr in
-            kk_string_from_utf8(ptr, 0)
-        }
-    }
     return utf8.withUnsafeBufferPointer { buffer in
-        kk_string_from_utf8(buffer.baseAddress!, Int32(buffer.count))
+        let base = buffer.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!
+        return kk_string_from_utf8(base, Int32(buffer.count))
     }
 }
 
