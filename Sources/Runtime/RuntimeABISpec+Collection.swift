@@ -1439,6 +1439,91 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                // ArrayDeque (STDLIB-240)
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_new",
+                    parameters: [],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_addFirst",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_addLast",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "element", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_removeFirst",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_removeLast",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_first",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_last",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_size",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_isEmpty",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_arraydeque_toString",
+                    parameters: [
+                        RuntimeABIParameter(name: "dequeRaw", type: .intptr),
+                    ],
+                    returnType: .opaquePointer,
+                    section: "Collection"
+                ),
             ]
     }()
 }

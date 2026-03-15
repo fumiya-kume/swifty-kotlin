@@ -184,6 +184,16 @@ public extension RuntimeABIExterns {
         kk_list_plus_collection,
         kk_list_minus_element,
         kk_list_minus_collection,
+        kk_arraydeque_new,
+        kk_arraydeque_addFirst,
+        kk_arraydeque_addLast,
+        kk_arraydeque_removeFirst,
+        kk_arraydeque_removeLast,
+        kk_arraydeque_first,
+        kk_arraydeque_last,
+        kk_arraydeque_size,
+        kk_arraydeque_isEmpty,
+        kk_arraydeque_toString,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1298,5 +1308,67 @@ public extension RuntimeABIExterns {
         name: "kk_list_minus_collection",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
+    )
+
+    // MARK: - ArrayDeque (STDLIB-240)
+
+    static let kk_arraydeque_new = ExternDecl(
+        name: "kk_arraydeque_new",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_addFirst = ExternDecl(
+        name: "kk_arraydeque_addFirst",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_addLast = ExternDecl(
+        name: "kk_arraydeque_addLast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_removeFirst = ExternDecl(
+        name: "kk_arraydeque_removeFirst",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_removeLast = ExternDecl(
+        name: "kk_arraydeque_removeLast",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_first = ExternDecl(
+        name: "kk_arraydeque_first",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_last = ExternDecl(
+        name: "kk_arraydeque_last",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_size = ExternDecl(
+        name: "kk_arraydeque_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_isEmpty = ExternDecl(
+        name: "kk_arraydeque_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_toString = ExternDecl(
+        name: "kk_arraydeque_toString",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
     )
 }

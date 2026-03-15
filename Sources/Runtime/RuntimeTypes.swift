@@ -197,6 +197,16 @@ final class RuntimeMapBox {
     }
 }
 
+/// Runtime box for `ArrayDeque<T>`.
+/// Stores elements in a mutable array of `Int`.
+final class RuntimeArrayDequeBox {
+    var elements: [Int]
+
+    init(elements: [Int]) {
+        self.elements = elements
+    }
+}
+
 /// Lazy wrapper for `withIndex()` result. Kotlin returns `IndexingIterable` with
 /// default Object.toString() = "kotlin.collections.IndexingIterable@<hex>".
 final class RuntimeIndexingIterableBox {
