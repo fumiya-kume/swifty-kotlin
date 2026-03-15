@@ -681,6 +681,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-316: String.zipWithNext()
+    public static let kk_string_zipWithNext = ExternDecl(
+        name: "kk_string_zipWithNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -1784,6 +1791,7 @@ public enum RuntimeABIExterns {
             kk_string_windowed,
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
+            kk_string_zipWithNext,
             // Print / Println
             kk_print_any,
             kk_println_any,

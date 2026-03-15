@@ -1127,6 +1127,19 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-316: String.zipWithNext ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "zipWithNext",
+            externalLinkName: "kk_string_zipWithNext",
+            receiverType: stringType,
+            parameters: [],
+            returnType: types.anyType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(
