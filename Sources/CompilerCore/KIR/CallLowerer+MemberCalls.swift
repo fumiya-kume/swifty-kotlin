@@ -1298,6 +1298,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "zipWithNext" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_zipWithNext"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 

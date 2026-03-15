@@ -875,6 +875,24 @@ public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
     return runtimeMakeStringListRaw(windows)
 }
 
+// MARK: - STDLIB-316: String.zipWithNext()
+
+@_cdecl("kk_string_zipWithNext")
+public func kk_string_zipWithNext(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRaw(strRaw) ?? ""
+    guard source.unicodeScalars.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    let scalars = Array(source.unicodeScalars)
+    var pairs: [Int] = []
+    for i in 0 ..< scalars.count - 1 {
+        let a = kk_box_char(Int(scalars[i].value))
+        let b = kk_box_char(Int(scalars[i + 1].value))
+        pairs.append(kk_pair_new(a, b))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+}
+
 // MARK: - STDLIB-192: equals(other, ignoreCase)
 
 @_cdecl("kk_string_equalsIgnoreCase")

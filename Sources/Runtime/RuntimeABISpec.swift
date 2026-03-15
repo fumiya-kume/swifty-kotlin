@@ -2324,6 +2324,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =
