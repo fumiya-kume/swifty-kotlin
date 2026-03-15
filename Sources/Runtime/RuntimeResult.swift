@@ -44,14 +44,14 @@ public func kk_runCatching(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeM
 
 @_cdecl("kk_result_isSuccess")
 public func kk_result_isSuccess(_ resultRaw: Int) -> Int {
-    guard let box = resultBoxFromRaw(resultRaw) else { return kk_box_bool(0) }
-    return kk_box_bool(box.isSuccess ? 1 : 0)
+    guard let box = resultBoxFromRaw(resultRaw) else { return 0 }
+    return box.isSuccess ? 1 : 0
 }
 
 @_cdecl("kk_result_isFailure")
 public func kk_result_isFailure(_ resultRaw: Int) -> Int {
-    guard let box = resultBoxFromRaw(resultRaw) else { return kk_box_bool(1) }
-    return kk_box_bool(box.isSuccess ? 0 : 1)
+    guard let box = resultBoxFromRaw(resultRaw) else { return 1 }
+    return box.isSuccess ? 0 : 1
 }
 
 // MARK: - STDLIB-282: Result member functions

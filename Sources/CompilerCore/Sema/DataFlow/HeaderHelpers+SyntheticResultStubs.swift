@@ -110,6 +110,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [],
             returnType: nullableTType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -122,6 +124,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [("defaultValue", tType, false, false)],
             returnType: tType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -141,6 +145,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [("onFailure", onFailureLambdaType, false, false)],
             returnType: tType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -153,6 +159,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [],
             returnType: tType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -165,6 +173,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [],
             returnType: nullableThrowableType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -173,12 +183,14 @@ extension DataFlowSemaPhase {
 
         // map(transform: (T) -> R): Result<R>
         let rName = interner.intern("R")
+
+        // Create map-scoped R type parameter
         let mapRFQName = resultFQName + [interner.intern("map"), rName]
-        let rSymbol: SymbolID
+        let mapRSymbol: SymbolID
         if let existing = symbols.lookup(fqName: mapRFQName) {
-            rSymbol = existing
+            mapRSymbol = existing
         } else {
-            rSymbol = symbols.define(
+            mapRSymbol = symbols.define(
                 kind: .typeParameter,
                 name: rName,
                 fqName: mapRFQName,
@@ -187,17 +199,17 @@ extension DataFlowSemaPhase {
                 flags: []
             )
         }
-        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        let mapRType = types.make(.typeParam(TypeParamType(symbol: mapRSymbol, nullability: .nonNull)))
 
         let mapTransformType = types.make(.functionType(FunctionType(
             receiver: nil,
             params: [tType],
-            returnType: rType,
+            returnType: mapRType,
             isSuspend: false,
             nullability: .nonNull
         )))
-        let resultRType = types.make(.classType(ClassType(
-            classSymbol: resultSymbol, args: [.out(rType)], nullability: .nonNull
+        let resultMapRType = types.make(.classType(ClassType(
+            classSymbol: resultSymbol, args: [.out(mapRType)], nullability: .nonNull
         )))
         registerResultMemberFunction(
             named: "map",
@@ -205,23 +217,42 @@ extension DataFlowSemaPhase {
             ownerSymbol: resultSymbol,
             ownerType: resultType,
             parameters: [("transform", mapTransformType, false, false)],
-            returnType: resultRType,
+            returnType: resultMapRType,
+            typeParameterSymbols: [tSymbol, mapRSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
 
         // fold(onSuccess: (T) -> R, onFailure: (Throwable) -> R): R
+        // Create fold-scoped R type parameter
+        let foldRFQName = resultFQName + [interner.intern("fold"), rName]
+        let foldRSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: foldRFQName) {
+            foldRSymbol = existing
+        } else {
+            foldRSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: foldRFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let foldRType = types.make(.typeParam(TypeParamType(symbol: foldRSymbol, nullability: .nonNull)))
+
         let foldOnSuccessType = types.make(.functionType(FunctionType(
             receiver: nil,
             params: [tType],
-            returnType: rType,
+            returnType: foldRType,
             isSuspend: false,
             nullability: .nonNull
         )))
         let foldOnFailureType = types.make(.functionType(FunctionType(
             receiver: nil,
             params: [throwableType],
-            returnType: rType,
+            returnType: foldRType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -234,7 +265,9 @@ extension DataFlowSemaPhase {
                 ("onSuccess", foldOnSuccessType, false, false),
                 ("onFailure", foldOnFailureType, false, false),
             ],
-            returnType: rType,
+            returnType: foldRType,
+            typeParameterSymbols: [tSymbol, foldRSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -254,6 +287,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [("action", onSuccessActionType, false, false)],
             returnType: resultType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -273,6 +308,8 @@ extension DataFlowSemaPhase {
             ownerType: resultType,
             parameters: [("action", onFailureActionType, false, false)],
             returnType: resultType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
         )
@@ -353,6 +390,8 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID, hasDefault: Bool, isVararg: Bool)],
         returnType: TypeID,
+        typeParameterSymbols: [SymbolID] = [],
+        classTypeParameterCount: Int = 0,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -414,7 +453,8 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: parameterSymbols,
                 valueParameterHasDefaultValues: parameterDefaults,
                 valueParameterIsVararg: parameterVarargs,
-                typeParameterSymbols: []
+                typeParameterSymbols: typeParameterSymbols,
+                classTypeParameterCount: classTypeParameterCount
             ),
             for: functionSymbol
         )

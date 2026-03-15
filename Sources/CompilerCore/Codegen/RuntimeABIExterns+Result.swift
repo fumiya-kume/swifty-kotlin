@@ -21,7 +21,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-281: Result properties
+    // STDLIB-283: Result properties
     static let kk_result_isSuccess = ExternDecl(
         name: "kk_result_isSuccess",
         parameterTypes: ["intptr_t"],
@@ -34,7 +34,7 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-282: Result member functions
+    // STDLIB-281: Result member functions
     static let kk_result_getOrNull = ExternDecl(
         name: "kk_result_getOrNull",
         parameterTypes: ["intptr_t"],
