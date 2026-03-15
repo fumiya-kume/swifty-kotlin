@@ -98,7 +98,7 @@ extension CallLowerer {
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
         "containsAll", "binarySearch",
-        "addFirst", "addLast", "removeFirst", "removeLast",
+        "addFirst", "addLast",
         "to", // FUNC-002
     ]
 
@@ -2401,6 +2401,16 @@ extension CallLowerer {
         )
         if isChannelReceiver,
            Self.unresolvedChannelMemberNames.contains(calleeText)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        // removeFirst/removeLast are scoped to ArrayDeque receivers only;
+        // they must NOT go through the general unresolvedCollectionMemberNames
+        // path because MutableList also has these methods and would get
+        // incorrect callee mapping.
+        if (calleeText == "removeFirst" || calleeText == "removeLast"),
+           isArrayDequeLikeType(receiverType, sema: sema, interner: interner)
         {
             arguments.insert(loweredReceiverID, at: 0)
         }
