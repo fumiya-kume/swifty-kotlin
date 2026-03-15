@@ -419,7 +419,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "groupBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -688,6 +688,33 @@ extension CallTypeChecker {
                 resultType = sema.types.make(.classType(ClassType(
                     classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
                     args: [.invariant(keyType), .invariant(listType)],
+                    nullability: .nonNull
+                )))
+
+            case "groupingBy":
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                // Return Grouping<T, K> type
+                let groupingSymbol = sema.symbols.lookupByShortName(interner.intern("Grouping")).first
+                    ?? sema.symbols.lookupByShortName(interner.intern("Grouping")).first!
+                resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: groupingSymbol,
+                    args: [.invariant(collectionElementType), .invariant(sema.types.anyType)],
+                    nullability: .nonNull
+                )))
+
+            case "eachCount":
+                // Called on Grouping, returns Map<K, Int>
+                let mapSymbol = sema.symbols.lookupByShortName(interner.intern("Map")).first!
+                resultType = sema.types.make(.classType(ClassType(
+                    classSymbol: mapSymbol,
+                    args: [.invariant(sema.types.anyType), .invariant(sema.types.intType)],
                     nullability: .nonNull
                 )))
 

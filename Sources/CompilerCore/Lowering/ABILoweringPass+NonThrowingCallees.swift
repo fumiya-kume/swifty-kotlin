@@ -382,6 +382,8 @@ extension ABILoweringPass {
             interner.intern("kk_int_coerceIn"),
             interner.intern("kk_int_coerceAtLeast"),
             interner.intern("kk_int_coerceAtMost"),
+            // Grouping (STDLIB-285/286) — groupingBy is non-throwing (just creates box)
+            interner.intern("kk_list_groupingBy"),
             // List plus/minus operators (STDLIB-345)
             interner.intern("kk_list_plus_element"),
             interner.intern("kk_list_plus_collection"),

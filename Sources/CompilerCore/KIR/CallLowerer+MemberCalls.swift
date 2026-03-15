@@ -81,7 +81,8 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "fold", "reduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
         "putAll",
@@ -497,6 +498,20 @@ extension CallLowerer {
             return false
         }
         return knownNames.isSequenceSymbol(symbol)
+    }
+
+    private func isGroupingLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isGroupingSymbol(symbol)
     }
 
     func isConcreteListLikeType(
@@ -1904,7 +1919,7 @@ extension CallLowerer {
     ) -> Bool {
         [
             "map", "filter", "mapNotNull", "forEach", "flatMap",
-            "any", "none", "all", "fold", "reduce", "groupBy",
+            "any", "none", "all", "fold", "reduce", "groupBy", "groupingBy",
             "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate",
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
@@ -2770,8 +2785,25 @@ extension CallLowerer {
             return interner.intern("kk_list_containsAll")
         case "binarySearch":
             return interner.intern("kk_list_binarySearch")
+        case "groupingBy":
+            return interner.intern("kk_list_groupingBy")
+        case "eachCount":
+            return interner.intern("kk_grouping_eachCount")
         default:
             break
+        }
+
+        if isGroupingLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "eachCount":
+                return interner.intern("kk_grouping_eachCount")
+            case "fold":
+                return interner.intern("kk_grouping_fold")
+            case "reduce":
+                return interner.intern("kk_grouping_reduce")
+            default:
+                break
+            }
         }
 
         if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
