@@ -258,14 +258,18 @@ extension CallTypeChecker {
         // Skip interception when the receiver type defines a real member
         // with the same name (user-defined members take precedence).
         if args.count == 1 {
-            let calleeStr = interner.resolve(calleeName)
-            let scopeKind: ScopeFunctionKind? = switch calleeStr {
-            case "let": .scopeLet
-            case "run": .scopeRun
-            case "apply": .scopeApply
-            case "also": .scopeAlso
-            case "use": .scopeUse // STDLIB-250
-            default: nil
+            let scopeKind: ScopeFunctionKind? = if calleeName == interner.intern("let") {
+                .scopeLet
+            } else if calleeName == interner.intern("run") {
+                .scopeRun
+            } else if calleeName == interner.intern("apply") {
+                .scopeApply
+            } else if calleeName == interner.intern("also") {
+                .scopeAlso
+            } else if calleeName == interner.intern("use") {
+                .scopeUse // STDLIB-250
+            } else {
+                nil
             }
             let hasUserDefinedMember = if scopeKind != nil {
                 !driver.helpers.collectMemberFunctionCandidates(
@@ -394,7 +398,9 @@ extension CallTypeChecker {
                     }
                     let useFinalType = safeCall ? sema.types.makeNullable(useReturnType) : useReturnType
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
-                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
                     sema.bindings.bindExprType(id, type: useFinalType)
                     return useFinalType
 
