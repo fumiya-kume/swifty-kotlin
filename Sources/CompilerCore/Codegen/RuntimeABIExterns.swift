@@ -668,6 +668,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-318: String.commonPrefixWith / commonSuffixWith
+    public static let kk_string_commonPrefixWith = ExternDecl(
+        name: "kk_string_commonPrefixWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_commonSuffixWith = ExternDecl(
+        name: "kk_string_commonSuffixWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -1740,6 +1753,8 @@ public enum RuntimeABIExterns {
             kk_string_substringAfterLast,
             kk_string_chunked,
             kk_string_windowed,
+            kk_string_commonPrefixWith,
+            kk_string_commonSuffixWith,
             // Print / Println
             kk_print_any,
             kk_println_any,

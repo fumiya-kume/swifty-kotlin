@@ -2324,6 +2324,25 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-318: commonPrefixWith / commonSuffixWith
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonPrefixWith",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonSuffixWith",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =

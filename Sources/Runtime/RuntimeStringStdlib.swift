@@ -875,6 +875,30 @@ public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
     return runtimeMakeStringListRaw(windows)
 }
 
+// MARK: - STDLIB-318: String.commonPrefixWith / commonSuffixWith
+
+@_cdecl("kk_string_commonPrefixWith")
+public func kk_string_commonPrefixWith(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    var prefix = ""
+    for (a, b) in zip(s, other) {
+        if a == b { prefix.append(a) } else { break }
+    }
+    return runtimeMakeStringRaw(prefix)
+}
+
+@_cdecl("kk_string_commonSuffixWith")
+public func kk_string_commonSuffixWith(_ strRaw: Int, _ otherRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    var suffix = ""
+    for (a, b) in zip(s.reversed(), other.reversed()) {
+        if a == b { suffix.insert(a, at: suffix.startIndex) } else { break }
+    }
+    return runtimeMakeStringRaw(suffix)
+}
+
 // MARK: - STDLIB-192: equals(other, ignoreCase)
 
 @_cdecl("kk_string_equalsIgnoreCase")
