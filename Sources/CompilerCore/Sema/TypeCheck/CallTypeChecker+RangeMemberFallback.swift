@@ -29,11 +29,14 @@ extension CallTypeChecker {
             return nil
         }
 
+        let isCharRange = sema.bindings.isCharRangeExpr(receiverID)
+
         // Provide contextual function type for range HOF lambda inference.
         if let expectation = rangeMemberLambdaExpectation(
             memberName: memberName,
             argCount: args.count,
-            sema: sema
+            sema: sema,
+            isCharRange: isCharRange
         ),
             args.indices.contains(expectation.argumentIndex)
         {
@@ -54,9 +57,13 @@ extension CallTypeChecker {
         }
         if memberName == "reversed" {
             sema.bindings.markRangeExpr(id)
+            // Propagate char range marker through reversed() (STDLIB-290)
+            if sema.bindings.isCharRangeExpr(receiverID) {
+                sema.bindings.markCharRangeExpr(id)
+            }
         }
 
-        let resultType = rangeMemberResultType(memberName: memberName, sema: sema)
+        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange)
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -86,9 +93,11 @@ extension CallTypeChecker {
         ["toList", "map"].contains(memberName)
     }
 
-    private func rangeMemberResultType(memberName: String, sema: SemaModule) -> TypeID {
+    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false) -> TypeID {
         switch memberName {
-        case "first", "last", "count":
+        case "first", "last":
+            isCharRange ? sema.types.charType : sema.types.intType
+        case "count":
             sema.types.intType
         case "contains":
             sema.types.booleanType
@@ -104,15 +113,17 @@ extension CallTypeChecker {
     private func rangeMemberLambdaExpectation(
         memberName: String,
         argCount: Int,
-        sema: SemaModule
+        sema: SemaModule,
+        isCharRange: Bool = false
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let oneParamMembers: Set = ["forEach", "map"]
         guard oneParamMembers.contains(memberName), argCount == 1 else {
             return nil
         }
         let lambdaReturnType = memberName == "forEach" ? sema.types.unitType : sema.types.anyType
+        let elementType = isCharRange ? sema.types.charType : sema.types.intType
         let expectedType = sema.types.make(.functionType(FunctionType(
-            params: [sema.types.intType],
+            params: [elementType],
             returnType: lambdaReturnType,
             isSuspend: false,
             nullability: .nonNull

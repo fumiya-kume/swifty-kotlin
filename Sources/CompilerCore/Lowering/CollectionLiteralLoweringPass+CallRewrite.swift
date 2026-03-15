@@ -21,6 +21,7 @@ extension CollectionLiteralLoweringPass {
             var arrayExprIDs: Set<Int32> = []
             var sequenceExprIDs: Set<Int32> = []
             var rangeExprIDs: Set<Int32> = []
+            var charRangeExprIDs: Set<Int32> = []
             var stringExprIDs: Set<Int32> = []
 
             collectInitialCollectionExprIDs(
@@ -32,6 +33,7 @@ extension CollectionLiteralLoweringPass {
                 arrayExprIDs: &arrayExprIDs,
                 sequenceExprIDs: &sequenceExprIDs,
                 rangeExprIDs: &rangeExprIDs,
+                charRangeExprIDs: &charRangeExprIDs,
                 stringExprIDs: &stringExprIDs
             )
 
@@ -1248,9 +1250,12 @@ extension CollectionLiteralLoweringPass {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
+                            // Use char range variant if this is a CharRange (STDLIB-290)
+                            let rangeToListCallee = charRangeExprIDs.contains(receiverID.rawValue)
+                                ? lookup.kkCharRangeToListName : lookup.kkRangeToListName
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkRangeToListName,
+                                callee: rangeToListCallee,
                                 arguments: [receiverID],
                                 result: toListResult,
                                 canThrow: false,
@@ -1571,8 +1576,14 @@ extension CollectionLiteralLoweringPass {
                                     loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                     closureRawID = zeroExpr
                                 }
-                                let kkName = callee == lookup.mapName
-                                    ? lookup.kkRangeMapName : lookup.kkRangeForEachName
+                                let isCharRange = charRangeExprIDs.contains(receiverID.rawValue)
+                                let kkName: InternedString
+                                if callee == lookup.mapName {
+                                    kkName = lookup.kkRangeMapName
+                                } else {
+                                    // forEach: use char range variant if applicable (STDLIB-290)
+                                    kkName = isCharRange ? lookup.kkCharRangeForEachName : lookup.kkRangeForEachName
+                                }
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
                                 )
@@ -2195,6 +2206,7 @@ extension CollectionLiteralLoweringPass {
                         arrayExprIDs: &arrayExprIDs,
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
+                        charRangeExprIDs: &charRangeExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
@@ -2220,6 +2232,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if rangeExprIDs.contains(from.rawValue) {
                         rangeExprIDs.insert(to.rawValue)
+                    }
+                    if charRangeExprIDs.contains(from.rawValue) {
+                        charRangeExprIDs.insert(to.rawValue)
                     }
                     if stringExprIDs.contains(from.rawValue) {
                         stringExprIDs.insert(to.rawValue)

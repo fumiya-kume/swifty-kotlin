@@ -1985,6 +1985,26 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        // CharRange (STDLIB-290)
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_toList",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_forEach",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "lambdaRaw", type: .intptr),
+                RuntimeABIParameter(name: "captureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
     ]
 
     /// Stdlib Delegate Functions (P5-80)

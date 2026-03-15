@@ -216,6 +216,11 @@ struct CollectionLiteralLookupTables {
     let kkRangeReversedName: InternedString
     let kkOpContainsName: InternedString
 
+    // CharRange (STDLIB-290)
+    let kkBoxCharName: InternedString
+    let kkCharRangeToListName: InternedString
+    let kkCharRangeForEachName: InternedString
+
     // Member names
     let sizeName: InternedString
     let getName: InternedString
@@ -549,6 +554,11 @@ struct CollectionLiteralLookupTables {
         kkRangeMapName = interner.intern("kk_range_map")
         kkRangeReversedName = interner.intern("kk_range_reversed")
         kkOpContainsName = interner.intern("kk_op_contains")
+
+        // CharRange (STDLIB-290)
+        kkBoxCharName = interner.intern("kk_box_char")
+        kkCharRangeToListName = interner.intern("kk_char_range_toList")
+        kkCharRangeForEachName = interner.intern("kk_char_range_forEach")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")

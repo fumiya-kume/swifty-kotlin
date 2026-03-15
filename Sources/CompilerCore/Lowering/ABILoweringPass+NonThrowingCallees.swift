@@ -102,6 +102,7 @@ extension ABILoweringPass {
             interner.intern("kk_range_count"),
             interner.intern("kk_range_toList"),
             interner.intern("kk_range_reversed"),
+            interner.intern("kk_char_range_toList"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),

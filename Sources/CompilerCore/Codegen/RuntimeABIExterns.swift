@@ -1366,6 +1366,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // CharRange (STDLIB-290)
+    public static let kk_char_range_toList = ExternDecl(
+        name: "kk_char_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_range_forEach = ExternDecl(
+        name: "kk_char_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Delegate
 
     public static let kk_lazy_create = ExternDecl(
@@ -1861,6 +1874,9 @@ public enum RuntimeABIExterns {
             kk_range_forEach,
             kk_range_map,
             kk_range_reversed,
+            // CharRange (STDLIB-290)
+            kk_char_range_toList,
+            kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
         all += [
