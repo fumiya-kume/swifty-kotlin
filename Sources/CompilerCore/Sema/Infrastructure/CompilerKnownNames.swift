@@ -297,7 +297,11 @@ struct KnownCompilerNames {
     }
 
     func isStringBuilderSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == stringBuilder || symbolMatches(symbol, fqName: kotlinStringBuilderFQName)
+        if symbolMatches(symbol, fqName: kotlinStringBuilderFQName) {
+            return true
+        }
+        // Fall back to simple name match only for synthetic symbols (no FQN)
+        return symbol.name == stringBuilder && symbol.fqName.isEmpty
     }
 
     func isSequenceSymbol(_ symbol: SemanticSymbol) -> Bool {

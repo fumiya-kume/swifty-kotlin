@@ -1729,17 +1729,15 @@ extension CallLowerer {
             }
             // StringBuilder member calls with 1 arg (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let calleeStr = interner.resolve(calleeName)
-                let runtimeCallee: String? = switch calleeStr {
-                case "append":
+                let runtimeCallee: String? = if calleeName == interner.intern("append") {
                     "kk_string_builder_append_obj"
-                case "appendLine":
+                } else if calleeName == interner.intern("appendLine") {
                     "kk_string_builder_appendLine_obj"
-                case "deleteCharAt":
+                } else if calleeName == interner.intern("deleteCharAt") {
                     "kk_string_builder_deleteCharAt"
-                case "get":
+                } else if calleeName == interner.intern("get") {
                     "kk_string_builder_get"
-                default:
+                } else {
                     nil
                 }
                 if let runtimeCallee {
@@ -1774,13 +1772,11 @@ extension CallLowerer {
             }
             // StringBuilder 2-arg member calls (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let calleeStr = interner.resolve(calleeName)
-                let runtimeCallee: String? = switch calleeStr {
-                case "insert":
+                let runtimeCallee: String? = if calleeName == interner.intern("insert") {
                     "kk_string_builder_insert_obj"
-                case "delete":
+                } else if calleeName == interner.intern("delete") {
                     "kk_string_builder_delete_obj"
-                default:
+                } else {
                     nil
                 }
                 if let runtimeCallee {
@@ -1869,19 +1865,17 @@ extension CallLowerer {
             }
             // StringBuilder 0-arg member calls and properties (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let calleeStr = interner.resolve(calleeName)
-                let runtimeCallee: String? = switch calleeStr {
-                case "toString":
+                let runtimeCallee: String? = if calleeName == interner.intern("toString") {
                     "kk_string_builder_toString"
-                case "clear":
+                } else if calleeName == interner.intern("clear") {
                     "kk_string_builder_clear"
-                case "reverse":
+                } else if calleeName == interner.intern("reverse") {
                     "kk_string_builder_reverse"
-                case "appendLine":
+                } else if calleeName == interner.intern("appendLine") {
                     "kk_string_builder_appendLine_noarg_obj"
-                case "length":
+                } else if calleeName == interner.intern("length") {
                     "kk_string_builder_length_prop"
-                default:
+                } else {
                     nil
                 }
                 if let runtimeCallee {

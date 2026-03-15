@@ -63,7 +63,7 @@ public func kk_string_builder_toString(_ sbRaw: Int) -> Int {
 @_cdecl("kk_string_builder_length_prop")
 public func kk_string_builder_length_prop(_ sbRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }
-    return sb.value.count
+    return sb.value.utf8.count
 }
 
 @_cdecl("kk_string_builder_appendLine_obj")
@@ -84,9 +84,13 @@ public func kk_string_builder_appendLine_noarg_obj(_ sbRaw: Int) -> Int {
 @_cdecl("kk_string_builder_insert_obj")
 public func kk_string_builder_insert_obj(_ sbRaw: Int, _ index: Int, _ valueRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index <= utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
     let str = runtimeElementToString(valueRaw)
-    let clampedIndex = max(0, min(index, sb.value.count))
-    let insertionPoint = sb.value.index(sb.value.startIndex, offsetBy: clampedIndex)
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    let insertionPoint = String.Index(utf8Index, within: sb.value) ?? sb.value.endIndex
     sb.value.insert(contentsOf: str, at: insertionPoint)
     return sbRaw
 }
@@ -94,12 +98,15 @@ public func kk_string_builder_insert_obj(_ sbRaw: Int, _ index: Int, _ valueRaw:
 @_cdecl("kk_string_builder_delete_obj")
 public func kk_string_builder_delete_obj(_ sbRaw: Int, _ start: Int, _ end: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
-    let len = sb.value.count
-    let s = max(0, min(start, len))
-    let e = max(s, min(end, len))
-    let startIdx = sb.value.index(sb.value.startIndex, offsetBy: s)
-    let endIdx = sb.value.index(sb.value.startIndex, offsetBy: e)
-    sb.value.removeSubrange(startIdx..<endIdx)
+    let len = sb.value.utf8.count
+    guard start >= 0, start <= len, end >= start, end <= len else {
+        fatalError("StringIndexOutOfBoundsException: start=\(start), end=\(end), length=\(len)")
+    }
+    let startIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: start)
+    let endIdx = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: end)
+    let sIdx = String.Index(startIdx, within: sb.value) ?? sb.value.endIndex
+    let eIdx = String.Index(endIdx, within: sb.value) ?? sb.value.endIndex
+    sb.value.removeSubrange(sIdx..<eIdx)
     return sbRaw
 }
 
@@ -120,17 +127,29 @@ public func kk_string_builder_reverse(_ sbRaw: Int) -> Int {
 @_cdecl("kk_string_builder_deleteCharAt")
 public func kk_string_builder_deleteCharAt(_ sbRaw: Int, _ index: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
-    guard index >= 0, index < sb.value.count else { return sbRaw }
-    let idx = sb.value.index(sb.value.startIndex, offsetBy: index)
-    sb.value.remove(at: idx)
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index < utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    guard let charIdx = String.Index(utf8Index, within: sb.value) else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    sb.value.remove(at: charIdx)
     return sbRaw
 }
 
 @_cdecl("kk_string_builder_get")
 public func kk_string_builder_get(_ sbRaw: Int, _ index: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }
-    guard index >= 0, index < sb.value.count else { return 0 }
-    let idx = sb.value.index(sb.value.startIndex, offsetBy: index)
-    let charValue = Int(sb.value[idx].unicodeScalars.first?.value ?? 0)
+    let utf8Count = sb.value.utf8.count
+    guard index >= 0, index < utf8Count else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let utf8Index = sb.value.utf8.index(sb.value.utf8.startIndex, offsetBy: index)
+    guard let charIdx = String.Index(utf8Index, within: sb.value) else {
+        fatalError("StringIndexOutOfBoundsException: index=\(index), length=\(utf8Count)")
+    }
+    let charValue = Int(sb.value[charIdx].unicodeScalars.first?.value ?? 0)
     return kk_box_char(charValue)
 }
