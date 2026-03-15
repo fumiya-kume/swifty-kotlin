@@ -1899,6 +1899,7 @@ public enum RuntimeABIExterns {
         all += sequenceExterns
         all += regexExterns
         all += comparatorExterns
+        all += resultExterns
         return all
     }()
 

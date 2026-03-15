@@ -382,6 +382,12 @@ extension ABILoweringPass {
             interner.intern("kk_int_coerceIn"),
             interner.intern("kk_int_coerceAtLeast"),
             interner.intern("kk_int_coerceAtMost"),
+            // Result non-throwing functions (STDLIB-281/282)
+            interner.intern("kk_result_isSuccess"),
+            interner.intern("kk_result_isFailure"),
+            interner.intern("kk_result_getOrNull"),
+            interner.intern("kk_result_getOrDefault"),
+            interner.intern("kk_result_exceptionOrNull"),
             // List plus/minus operators (STDLIB-345)
             interner.intern("kk_list_plus_element"),
             interner.intern("kk_list_plus_collection"),
