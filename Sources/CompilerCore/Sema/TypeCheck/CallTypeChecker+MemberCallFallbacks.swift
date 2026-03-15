@@ -428,6 +428,8 @@ extension CallTypeChecker {
             interner.intern("fold"),
             interner.intern("reduce"),
             interner.intern("groupBy"),
+            interner.intern("groupingBy"),
+            interner.intern("eachCount"),
             interner.intern("sortedBy"),
             interner.intern("find"),
             interner.intern("associateBy"),
@@ -532,7 +534,7 @@ extension CallTypeChecker {
     ) -> Bool {
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
-            interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("associateBy"), interner.intern("associateWith"),
+            interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("eachCount"), interner.intern("associateBy"), interner.intern("associateWith"),
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
@@ -580,13 +582,13 @@ extension CallTypeChecker {
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
-        case interner.intern("filterNotNull"), interner.intern("unzip"):
+        case interner.intern("filterNotNull"), interner.intern("unzip"), interner.intern("eachCount"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
-             interner.intern("groupBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
+             interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
@@ -838,6 +840,7 @@ extension CallTypeChecker {
             interner.intern("none"),
             interner.intern("all"),
             interner.intern("groupBy"),
+            interner.intern("groupingBy"),
             interner.intern("sortedBy"),
             interner.intern("count"),
             interner.intern("first"),
