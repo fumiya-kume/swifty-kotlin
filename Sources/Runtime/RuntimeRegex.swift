@@ -107,7 +107,9 @@ public func kk_regex_create(_ patternRaw: Int) -> Int {
 @_cdecl("kk_string_matches_regex")
 public func kk_string_matches_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     let match = regexBox.regex.firstMatch(in: str, options: [.anchored], range: range)
     let fullMatch = match != nil && match!.range.length == range.length
@@ -117,7 +119,9 @@ public func kk_string_matches_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
 @_cdecl("kk_string_contains_regex")
 public func kk_string_contains_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     let match = regexBox.regex.firstMatch(in: str, options: [], range: range)
     return kk_box_bool(match != nil ? 1 : 0)
@@ -128,7 +132,9 @@ public func kk_string_contains_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
 @_cdecl("kk_regex_find")
 public func kk_regex_find(_ regexRaw: Int, _ strRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return runtimeNullSentinelInt }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     guard let result = regexBox.regex.firstMatch(in: str, options: [], range: range) else {
         return runtimeNullSentinelInt
@@ -140,7 +146,9 @@ public func kk_regex_find(_ regexRaw: Int, _ strRaw: Int) -> Int {
 @_cdecl("kk_regex_findAll")
 public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeListRaw([]) }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     let results = regexBox.regex.matches(in: str, options: [], range: range)
     let matchResults = results.map { result -> Int in
@@ -156,7 +164,9 @@ public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
 public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacementRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
     let replacement = regexStringFromRaw(replacementRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return strRaw }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     let result = regexBox.regex.stringByReplacingMatches(in: str, options: [], range: range, withTemplate: replacement)
     return regexMakeStringRaw(result)
@@ -165,7 +175,9 @@ public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacemen
 @_cdecl("kk_string_split_regex")
 public func kk_string_split_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringListRaw([str]) }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     let range = NSRange(str.startIndex..., in: str)
     let matches = regexBox.regex.matches(in: str, options: [], range: range)
     if matches.isEmpty {
@@ -191,7 +203,9 @@ public func kk_string_toRegex(_ strRaw: Int) -> Int {
 
 @_cdecl("kk_regex_pattern")
 public func kk_regex_pattern(_ regexRaw: Int) -> Int {
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw("") }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Regex handle")
+    }
     return regexMakeStringRaw(regexBox.pattern)
 }
 
@@ -199,12 +213,16 @@ public func kk_regex_pattern(_ regexRaw: Int) -> Int {
 
 @_cdecl("kk_match_result_value")
 public func kk_match_result_value(_ matchRaw: Int) -> Int {
-    guard let matchResult = matchResultBoxFromRaw(matchRaw) else { return regexMakeStringRaw("") }
+    guard let matchResult = matchResultBoxFromRaw(matchRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid MatchResult handle")
+    }
     return regexMakeStringRaw(matchResult.value)
 }
 
 @_cdecl("kk_match_result_groupValues")
 public func kk_match_result_groupValues(_ matchRaw: Int) -> Int {
-    guard let matchResult = matchResultBoxFromRaw(matchRaw) else { return regexMakeStringListRaw([]) }
+    guard let matchResult = matchResultBoxFromRaw(matchRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid MatchResult handle")
+    }
     return regexMakeStringListRaw(matchResult.groupValues)
 }

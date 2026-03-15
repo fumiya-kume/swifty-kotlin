@@ -110,10 +110,15 @@ public func kk_unbox_long(_ obj: Int) -> Int {
     let isObjectPointer = runtimeStorage.withLock { state in
         state.objectPointers.contains(UInt(bitPattern: objPointer))
     }
+    // Passthrough: value is not a heap object — treat as raw int (implicit widening)
     guard isObjectPointer else { return obj }
     if let longBox = tryCast(objPointer, to: RuntimeLongBox.self) {
         return longBox.value
     }
+    // Object pointer that isn't a LongBox — box/unbox type mismatch
+    #if DEBUG
+    print("KSwiftK warning [\(runtimePanicDiagnosticCode)]: kk_unbox_long called on non-LongBox object (0x\(String(obj, radix: 16)))")
+    #endif
     return obj
 }
 
@@ -140,6 +145,9 @@ public func kk_unbox_float(_ obj: Int) -> Int {
     if let floatBox = tryCast(objPointer, to: RuntimeFloatBox.self) {
         return Int(floatBox.value.bitPattern)
     }
+    #if DEBUG
+    print("KSwiftK warning [\(runtimePanicDiagnosticCode)]: kk_unbox_float called on non-FloatBox object (0x\(String(obj, radix: 16)))")
+    #endif
     return obj
 }
 
@@ -166,6 +174,9 @@ public func kk_unbox_double(_ obj: Int) -> Int {
     if let doubleBox = tryCast(objPointer, to: RuntimeDoubleBox.self) {
         return Int(bitPattern: UInt(truncatingIfNeeded: doubleBox.value.bitPattern))
     }
+    #if DEBUG
+    print("KSwiftK warning [\(runtimePanicDiagnosticCode)]: kk_unbox_double called on non-DoubleBox object (0x\(String(obj, radix: 16)))")
+    #endif
     return obj
 }
 
@@ -191,5 +202,8 @@ public func kk_unbox_char(_ obj: Int) -> Int {
     if let charBox = tryCast(objPointer, to: RuntimeCharBox.self) {
         return charBox.value
     }
+    #if DEBUG
+    print("KSwiftK warning [\(runtimePanicDiagnosticCode)]: kk_unbox_char called on non-CharBox object (0x\(String(obj, radix: 16)))")
+    #endif
     return obj
 }
