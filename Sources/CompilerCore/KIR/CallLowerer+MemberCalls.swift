@@ -84,7 +84,7 @@ extension CallLowerer {
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
-        "putAll",
+        "putAll", "addAll",
         "maxByOrNull", "minByOrNull",
         "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
