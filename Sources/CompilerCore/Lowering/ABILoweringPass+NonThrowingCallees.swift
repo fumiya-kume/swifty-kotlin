@@ -393,6 +393,8 @@ extension ABILoweringPass {
             interner.intern("kk_result_getOrNull"),
             interner.intern("kk_result_getOrDefault"),
             interner.intern("kk_result_exceptionOrNull"),
+            // Grouping (STDLIB-285/286) — groupingBy is non-throwing (just creates box)
+            interner.intern("kk_list_groupingBy"),
             // List plus/minus operators (STDLIB-345)
             interner.intern("kk_list_plus_element"),
             interner.intern("kk_list_plus_collection"),

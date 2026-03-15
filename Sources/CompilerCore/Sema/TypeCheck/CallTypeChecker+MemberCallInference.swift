@@ -264,6 +264,7 @@ extension CallTypeChecker {
             case "run": .scopeRun
             case "apply": .scopeApply
             case "also": .scopeAlso
+            case "use": .scopeUse // STDLIB-250
             default: nil
             }
             let hasUserDefinedMember = if scopeKind != nil {
@@ -368,6 +369,34 @@ extension CallTypeChecker {
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+
+                case .scopeUse:
+                    // STDLIB-250: use: lambda receives `it` parameter typed as T, returns R
+                    // Semantically identical to `let`, but lowered through kk_use runtime
+                    // which wraps the call in try-finally and calls close().
+                    let useLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [nonNullReceiverType],
+                        returnType: expectedType ?? sema.types.anyType
+                    )))
+                    let useLambdaType = driver.inferExpr(
+                        args[0].expr, ctx: ctx, locals: &locals,
+                        expectedType: useLambdaExpectedType
+                    )
+                    let useReturnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: useLambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let useFinalType = safeCall ? sema.types.makeNullable(useReturnType) : useReturnType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    sema.bindings.bindExprType(id, type: useFinalType)
+                    return useFinalType
 
                 case .scopeWith:
                     break // with is handled in inferCallExpr (top-level function)

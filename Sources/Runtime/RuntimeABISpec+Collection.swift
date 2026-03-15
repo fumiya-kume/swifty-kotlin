@@ -1541,6 +1541,61 @@ public extension RuntimeABISpec {
                     returnType: .opaquePointer,
                     section: "Collection"
                 ),
+                // Grouping (STDLIB-285/286)
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_groupingBy",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_eachCount",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_fold",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "initial", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_grouping_reduce",
+                    parameters: [
+                        RuntimeABIParameter(name: "groupingRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                // STDLIB-250: Closeable.use {}
+                RuntimeABIFunctionSpec(
+                    name: "kk_use",
+                    parameters: [
+                        RuntimeABIParameter(name: "resourceRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
             ]
     }()
 }

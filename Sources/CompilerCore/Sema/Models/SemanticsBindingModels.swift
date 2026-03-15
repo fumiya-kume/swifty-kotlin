@@ -42,6 +42,8 @@ public enum ScopeFunctionKind: Equatable {
     case scopeWith
     case scopeApply
     case scopeAlso
+    /// STDLIB-250: Closeable.use {} — like `let` but routes through kk_use runtime.
+    case scopeUse
 }
 
 /// Identifies takeIf / takeUnless extension calls (STDLIB-160).

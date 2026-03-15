@@ -26,6 +26,25 @@ private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutab
     }
 }
 
+// MARK: - Closeable.use {} (STDLIB-250)
+
+/// `resource.use { block }` — calls the block with the resource, then propagates
+/// any exception from the block. The close() call on the resource is handled at
+/// the compiler level via virtual dispatch when the receiver type has a close() method.
+/// Runtime signature: kk_use(resourceRaw, fnPtr, closureRaw, outThrown) -> R
+@_cdecl("kk_use")
+public func kk_use(_ resourceRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    // Call the lambda with the resource as its argument
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: resourceRaw, outThrown: &thrown)
+
+    // Propagate any exception from the block
+    if thrown != 0 {
+        return handleCollectionLambdaThrow(thrown, outThrown)
+    }
+    return result
+}
+
 // MARK: - List getOrElse (STDLIB-212)
 
 @_cdecl("kk_list_getOrElse")
