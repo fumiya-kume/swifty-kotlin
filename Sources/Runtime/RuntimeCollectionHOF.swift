@@ -1314,7 +1314,7 @@ public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutable
             counts.append(1)
         }
     }
-    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: counts))
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: counts.map { kk_box_int($0) }))
 }
 
 /// `grouping.fold(initial) { acc, element -> ... }` — folds per key, returns Map<K, R>.

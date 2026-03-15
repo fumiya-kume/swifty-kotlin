@@ -2787,8 +2787,6 @@ extension CallLowerer {
             return interner.intern("kk_list_binarySearch")
         case "groupingBy":
             return interner.intern("kk_list_groupingBy")
-        case "eachCount":
-            return interner.intern("kk_grouping_eachCount")
         default:
             break
         }
