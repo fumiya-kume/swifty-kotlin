@@ -349,6 +349,9 @@ struct CollectionLiteralLookupTables {
     let listFactoryNames: Set<InternedString>
     let setFactoryNames: Set<InternedString>
     let mapFactoryNames: Set<InternedString>
+    let mutableListConstructorNames: Set<InternedString>
+    let mutableSetConstructorNames: Set<InternedString>
+    let mutableMapConstructorNames: Set<InternedString>
     let arrayOfFactoryNames: Set<InternedString>
     let builderDSLNames: Set<InternedString>
     let stringProducingCallees: Set<InternedString>
@@ -674,9 +677,12 @@ struct CollectionLiteralLookupTables {
         kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
         kkMutableMapPutName = interner.intern("kk_mutable_map_put")
 
-        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName, arrayListName]
-        setFactoryNames = [setOfName, mutableSetOfName, emptySetName, hashSetName, linkedHashSetName]
-        mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName, hashMapName, linkedHashMapName]
+        listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
+        setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
+        mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
+        mutableListConstructorNames = [arrayListName]
+        mutableSetConstructorNames = [hashSetName, linkedHashSetName]
+        mutableMapConstructorNames = [hashMapName, linkedHashMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 

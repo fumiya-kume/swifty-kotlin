@@ -157,15 +157,18 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>
     ) {
         guard let result else { return }
-        if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName
+        if lookup.listFactoryNames.contains(callee) || lookup.mutableListConstructorNames.contains(callee)
+            || callee == lookup.kkListOfName
             || callee == lookup.kkStringSplitName
             || callee == lookup.kkStringChunkedName
             || callee == lookup.kkStringWindowedName
         {
             listExprIDs.insert(result.rawValue)
-        } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
+        } else if lookup.setFactoryNames.contains(callee) || lookup.mutableSetConstructorNames.contains(callee)
+                    || callee == lookup.kkSetOfName {
             setExprIDs.insert(result.rawValue)
-        } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
+        } else if lookup.mapFactoryNames.contains(callee) || lookup.mutableMapConstructorNames.contains(callee)
+                    || callee == lookup.kkMapOfName {
             mapExprIDs.insert(result.rawValue)
         } else if lookup.arrayOfFactoryNames.contains(callee) || callee == lookup.kkArrayNewName {
             arrayExprIDs.insert(result.rawValue)

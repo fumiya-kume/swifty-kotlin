@@ -104,6 +104,60 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite ArrayList()/HashSet()/LinkedHashSet()/HashMap()/LinkedHashMap() constructors ---
+                    // 0 args → empty collection; 1 int arg (capacity) → empty collection;
+                    // 1 collection arg → copy (treated as empty for now since runtime uses Swift collections)
+                    if lookup.mutableListConstructorNames.contains(callee) {
+                        // All forms produce an empty mutable list
+                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkListOfName,
+                            arguments: [nullExpr, zeroExpr],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    if lookup.mutableSetConstructorNames.contains(callee) {
+                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkSetOfName,
+                            arguments: [nullExpr, zeroExpr],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    if lookup.mutableMapConstructorNames.contains(callee) {
+                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                        let nullExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: nullExpr2, value: .intLiteral(0)))
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkMapOfName,
+                            arguments: [nullExpr, nullExpr2, zeroExpr],
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // map.count(predicate) on map literals
                     if callee == lookup.countName && (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
