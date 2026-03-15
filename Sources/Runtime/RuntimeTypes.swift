@@ -277,6 +277,20 @@ final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
 }
 
+/// Runtime box for `Grouping<T, K>` returned by `groupingBy`.
+/// Stores the source elements and key selector function pointer/closure.
+final class RuntimeGroupingBox {
+    let sourceElements: [Int]
+    let keyFnPtr: Int
+    let keyClosureRaw: Int
+
+    init(sourceElements: [Int], keyFnPtr: Int, keyClosureRaw: Int) {
+        self.sourceElements = sourceElements
+        self.keyFnPtr = keyFnPtr
+        self.keyClosureRaw = keyClosureRaw
+    }
+}
+
 // MARK: - Stdlib Delegate Types (P5-80)
 
 /// Thread-safety mode for `lazy` delegate.

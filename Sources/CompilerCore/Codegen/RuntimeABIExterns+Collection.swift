@@ -184,6 +184,10 @@ public extension RuntimeABIExterns {
         kk_list_plus_collection,
         kk_list_minus_element,
         kk_list_minus_collection,
+        kk_list_groupingBy,
+        kk_grouping_eachCount,
+        kk_grouping_fold,
+        kk_grouping_reduce,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1297,6 +1301,31 @@ public extension RuntimeABIExterns {
     static let kk_list_minus_collection = ExternDecl(
         name: "kk_list_minus_collection",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// Grouping (STDLIB-285/286)
+    static let kk_list_groupingBy = ExternDecl(
+        name: "kk_list_groupingBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_eachCount = ExternDecl(
+        name: "kk_grouping_eachCount",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_fold = ExternDecl(
+        name: "kk_grouping_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_reduce = ExternDecl(
+        name: "kk_grouping_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
