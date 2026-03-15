@@ -387,6 +387,20 @@ extension ABILoweringPass {
             interner.intern("kk_list_plus_collection"),
             interner.intern("kk_list_minus_element"),
             interner.intern("kk_list_minus_collection"),
+            // StringBuilder (STDLIB-255/256/257)
+            interner.intern("kk_string_builder_new"),
+            interner.intern("kk_string_builder_new_from_string"),
+            interner.intern("kk_string_builder_append_obj"),
+            interner.intern("kk_string_builder_toString"),
+            interner.intern("kk_string_builder_length_prop"),
+            interner.intern("kk_string_builder_appendLine_obj"),
+            interner.intern("kk_string_builder_appendLine_noarg_obj"),
+            interner.intern("kk_string_builder_insert_obj"),
+            interner.intern("kk_string_builder_delete_obj"),
+            interner.intern("kk_string_builder_clear"),
+            interner.intern("kk_string_builder_reverse"),
+            interner.intern("kk_string_builder_deleteCharAt"),
+            interner.intern("kk_string_builder_get"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

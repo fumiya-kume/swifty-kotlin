@@ -1165,6 +1165,38 @@ final class CallTypeChecker {
                 }
                 sema.bindings.bindExprType(id, type: regexType)
                 return regexType
+            case "StringBuilder":
+                guard args.count <= 1 else {
+                    break
+                }
+                // Skip stdlib treatment if shadowed by a local declaration
+                if locals[calleeName] != nil {
+                    break
+                }
+                if ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+                    guard let sym = ctx.cachedSymbol(candidate) else { return false }
+                    return !sym.flags.contains(.synthetic)
+                }) {
+                    break
+                }
+                if args.count == 1 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+                }
+                let sbType: TypeID = if let sbSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("text"),
+                    interner.intern("StringBuilder"),
+                ]) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: sbSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: sbType)
+                return sbType
             default:
                 break
             }
