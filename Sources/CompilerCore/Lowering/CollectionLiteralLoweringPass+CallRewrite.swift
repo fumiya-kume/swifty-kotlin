@@ -425,6 +425,16 @@ extension CollectionLiteralLoweringPass {
                         var rewrittenCallee: InternedString?
                         if builderCallee == lookup.buildStringName, callee == lookup.appendName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkStringBuilderAppendName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.appendLineName, arguments.count == 1 {
+                            rewrittenCallee = lookup.kkStringBuilderAppendLineName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.appendLineName, arguments.count == 0 {
+                            rewrittenCallee = lookup.kkStringBuilderAppendLineNoargName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.insertName, arguments.count == 2 {
+                            rewrittenCallee = lookup.kkStringBuilderInsertName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.deleteName, arguments.count == 2 {
+                            rewrittenCallee = lookup.kkStringBuilderDeleteName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.lengthName, arguments.count == 0 {
+                            rewrittenCallee = lookup.kkStringBuilderLengthName
                         } else if builderCallee == lookup.buildListName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderListAddName
                         } else if builderCallee == lookup.buildSetName, callee == lookup.addName, arguments.count == 1 {

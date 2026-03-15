@@ -145,6 +145,11 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_build_set,
         kk_string_builder_append,
+        kk_string_builder_appendLine,
+        kk_string_builder_appendLine_noarg,
+        kk_string_builder_insert,
+        kk_string_builder_delete,
+        kk_string_builder_length,
         kk_builder_list_add,
         kk_builder_set_add,
         kk_list_getOrNull,
@@ -1128,6 +1133,37 @@ public extension RuntimeABIExterns {
     static let kk_string_builder_append = ExternDecl(
         name: "kk_string_builder_append",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// StringBuilder enhancements (STDLIB-311)
+    static let kk_string_builder_appendLine = ExternDecl(
+        name: "kk_string_builder_appendLine",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_appendLine_noarg = ExternDecl(
+        name: "kk_string_builder_appendLine_noarg",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_insert = ExternDecl(
+        name: "kk_string_builder_insert",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_delete = ExternDecl(
+        name: "kk_string_builder_delete",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_length = ExternDecl(
+        name: "kk_string_builder_length",
+        parameterTypes: [],
         returnType: "intptr_t"
     )
 

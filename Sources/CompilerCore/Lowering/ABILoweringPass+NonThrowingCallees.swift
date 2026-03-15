@@ -382,6 +382,13 @@ extension ABILoweringPass {
             interner.intern("kk_int_coerceIn"),
             interner.intern("kk_int_coerceAtLeast"),
             interner.intern("kk_int_coerceAtMost"),
+            // StringBuilder enhancements (STDLIB-311)
+            interner.intern("kk_string_builder_append"),
+            interner.intern("kk_string_builder_appendLine"),
+            interner.intern("kk_string_builder_appendLine_noarg"),
+            interner.intern("kk_string_builder_insert"),
+            interner.intern("kk_string_builder_delete"),
+            interner.intern("kk_string_builder_length"),
             // List plus/minus operators (STDLIB-345)
             interner.intern("kk_list_plus_element"),
             interner.intern("kk_list_plus_collection"),

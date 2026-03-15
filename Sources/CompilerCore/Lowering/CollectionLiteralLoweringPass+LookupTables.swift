@@ -338,6 +338,17 @@ struct CollectionLiteralLookupTables {
     let kkMutableSetRemoveName: InternedString
     let kkMutableMapPutName: InternedString
 
+    // StringBuilder enhancements (STDLIB-311)
+    let appendLineName: InternedString
+    let insertName: InternedString
+    let deleteName: InternedString
+    let lengthName: InternedString
+    let kkStringBuilderAppendLineName: InternedString
+    let kkStringBuilderAppendLineNoargName: InternedString
+    let kkStringBuilderInsertName: InternedString
+    let kkStringBuilderDeleteName: InternedString
+    let kkStringBuilderLengthName: InternedString
+
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
     let setFactoryNames: Set<InternedString>
@@ -660,6 +671,17 @@ struct CollectionLiteralLookupTables {
         kkMutableSetAddName = interner.intern("kk_mutable_set_add")
         kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
         kkMutableMapPutName = interner.intern("kk_mutable_map_put")
+
+        // StringBuilder enhancements (STDLIB-311)
+        appendLineName = interner.intern("appendLine")
+        insertName = interner.intern("insert")
+        deleteName = interner.intern("delete")
+        lengthName = interner.intern("length")
+        kkStringBuilderAppendLineName = interner.intern("kk_string_builder_appendLine")
+        kkStringBuilderAppendLineNoargName = interner.intern("kk_string_builder_appendLine_noarg")
+        kkStringBuilderInsertName = interner.intern("kk_string_builder_insert")
+        kkStringBuilderDeleteName = interner.intern("kk_string_builder_delete")
+        kkStringBuilderLengthName = interner.intern("kk_string_builder_length")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
