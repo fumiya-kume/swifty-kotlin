@@ -1099,6 +1099,34 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-318: String.commonPrefixWith / commonSuffixWith ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "commonPrefixWith",
+            externalLinkName: "kk_string_commonPrefixWith",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "commonSuffixWith",
+            externalLinkName: "kk_string_commonSuffixWith",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureKotlinTextPackage(

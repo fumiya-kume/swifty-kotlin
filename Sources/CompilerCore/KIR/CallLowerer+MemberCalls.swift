@@ -1382,6 +1382,10 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
+                case "commonPrefixWith":
+                    ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                case "commonSuffixWith":
+                    ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
