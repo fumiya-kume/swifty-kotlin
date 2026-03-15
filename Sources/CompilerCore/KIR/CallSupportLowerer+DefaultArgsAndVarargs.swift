@@ -115,6 +115,15 @@ extension CallSupportLowerer {
                 return nil
             }
             return interner.intern("kk_regex_create")
+        case "StringBuilder":
+            switch argumentCount {
+            case 0:
+                return interner.intern("kk_string_builder_new")
+            case 1:
+                return interner.intern("kk_string_builder_new_from_string")
+            default:
+                return nil
+            }
         default:
             return nil
         }

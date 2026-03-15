@@ -485,6 +485,20 @@ extension CallLowerer {
         return knownNames.isRegexSymbol(symbol)
     }
 
+    private func isStringBuilderLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isStringBuilderSymbol(symbol)
+    }
+
     private func isSequenceLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -1713,6 +1727,33 @@ extension CallLowerer {
                     return result
                 }
             }
+            // StringBuilder member calls with 1 arg (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "append":
+                    "kk_string_builder_append_obj"
+                case "appendLine":
+                    "kk_string_builder_appendLine_obj"
+                case "deleteCharAt":
+                    "kk_string_builder_deleteCharAt"
+                case "get":
+                    "kk_string_builder_get"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
         }
 
         if args.count == 2 {
@@ -1730,6 +1771,29 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
                 return result
+            }
+            // StringBuilder 2-arg member calls (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "insert":
+                    "kk_string_builder_insert_obj"
+                case "delete":
+                    "kk_string_builder_delete_obj"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
@@ -1802,6 +1866,35 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
                 return result
+            }
+            // StringBuilder 0-arg member calls and properties (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let calleeStr = interner.resolve(calleeName)
+                let runtimeCallee: String? = switch calleeStr {
+                case "toString":
+                    "kk_string_builder_toString"
+                case "clear":
+                    "kk_string_builder_clear"
+                case "reverse":
+                    "kk_string_builder_reverse"
+                case "appendLine":
+                    "kk_string_builder_appendLine_noarg_obj"
+                case "length":
+                    "kk_string_builder_length_prop"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
