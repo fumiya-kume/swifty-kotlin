@@ -66,8 +66,9 @@ private final class RuntimeBuilderState: @unchecked Sendable {
             }
             let frameIndex = state.stringFrames.count - 1
             let str = state.stringFrames[frameIndex].value
-            let clampedIndex = max(0, min(index, str.count))
-            let insertionPoint = str.index(str.startIndex, offsetBy: clampedIndex)
+            let utf8 = str.utf8
+            let clampedIndex = max(0, min(index, utf8.count))
+            let insertionPoint = utf8.index(utf8.startIndex, offsetBy: clampedIndex)
             state.stringFrames[frameIndex].value.insert(contentsOf: value, at: insertionPoint)
         }
     }
@@ -79,10 +80,11 @@ private final class RuntimeBuilderState: @unchecked Sendable {
             }
             let frameIndex = state.stringFrames.count - 1
             let str = state.stringFrames[frameIndex].value
-            let clampedStart = max(0, min(start, str.count))
-            let clampedEnd = max(clampedStart, min(end, str.count))
-            let startIdx = str.index(str.startIndex, offsetBy: clampedStart)
-            let endIdx = str.index(str.startIndex, offsetBy: clampedEnd)
+            let utf8 = str.utf8
+            let clampedStart = max(0, min(start, utf8.count))
+            let clampedEnd = max(clampedStart, min(end, utf8.count))
+            let startIdx = utf8.index(utf8.startIndex, offsetBy: clampedStart)
+            let endIdx = utf8.index(utf8.startIndex, offsetBy: clampedEnd)
             state.stringFrames[frameIndex].value.removeSubrange(startIdx..<endIdx)
         }
     }
@@ -92,7 +94,7 @@ private final class RuntimeBuilderState: @unchecked Sendable {
             guard !state.stringFrames.isEmpty else {
                 return 0
             }
-            return state.stringFrames[state.stringFrames.count - 1].value.count
+            return state.stringFrames[state.stringFrames.count - 1].value.utf8.count
         }
     }
 
@@ -213,7 +215,6 @@ public func kk_string_builder_appendLine(_ valueRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: valueRaw),
           let string = extractString(from: pointer)
     else {
-        runtimeBuilderState.appendString("\n")
         return 0
     }
     runtimeBuilderState.appendString(string)
