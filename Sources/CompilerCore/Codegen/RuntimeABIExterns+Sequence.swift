@@ -33,6 +33,8 @@ public extension RuntimeABIExterns {
         kk_sequence_chunked,
         kk_sequence_windowed,
         kk_sequence_onEach,
+        kk_empty_sequence,
+        kk_sequence_ifEmpty,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -225,6 +227,19 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_onEach = ExternDecl(
         name: "kk_sequence_onEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-277: emptySequence / ifEmpty
+    static let kk_empty_sequence = ExternDecl(
+        name: "kk_empty_sequence",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_ifEmpty = ExternDecl(
+        name: "kk_sequence_ifEmpty",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

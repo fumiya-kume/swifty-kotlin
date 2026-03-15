@@ -264,6 +264,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // STDLIB-277: emptySequence / ifEmpty
+        RuntimeABIFunctionSpec(
+            name: "kk_empty_sequence",
+            parameters: [],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_sequence_windowed",
             parameters: [
@@ -277,6 +284,17 @@ public extension RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_sequence_onEach",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_ifEmpty",
             parameters: [
                 RuntimeABIParameter(name: "seqRaw", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
