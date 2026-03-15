@@ -81,6 +81,7 @@ struct KnownCompilerNames {
     let charArray: InternedString
 
     let regex: InternedString
+    let stringBuilder: InternedString
     let sequence: InternedString
     let channel: InternedString
     let job: InternedString
@@ -125,6 +126,7 @@ struct KnownCompilerNames {
     let async: InternedString
 
     let kotlinRegexFQName: [InternedString]
+    let kotlinStringBuilderFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
     let kotlinCollectionsListFQName: [InternedString]
     let kotlinCollectionsMutableListFQName: [InternedString]
@@ -178,6 +180,7 @@ struct KnownCompilerNames {
         charArray = interner.intern("CharArray")
 
         regex = interner.intern("Regex")
+        stringBuilder = interner.intern("StringBuilder")
         sequence = interner.intern("Sequence")
         channel = interner.intern("Channel")
         job = interner.intern("Job")
@@ -231,6 +234,7 @@ struct KnownCompilerNames {
         let flowPkg = interner.intern("flow")
 
         kotlinRegexFQName = [kotlin, kotlinText, regex]
+        kotlinStringBuilderFQName = [kotlin, kotlinText, stringBuilder]
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
         kotlinCollectionsListFQName = [kotlin, kotlinCollections, list]
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
@@ -294,6 +298,10 @@ struct KnownCompilerNames {
 
     func isRegexSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == regex || symbolMatches(symbol, fqName: kotlinRegexFQName)
+    }
+
+    func isStringBuilderSymbol(_ symbol: SemanticSymbol) -> Bool {
+        symbol.name == stringBuilder || symbolMatches(symbol, fqName: kotlinStringBuilderFQName)
     }
 
     func isSequenceSymbol(_ symbol: SemanticSymbol) -> Bool {

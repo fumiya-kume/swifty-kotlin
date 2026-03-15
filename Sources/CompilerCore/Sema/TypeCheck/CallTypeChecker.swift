@@ -1258,6 +1258,28 @@ final class CallTypeChecker {
                 sema.bindings.markCollectionExpr(id)
                 sema.bindings.bindExprType(id, type: arrayDequeType)
                 return arrayDequeType
+            case "StringBuilder":
+                guard args.count <= 1 else {
+                    break
+                }
+                if args.count == 1 {
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+                }
+                let sbType: TypeID = if let sbSymbol = sema.symbols.lookup(fqName: [
+                    interner.intern("kotlin"),
+                    interner.intern("text"),
+                    interner.intern("StringBuilder"),
+                ]) {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: sbSymbol,
+                        args: [],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: sbType)
+                return sbType
             default:
                 break
             }
