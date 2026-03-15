@@ -1439,6 +1439,18 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                // STDLIB-250: Closeable.use {}
+                RuntimeABIFunctionSpec(
+                    name: "kk_use",
+                    parameters: [
+                        RuntimeABIParameter(name: "resourceRaw", type: .intptr),
+                        RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
             ]
     }()
 }

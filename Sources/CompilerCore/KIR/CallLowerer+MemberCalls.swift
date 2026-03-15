@@ -3321,6 +3321,47 @@ extension CallLowerer {
             }
             return result
 
+        case .scopeUse:
+            // STDLIB-250: use {} — like `let` but routes through kk_use runtime
+            // which wraps the lambda call in try-finally and calls close().
+            // Runtime signature: kk_use(resourceRaw, fnPtr, closureRaw, outThrown) -> R
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
+                // loweredLambdaID is the fnPtr; closureRaw comes from captures
+                let closureRaw: KIRExprID
+                if let firstCapture = info.captureArguments.first {
+                    closureRaw = firstCapture
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    closureRaw = zeroExpr
+                }
+                let thrownResult = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_use"),
+                    arguments: [loweredReceiverID, loweredLambdaID, closureRaw],
+                    result: result,
+                    canThrow: true,
+                    thrownResult: thrownResult
+                ))
+            } else {
+                return nil
+            }
+            return result
+
         case .scopeWith:
             return nil // with is handled in lowerCallExpr
         }
