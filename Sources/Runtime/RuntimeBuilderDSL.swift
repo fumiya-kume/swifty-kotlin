@@ -59,6 +59,45 @@ private final class RuntimeBuilderState: @unchecked Sendable {
         }
     }
 
+    func insertString(_ value: String, at index: Int) {
+        withThreadState { state in
+            guard !state.stringFrames.isEmpty else {
+                return
+            }
+            let frameIndex = state.stringFrames.count - 1
+            let str = state.stringFrames[frameIndex].value
+            let utf8 = str.utf8
+            let clampedIndex = max(0, min(index, utf8.count))
+            let insertionPoint = utf8.index(utf8.startIndex, offsetBy: clampedIndex)
+            state.stringFrames[frameIndex].value.insert(contentsOf: value, at: insertionPoint)
+        }
+    }
+
+    func deleteString(start: Int, end: Int) {
+        withThreadState { state in
+            guard !state.stringFrames.isEmpty else {
+                return
+            }
+            let frameIndex = state.stringFrames.count - 1
+            let str = state.stringFrames[frameIndex].value
+            let utf8 = str.utf8
+            let clampedStart = max(0, min(start, utf8.count))
+            let clampedEnd = max(clampedStart, min(end, utf8.count))
+            let startIdx = utf8.index(utf8.startIndex, offsetBy: clampedStart)
+            let endIdx = utf8.index(utf8.startIndex, offsetBy: clampedEnd)
+            state.stringFrames[frameIndex].value.removeSubrange(startIdx..<endIdx)
+        }
+    }
+
+    func stringLength() -> Int {
+        withThreadState { state in
+            guard !state.stringFrames.isEmpty else {
+                return 0
+            }
+            return state.stringFrames[state.stringFrames.count - 1].value.utf8.count
+        }
+    }
+
     func pushListFrame() -> Bool {
         withThreadState { state in
             guard state.listFrames.count < maxDepth else {
@@ -169,6 +208,46 @@ public func kk_string_builder_append(_ strRaw: Int) -> Int {
     }
     runtimeBuilderState.appendString(string)
     return 0
+}
+
+@_cdecl("kk_string_builder_appendLine")
+public func kk_string_builder_appendLine(_ valueRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: valueRaw),
+          let string = extractString(from: pointer)
+    else {
+        return 0
+    }
+    runtimeBuilderState.appendString(string)
+    runtimeBuilderState.appendString("\n")
+    return 0
+}
+
+@_cdecl("kk_string_builder_appendLine_noarg")
+public func kk_string_builder_appendLine_noarg() -> Int {
+    runtimeBuilderState.appendString("\n")
+    return 0
+}
+
+@_cdecl("kk_string_builder_insert")
+public func kk_string_builder_insert(_ index: Int, _ valueRaw: Int) -> Int {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: valueRaw),
+          let string = extractString(from: pointer)
+    else {
+        return 0
+    }
+    runtimeBuilderState.insertString(string, at: index)
+    return 0
+}
+
+@_cdecl("kk_string_builder_delete")
+public func kk_string_builder_delete(_ start: Int, _ end: Int) -> Int {
+    runtimeBuilderState.deleteString(start: start, end: end)
+    return 0
+}
+
+@_cdecl("kk_string_builder_length")
+public func kk_string_builder_length() -> Int {
+    return runtimeBuilderState.stringLength()
 }
 
 @_cdecl("kk_build_string")
