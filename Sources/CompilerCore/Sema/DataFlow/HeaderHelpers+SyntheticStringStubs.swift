@@ -1102,12 +1102,19 @@ extension DataFlowSemaPhase {
 
         // --- STDLIB-317: String.asSequence / asIterable ---
 
+        let sequenceCharType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: charType
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "asSequence",
             externalLinkName: "kk_string_asSequence",
             receiverType: stringType,
             parameters: [],
-            returnType: types.anyType,
+            returnType: sequenceCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -1118,7 +1125,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_string_asIterable",
             receiverType: stringType,
             parameters: [],
-            returnType: types.anyType,
+            returnType: listCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -1159,6 +1166,27 @@ extension DataFlowSemaPhase {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSequenceType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let sequenceFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("sequences"),
+            interner.intern("Sequence"),
+        ]
+        guard let sequenceSymbol = symbols.lookup(fqName: sequenceFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
             args: [.out(elementType)],
             nullability: .nonNull
         )))
