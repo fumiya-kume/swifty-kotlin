@@ -1275,11 +1275,7 @@ final class CallTypeChecker {
                 if args.count == 1 {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
                 }
-                let sbType: TypeID = if let sbSymbol = sema.symbols.lookup(fqName: [
-                    interner.intern("kotlin"),
-                    interner.intern("text"),
-                    interner.intern("StringBuilder"),
-                ]) {
+                let sbType: TypeID = if let sbSymbol = sema.symbols.lookup(fqName: knownNames.kotlinStringBuilderFQName) {
                     sema.types.make(.classType(ClassType(
                         classSymbol: sbSymbol,
                         args: [],

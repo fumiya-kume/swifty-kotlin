@@ -1753,13 +1753,14 @@ extension CallLowerer {
             }
             // StringBuilder member calls with 1 arg (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let runtimeCallee: String? = if calleeName == interner.intern("append") {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.append {
                     "kk_string_builder_append_obj"
-                } else if calleeName == interner.intern("appendLine") {
+                } else if calleeName == sbNames.appendLine {
                     "kk_string_builder_appendLine_obj"
-                } else if calleeName == interner.intern("deleteCharAt") {
+                } else if calleeName == sbNames.deleteCharAt {
                     "kk_string_builder_deleteCharAt"
-                } else if calleeName == interner.intern("get") {
+                } else if calleeName == sbNames.get {
                     "kk_string_builder_get"
                 } else {
                     nil
@@ -1796,9 +1797,10 @@ extension CallLowerer {
             }
             // StringBuilder 2-arg member calls (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let runtimeCallee: String? = if calleeName == interner.intern("insert") {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.insert {
                     "kk_string_builder_insert_obj"
-                } else if calleeName == interner.intern("delete") {
+                } else if calleeName == sbNames.delete {
                     "kk_string_builder_delete_obj"
                 } else {
                     nil
@@ -1923,15 +1925,16 @@ extension CallLowerer {
             }
             // StringBuilder 0-arg member calls and properties (STDLIB-255/256/257)
             if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
-                let runtimeCallee: String? = if calleeName == interner.intern("toString") {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.toString {
                     "kk_string_builder_toString"
-                } else if calleeName == interner.intern("clear") {
+                } else if calleeName == sbNames.clear {
                     "kk_string_builder_clear"
-                } else if calleeName == interner.intern("reverse") {
+                } else if calleeName == sbNames.reverse {
                     "kk_string_builder_reverse"
-                } else if calleeName == interner.intern("appendLine") {
+                } else if calleeName == sbNames.appendLine {
                     "kk_string_builder_appendLine_noarg_obj"
-                } else if calleeName == interner.intern("length") {
+                } else if calleeName == sbNames.length {
                     "kk_string_builder_length_prop"
                 } else {
                     nil

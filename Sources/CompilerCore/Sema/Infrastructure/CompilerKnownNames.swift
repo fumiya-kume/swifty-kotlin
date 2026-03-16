@@ -125,6 +125,18 @@ struct KnownCompilerNames {
     let launch: InternedString
     let async: InternedString
 
+    // StringBuilder member names
+    let append: InternedString
+    let appendLine: InternedString
+    let deleteCharAt: InternedString
+    let get: InternedString
+    let insert: InternedString
+    let delete: InternedString
+    let toString: InternedString
+    let clear: InternedString
+    let reverse: InternedString
+    let length: InternedString
+
     let kotlinRegexFQName: [InternedString]
     let kotlinStringBuilderFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
@@ -223,6 +235,18 @@ struct KnownCompilerNames {
         runBlocking = interner.intern("runBlocking")
         launch = interner.intern("launch")
         async = interner.intern("async")
+
+        // StringBuilder member names
+        append = interner.intern("append")
+        appendLine = interner.intern("appendLine")
+        deleteCharAt = interner.intern("deleteCharAt")
+        get = interner.intern("get")
+        insert = interner.intern("insert")
+        delete = interner.intern("delete")
+        toString = interner.intern("toString")
+        clear = interner.intern("clear")
+        reverse = interner.intern("reverse")
+        length = interner.intern("length")
 
         let kotlin = interner.intern("kotlin")
         let kotlinText = interner.intern("text")
