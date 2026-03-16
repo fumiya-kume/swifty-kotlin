@@ -244,8 +244,11 @@ public func kk_builder_set_add(_ elem: Int) -> Int {
 @_cdecl("kk_build_set")
 public func kk_build_set(_ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard fnPtr != 0, runtimeBuilderState.pushSetFrame() else {
-        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    guard fnPtr != 0 else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_set called with null function pointer")
+    }
+    guard runtimeBuilderState.pushSetFrame() else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_build_set nesting depth exceeded (max 16)")
     }
 
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (UnsafeMutablePointer<Int>?) -> Int).self)
