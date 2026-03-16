@@ -131,6 +131,14 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - Synchronized (STDLIB-325)
+
+    public static let kk_synchronized = ExternDecl(
+        name: "kk_synchronized",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t* _Nullable"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_throwable_message = ExternDecl(
         name: "kk_throwable_message",
         parameterTypes: ["intptr_t"],
@@ -1634,6 +1642,7 @@ public enum RuntimeABIExterns {
             kk_require,
             kk_check,
             kk_require_lazy,
+            kk_synchronized,
             kk_check_lazy,
             kk_error,
             kk_todo,

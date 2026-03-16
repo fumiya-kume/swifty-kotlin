@@ -169,6 +169,20 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- kotlin.synchronized (STDLIB-325) ---
+        registerSyntheticTopLevelFunction(
+            named: "synchronized",
+            packageFQName: kotlinPkg,
+            parameters: [
+                (name: "lock", type: types.anyType),
+                (name: "block", type: types.anyType),
+            ],
+            returnType: types.anyType,
+            externalLinkName: "kk_synchronized",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureSyntheticObjectSymbol(
