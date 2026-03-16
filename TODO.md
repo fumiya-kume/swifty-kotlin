@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-16
+最終更新: 2026-03-17
 
 ## 運用ルール
 
@@ -44,25 +44,29 @@
 
 - [ ] STDLIB-320: `java.io.File` 基本操作（`readText` / `writeText` / `readLines`）を実装する
   - [ ] Sema に `File(String)` コンストラクタと `readText(): String` / `writeText(String)` / `readLines(): List<String>` stub を登録する
-  - [ ] Runtime に `kk_file_readText` / `kk_file_writeText` / `kk_file_readLines` を追加する
+  - [x] Runtime に `kk_file_readText` / `kk_file_writeText` / `kk_file_readLines` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
+  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp/test.txt").writeText("hello"); File("/tmp/test.txt").readText()` → `"hello"` が動作する
 
 - [ ] STDLIB-321: `File.exists()` / `File.isFile` / `File.isDirectory` / `File.name` / `File.path` を実装する
   - [ ] Sema に各プロパティ / メソッド stub を登録する
-  - [ ] Runtime に `kk_file_exists` / `kk_file_isFile` 等を追加する
+  - [x] Runtime に `kk_file_exists` / `kk_file_isFile` / `kk_file_isDirectory` / `kk_file_name` / `kk_file_path` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
+  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp").isDirectory` → `true` が動作する
 
 - [ ] STDLIB-322: `File.forEachLine {}` / `File.useLines {}` / `File.bufferedReader()` を実装する
   - [ ] Sema に各 member stub を登録する
-  - [ ] Runtime に対応ヘルパーを追加する
+  - [ ] Runtime に `kk_file_useLines` / `kk_file_bufferedReader` を追加する（`kk_file_forEachLine` は PR #333 で実装済み）
+  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("test.txt").forEachLine { println(it) }` が各行を出力する
 
 - [ ] STDLIB-323: `File.walk()` / `File.listFiles()` / `File.delete()` / `File.mkdirs()` を実装する
   - [ ] Sema に各 member stub を登録する
-  - [ ] Runtime に `kk_file_walk` / `kk_file_listFiles` / `kk_file_delete` / `kk_file_mkdirs` を追加する
+  - [x] Runtime に `kk_file_walk` / `kk_file_listFiles` / `kk_file_delete` / `kk_file_mkdirs` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
+  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp/test").mkdirs()` でディレクトリが作成される
 
@@ -71,9 +75,12 @@
 ### 📦 Stdlib — sequence / iterator ビルダー（stdlib 版）
 
 - [ ] STDLIB-330: `sequence {}` ビルダー（`kotlin.sequences.sequence`）を実装する
-  - [ ] Sema に `sequence(block: suspend SequenceScope<T>.() -> Unit): Sequence<T>` stub を登録する
-  - [ ] `SequenceScope.yield(value)` / `yieldAll(iterable)` を解決可能にする
-  - [ ] Runtime で continuation ベースの lazy sequence 生成を実装する
+  - [ ] Sema に `sequence(block: suspend SequenceScope<T>.() -> Unit): Sequence<T>` stub を登録する（`SequenceScope` 未登録）
+  - [ ] `SequenceScope.yield(value)` / `yieldAll(iterable)` を解決可能にする（`yieldAll` 未実装）
+  - [x] Runtime に `kk_sequence_builder_create` / `kk_sequence_builder_yield` / `kk_sequence_builder_build` を追加する（`Sources/Runtime/RuntimeSequence.swift`）
+  - [x] Lowering で `sequence {}` → `kk_sequence_builder_build`、`yield()` → `kk_sequence_builder_yield` に変換する（`CollectionLiteralLoweringPass+CallRewrite.swift`）
+  - [x] Codegen に `kk_sequence_builder_*` extern 宣言を追加する（`RuntimeABIExterns+Sequence.swift`）
+  - [ ] continuation ベースの lazy sequence 生成に切り替える（現在は eager builder）
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `sequence { yield(1); yield(2); yield(3) }.toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
@@ -100,8 +107,9 @@
   - **完了条件**: `listOf(1).mapIndexed { _, x -> "$x" }` の型が `List<String>` になり、`associateBy` / `flatMap` / `groupBy` でも `kotlinc` と同等の型推論結果になる
 
 - [ ] TYPE-102: synthetic collection stub の暫定 `Any` 戻り型を実型ベースに置き換える
-  - [ ] `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift` の `partition` / `mapIndexed` など、コメントで「use Any for now」としている箇所を一覧化する
+  - [ ] `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift` の `partition` など、コメントで「use Any for now」としている箇所を対応する（`mapIndexed` stub は `List<R>` で定義済み）
   - [ ] synthetic stub 側で関数型 type parameter `R`、`Pair<List<T>, List<T>>`、`Map<K, V>` を表現するための builder を追加する
+  - [ ] `mapIndexed` の stub 定義（`List<R>`）を推論コード（`CallTypeChecker+MemberCallInference.swift`）が利用するよう連携する（現在は stub を無視して `List<Any>` を返している）
   - [ ] fallback 推論に依存せず、stub 定義だけで Kotlin 標準ライブラリ署名を再現できるようにする
   - [ ] `lookupByShortName(...).first!` に依存する箇所を、診断可能な lookup helper に寄せる
   - [ ] 対応した stub の golden 署名を更新し、既存ケースとの差分を固定する
