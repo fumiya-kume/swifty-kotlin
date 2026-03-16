@@ -2,6 +2,13 @@ import Foundation
 
 /// Typed representation of a KSwiftK library manifest.json.
 /// Replaces untyped `[String: Any]` dictionary access with compile-time safe fields.
+///
+/// Uses a custom `init(from:)` that wraps each field in `try?` so that a type
+/// mismatch in one field (e.g. `"compilerVersion": 123` instead of a string)
+/// results in `nil` for that field rather than rejecting the entire manifest.
+/// This preserves the per-field-lenient behavior of the old `JSONSerialization`
+/// approach, letting `validateManifestSchema` handle each case with appropriate
+/// diagnostics.
 struct LibraryManifest: Decodable {
     let formatVersion: Int?
     let moduleName: String?
@@ -11,6 +18,23 @@ struct LibraryManifest: Decodable {
     let metadata: String?
     let inlineKIRDir: String?
     let objects: [String]?
+
+    private enum CodingKeys: String, CodingKey {
+        case formatVersion, moduleName, kotlinLanguageVersion, target
+        case compilerVersion, metadata, inlineKIRDir, objects
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        formatVersion = try? container.decodeIfPresent(Int.self, forKey: .formatVersion)
+        moduleName = try? container.decodeIfPresent(String.self, forKey: .moduleName)
+        kotlinLanguageVersion = try? container.decodeIfPresent(String.self, forKey: .kotlinLanguageVersion)
+        target = try? container.decodeIfPresent(String.self, forKey: .target)
+        compilerVersion = try? container.decodeIfPresent(String.self, forKey: .compilerVersion)
+        metadata = try? container.decodeIfPresent(String.self, forKey: .metadata)
+        inlineKIRDir = try? container.decodeIfPresent(String.self, forKey: .inlineKIRDir)
+        objects = try? container.decodeIfPresent([String].self, forKey: .objects)
+    }
 }
 
 extension DataFlowSemaPhase {
