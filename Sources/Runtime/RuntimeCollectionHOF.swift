@@ -26,6 +26,12 @@ private func handleCollectionLambdaThrow(_ thrown: Int, _ outThrown: UnsafeMutab
     }
 }
 
+/// Panics when a collection HOF receives an invalid container handle.
+/// Replaces silent fallbacks (return empty list/map/0/false) that mask runtime corruption.
+private func invalidContainerPanic(_ caller: StaticString, _ kind: StaticString) -> Never {
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid \(kind) handle")
+}
+
 // MARK: - List getOrElse (STDLIB-212)
 
 @_cdecl("kk_list_getOrElse")
@@ -45,7 +51,7 @@ public func kk_list_getOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ clos
 @_cdecl("kk_list_map")
 public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var mapped: [Int] = []
     mapped.reserveCapacity(list.elements.count)
@@ -61,7 +67,7 @@ public func kk_list_map(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
 @_cdecl("kk_list_filter")
 public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var filtered: [Int] = []
     for elem in list.elements {
@@ -76,7 +82,7 @@ public func kk_list_filter(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
 @_cdecl("kk_list_mapNotNull")
 public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var mapped: [Int] = []
     for elem in list.elements {
@@ -94,7 +100,7 @@ public func kk_list_mapNotNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
 @_cdecl("kk_list_filterNotNull")
 public func kk_list_filterNotNull(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     let filtered = list.elements.filter { maybeUnbox($0) != runtimeNullSentinelInt }
     return registerRuntimeObject(RuntimeListBox(elements: filtered))
@@ -102,7 +108,7 @@ public func kk_list_filterNotNull(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_forEach")
 public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for elem in list.elements {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
@@ -113,7 +119,7 @@ public func kk_list_forEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
 
 @_cdecl("kk_map_forEach")
 public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
@@ -124,7 +130,7 @@ public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_map_map")
 public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     var mapped: [Int] = []
     mapped.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
@@ -138,7 +144,7 @@ public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
 
 @_cdecl("kk_map_filter")
 public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     var filteredKeys: [Int] = []
     var filteredValues: [Int] = []
     filteredKeys.reserveCapacity(min(map.keys.count, map.values.count))
@@ -157,7 +163,7 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 
 @_cdecl("kk_map_count")
 public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var count = 0
     for (key, value) in zip(map.keys, map.values) {
@@ -171,7 +177,7 @@ public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
 
 @_cdecl("kk_map_any")
 public func kk_map_any(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return 0 }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
@@ -184,7 +190,7 @@ public func kk_map_any(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
 
 @_cdecl("kk_map_all")
 public func kk_map_all(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return 1 }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
@@ -197,7 +203,7 @@ public func kk_map_all(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
 
 @_cdecl("kk_map_none")
 public func kk_map_none(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return 1 }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
@@ -253,7 +259,7 @@ public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ c
 
 @_cdecl("kk_map_mapValues")
 public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     var mappedValues: [Int] = []
     mappedValues.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
@@ -268,7 +274,7 @@ public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
 
 @_cdecl("kk_map_mapKeys")
 public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeMapBox(keys: [], values: [])) }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     var mappedKeys: [Int] = []
     mappedKeys.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
@@ -283,7 +289,7 @@ public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_map_toList")
 public func kk_map_toList(_ mapRaw: Int) -> Int {
-    guard let map = runtimeMapBox(from: mapRaw) else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     var pairs: [Int] = []
     pairs.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
@@ -295,7 +301,7 @@ public func kk_map_toList(_ mapRaw: Int) -> Int {
 @_cdecl("kk_map_flatMap")
 public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "map")
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var result: [Int] = []
@@ -313,7 +319,7 @@ public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 @_cdecl("kk_map_maxByOrNull")
 public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return runtimeNullSentinelInt
+        invalidContainerPanic(#function, "map")
     }
     let pairCount = min(map.keys.count, map.values.count)
     guard pairCount > 0 else {
@@ -343,7 +349,7 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 @_cdecl("kk_map_minByOrNull")
 public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {
-        return runtimeNullSentinelInt
+        invalidContainerPanic(#function, "map")
     }
     let pairCount = min(map.keys.count, map.values.count)
     guard pairCount > 0 else {
@@ -373,7 +379,7 @@ public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 @_cdecl("kk_list_flatMap")
 public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var result: [Int] = []
     for elem in list.elements {
@@ -389,7 +395,7 @@ public func kk_list_flatMap(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
 
 @_cdecl("kk_list_any")
 public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     if fnPtr == 0 {
         return list.elements.isEmpty ? 0 : 1
     }
@@ -404,7 +410,7 @@ public func kk_list_any(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
 
 @_cdecl("kk_list_none")
 public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     if fnPtr == 0 {
         return list.elements.isEmpty ? 1 : 0
     }
@@ -419,7 +425,7 @@ public func kk_list_none(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 
 @_cdecl("kk_list_all")
 public func kk_list_all(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for elem in list.elements {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
@@ -434,7 +440,7 @@ public func kk_list_fold(
     _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return initial }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var acc = initial
     for elem in list.elements {
         var thrown = 0
@@ -461,7 +467,7 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
 @_cdecl("kk_list_groupBy")
 public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "list")
     }
     var groupKeys: [Int] = []
     var groupElements: [[Int]] = []
@@ -487,7 +493,7 @@ public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
 @_cdecl("kk_list_sortedBy")
 public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var indexed: [(offset: Int, element: Int, key: Int)] = []
@@ -510,7 +516,7 @@ public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
 
 @_cdecl("kk_list_count")
 public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     if fnPtr == 0 {
         return list.elements.count
     }
@@ -568,7 +574,7 @@ public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 
 @_cdecl("kk_list_find")
 public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return runtimeNullSentinelInt }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     if fnPtr == 0 {
         return list.elements.first ?? runtimeNullSentinelInt
     }
@@ -584,7 +590,7 @@ public func kk_list_find(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 @_cdecl("kk_list_associateBy")
 public func kk_list_associateBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "list")
     }
     var keys: [Int] = []
     var values: [Int] = []
@@ -602,7 +608,7 @@ public func kk_list_associateBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 @_cdecl("kk_list_associateWith")
 public func kk_list_associateWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "list")
     }
     var keys: [Int] = []
     var values: [Int] = []
@@ -620,7 +626,7 @@ public func kk_list_associateWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
 @_cdecl("kk_list_associate")
 public func kk_list_associate(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "list")
     }
     var keys: [Int] = []
     var values: [Int] = []
@@ -637,8 +643,10 @@ public func kk_list_associate(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 
 @_cdecl("kk_list_zip")
 public func kk_list_zip(_ listRaw: Int, _ otherRaw: Int) -> Int {
-    let lhs = runtimeListBox(from: listRaw)?.elements ?? []
-    let rhs = runtimeListBox(from: otherRaw)?.elements ?? []
+    guard let lhsBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard let rhsBox = runtimeListBox(from: otherRaw) else { invalidContainerPanic(#function, "list") }
+    let lhs = lhsBox.elements
+    let rhs = rhsBox.elements
     let count = min(lhs.count, rhs.count)
     var pairs: [Int] = []
     pairs.reserveCapacity(count)
@@ -650,7 +658,8 @@ public func kk_list_zip(_ listRaw: Int, _ otherRaw: Int) -> Int {
 
 @_cdecl("kk_list_unzip")
 public func kk_list_unzip(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     var firstValues: [Int] = []
     var secondValues: [Int] = []
     firstValues.reserveCapacity(elements.count)
@@ -672,7 +681,7 @@ public func kk_list_withIndex(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_forEachIndexed")
 public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for (idx, elem) in list.elements.enumerated() {
         var thrown = 0
         // Pass index as raw Int (Kotlin primitive); elem stays boxed per ABI.
@@ -685,7 +694,7 @@ public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
 @_cdecl("kk_list_mapIndexed")
 public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var mapped: [Int] = []
     mapped.reserveCapacity(list.elements.count)
@@ -701,7 +710,7 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
 
 @_cdecl("kk_list_sumOf")
 public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var total = 0
     for elem in list.elements {
         var thrown = 0
@@ -822,27 +831,31 @@ public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 
 @_cdecl("kk_list_take")
 public func kk_list_take(_ listRaw: Int, _ count: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let clamped = max(0, min(count, elements.count))
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.prefix(clamped))))
 }
 
 @_cdecl("kk_list_drop")
 public func kk_list_drop(_ listRaw: Int, _ count: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let clamped = max(0, min(count, elements.count))
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.dropFirst(clamped))))
 }
 
 @_cdecl("kk_list_reversed")
 public func kk_list_reversed(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.reversed())))
 }
 
 @_cdecl("kk_list_sorted")
 public func kk_list_sorted(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let sorted = elements.enumerated().sorted { lhs, rhs in
         let comparison = runtimeCompareValues(lhs.element, rhs.element)
         if comparison != 0 {
@@ -855,13 +868,15 @@ public func kk_list_sorted(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_distinct")
 public func kk_list_distinct(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     return registerRuntimeObject(RuntimeListBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
 @_cdecl("kk_list_shuffled")
 public func kk_list_shuffled(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let shuffled = elements.shuffled()
     return registerRuntimeObject(RuntimeListBox(elements: shuffled))
 }
@@ -885,7 +900,8 @@ public func kk_list_randomOrNull(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_flatten")
 public func kk_list_flatten(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     var result: [Int] = []
     for subListRaw in elements {
         if let subList = runtimeListBox(from: subListRaw) {
@@ -897,7 +913,8 @@ public func kk_list_flatten(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_chunked")
 public func kk_list_chunked(_ listRaw: Int, _ size: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let clampedSize = max(1, size)
     var chunks: [Int] = []
     var i = 0
@@ -912,7 +929,8 @@ public func kk_list_chunked(_ listRaw: Int, _ size: Int) -> Int {
 
 @_cdecl("kk_list_windowed")
 public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let clampedSize = max(1, size)
     let clampedStep = max(1, step)
     var windows: [Int] = []
@@ -927,7 +945,7 @@ public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
 
 @_cdecl("kk_list_indexOf")
 public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
         return index
     }
@@ -936,7 +954,7 @@ public func kk_list_indexOf(_ listRaw: Int, _ element: Int) -> Int {
 
 @_cdecl("kk_list_lastIndexOf")
 public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var lastIdx = -1
     for (index, elem) in list.elements.enumerated() where runtimeCompareValues(elem, element) == 0 {
         lastIdx = index
@@ -946,7 +964,7 @@ public func kk_list_lastIndexOf(_ listRaw: Int, _ element: Int) -> Int {
 
 @_cdecl("kk_list_indexOfFirst")
 public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     for (index, elem) in list.elements.enumerated() {
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
@@ -958,7 +976,7 @@ public func kk_list_indexOfFirst(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
 
 @_cdecl("kk_list_indexOfLast")
 public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return -1 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     var lastIdx = -1
     for (index, elem) in list.elements.enumerated() {
         var thrown = 0
@@ -973,7 +991,8 @@ public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
 
 @_cdecl("kk_list_filterIsInstance")
 public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     var result: [Int] = []
     for elem in elements where kk_op_is(elem, typeToken) != 0 {
         result.append(elem)
@@ -985,7 +1004,8 @@ public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
 
 @_cdecl("kk_list_sortedDescending")
 public func kk_list_sortedDescending(_ listRaw: Int) -> Int {
-    let elements = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
     let sorted = elements.enumerated().sorted { lhs, rhs in
         let comparison = runtimeCompareValues(lhs.element, rhs.element)
         if comparison != 0 {
@@ -999,7 +1019,7 @@ public func kk_list_sortedDescending(_ listRaw: Int) -> Int {
 @_cdecl("kk_list_sortedByDescending")
 public func kk_list_sortedByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var keys: [Int] = []
     keys.reserveCapacity(list.elements.count)
@@ -1021,7 +1041,7 @@ public func kk_list_sortedByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRa
 @_cdecl("kk_list_sortedWith")
 public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "list")
     }
     var hadThrow = false
     let sorted = list.elements.enumerated().sorted { lhs, rhs in
@@ -1040,7 +1060,7 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
 
 @_cdecl("kk_list_onEach")
 public func kk_list_onEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in list.elements {
         var thrown = 0
@@ -1052,7 +1072,7 @@ public func kk_list_onEach(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
 
 @_cdecl("kk_list_onEachIndexed")
 public func kk_list_onEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return listRaw }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (idx, elem) in list.elements.enumerated() {
         var thrown = 0
@@ -1067,8 +1087,7 @@ public func kk_list_onEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
 @_cdecl("kk_list_partition")
 public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        let emptyList = registerRuntimeObject(RuntimeListBox(elements: []))
-        return kk_pair_new(emptyList, emptyList)
+        invalidContainerPanic(#function, "list")
     }
     var matching: [Int] = []
     var nonMatching: [Int] = []
@@ -1093,7 +1112,7 @@ public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 
 @_cdecl("kk_mutable_list_sort")
 public func kk_mutable_list_sort(_ listRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let indexed = list.elements.enumerated().sorted { lhs, rhs in
         let comparison = runtimeCompareValues(lhs.element, rhs.element)
         if comparison != 0 { return comparison < 0 }
@@ -1107,7 +1126,7 @@ public func kk_mutable_list_sort(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_mutable_list_sortBy")
 public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var keys: [Int] = []
     keys.reserveCapacity(list.elements.count)
@@ -1129,7 +1148,7 @@ public func kk_mutable_list_sortBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: I
 
 @_cdecl("kk_mutable_list_sortByDescending")
 public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw) else { return 0 }
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var keys: [Int] = []
     keys.reserveCapacity(list.elements.count)
@@ -1154,7 +1173,7 @@ public func kk_mutable_list_sortByDescending(_ listRaw: Int, _ fnPtr: Int, _ clo
 @_cdecl("kk_set_map")
 public func kk_set_map(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "set")
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var mapped: [Int] = []
@@ -1171,7 +1190,7 @@ public func kk_set_map(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
 @_cdecl("kk_set_filter")
 public func kk_set_filter(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "set")
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filtered: [Int] = []
@@ -1186,7 +1205,7 @@ public func kk_set_filter(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 
 @_cdecl("kk_set_forEach")
 public func kk_set_forEach(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let set = runtimeSetBox(from: setRaw) else { return 0 }
+    guard let set = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for elem in set.elements {
         var thrown = 0
@@ -1201,7 +1220,7 @@ public func kk_set_forEach(_ setRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 @_cdecl("kk_array_map")
 public func kk_array_map(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "array")
     }
     var mapped: [Int] = []
     mapped.reserveCapacity(array.elements.count)
@@ -1217,7 +1236,7 @@ public func kk_array_map(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 @_cdecl("kk_array_filter")
 public func kk_array_filter(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        invalidContainerPanic(#function, "array")
     }
     var filtered: [Int] = []
     for elem in array.elements {
@@ -1231,7 +1250,7 @@ public func kk_array_filter(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ 
 
 @_cdecl("kk_array_forEach")
 public func kk_array_forEach(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else { return 0 }
+    guard let array = runtimeArrayBox(from: arrayRaw) else { invalidContainerPanic(#function, "array") }
     for elem in array.elements {
         var thrown = 0
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
@@ -1242,7 +1261,7 @@ public func kk_array_forEach(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
 
 @_cdecl("kk_array_any")
 public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(0) }
+    guard let array = runtimeArrayBox(from: arrayRaw) else { invalidContainerPanic(#function, "array") }
     // Zero-arg overload: any() returns true if array is non-empty
     if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 0 : 1) }
     for elem in array.elements {
@@ -1256,7 +1275,7 @@ public func kk_array_any(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_array_none")
 public func kk_array_none(_ arrayRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else { return kk_box_bool(1) }
+    guard let array = runtimeArrayBox(from: arrayRaw) else { invalidContainerPanic(#function, "array") }
     // Zero-arg overload: none() returns true if array is empty
     if fnPtr == 0 { return kk_box_bool(array.elements.isEmpty ? 1 : 0) }
     for elem in array.elements {
