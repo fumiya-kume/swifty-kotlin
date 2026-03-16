@@ -65,10 +65,13 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        // Range/progression types (Int) are iterable over Int elements,
+        // Range/progression types (Int/Long) are iterable over their element type,
         // but only when the expression is actually a range operator.
         if isRangeExpr, iterableType == sema.types.intType {
             return sema.types.intType
+        }
+        if isRangeExpr, iterableType == sema.types.longType {
+            return sema.types.longType
         }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)
     }
