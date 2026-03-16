@@ -1672,6 +1672,8 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_chunked"
                 } else if calleeName == interner.intern("onEach") {
                     runtimeCallee = "kk_sequence_onEach"
+                } else if calleeName == interner.intern("ifEmpty") {
+                    runtimeCallee = "kk_sequence_ifEmpty"
                 } else {
                     runtimeCallee = nil
                 }
@@ -1683,6 +1685,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
                         || runtimeCallee == "kk_sequence_onEach"
+                        || runtimeCallee == "kk_sequence_ifEmpty"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
@@ -1985,6 +1988,7 @@ extension CallLowerer {
             "replaceFirstChar",
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
+            "ifEmpty",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -2580,6 +2584,7 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_map_getValue")
             || loweredCallee == interner.intern("kk_sequence_mapNotNull")
             || loweredCallee == interner.intern("kk_sequence_mapIndexed")
+            || loweredCallee == interner.intern("kk_sequence_ifEmpty")
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2951,6 +2956,8 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_windowed")
             case interner.intern("onEach"):
                 return interner.intern("kk_sequence_onEach")
+            case interner.intern("ifEmpty"):
+                return interner.intern("kk_sequence_ifEmpty")
             default:
                 break
             }

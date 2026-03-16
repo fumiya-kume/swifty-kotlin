@@ -107,6 +107,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-277: emptySequence<T>()
+        registerSyntheticTopLevelFunction(
+            named: "emptySequence",
+            packageFQName: kotlinSequencesPkg,
+            parameters: [],
+            returnType: types.anyType,
+            externalLinkName: "kk_empty_sequence",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticTopLevelFunction(
             named: "generateSequence",
             packageFQName: kotlinSequencesPkg,
