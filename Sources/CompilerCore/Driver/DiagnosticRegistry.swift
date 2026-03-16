@@ -607,6 +607,12 @@ public enum DiagnosticRegistry {
             defaultSeverity: .warning,
             summary: "KIR generation encountered unsupported construct."
         ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-KIR-0002",
+            pass: "KIR",
+            defaultSeverity: .error,
+            summary: "emitCustomDelegateInit called for a property without a delegate expression."
+        ),
     ]
 
     // MARK: - Coroutine lowering pass (CORO)
