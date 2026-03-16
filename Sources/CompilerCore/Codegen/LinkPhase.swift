@@ -201,8 +201,8 @@ public final class LinkPhase: CompilerPhase {
         let fileManager = FileManager.default
         let manifestPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("manifest.json").path
         if let data = try? Data(contentsOf: URL(fileURLWithPath: manifestPath)),
-           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let manifestObjects = object["objects"] as? [String]
+           let manifest = try? JSONDecoder().decode(LibraryManifest.self, from: data),
+           let manifestObjects = manifest.objects
         {
             let libraryDirNormalized = URL(fileURLWithPath: libraryDir).standardized.path
             let mapped = manifestObjects

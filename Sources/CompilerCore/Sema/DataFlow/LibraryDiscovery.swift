@@ -1,5 +1,42 @@
 import Foundation
 
+/// Typed representation of a KSwiftK library manifest.json.
+/// Replaces untyped `[String: Any]` dictionary access with compile-time safe fields.
+///
+/// Uses a custom `init(from:)` that wraps each field in `try?` so that a type
+/// mismatch in one field (e.g. `"compilerVersion": 123` instead of a string)
+/// results in `nil` for that field rather than rejecting the entire manifest.
+/// This preserves the per-field-lenient behavior of the old `JSONSerialization`
+/// approach, letting `validateManifestSchema` handle each case with appropriate
+/// diagnostics.
+struct LibraryManifest: Decodable {
+    let formatVersion: Int?
+    let moduleName: String?
+    let kotlinLanguageVersion: String?
+    let target: String?
+    let compilerVersion: String?
+    let metadata: String?
+    let inlineKIRDir: String?
+    let objects: [String]?
+
+    private enum CodingKeys: String, CodingKey {
+        case formatVersion, moduleName, kotlinLanguageVersion, target
+        case compilerVersion, metadata, inlineKIRDir, objects
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        formatVersion = try? container.decodeIfPresent(Int.self, forKey: .formatVersion)
+        moduleName = try? container.decodeIfPresent(String.self, forKey: .moduleName)
+        kotlinLanguageVersion = try? container.decodeIfPresent(String.self, forKey: .kotlinLanguageVersion)
+        target = try? container.decodeIfPresent(String.self, forKey: .target)
+        compilerVersion = try? container.decodeIfPresent(String.self, forKey: .compilerVersion)
+        metadata = try? container.decodeIfPresent(String.self, forKey: .metadata)
+        inlineKIRDir = try? container.decodeIfPresent(String.self, forKey: .inlineKIRDir)
+        objects = try? container.decodeIfPresent([String].self, forKey: .objects)
+    }
+}
+
 extension DataFlowSemaPhase {
     func discoverLibraryDirectories(searchPaths: [String]) -> [String] {
         let fm = FileManager.default
@@ -45,10 +82,13 @@ extension DataFlowSemaPhase {
             )
         }
 
-        guard let object = try? JSONSerialization.jsonObject(with: manifestData) as? [String: Any] else {
+        let manifest: LibraryManifest
+        do {
+            manifest = try JSONDecoder().decode(LibraryManifest.self, from: manifestData)
+        } catch {
             diagnostics.error(
                 "KSWIFTK-LIB-0015",
-                "Invalid JSON in \(libName)/manifest.json; library cannot be loaded",
+                "Invalid JSON in \(libName)/manifest.json: \(error.localizedDescription)",
                 range: nil
             )
             return LibraryManifestInfo(
@@ -61,14 +101,14 @@ extension DataFlowSemaPhase {
         var isValid = true
 
         isValid = validateManifestSchema(
-            object: object,
+            manifest: manifest,
             libraryDir: libraryDir,
             currentTarget: currentTarget,
             diagnostics: diagnostics
         ) && isValid
 
         let metadataPath: String
-        if let metadataRelativePath = object["metadata"] as? String, !metadataRelativePath.isEmpty {
+        if let metadataRelativePath = manifest.metadata, !metadataRelativePath.isEmpty {
             metadataPath = URL(fileURLWithPath: libraryDir).appendingPathComponent(metadataRelativePath).path
         } else {
             diagnostics.warning(
@@ -78,14 +118,14 @@ extension DataFlowSemaPhase {
             )
             metadataPath = URL(fileURLWithPath: libraryDir).appendingPathComponent("metadata.bin").path
         }
-        let inlineKIRDir: String? = if let inlineRelativePath = object["inlineKIRDir"] as? String, !inlineRelativePath.isEmpty {
+        let inlineKIRDir: String? = if let inlineRelativePath = manifest.inlineKIRDir, !inlineRelativePath.isEmpty {
             URL(fileURLWithPath: libraryDir).appendingPathComponent(inlineRelativePath).path
         } else {
             nil
         }
 
         isValid = validateManifestPaths(
-            object: object,
+            manifest: manifest,
             libraryDir: libraryDir,
             metadataPath: metadataPath,
             inlineKIRDir: inlineKIRDir,
@@ -96,7 +136,7 @@ extension DataFlowSemaPhase {
     }
 
     private func validateManifestSchema(
-        object: [String: Any],
+        manifest: LibraryManifest,
         libraryDir: String,
         currentTarget: TargetTriple,
         diagnostics: DiagnosticEngine
@@ -105,7 +145,7 @@ extension DataFlowSemaPhase {
         var isValid = true
 
         // formatVersion: required, must be Int == 1
-        if let formatVersion = object["formatVersion"] as? Int {
+        if let formatVersion = manifest.formatVersion {
             if formatVersion != 1 {
                 diagnostics.error(
                     "KSWIFTK-LIB-0010",
@@ -124,7 +164,7 @@ extension DataFlowSemaPhase {
         }
 
         // moduleName: required, must be non-empty String
-        if let moduleName = object["moduleName"] as? String {
+        if let moduleName = manifest.moduleName {
             if moduleName.isEmpty {
                 diagnostics.error(
                     "KSWIFTK-LIB-0011",
@@ -144,7 +184,7 @@ extension DataFlowSemaPhase {
 
         // kotlinLanguageVersion: optional but validated when present
         let supportedLanguageVersions: Set = ["2.3.10"]
-        if let langVersion = object["kotlinLanguageVersion"] as? String {
+        if let langVersion = manifest.kotlinLanguageVersion {
             if !supportedLanguageVersions.contains(langVersion) {
                 diagnostics.error(
                     "KSWIFTK-LIB-0012",
@@ -162,7 +202,7 @@ extension DataFlowSemaPhase {
         }
 
         // target: optional but validated for compatibility when present
-        if let targetString = object["target"] as? String, !targetString.isEmpty {
+        if let targetString = manifest.target, !targetString.isEmpty {
             let currentTargetString = "\(currentTarget.arch)-\(currentTarget.vendor)-\(currentTarget.os)"
             if targetString != currentTargetString {
                 diagnostics.error(
@@ -180,19 +220,11 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // compilerVersion: informational, warn if invalid type
-        if let compilerVersion = object["compilerVersion"] as? String {
-            if compilerVersion.isEmpty {
-                diagnostics.warning(
-                    "KSWIFTK-LIB-0017",
-                    "Empty 'compilerVersion' in \(libName)/manifest.json",
-                    range: nil
-                )
-            }
-        } else if object["compilerVersion"] != nil {
+        // compilerVersion: informational, warn if empty
+        if let compilerVersion = manifest.compilerVersion, compilerVersion.isEmpty {
             diagnostics.warning(
                 "KSWIFTK-LIB-0017",
-                "Invalid 'compilerVersion' type in \(libName)/manifest.json (expected string)",
+                "Empty 'compilerVersion' in \(libName)/manifest.json",
                 range: nil
             )
         }
@@ -201,7 +233,7 @@ extension DataFlowSemaPhase {
     }
 
     private func validateManifestPaths(
-        object: [String: Any],
+        manifest: LibraryManifest,
         libraryDir: String,
         metadataPath: String,
         inlineKIRDir: String?,
@@ -230,34 +262,25 @@ extension DataFlowSemaPhase {
             isValid = false
         }
 
-        // Validate objects array type and paths
-        if let objectsValue = object["objects"] {
-            if let objectPaths = objectsValue as? [String] {
-                for relativePath in objectPaths {
-                    let fullPath = URL(fileURLWithPath: libraryDir).appendingPathComponent(relativePath).path
-                    let resolvedObjPath = URL(fileURLWithPath: fullPath).standardized.path
-                    if !resolvedObjPath.hasPrefix(libraryDirResolved + "/"), resolvedObjPath != libraryDirResolved {
-                        diagnostics.error(
-                            "KSWIFTK-LIB-0018",
-                            "Object path '\(relativePath)' escapes library directory \(libName)",
-                            range: nil
-                        )
-                        isValid = false
-                    } else if !fm.fileExists(atPath: fullPath) {
-                        diagnostics.warning(
-                            "KSWIFTK-LIB-0014",
-                            "Object file not found at '\(relativePath)' referenced by \(libName)/manifest.json",
-                            range: nil
-                        )
-                    }
+        // Validate objects array paths
+        if let objectPaths = manifest.objects {
+            for relativePath in objectPaths {
+                let fullPath = URL(fileURLWithPath: libraryDir).appendingPathComponent(relativePath).path
+                let resolvedObjPath = URL(fileURLWithPath: fullPath).standardized.path
+                if !resolvedObjPath.hasPrefix(libraryDirResolved + "/"), resolvedObjPath != libraryDirResolved {
+                    diagnostics.error(
+                        "KSWIFTK-LIB-0018",
+                        "Object path '\(relativePath)' escapes library directory \(libName)",
+                        range: nil
+                    )
+                    isValid = false
+                } else if !fm.fileExists(atPath: fullPath) {
+                    diagnostics.warning(
+                        "KSWIFTK-LIB-0014",
+                        "Object file not found at '\(relativePath)' referenced by \(libName)/manifest.json",
+                        range: nil
+                    )
                 }
-            } else {
-                diagnostics.error(
-                    "KSWIFTK-LIB-0014",
-                    "Invalid 'objects' field type in \(libName)/manifest.json (expected array of strings)",
-                    range: nil
-                )
-                isValid = false
             }
         }
 
