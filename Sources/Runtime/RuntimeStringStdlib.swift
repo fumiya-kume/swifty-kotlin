@@ -3,7 +3,7 @@ import Foundation
 private let runtimeDefaultTrimMarginPrefixRaw = runtimeMakeStringRaw("|")
 
 private func runtimeStringScalars(_ raw: Int) -> [UnicodeScalar] {
-    Array((runtimeStringFromRaw(raw) ?? "").unicodeScalars)
+    Array(runtimeStringFromRawOrPanic(raw, caller: #function).unicodeScalars)
 }
 
 private func runtimeStringFromScalars(_ scalars: some Sequence<UnicodeScalar>) -> String {
@@ -14,27 +14,27 @@ private func runtimeStringFromScalars(_ scalars: some Sequence<UnicodeScalar>) -
 
 @_cdecl("kk_string_trim")
 public func kk_string_trim(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
     return runtimeMakeStringRaw(trimmed)
 }
 
 @_cdecl("kk_string_lowercase")
 public func kk_string_lowercase(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(source.lowercased())
 }
 
 @_cdecl("kk_string_uppercase")
 public func kk_string_uppercase(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(source.uppercased())
 }
 
 @_cdecl("kk_string_split")
 public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let delimiter = runtimeStringFromRaw(delimRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimRaw, caller: #function)
 
     if delimiter.isEmpty {
         return runtimeMakeStringListRaw([source])
@@ -44,9 +44,9 @@ public func kk_string_split(_ strRaw: Int, _ delimRaw: Int) -> Int {
 
 @_cdecl("kk_string_replace")
 public func kk_string_replace(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let oldValue = runtimeStringFromRaw(oldRaw) ?? ""
-    let newValue = runtimeStringFromRaw(newRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let oldValue = runtimeStringFromRawOrPanic(oldRaw, caller: #function)
+    let newValue = runtimeStringFromRawOrPanic(newRaw, caller: #function)
     return runtimeMakeStringRaw(source.replacingOccurrences(of: oldValue, with: newValue))
 }
 
@@ -80,7 +80,7 @@ public func kk_string_substring(
 
 @_cdecl("kk_string_padStart")
 public func kk_string_padStart(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let sourceLength = source.unicodeScalars.count
     guard lengthRaw > sourceLength else {
         return runtimeMakeStringRaw(source)
@@ -96,7 +96,7 @@ public func kk_string_padStart(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: In
 
 @_cdecl("kk_string_padEnd")
 public func kk_string_padEnd(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let sourceLength = source.unicodeScalars.count
     guard lengthRaw > sourceLength else {
         return runtimeMakeStringRaw(source)
@@ -112,7 +112,7 @@ public func kk_string_padEnd(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: Int)
 
 @_cdecl("kk_string_repeat")
 public func kk_string_repeat(_ strRaw: Int, _ countRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     outThrown?.pointee = 0
     if countRaw < 0 {
         runtimeSetThrown(outThrown, message: "IllegalArgumentException: Count 'n' must be non-negative, but was \(countRaw).")
@@ -174,8 +174,9 @@ public func kk_string_iterator_next(_ iterRaw: Int) -> Int {
 public func kk_string_filter(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "") }
+    guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var filtered: [Int] = []
     for charRaw in charRaws {
@@ -192,6 +193,7 @@ public func kk_string_filter(
 public func kk_string_map(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     guard fnPtr != 0 else { return strRaw }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -212,6 +214,7 @@ public func kk_string_map(
 public func kk_string_count(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     if fnPtr == 0 { return charRaws.count }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -229,6 +232,7 @@ public func kk_string_count(
 public func kk_string_any(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     if fnPtr == 0 { return charRaws.isEmpty ? 0 : 1 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -245,6 +249,7 @@ public func kk_string_any(
 public func kk_string_all(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for charRaw in charRaws {
@@ -260,6 +265,7 @@ public func kk_string_all(
 public func kk_string_none(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
     if fnPtr == 0 { return charRaws.isEmpty ? 1 : 0 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -305,7 +311,7 @@ public func kk_string_replaceFirstChar(
 
 @_cdecl("kk_string_take")
 public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw("")
@@ -320,8 +326,8 @@ public func kk_string_take(_ strRaw: Int, _ nRaw: Int) -> Int {
 
 @_cdecl("kk_string_removePrefix")
 public func kk_string_removePrefix(_ strRaw: Int, _ prefixRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let prefix = runtimeStringFromRawOrPanic(prefixRaw, caller: #function)
     guard source.hasPrefix(prefix) else {
         return runtimeMakeStringRaw(source)
     }
@@ -330,8 +336,8 @@ public func kk_string_removePrefix(_ strRaw: Int, _ prefixRaw: Int) -> Int {
 
 @_cdecl("kk_string_removeSuffix")
 public func kk_string_removeSuffix(_ strRaw: Int, _ suffixRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let suffix = runtimeStringFromRawOrPanic(suffixRaw, caller: #function)
     guard source.hasSuffix(suffix) else {
         return runtimeMakeStringRaw(source)
     }
@@ -340,8 +346,8 @@ public func kk_string_removeSuffix(_ strRaw: Int, _ suffixRaw: Int) -> Int {
 
 @_cdecl("kk_string_removeSurrounding")
 public func kk_string_removeSurrounding(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let delimiter = runtimeStringFromRaw(delimiterRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let delimiter = runtimeStringFromRawOrPanic(delimiterRaw, caller: #function)
     guard !delimiter.isEmpty,
           source.hasPrefix(delimiter),
           source.hasSuffix(delimiter),
@@ -360,9 +366,9 @@ public func kk_string_removeSurrounding_pair(
     _ prefixRaw: Int,
     _ suffixRaw: Int
 ) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
-    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let prefix = runtimeStringFromRawOrPanic(prefixRaw, caller: #function)
+    let suffix = runtimeStringFromRawOrPanic(suffixRaw, caller: #function)
     guard source.hasPrefix(prefix),
           source.hasSuffix(suffix),
           source.count >= prefix.count + suffix.count
@@ -386,7 +392,7 @@ public func kk_string_takeLast(_ strRaw: Int, _ nRaw: Int) -> Int {
 
 @_cdecl("kk_string_drop")
 public func kk_string_drop(_ strRaw: Int, _ nRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
@@ -399,7 +405,7 @@ public func kk_string_drop(_ strRaw: Int, _ nRaw: Int) -> Int {
 
 @_cdecl("kk_string_dropLast")
 public func kk_string_dropLast(_ strRaw: Int, _ nRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let scalars = runtimeStringScalars(strRaw)
     guard nRaw > 0 else {
         return runtimeMakeStringRaw(source)
@@ -410,22 +416,22 @@ public func kk_string_dropLast(_ strRaw: Int, _ nRaw: Int) -> Int {
 
 @_cdecl("kk_string_startsWith")
 public func kk_string_startsWith(_ strRaw: Int, _ prefixRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let prefix = runtimeStringFromRaw(prefixRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let prefix = runtimeStringFromRawOrPanic(prefixRaw, caller: #function)
     return kk_box_bool(source.hasPrefix(prefix) ? 1 : 0)
 }
 
 @_cdecl("kk_string_endsWith")
 public func kk_string_endsWith(_ strRaw: Int, _ suffixRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let suffix = runtimeStringFromRaw(suffixRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let suffix = runtimeStringFromRawOrPanic(suffixRaw, caller: #function)
     return kk_box_bool(source.hasSuffix(suffix) ? 1 : 0)
 }
 
 @_cdecl("kk_string_contains_str")
 public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let other = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
     if other.isEmpty {
         return kk_box_bool(1)
     }
@@ -435,7 +441,7 @@ public func kk_string_contains_str(_ strRaw: Int, _ otherRaw: Int) -> Int {
 @_cdecl("kk_string_toInt")
 public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     guard let value = Int32(source) else {
         runtimeSetThrown(
             outThrown,
@@ -449,7 +455,7 @@ public func kk_string_toInt(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int
 @_cdecl("kk_string_toInt_radix")
 public func kk_string_toInt_radix(_ strRaw: Int, _ radix: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     guard (2 ... 36).contains(radix) else {
         runtimeSetThrown(
             outThrown,
@@ -469,7 +475,7 @@ public func kk_string_toInt_radix(_ strRaw: Int, _ radix: Int, _ outThrown: Unsa
 
 @_cdecl("kk_string_toIntOrNull")
 public func kk_string_toIntOrNull(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     guard let value = Int32(source) else {
         return runtimeNullSentinelInt
     }
@@ -479,7 +485,7 @@ public func kk_string_toIntOrNull(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_toDouble")
 public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
     if trimmed.isEmpty {
         runtimeSetThrown(outThrown, message: "NumberFormatException: empty String")
@@ -508,7 +514,7 @@ public func kk_string_toDouble(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<
 
 @_cdecl("kk_string_toDoubleOrNull")
 public func kk_string_toDoubleOrNull(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else {
         return runtimeNullSentinelInt
@@ -610,25 +616,25 @@ public func kk_string_lastOrNull(_ strRaw: Int) -> Int {
 
 @_cdecl("kk_string_isEmpty")
 public func kk_string_isEmpty(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return kk_box_bool(source.isEmpty ? 1 : 0)
 }
 
 @_cdecl("kk_string_isNotEmpty")
 public func kk_string_isNotEmpty(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return kk_box_bool(source.isEmpty ? 0 : 1)
 }
 
 @_cdecl("kk_string_isBlank")
 public func kk_string_isBlank(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 1 : 0)
 }
 
 @_cdecl("kk_string_isNotBlank")
 public func kk_string_isNotBlank(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return kk_box_bool(source.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0 : 1)
 }
 
@@ -638,7 +644,7 @@ public func kk_string_isNotBlank(_ strRaw: Int) -> Int {
 public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
     let idx = kk_string_indexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
     }
     let scalars = runtimeStringScalars(strRaw)
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
@@ -648,7 +654,7 @@ public func kk_string_substringBefore(_ strRaw: Int, _ delimiterRaw: Int) -> Int
 public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
     let idx = kk_string_indexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
     }
     let scalars = runtimeStringScalars(strRaw)
     let delimScalars = runtimeStringScalars(delimiterRaw)
@@ -660,7 +666,7 @@ public func kk_string_substringAfter(_ strRaw: Int, _ delimiterRaw: Int) -> Int 
 public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
     let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
     }
     let scalars = runtimeStringScalars(strRaw)
     return runtimeMakeStringRaw(runtimeStringFromScalars(scalars[0 ..< idx]))
@@ -670,7 +676,7 @@ public func kk_string_substringBeforeLast(_ strRaw: Int, _ delimiterRaw: Int) ->
 public func kk_string_substringAfterLast(_ strRaw: Int, _ delimiterRaw: Int) -> Int {
     let idx = kk_string_lastIndexOf(strRaw, delimiterRaw)
     if idx < 0 {
-        return runtimeMakeStringRaw(runtimeStringFromRaw(strRaw) ?? "")
+        return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function))
     }
     let scalars = runtimeStringScalars(strRaw)
     let delimScalars = runtimeStringScalars(delimiterRaw)
@@ -715,15 +721,15 @@ public func kk_string_get(_ strRaw: Int, _ indexRaw: Int, _ outThrown: UnsafeMut
 
 @_cdecl("kk_string_compareTo_member")
 public func kk_string_compareTo_member(_ strRaw: Int, _ otherRaw: Int) -> Int {
-    let lhs = runtimeStringFromRaw(strRaw) ?? ""
-    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    let lhs = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let rhs = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
     return runtimeCompareStrings(lhs, rhs)
 }
 
 @_cdecl("kk_string_compareToIgnoreCase")
 public func kk_string_compareToIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
-    let lhs = runtimeStringFromRaw(strRaw) ?? ""
-    let rhs = runtimeStringFromRaw(otherRaw) ?? ""
+    let lhs = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let rhs = runtimeStringFromRawOrPanic(otherRaw, caller: #function)
     if ignoreCaseRaw == 0 {
         return runtimeCompareStrings(lhs, rhs)
     }
@@ -740,14 +746,14 @@ public func kk_string_compareToIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ igno
 
 @_cdecl("kk_string_toBoolean")
 public func kk_string_toBoolean(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return kk_box_bool(source.caseInsensitiveCompare("true") == .orderedSame ? 1 : 0)
 }
 
 @_cdecl("kk_string_toBooleanStrict")
 public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     switch source {
     case "true":
         return kk_box_bool(1)
@@ -764,38 +770,38 @@ public func kk_string_toBooleanStrict(_ strRaw: Int, _ outThrown: UnsafeMutableP
 
 @_cdecl("kk_string_lines")
 public func kk_string_lines(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringListRaw(runtimeNormalizedMultilineString(source))
 }
 
 @_cdecl("kk_string_trimStart")
 public func kk_string_trimStart(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(String(source.drop { $0.isWhitespace }))
 }
 
 @_cdecl("kk_string_trimEnd")
 public func kk_string_trimEnd(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(String(source.reversed().drop { $0.isWhitespace }.reversed()))
 }
 
 @_cdecl("kk_string_toByteArray")
 public func kk_string_toByteArray(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeListRaw(source.utf8.map(Int.init))
 }
 
 @_cdecl("kk_string_format")
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
-    let template = runtimeStringFromRaw(formatRaw) ?? ""
+    let template = runtimeStringFromRawOrPanic(formatRaw, caller: #function)
     let arguments = runtimeArrayBox(from: argsArrayRaw)?.elements ?? []
     return runtimeMakeStringRaw(runtimeFormatString(template, arguments: arguments))
 }
 
 @_cdecl("kk_string_trimIndent")
 public func kk_string_trimIndent(_ strRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeStringRaw(runtimeTrimIndent(source))
 }
 
@@ -806,7 +812,7 @@ public func kk_string_trimMargin_default(_ strRaw: Int) -> Int {
 
 @_cdecl("kk_string_trimMargin")
 public func kk_string_trimMargin(_ strRaw: Int, _ marginPrefixRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let marginPrefix = runtimeStringFromRaw(marginPrefixRaw) ?? "|"
     return runtimeMakeStringRaw(runtimeTrimMargin(source, marginPrefix: marginPrefix))
 }
@@ -828,15 +834,15 @@ public func kk_string_replaceIndent_default(_ strRaw: Int) -> Int {
 
 @_cdecl("kk_string_prependIndent")
 public func kk_string_prependIndent(_ strRaw: Int, _ indentRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     let indent = runtimeStringFromRaw(indentRaw) ?? " "
     return runtimeMakeStringRaw(runtimePrependIndent(source, indent: indent))
 }
 
 @_cdecl("kk_string_replaceIndent")
 public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let newIndent = runtimeStringFromRaw(newIndentRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let newIndent = runtimeStringFromRawOrPanic(newIndentRaw, caller: #function)
     return runtimeMakeStringRaw(runtimeReplaceIndent(source, newIndent: newIndent))
 }
 
@@ -844,7 +850,7 @@ public func kk_string_replaceIndent(_ strRaw: Int, _ newIndentRaw: Int) -> Int {
 
 @_cdecl("kk_string_chunked")
 public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     guard size > 0 else {
         return runtimeMakeStringListRaw([])
     }
@@ -861,7 +867,7 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
 
 @_cdecl("kk_string_windowed")
 public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     guard size > 0, step > 0 else {
         return runtimeMakeStringListRaw([])
     }
@@ -890,9 +896,9 @@ public func kk_string_equalsIgnoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreC
 
 @_cdecl("kk_string_replaceFirst")
 public func kk_string_replaceFirst(_ strRaw: Int, _ oldRaw: Int, _ newRaw: Int) -> Int {
-    let source = runtimeStringFromRaw(strRaw) ?? ""
-    let oldValue = runtimeStringFromRaw(oldRaw) ?? ""
-    let newValue = runtimeStringFromRaw(newRaw) ?? ""
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let oldValue = runtimeStringFromRawOrPanic(oldRaw, caller: #function)
+    let newValue = runtimeStringFromRawOrPanic(newRaw, caller: #function)
     guard let range = source.range(of: oldValue) else {
         return runtimeMakeStringRaw(source)
     }
@@ -925,7 +931,7 @@ public func kk_string_replaceRange(
         return 0
     }
     let endIndex = last + 1
-    let replacement = runtimeStringFromRaw(replacementRaw) ?? ""
+    let replacement = runtimeStringFromRawOrPanic(replacementRaw, caller: #function)
     let before = runtimeStringFromScalars(scalars[0 ..< first])
     let after = runtimeStringFromScalars(scalars[endIndex...])
     return runtimeMakeStringRaw(before + replacement + after)
@@ -1136,6 +1142,16 @@ private func runtimeStringFromRaw(_ raw: Int) -> String? {
         return nil
     }
     return extractString(from: pointer)
+}
+
+/// Fail-fast variant that panics on invalid string handles instead of returning nil.
+/// Use this instead of `runtimeStringFromRaw(...) ?? ""` to distinguish
+/// invalid handles from legitimately empty strings.
+private func runtimeStringFromRawOrPanic(_ raw: Int, caller: StaticString) -> String {
+    if let s = runtimeStringFromRaw(raw) {
+        return s
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid string handle")
 }
 
 private func runtimeCharacterFromRaw(_ raw: Int) -> String {
