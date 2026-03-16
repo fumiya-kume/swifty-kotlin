@@ -135,7 +135,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_measureTime = ExternDecl(
         name: "kk_measureTime",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t* _Nullable"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -1660,10 +1660,6 @@ public enum RuntimeABIExterns {
             kk_require,
             kk_check,
             kk_require_lazy,
-            kk_measureTime,
-            kk_duration_inWholeMilliseconds,
-            kk_duration_inWholeSeconds,
-            kk_duration_toString,
             kk_check_lazy,
             kk_error,
             kk_todo,
@@ -1929,6 +1925,13 @@ public enum RuntimeABIExterns {
         all += sequenceExterns
         all += regexExterns
         all += comparatorExterns
+        // Duration / measureTime (STDLIB-230/231)
+        all += [
+            kk_measureTime,
+            kk_duration_inWholeMilliseconds,
+            kk_duration_inWholeSeconds,
+            kk_duration_toString,
+        ]
         return all
     }()
 

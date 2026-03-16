@@ -2326,6 +2326,45 @@ public enum RuntimeABISpec {
         ),
     ]
 
+    // MARK: - Duration / measureTime (STDLIB-230/231)
+
+    public static let durationFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_measureTime",
+            parameters: [
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeMilliseconds",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeSeconds",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_toString",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+    ]
+
     public static let allFunctions: [RuntimeABIFunctionSpec] =
         memoryFunctions
             + exceptionFunctions
@@ -2348,6 +2387,7 @@ public enum RuntimeABISpec {
             + sequenceFunctions
             + regexFunctions
             + comparatorFunctions
+            + durationFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []
