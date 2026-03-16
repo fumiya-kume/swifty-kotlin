@@ -369,12 +369,22 @@ extension KIRLoweringDriver {
         delegateStorageSymbol: SymbolID,
         delegateType: TypeID,
         shared: KIRLoweringSharedContext,
-        compilationCtx _: CompilationContext,
+        compilationCtx: CompilationContext,
         initInstructions: inout KIRLoweringEmitContext
     ) {
         let sema = shared.sema
-        let delegateObjExpr = lowerExpr(propertyDecl.delegateExpression!, shared: shared, emit: &initInstructions)
-        let delegateExprType = sema.bindings.exprType(for: propertyDecl.delegateExpression!)
+        guard let delegateExpr = propertyDecl.delegateExpression else {
+            // Internal error: emitCustomDelegateInit called for a property without delegate expression.
+            // This indicates an AST invariant violation — emit a diagnostic and bail out.
+            compilationCtx.diagnostics.error(
+                "KSWIFTK-KIR-0002",
+                "Internal error: emitCustomDelegateInit called for a property without a delegate expression.",
+                range: propertyDecl.range
+            )
+            return
+        }
+        let delegateObjExpr = lowerExpr(delegateExpr, shared: shared, emit: &initInstructions)
+        let delegateExprType = sema.bindings.exprType(for: delegateExpr)
         if checkHasProvideDelegate(delegateExprType: delegateExprType, shared: shared) {
             emitProvideDelegateInit(
                 delegateObjExpr: delegateObjExpr, symbol: symbol,
