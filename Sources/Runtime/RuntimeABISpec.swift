@@ -160,6 +160,17 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_synchronized",
+            parameters: [
+                RuntimeABIParameter(name: "lock", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_check_lazy",
             parameters: [
                 RuntimeABIParameter(name: "condition", type: .intptr),

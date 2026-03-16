@@ -155,7 +155,7 @@ private func runtimePreconditionMessage(from rawValue: Int) -> String? {
 // MARK: - synchronized (STDLIB-325)
 
 /// Runtime support for kotlin.synchronized(lock, block).
-/// Uses NSLock-based per-object locking. The lock argument is used as a key
+/// Uses NSRecursiveLock-based per-object locking. The lock argument is used as a key
 /// to obtain a reentrant lock, and the block lambda is executed under that lock.
 @_cdecl("kk_synchronized")
 public func kk_synchronized(_ lock: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
@@ -174,15 +174,15 @@ public func kk_synchronized(_ lock: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
 }
 
 private let runtimeLockStorage = NSLock()
-private nonisolated(unsafe) var runtimeLocks: [Int: NSLock] = [:]
+private nonisolated(unsafe) var runtimeLocks: [Int: NSRecursiveLock] = [:]
 
-private func runtimeGetOrCreateLock(for key: Int) -> NSLock {
+private func runtimeGetOrCreateLock(for key: Int) -> NSRecursiveLock {
     runtimeLockStorage.lock()
     defer { runtimeLockStorage.unlock() }
     if let existing = runtimeLocks[key] {
         return existing
     }
-    let newLock = NSLock()
+    let newLock = NSRecursiveLock()
     runtimeLocks[key] = newLock
     return newLock
 }
