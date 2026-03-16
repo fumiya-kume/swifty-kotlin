@@ -327,7 +327,7 @@ extension ExprTypeChecker {
             }
         case .step:
             // LongRange when the receiver (lhs) is Long; IntRange otherwise.
-            if lhs == longType || rhs == longType {
+            if lhs == longType {
                 type = longType
             } else {
                 type = intType
