@@ -251,6 +251,7 @@ public func kk_string_all(
 ) -> Int {
     outThrown?.pointee = 0
     let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    if fnPtr == 0 { return 1 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for charRaw in charRaws {
         var thrown = 0
