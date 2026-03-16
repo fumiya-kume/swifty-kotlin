@@ -1537,14 +1537,34 @@ extension CallLowerer {
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
                 let stringType = sema.types.stringType
+                let paramNames = ["separator", "prefix", "postfix"]
                 let defaults = [", ", "", ""]
-                var joinArgs = loweredArgIDs
-                // Materialize defaults for any missing positional arguments
-                for paramIndex in joinArgs.count ..< 3 {
-                    let interned = interner.intern(defaults[paramIndex])
-                    let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
-                    instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
-                    joinArgs.append(exprID)
+                // Build a 3-element array mapping each parameter to its lowered arg or a default
+                var resolved: [KIRExprID?] = [nil, nil, nil]
+                for (argIdx, arg) in args.enumerated() {
+                    if let label = arg.label,
+                       let paramIdx = paramNames.firstIndex(of: interner.resolve(label))
+                    {
+                        resolved[paramIdx] = loweredArgIDs[argIdx]
+                    } else {
+                        // Positional argument: fill first unresolved slot
+                        if let slot = resolved.firstIndex(where: { $0 == nil }), slot <= argIdx {
+                            resolved[slot] = loweredArgIDs[argIdx]
+                        } else {
+                            resolved[argIdx] = loweredArgIDs[argIdx]
+                        }
+                    }
+                }
+                var joinArgs: [KIRExprID] = []
+                for paramIndex in 0 ..< 3 {
+                    if let existing = resolved[paramIndex] {
+                        joinArgs.append(existing)
+                    } else {
+                        let interned = interner.intern(defaults[paramIndex])
+                        let exprID = arena.appendExpr(.stringLiteral(interned), type: stringType)
+                        instructions.append(.constValue(result: exprID, value: .stringLiteral(interned)))
+                        joinArgs.append(exprID)
+                    }
                 }
                 instructions.append(.call(
                     symbol: nil,

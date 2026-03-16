@@ -464,6 +464,7 @@ extension CallTypeChecker {
             interner.intern("dropWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("joinToString"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -479,7 +480,6 @@ extension CallTypeChecker {
         let collectionSpecificMembers: Set = [
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
-            interner.intern("joinToString"),
         ]
         let mutableListOnlyMembers: Set = [
             interner.intern("sort"),

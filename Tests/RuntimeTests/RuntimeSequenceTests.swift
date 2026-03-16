@@ -73,7 +73,7 @@ final class RuntimeSequenceTests: XCTestCase {
             runtimeTestStringHandle("]")
         )
 
-        XCTAssertEqual(extractString(from: renderedRaw), "[1:2:3]")
+        XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
     }
 
     private func makeArray(_ elements: [Int]) -> Int {
