@@ -462,6 +462,54 @@ extension DataFlowSemaPhase {
         types.setNominalDirectSupertypes([iterableInterfaceSymbol], for: collectionInterfaceSymbol)
         symbols.setSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
         types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
+
+        // Register Collection<T> members: size, isEmpty, contains (STDLIB-295)
+        let collectionMemberDefs: [(String, TypeID)] = [
+            ("size", types.intType),
+            ("isEmpty", types.booleanType),
+        ]
+        for (name, returnType) in collectionMemberDefs {
+            let memberName = interner.intern(name)
+            let memberFQName = collectionFQName + [memberName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { continue }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            let memberType = types.make(.functionType(FunctionType(
+                params: [],
+                returnType: returnType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            symbols.setPropertyType(memberType, for: memberSymbol)
+        }
+
+        // contains(element: E): Boolean
+        let containsName = interner.intern("contains")
+        let containsFQName = collectionFQName + [containsName]
+        if symbols.lookup(fqName: containsFQName) == nil {
+            let containsSymbol = symbols.define(
+                kind: .function,
+                name: containsName,
+                fqName: containsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            let containsType = types.make(.functionType(FunctionType(
+                params: [typeParamType],
+                returnType: types.booleanType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            symbols.setPropertyType(containsType, for: containsSymbol)
+        }
+
         return collectionInterfaceSymbol
     }
 
