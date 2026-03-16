@@ -479,6 +479,7 @@ extension CallTypeChecker {
         let collectionSpecificMembers: Set = [
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("joinToString"),
         ]
         let mutableListOnlyMembers: Set = [
             interner.intern("sort"),
@@ -577,6 +578,8 @@ extension CallTypeChecker {
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
              interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"):
             return argCount == 0
+        case interner.intern("joinToString"):
+            return (0 ... 3).contains(argCount)
         case interner.intern("filterNotNull"), interner.intern("unzip"):
             return argCount == 0
         case interner.intern("get"), interner.intern("getOrNull"), interner.intern("elementAtOrNull"),
@@ -659,6 +662,10 @@ extension CallTypeChecker {
             memberName == interner.intern("sortByDescending")
         {
             return sema.types.unitType
+        }
+
+        if memberName == interner.intern("joinToString") {
+            return sema.types.stringType
         }
 
         if memberName == knownNames.putAll {
