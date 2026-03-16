@@ -1537,3 +1537,64 @@ private func runtimeIsObjectPointer(_ pointer: UnsafeMutableRawPointer) -> Bool 
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
 }
+
+// MARK: - STDLIB-319: String.toBigDecimal() / String.toBigInteger()
+
+/// BigDecimal and BigInteger are represented as boxed strings in KSwiftK.
+/// The runtime validates the format and stores the string representation.
+final class RuntimeBigNumberBox {
+    let value: String
+    let kind: BigNumberKind
+
+    enum BigNumberKind { case decimal, integer }
+
+    init(value: String, kind: BigNumberKind) {
+        self.value = value
+        self.kind = kind
+    }
+}
+
+@_cdecl("kk_string_toBigDecimal")
+public func kk_string_toBigDecimal(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let str = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_toBigDecimal received invalid string handle")
+    }
+    guard Decimal(string: str) != nil else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
+        return 0
+    }
+    let box = RuntimeBigNumberBox(value: str, kind: .decimal)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_string_toBigInteger")
+public func kk_string_toBigInteger(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let str = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_toBigInteger received invalid string handle")
+    }
+    // Validate integer format
+    let trimmed = str.trimmingCharacters(in: .whitespaces)
+    let isValid = !trimmed.isEmpty && trimmed.allSatisfy { $0.isNumber || $0 == "-" || $0 == "+" }
+    guard isValid else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
+        return 0
+    }
+    let box = RuntimeBigNumberBox(value: trimmed, kind: .integer)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_bignum_toString")
+public func kk_bignum_toString(_ numRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: numRaw),
+          let box = tryCast(ptr, to: RuntimeBigNumberBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bignum_toString received invalid BigNumber handle")
+    }
+    return runtimeMakeStringRaw(box.value)
+}
