@@ -699,33 +699,6 @@ public func kk_sequence_to_list(_ seqRaw: Int) -> Int {
     return registerRuntimeObject(list)
 }
 
-@_cdecl("kk_sequence_joinToString")
-public func kk_sequence_joinToString(
-    _ seqRaw: Int,
-    _ separatorRaw: Int,
-    _ prefixRaw: Int,
-    _ postfixRaw: Int
-) -> UnsafeMutableRawPointer {
-    let separator = extractString(from: UnsafeMutableRawPointer(bitPattern: separatorRaw)) ?? ", "
-    let prefix = extractString(from: UnsafeMutableRawPointer(bitPattern: prefixRaw)) ?? ""
-    let postfix = extractString(from: UnsafeMutableRawPointer(bitPattern: postfixRaw)) ?? ""
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    var rendered = ""
-    rendered.reserveCapacity(elements.count * max(separator.count, 1))
-    for (index, element) in elements.enumerated() {
-        if index > 0 {
-            rendered += separator
-        }
-        rendered += runtimeElementToString(element)
-    }
-    let stringValue = prefix + rendered + postfix
-    let utf8 = Array(stringValue.utf8)
-    return utf8.withUnsafeBufferPointer { buffer in
-        let base = buffer.baseAddress ?? UnsafePointer<UInt8>(bitPattern: 1)!
-        return kk_string_from_utf8(base, Int32(buffer.count))
-    }
-}
-
 // MARK: - Sequence Sorting Operations (STDLIB-272)
 
 @_cdecl("kk_sequence_sorted")

@@ -231,7 +231,6 @@ extension ABILoweringPass {
             interner.intern("kk_list_to_string"),
             interner.intern("kk_list_to_mutable_list"),
             interner.intern("kk_list_joinToString"),
-            interner.intern("kk_sequence_joinToString"),
             interner.intern("kk_list_to_set"),
             interner.intern("kk_list_toMap"),
             interner.intern("kk_list_filterNotNull"),
