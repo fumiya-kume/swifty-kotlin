@@ -146,8 +146,12 @@ public func kk_int_toString_radix(_ value: Int, _ radix: Int) -> UnsafeMutableRa
 
 @_cdecl("kk_string_concat")
 public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer {
-    let lhs = extractString(from: normalizeNullableRuntimePointer(a)) ?? ""
-    let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
+    guard let lhs = extractString(from: normalizeNullableRuntimePointer(a)) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_concat received invalid left-hand string pointer")
+    }
+    guard let rhs = extractString(from: normalizeNullableRuntimePointer(b)) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_concat received invalid right-hand string pointer")
+    }
     let box = RuntimeStringBox(lhs + rhs)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
@@ -158,8 +162,12 @@ public func kk_string_concat(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRa
 
 @_cdecl("kk_string_compareTo")
 public func kk_string_compareTo(_ a: UnsafeMutableRawPointer?, _ b: UnsafeMutableRawPointer?) -> Int {
-    let lhs = extractString(from: normalizeNullableRuntimePointer(a)) ?? ""
-    let rhs = extractString(from: normalizeNullableRuntimePointer(b)) ?? ""
+    guard let lhs = extractString(from: normalizeNullableRuntimePointer(a)) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_compareTo received invalid left-hand string pointer")
+    }
+    guard let rhs = extractString(from: normalizeNullableRuntimePointer(b)) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_compareTo received invalid right-hand string pointer")
+    }
     if lhs < rhs { return -1 }
     if lhs > rhs { return 1 }
     return 0
@@ -177,7 +185,7 @@ public func kk_string_length(_ strRaw: Int) -> Int {
         state.objectPointers.contains(UInt(bitPattern: ptr))
     }
     guard isObjectPointer, let stringBox = tryCast(ptr, to: RuntimeStringBox.self) else {
-        return runtimeNullSentinelInt
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_length received invalid string pointer")
     }
     return stringBox.value.utf8.count
 }

@@ -315,7 +315,7 @@ public func kk_coroutine_continuation_new(_ functionID: Int) -> Int {
 @_cdecl("kk_coroutine_state_enter")
 public func kk_coroutine_state_enter(_ continuation: Int, _ functionID: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_enter received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     let functionIDValue = Int64(functionID)
@@ -331,7 +331,7 @@ public func kk_coroutine_state_enter(_ continuation: Int, _ functionID: Int) -> 
 @_cdecl("kk_coroutine_state_set_label")
 public func kk_coroutine_state_set_label(_ continuation: Int, _ label: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return label
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_set_label received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     state.label = Int64(label)
@@ -359,7 +359,7 @@ public func kk_coroutine_state_exit(_ continuation: Int, _ value: Int) -> Int {
 @_cdecl("kk_coroutine_state_set_spill")
 public func kk_coroutine_state_set_spill(_ continuation: Int, _ slot: Int, _ value: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return value
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_set_spill received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     state.spillSlots[Int64(slot)] = Int64(value)
@@ -369,7 +369,7 @@ public func kk_coroutine_state_set_spill(_ continuation: Int, _ slot: Int, _ val
 @_cdecl("kk_coroutine_state_get_spill")
 public func kk_coroutine_state_get_spill(_ continuation: Int, _ slot: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_get_spill received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     return Int(state.spillSlots[Int64(slot)] ?? 0)
@@ -378,7 +378,7 @@ public func kk_coroutine_state_get_spill(_ continuation: Int, _ slot: Int) -> In
 @_cdecl("kk_coroutine_state_set_completion")
 public func kk_coroutine_state_set_completion(_ continuation: Int, _ value: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return value
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_set_completion received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     state.completion = Int64(value)
@@ -388,7 +388,7 @@ public func kk_coroutine_state_set_completion(_ continuation: Int, _ value: Int)
 @_cdecl("kk_coroutine_state_get_completion")
 public func kk_coroutine_state_get_completion(_ continuation: Int) -> Int {
     guard let continuationPtr = UnsafeMutableRawPointer(bitPattern: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_state_get_completion received invalid continuation handle")
     }
     let state = Unmanaged<RuntimeContinuationState>.fromOpaque(continuationPtr).takeUnretainedValue()
     return Int(state.completion)
@@ -447,7 +447,7 @@ public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
 @_cdecl("kk_coroutine_launcher_arg_set")
 public func kk_coroutine_launcher_arg_set(_ continuation: Int, _ index: Int64, _ value: Int64) -> Int64 {
     guard let state = runtimeContinuationState(from: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_launcher_arg_set received invalid continuation handle")
     }
     state.launcherArgs[index] = value
     return value
@@ -456,7 +456,7 @@ public func kk_coroutine_launcher_arg_set(_ continuation: Int, _ index: Int64, _
 @_cdecl("kk_coroutine_launcher_arg_get")
 public func kk_coroutine_launcher_arg_get(_ continuation: Int, _ index: Int64) -> Int64 {
     guard let state = runtimeContinuationState(from: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_launcher_arg_get received invalid continuation handle")
     }
     return state.launcherArgs[index] ?? 0
 }
@@ -526,7 +526,7 @@ public func kk_kxmini_async_await(_ handle: Int) -> Int {
 @_cdecl("kk_kxmini_delay")
 public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
     guard let state = runtimeContinuationState(from: continuation) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_kxmini_delay received invalid continuation handle")
     }
     state.scheduleDelay(milliseconds: milliseconds)
     return Int(bitPattern: kk_coroutine_suspended())
@@ -776,7 +776,7 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
     guard let opKind = RuntimeFlowTag(rawValue: tag),
           let flow = runtimeFlowHandle(from: flowHandle)
     else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_emit received invalid flow handle or unknown op tag")
     }
     let derived = RuntimeFlowHandle(
         emitterFnPtr: flow.emitterFnPtr,
@@ -788,7 +788,7 @@ public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {
 @_cdecl("kk_flow_collect")
 public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continuation: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_collect received invalid flow handle")
     }
 
     // Cold-stream semantics: evaluate source emissions anew on each collect.
@@ -804,12 +804,12 @@ public func kk_flow_collect(_ flowHandle: Int, _ collectorFnPtr: Int, _ continua
 @_cdecl("kk_flow_retain")
 public func kk_flow_retain(_ flowHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_retain received invalid flow handle")
     }
     let key = UInt(bitPattern: ptr)
     return runtimeStorage.withLock { state in
         guard state.flowHandles[key] != nil else {
-            return 0
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_retain received unregistered flow handle")
         }
         state.flowRetainCounts[key, default: 0] += 1
         return flowHandle
@@ -819,7 +819,7 @@ public func kk_flow_retain(_ flowHandle: Int) -> Int {
 @_cdecl("kk_flow_release")
 public func kk_flow_release(_ flowHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: flowHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_flow_release received invalid flow handle")
     }
     let key = UInt(bitPattern: ptr)
     runtimeStorage.withLock { state in
@@ -988,7 +988,7 @@ public func kk_channel_create(_ capacity: Int) -> Int {
 @_cdecl("kk_channel_send")
 public func kk_channel_send(_ handle: Int, _ value: Int, _: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_send received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     return channel.send(value)
@@ -997,7 +997,7 @@ public func kk_channel_send(_ handle: Int, _ value: Int, _: Int) -> Int {
 @_cdecl("kk_channel_receive")
 public func kk_channel_receive(_ handle: Int, _: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_receive received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     return channel.receive()
@@ -1006,7 +1006,7 @@ public func kk_channel_receive(_ handle: Int, _: Int) -> Int {
 @_cdecl("kk_channel_close")
 public func kk_channel_close(_ handle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_close received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     channel.close()
@@ -1079,7 +1079,7 @@ public func kk_coroutine_scope_new() -> Int {
 @_cdecl("kk_coroutine_scope_cancel")
 public func kk_coroutine_scope_cancel(_ scopeHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_scope_cancel received invalid scope handle")
     }
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
     scope.cancel()
@@ -1090,7 +1090,7 @@ public func kk_coroutine_scope_cancel(_ scopeHandle: Int) -> Int {
 @_cdecl("kk_coroutine_scope_wait")
 public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_scope_wait received invalid scope handle")
     }
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
     scope.waitForChildren()
@@ -1110,7 +1110,7 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
 @_cdecl("kk_coroutine_scope_register_child")
 public func kk_coroutine_scope_register_child(_ scopeHandle: Int, _ childHandle: Int) -> Int {
     guard let scopePtr = UnsafeMutableRawPointer(bitPattern: scopeHandle) else {
-        return childHandle
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_coroutine_scope_register_child received invalid scope handle")
     }
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(scopePtr).takeUnretainedValue()
     scope.registerChild(childHandle)
@@ -1122,7 +1122,7 @@ public func kk_coroutine_scope_register_child(_ scopeHandle: Int, _ childHandle:
 @_cdecl("kk_job_join")
 public func kk_job_join(_ jobHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_job_join received invalid job handle")
     }
     // Mark on the handle object itself that user code is consuming the passRetained.
     // This is checked by scope's waitForChildren to avoid double-release.
@@ -1202,7 +1202,7 @@ func runtimeJoinChild(_ handle: Int) -> Int {
 @_cdecl("kk_job_cancel")
 public func kk_job_cancel(_ jobHandle: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: jobHandle) else {
-        return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_job_cancel received invalid job handle")
     }
     let obj = Unmanaged<AnyObject>.fromOpaque(ptr).takeUnretainedValue()
     if let job = obj as? RuntimeJobHandle {
