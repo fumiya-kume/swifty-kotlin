@@ -173,6 +173,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.resultFunctions,
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
+            RuntimeABISpec.durationFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count
