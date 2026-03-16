@@ -600,6 +600,7 @@ extension CallLowerer {
             ast: ast,
             sema: sema,
             arena: arena,
+            interner: interner,
             instructions: &instructions
         ) {
             return staticMemberValue
@@ -2221,6 +2222,7 @@ extension CallLowerer {
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
+        interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
         guard args.isEmpty,
@@ -2260,6 +2262,29 @@ extension CallLowerer {
             let valueID = arena.appendExpr(.symbolRef(valueSymbolID), type: valueType)
             instructions.append(.constValue(result: valueID, value: .symbolRef(valueSymbolID)))
             return valueID
+
+        case .property:
+            // Handle companion property access (e.g. Color.entries).
+            // Look for a synthesized getter function with name "<propertyName>$get".
+            let getterName = interner.intern(
+                "\(interner.resolve(valueSymbol.name))$get"
+            )
+            let ownerFQName = Array(valueSymbol.fqName.dropLast())
+            let getterFQName = ownerFQName + [getterName]
+            if let getterSymbol = sema.symbols.lookupAll(fqName: getterFQName).first {
+                let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+                let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                instructions.append(.call(
+                    symbol: getterSymbol,
+                    callee: getterName,
+                    arguments: [],
+                    result: resultID,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return resultID
+            }
+            return nil
 
         default:
             return nil
