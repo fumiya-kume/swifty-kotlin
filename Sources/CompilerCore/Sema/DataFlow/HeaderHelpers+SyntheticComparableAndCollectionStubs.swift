@@ -464,6 +464,12 @@ extension DataFlowSemaPhase {
         types.setNominalSupertypeTypeArgs([.out(typeParamType)], for: collectionInterfaceSymbol, supertype: iterableInterfaceSymbol)
 
         // Register Collection<T> members: size, isEmpty, contains (STDLIB-295)
+        let collectionReceiverType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
         let collectionMemberDefs: [(String, TypeID)] = [
             ("size", types.intType),
             ("isEmpty", types.booleanType),
@@ -480,13 +486,17 @@ extension DataFlowSemaPhase {
                 visibility: .public,
                 flags: [.synthetic]
             )
-            let memberType = types.make(.functionType(FunctionType(
-                params: [],
-                returnType: returnType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            symbols.setPropertyType(memberType, for: memberSymbol)
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: collectionReceiverType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
         }
 
         // contains(element: E): Boolean
@@ -499,15 +509,19 @@ extension DataFlowSemaPhase {
                 fqName: containsFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: [.synthetic, .operatorFunction]
             )
-            let containsType = types.make(.functionType(FunctionType(
-                params: [typeParamType],
-                returnType: types.booleanType,
-                isSuspend: false,
-                nullability: .nonNull
-            )))
-            symbols.setPropertyType(containsType, for: containsSymbol)
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: containsSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: collectionReceiverType,
+                    parameterTypes: [typeParamType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [typeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: containsSymbol
+            )
         }
 
         return collectionInterfaceSymbol
