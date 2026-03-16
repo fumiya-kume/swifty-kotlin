@@ -569,9 +569,15 @@ extension CallTypeChecker {
                         if isSyntheticSequenceReceiver {
                             resultType = sema.types.anyType
                         } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                            let lambdaBodyType = inferredLambdaReturnType(
+                                argExpr: args[0].expr, ast: ast, sema: sema
+                            )
+                            let innerElementType = extractListElementType(
+                                lambdaBodyType, sema: sema, interner: interner
+                            )
                             resultType = sema.types.make(.classType(ClassType(
                                 classSymbol: listSymbol,
-                                args: [.invariant(sema.types.anyType)],
+                                args: [.invariant(innerElementType)],
                                 nullability: .nonNull
                             )))
                         } else {
@@ -580,11 +586,58 @@ extension CallTypeChecker {
                     case "any", "none", "all": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
                     case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
-                    case "associateBy", "associateWith", "associate":
+                    case "associateBy":
                         if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            let keyType = inferredLambdaReturnType(
+                                argExpr: args[0].expr, ast: ast, sema: sema
+                            )
                             resultType = sema.types.make(.classType(ClassType(
                                 classSymbol: mapSymbol,
-                                args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                                args: [.invariant(keyType), .invariant(collectionElementType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
+                    case "associateWith":
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            let valueType = inferredLambdaReturnType(
+                                argExpr: args[0].expr, ast: ast, sema: sema
+                            )
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(collectionElementType), .invariant(valueType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
+                    case "associate":
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            let lambdaBodyType = inferredLambdaReturnType(
+                                argExpr: args[0].expr, ast: ast, sema: sema
+                            )
+                            let nonNullBodyType = sema.types.makeNonNullable(lambdaBodyType)
+                            let keyType: TypeID
+                            let valueType: TypeID
+                            if case let .classType(pairClass) = sema.types.kind(of: nonNullBodyType),
+                               pairClass.args.count == 2
+                            {
+                                keyType = switch pairClass.args[0] {
+                                case let .invariant(id), let .out(id), let .in(id): id
+                                case .star: sema.types.anyType
+                                }
+                                valueType = switch pairClass.args[1] {
+                                case let .invariant(id), let .out(id), let .in(id): id
+                                case .star: sema.types.anyType
+                                }
+                            } else {
+                                keyType = sema.types.anyType
+                                valueType = sema.types.anyType
+                            }
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(keyType), .invariant(valueType)],
                                 nullability: .nonNull
                             )))
                         } else {
@@ -705,13 +758,9 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
-                let keyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
-                    sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
-                } else if case let .functionType(fnType) = sema.types.kind(of: sema.bindings.exprType(for: args[0].expr) ?? sema.types.anyType) {
-                    fnType.returnType
-                } else {
-                    sema.types.anyType
-                }
+                let keyType = inferredLambdaReturnType(
+                    argExpr: args[0].expr, ast: ast, sema: sema
+                )
                 if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                    let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner)
                 {
@@ -840,9 +889,12 @@ extension CallTypeChecker {
                 } else if calleeStr == "onEachIndexed" {
                     resultType = receiverType
                 } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                    let bodyType = inferredLambdaReturnType(
+                        argExpr: args[0].expr, ast: ast, sema: sema
+                    )
                     resultType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
-                        args: [.invariant(sema.types.anyType)],
+                        args: [.invariant(bodyType)],
                         nullability: .nonNull
                     )))
                 } else {
@@ -3172,6 +3224,45 @@ extension CallTypeChecker {
             }
         }
         return sema.types.anyType
+    }
+
+    /// Extract the inferred return type from a lambda argument.
+    /// Checks the lambda body expression first, then falls back to the function
+    /// type of the argument expression. Returns `anyType` if neither is available.
+    private func inferredLambdaReturnType(
+        argExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule
+    ) -> TypeID {
+        if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(argExpr) {
+            return sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
+        } else if case let .functionType(fnType) = sema.types.kind(
+            of: sema.bindings.exprType(for: argExpr) ?? sema.types.anyType
+        ) {
+            return fnType.returnType
+        } else {
+            return sema.types.anyType
+        }
+    }
+
+    /// Extract the element type from a collection/list type.
+    /// If the type is List<R> (or similar single-type-arg collection), returns R.
+    /// Otherwise returns `anyType`.
+    private func extractListElementType(
+        _ type: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let nonNullType = sema.types.makeNonNullable(type)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let firstArg = classType.args.first
+        else {
+            return sema.types.anyType
+        }
+        return switch firstArg {
+        case let .invariant(id), let .out(id), let .in(id): id
+        case .star: sema.types.anyType
+        }
     }
 
     private func resolvedCollectionElementType(
