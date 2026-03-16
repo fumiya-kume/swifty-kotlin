@@ -268,6 +268,22 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- kotlin.time package (STDLIB-230/231) ---
+        let kotlinTimePkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin"), interner.intern("time")],
+            symbols: symbols
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "measureTime",
+            packageFQName: kotlinTimePkg,
+            parameters: [(name: "block", type: types.anyType)],
+            returnType: types.anyType,
+            externalLinkName: "kk_measureTime",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureSyntheticObjectSymbol(
