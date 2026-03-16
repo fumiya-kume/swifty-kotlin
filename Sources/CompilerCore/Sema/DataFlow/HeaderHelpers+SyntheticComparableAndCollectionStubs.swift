@@ -498,6 +498,85 @@ extension DataFlowSemaPhase {
         )
         types.setNominalTypeParameterSymbols([typeParamSymbol], for: iterableInterfaceSymbol)
         types.setNominalTypeParameterVariances([.out], for: iterableInterfaceSymbol)
+
+        // Register Iterator<T> interface (STDLIB-221)
+        let iteratorName = interner.intern("Iterator")
+        let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+        let iteratorSymbol: SymbolID = if let existing = symbols.lookup(fqName: iteratorFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: iteratorName,
+                fqName: iteratorFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let itTypeParamName = interner.intern("T")
+        let itTypeParamFQName = iteratorFQName + [itTypeParamName]
+        let itTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: itTypeParamName,
+            fqName: itTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([itTypeParamSymbol], for: iteratorSymbol)
+        types.setNominalTypeParameterVariances([.out], for: iteratorSymbol)
+
+        // Iterator.hasNext(): Boolean
+        let hasNextName = interner.intern("hasNext")
+        let hasNextFQName = iteratorFQName + [hasNextName]
+        if symbols.lookup(fqName: hasNextFQName) == nil {
+            let sym = symbols.define(
+                kind: .function, name: hasNextName, fqName: hasNextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
+            ))), for: sym)
+        }
+
+        // Iterator.next(): T
+        let nextName = interner.intern("next")
+        let nextFQName = iteratorFQName + [nextName]
+        if symbols.lookup(fqName: nextFQName) == nil {
+            let itTypeParamType = types.make(.typeParam(TypeParamType(symbol: itTypeParamSymbol, nullability: .nonNull)))
+            let sym = symbols.define(
+                kind: .function, name: nextName, fqName: nextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: itTypeParamType, isSuspend: false, nullability: .nonNull
+            ))), for: sym)
+        }
+
+        // MutableIterator<T> : Iterator<T> (STDLIB-221)
+        let mutableIteratorName = interner.intern("MutableIterator")
+        let mutableIteratorFQName = kotlinCollectionsPkg + [mutableIteratorName]
+        if symbols.lookup(fqName: mutableIteratorFQName) == nil {
+            let mutIterSym = symbols.define(
+                kind: .interface, name: mutableIteratorName, fqName: mutableIteratorFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setDirectSupertypes([iteratorSymbol], for: mutIterSym)
+            types.setNominalDirectSupertypes([iteratorSymbol], for: mutIterSym)
+
+            // MutableIterator.remove(): Unit
+            let removeName = interner.intern("remove")
+            let removeFQName = mutableIteratorFQName + [removeName]
+            let removeSym = symbols.define(
+                kind: .function, name: removeName, fqName: removeFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: types.unitType, isSuspend: false, nullability: .nonNull
+            ))), for: removeSym)
+        }
+
         return iterableInterfaceSymbol
     }
 
