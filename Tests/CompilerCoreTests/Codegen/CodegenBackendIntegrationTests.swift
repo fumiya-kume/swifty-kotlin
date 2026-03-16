@@ -568,6 +568,32 @@ final class CodegenBackendIntegrationTests: XCTestCase {
         }
     }
 
+    func testCodegenSequenceJoinToStringUsesRuntimeDefaultsAndNamedArguments() throws {
+        let source = """
+        fun main() {
+            println(sequenceOf(1, 2, 3).joinToString(", "))
+            println(sequenceOf("a", "b", "c").joinToString("-"))
+            println(listOf<String>().asSequence().joinToString(prefix = "<", postfix = ">"))
+            println(sequenceOf(1, 2, 3).joinToString(separator = ":", prefix = "[", postfix = "]"))
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let outputBase = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path
+            let ctx = try runCodegenPipeline(
+                inputPath: path,
+                moduleName: "SequenceJoinToStringRuntime",
+                emit: .executable,
+                outputPath: outputBase
+            )
+            try LinkPhase().run(ctx)
+
+            let result = try CommandRunner.run(executable: outputBase, arguments: [])
+            let normalizedStdout = result.stdout.replacingOccurrences(of: "\r\n", with: "\n")
+            XCTAssertEqual(normalizedStdout, "1, 2, 3\na-b-c\n<>\n[1:2:3]\n")
+        }
+    }
+
     func testCodegenListMapNotNullAndFilterNotNullUseRuntimeHOFs() throws {
         let source = """
         fun main() {

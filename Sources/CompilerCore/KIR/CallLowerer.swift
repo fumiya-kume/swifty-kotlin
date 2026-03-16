@@ -634,7 +634,8 @@ final class CallLowerer {
         argumentExprs: [ExprID],
         sema: SemaModule
     ) -> CallBinding? {
-        if let existing = sema.bindings.callBindings[exprID],
+        let existingBinding = sema.bindings.callBindings[exprID]
+        if let existing = existingBinding,
            existing.chosenCallee != .invalid,
            sema.symbols.symbol(existing.chosenCallee) != nil
         {
@@ -645,10 +646,10 @@ final class CallLowerer {
            let signature = sema.symbols.functionSignature(for: symbol),
            signature.receiverType != nil
         {
-            var parameterMapping: [Int: Int] = [:]
-            for index in argumentExprs.indices {
-                parameterMapping[index] = index
-            }
+            let parameterMapping = normalizedParameterMapping(
+                existingBinding?.parameterMapping,
+                argumentCount: argumentExprs.count
+            )
             return CallBinding(
                 chosenCallee: symbol,
                 substitutedTypeArguments: [],
@@ -709,15 +710,29 @@ final class CallLowerer {
             return nil
         }
 
-        var parameterMapping: [Int: Int] = [:]
-        for index in argumentExprs.indices {
-            parameterMapping[index] = index
-        }
+        let parameterMapping = normalizedParameterMapping(
+            existingBinding?.parameterMapping,
+            argumentCount: argumentExprs.count
+        )
         return CallBinding(
             chosenCallee: chosen,
             substitutedTypeArguments: [],
             parameterMapping: parameterMapping
         )
+    }
+
+    private func normalizedParameterMapping(
+        _ parameterMapping: [Int: Int]?,
+        argumentCount: Int
+    ) -> [Int: Int] {
+        if let parameterMapping, !parameterMapping.isEmpty {
+            return parameterMapping
+        }
+        var positionalMapping: [Int: Int] = [:]
+        for index in 0 ..< argumentCount {
+            positionalMapping[index] = index
+        }
+        return positionalMapping
     }
 
     private func lowerTopLevelNumericConversionCall(
