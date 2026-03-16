@@ -327,6 +327,8 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
 
+        // Pair<A,B>.toList() returns List<Any> in Kotlin (type erasure).
+        // List symbol is registered after Pair, so we use anyType as a stand-in.
         registerFunctionMember(
             name: "toList",
             returnType: types.anyType,
@@ -418,6 +420,8 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
         registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
         registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
+        // Triple<A,B,C>.toList() returns List<Any> in Kotlin (type erasure).
+        // List symbol is registered after Triple, so we use anyType as a stand-in.
         registerFunctionMember(name: "toList", returnType: types.anyType, externalLinkName: "kk_triple_toList", flags: [.synthetic])
     }
 
@@ -1607,13 +1611,32 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // sortedByDescending (HOF, selector lambda)
+        // sortedByDescending (HOF, selector lambda with R: Comparable<R>)
         let sortedByDescendingName = interner.intern("sortedByDescending")
         let sortedByDescendingFQName = listFQName + [sortedByDescendingName]
         if symbols.lookup(fqName: sortedByDescendingFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: sortedByDescendingFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                [types.make(.classType(ClassType(
+                    classSymbol: comparableSymbol,
+                    args: [.invariant(rType)],
+                    nullability: .nonNull
+                )))]
+            } else {
+                []
+            }
             let selectorType = types.make(.functionType(FunctionType(
                 params: [listTypeParamType],
-                returnType: types.anyType,
+                returnType: rType,
                 isSuspend: false,
                 nullability: .nonNull
             )))
@@ -1632,7 +1655,8 @@ extension DataFlowSemaPhase {
                     receiverType: receiverType,
                     parameterTypes: [selectorType],
                     returnType: receiverType,
-                    typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    typeParameterUpperBoundsList: [[], comparableRBounds],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
@@ -1691,12 +1715,27 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_partition", for: memberSymbol)
-            // Return type is Pair<List<T>, List<T>> — use Any for now, refined by inference
+            // Return type is Pair<List<T>, List<T>>
+            let partitionReturnType: TypeID
+            if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")]) {
+                let listOfE = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(listTypeParamType)],
+                    nullability: .nonNull
+                )))
+                partitionReturnType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(listOfE), .out(listOfE)],
+                    nullability: .nonNull
+                )))
+            } else {
+                partitionReturnType = types.anyType
+            }
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: [predicateType2],
-                    returnType: types.anyType,
+                    returnType: partitionReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -2276,9 +2315,28 @@ extension DataFlowSemaPhase {
             args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
+        let rName = interner.intern("R")
+        let rSymbol = symbols.define(
+            kind: .typeParameter,
+            name: rName,
+            fqName: memberFQName + [rName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(rType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
         let selectorType = types.make(.functionType(FunctionType(
             params: [mlTypeParamType],
-            returnType: types.anyType,
+            returnType: rType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -2297,7 +2355,8 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [selectorType],
                 returnType: types.unitType,
-                typeParameterSymbols: [mlTypeParamSymbol],
+                typeParameterSymbols: [mlTypeParamSymbol, rSymbol],
+                typeParameterUpperBoundsList: [[], comparableRBounds],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
@@ -2321,9 +2380,28 @@ extension DataFlowSemaPhase {
             args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
+        let rName = interner.intern("R")
+        let rSymbol = symbols.define(
+            kind: .typeParameter,
+            name: rName,
+            fqName: memberFQName + [rName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+            [types.make(.classType(ClassType(
+                classSymbol: comparableSymbol,
+                args: [.invariant(rType)],
+                nullability: .nonNull
+            )))]
+        } else {
+            []
+        }
         let selectorType = types.make(.functionType(FunctionType(
             params: [mlTypeParamType],
-            returnType: types.anyType,
+            returnType: rType,
             isSuspend: false,
             nullability: .nonNull
         )))
@@ -2342,7 +2420,8 @@ extension DataFlowSemaPhase {
                 receiverType: receiverType,
                 parameterTypes: [selectorType],
                 returnType: types.unitType,
-                typeParameterSymbols: [mlTypeParamSymbol],
+                typeParameterSymbols: [mlTypeParamSymbol, rSymbol],
+                typeParameterUpperBoundsList: [[], comparableRBounds],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
@@ -3456,30 +3535,64 @@ extension DataFlowSemaPhase {
             )
         }
 
-        let maxByOrNullLambdaType = types.make(.functionType(FunctionType(
-            params: [entryType],
-            returnType: types.anyType,
-            isSuspend: false,
-            nullability: .nonNull
-        )))
+        // maxByOrNull / minByOrNull with R: Comparable<R> selector
         let nullableEntryType = types.makeNullable(entryType)
-        registerMember(
-            name: "maxByOrNull",
-            externalLinkName: "kk_map_maxByOrNull",
-            parameterTypes: [maxByOrNullLambdaType],
-            returnType: nullableEntryType,
-            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
-            flags: [.synthetic, .inlineFunction]
-        )
+        do {
+            func registerMapByOrNull(name: String, externalLinkName: String) {
+                let memberName = interner.intern(name)
+                let memberFQName = mapFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+                let comparableRBounds: [TypeID] = if let comparableSymbol = types.comparableInterfaceSymbol {
+                    [types.make(.classType(ClassType(
+                        classSymbol: comparableSymbol,
+                        args: [.invariant(rType)],
+                        nullability: .nonNull
+                    )))]
+                } else {
+                    []
+                }
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [entryType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(mapInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [selectorType],
+                        returnType: nullableEntryType,
+                        typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], [], comparableRBounds],
+                        classTypeParameterCount: 2
+                    ),
+                    for: memberSymbol
+                )
+            }
 
-        registerMember(
-            name: "minByOrNull",
-            externalLinkName: "kk_map_minByOrNull",
-            parameterTypes: [maxByOrNullLambdaType],
-            returnType: nullableEntryType,
-            typeParameterSymbols: [keyTypeParamSymbol, valueTypeParamSymbol],
-            flags: [.synthetic, .inlineFunction]
-        )
+            registerMapByOrNull(name: "maxByOrNull", externalLinkName: "kk_map_maxByOrNull")
+            registerMapByOrNull(name: "minByOrNull", externalLinkName: "kk_map_minByOrNull")
+        }
     }
 
     private func registerSyntheticMapEntryStub(
