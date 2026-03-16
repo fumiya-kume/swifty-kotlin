@@ -1425,9 +1425,10 @@ extension DataFlowSemaPhase {
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: receiverType,
-                    parameterTypes: [listTypeParamType],
+                    parameterTypes: [nullableElementType],
                     returnType: types.intType,
                     typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol

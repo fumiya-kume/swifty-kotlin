@@ -20,6 +20,7 @@ public extension RuntimeABIExterns {
         kk_list_to_set,
         kk_list_toMap,
         kk_list_subList,
+        kk_list_binarySearch,
         kk_set_of,
         kk_set_size,
         kk_set_contains,
@@ -154,7 +155,6 @@ public extension RuntimeABIExterns {
         kk_list_lastOrNull,
         kk_list_single,
         kk_list_singleOrNull,
-        kk_list_binarySearch,
         kk_mutable_list_add,
         kk_mutable_list_addAll,
         kk_mutable_list_removeAll,
@@ -299,6 +299,12 @@ public extension RuntimeABIExterns {
     static let kk_list_subList = ExternDecl(
         name: "kk_list_subList",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_binarySearch = ExternDecl(
+        name: "kk_list_binarySearch",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -1016,13 +1022,6 @@ public extension RuntimeABIExterns {
     static let kk_list_singleOrNull = ExternDecl(
         name: "kk_list_singleOrNull",
         parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
-    )
-
-    /// STDLIB-214: List.binarySearch(element)
-    static let kk_list_binarySearch = ExternDecl(
-        name: "kk_list_binarySearch",
-        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
