@@ -2,6 +2,17 @@
 import Foundation
 
 extension CallTypeChecker {
+    /// Safe lookup for well-known stdlib symbols (List, Map, Pair, etc.).
+    /// Returns `.invalid` if the symbol is not found, which should never happen
+    /// for correctly registered stdlib types. Avoids force-unwrap crashes.
+    private func requireStdlibSymbol(_ name: String, symbols: SymbolTable, interner: StringInterner) -> SymbolID {
+        guard let symbol = symbols.lookupByShortName(interner.intern(name)).first else {
+            // This is a compiler bug: a well-known stdlib symbol should always be registered.
+            preconditionFailure("KSwiftK internal error: stdlib symbol '\(name)' not found in symbol table")
+        }
+        return symbol
+    }
+
     private func tryBuiltinFlowMemberCall(
         _ id: ExprID,
         calleeName: InternedString,
@@ -542,7 +553,7 @@ extension CallTypeChecker {
                                 sema.types.anyType
                             }
                             resultType = sema.types.make(.classType(ClassType(
-                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                                classSymbol: requireStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                                 args: [.invariant(bodyType)],
                                 nullability: .nonNull
                             )))
@@ -557,7 +568,7 @@ extension CallTypeChecker {
                         resultType = isSyntheticSequenceReceiver
                             ? sema.types.anyType
                             : sema.types.make(.classType(ClassType(
-                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                                classSymbol: requireStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                                 args: [.invariant(sema.types.anyType)],
                                 nullability: .nonNull
                             )))
@@ -566,7 +577,7 @@ extension CallTypeChecker {
                     case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
                     case "associateBy", "associateWith", "associate":
                         resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            classSymbol: requireStdlibSymbol("Map", symbols: sema.symbols, interner: interner),
                             args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
                             nullability: .nonNull
                         )))
@@ -589,7 +600,7 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                         resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            classSymbol: requireStdlibSymbol("Map", symbols: sema.symbols, interner: interner),
                             args: [.invariant(keyType), .invariant(bodyType)],
                             nullability: .nonNull
                         )))
@@ -612,7 +623,7 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                         resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                            classSymbol: requireStdlibSymbol("Map", symbols: sema.symbols, interner: interner),
                             args: [.invariant(bodyType), .invariant(valueType)],
                             nullability: .nonNull
                         )))
@@ -625,7 +636,7 @@ extension CallTypeChecker {
                             sema.types.anyType
                         }
                         resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                            classSymbol: requireStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                             args: [.invariant(bodyType)],
                             nullability: .nonNull
                         )))
@@ -681,12 +692,12 @@ extension CallTypeChecker {
                     sema.types.anyType
                 }
                 let listType = sema.types.make(.classType(ClassType(
-                    classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                    classSymbol: requireStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                     args: [.invariant(collectionElementType)],
                     nullability: .nonNull
                 )))
                 resultType = sema.types.make(.classType(ClassType(
-                    classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
+                    classSymbol: requireStdlibSymbol("Map", symbols: sema.symbols, interner: interner),
                     args: [.invariant(keyType), .invariant(listType)],
                     nullability: .nonNull
                 )))
@@ -803,7 +814,7 @@ extension CallTypeChecker {
                     resultType = receiverType
                 } else {
                     resultType = sema.types.make(.classType(ClassType(
-                        classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        classSymbol: requireStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                         args: [.invariant(sema.types.anyType)],
                         nullability: .nonNull
                     )))
