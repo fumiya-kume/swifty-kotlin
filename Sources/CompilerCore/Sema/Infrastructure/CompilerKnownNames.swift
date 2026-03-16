@@ -4,6 +4,9 @@ enum KnownCompilerAnnotation {
     case deprecated
     case jvmStatic
     case jvmName
+    case jvmField
+    case jvmOverloads
+    case throws_
     case suppress
 
     var simpleName: String {
@@ -14,6 +17,12 @@ enum KnownCompilerAnnotation {
             "JvmStatic"
         case .jvmName:
             "JvmName"
+        case .jvmField:
+            "JvmField"
+        case .jvmOverloads:
+            "JvmOverloads"
+        case .throws_:
+            "Throws"
         case .suppress:
             "Suppress"
         }
@@ -27,6 +36,12 @@ enum KnownCompilerAnnotation {
             "kotlin.jvm.JvmStatic"
         case .jvmName:
             "kotlin.jvm.JvmName"
+        case .jvmField:
+            "kotlin.jvm.JvmField"
+        case .jvmOverloads:
+            "kotlin.jvm.JvmOverloads"
+        case .throws_:
+            "kotlin.jvm.Throws"
         case .suppress:
             "kotlin.Suppress"
         }
