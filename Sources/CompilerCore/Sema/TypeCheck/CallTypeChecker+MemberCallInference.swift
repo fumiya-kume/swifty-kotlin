@@ -2,6 +2,14 @@
 import Foundation
 
 extension CallTypeChecker {
+    /// Safe lookup for well-known stdlib symbols (List, Map, Pair, etc.).
+    /// Returns `nil` if the symbol is not found. Callers should fall back to
+    /// `sema.types.anyType` when the result is nil, following the error-resilient
+    /// design principle (never crash on missing symbols).
+    private func lookupStdlibSymbol(_ name: String, symbols: SymbolTable, interner: StringInterner) -> SymbolID? {
+        symbols.lookupByShortName(interner.intern(name)).first
+    }
+
     private func tryBuiltinFlowMemberCall(
         _ id: ExprID,
         calleeName: InternedString,
@@ -541,11 +549,15 @@ extension CallTypeChecker {
                             } else {
                                 sema.types.anyType
                             }
-                            resultType = sema.types.make(.classType(ClassType(
-                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
-                                args: [.invariant(bodyType)],
-                                nullability: .nonNull
-                            )))
+                            if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                                resultType = sema.types.make(.classType(ClassType(
+                                    classSymbol: listSymbol,
+                                    args: [.invariant(bodyType)],
+                                    nullability: .nonNull
+                                )))
+                            } else {
+                                resultType = sema.types.anyType
+                            }
                         }
                     case "filter":
                         resultType = isSyntheticSequenceReceiver ? sema.types.anyType : receiverType
@@ -554,22 +566,30 @@ extension CallTypeChecker {
                     case "forEach": resultType = sema.types.unitType
                     case "onEach": resultType = receiverType
                     case "flatMap":
-                        resultType = isSyntheticSequenceReceiver
-                            ? sema.types.anyType
-                            : sema.types.make(.classType(ClassType(
-                                classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        if isSyntheticSequenceReceiver {
+                            resultType = sema.types.anyType
+                        } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: listSymbol,
                                 args: [.invariant(sema.types.anyType)],
                                 nullability: .nonNull
                             )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
                     case "any", "none", "all": resultType = sema.types.booleanType
                     case "count": resultType = sema.types.intType
                     case "first", "last", "find": resultType = sema.types.makeNullable(collectionElementType)
                     case "associateBy", "associateWith", "associate":
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
-                            args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
-                            nullability: .nonNull
-                        )))
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(sema.types.anyType), .invariant(sema.types.anyType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
                     case "mapValues" where isMapReceiver:
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
@@ -588,11 +608,15 @@ extension CallTypeChecker {
                         } else {
                             sema.types.anyType
                         }
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
-                            args: [.invariant(keyType), .invariant(bodyType)],
-                            nullability: .nonNull
-                        )))
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(keyType), .invariant(bodyType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
                     case "mapKeys" where isMapReceiver:
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType
@@ -611,11 +635,15 @@ extension CallTypeChecker {
                         } else {
                             sema.types.anyType
                         }
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
-                            args: [.invariant(bodyType), .invariant(valueType)],
-                            nullability: .nonNull
-                        )))
+                        if let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: mapSymbol,
+                                args: [.invariant(bodyType), .invariant(valueType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
                     case "mapNotNull":
                         let bodyType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                             sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
@@ -624,11 +652,15 @@ extension CallTypeChecker {
                         } else {
                             sema.types.anyType
                         }
-                        resultType = sema.types.make(.classType(ClassType(
-                            classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
-                            args: [.invariant(bodyType)],
-                            nullability: .nonNull
-                        )))
+                        if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
+                            resultType = sema.types.make(.classType(ClassType(
+                                classSymbol: listSymbol,
+                                args: [.invariant(bodyType)],
+                                nullability: .nonNull
+                            )))
+                        } else {
+                            resultType = sema.types.anyType
+                        }
                     default: resultType = sema.types.anyType
                     }
                 }
@@ -680,16 +712,22 @@ extension CallTypeChecker {
                 } else {
                     sema.types.anyType
                 }
-                let listType = sema.types.make(.classType(ClassType(
-                    classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
-                    args: [.invariant(collectionElementType)],
-                    nullability: .nonNull
-                )))
-                resultType = sema.types.make(.classType(ClassType(
-                    classSymbol: sema.symbols.lookupByShortName(interner.intern("Map")).first!,
-                    args: [.invariant(keyType), .invariant(listType)],
-                    nullability: .nonNull
-                )))
+                if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner),
+                   let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner)
+                {
+                    let listType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.invariant(collectionElementType)],
+                        nullability: .nonNull
+                    )))
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: mapSymbol,
+                        args: [.invariant(keyType), .invariant(listType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
 
             case "sortedBy", "sortedByDescending":
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -801,12 +839,14 @@ extension CallTypeChecker {
                     resultType = sema.types.unitType
                 } else if calleeStr == "onEachIndexed" {
                     resultType = receiverType
-                } else {
+                } else if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner) {
                     resultType = sema.types.make(.classType(ClassType(
-                        classSymbol: sema.symbols.lookupByShortName(interner.intern("List")).first!,
+                        classSymbol: listSymbol,
                         args: [.invariant(sema.types.anyType)],
                         nullability: .nonNull
                     )))
+                } else {
+                    resultType = sema.types.anyType
                 }
 
             case "sumOf":
