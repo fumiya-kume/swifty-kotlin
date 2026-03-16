@@ -2530,6 +2530,30 @@ public enum RuntimeABISpec {
         ),
     ]
 
+    // MARK: - File I/O (STDLIB-320/322)
+
+    public static let fileIOFunctions: [RuntimeABIFunctionSpec] = [
+        RuntimeABIFunctionSpec(
+            name: "kk_file_new",
+            parameters: [
+                RuntimeABIParameter(name: "pathRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_file_forEachLine",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+    ]
+
     // MARK: - Duration / measureTime (STDLIB-230/231)
 
     public static let durationFunctions: [RuntimeABIFunctionSpec] = [

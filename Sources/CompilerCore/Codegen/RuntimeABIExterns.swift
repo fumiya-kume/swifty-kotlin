@@ -1806,6 +1806,25 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MARK: - File I/O (STDLIB-320/322)
+
+    public static let kk_file_new = ExternDecl(
+        name: "kk_file_new",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_file_forEachLine = ExternDecl(
+        name: "kk_file_forEachLine",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let fileIOExterns: [ExternDecl] = [
+        kk_file_new,
+        kk_file_forEachLine,
+    ]
+
     public static let regexExterns: [ExternDecl] = [
         kk_regex_create,
         kk_string_matches_regex,
