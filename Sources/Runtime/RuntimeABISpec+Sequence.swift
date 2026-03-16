@@ -75,6 +75,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
+        // Iterator builder (STDLIB-331)
+        RuntimeABIFunctionSpec(
+            name: "kk_iterator_builder_build",
+            parameters: [
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
         // Factory functions (STDLIB-097)
         RuntimeABIFunctionSpec(
             name: "kk_sequence_of",

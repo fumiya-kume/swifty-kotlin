@@ -131,6 +131,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-331: iterator {} builder → Iterator<T>
+        registerSyntheticTopLevelFunction(
+            named: "iterator",
+            packageFQName: kotlinSequencesPkg,
+            parameters: [(name: "block", type: types.anyType)],
+            returnType: types.anyType,
+            externalLinkName: "kk_iterator_builder_build",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticSequenceJoinToStringMember(
             symbols: symbols,
             types: types,
