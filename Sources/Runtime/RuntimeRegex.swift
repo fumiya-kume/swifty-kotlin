@@ -156,7 +156,7 @@ public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
 public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacementRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
     let replacement = regexStringFromRaw(replacementRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return strRaw }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw(str) }
     let range = NSRange(str.startIndex..., in: str)
     let result = regexBox.regex.stringByReplacingMatches(in: str, options: [], range: range, withTemplate: replacement)
     return regexMakeStringRaw(result)
