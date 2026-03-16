@@ -379,6 +379,63 @@ extension BuildKIRRegressionTests {
         XCTAssertEqual(fixture.interner.resolve(loweredCallee), "invoke")
     }
 
+    func testDirectMemberCallMutableMapPutAllFallsBackToRuntimeCallee() {
+        let fixture = makeKIRDirectLoweringFixture()
+        let range = makeRange()
+        let anyType = fixture.types.anyType
+        let mutableMapSymbol = defineSemanticSymbol(
+            in: fixture,
+            kind: .interface,
+            fqName: ["kotlin", "collections", "MutableMap"]
+        )
+        let mutableMapType = fixture.types.make(
+            .classType(
+                ClassType(
+                    classSymbol: mutableMapSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )
+            )
+        )
+
+        let receiver = appendTypedExpr(
+            .nameRef(fixture.interner.intern("map"), range),
+            type: mutableMapType,
+            fixture: fixture
+        )
+        let argExpr = appendTypedExpr(
+            .nameRef(fixture.interner.intern("other"), range),
+            type: anyType,
+            fixture: fixture
+        )
+        let args = [CallArgument(expr: argExpr)]
+        let exprID = appendTypedExpr(
+            .memberCall(
+                receiver: receiver,
+                callee: fixture.interner.intern("putAll"),
+                typeArgs: [],
+                args: args,
+                range: range
+            ),
+            type: fixture.types.unitType,
+            fixture: fixture
+        )
+
+        var emit = KIRLoweringEmitContext()
+        _ = fixture.driver.callLowerer.lowerMemberCallExpr(
+            exprID,
+            receiverExpr: receiver,
+            calleeName: fixture.interner.intern("putAll"),
+            args: args,
+            shared: fixture.makeShared(),
+            emit: &emit
+        )
+
+        let callees = extractCallees(from: emit.instructions, interner: fixture.interner)
+        XCTAssertTrue(callees.contains("kk_mutable_map_putAll"))
+        XCTAssertFalse(callees.contains("putAll"))
+    }
+
     func testDirectSharedAPILambdaAndObjectForwardersAreReachable() {
         let fixture = makeKIRDirectLoweringFixture()
         let range = makeRange()

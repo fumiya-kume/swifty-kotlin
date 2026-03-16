@@ -145,6 +145,11 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_build_set,
         kk_string_builder_append,
+        kk_string_builder_appendLine,
+        kk_string_builder_appendLine_noarg,
+        kk_string_builder_insert,
+        kk_string_builder_delete,
+        kk_string_builder_length,
         kk_builder_list_add,
         kk_builder_set_add,
         kk_list_getOrNull,
@@ -178,12 +183,23 @@ public extension RuntimeABIExterns {
         kk_builder_map_put,
         kk_mutable_map_put,
         kk_mutable_map_remove,
+        kk_mutable_map_clear,
         kk_mutable_map_getOrPut,
         kk_mutable_map_putAll,
         kk_list_plus_element,
         kk_list_plus_collection,
         kk_list_minus_element,
         kk_list_minus_collection,
+        kk_arraydeque_new,
+        kk_arraydeque_addFirst,
+        kk_arraydeque_addLast,
+        kk_arraydeque_removeFirst,
+        kk_arraydeque_removeLast,
+        kk_arraydeque_first,
+        kk_arraydeque_last,
+        kk_arraydeque_size,
+        kk_arraydeque_isEmpty,
+        kk_arraydeque_toString,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1131,6 +1147,37 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// StringBuilder enhancements (STDLIB-311)
+    static let kk_string_builder_appendLine = ExternDecl(
+        name: "kk_string_builder_appendLine",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_appendLine_noarg = ExternDecl(
+        name: "kk_string_builder_appendLine_noarg",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_insert = ExternDecl(
+        name: "kk_string_builder_insert",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_delete = ExternDecl(
+        name: "kk_string_builder_delete",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_length = ExternDecl(
+        name: "kk_string_builder_length",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
     static let kk_builder_list_add = ExternDecl(
         name: "kk_builder_list_add",
         parameterTypes: ["intptr_t"],
@@ -1263,6 +1310,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_mutable_map_clear = ExternDecl(
+        name: "kk_mutable_map_clear",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_mutable_map_getOrPut = ExternDecl(
         name: "kk_mutable_map_getOrPut",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -1298,5 +1351,67 @@ public extension RuntimeABIExterns {
         name: "kk_list_minus_collection",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
+    )
+
+    // MARK: - ArrayDeque (STDLIB-240)
+
+    static let kk_arraydeque_new = ExternDecl(
+        name: "kk_arraydeque_new",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_addFirst = ExternDecl(
+        name: "kk_arraydeque_addFirst",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_addLast = ExternDecl(
+        name: "kk_arraydeque_addLast",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_removeFirst = ExternDecl(
+        name: "kk_arraydeque_removeFirst",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_removeLast = ExternDecl(
+        name: "kk_arraydeque_removeLast",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_first = ExternDecl(
+        name: "kk_arraydeque_first",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_last = ExternDecl(
+        name: "kk_arraydeque_last",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_size = ExternDecl(
+        name: "kk_arraydeque_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_isEmpty = ExternDecl(
+        name: "kk_arraydeque_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_arraydeque_toString = ExternDecl(
+        name: "kk_arraydeque_toString",
+        parameterTypes: ["intptr_t"],
+        returnType: "void *"
     )
 }

@@ -8,8 +8,16 @@ public func kk_string_equals(_ aRaw: Int, _ bRaw: Int) -> Int {
     if bRaw == runtimeNullSentinelInt {
         return 0
     }
-    let a = extractString(from: UnsafeMutableRawPointer(bitPattern: aRaw)) ?? ""
-    let b = extractString(from: UnsafeMutableRawPointer(bitPattern: bRaw)) ?? ""
+    guard let aPtr = UnsafeMutableRawPointer(bitPattern: aRaw),
+          let a = extractString(from: aPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid string pointer in kk_string_equals (aRaw=0x\(String(aRaw, radix: 16)))")
+    }
+    guard let bPtr = UnsafeMutableRawPointer(bitPattern: bRaw),
+          let b = extractString(from: bPtr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid string pointer in kk_string_equals (bRaw=0x\(String(bRaw, radix: 16)))")
+    }
     return a == b ? 1 : 0
 }
 

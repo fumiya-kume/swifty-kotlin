@@ -313,9 +313,20 @@ extension ExprTypeChecker {
                     locals[elvisVarName] = (nonNullType, elvisLocal.symbol, elvisLocal.isMutable, elvisLocal.isInitialized)
                 }
             }
-        case .rangeTo, .rangeUntil, .downTo, .step:
+        case .rangeTo, .rangeUntil, .downTo:
             type = sema.types.intType
             sema.bindings.markRangeExpr(id)
+            // Detect CharRange: if either operand is Char, mark as char range (STDLIB-290)
+            if lhs == sema.types.charType || rhs == sema.types.charType {
+                sema.bindings.markCharRangeExpr(id)
+            }
+        case .step:
+            type = sema.types.intType
+            sema.bindings.markRangeExpr(id)
+            // For step, inherit CharRange flag from the receiver (the range expression)
+            if sema.bindings.isCharRangeExpr(lhsID) {
+                sema.bindings.markCharRangeExpr(id)
+            }
         case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
             preconditionFailure("Bitwise/shift binary operators must be parsed as infix member calls")
         }

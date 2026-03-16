@@ -668,6 +668,26 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-318: String.commonPrefixWith / commonSuffixWith
+    public static let kk_string_commonPrefixWith = ExternDecl(
+        name: "kk_string_commonPrefixWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_commonSuffixWith = ExternDecl(
+        name: "kk_string_commonSuffixWith",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-316: String.zipWithNext()
+    public static let kk_string_zipWithNext = ExternDecl(
+        name: "kk_string_zipWithNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isDigit = ExternDecl(
         name: "kk_char_isDigit",
         parameterTypes: ["intptr_t"],
@@ -1366,6 +1386,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // CharRange (STDLIB-290)
+    public static let kk_char_range_toList = ExternDecl(
+        name: "kk_char_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_range_forEach = ExternDecl(
+        name: "kk_char_range_forEach",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Delegate
 
     public static let kk_lazy_create = ExternDecl(
@@ -1602,6 +1635,20 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-351: Regex.replace(input) { lambda }
+    public static let kk_regex_replace_lambda = ExternDecl(
+        name: "kk_regex_replace_lambda",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-350: Regex.matchEntire
+    public static let kk_regex_matchEntire = ExternDecl(
+        name: "kk_regex_matchEntire",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let regexExterns: [ExternDecl] = [
         kk_regex_create,
         kk_string_matches_regex,
@@ -1614,6 +1661,8 @@ public enum RuntimeABIExterns {
         kk_regex_pattern,
         kk_match_result_value,
         kk_match_result_groupValues,
+        kk_regex_replace_lambda,
+        kk_regex_matchEntire,
     ]
 
     // MARK: - All Functions (canonical list)
@@ -1740,6 +1789,9 @@ public enum RuntimeABIExterns {
             kk_string_substringAfterLast,
             kk_string_chunked,
             kk_string_windowed,
+            kk_string_commonPrefixWith,
+            kk_string_commonSuffixWith,
+            kk_string_zipWithNext,
             // Print / Println
             kk_print_any,
             kk_println_any,
@@ -1861,6 +1913,9 @@ public enum RuntimeABIExterns {
             kk_range_forEach,
             kk_range_map,
             kk_range_reversed,
+            // CharRange (STDLIB-290)
+            kk_char_range_toList,
+            kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
         all += [
@@ -1899,6 +1954,7 @@ public enum RuntimeABIExterns {
         all += sequenceExterns
         all += regexExterns
         all += comparatorExterns
+        all += resultExterns
         return all
     }()
 

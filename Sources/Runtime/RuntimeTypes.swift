@@ -197,6 +197,16 @@ final class RuntimeMapBox {
     }
 }
 
+/// Runtime box for `ArrayDeque<T>`.
+/// Stores elements in a mutable array of `Int`.
+final class RuntimeArrayDequeBox {
+    var elements: [Int]
+
+    init(elements: [Int]) {
+        self.elements = elements
+    }
+}
+
 /// Lazy wrapper for `withIndex()` result. Kotlin returns `IndexingIterable` with
 /// default Object.toString() = "kotlin.collections.IndexingIterable@<hex>".
 final class RuntimeIndexingIterableBox {
@@ -259,6 +269,7 @@ enum SequenceStepKind {
     case zipStep(otherElements: [Int])
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
+    case onEachStep(fnPtr: Int, closureRaw: Int)
 }
 
 /// Runtime box for `Sequence<T>`.

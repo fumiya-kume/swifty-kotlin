@@ -30,6 +30,9 @@ public extension RuntimeABIExterns {
         kk_sequence_sumOf,
         kk_sequence_associate,
         kk_sequence_associateBy,
+        kk_sequence_chunked,
+        kk_sequence_windowed,
+        kk_sequence_onEach,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -203,6 +206,25 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_associateBy = ExternDecl(
         name: "kk_sequence_associateBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-276: chunked, windowed, onEach
+    static let kk_sequence_chunked = ExternDecl(
+        name: "kk_sequence_chunked",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_windowed = ExternDecl(
+        name: "kk_sequence_windowed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_onEach = ExternDecl(
+        name: "kk_sequence_onEach",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )

@@ -21,6 +21,7 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -61,7 +62,8 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
-            rangeExprIDs: &rangeExprIDs, listExprIDs: &listExprIDs,
+            rangeExprIDs: &rangeExprIDs, charRangeExprIDs: &charRangeExprIDs,
+            listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -1195,10 +1197,12 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard rangeExprIDs.contains(receiver.rawValue) else { return false }
+        let isCharRange = charRangeExprIDs.contains(receiver.rawValue)
 
         // first / last / count — simple property access (STDLIB-092)
         if callee == lookup.firstName, arguments.isEmpty {
@@ -1237,10 +1241,11 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // toList — returns a List (STDLIB-091)
+        // toList — returns a List (STDLIB-091 / STDLIB-290)
         if callee == lookup.toListName, arguments.isEmpty {
+            let toListCallee = isCharRange ? lookup.kkCharRangeToListName : lookup.kkRangeToListName
             loweredBody.append(.call(
-                symbol: nil, callee: lookup.kkRangeToListName,
+                symbol: nil, callee: toListCallee,
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
@@ -1248,12 +1253,13 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // forEach — HOF (STDLIB-091)
+        // forEach — HOF (STDLIB-091 / STDLIB-290)
         if callee == lookup.forEachName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let forEachCallee = isCharRange ? lookup.kkCharRangeForEachName : lookup.kkRangeForEachName
             _ = emitHOFCall(
-                kkName: lookup.kkRangeForEachName, receiver: receiver,
+                kkName: forEachCallee, receiver: receiver,
                 arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
@@ -1285,7 +1291,11 @@ extension CollectionLiteralLoweringPass {
                 arguments: [receiver], result: result,
                 canThrow: false, thrownResult: nil
             ))
-            if let result { rangeExprIDs.insert(result.rawValue) }
+            if let result {
+                rangeExprIDs.insert(result.rawValue)
+                // Propagate char range through reversed() (STDLIB-290)
+                if isCharRange { charRangeExprIDs.insert(result.rawValue) }
+            }
             return true
         }
 

@@ -1091,6 +1091,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let printlnFunctions: [RuntimeABIFunctionSpec] = [
@@ -1985,6 +1994,26 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Range"
         ),
+        // CharRange (STDLIB-290)
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_toList",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_char_range_forEach",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+                RuntimeABIParameter(name: "lambdaRaw", type: .intptr),
+                RuntimeABIParameter(name: "captureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
     ]
 
     /// Stdlib Delegate Functions (P5-80)
@@ -2305,6 +2334,28 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // STDLIB-351: Regex.replace lambda / STDLIB-350: Regex.matchEntire
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_replace_lambda",
+            parameters: [
+                RuntimeABIParameter(name: "regexRaw", type: .intptr),
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_regex_matchEntire",
+            parameters: [
+                RuntimeABIParameter(name: "regexRaw", type: .intptr),
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_chunked",
             parameters: [
@@ -2320,6 +2371,34 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "str", type: .intptr),
                 RuntimeABIParameter(name: "size", type: .intptr),
                 RuntimeABIParameter(name: "step", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-318: commonPrefixWith / commonSuffixWith
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonPrefixWith",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonSuffixWith",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-316: String.zipWithNext()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"
@@ -2348,6 +2427,7 @@ public enum RuntimeABISpec {
             + sequenceFunctions
             + regexFunctions
             + comparatorFunctions
+            + resultFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

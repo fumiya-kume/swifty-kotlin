@@ -20,6 +20,13 @@ struct CollectionLiteralLookupTables {
     let mutableSetOfName: InternedString
     let emptySetName: InternedString
 
+    // Type alias constructor names (STDLIB-245)
+    let arrayListName: InternedString
+    let hashMapName: InternedString
+    let hashSetName: InternedString
+    let linkedHashMapName: InternedString
+    let linkedHashSetName: InternedString
+
     // Runtime ABI names
     let kkListOfName: InternedString
     let kkListSizeName: InternedString
@@ -156,6 +163,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceSumOfName: InternedString
     let kkSequenceAssociateName: InternedString
     let kkSequenceAssociateByName: InternedString
+    let kkSequenceChunkedName: InternedString
+    let kkSequenceWindowedName: InternedString
+    let kkSequenceOnEachName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -215,6 +225,11 @@ struct CollectionLiteralLookupTables {
     let kkRangeMapName: InternedString
     let kkRangeReversedName: InternedString
     let kkOpContainsName: InternedString
+
+    // CharRange (STDLIB-290)
+    let kkBoxCharName: InternedString
+    let kkCharRangeToListName: InternedString
+    let kkCharRangeForEachName: InternedString
 
     // Member names
     let sizeName: InternedString
@@ -338,10 +353,24 @@ struct CollectionLiteralLookupTables {
     let kkMutableSetRemoveName: InternedString
     let kkMutableMapPutName: InternedString
 
+    // StringBuilder enhancements (STDLIB-311)
+    let appendLineName: InternedString
+    let insertName: InternedString
+    let deleteName: InternedString
+    let lengthName: InternedString
+    let kkStringBuilderAppendLineName: InternedString
+    let kkStringBuilderAppendLineNoargName: InternedString
+    let kkStringBuilderInsertName: InternedString
+    let kkStringBuilderDeleteName: InternedString
+    let kkStringBuilderLengthName: InternedString
+
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
     let setFactoryNames: Set<InternedString>
     let mapFactoryNames: Set<InternedString>
+    let mutableListConstructorNames: Set<InternedString>
+    let mutableSetConstructorNames: Set<InternedString>
+    let mutableMapConstructorNames: Set<InternedString>
     let arrayOfFactoryNames: Set<InternedString>
     let builderDSLNames: Set<InternedString>
     let stringProducingCallees: Set<InternedString>
@@ -363,6 +392,12 @@ struct CollectionLiteralLookupTables {
         setOfName = interner.intern("setOf")
         mutableSetOfName = interner.intern("mutableSetOf")
         emptySetName = interner.intern("emptySet")
+
+        arrayListName = interner.intern("ArrayList")
+        hashMapName = interner.intern("HashMap")
+        hashSetName = interner.intern("HashSet")
+        linkedHashMapName = interner.intern("LinkedHashMap")
+        linkedHashSetName = interner.intern("LinkedHashSet")
 
         kkListOfName = interner.intern("kk_list_of")
         kkListSizeName = interner.intern("kk_list_size")
@@ -493,6 +528,9 @@ struct CollectionLiteralLookupTables {
         kkSequenceSumOfName = interner.intern("kk_sequence_sumOf")
         kkSequenceAssociateName = interner.intern("kk_sequence_associate")
         kkSequenceAssociateByName = interner.intern("kk_sequence_associateBy")
+        kkSequenceChunkedName = interner.intern("kk_sequence_chunked")
+        kkSequenceWindowedName = interner.intern("kk_sequence_windowed")
+        kkSequenceOnEachName = interner.intern("kk_sequence_onEach")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
@@ -549,6 +587,11 @@ struct CollectionLiteralLookupTables {
         kkRangeMapName = interner.intern("kk_range_map")
         kkRangeReversedName = interner.intern("kk_range_reversed")
         kkOpContainsName = interner.intern("kk_op_contains")
+
+        // CharRange (STDLIB-290)
+        kkBoxCharName = interner.intern("kk_box_char")
+        kkCharRangeToListName = interner.intern("kk_char_range_toList")
+        kkCharRangeForEachName = interner.intern("kk_char_range_forEach")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")
@@ -661,9 +704,23 @@ struct CollectionLiteralLookupTables {
         kkMutableSetRemoveName = interner.intern("kk_mutable_set_remove")
         kkMutableMapPutName = interner.intern("kk_mutable_map_put")
 
+        // StringBuilder enhancements (STDLIB-311)
+        appendLineName = interner.intern("appendLine")
+        insertName = interner.intern("insert")
+        deleteName = interner.intern("delete")
+        lengthName = interner.intern("length")
+        kkStringBuilderAppendLineName = interner.intern("kk_string_builder_appendLine")
+        kkStringBuilderAppendLineNoargName = interner.intern("kk_string_builder_appendLine_noarg")
+        kkStringBuilderInsertName = interner.intern("kk_string_builder_insert")
+        kkStringBuilderDeleteName = interner.intern("kk_string_builder_delete")
+        kkStringBuilderLengthName = interner.intern("kk_string_builder_length")
+
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
         mapFactoryNames = [mapOfName, mutableMapOfName, emptyMapName]
+        mutableListConstructorNames = [arrayListName]
+        mutableSetConstructorNames = [hashSetName, linkedHashSetName]
+        mutableMapConstructorNames = [hashMapName, linkedHashMapName]
         arrayOfFactoryNames = [arrayOfName, intArrayOfName, longArrayOfName, doubleArrayOfName, booleanArrayOfName, charArrayOfName]
         builderDSLNames = [buildStringName, buildListName, buildSetName, buildMapName]
 

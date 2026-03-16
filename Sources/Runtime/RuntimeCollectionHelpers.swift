@@ -37,6 +37,19 @@ func runtimeSetBox(from rawValue: Int) -> RuntimeSetBox? {
     return tryCast(ptr, to: RuntimeSetBox.self)
 }
 
+func runtimeArrayDequeBox(from rawValue: Int) -> RuntimeArrayDequeBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
+        return nil
+    }
+    let isObjectPointer = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: ptr))
+    }
+    guard isObjectPointer else {
+        return nil
+    }
+    return tryCast(ptr, to: RuntimeArrayDequeBox.self)
+}
+
 func runtimeCollectionElements(from rawValue: Int) -> [Int]? {
     if let listBox = runtimeListBox(from: rawValue) {
         return listBox.elements

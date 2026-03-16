@@ -17,13 +17,13 @@ public extension RuntimeABIExterns {
 
     static let kk_random_nextInt_until = ExternDecl(
         name: "kk_random_nextInt_until",
-        parameterTypes: ["intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
     static let kk_random_nextInt_range = ExternDecl(
         name: "kk_random_nextInt_range",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

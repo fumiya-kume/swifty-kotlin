@@ -84,7 +84,7 @@ extension CallLowerer {
         "fold", "reduce", "groupBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
-        "putAll",
+        "putAll", "addAll",
         "maxByOrNull", "minByOrNull",
         "plus", "minus",
         "asSequence", "toList", "toMutableList", "toTypedArray",
@@ -98,6 +98,7 @@ extension CallLowerer {
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
         "containsAll", "binarySearch",
+        "addFirst", "addLast",
         "to", // FUNC-002
     ]
 
@@ -526,6 +527,20 @@ extension CallLowerer {
         }
         return symbol.name == knownNames.mutableList
             || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
+    }
+
+    private func isArrayDequeLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isArrayDequeSymbol(symbol)
     }
 
     private func isConcreteCollectionLikeType(
@@ -1298,6 +1313,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeName == interner.intern("zipWithNext") {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_zipWithNext"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
@@ -1382,6 +1408,10 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
+                case "commonPrefixWith":
+                    ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                case "commonSuffixWith":
+                    ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
                 default:
                     nil
                 }
@@ -1638,6 +1668,10 @@ extension CallLowerer {
                     runtimeCallee = "kk_sequence_mapNotNull"
                 } else if calleeName == interner.intern("mapIndexed") {
                     runtimeCallee = "kk_sequence_mapIndexed"
+                } else if calleeName == interner.intern("chunked") {
+                    runtimeCallee = "kk_sequence_chunked"
+                } else if calleeName == interner.intern("onEach") {
+                    runtimeCallee = "kk_sequence_onEach"
                 } else {
                     runtimeCallee = nil
                 }
@@ -1648,6 +1682,7 @@ extension CallLowerer {
                         || runtimeCallee == "kk_sequence_associateBy"
                         || runtimeCallee == "kk_sequence_mapNotNull"
                         || runtimeCallee == "kk_sequence_mapIndexed"
+                        || runtimeCallee == "kk_sequence_onEach"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
@@ -1725,6 +1760,40 @@ extension CallLowerer {
                     symbol: nil,
                     callee: interner.intern("kk_array_copyOfRange"),
                     arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // Sequence windowed: 1-3 args (size, step=1, partialWindows=false) — STDLIB-276
+        if (1...3).contains(args.count), calleeName == interner.intern("windowed") {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
+                || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            {
+                let sizeArg = normalizedArgIDs[0]
+                let stepArg: KIRExprID
+                if args.count >= 2 {
+                    stepArg = normalizedArgIDs[1]
+                } else {
+                    stepArg = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+                    instructions.append(.constValue(result: stepArg, value: .intLiteral(1)))
+                }
+                let partialArg: KIRExprID
+                if args.count >= 3 {
+                    partialArg = normalizedArgIDs[2]
+                } else {
+                    partialArg = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: partialArg, value: .intLiteral(0)))
+                }
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_sequence_windowed"),
+                    arguments: [loweredReceiverID, sizeArg, stepArg, partialArg],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
@@ -2388,6 +2457,16 @@ extension CallLowerer {
            Self.unresolvedChannelMemberNames.contains(calleeText)
         {
             arguments.insert(loweredReceiverID, at: 0)
+            return
+        }
+        // removeFirst/removeLast are scoped to ArrayDeque receivers only;
+        // they must NOT go through the general unresolvedCollectionMemberNames
+        // path because MutableList also has these methods and would get
+        // incorrect callee mapping.
+        if (calleeText == "removeFirst" || calleeText == "removeLast"),
+           isArrayDequeLikeType(receiverType, sema: sema, interner: interner)
+        {
+            arguments.insert(loweredReceiverID, at: 0)
         }
     }
 
@@ -2724,6 +2803,31 @@ extension CallLowerer {
             }
         }
 
+        if isArrayDequeLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "addFirst":
+                return interner.intern("kk_arraydeque_addFirst")
+            case "addLast":
+                return interner.intern("kk_arraydeque_addLast")
+            case "removeFirst":
+                return interner.intern("kk_arraydeque_removeFirst")
+            case "removeLast":
+                return interner.intern("kk_arraydeque_removeLast")
+            case "first":
+                return interner.intern("kk_arraydeque_first")
+            case "last":
+                return interner.intern("kk_arraydeque_last")
+            case "size":
+                return interner.intern("kk_arraydeque_size")
+            case "isEmpty":
+                return interner.intern("kk_arraydeque_isEmpty")
+            case "toString":
+                return interner.intern("kk_arraydeque_toString")
+            default:
+                break
+            }
+        }
+
         if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
             case "map":
@@ -2841,6 +2945,12 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_mapIndexed")
             case interner.intern("withIndex"):
                 return interner.intern("kk_sequence_withIndex")
+            case interner.intern("chunked"):
+                return interner.intern("kk_sequence_chunked")
+            case interner.intern("windowed"):
+                return interner.intern("kk_sequence_windowed")
+            case interner.intern("onEach"):
+                return interner.intern("kk_sequence_onEach")
             default:
                 break
             }

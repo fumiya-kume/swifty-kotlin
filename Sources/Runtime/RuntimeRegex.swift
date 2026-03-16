@@ -156,7 +156,7 @@ public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
 public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacementRaw: Int) -> Int {
     let str = regexStringFromRaw(strRaw) ?? ""
     let replacement = regexStringFromRaw(replacementRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return strRaw }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw(str) }
     let range = NSRange(str.startIndex..., in: str)
     let result = regexBox.regex.stringByReplacingMatches(in: str, options: [], range: range, withTemplate: replacement)
     return regexMakeStringRaw(result)
@@ -180,6 +180,60 @@ public func kk_string_split_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
     }
     parts.append(String(str[lastEnd...]))
     return regexMakeStringListRaw(parts)
+}
+
+// MARK: - STDLIB-351: Regex.replace(input) { matchResult -> replacement }
+
+@_cdecl("kk_regex_replace_lambda")
+public func kk_regex_replace_lambda(
+    _ regexRaw: Int,
+    _ strRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let str = regexStringFromRaw(strRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return strRaw }
+    let range = NSRange(str.startIndex..., in: str)
+    let matches = regexBox.regex.matches(in: str, options: [], range: range)
+    if matches.isEmpty { return strRaw }
+    var result = ""
+    var lastEnd = str.startIndex
+    for match in matches {
+        let matchRange = Range(match.range, in: str)!
+        result.append(String(str[lastEnd ..< matchRange.lowerBound]))
+        let matchResult = makeMatchResult(from: match, in: str)
+        let matchResultRaw = registerRuntimeObject(matchResult)
+        var thrown = 0
+        let replacementRaw = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: matchResultRaw, outThrown: &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return regexMakeStringRaw("")
+        }
+        let replacement = regexStringFromRaw(replacementRaw) ?? ""
+        result.append(replacement)
+        lastEnd = matchRange.upperBound
+    }
+    result.append(String(str[lastEnd...]))
+    return regexMakeStringRaw(result)
+}
+
+// MARK: - STDLIB-350: Regex.matchEntire
+
+@_cdecl("kk_regex_matchEntire")
+public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
+    let str = regexStringFromRaw(strRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return runtimeNullSentinelInt }
+    let range = NSRange(str.startIndex..., in: str)
+    guard let result = regexBox.regex.firstMatch(in: str, options: [], range: range) else {
+        return runtimeNullSentinelInt
+    }
+    let matchRange = Range(result.range, in: str)!
+    guard matchRange.lowerBound == str.startIndex && matchRange.upperBound == str.endIndex else {
+        return runtimeNullSentinelInt
+    }
+    let matchResult = makeMatchResult(from: result, in: str)
+    return registerRuntimeObject(matchResult)
 }
 
 // MARK: - STDLIB-103: String.toRegex() / Regex.pattern

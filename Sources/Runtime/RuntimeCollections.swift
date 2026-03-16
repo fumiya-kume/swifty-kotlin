@@ -158,7 +158,7 @@ public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
 @_cdecl("kk_list_to_mutable_list")
 public func kk_list_to_mutable_list(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_to_mutable_list")
     }
     return registerRuntimeObject(RuntimeListBox(elements: list.elements))
 }
@@ -770,6 +770,15 @@ public func kk_mutable_map_remove(_ mapRaw: Int, _ key: Int) -> Int {
     return map.values.remove(at: index)
 }
 
+@_cdecl("kk_mutable_map_clear")
+public func kk_mutable_map_clear(_ mapRaw: Int) -> Int {
+    if let map = runtimeMapBox(from: mapRaw) {
+        map.keys.removeAll()
+        map.values.removeAll()
+    }
+    return 0
+}
+
 @_cdecl("kk_mutable_map_putAll")
 public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw),
@@ -778,7 +787,11 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
         guard idx < other.values.count else { break }
         var found = false
         for (existIdx, existKey) in map.keys.enumerated() where runtimeValuesEqual(existKey, key) {
-            map.values[existIdx] = other.values[idx]
+            if existIdx < map.values.count {
+                map.values[existIdx] = other.values[idx]
+            } else {
+                map.values.append(other.values[idx])
+            }
             found = true
             break
         }
@@ -1028,7 +1041,10 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_first")
+    }
     return pairBox.first
 }
 
@@ -1040,7 +1056,10 @@ public func component1(_ pairRaw: Int) -> Int {
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
-          let pairBox = tryCast(pointer, to: RuntimePairBox.self) else { return runtimeNullSentinelInt }
+          let pairBox = tryCast(pointer, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_second")
+    }
     return pairBox.second
 }
 
@@ -1054,11 +1073,7 @@ public func kk_pair_to_string(_ pairRaw: Int) -> UnsafeMutableRawPointer {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
-        let str = "(null, null)"
-        let utf8 = Array(str.utf8)
-        return utf8.withUnsafeBufferPointer { buf in
-            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
-        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_to_string")
     }
     let firstStr = runtimeElementToString(pairBox.first)
     let secondStr = runtimeElementToString(pairBox.second)
@@ -1080,21 +1095,30 @@ public func kk_triple_new(_ first: Int, _ second: Int, _ third: Int) -> Int {
 @_cdecl("kk_triple_first")
 public func kk_triple_first(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_first")
+    }
     return tripleBox.first
 }
 
 @_cdecl("kk_triple_second")
 public func kk_triple_second(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_second")
+    }
     return tripleBox.second
 }
 
 @_cdecl("kk_triple_third")
 public func kk_triple_third(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
-          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self) else { return runtimeNullSentinelInt }
+          let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_third")
+    }
     return tripleBox.third
 }
 
@@ -1103,11 +1127,7 @@ public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
           let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
     else {
-        let str = "(null, null, null)"
-        let utf8 = Array(str.utf8)
-        return utf8.withUnsafeBufferPointer { buf in
-            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
-        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_to_string")
     }
     let firstStr = runtimeElementToString(tripleBox.first)
     let secondStr = runtimeElementToString(tripleBox.second)
@@ -1125,7 +1145,9 @@ public func kk_triple_to_string(_ tripleRaw: Int) -> UnsafeMutableRawPointer {
 public func kk_pair_toList(_ pairRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
-    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Pair handle in kk_pair_toList")
+    }
     return registerRuntimeObject(RuntimeListBox(elements: [pairBox.first, pairBox.second]))
 }
 
@@ -1133,7 +1155,9 @@ public func kk_pair_toList(_ pairRaw: Int) -> Int {
 public func kk_triple_toList(_ tripleRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: tripleRaw),
           let tripleBox = tryCast(pointer, to: RuntimeTripleBox.self)
-    else { return registerRuntimeObject(RuntimeListBox(elements: [])) }
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid Triple handle in kk_triple_toList")
+    }
     return registerRuntimeObject(RuntimeListBox(elements: [tripleBox.first, tripleBox.second, tripleBox.third]))
 }
 
@@ -1142,7 +1166,7 @@ public func kk_triple_toList(_ tripleRaw: Int) -> Int {
 @_cdecl("kk_array_toList")
 public func kk_array_toList(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_toList")
     }
     return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
 }
@@ -1150,7 +1174,7 @@ public func kk_array_toList(_ arrayRaw: Int) -> Int {
 @_cdecl("kk_array_toMutableList")
 public func kk_array_toMutableList(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_toMutableList")
     }
     return registerRuntimeObject(RuntimeListBox(elements: Array(array.elements)))
 }
@@ -1158,7 +1182,7 @@ public func kk_array_toMutableList(_ arrayRaw: Int) -> Int {
 @_cdecl("kk_list_toTypedArray")
 public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
-        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_toTypedArray")
     }
     let box = RuntimeArrayBox(length: list.elements.count)
     for (i, elem) in list.elements.enumerated() {
@@ -1167,12 +1191,128 @@ public func kk_list_toTypedArray(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - ArrayDeque Functions (STDLIB-240)
+
+@_cdecl("kk_arraydeque_new")
+public func kk_arraydeque_new() -> Int {
+    registerRuntimeObject(RuntimeArrayDequeBox(elements: []))
+}
+
+@_cdecl("kk_arraydeque_addFirst")
+public func kk_arraydeque_addFirst(_ dequeRaw: Int, _ element: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    deque.elements.insert(element, at: 0)
+    return 0
+}
+
+@_cdecl("kk_arraydeque_addLast")
+public func kk_arraydeque_addLast(_ dequeRaw: Int, _ element: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    deque.elements.append(element)
+    return 0
+}
+
+@_cdecl("kk_arraydeque_removeFirst")
+public func kk_arraydeque_removeFirst(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements.removeFirst()
+}
+
+@_cdecl("kk_arraydeque_removeLast")
+public func kk_arraydeque_removeLast(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements.removeLast()
+}
+
+@_cdecl("kk_arraydeque_first")
+public func kk_arraydeque_first(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements[0]
+}
+
+@_cdecl("kk_arraydeque_last")
+public func kk_arraydeque_last(_ dequeRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    guard !deque.elements.isEmpty else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "ArrayDeque is empty.")
+        return 0
+    }
+    return deque.elements[deque.elements.count - 1]
+}
+
+@_cdecl("kk_arraydeque_size")
+public func kk_arraydeque_size(_ dequeRaw: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return 0
+    }
+    return deque.elements.count
+}
+
+@_cdecl("kk_arraydeque_isEmpty")
+public func kk_arraydeque_isEmpty(_ dequeRaw: Int) -> Int {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        return kk_box_bool(1)
+    }
+    return kk_box_bool(deque.elements.isEmpty ? 1 : 0)
+}
+
+@_cdecl("kk_arraydeque_toString")
+public func kk_arraydeque_toString(_ dequeRaw: Int) -> UnsafeMutableRawPointer {
+    guard let deque = runtimeArrayDequeBox(from: dequeRaw) else {
+        let str = "[]"
+        let utf8 = Array(str.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+        }
+    }
+    let parts = deque.elements.map { elem -> String in
+        runtimeElementToString(elem)
+    }
+    let str = "[" + parts.joined(separator: ", ") + "]"
+    let utf8 = Array(str.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    }
+}
+
 // MARK: - Array utility functions (STDLIB-089)
 
 @_cdecl("kk_array_copyOf")
 public func kk_array_copyOf(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_copyOf")
     }
     let box = RuntimeArrayBox(length: array.elements.count)
     for (i, elem) in array.elements.enumerated() {
@@ -1184,7 +1324,7 @@ public func kk_array_copyOf(_ arrayRaw: Int) -> Int {
 @_cdecl("kk_array_copyOfRange")
 public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return registerRuntimeObject(RuntimeArrayBox(length: 0))
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_copyOfRange")
     }
     // Kotlin semantics: validate boundaries
     let size = array.elements.count
@@ -1200,7 +1340,9 @@ public func kk_array_copyOfRange(_ arrayRaw: Int, _ fromIndex: Int, _ toIndex: I
 
 @_cdecl("kk_array_fill")
 public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
-    guard let array = runtimeArrayBox(from: arrayRaw) else { return 0 }
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_fill")
+    }
     for i in 0 ..< array.elements.count {
         array.elements[i] = value
     }

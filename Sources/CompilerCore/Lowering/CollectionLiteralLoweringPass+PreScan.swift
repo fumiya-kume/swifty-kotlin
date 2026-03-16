@@ -64,8 +64,28 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
+        // First pass: collect char-valued expression IDs to detect char range arguments (STDLIB-290)
+        var charValuedExprIDs: Set<Int32> = []
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, callee, _, result, _, _, _):
+                if callee == lookup.kkBoxCharName, let result {
+                    charValuedExprIDs.insert(result.rawValue)
+                }
+            case let .constValue(result, .charLiteral):
+                charValuedExprIDs.insert(result.rawValue)
+            case let .copy(from, to):
+                if charValuedExprIDs.contains(from.rawValue) {
+                    charValuedExprIDs.insert(to.rawValue)
+                }
+            default:
+                break
+            }
+        }
+
         for instruction in function.body {
             switch instruction {
             case let .call(_, callee, arguments, result, _, _, _):
@@ -76,6 +96,8 @@ extension CollectionLiteralLoweringPass {
                     mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
                     sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
+                    charRangeExprIDs: &charRangeExprIDs,
+                    charValuedExprIDs: charValuedExprIDs,
                     stringExprIDs: &stringExprIDs
                 )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
@@ -85,6 +107,7 @@ extension CollectionLiteralLoweringPass {
                     mapExprIDs: &mapExprIDs,
                     sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
+                    charRangeExprIDs: &charRangeExprIDs,
                     stringExprIDs: &stringExprIDs
                 )
             case let .copy(from, to):
@@ -94,6 +117,7 @@ extension CollectionLiteralLoweringPass {
                     setExprIDs: &setExprIDs,
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
+                    charRangeExprIDs: &charRangeExprIDs,
                     stringExprIDs: &stringExprIDs
                 )
             case let .constValue(result, .stringLiteral):
@@ -115,6 +139,8 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
+        charValuedExprIDs: Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
         classifyFactoryCall(
@@ -128,6 +154,16 @@ extension CollectionLiteralLoweringPass {
            || callee == lookup.kkOpDownToName || callee == lookup.kkOpStepName
         {
             rangeExprIDs.insert(result.rawValue)
+            // Detect CharRange: if any argument is a char-valued expression (STDLIB-290)
+            if arguments.contains(where: { charValuedExprIDs.contains($0.rawValue) }) {
+                charRangeExprIDs.insert(result.rawValue)
+            }
+            // step on a char range propagates char range
+            if callee == lookup.kkOpStepName, !arguments.isEmpty,
+               charRangeExprIDs.contains(arguments[0].rawValue)
+            {
+                charRangeExprIDs.insert(result.rawValue)
+            }
         }
         // Classify sequence factory calls (STDLIB-097)
         if let result,
@@ -157,15 +193,18 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>
     ) {
         guard let result else { return }
-        if lookup.listFactoryNames.contains(callee) || callee == lookup.kkListOfName
+        if lookup.listFactoryNames.contains(callee) || lookup.mutableListConstructorNames.contains(callee)
+            || callee == lookup.kkListOfName
             || callee == lookup.kkStringSplitName
             || callee == lookup.kkStringChunkedName
             || callee == lookup.kkStringWindowedName
         {
             listExprIDs.insert(result.rawValue)
-        } else if lookup.setFactoryNames.contains(callee) || callee == lookup.kkSetOfName {
+        } else if lookup.setFactoryNames.contains(callee) || lookup.mutableSetConstructorNames.contains(callee)
+                    || callee == lookup.kkSetOfName {
             setExprIDs.insert(result.rawValue)
-        } else if lookup.mapFactoryNames.contains(callee) || callee == lookup.kkMapOfName {
+        } else if lookup.mapFactoryNames.contains(callee) || lookup.mutableMapConstructorNames.contains(callee)
+                    || callee == lookup.kkMapOfName {
             mapExprIDs.insert(result.rawValue)
         } else if lookup.arrayOfFactoryNames.contains(callee) || callee == lookup.kkArrayNewName {
             arrayExprIDs.insert(result.rawValue)
@@ -238,6 +277,7 @@ extension CollectionLiteralLoweringPass {
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
         if callee == lookup.asSequenceName {
@@ -294,7 +334,13 @@ extension CollectionLiteralLoweringPass {
         // Track range member calls that return ranges
         if rangeExprIDs.contains(receiverRaw) {
             if callee == lookup.reversedName {
-                if let result { rangeExprIDs.insert(result.rawValue) }
+                if let result {
+                    rangeExprIDs.insert(result.rawValue)
+                    // Propagate char range through reversed() (STDLIB-290)
+                    if charRangeExprIDs.contains(receiverRaw) {
+                        charRangeExprIDs.insert(result.rawValue)
+                    }
+                }
             } else if callee == lookup.toListName || callee == lookup.mapName {
                 if let result { listExprIDs.insert(result.rawValue) }
             }
@@ -317,6 +363,7 @@ extension CollectionLiteralLoweringPass {
         arrayExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
+        charRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
@@ -336,6 +383,9 @@ extension CollectionLiteralLoweringPass {
         }
         if rangeExprIDs.contains(from.rawValue) {
             rangeExprIDs.insert(to.rawValue)
+        }
+        if charRangeExprIDs.contains(from.rawValue) {
+            charRangeExprIDs.insert(to.rawValue)
         }
         if stringExprIDs.contains(from.rawValue) {
             stringExprIDs.insert(to.rawValue)

@@ -393,6 +393,26 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_map_get(map, 1), runtimeNullSentinelInt)
     }
 
+    func testMutableMapPutAllNormalizesCorruptedTargetEntryArrays() {
+        let target = registerRuntimeObject(RuntimeMapBox(keys: [1, 2], values: [10]))
+        let source = registerRuntimeObject(RuntimeMapBox(keys: [2, 3], values: [20, 30]))
+
+        _ = kk_mutable_map_putAll(target, source)
+
+        XCTAssertEqual(mapKeys(target), [1, 2, 3])
+        XCTAssertEqual(listElements(kk_map_values(target)), [10, 20, 30])
+    }
+
+    func testMutableSetAddAllAcceptsSetInput() {
+        let target = registerRuntimeObject(RuntimeSetBox(elements: [1, 2]))
+        let source = registerRuntimeObject(RuntimeSetBox(elements: [2, 3, 4]))
+
+        let modified = kk_mutable_set_addAll(target, source)
+
+        XCTAssertEqual(kk_unbox_bool(modified), 1)
+        XCTAssertEqual(setElements(target), [1, 2, 3, 4])
+    }
+
     func testBoolAbiForCollectionHelpersReturnsRaw() {
         let source = makeList([1, 2, 3])
         XCTAssertEqual(kk_unbox_bool(kk_list_contains(source, 2)), 1)

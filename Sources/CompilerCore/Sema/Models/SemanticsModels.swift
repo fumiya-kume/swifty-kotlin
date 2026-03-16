@@ -831,6 +831,7 @@ public final class BindingTable {
     public private(set) var invokeOperatorCallExprs: Set<ExprID> = []
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var rangeExprIDs: Set<ExprID> = []
+    public private(set) var charRangeExprIDs: Set<ExprID> = []
     public private(set) var flowExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
     public private(set) var flowSymbolIDs: Set<SymbolID> = []
@@ -938,6 +939,14 @@ public final class BindingTable {
 
     public func isRangeExpr(_ expr: ExprID) -> Bool {
         rangeExprIDs.contains(expr)
+    }
+
+    public func markCharRangeExpr(_ expr: ExprID) {
+        charRangeExprIDs.insert(expr)
+    }
+
+    public func isCharRangeExpr(_ expr: ExprID) -> Bool {
+        charRangeExprIDs.contains(expr)
     }
 
     public func markFlowExpr(_ expr: ExprID) {

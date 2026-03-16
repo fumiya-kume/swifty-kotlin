@@ -49,28 +49,22 @@ public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> In
 
 @_cdecl("kk_kproperty_stub_name")
 public func kk_kproperty_stub_name(_ handle: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return 0
-    }
-    let isObj = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObj, let stub = tryCast(ptr, to: RuntimeKPropertyStub.self) else {
-        return 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid KProperty handle in kk_kproperty_stub_name")
     }
     return stub.name
 }
 
 @_cdecl("kk_kproperty_stub_return_type")
 public func kk_kproperty_stub_return_type(_ handle: Int) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
-        return 0
-    }
-    let isObj = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObj, let stub = tryCast(ptr, to: RuntimeKPropertyStub.self) else {
-        return 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: handle),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let stub = tryCast(ptr, to: RuntimeKPropertyStub.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid KProperty handle in kk_kproperty_stub_return_type")
     }
     return stub.returnType
 }
