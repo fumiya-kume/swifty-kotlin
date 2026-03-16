@@ -13,6 +13,7 @@ public func kk_random_nextInt_until(_: Int, _ until: Int, _ outThrown: UnsafeMut
     guard until > 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
         return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: IllegalArgumentException: bound must be positive, but is \(until)")
     }
     return Int.random(in: 0 ..< until)
 }
@@ -23,6 +24,7 @@ public func kk_random_nextInt_range(_: Int, _ from: Int, _ until: Int, _ outThro
     guard until > from else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
         return 0
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: IllegalArgumentException: Random range is empty: [\(from), \(until)).")
     }
     return Int.random(in: from ..< until)
 }
