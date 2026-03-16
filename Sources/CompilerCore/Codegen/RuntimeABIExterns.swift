@@ -1602,6 +1602,20 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-351: Regex.replace(input) { lambda }
+    public static let kk_regex_replace_lambda = ExternDecl(
+        name: "kk_regex_replace_lambda",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-350: Regex.matchEntire
+    public static let kk_regex_matchEntire = ExternDecl(
+        name: "kk_regex_matchEntire",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let regexExterns: [ExternDecl] = [
         kk_regex_create,
         kk_string_matches_regex,
@@ -1614,6 +1628,8 @@ public enum RuntimeABIExterns {
         kk_regex_pattern,
         kk_match_result_value,
         kk_match_result_groupValues,
+        kk_regex_replace_lambda,
+        kk_regex_matchEntire,
     ]
 
     // MARK: - All Functions (canonical list)

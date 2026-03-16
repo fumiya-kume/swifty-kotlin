@@ -90,6 +90,38 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-350: Regex.matchEntire ---
+        registerRegexMemberFunction(
+            named: "matchEntire",
+            externalLinkName: "kk_regex_matchEntire",
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
+            parameters: [("input", stringType, false, false)],
+            returnType: nullableMatchResultType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-351: Regex.replace(input) { lambda } ---
+        let matchResultToStringLambda = types.make(.functionType(FunctionType(
+            params: [matchResultType],
+            returnType: stringType,
+            nullability: .nonNull
+        )))
+        registerRegexMemberFunction(
+            named: "replace",
+            externalLinkName: "kk_regex_replace_lambda",
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
+            parameters: [
+                ("input", stringType, false, false),
+                ("transform", matchResultToStringLambda, false, false),
+            ],
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Helpers
