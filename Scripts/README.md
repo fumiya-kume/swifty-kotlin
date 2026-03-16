@@ -115,3 +115,23 @@ Render a markdown summary from that report:
 ```bash
 bash Scripts/diff_kotlinc_ci_summary.sh --report /tmp/diff_report.tsv --summary /tmp/step_summary.md
 ```
+
+## Review worktree workflow
+
+List open PRs, unresolved review counts, and matching local worktrees:
+
+```bash
+python3 Scripts/review_worktrees.py list --with-review-counts
+```
+
+Create a dedicated review worktree for an open PR:
+
+```bash
+python3 Scripts/review_worktrees.py add 276
+```
+
+Override the destination directory if needed:
+
+```bash
+python3 Scripts/review_worktrees.py add 274 --base-dir /tmp
+```
