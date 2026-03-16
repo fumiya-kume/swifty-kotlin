@@ -376,3 +376,17 @@ final class RuntimeVetoableBox {
 final class RuntimeNotNullBox {
     var currentValue: Int?
 }
+
+/// Runtime box for `Iterable.groupingBy { keySelector }`.
+/// Captures the source list and key selector function pointer.
+final class RuntimeGroupingBox {
+    let sourceElements: [Int]
+    let keyFnPtr: Int
+    let keyClosureRaw: Int
+
+    init(sourceElements: [Int], keyFnPtr: Int, keyClosureRaw: Int) {
+        self.sourceElements = sourceElements
+        self.keyFnPtr = keyFnPtr
+        self.keyClosureRaw = keyClosureRaw
+    }
+}
