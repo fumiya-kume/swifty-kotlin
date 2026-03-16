@@ -36,9 +36,10 @@ private func invalidContainerPanic(_ caller: StaticString, _ kind: StaticString)
 
 @_cdecl("kk_list_getOrElse")
 public func kk_list_getOrElse(_ listRaw: Int, _ index: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    if let list = runtimeListBox(from: listRaw),
-       list.elements.indices.contains(index)
-    {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    if list.elements.indices.contains(index) {
         return list.elements[index]
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -216,11 +217,12 @@ public func kk_map_none(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThr
 
 @_cdecl("kk_map_getOrElse")
 public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    if let map = runtimeMapBox(from: mapRaw) {
-        for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
-            if idx < map.values.count { return map.values[idx] }
-            break
-        }
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+        if idx < map.values.count { return map.values[idx] }
+        break
     }
     var thrown = 0
     let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
@@ -230,30 +232,29 @@ public func kk_map_getOrElse(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureR
 
 @_cdecl("kk_mutable_map_getOrPut")
 public func kk_mutable_map_getOrPut(_ mapRaw: Int, _ key: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    if let map = runtimeMapBox(from: mapRaw) {
-        for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
-            if idx < map.values.count {
-                let existing = map.values[idx]
-                if existing != runtimeNullSentinelInt {
-                    return existing
-                }
-                var thrown = 0
-                let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
-                if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-                map.values[idx] = result
-                return result
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    for (idx, mapKey) in map.keys.enumerated() where runtimeValuesEqual(mapKey, key) {
+        if idx < map.values.count {
+            let existing = map.values[idx]
+            if existing != runtimeNullSentinelInt {
+                return existing
             }
-            break
+            var thrown = 0
+            let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
+            if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+            map.values[idx] = result
+            return result
         }
+        break
     }
 
     var thrown = 0
     let result = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &thrown)
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-    if let map = runtimeMapBox(from: mapRaw) {
-        map.keys.append(key)
-        map.values.append(result)
-    }
+    map.keys.append(key)
+    map.values.append(result)
     return result
 }
 
@@ -452,7 +453,10 @@ public func kk_list_fold(
 
 @_cdecl("kk_list_reduce")
 public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
     }
     var acc = list.elements[0]
@@ -532,7 +536,10 @@ public func kk_list_count(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_list_first")
 public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Collection is empty."), outThrown)
     }
     if fnPtr == 0 {
@@ -552,7 +559,10 @@ public func kk_list_first(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_list_last")
 public func kk_list_last(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Collection is empty."), outThrown)
     }
     if fnPtr == 0 {
@@ -723,7 +733,10 @@ public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
 
 @_cdecl("kk_list_maxOrNull")
 public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let first = list.elements.first else {
         return runtimeNullSentinelInt
     }
     var best = first
@@ -735,7 +748,10 @@ public func kk_list_maxOrNull(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_minOrNull")
 public func kk_list_minOrNull(_ listRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw), let first = list.elements.first else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let first = list.elements.first else {
         return runtimeNullSentinelInt
     }
     var best = first
@@ -747,7 +763,10 @@ public func kk_list_minOrNull(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_maxByOrNull")
 public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -769,7 +788,10 @@ public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 
 @_cdecl("kk_list_minByOrNull")
 public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -791,7 +813,10 @@ public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 
 @_cdecl("kk_list_maxOfOrNull")
 public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -811,7 +836,10 @@ public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 
 @_cdecl("kk_list_minOfOrNull")
 public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
@@ -884,7 +912,10 @@ public func kk_list_shuffled(_ listRaw: Int) -> Int {
 @_cdecl("kk_list_random")
 public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    guard let list = runtimeListBox(from: listRaw), !list.elements.isEmpty else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
     }
     return list.elements.randomElement()!
@@ -892,7 +923,10 @@ public func kk_list_random(_ listRaw: Int, _ outThrown: UnsafeMutablePointer<Int
 
 @_cdecl("kk_list_randomOrNull")
 public func kk_list_randomOrNull(_ listRaw: Int) -> Int {
-    guard let list = runtimeListBox(from: listRaw), let element = list.elements.randomElement() else {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let element = list.elements.randomElement() else {
         return runtimeNullSentinelInt
     }
     return element
