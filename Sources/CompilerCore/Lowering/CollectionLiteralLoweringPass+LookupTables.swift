@@ -346,8 +346,11 @@ struct CollectionLiteralLookupTables {
 
     // Builder member function names (STDLIB-002)
     let appendName: InternedString
+    let appendLineName: InternedString
     let putName: InternedString
     let kkStringBuilderAppendName: InternedString
+    let kkStringBuilderAppendLineName: InternedString
+    let kkStringBuilderAppendLineNoargName: InternedString
     let kkBuilderListAddName: InternedString
     let kkBuilderSetAddName: InternedString
     let kkBuilderMapPutName: InternedString
@@ -699,8 +702,11 @@ struct CollectionLiteralLookupTables {
         kkBuildMapName = interner.intern("kk_build_map")
 
         appendName = interner.intern("append")
+        appendLineName = interner.intern("appendLine")
         putName = interner.intern("put")
         kkStringBuilderAppendName = interner.intern("kk_string_builder_append")
+        kkStringBuilderAppendLineName = interner.intern("kk_string_builder_appendLine")
+        kkStringBuilderAppendLineNoargName = interner.intern("kk_string_builder_appendLine_noarg")
         kkBuilderListAddName = interner.intern("kk_builder_list_add")
         kkBuilderSetAddName = interner.intern("kk_builder_set_add")
         kkBuilderMapPutName = interner.intern("kk_builder_map_put")
