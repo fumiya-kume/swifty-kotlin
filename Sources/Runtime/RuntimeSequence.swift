@@ -791,7 +791,7 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
 @_cdecl("kk_sequence_first")
 public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var firstElement: Int? = nil
+        var firstElement: Int?
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
             firstElement = elem
             return false // stop after first element
@@ -814,7 +814,7 @@ public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<I
 @_cdecl("kk_sequence_firstOrNull")
 public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var firstElement: Int? = nil
+        var firstElement: Int?
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
             firstElement = elem
             return false // stop after first element
@@ -830,7 +830,7 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
 @_cdecl("kk_sequence_last")
 public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var lastElement: Int? = nil
+        var lastElement: Int?
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
             lastElement = elem
             return true // continue to find last element
