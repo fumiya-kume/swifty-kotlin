@@ -330,8 +330,10 @@ private func applyMapStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, outThr
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            return mapped
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
         }
         mapped.append(maybeUnbox(result))
     }
@@ -346,8 +348,10 @@ private func applyFilterStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, out
         var thrown = 0
         let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            return filtered
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
         }
         if maybeUnbox(result) != 0 {
             filtered.append(elem)
@@ -364,8 +368,10 @@ private func applyTakeWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, 
         var thrown = 0
         let predicateResult = predicate(closureRaw, elem, &thrown)
         if thrown != 0 {
-            outThrown?.pointee = thrown
-            return result
+            if let outThrown = outThrown {
+                outThrown.pointee = thrown
+            }
+            return []
         }
         if maybeUnbox(predicateResult) == 0 {
             break
@@ -385,8 +391,10 @@ private func applyDropWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, 
             var thrown = 0
             let predicateResult = predicate(closureRaw, elem, &thrown)
             if thrown != 0 {
-                outThrown?.pointee = thrown
-                return result
+                if let outThrown = outThrown {
+                    outThrown.pointee = thrown
+                }
+                return []
             }
             if maybeUnbox(predicateResult) == 0 {
                 dropping = false
@@ -708,7 +716,6 @@ public func kk_sequence_forEach(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) 
         _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
-            return 0
         }
     }
     return 0
@@ -723,7 +730,6 @@ public func kk_sequence_flatMap(_ seqRaw: Int, _ fnPtr: Int, _ closureRaw: Int) 
         let subRaw = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
-            break
         }
         if let subList = runtimeListBox(from: subRaw) {
             result.append(contentsOf: subList.elements)
