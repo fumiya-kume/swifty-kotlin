@@ -335,7 +335,7 @@ public func kk_custom_delegate_set_value(_ handle: Int, _ thisRef: Int, _ proper
 /// Bridges compiler-emitted delegated property accessors that still lower to
 /// `getValue` / `setValue` symbols instead of direct runtime helper names.
 @_cdecl("kk_delegate_get_value")
-public func kk_delegate_get_value(_ handle: Int, _: Int, _: Int) -> Int {
+public func kk_delegate_get_value(_ handle: Int, _: Int, _ property: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -360,13 +360,23 @@ public func kk_delegate_get_value(_ handle: Int, _: Int, _: Int) -> Int {
         }
         return value
     }
+    // Map-backed property delegation (STDLIB-335)
+    if let mapBox = tryCast(ptr, to: RuntimeMapBox.self) {
+        let propName = kk_kproperty_stub_name(property)
+        for i in 0..<mapBox.keys.count {
+            if kk_string_equals(mapBox.keys[i], propName) != 0 {
+                return mapBox.values[i]
+            }
+        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: key not found in map delegate")
+    }
     return 0
 }
 
 /// Bridges compiler-emitted delegated property setters that still lower to
 /// `setValue` instead of direct runtime helper names.
 @_cdecl("kk_delegate_set_value")
-public func kk_delegate_set_value(_ handle: Int, _: Int, _: Int, _ newValue: Int) -> Int {
+public func kk_delegate_set_value(_ handle: Int, _: Int, _ property: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         return 0
     }
@@ -408,6 +418,20 @@ public func kk_delegate_set_value(_ handle: Int, _: Int, _: Int, _ newValue: Int
     }
     if let notNullBox = tryCast(ptr, to: RuntimeNotNullBox.self) {
         notNullBox.currentValue = newValue
+        return newValue
+    }
+    // MutableMap-backed property delegation (STDLIB-335)
+    if let mapBox = tryCast(ptr, to: RuntimeMapBox.self) {
+        let propName = kk_kproperty_stub_name(property)
+        for i in 0..<mapBox.keys.count {
+            if kk_string_equals(mapBox.keys[i], propName) != 0 {
+                mapBox.values[i] = newValue
+                return newValue
+            }
+        }
+        // Key not present yet — insert new entry.
+        mapBox.keys.append(propName)
+        mapBox.values.append(newValue)
         return newValue
     }
     return newValue
