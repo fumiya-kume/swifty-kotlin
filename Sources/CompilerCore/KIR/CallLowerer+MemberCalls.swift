@@ -1977,6 +1977,7 @@ extension CallLowerer {
             "replaceFirstChar",
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
+            "ifEmpty",
         ].contains(interner.resolve(calleeName))
     }
 
