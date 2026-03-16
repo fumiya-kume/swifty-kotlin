@@ -78,8 +78,6 @@ extension ABILoweringPass {
             interner.intern("kk_math_floor"),
             interner.intern("kk_math_round"),
             interner.intern("kk_random_nextInt"),
-            interner.intern("kk_random_nextInt_until"),
-            interner.intern("kk_random_nextInt_range"),
             interner.intern("kk_random_nextDouble"),
             interner.intern("kk_random_nextBoolean"),
             interner.intern("kk_op_is"),
