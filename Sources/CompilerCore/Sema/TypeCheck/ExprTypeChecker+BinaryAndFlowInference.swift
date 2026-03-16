@@ -314,14 +314,24 @@ extension ExprTypeChecker {
                 }
             }
         case .rangeTo, .rangeUntil, .downTo:
-            type = sema.types.intType
+            // LongRange when either operand is Long; IntRange otherwise.
+            if lhs == longType || rhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
             sema.bindings.markRangeExpr(id)
             // Detect CharRange: if either operand is Char, mark as char range (STDLIB-290)
             if lhs == sema.types.charType || rhs == sema.types.charType {
                 sema.bindings.markCharRangeExpr(id)
             }
         case .step:
-            type = sema.types.intType
+            // LongRange when the receiver (lhs) is Long; IntRange otherwise.
+            if lhs == longType {
+                type = longType
+            } else {
+                type = intType
+            }
             sema.bindings.markRangeExpr(id)
             // For step, inherit CharRange flag from the receiver (the range expression)
             if sema.bindings.isCharRangeExpr(lhsID) {

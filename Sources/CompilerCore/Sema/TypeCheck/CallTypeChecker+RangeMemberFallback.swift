@@ -30,13 +30,16 @@ extension CallTypeChecker {
         }
 
         let isCharRange = sema.bindings.isCharRangeExpr(receiverID)
+        let receiverType = sema.bindings.exprType(for: receiverID)
+        let isLongRange = receiverType == sema.types.longType
 
         // Provide contextual function type for range HOF lambda inference.
         if let expectation = rangeMemberLambdaExpectation(
             memberName: memberName,
             argCount: args.count,
             sema: sema,
-            isCharRange: isCharRange
+            isCharRange: isCharRange,
+            isLongRange: isLongRange
         ),
             args.indices.contains(expectation.argumentIndex)
         {
@@ -63,7 +66,7 @@ extension CallTypeChecker {
             }
         }
 
-        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange)
+        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange, isLongRange: isLongRange)
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -93,20 +96,21 @@ extension CallTypeChecker {
         ["toList", "map"].contains(memberName)
     }
 
-    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false) -> TypeID {
+    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false, isLongRange: Bool = false) -> TypeID {
+        let elementType = isCharRange ? sema.types.charType : (isLongRange ? sema.types.longType : sema.types.intType)
         switch memberName {
         case "first", "last":
-            isCharRange ? sema.types.charType : sema.types.intType
+            return elementType
         case "count":
-            sema.types.intType
+            return sema.types.intType
         case "contains":
-            sema.types.booleanType
+            return sema.types.booleanType
         case "forEach":
-            sema.types.unitType
+            return sema.types.unitType
         case "reversed":
-            sema.types.intType
+            return elementType
         default:
-            sema.types.anyType
+            return sema.types.anyType
         }
     }
 
@@ -114,14 +118,15 @@ extension CallTypeChecker {
         memberName: String,
         argCount: Int,
         sema: SemaModule,
-        isCharRange: Bool = false
+        isCharRange: Bool = false,
+        isLongRange: Bool = false
     ) -> (argumentIndex: Int, expectedType: TypeID)? {
         let oneParamMembers: Set = ["forEach", "map"]
         guard oneParamMembers.contains(memberName), argCount == 1 else {
             return nil
         }
         let lambdaReturnType = memberName == "forEach" ? sema.types.unitType : sema.types.anyType
-        let elementType = isCharRange ? sema.types.charType : sema.types.intType
+        let elementType = isCharRange ? sema.types.charType : (isLongRange ? sema.types.longType : sema.types.intType)
         let expectedType = sema.types.make(.functionType(FunctionType(
             params: [elementType],
             returnType: lambdaReturnType,
