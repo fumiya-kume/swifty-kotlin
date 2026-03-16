@@ -1916,44 +1916,52 @@ extension CallLowerer {
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
-                let runtimeCallee: String? = switch interner.resolve(calleeName) {
-                case "toList":
-                    "kk_sequence_to_list"
-                case "distinct":
-                    "kk_sequence_distinct"
-                case "sorted":
-                    "kk_sequence_sorted"
-                case "sortedDescending":
-                    "kk_sequence_sortedDescending"
-                case "filterNotNull":
-                    "kk_sequence_filterNotNull"
-                case "withIndex":
-                    "kk_sequence_withIndex"
-                case "first":
-                    "kk_sequence_first"
-                case "firstOrNull":
-                    "kk_sequence_firstOrNull"
-                case "last":
-                    "kk_sequence_last"
-                case "count":
-                    "kk_sequence_count"
+                let toListID = interner.intern("toList")
+                let distinctID = interner.intern("distinct")
+                let sortedID = interner.intern("sorted")
+                let sortedDescendingID = interner.intern("sortedDescending")
+                let filterNotNullID = interner.intern("filterNotNull")
+                let withIndexID = interner.intern("withIndex")
+                let firstID = interner.intern("first")
+                let firstOrNullID = interner.intern("firstOrNull")
+                let lastID = interner.intern("last")
+                let countID = interner.intern("count")
+                let runtimeCallee: InternedString? = switch calleeName {
+                case toListID:
+                    interner.intern("kk_sequence_to_list")
+                case distinctID:
+                    interner.intern("kk_sequence_distinct")
+                case sortedID:
+                    interner.intern("kk_sequence_sorted")
+                case sortedDescendingID:
+                    interner.intern("kk_sequence_sortedDescending")
+                case filterNotNullID:
+                    interner.intern("kk_sequence_filterNotNull")
+                case withIndexID:
+                    interner.intern("kk_sequence_withIndex")
+                case firstID:
+                    interner.intern("kk_sequence_first")
+                case firstOrNullID:
+                    interner.intern("kk_sequence_firstOrNull")
+                case lastID:
+                    interner.intern("kk_sequence_last")
+                case countID:
+                    interner.intern("kk_sequence_count")
                 default:
                     nil
                 }
                 if let runtimeCallee {
-                    let canThrow = runtimeCallee == "kk_sequence_first" || runtimeCallee == "kk_sequence_last"
-                        || runtimeCallee == "kk_sequence_firstOrNull" || runtimeCallee == "kk_sequence_count"
-                    let thrownResult: KIRExprID? = canThrow ? arena.appendExpr(
-                        .temporary(Int32(arena.expressions.count)),
-                        type: sema.types.nullableAnyType
-                    ) : nil
+                    let canThrow = runtimeCallee == interner.intern("kk_sequence_first")
+                        || runtimeCallee == interner.intern("kk_sequence_last")
+                        || runtimeCallee == interner.intern("kk_sequence_firstOrNull")
+                        || runtimeCallee == interner.intern("kk_sequence_count")
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern(runtimeCallee),
+                        callee: runtimeCallee,
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: canThrow,
-                        thrownResult: thrownResult
+                        thrownResult: nil
                     ))
                     return result
                 }
@@ -2713,17 +2721,13 @@ extension CallLowerer {
             || loweredCallee == interner.intern("kk_sequence_last")
             || loweredCallee == interner.intern("kk_sequence_firstOrNull")
             || loweredCallee == interner.intern("kk_sequence_count")
-        let thrownResult: KIRExprID? = canThrow ? arena.appendExpr(
-            .temporary(Int32(arena.expressions.count)),
-            type: sema.types.nullableAnyType
-        ) : nil
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
             arguments: callArguments,
             result: result,
             canThrow: canThrow,
-            thrownResult: thrownResult,
+            thrownResult: nil,
             isSuperCall: isSuperCall
         ))
     }
