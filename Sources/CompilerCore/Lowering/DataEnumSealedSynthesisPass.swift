@@ -520,7 +520,15 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let getterName = interner.intern("entries$get")
 
-        let signature = FunctionSignature(parameterTypes: [], returnType: intType, isSuspend: false)
+        // Compute correct types from enumSymbol, matching CallLowerer+EnumStdlib pattern
+        let entryType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnType = entryType
+
+        let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
         var body: [KIRInstruction] = []
 
@@ -530,9 +538,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
 
-        // kk_array_new(count)
+        // kk_array_new(count) -- intermediate array uses anyType
         let arrayExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: intType
+            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
         )
         body.append(.call(
             symbol: nil,
@@ -551,26 +559,23 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
 
             let entryRef = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: intType
+                .temporary(Int32(module.arena.expressions.count)), type: entryType
             )
             body.append(.constValue(result: entryRef, value: .symbolRef(entry.id)))
 
-            let setResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: intType
-            )
             body.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_array_set"),
                 arguments: [arrayExpr, indexExpr, entryRef],
-                result: setResult,
+                result: nil,
                 canThrow: false,
                 thrownResult: nil
             ))
         }
 
-        // kk_enum_make_values_array(array, count)
+        // kk_enum_make_values_array(array, count) -- result uses the enum type
         let listExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)), type: intType
+            .temporary(Int32(module.arena.expressions.count)), type: returnType
         )
         body.append(.call(
             symbol: nil,

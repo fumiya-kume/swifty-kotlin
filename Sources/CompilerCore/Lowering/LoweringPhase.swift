@@ -27,6 +27,7 @@ public final class LoweringPhase: CompilerPhase {
         StdlibDelegateLoweringPass(),
         JvmStaticLoweringPass(),
         DataEnumSealedSynthesisPass(),
+        EnumEntriesLoweringPass(),
         EnumNameAccessLoweringPass(),
         LambdaClosureConversionPass(),
         InlineLoweringPass(),
