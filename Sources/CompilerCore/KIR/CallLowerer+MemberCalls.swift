@@ -486,6 +486,20 @@ extension CallLowerer {
         return knownNames.isRegexSymbol(symbol)
     }
 
+    private func isStringBuilderLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isStringBuilderSymbol(symbol)
+    }
+
     private func isSequenceLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -1771,6 +1785,32 @@ extension CallLowerer {
                     return result
                 }
             }
+            // StringBuilder member calls with 1 arg (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.append {
+                    "kk_string_builder_append_obj"
+                } else if calleeName == sbNames.appendLine {
+                    "kk_string_builder_appendLine_obj"
+                } else if calleeName == sbNames.deleteCharAt {
+                    "kk_string_builder_deleteCharAt"
+                } else if calleeName == sbNames.get {
+                    "kk_string_builder_get"
+                } else {
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
         }
 
         if args.count == 2 {
@@ -1788,6 +1828,28 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
                 return result
+            }
+            // StringBuilder 2-arg member calls (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.insert {
+                    "kk_string_builder_insert_obj"
+                } else if calleeName == sbNames.delete {
+                    "kk_string_builder_delete_obj"
+                } else {
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 
@@ -1894,6 +1956,34 @@ extension CallLowerer {
                     thrownResult: nil
                 ))
                 return result
+            }
+            // StringBuilder 0-arg member calls and properties (STDLIB-255/256/257)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                let sbNames = KnownCompilerNames(interner: interner)
+                let runtimeCallee: String? = if calleeName == sbNames.toString {
+                    "kk_string_builder_toString"
+                } else if calleeName == sbNames.clear {
+                    "kk_string_builder_clear"
+                } else if calleeName == sbNames.reverse {
+                    "kk_string_builder_reverse"
+                } else if calleeName == sbNames.appendLine {
+                    "kk_string_builder_appendLine_noarg_obj"
+                } else if calleeName == sbNames.length {
+                    "kk_string_builder_length_prop"
+                } else {
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
             }
         }
 

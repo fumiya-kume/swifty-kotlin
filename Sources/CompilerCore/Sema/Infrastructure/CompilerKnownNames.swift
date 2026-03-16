@@ -96,6 +96,7 @@ struct KnownCompilerNames {
     let charArray: InternedString
 
     let regex: InternedString
+    let stringBuilder: InternedString
     let sequence: InternedString
     let channel: InternedString
     let job: InternedString
@@ -139,7 +140,20 @@ struct KnownCompilerNames {
     let launch: InternedString
     let async: InternedString
 
+    // StringBuilder member names
+    let append: InternedString
+    let appendLine: InternedString
+    let deleteCharAt: InternedString
+    let get: InternedString
+    let insert: InternedString
+    let delete: InternedString
+    let toString: InternedString
+    let clear: InternedString
+    let reverse: InternedString
+    let length: InternedString
+
     let kotlinRegexFQName: [InternedString]
+    let kotlinStringBuilderFQName: [InternedString]
     let kotlinSequenceFQName: [InternedString]
     let kotlinCollectionsListFQName: [InternedString]
     let kotlinCollectionsMutableListFQName: [InternedString]
@@ -193,6 +207,7 @@ struct KnownCompilerNames {
         charArray = interner.intern("CharArray")
 
         regex = interner.intern("Regex")
+        stringBuilder = interner.intern("StringBuilder")
         sequence = interner.intern("Sequence")
         channel = interner.intern("Channel")
         job = interner.intern("Job")
@@ -236,6 +251,18 @@ struct KnownCompilerNames {
         launch = interner.intern("launch")
         async = interner.intern("async")
 
+        // StringBuilder member names
+        append = interner.intern("append")
+        appendLine = interner.intern("appendLine")
+        deleteCharAt = interner.intern("deleteCharAt")
+        get = interner.intern("get")
+        insert = interner.intern("insert")
+        delete = interner.intern("delete")
+        toString = interner.intern("toString")
+        clear = interner.intern("clear")
+        reverse = interner.intern("reverse")
+        length = interner.intern("length")
+
         let kotlin = interner.intern("kotlin")
         let kotlinText = interner.intern("text")
         let kotlinCollections = interner.intern("collections")
@@ -246,6 +273,7 @@ struct KnownCompilerNames {
         let flowPkg = interner.intern("flow")
 
         kotlinRegexFQName = [kotlin, kotlinText, regex]
+        kotlinStringBuilderFQName = [kotlin, kotlinText, stringBuilder]
         kotlinSequenceFQName = [kotlin, kotlinSequences, sequence]
         kotlinCollectionsListFQName = [kotlin, kotlinCollections, list]
         kotlinCollectionsMutableListFQName = [kotlin, kotlinCollections, mutableList]
@@ -309,6 +337,14 @@ struct KnownCompilerNames {
 
     func isRegexSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == regex || symbolMatches(symbol, fqName: kotlinRegexFQName)
+    }
+
+    func isStringBuilderSymbol(_ symbol: SemanticSymbol) -> Bool {
+        if symbolMatches(symbol, fqName: kotlinStringBuilderFQName) {
+            return true
+        }
+        // Fall back to simple name match only for synthetic symbols (no FQN)
+        return symbol.name == stringBuilder && symbol.fqName.isEmpty
     }
 
     func isSequenceSymbol(_ symbol: SemanticSymbol) -> Bool {

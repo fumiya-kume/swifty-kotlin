@@ -171,6 +171,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.regexFunctions,
             RuntimeABISpec.comparatorFunctions,
             RuntimeABISpec.resultFunctions,
+            RuntimeABISpec.stringBuilderFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count
