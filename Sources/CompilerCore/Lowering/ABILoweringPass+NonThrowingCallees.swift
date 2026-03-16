@@ -247,7 +247,6 @@ extension ABILoweringPass {
             interner.intern("kk_set_contains"),
             interner.intern("kk_set_containsAll"),
             interner.intern("kk_list_containsAll"),
-            interner.intern("kk_list_binarySearch"),
             interner.intern("kk_set_is_empty"),
             interner.intern("kk_set_toList"),
             interner.intern("kk_set_intersect"),

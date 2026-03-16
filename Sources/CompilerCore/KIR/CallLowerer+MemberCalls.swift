@@ -1676,8 +1676,6 @@ extension CallLowerer {
                     "kk_list_elementAtOrNull"
                 case "containsAll":
                     "kk_list_containsAll"
-                case "binarySearch":
-                    "kk_list_binarySearch"
                 default:
                     nil
                 }
@@ -2708,8 +2706,6 @@ extension CallLowerer {
                 return interner.intern("kk_list_subList")
             case "containsAll":
                 return interner.intern("kk_list_containsAll")
-            case "binarySearch":
-                return interner.intern("kk_list_binarySearch")
             default:
                 break
             }
