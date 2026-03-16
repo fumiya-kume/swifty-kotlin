@@ -157,7 +157,9 @@ public func kk_range_toList(_ rangeRaw: Int) -> Int {
 public func kk_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
                              _ outThrown: UnsafeMutablePointer<Int>?) -> Int
 {
-    guard let range = runtimeRangeBox(from: rangeRaw) else { return 0 }
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_forEach")
+    }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var current = range.first
     if range.step > 0 {
