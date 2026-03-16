@@ -59,7 +59,6 @@ extension DataFlowSemaPhase {
         let nullableThrowableType = types.makeNullable(throwableType)
 
         let boolType = types.booleanType
-        let anyType = types.anyType
 
         // --- STDLIB-280: runCatching top-level function ---
         // fun <T> runCatching(block: () -> T): Result<T>
