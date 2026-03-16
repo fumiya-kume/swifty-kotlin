@@ -443,6 +443,37 @@ public func kk_sequence_from_list(_ listRaw: Int) -> Int {
     return registerRuntimeObject(seq)
 }
 
+// MARK: - emptySequence (STDLIB-277)
+
+@_cdecl("kk_empty_sequence")
+public func kk_empty_sequence() -> Int {
+    let seq = RuntimeSequenceBox(steps: [.source(elements: [])])
+    return registerRuntimeObject(seq)
+}
+
+// MARK: - Sequence.ifEmpty (STDLIB-277)
+
+@_cdecl("kk_sequence_ifEmpty")
+public func kk_sequence_ifEmpty(
+    _ seqRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+    if elements.isEmpty {
+        var thrown = 0
+        let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
+        let result = lambda(closureRaw, &thrown)
+        if thrown != 0 {
+            outThrown?.pointee = thrown
+            return registerRuntimeObject(RuntimeSequenceBox(steps: [.source(elements: [])]))
+        }
+        return result
+    }
+    return seqRaw
+}
+
 @_cdecl("kk_sequence_of")
 public func kk_sequence_of(_ arrayRaw: Int) -> Int {
     guard let arr = runtimeArrayBox(from: arrayRaw) else {
