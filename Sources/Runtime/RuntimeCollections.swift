@@ -770,6 +770,15 @@ public func kk_mutable_map_remove(_ mapRaw: Int, _ key: Int) -> Int {
     return map.values.remove(at: index)
 }
 
+@_cdecl("kk_mutable_map_clear")
+public func kk_mutable_map_clear(_ mapRaw: Int) -> Int {
+    if let map = runtimeMapBox(from: mapRaw) {
+        map.keys.removeAll()
+        map.values.removeAll()
+    }
+    return 0
+}
+
 @_cdecl("kk_mutable_map_putAll")
 public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw),
@@ -778,7 +787,11 @@ public func kk_mutable_map_putAll(_ mapRaw: Int, _ otherMapRaw: Int) -> Int {
         guard idx < other.values.count else { break }
         var found = false
         for (existIdx, existKey) in map.keys.enumerated() where runtimeValuesEqual(existKey, key) {
-            map.values[existIdx] = other.values[idx]
+            if existIdx < map.values.count {
+                map.values[existIdx] = other.values[idx]
+            } else {
+                map.values.append(other.values[idx])
+            }
             found = true
             break
         }
