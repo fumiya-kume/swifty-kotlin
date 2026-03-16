@@ -1,0 +1,406 @@
+import Foundation
+
+/// Synthetic stubs for java.io.File type (STDLIB-320/321/322/323).
+extension DataFlowSemaPhase {
+    func registerSyntheticFileIOStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let javaIOPkg = ensureJavaIOPackage(symbols: symbols, interner: interner)
+
+        let fileSymbol = ensureClassSymbol(
+            named: "File",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let fileType = types.make(.classType(ClassType(
+            classSymbol: fileSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileType, for: fileSymbol)
+
+        // List<File> type for listFiles return
+        let listSymbol = resolveListSymbol(symbols: symbols, interner: interner)
+        let listOfFileType: TypeID = if let listSym = listSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: listSym,
+                args: [.invariant(fileType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+        let nullableListOfFileType = types.makeNullable(listOfFileType)
+
+        // MARK: - File(String) constructor (STDLIB-320)
+
+        registerFileConstructor(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("path", types.stringType)],
+            externalLinkName: "kk_file_new",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File properties (STDLIB-321)
+
+        registerFileMemberProperty(
+            named: "name",
+            externalLinkName: "kk_file_name",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberProperty(
+            named: "path",
+            externalLinkName: "kk_file_path",
+            ownerSymbol: fileSymbol,
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File query methods (STDLIB-321)
+
+        registerFileMemberFunction(
+            named: "exists",
+            externalLinkName: "kk_file_exists",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "isFile",
+            externalLinkName: "kk_file_isFile",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "isDirectory",
+            externalLinkName: "kk_file_isDirectory",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File read/write methods (STDLIB-320)
+
+        registerFileMemberFunction(
+            named: "readText",
+            externalLinkName: "kk_file_readText",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "writeText",
+            externalLinkName: "kk_file_writeText",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "readLines",
+            externalLinkName: "kk_file_readLines",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File line-by-line operations (STDLIB-322)
+
+        registerFileMemberFunction(
+            named: "forEachLine",
+            externalLinkName: "kk_file_forEachLine",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("action", types.anyType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File filesystem operations (STDLIB-323)
+
+        registerFileMemberFunction(
+            named: "delete",
+            externalLinkName: "kk_file_delete",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "mkdirs",
+            externalLinkName: "kk_file_mkdirs",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "listFiles",
+            externalLinkName: "kk_file_listFiles",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: nullableListOfFileType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "walk",
+            externalLinkName: "kk_file_walk",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: listOfFileType,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    // MARK: - Private Helpers
+
+    private func resolveListSymbol(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID? {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        return symbols.lookup(fqName: listFQName)
+    }
+
+    private func registerFileConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerInfo.fqName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == parameters.map(\.type)
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: ctorFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ctorSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: ctorSymbol
+        )
+    }
+
+    private func registerFileMemberFunction(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let functionName = interner.intern(name)
+        let functionFQName = ownerInfo.fqName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.receiverType == ownerType
+                && existingSignature.parameterTypes == parameters.map(\.type)
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: functionSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: functionFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    private func ensureJavaIOPackage(
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        let javaPkg: [InternedString] = [interner.intern("java")]
+        if symbols.lookup(fqName: javaPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("java"),
+                fqName: javaPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaIOPkg: [InternedString] = javaPkg + [interner.intern("io")]
+        if symbols.lookup(fqName: javaIOPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("io"),
+                fqName: javaIOPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        return javaIOPkg
+    }
+
+    private func registerFileMemberProperty(
+        named name: String,
+        externalLinkName: String,
+        ownerSymbol: SymbolID,
+        returnType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+}
