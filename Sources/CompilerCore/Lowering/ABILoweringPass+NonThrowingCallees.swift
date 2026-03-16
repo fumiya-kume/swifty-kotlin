@@ -414,6 +414,8 @@ extension ABILoweringPass {
             interner.intern("kk_arraydeque_size"),
             interner.intern("kk_arraydeque_isEmpty"),
             interner.intern("kk_arraydeque_toString"),
+            // File I/O (STDLIB-320) — constructor is non-throwing
+            interner.intern("kk_file_new"),
             // StringBuilder (STDLIB-255/256/257)
             interner.intern("kk_string_builder_new"),
             interner.intern("kk_string_builder_new_from_string"),

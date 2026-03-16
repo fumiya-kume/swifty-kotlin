@@ -201,6 +201,58 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- java.io.File (STDLIB-320) ---
+        let javaIOPkg = ensureSyntheticPackage(
+            path: [interner.intern("java"), interner.intern("io")],
+            symbols: symbols
+        )
+        let fileSymbol = ensureClassSymbol(
+            named: "File",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let fileType = types.make(.classType(ClassType(
+            classSymbol: fileSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(fileType, for: fileSymbol)
+
+        // readText(): String
+        registerSyntheticSystemMember(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            name: "readText",
+            externalLinkName: "kk_file_readText",
+            returnType: types.stringType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // writeText(text: String): Unit
+        registerSyntheticSystemMember(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            name: "writeText",
+            externalLinkName: "kk_file_writeText",
+            returnType: types.unitType,
+            parameters: [(name: "text", type: types.stringType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // readLines(): List<String>
+        registerSyntheticSystemMember(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            name: "readLines",
+            externalLinkName: "kk_file_readLines",
+            returnType: types.anyType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureSyntheticObjectSymbol(

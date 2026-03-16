@@ -1965,6 +1965,7 @@ public enum RuntimeABIExterns {
         all += comparatorExterns
         all += resultExterns
         all += stringBuilderExterns
+        all += fileIOExterns
         return all
     }()
 
