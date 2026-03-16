@@ -90,30 +90,27 @@ private func preconditionWithLazyMessage(
         return 0
     }
 
-    let message = runtimeEvaluateLazyMessage(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: outThrown)
-        ?? defaultMessage
-    if outThrown?.pointee != 0 {
+    // No lazy message lambda provided — use the default message directly
+    guard fnPtr != 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: defaultMessage)
         return 0
     }
-    outThrown?.pointee = runtimeAllocateThrowable(message: message)
-    return 0
-}
 
-private func runtimeEvaluateLazyMessage(
-    fnPtr: Int,
-    closureRaw: Int,
-    outThrown: UnsafeMutablePointer<Int>?
-) -> String? {
-    guard fnPtr != 0 else {
-        return nil
-    }
+    // Evaluate the lazy message lambda
     var lazyThrown = 0
     let rawMessage = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: closureRaw, outThrown: &lazyThrown)
+
     if lazyThrown != 0 {
+        // Lazy message evaluation itself threw — propagate that exception directly.
+        // This is a distinct failure path from the precondition failure itself.
         outThrown?.pointee = lazyThrown
-        return nil
+        return 0
     }
-    return runtimePreconditionMessage(from: rawMessage)
+
+    // Lazy message evaluated successfully — use it for the precondition failure
+    let message = runtimePreconditionMessage(from: rawMessage) ?? defaultMessage
+    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+    return 0
 }
 
 private func runtimePreconditionMessage(from rawValue: Int) -> String? {
