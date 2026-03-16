@@ -18,11 +18,12 @@ public func kk_comparator_from_selector_trampoline(
     _ b: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw) else { return 0 }
-    let isObj = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let pairBox = tryCast(ptr, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_from_selector_trampoline")
     }
-    guard isObj, let pairBox = tryCast(ptr, to: RuntimePairBox.self) else { return 0 }
     let selectorFn = pairBox.first
     let selectorClosure = pairBox.second
     var thrown = 0
@@ -86,16 +87,19 @@ public func kk_comparator_then_by_trampoline(
     _ b: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw) else { return 0 }
-    let isObj = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let outerBox = tryCast(ptr, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_then_by_trampoline")
     }
-    guard isObj, let outerBox = tryCast(ptr, to: RuntimePairBox.self) else { return 0 }
     guard let ptr1 = UnsafeMutableRawPointer(bitPattern: outerBox.first),
           let ptr2 = UnsafeMutableRawPointer(bitPattern: outerBox.second),
           let inner1 = tryCast(ptr1, to: RuntimePairBox.self),
           let inner2 = tryCast(ptr2, to: RuntimePairBox.self)
-    else { return 0 }
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator inner closure in kk_comparator_then_by_trampoline")
+    }
     var thrown = 0
     let r1 = runtimeInvokeCollectionLambda2(fnPtr: inner1.first, closureRaw: inner1.second, lhs: a, rhs: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
@@ -133,11 +137,12 @@ public func kk_comparator_reversed_trampoline(
     _ b: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw) else { return 0 }
-    let isObj = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let pairBox = tryCast(ptr, to: RuntimePairBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_reversed_trampoline")
     }
-    guard isObj, let pairBox = tryCast(ptr, to: RuntimePairBox.self) else { return 0 }
     var thrown = 0
     let result = runtimeInvokeCollectionLambda2(fnPtr: pairBox.first, closureRaw: pairBox.second, lhs: a, rhs: b, outThrown: &thrown)
     if thrown != 0 { outThrown?.pointee = thrown; return 0 }
