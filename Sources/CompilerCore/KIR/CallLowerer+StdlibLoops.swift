@@ -182,6 +182,11 @@ extension CallLowerer {
                     arguments: callableInfo.captureArguments,
                     result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
+            } else {
+                // The sema phase guarantees the argument is a callable (lambda or
+                // callable reference) when .measureTimeMillis is marked. A nil
+                // callableValueInfo here indicates an internal invariant violation.
+                assertionFailure("lowerMeasureTimeMillisCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
             }
         }
 
@@ -252,6 +257,11 @@ extension CallLowerer {
                     arguments: callableInfo.captureArguments,
                     result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
+            } else {
+                // The sema phase guarantees the argument is a callable (lambda or
+                // callable reference) when .measureNanoTime is marked. A nil
+                // callableValueInfo here indicates an internal invariant violation.
+                assertionFailure("lowerMeasureNanoTimeCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
             }
         }
 

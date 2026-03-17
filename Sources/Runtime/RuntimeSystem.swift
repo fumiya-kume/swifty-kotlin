@@ -20,6 +20,11 @@ public func kk_system_currentTimeMillis() -> Int {
 /// Returns monotonic uptime in nanoseconds (not wall-clock).
 @_cdecl("kk_system_nanoTime")
 public func kk_system_nanoTime() -> Int {
+    // Int(clamping:) is acceptable here: on 64-bit targets Int.max is ~9.2e18,
+    // which corresponds to ~292 years of uptime in nanoseconds. UInt64 uptime
+    // values will not exceed Int.max under any realistic scenario, so clamping
+    // is effectively a no-op. On hypothetical 32-bit targets this would saturate
+    // at ~2.1 seconds, but the compiler only targets 64-bit macOS (LP64).
     Int(clamping: DispatchTime.now().uptimeNanoseconds)
 }
 
