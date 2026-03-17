@@ -418,14 +418,14 @@ final class CallTypeChecker {
             return durationType
         }
 
-        // --- Stdlib Array(size) { init } constructor (STDLIB-085/086) ---
+        // --- Stdlib Array(size) { init } constructor (STDLIB-085/086, TYPE-103) ---
         if let calleeName,
            knownNames.isPrimitiveArrayConstructorTypeName(calleeName),
            args.count == 2,
            locals[calleeName] == nil
         {
             let intType = sema.types.intType
-            let anyType = sema.types.anyType
+            let calleeNameStr = interner.resolve(calleeName)
             let countType = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
@@ -440,9 +440,36 @@ final class CallTypeChecker {
                 sema: sema,
                 diagnostics: ctx.semaCtx.diagnostics
             )
+            // Determine the element type from the expected type annotation or
+            // the init lambda's return type, avoiding erasure to Any.
+            let elementReturnType: TypeID
+            if let expectedType, expectedType != sema.types.errorType,
+               case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+               let firstArg = expectedClassType.args.first
+            {
+                switch firstArg {
+                case let .invariant(type), let .in(type), let .out(type):
+                    elementReturnType = type
+                case .star:
+                    elementReturnType = sema.types.anyType
+                }
+            } else if let explicitTypeArg = explicitTypeArgs.first, calleeNameStr == "Array" {
+                elementReturnType = explicitTypeArg
+            } else {
+                // For primitive array constructors, the element type is fixed.
+                elementReturnType = switch calleeNameStr {
+                case "IntArray": sema.types.intType
+                case "LongArray": sema.types.longType
+                case "DoubleArray": sema.types.make(.primitive(.double, .nonNull))
+                case "FloatArray": sema.types.make(.primitive(.float, .nonNull))
+                case "BooleanArray": sema.types.booleanType
+                case "CharArray": sema.types.make(.primitive(.char, .nonNull))
+                default: sema.types.anyType
+                }
+            }
             let initExpectedType = sema.types.make(.functionType(FunctionType(
                 params: [intType],
-                returnType: anyType
+                returnType: elementReturnType
             )))
             _ = driver.inferExpr(
                 args[1].expr,
@@ -452,8 +479,24 @@ final class CallTypeChecker {
             )
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
             sema.bindings.markCollectionExpr(id)
-            sema.bindings.bindExprType(id, type: anyType)
-            return anyType
+            let resultType: TypeID
+            if calleeNameStr == "Array" {
+                resultType = makeSyntheticArrayType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: elementReturnType
+                )
+            } else {
+                resultType = makeSyntheticPrimitiveArrayType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    arrayName: calleeNameStr
+                )
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
         }
 
         // --- Stdlib enumValues<T>() / enumValueOf<T>(name) (STDLIB-171) ---
@@ -1322,6 +1365,62 @@ final class CallTypeChecker {
                         interner: interner,
                         elementType: seedType
                     )
+                // --- arrayOf / primitive array factories (TYPE-103) ---
+                } else if name == "arrayOf" {
+                    if let explicitTypeArg = explicitTypeArgs.first {
+                        collectionType = makeSyntheticArrayType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: explicitTypeArg
+                        )
+                    } else if !argTypes.isEmpty {
+                        let elementType = sema.types.lub(argTypes)
+                        collectionType = makeSyntheticArrayType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: elementType
+                        )
+                    } else {
+                        // arrayOf() with no args and no explicit type
+                        collectionType = makeSyntheticArrayType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.anyType
+                        )
+                    }
+                } else if name == "intArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "IntArray"
+                    )
+                } else if name == "longArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "LongArray"
+                    )
+                } else if name == "doubleArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "DoubleArray"
+                    )
+                } else if name == "floatArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "FloatArray"
+                    )
+                } else if name == "booleanArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "BooleanArray"
+                    )
+                } else if name == "charArrayOf" {
+                    collectionType = makeSyntheticPrimitiveArrayType(
+                        symbols: sema.symbols, types: sema.types, interner: interner,
+                        arrayName: "CharArray"
+                    )
                 } else {
                     collectionType = sema.types.anyType
                 }
@@ -1584,6 +1683,48 @@ final class CallTypeChecker {
         return types.make(.classType(ClassType(
             classSymbol: iterableSymbol,
             args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    /// Build `Array<elementType>` -- generic array with preserved element type.
+    private func makeSyntheticArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let arrayFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("Array"),
+        ]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    /// Build a primitive array type (`IntArray`, `LongArray`, etc.) by name.
+    private func makeSyntheticPrimitiveArrayType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        arrayName: String
+    ) -> TypeID {
+        let arrayFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern(arrayName),
+        ]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [],
             nullability: .nonNull
         )))
     }

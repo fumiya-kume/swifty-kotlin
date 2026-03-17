@@ -239,6 +239,11 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
+        // Register Array<T> and primitive array types (TYPE-103)
+        registerSyntheticArrayStubs(
+            symbols: symbols, types: types, interner: interner
+        )
+
         // Register type aliases: ArrayList, HashMap, HashSet, LinkedHashMap, LinkedHashSet (STDLIB-560)
         // TODO: Add golden test cases that exercise these aliases in type positions
         //       (e.g. property types, parameter types, return types) to verify
@@ -5231,5 +5236,112 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    // MARK: - Array<T> and primitive arrays (TYPE-103)
+
+    private func registerSyntheticArrayStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+
+        // --- kotlin.Array<T> ---
+        let arrayFQName = kotlinPkg + [interner.intern("Array")]
+        let arraySymbol: SymbolID = if let existing = symbols.lookup(fqName: arrayFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: interner.intern("Array"),
+                fqName: arrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let tParamName = interner.intern("T")
+        let tParamSymbol = symbols.lookup(fqName: arrayFQName + [tParamName]) ?? symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: arrayFQName + [tParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([tParamSymbol], for: arraySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: arraySymbol)
+
+        // Register size property for Array<T>
+        let sizeReturnType = types.intType
+        let tType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+        let arrayOfT = types.make(.classType(ClassType(
+            classSymbol: arraySymbol,
+            args: [.invariant(tType)],
+            nullability: .nonNull
+        )))
+        let sizeName = interner.intern("size")
+        let sizeFQName = arrayFQName + [sizeName]
+        if symbols.lookup(fqName: sizeFQName) == nil {
+            let sizeSym = symbols.define(
+                kind: .function,
+                name: sizeName,
+                fqName: sizeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setFunctionSignature(FunctionSignature(
+                receiverType: arrayOfT,
+                parameterTypes: [],
+                returnType: sizeReturnType
+            ), for: sizeSym)
+            symbols.setParentSymbol(arraySymbol, for: sizeSym)
+        }
+
+        // --- Primitive array types: IntArray, LongArray, etc. ---
+        let primitiveArrayNames = [
+            "IntArray",
+            "LongArray",
+            "DoubleArray",
+            "FloatArray",
+            "BooleanArray",
+            "CharArray",
+        ]
+        for name in primitiveArrayNames {
+            let fqName = kotlinPkg + [interner.intern(name)]
+            if symbols.lookup(fqName: fqName) == nil {
+                let sym = symbols.define(
+                    kind: .class,
+                    name: interner.intern(name),
+                    fqName: fqName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                // Register size property for primitive arrays
+                let primArrayType = types.make(.classType(ClassType(
+                    classSymbol: sym,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                let primSizeFQName = fqName + [sizeName]
+                let primSizeSym = symbols.define(
+                    kind: .function,
+                    name: sizeName,
+                    fqName: primSizeFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .operatorFunction]
+                )
+                symbols.setFunctionSignature(FunctionSignature(
+                    receiverType: primArrayType,
+                    parameterTypes: [],
+                    returnType: sizeReturnType
+                ), for: primSizeSym)
+                symbols.setParentSymbol(sym, for: primSizeSym)
+            }
+        }
     }
 }

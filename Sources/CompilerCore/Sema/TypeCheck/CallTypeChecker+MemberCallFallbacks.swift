@@ -1456,14 +1456,14 @@ extension CallTypeChecker {
         sema: SemaModule,
         interner: StringInterner
     ) -> Bool {
-        let knownNames = KnownCompilerNames(interner: interner)
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        if isArrayLikeType(receiverType, sema: sema, interner: interner) {
+            return true
+        }
+        // Also check if it's marked as collection and has an array-like class
+        // type (now that arrayOf() preserves the actual Array<T> type).
         if sema.bindings.isCollectionExpr(receiverID) {
-            let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
-            if isArrayLikeType(receiverType, sema: sema, interner: interner) {
-                return true
-            }
-            // Also check if it's marked as collection but actually an array
-            // (e.g. arrayOf() results are marked as collection)
+            let knownNames = KnownCompilerNames(interner: interner)
             if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
                let symbol = sema.symbols.symbol(classType.classSymbol)
             {
@@ -1471,13 +1471,8 @@ extension CallTypeChecker {
                     return true
                 }
             }
-            // For arrayOf() results: the type is erased to Any, but marked as
-            // collection. We use a heuristic: if the receiver is a collection
-            // and the member is an array-only member, accept it.
-            return true
         }
-        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
-        return isArrayLikeType(receiverType, sema: sema, interner: interner)
+        return false
     }
 
     private func isArrayLikeType(
