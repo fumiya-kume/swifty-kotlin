@@ -65,7 +65,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         // First pass: collect char-valued expression IDs to detect char range arguments (STDLIB-290)
         var charValuedExprIDs: Set<Int32> = []
@@ -98,7 +99,8 @@ extension CollectionLiteralLoweringPass {
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
                     charValuedExprIDs: charValuedExprIDs,
-                    stringExprIDs: &stringExprIDs
+                    stringExprIDs: &stringExprIDs,
+                    fileExprIDs: &fileExprIDs
                 )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                 handleVirtualCallInstruction(
@@ -118,7 +120,8 @@ extension CollectionLiteralLoweringPass {
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
-                    stringExprIDs: &stringExprIDs
+                    stringExprIDs: &stringExprIDs,
+                    fileExprIDs: &fileExprIDs
                 )
             case let .constValue(result, .stringLiteral):
                 stringExprIDs.insert(result.rawValue)
@@ -141,7 +144,8 @@ extension CollectionLiteralLoweringPass {
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
         charValuedExprIDs: Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         classifyFactoryCall(
             callee: callee, result: result, lookup: lookup,
@@ -181,6 +185,12 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs: &sequenceExprIDs,
             stringExprIDs: &stringExprIDs
         )
+        // STDLIB-565: Classify File constructor calls
+        if let result,
+           callee == lookup.fileConstructorName || callee == lookup.kkFileNewName
+        {
+            fileExprIDs.insert(result.rawValue)
+        }
     }
 
     private func classifyFactoryCall(
@@ -382,7 +392,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
             listExprIDs.insert(to.rawValue)
@@ -407,6 +418,9 @@ extension CollectionLiteralLoweringPass {
         }
         if stringExprIDs.contains(from.rawValue) {
             stringExprIDs.insert(to.rawValue)
+        }
+        if fileExprIDs.contains(from.rawValue) {
+            fileExprIDs.insert(to.rawValue)
         }
     }
 }
