@@ -187,6 +187,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
             )
         }
+        synthesizeDataClassComponentN(
+            nominalSymbol: nominalSymbol,
+            module: module,
+            sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols,
+            ctx: ctx
+        )
         let toStringName = ctx.interner.intern("toString")
         let existingToStringSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [toStringName]).first {
             sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
@@ -266,6 +273,144 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             3
         default:
             1
+        }
+    }
+
+    /// DATA-002 / STDLIB-090: Synthesizes `componentN()` KIR function bodies for data classes.
+    /// Each componentN takes the receiver ($self) and returns the Nth constructor property
+    /// by reading the corresponding field via `kk_array_get_inbounds`.
+    private func synthesizeDataClassComponentN(
+        nominalSymbol: SemanticSymbol,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        ctx: KIRContext
+    ) {
+        let interner = ctx.interner
+
+        // Find componentN symbols registered by Sema for this data class.
+        // They are children of the class FQName with names component1, component2, etc.
+        let componentSymbols: [(index: Int, symbolID: SymbolID, signature: FunctionSignature)] = {
+            var result: [(Int, SymbolID, FunctionSignature)] = []
+            var idx = 1
+            while true {
+                let componentName = interner.intern("component\(idx)")
+                let fqName = nominalSymbol.fqName + [componentName]
+                let candidates = sema.symbols.lookupAll(fqName: fqName).filter { candidate in
+                    guard let sym = sema.symbols.symbol(candidate),
+                          sym.kind == .function,
+                          sym.flags.contains(.synthetic),
+                          let sig = sema.symbols.functionSignature(for: candidate)
+                    else { return false }
+                    return sig.parameterTypes.isEmpty
+                }
+                guard let chosen = candidates.first,
+                      let sig = sema.symbols.functionSignature(for: chosen)
+                else { break }
+                result.append((idx, chosen, sig))
+                idx += 1
+            }
+            return result
+        }()
+
+        guard !componentSymbols.isEmpty else { return }
+
+        // Find the constructor property symbols (children of the class with kind .property)
+        // sorted by symbol ID to preserve declaration order.
+        let propertySymbols: [SemanticSymbol] = sema.symbols.children(ofFQName: nominalSymbol.fqName)
+            .compactMap { sema.symbols.symbol($0) }
+            .filter { $0.kind == .property }
+            .sorted { $0.id.rawValue < $1.id.rawValue }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: nominalSymbol.id,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        let layout = sema.symbols.nominalLayout(for: nominalSymbol.id)
+
+        for (componentIndex, functionSymbol, signature) in componentSymbols {
+            guard !existingFunctionSymbols.contains(functionSymbol) else { continue }
+
+            let componentName = interner.intern("component\(componentIndex)")
+            let returnType = signature.returnType
+            let fqName = nominalSymbol.fqName + [componentName]
+
+            // Create receiver parameter ($self)
+            let selfParamName = interner.intern("$self")
+            let selfParamSymbol = sema.symbols.define(
+                kind: .valueParameter,
+                name: selfParamName,
+                fqName: fqName + [selfParamName],
+                declSite: nominalSymbol.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            let selfParam = KIRParameter(symbol: selfParamSymbol, type: receiverType)
+
+            let selfRef = module.arena.appendExpr(.symbolRef(selfParamSymbol), type: receiverType)
+
+            var body: [KIRInstruction] = []
+            body.append(.constValue(result: selfRef, value: .symbolRef(selfParamSymbol)))
+
+            let propertyIndex = componentIndex - 1 // 0-based
+            let resultExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: returnType
+            )
+
+            // Try to read the field via layout offset using kk_array_get_inbounds
+            if let layout = layout,
+               propertyIndex < propertySymbols.count
+            {
+                let propertySymbol = propertySymbols[propertyIndex]
+                let backingField = sema.symbols.backingFieldSymbol(for: propertySymbol.id) ?? propertySymbol.id
+                if let fieldOffset = layout.fieldOffsets[backingField] ?? layout.fieldOffsets[propertySymbol.id] {
+                    let offsetExpr = module.arena.appendExpr(
+                        .intLiteral(Int64(fieldOffset)),
+                        type: sema.types.make(.primitive(.int, .nonNull))
+                    )
+                    body.append(.constValue(result: offsetExpr, value: .intLiteral(Int64(fieldOffset))))
+                    body.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get_inbounds"),
+                        arguments: [selfRef, offsetExpr],
+                        result: resultExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    body.append(.returnValue(resultExpr))
+                } else {
+                    // Fallback: return $self (stub behaviour for missing layout)
+                    body.append(.constValue(result: resultExpr, value: .symbolRef(selfParamSymbol)))
+                    body.append(.returnValue(resultExpr))
+                }
+            } else {
+                // Fallback: return $self (stub behaviour when layout unavailable)
+                body.append(.constValue(result: resultExpr, value: .symbolRef(selfParamSymbol)))
+                body.append(.returnValue(resultExpr))
+            }
+
+            let fullSignature = FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            )
+            appendSyntheticFunctionWithSymbol(
+                functionSymbol: functionSymbol,
+                name: componentName,
+                module: module,
+                sema: sema,
+                signature: fullSignature,
+                params: [selfParam],
+                body: body
+            )
         }
     }
 

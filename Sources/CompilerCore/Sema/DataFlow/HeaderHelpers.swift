@@ -420,6 +420,73 @@ extension DataFlowSemaPhase {
         scope.insert(funcSymbol)
     }
 
+    /// DATA-002 / STDLIB-090: Registers synthetic `componentN()` functions for each
+    /// primary constructor parameter of a data class.
+    /// `component1()` returns the first constructor property, `component2()` the second, etc.
+    func collectSyntheticDataClassComponentN(
+        classDecl: ClassDecl,
+        ast: ASTModule,
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine,
+        localTypeParameters: [InternedString: SymbolID] = [:]
+    ) {
+        for (index, param) in classDecl.primaryConstructorParams.enumerated() {
+            let componentName = interner.intern("component\(index + 1)")
+            let componentFQName = ownerFQName + [componentName]
+
+            // Skip if a user-declared componentN already exists
+            let hasUserDeclared = symbols.lookupAll(fqName: componentFQName).contains { id in
+                guard let sym = symbols.symbol(id),
+                      sym.kind == .function,
+                      !sym.flags.contains(.synthetic)
+                else { return false }
+                return true
+            }
+            guard !hasUserDeclared else { continue }
+
+            let returnType = resolveTypeRef(
+                param.type,
+                ast: ast,
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                localTypeParameters: localTypeParameters,
+                diagnostics: diagnostics
+            ) ?? types.anyType
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: componentName,
+                fqName: componentFQName,
+                declSite: classDecl.range,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: ownerType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    isSuspend: false,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: []
+                ),
+                for: funcSymbol
+            )
+            scope.insert(funcSymbol)
+        }
+    }
+
     /// Registers synthetic `toString(): String` for data class so member resolution finds it.
     func collectSyntheticDataClassToString(
         ownerSymbol: SymbolID,
