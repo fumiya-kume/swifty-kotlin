@@ -216,6 +216,9 @@ extension DataFlowSemaPhase {
         )
 
         // Register type aliases: ArrayList, HashMap, HashSet, LinkedHashMap, LinkedHashSet (STDLIB-560)
+        // TODO: Add golden test cases that exercise these aliases in type positions
+        //       (e.g. property types, parameter types, return types) to verify
+        //       resolveTypeRef expansion works end-to-end.
         registerSyntheticCollectionTypeAliases(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
@@ -4354,7 +4357,7 @@ extension DataFlowSemaPhase {
 
     // MARK: - Collection Type Aliases (STDLIB-560)
 
-    /// Register `ArrayList<T>`, `HashMap<K,V>`, `HashSet<T>`, `LinkedHashMap<K,V>`, `LinkedHashSet<T>`
+    /// Register `ArrayList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
     /// as type aliases pointing to their corresponding mutable collection types.
     private func registerSyntheticCollectionTypeAliases(
         symbols: SymbolTable,
@@ -4419,7 +4422,10 @@ extension DataFlowSemaPhase {
         // Validate target symbol exists before registering alias
         let internedTarget = interner.intern(targetName)
         let targetFQName = kotlinCollectionsPkg + [internedTarget]
-        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
+        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else {
+            assertionFailure("Synthetic collection type alias '\(aliasName)': target '\(targetName)' not found in symbol table")
+            return
+        }
 
         let aliasSymbol = symbols.define(
             kind: .typeAlias,
@@ -4471,7 +4477,10 @@ extension DataFlowSemaPhase {
         // Validate target symbol exists before registering alias
         let internedTarget = interner.intern(targetName)
         let targetFQName = kotlinCollectionsPkg + [internedTarget]
-        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
+        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else {
+            assertionFailure("Synthetic collection type alias '\(aliasName)': target '\(targetName)' not found in symbol table")
+            return
+        }
 
         let aliasSymbol = symbols.define(
             kind: .typeAlias,
