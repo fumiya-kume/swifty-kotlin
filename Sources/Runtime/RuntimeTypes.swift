@@ -288,6 +288,14 @@ final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
 }
 
+/// Runtime box for the `iterator { yield(x) }` builder (STDLIB-331/564).
+/// Accumulates yielded elements eagerly during builder block execution,
+/// then provides `hasNext` / `next` traversal over the collected values.
+final class RuntimeIteratorBuilderBox {
+    var elements: [Int] = []
+    var index: Int = 0
+}
+
 /// Runtime box for `Grouping<T, K>` returned by `groupingBy`.
 /// Stores the source elements and key selector function pointer/closure.
 final class RuntimeGroupingBox {

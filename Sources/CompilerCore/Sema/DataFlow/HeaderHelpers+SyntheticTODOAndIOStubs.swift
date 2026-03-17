@@ -144,32 +144,12 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-331: iterator {} builder → Iterator<T>
-        let iteratorBlockType = types.make(.functionType(FunctionType(
-            params: [],
-            returnType: types.unitType
-        )))
-        // Use Iterator<Any> as return type if the Iterator interface is already registered
-        // (registerSyntheticCollectionStubs runs before this method).
-        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
-        let iteratorFQName = kotlinCollectionsPkg + [interner.intern("Iterator")]
-        let iteratorReturnType: TypeID
-        if let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) {
-            iteratorReturnType = types.make(.classType(ClassType(
-                classSymbol: iteratorSymbol,
-                args: [.out(types.anyType)],
-                nullability: .nonNull
-            )))
-        } else {
-            iteratorReturnType = types.anyType
-        }
-        registerSyntheticTopLevelFunction(
-            named: "iterator",
+        // STDLIB-331/564: iterator {} builder → Iterator<T>
+        // Registered with SequenceScope<T> receiver so yield() resolves inside the lambda.
+        registerSyntheticIteratorBuilderStub(
             packageFQName: kotlinSequencesPkg,
-            parameters: [(name: "block", type: iteratorBlockType)],
-            returnType: iteratorReturnType,
-            externalLinkName: "kk_iterator_builder_build",
             symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -934,6 +914,125 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 parameterTypes: [blockType],
                 returnType: sequenceReturnType,
+                valueParameterSymbols: [blockParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [functionTypeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
+    // STDLIB-331/564: iterator {} builder → Iterator<T>
+    // Mirrors registerSyntheticSequenceBuilderStub but returns Iterator<T>
+    // instead of Sequence<T>, and reuses the SequenceScope<T> receiver for yield().
+    private func registerSyntheticIteratorBuilderStub(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinSequencesPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("sequences")],
+            symbols: symbols
+        )
+
+        // Reuse the SequenceScope class registered by sequence {} builder.
+        let scopeName = interner.intern("SequenceScope")
+        let scopeFQName = kotlinSequencesPkg + [scopeName]
+        let scopeSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: scopeFQName) {
+            scopeSymbol = existing
+        } else {
+            let sym = symbols.define(
+                kind: .class,
+                name: scopeName,
+                fqName: scopeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinSequencesPkg) {
+                symbols.setParentSymbol(packageSymbol, for: sym)
+            }
+            scopeSymbol = sym
+        }
+
+        let functionName = interner.intern("iterator")
+        let functionFQName = kotlinSequencesPkg + [functionName]
+        guard symbols.lookup(fqName: functionFQName) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinSequencesPkg) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_iterator_builder_build", for: functionSymbol)
+
+        let functionTypeParamName = interner.intern("T")
+        let functionTypeParamFQName = functionFQName + [functionTypeParamName]
+        let functionTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: functionTypeParamName,
+            fqName: functionTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        symbols.setParentSymbol(functionSymbol, for: functionTypeParamSymbol)
+
+        let builderTypeParamType = types.make(.typeParam(TypeParamType(symbol: functionTypeParamSymbol)))
+
+        // Return type: Iterator<T>
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        let iteratorInterfaceFQName = kotlinCollectionsPkg + [interner.intern("Iterator")]
+        let iteratorReturnType: TypeID
+        if let iteratorSymbol = symbols.lookup(fqName: iteratorInterfaceFQName) {
+            iteratorReturnType = types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(builderTypeParamType)],
+                nullability: .nonNull
+            )))
+        } else {
+            iteratorReturnType = types.anyType
+        }
+
+        // Block type: SequenceScope<T>.() -> Unit  (with receiver so yield() resolves)
+        let builderScopeType = types.make(.classType(ClassType(
+            classSymbol: scopeSymbol,
+            args: [.invariant(builderTypeParamType)],
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            receiver: builderScopeType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: true
+        )))
+
+        let blockParamName = interner.intern("block")
+        let blockParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: blockParamName,
+            fqName: functionFQName + [blockParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: blockParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [blockType],
+                returnType: iteratorReturnType,
                 valueParameterSymbols: [blockParamSymbol],
                 valueParameterHasDefaultValues: [false],
                 valueParameterIsVararg: [false],
