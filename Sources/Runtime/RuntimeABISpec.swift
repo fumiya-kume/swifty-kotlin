@@ -1195,6 +1195,12 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "IO"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_readlnOrNull",
+            parameters: [],
+            returnType: .intptr,
+            section: "IO"
+        ),
     ]
 
     public static let systemFunctions: [RuntimeABIFunctionSpec] = [
