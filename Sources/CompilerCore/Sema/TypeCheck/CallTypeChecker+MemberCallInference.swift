@@ -607,7 +607,7 @@ extension CallTypeChecker {
                             let lambdaBodyType = inferredLambdaReturnType(
                                 argExpr: args[0].expr, ast: ast, sema: sema
                             )
-                            let innerElementType = extractListElementType(
+                            let innerElementType = extractCollectionElementType(
                                 lambdaBodyType, sema: sema, interner: interner
                             )
                             resultType = sema.types.make(.classType(ClassType(
@@ -3444,7 +3444,7 @@ extension CallTypeChecker {
     /// or similar single-type-arg collection, returns R.
     /// Returns `anyType` for non-collection types to avoid mis-inferring element
     /// types from unrelated generic types (e.g., Pair<K,V>).
-    private func extractListElementType(
+    private func extractCollectionElementType(
         _ type: TypeID,
         sema: SemaModule,
         interner: StringInterner
@@ -3460,8 +3460,8 @@ extension CallTypeChecker {
         }
         // Accept any single-type-arg collection-like symbol (List, MutableList,
         // Collection, Set, MutableSet, Sequence, etc.) but reject unrelated
-        // generics like Pair<K,V>. Map<K,V> is excluded by the args.count == 1
-        // check above.
+        // generics like Pair<K,V>. The standard Map<K,V> shape is naturally
+        // excluded because it does not satisfy the single-type-argument check.
         guard knownNames.isCollectionLikeSymbol(symbol) else {
             return sema.types.anyType
         }
