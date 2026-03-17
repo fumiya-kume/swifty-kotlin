@@ -67,6 +67,8 @@ public enum StdlibSpecialCallKind: Equatable {
     case minOfLong3
     case maxOfDouble3
     case minOfDouble3
+    case maxOfFloat3
+    case minOfFloat3
     case arrayConstructor
     case measureTimeMillis
     case enumValues

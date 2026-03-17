@@ -23,10 +23,10 @@ extension CallLowerer {
         case .minOfInt, .minOfLong, .minOfDouble, .minOfFloat:
             guard args.count == 2 else { return nil }
             comparisonOp = .lessThan
-        case .maxOfInt3, .maxOfLong3, .maxOfDouble3:
+        case .maxOfInt3, .maxOfLong3, .maxOfDouble3, .maxOfFloat3:
             guard args.count == 3 else { return nil }
             comparisonOp = .greaterThan
-        case .minOfInt3, .minOfLong3, .minOfDouble3:
+        case .minOfInt3, .minOfLong3, .minOfDouble3, .minOfFloat3:
             guard args.count == 3 else { return nil }
             comparisonOp = .lessThan
         default:

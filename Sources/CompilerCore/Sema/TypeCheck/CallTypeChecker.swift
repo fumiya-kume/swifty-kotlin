@@ -428,6 +428,16 @@ final class CallTypeChecker {
             ) {
                 let expectedType = resolvedParamType
 
+                // Emit subtype constraint for the first argument.
+                driver.emitSubtypeConstraint(
+                    left: firstArgType,
+                    right: expectedType,
+                    range: ast.arena.exprRange(args[0].expr) ?? range,
+                    solver: ConstraintSolver(),
+                    sema: sema,
+                    diagnostics: ctx.semaCtx.diagnostics
+                )
+
                 // Infer remaining arguments with the resolved type.
                 for i in 1 ..< args.count {
                     let argType = driver.inferExpr(

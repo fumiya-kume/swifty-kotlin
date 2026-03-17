@@ -36,10 +36,12 @@ extension CallTypeChecker {
             case "maxOf":
                 if paramType == types.longType { return .maxOfLong3 }
                 if paramType == types.doubleType { return .maxOfDouble3 }
+                if paramType == types.floatType { return .maxOfFloat3 }
                 return .maxOfInt3
             case "minOf":
                 if paramType == types.longType { return .minOfLong3 }
                 if paramType == types.doubleType { return .minOfDouble3 }
+                if paramType == types.floatType { return .minOfFloat3 }
                 return .minOfInt3
             default:
                 return nil
