@@ -7,7 +7,21 @@ private struct RuntimeElementKey: Hashable {
     let value: Int
 
     func hash(into hasher: inout Hasher) {
-        hasher.combine(kk_any_hashCode(value, 0))
+        // Normalise ±0.0 so that IEEE-equal values (-0.0 == +0.0) produce
+        // identical hashes, keeping the Hashable contract intact.
+        var h = kk_any_hashCode(value, 0)
+        if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+            let isObj = runtimeStorage.withLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
+            if isObj {
+                if let fb = tryCast(ptr, to: RuntimeFloatBox.self), fb.value == 0 {
+                    h = kk_float_to_bits(Float(0))
+                } else if let db = tryCast(ptr, to: RuntimeDoubleBox.self), db.value == 0 {
+                    let bits = Int64(bitPattern: UInt64(bitPattern: Int64(kk_double_to_bits(Double(0)))))
+                    h = Int(truncatingIfNeeded: bits ^ (bits >> 32))
+                }
+            }
+        }
+        hasher.combine(h)
     }
 
     static func == (lhs: RuntimeElementKey, rhs: RuntimeElementKey) -> Bool {
