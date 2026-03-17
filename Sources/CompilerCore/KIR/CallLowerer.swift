@@ -185,20 +185,33 @@ final class CallLowerer {
                 .temporary(Int32(arena.expressions.count)),
                 type: boundType
             )
-            guard let info = driver.ctx.callableValueInfo(for: loweredLambdaID) else {
-                // Non-lambda argument passed to top-level run(); return the
-                // already-lowered expression directly instead of leaving
-                // `result` uninitialized.
-                return loweredLambdaID
+            if let info = driver.ctx.callableValueInfo(for: loweredLambdaID) {
+                instructions.append(.call(
+                    symbol: info.symbol,
+                    callee: info.callee,
+                    arguments: info.captureArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            } else {
+                // Callable reference or other non-lambda callable: invoke it
+                // so that `run(::foo)` calls foo() rather than returning the
+                // reference itself.
+                let invokeName = interner.intern("invoke")
+                return lowerMemberCallExpr(
+                    exprID,
+                    receiverExpr: args[0].expr,
+                    calleeName: invokeName,
+                    args: [],
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
             }
-            instructions.append(.call(
-                symbol: info.symbol,
-                callee: info.callee,
-                arguments: info.captureArguments,
-                result: result,
-                canThrow: false,
-                thrownResult: nil
-            ))
             return result
         }
 

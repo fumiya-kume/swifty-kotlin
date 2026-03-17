@@ -209,10 +209,18 @@ extension DataFlowSemaPhase {
         kotlinPkg: [InternedString]
     ) {
         let runName = interner.intern("run")
-        // Use a distinct FQN to avoid collision with the top-level run stub.
-        let extRunFQName = kotlinPkg + [interner.intern("run_toplevel")]
+        let extRunFQName = kotlinPkg + [runName]
 
-        if symbols.lookup(fqName: extRunFQName) != nil {
+        // The top-level `run` overload shares the same FQN; the symbol table
+        // supports function overloads under one FQN via canCoexistAsOverload.
+        // Skip only when the extension overload (with receiverType) is already
+        // registered.
+        let existingRunSymbols = symbols.lookupAll(fqName: extRunFQName)
+        let extensionAlreadyRegistered = existingRunSymbols.contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else { return false }
+            return sig.receiverType != nil
+        }
+        if extensionAlreadyRegistered {
             return
         }
 

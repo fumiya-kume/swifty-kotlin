@@ -147,23 +147,14 @@ final class CallTypeChecker {
         // Intercept when no local or user-defined (non-synthetic) `run` shadows the stdlib helper.
         // The single argument must be a lambda literal or callable reference;
         // otherwise (e.g. `run(123)`) fall through to normal call resolution.
-        if let calleeName, args.count == 1,
-           calleeName == knownNames.run,
-           locals[calleeName] == nil,
-           ({
-               guard let argExpr = ast.arena.expr(args[0].expr) else { return false }
-               switch argExpr {
-               case .lambdaLiteral, .callableRef:
-                   return true
-               default:
-                   return false
-               }
-           })(),
-           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
-               guard let sym = ctx.cachedSymbol(candidate) else { return false }
-               return !sym.flags.contains(.synthetic)
-           })
-        {
+        if isTopLevelRunCandidate(
+            calleeName: calleeName,
+            args: args,
+            knownNames: knownNames,
+            ast: ast,
+            ctx: ctx,
+            locals: locals
+        ) {
             let lambdaExpectedType: TypeID? = if let expectedType {
                 sema.types.make(.functionType(FunctionType(
                     params: [],
@@ -1747,6 +1738,51 @@ final class CallTypeChecker {
             return symbol.fqName != KnownCompilerNames(interner: ctx.interner).kotlinxCoroutinesFlowFQName
         }
         return !hasConflictingUserDefinedCandidate
+    }
+
+    // MARK: - Top-level run helpers (STDLIB-401)
+
+    /// Returns true when the call site looks like a top-level `run { ... }` or
+    /// `run(::ref)` that should be intercepted by the scope-function path.
+    private func isTopLevelRunCandidate(
+        calleeName: InternedString?,
+        args: [CallArgument],
+        knownNames: KnownCompilerNames,
+        ast: ASTModule,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings
+    ) -> Bool {
+        guard let calleeName, args.count == 1,
+              calleeName == knownNames.run,
+              locals[calleeName] == nil
+        else {
+            return false
+        }
+        return isLambdaOrCallableRefArg(args[0].expr, ast: ast)
+            && !isShadowedByUserDefinedRun(calleeName, ctx: ctx)
+    }
+
+    /// Returns true when `exprID` is a lambda literal or callable reference.
+    private func isLambdaOrCallableRefArg(_ exprID: ExprID, ast: ASTModule) -> Bool {
+        guard let argExpr = ast.arena.expr(exprID) else { return false }
+        switch argExpr {
+        case .lambdaLiteral, .callableRef:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Returns true when a non-synthetic (user-defined) `run` shadows the
+    /// synthetic stdlib helper.
+    private func isShadowedByUserDefinedRun(
+        _ calleeName: InternedString,
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        ctx.cachedScopeLookup(calleeName).contains { candidate in
+            guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            return !sym.flags.contains(.synthetic)
+        }
     }
 }
 
