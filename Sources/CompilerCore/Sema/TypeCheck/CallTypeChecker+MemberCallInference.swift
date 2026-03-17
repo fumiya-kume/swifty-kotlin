@@ -1058,7 +1058,7 @@ extension CallTypeChecker {
                     sema.types.anyType
                 }
                 let selectorKind = sema.types.kind(of: selectorType)
-                if selectorKind != .typeParam {
+                if case .typeParam = selectorKind {} else {
                     do {
                         let primitiveComparableTypes: Set<TypeID> = [
                             sema.types.intType,
