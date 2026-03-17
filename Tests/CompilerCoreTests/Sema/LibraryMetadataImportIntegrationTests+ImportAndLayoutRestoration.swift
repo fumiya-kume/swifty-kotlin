@@ -51,6 +51,57 @@ extension LibraryMetadataImportIntegrationTests {
         }
     }
 
+    func testLibraryImportRestoresKClassTypeSignatures() throws {
+        let fm = FileManager.default
+        let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let libDir = baseDir.appendingPathExtension("kklib")
+        try fm.createDirectory(at: libDir, withIntermediateDirectories: true)
+
+        let manifest = """
+        {
+          "formatVersion": 1,
+          "moduleName": "ExtKClass",
+          "metadata": "metadata.bin"
+        }
+        """
+        let metadata = """
+        symbols=2
+        function _ fq=ext.classOf schema=v1 arity=0 suspend=0 sig=F0<KC<I>>
+        property _ fq=ext.classRef schema=v1 sig=Q<KC<I>>
+        """
+        try manifest.write(to: libDir.appendingPathComponent("manifest.json"), atomically: true, encoding: .utf8)
+        try metadata.write(to: libDir.appendingPathComponent("metadata.bin"), atomically: true, encoding: .utf8)
+
+        try withTemporaryFile(contents: "fun main() = 0") { path in
+            let ctx = makeCompilationContext(
+                inputs: [path],
+                moduleName: "KClassImport",
+                emit: .kirDump,
+                searchPaths: [libDir.path]
+            )
+            try runToKIR(ctx)
+
+            let sema = try XCTUnwrap(ctx.sema)
+            let ext = ctx.interner.intern("ext")
+            let classOf = ctx.interner.intern("classOf")
+            let classRef = ctx.interner.intern("classRef")
+
+            let functionSymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, classOf]).first)
+            let propertySymbol = try XCTUnwrap(sema.symbols.lookupAll(fqName: [ext, classRef]).first)
+            let functionSignature = try XCTUnwrap(sema.symbols.functionSignature(for: functionSymbol))
+            let propertyType = try XCTUnwrap(sema.symbols.propertyType(for: propertySymbol))
+
+            XCTAssertEqual(
+                functionSignature.returnType,
+                sema.types.makeKClassType(argument: sema.types.intType)
+            )
+            XCTAssertEqual(
+                propertyType,
+                sema.types.makeKClassType(argument: sema.types.intType, nullability: .nullable)
+            )
+        }
+    }
+
     func testLibraryImportRestoresExplicitNominalLayoutSlotsAndOffsets() throws {
         let fm = FileManager.default
         let baseDir = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString)

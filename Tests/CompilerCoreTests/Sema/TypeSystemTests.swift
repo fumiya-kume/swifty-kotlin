@@ -509,8 +509,17 @@ final class TypeSystemTests: XCTestCase {
         let stringType = ts.make(.primitive(.string, .nonNull))
         let kClassInt = ts.makeKClassType(argument: intType)
         let kClassString = ts.makeKClassType(argument: stringType)
-        // KClass<Int> is NOT a subtype of KClass<String> (invariant)
+        // Even with covariance, unrelated arguments are not compatible.
         XCTAssertFalse(ts.isSubtype(kClassInt, kClassString))
+    }
+
+    func testKClassSubtypingIsCovariant() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        let kClassAny = ts.makeKClassType(argument: ts.anyType)
+        XCTAssertTrue(ts.isSubtype(kClassInt, kClassAny))
+        XCTAssertFalse(ts.isSubtype(kClassAny, kClassInt))
     }
 
     func testKClassIsSubtypeOfAny() {

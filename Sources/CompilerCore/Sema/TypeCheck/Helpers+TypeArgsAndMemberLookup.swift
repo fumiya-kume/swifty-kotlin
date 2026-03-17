@@ -55,6 +55,8 @@ extension TypeCheckHelpers {
             return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
         case let .functionType(ft):
             return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
+        case let .kClassType(kc):
+            return types.make(.kClassType(KClassType(argument: kc.argument, nullability: .nullable)))
         case .any, .unit, .nothing:
             let nullable = types.makeNullable(typeID)
             if nullable == typeID {

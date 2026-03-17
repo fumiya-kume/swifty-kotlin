@@ -164,6 +164,14 @@ extension TypeCheckHelpersCoverageTests {
             helpers.applyNullabilityForTypeCheck(fixture.types.errorType, types: fixture.types),
             fixture.types.nullableAnyType
         )
+        let nullableKClass = helpers.applyNullabilityForTypeCheck(
+            fixture.types.makeKClassType(argument: fixture.types.intType),
+            types: fixture.types
+        )
+        XCTAssertEqual(
+            nullableKClass,
+            fixture.types.makeKClassType(argument: fixture.types.intType, nullability: .nullable)
+        )
 
         XCTAssertEqual(helpers.typeArgInnerTypeForCheck(.star), TypeID.invalid)
         XCTAssertEqual(helpers.typeArgInnerTypeForCheck(.out(fixture.types.intType)), fixture.types.intType)

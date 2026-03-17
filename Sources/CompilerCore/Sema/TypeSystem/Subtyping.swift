@@ -229,13 +229,12 @@ extension TypeSystem {
         case let (.any(leftNullability), .any(rightNullability)):
             return nullabilitySubtype(leftNullability, rightNullability)
 
-        // KClass<T> subtyping: KClass<A> <: KClass<B> iff A == B (invariant) and nullability is compatible.
+        // KClass<T> is covariant in T, matching Kotlin's `KClass<out T : Any>`.
         case let (.kClassType(leftKClass), .kClassType(rightKClass)):
             guard nullabilitySubtype(leftKClass.nullability, rightKClass.nullability) else {
                 return false
             }
-            // KClass type argument is invariant
-            return leftKClass.argument == rightKClass.argument
+            return isSubtype(leftKClass.argument, rightKClass.argument)
 
         default:
             return false
