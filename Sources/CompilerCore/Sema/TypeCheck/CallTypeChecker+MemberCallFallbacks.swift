@@ -497,6 +497,7 @@ extension CallTypeChecker {
             interner.intern("getOrNull"),
             interner.intern("elementAtOrNull"),
             interner.intern("binarySearch"),
+            interner.intern("decodeToString"),
         ]
         let collectionSpecificMembers: Set = [
             interner.intern("firstOrNull"),
@@ -599,7 +600,8 @@ extension CallTypeChecker {
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
-             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"):
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"),
+             interner.intern("decodeToString"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
@@ -689,6 +691,11 @@ extension CallTypeChecker {
         }
 
         if memberName == interner.intern("joinToString") {
+            return sema.types.stringType
+        }
+
+        // STDLIB-574: ByteArray.decodeToString()
+        if memberName == interner.intern("decodeToString") {
             return sema.types.stringType
         }
 

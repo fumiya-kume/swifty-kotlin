@@ -875,6 +875,24 @@ public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     return runtimeMakeListRaw(source.utf8.map(Int.init))
 }
 
+// STDLIB-573: String.encodeToByteArray()
+@_cdecl("kk_string_encodeToByteArray")
+public func kk_string_encodeToByteArray(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    return runtimeMakeListRaw(source.utf8.map(Int.init))
+}
+
+// STDLIB-574: ByteArray.decodeToString()
+@_cdecl("kk_bytearray_decodeToString")
+public func kk_bytearray_decodeToString(_ arrRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: arrRaw) else {
+        return runtimeMakeStringRaw("")
+    }
+    let bytes = list.elements.map { UInt8(clamping: $0) }
+    let decoded = String(bytes: bytes, encoding: .utf8) ?? ""
+    return runtimeMakeStringRaw(decoded)
+}
+
 @_cdecl("kk_string_format")
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let template = runtimeStringFromRawOrPanic(formatRaw, caller: #function)

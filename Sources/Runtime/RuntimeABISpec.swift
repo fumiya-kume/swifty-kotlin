@@ -674,6 +674,24 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-573: String.encodeToByteArray
+        RuntimeABIFunctionSpec(
+            name: "kk_string_encodeToByteArray",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-574: ByteArray.decodeToString
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_decodeToString",
+            parameters: [
+                RuntimeABIParameter(name: "arrRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_char_isDigit",
             parameters: [

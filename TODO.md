@@ -212,8 +212,8 @@
 
 #### G. kotlin.text / String — 単一 API 単位
 
-- [ ] STDLIB-573: `String.encodeToByteArray(charset)` の実装
-- [ ] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
+- [x] STDLIB-573: `String.encodeToByteArray(charset)` の実装
+- [x] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
 - [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード

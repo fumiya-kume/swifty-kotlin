@@ -1108,12 +1108,25 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-573: String.encodeToByteArray()
         registerSyntheticStringExtensionFunction(
             named: "encodeToByteArray",
-            externalLinkName: "kk_string_toByteArray",
+            externalLinkName: "kk_string_encodeToByteArray",
             receiverType: stringType,
             parameters: [],
             returnType: listIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-574: ByteArray.decodeToString()
+        registerSyntheticStringExtensionFunction(
+            named: "decodeToString",
+            externalLinkName: "kk_bytearray_decodeToString",
+            receiverType: listIntType,
+            parameters: [],
+            returnType: stringType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
