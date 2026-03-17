@@ -537,6 +537,88 @@ public func kk_string_toDoubleOrNull(_ strRaw: Int) -> Int {
     return Int(bitPattern: UInt(truncatingIfNeeded: parsed.bitPattern))
 }
 
+// MARK: - STDLIB-420 String.toLong / toLongOrNull / toFloat / toFloatOrNull
+
+#if !arch(arm64) && !arch(x86_64)
+#error("Long conversion assumes 64-bit Int")
+#endif
+
+/// Shared helper: parse a trimmed string into a Float, handling NaN/Infinity literals.
+private func runtimeParseFloat(_ trimmed: String) -> Float? {
+    switch trimmed {
+    case "NaN":
+        return .nan
+    case "Infinity", "+Infinity":
+        return .infinity
+    case "-Infinity":
+        return -.infinity
+    default:
+        return Float(trimmed)
+    }
+}
+
+/// Convert a Float's bit pattern to Int in an architecture-safe manner.
+private func runtimeFloatBitsToInt(_ f: Float) -> Int {
+    Int(bitPattern: UInt(f.bitPattern))
+}
+
+@_cdecl("kk_string_toLong")
+public func kk_string_toLong(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int64(source) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(truncatingIfNeeded: value)
+}
+
+@_cdecl("kk_string_toLongOrNull")
+public func kk_string_toLongOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int64(source) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(truncatingIfNeeded: value)
+}
+
+@_cdecl("kk_string_toFloat")
+public func kk_string_toFloat(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty {
+        runtimeSetThrown(outThrown, message: "NumberFormatException: empty String")
+        return 0
+    }
+
+    guard let parsed = runtimeParseFloat(trimmed) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(trimmed)\""
+        )
+        return 0
+    }
+    return runtimeFloatBitsToInt(parsed)
+}
+
+@_cdecl("kk_string_toFloatOrNull")
+public func kk_string_toFloatOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+
+    guard let parsed = runtimeParseFloat(trimmed) else {
+        return runtimeNullSentinelInt
+    }
+    return runtimeFloatBitsToInt(parsed)
+}
+
 @_cdecl("kk_string_indexOf")
 public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)

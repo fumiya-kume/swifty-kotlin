@@ -572,6 +572,30 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_toLong = ExternDecl(
+        name: "kk_string_toLong",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toLongOrNull = ExternDecl(
+        name: "kk_string_toLongOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toFloat = ExternDecl(
+        name: "kk_string_toFloat",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_toFloatOrNull = ExternDecl(
+        name: "kk_string_toFloatOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_indexOf = ExternDecl(
         name: "kk_string_indexOf",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -1731,6 +1755,10 @@ public enum RuntimeABIExterns {
             kk_string_toIntOrNull,
             kk_string_toDouble,
             kk_string_toDoubleOrNull,
+            kk_string_toLong,
+            kk_string_toLongOrNull,
+            kk_string_toFloat,
+            kk_string_toFloatOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
             kk_string_get,
