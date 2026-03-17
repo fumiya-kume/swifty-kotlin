@@ -1029,7 +1029,7 @@ public func kk_array_size(_ arrayRaw: Int) -> Int {
 @_cdecl("kk_array_is_empty")
 public func kk_array_is_empty(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
-        return kk_box_bool(1)
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_is_empty")
     }
     return kk_box_bool(array.elements.isEmpty ? 1 : 0)
 }
