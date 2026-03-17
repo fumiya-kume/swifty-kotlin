@@ -1007,9 +1007,17 @@ extension CallTypeChecker {
                 resultType = sema.types.makeNullable(collectionElementType)
 
             case "distinctBy":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                // Match the synthetic stub: selector is (T) -> Any (non-null, non-suspend).
+                // KNOWN LIMITATION: nullable keys are not supported; see stub comment.
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.anyType
+                    returnType: sema.types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
                 )))
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)

@@ -912,6 +912,12 @@ public func kk_list_distinctBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
+    // KNOWN LIMITATION: Key deduplication uses raw Int values (identity for
+    // non-primitive, unboxed value for primitives).  Structural equality for
+    // String/data-class keys works only when the runtime canonicalizes them
+    // to the same handle (which it does for String via interning).  For other
+    // reference-typed keys (e.g., custom data classes), this may produce
+    // incorrect results until runtime-level equals/hashCode dispatch is added.
     var seenKeys = Set<Int>()
     seenKeys.reserveCapacity(list.elements.count)
     var result: [Int] = []
