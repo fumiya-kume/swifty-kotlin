@@ -307,10 +307,15 @@ private func runtimeTraverseSequenceWithState(
             }
             return
         case let .stringSource(strRaw):
-            // Lazy: iterate string characters on demand without pre-materializing
-            let str = runtimeResolveStringOrPanic(strRaw, caller: "kk_string_asSequence")
-            for scalar in str.unicodeScalars {
-                emit(kk_box_char(Int(scalar.value)))
+            // Lazy: iterate string characters on demand without pre-materializing.
+            // NOTE: Kotlin Char is a UTF-16 code unit (16-bit). Iterating unicodeScalars
+            // produces values > 0xFFFF for supplementary characters (e.g. emoji),
+            // which do not fit in a Kotlin Char. We iterate utf16 code units instead to
+            // match Kotlin's Char semantics correctly. Supplementary characters are split
+            // into two surrogate code units, which is the expected Kotlin behaviour.
+            let str = runtimeStringFromRawOrPanic(strRaw, caller: "kk_string_asSequence")
+            for codeUnit in str.utf16 {
+                emit(kk_box_char(Int(codeUnit)))
                 if state.stop { return }
             }
             return
@@ -344,14 +349,6 @@ private func runtimeTraverseSequenceWithState(
     }
 }
 
-/// Resolves a string raw handle to its Swift String value, or panics.
-private func runtimeResolveStringOrPanic(_ strRaw: Int, caller: StaticString) -> String {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
-          let box = tryCast(ptr, to: RuntimeStringBox.self) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: \(caller) received invalid string handle")
-    }
-    return box.value
-}
 
 /// Convenience wrapper that creates its own `SequenceTraversalState`.
 private func runtimeTraverseSequence(
@@ -474,9 +471,12 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
             break
         }
         if case let .stringSource(strRaw) = step {
-            // Materialize characters lazily from the string handle (only at terminal evaluation)
-            let str = runtimeResolveStringOrPanic(strRaw, caller: "kk_string_asSequence")
-            elements = str.unicodeScalars.map { kk_box_char(Int($0.value)) }
+            // Materialize string characters at terminal evaluation only.
+            // Use utf16 code units (not unicodeScalars) so that supplementary characters
+            // (emoji, etc. with scalar value > 0xFFFF) are represented as surrogate pairs,
+            // matching Kotlin's UTF-16 Char semantics.
+            let str = runtimeStringFromRawOrPanic(strRaw, caller: "kk_string_asSequence")
+            elements = str.utf16.map { kk_box_char(Int($0)) }
             break
         }
         if case let .generator(seed, fnPtr, closureRaw) = step {

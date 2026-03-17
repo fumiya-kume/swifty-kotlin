@@ -1291,19 +1291,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let iterableCharType = makeIterableType(
-            symbols: symbols,
-            types: types,
-            interner: interner,
-            elementType: charType
-        )
-
+        // TODO: When a true lazy Iterable<Char> runtime view is implemented,
+        // change this stub back to Iterable<Char> (using makeIterableType).
+        // For now the runtime eagerly materializes a List<Char> via kk_string_toList,
+        // so the stub must return List<Char> to keep type and runtime in sync.
         registerSyntheticStringExtensionFunction(
             named: "asIterable",
             externalLinkName: "kk_string_asIterable",
             receiverType: stringType,
             parameters: [],
-            returnType: iterableCharType,
+            returnType: listCharType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
@@ -1340,6 +1337,7 @@ extension DataFlowSemaPhase {
             interner.intern("List"),
         ]
         guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            assertionFailure("kotlin.collections.List symbol not found — stdlib headers may not have been loaded before registering string stubs")
             return types.anyType
         }
         return types.make(.classType(ClassType(
@@ -1525,6 +1523,7 @@ extension DataFlowSemaPhase {
         fqName: [InternedString]
     ) -> TypeID {
         guard let symbol = symbols.lookup(fqName: fqName) else {
+            assertionFailure("Symbol not found for fqName \(fqName) — stdlib headers may not have been loaded before registering string stubs")
             return types.anyType
         }
         return types.make(.classType(ClassType(

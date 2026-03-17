@@ -1386,7 +1386,9 @@ private func runtimeStringFromRaw(_ raw: Int) -> String? {
 /// Fail-fast variant that panics on invalid string handles instead of returning nil.
 /// Use this instead of `runtimeStringFromRaw(...) ?? ""` to distinguish
 /// invalid handles from legitimately empty strings.
-private func runtimeStringFromRawOrPanic(_ raw: Int, caller: StaticString) -> String {
+/// Internal so that other runtime files (e.g. RuntimeSequence.swift) can share
+/// this helper without duplicating the safety check and panic message.
+func runtimeStringFromRawOrPanic(_ raw: Int, caller: StaticString) -> String {
     if let s = runtimeStringFromRaw(raw) {
         return s
     }
