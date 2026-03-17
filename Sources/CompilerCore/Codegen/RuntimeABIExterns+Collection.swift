@@ -100,6 +100,7 @@ public extension RuntimeABIExterns {
         kk_map_size,
         kk_map_get,
         kk_map_contains_key,
+        kk_map_contains_value,
         kk_map_is_empty,
         kk_map_forEach,
         kk_map_map,
@@ -480,6 +481,12 @@ public extension RuntimeABIExterns {
 
     static let kk_map_contains_key = ExternDecl(
         name: "kk_map_contains_key",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_map_contains_value = ExternDecl(
+        name: "kk_map_contains_value",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )

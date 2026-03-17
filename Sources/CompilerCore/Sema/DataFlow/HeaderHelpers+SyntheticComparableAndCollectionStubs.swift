@@ -3482,6 +3482,31 @@ extension DataFlowSemaPhase {
             )
         }
 
+        let containsValueName = interner.intern("containsValue")
+        let containsValueFQName = mapFQName + [containsValueName]
+        if symbols.lookup(fqName: containsValueFQName) == nil {
+            let containsValueSymbol = symbols.define(
+                kind: .function,
+                name: containsValueName,
+                fqName: containsValueFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(mapSymbol, for: containsValueSymbol)
+            symbols.setExternalLinkName("kk_map_contains_value", for: containsValueSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [valueType],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [keyParamSymbol, valueParamSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: containsValueSymbol
+            )
+        }
+
         return (mapSymbol, keyParamSymbol, valueParamSymbol)
     }
 

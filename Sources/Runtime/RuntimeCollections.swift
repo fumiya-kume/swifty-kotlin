@@ -952,6 +952,14 @@ public func kk_map_contains_key(_ mapRaw: Int, _ key: Int) -> Int {
     return kk_box_bool(map.keys.contains(where: { runtimeValuesEqual($0, key) }) ? 1 : 0)
 }
 
+@_cdecl("kk_map_contains_value")
+public func kk_map_contains_value(_ mapRaw: Int, _ value: Int) -> Int {
+    guard let map = runtimeMapBox(from: mapRaw) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(map.values.contains(where: { runtimeValuesEqual($0, value) }) ? 1 : 0)
+}
+
 @_cdecl("kk_map_is_empty")
 public func kk_map_is_empty(_ mapRaw: Int) -> Int {
     guard let map = runtimeMapBox(from: mapRaw) else {

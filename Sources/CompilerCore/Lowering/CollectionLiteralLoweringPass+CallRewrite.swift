@@ -900,6 +900,23 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    if callee == lookup.containsValueName {
+                        if arguments.count == 2 {
+                            let receiverID = arguments[0]
+                            if mapExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkMapContainsValueName,
+                                    arguments: arguments,
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
                     if callee == lookup.addName {
                         if arguments.count == 2 {
                             let receiverID = arguments[0]
