@@ -2519,6 +2519,27 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonPrefixWith_ignoreCase",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonSuffixWith_ignoreCase",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-316: String.zipWithNext()
         RuntimeABIFunctionSpec(
             name: "kk_string_zipWithNext",

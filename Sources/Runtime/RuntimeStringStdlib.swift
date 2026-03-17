@@ -988,6 +988,40 @@ public func kk_string_commonSuffixWith(_ strRaw: Int, _ otherRaw: Int) -> Int {
     return runtimeMakeStringRaw(suffix)
 }
 
+// MARK: - STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+
+@_cdecl("kk_string_commonPrefixWith_ignoreCase")
+public func kk_string_commonPrefixWith_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    let ignoreCase = ignoreCaseRaw != 0
+    var prefix = ""
+    for (a, b) in zip(s, other) {
+        if ignoreCase ? a.lowercased() == b.lowercased() : a == b {
+            prefix.append(a)
+        } else {
+            break
+        }
+    }
+    return runtimeMakeStringRaw(prefix)
+}
+
+@_cdecl("kk_string_commonSuffixWith_ignoreCase")
+public func kk_string_commonSuffixWith_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    let ignoreCase = ignoreCaseRaw != 0
+    var suffix = ""
+    for (a, b) in zip(s.reversed(), other.reversed()) {
+        if ignoreCase ? a.lowercased() == b.lowercased() : a == b {
+            suffix.insert(a, at: suffix.startIndex)
+        } else {
+            break
+        }
+    }
+    return runtimeMakeStringRaw(suffix)
+}
+
 // MARK: - STDLIB-316: String.zipWithNext()
 
 @_cdecl("kk_string_zipWithNext")
