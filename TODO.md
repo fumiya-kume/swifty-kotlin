@@ -220,7 +220,7 @@
 - [ ] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-579: `buildString.appendLine` の完全性確認
 - [ ] STDLIB-580: `buildString.appendRange` の完全性確認
-- [ ] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
+- [x] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
 
 #### H. kotlin.time / kotlin.system
 
