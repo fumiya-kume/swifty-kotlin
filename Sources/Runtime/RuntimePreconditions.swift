@@ -58,7 +58,7 @@ public func kk_check_lazy(
 @_cdecl("kk_error")
 public func kk_error(_ messageRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
-    let message = runtimePreconditionMessage(from: messageRaw) ?? "An operation is not supported."
+    let message = runtimePreconditionMessage(from: messageRaw)
     outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalStateException: \(message)")
     return 0
 }
@@ -108,12 +108,12 @@ private func preconditionWithLazyMessage(
     }
 
     // Lazy message evaluated successfully — use it for the precondition failure
-    let message = runtimePreconditionMessage(from: rawMessage) ?? defaultMessage
+    let message = runtimePreconditionMessage(from: rawMessage)
     outThrown?.pointee = runtimeAllocateThrowable(message: message)
     return 0
 }
 
-private func runtimePreconditionMessage(from rawValue: Int) -> String? {
+private func runtimePreconditionMessage(from rawValue: Int) -> String {
     if let message = extractString(from: UnsafeMutableRawPointer(bitPattern: rawValue)) {
         return message
     }
