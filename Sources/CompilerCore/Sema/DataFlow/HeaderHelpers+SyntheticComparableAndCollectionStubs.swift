@@ -328,11 +328,11 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
 
         // Pair<A,B>.toList() returns List<Any?> in Kotlin (elements can be null).
-        // List symbol is registered after Pair, so we use anyType as a temporary stand-in
-        // for the actual return type; it will be refined once List stubs are available.
+        // List symbol is registered after Pair, so we use nullable anyType as a temporary
+        // stand-in for the actual return type; it will be refined once List stubs are available.
         registerFunctionMember(
             name: "toList",
-            returnType: types.anyType,
+            returnType: types.makeNullable(types.anyType),
             externalLinkName: "kk_pair_toList",
             flags: [.synthetic]
         )
@@ -422,9 +422,9 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
         registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
         // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be null).
-        // List symbol is registered after Triple, so we use anyType as a temporary stand-in
-        // for the actual return type; it will be refined once List stubs are available.
-        registerFunctionMember(name: "toList", returnType: types.anyType, externalLinkName: "kk_triple_toList", flags: [.synthetic])
+        // List symbol is registered after Triple, so we use nullable anyType as a temporary
+        // stand-in for the actual return type; it will be refined once List stubs are available.
+        registerFunctionMember(name: "toList", returnType: types.makeNullable(types.anyType), externalLinkName: "kk_triple_toList", flags: [.synthetic])
     }
 
     private func registerSyntheticCollectionStub(
