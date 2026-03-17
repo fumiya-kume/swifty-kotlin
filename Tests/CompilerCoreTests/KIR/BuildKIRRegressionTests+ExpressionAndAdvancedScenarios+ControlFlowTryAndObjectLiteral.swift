@@ -243,6 +243,110 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    // CODE-002: Verify that when exception type token is UNKNOWN (0), catch clause
+    // matching uses kk_op_is for precise runtime type checking instead of blindly
+    // matching all catch clauses.
+    func testTryCatchUnknownTokenUsesRuntimeTypeCheck() throws {
+        let source = """
+        class MyException
+
+        fun riskyCall(): Int = 42
+
+        fun demo(): Int {
+            return try {
+                riskyCall()
+            } catch (e: MyException) {
+                -1
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
+
+            // Verify that kk_op_is is called for runtime type checking fallback
+            let opIsCalls = body.filter { instruction in
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "kk_op_is"
+            }
+            XCTAssertEqual(opIsCalls.count, 1, "Expected exactly one kk_op_is call for runtime type check fallback on UNKNOWN token.")
+
+            // Verify the kk_op_is call receives the exception slot and the type token
+            if case let .call(_, _, arguments, _, _, _, _) = opIsCalls.first {
+                XCTAssertEqual(arguments.count, 2, "kk_op_is should receive exception value and type token.")
+            }
+        }
+    }
+
+    // CODE-002: Verify multi-catch generates kk_op_is for each typed catch clause.
+    func testTryCatchMultipleClausesUnknownTokenUsesRuntimeTypeCheck() throws {
+        let source = """
+        class ErrA
+        class ErrB
+
+        fun riskyCall(): Int = 42
+
+        fun demo(): Int {
+            return try {
+                riskyCall()
+            } catch (e: ErrA) {
+                -1
+            } catch (e: ErrB) {
+                -2
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
+
+            // Verify that kk_op_is is called for each typed catch clause
+            let opIsCalls = body.filter { instruction in
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "kk_op_is"
+            }
+            XCTAssertEqual(opIsCalls.count, 2, "Expected one kk_op_is call per typed catch clause for runtime type check fallback.")
+        }
+    }
+
+    // CODE-002: Verify catch-all clause (catch (e: Any)) does NOT emit kk_op_is.
+    func testTryCatchCatchAllDoesNotEmitRuntimeTypeCheck() throws {
+        let source = """
+        fun riskyCall(): Int = 42
+
+        fun demo(): Int {
+            return try {
+                riskyCall()
+            } catch (e: Any) {
+                -1
+            }
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], emit: .kirDump)
+            try runToKIR(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let body = try findKIRFunctionBody(named: "demo", in: module, interner: ctx.interner)
+
+            // catch-all should not require runtime type checking
+            let opIsCalls = body.filter { instruction in
+                guard case let .call(_, callee, _, _, _, _, _) = instruction else { return false }
+                return ctx.interner.resolve(callee) == "kk_op_is"
+            }
+            XCTAssertEqual(opIsCalls.count, 0, "catch-all (Any) should not emit kk_op_is runtime type check.")
+        }
+    }
+
     func testBuildKIRLowersObjectLiteralToGeneratedFactoryReturningRuntimeObjectEntity() throws {
         let source = """
         interface Marker

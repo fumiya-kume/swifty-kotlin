@@ -372,31 +372,18 @@ final class ControlFlowLowerer {
                         thrownResult: nil
                     ))
                 } else {
-                    let encodedToken = RuntimeTypeCheckToken.encode(type: binding.parameterType, sema: sema, interner: interner)
-                    let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
-                    let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
-                    let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
-                    instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: exceptionTypeSlot,
-                        rhs: tokenExpr,
-                        result: typeMatches
-                    ))
-                    instructions.append(.binary(
-                        op: .equal,
-                        lhs: exceptionTypeSlot,
-                        rhs: unknownTypeToken,
-                        result: typeUnknown
-                    ))
-                    instructions.append(.binary(
-                        op: .logicalOr,
-                        lhs: typeMatches,
-                        rhs: typeUnknown,
-                        result: matchResult
-                    ))
+                    emitExceptionTypeCheck(
+                        catchType: binding.parameterType,
+                        exceptionSlot: exceptionSlot,
+                        exceptionTypeSlot: exceptionTypeSlot,
+                        matchResult: matchResult,
+                        boolType: boolType,
+                        intType: intType,
+                        sema: sema,
+                        interner: interner,
+                        arena: arena,
+                        instructions: &instructions
+                    )
                 }
                 instructions.append(.jumpIfEqual(lhs: matchResult, rhs: falseValue, target: noMatchLabel))
             }
@@ -472,31 +459,18 @@ final class ControlFlowLowerer {
                             thrownResult: nil
                         ))
                     } else {
-                        let encodedToken = RuntimeTypeCheckToken.encode(type: binding.parameterType, sema: sema, interner: interner)
-                        let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
-                        let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
-                        let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                        let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-                        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
-                        instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
-                        instructions.append(.binary(
-                            op: .equal,
-                            lhs: exceptionTypeSlot,
-                            rhs: tokenExpr,
-                            result: typeMatches
-                        ))
-                        instructions.append(.binary(
-                            op: .equal,
-                            lhs: exceptionTypeSlot,
-                            rhs: unknownTypeToken,
-                            result: typeUnknown
-                        ))
-                        instructions.append(.binary(
-                            op: .logicalOr,
-                            lhs: typeMatches,
-                            rhs: typeUnknown,
-                            result: matchResult
-                        ))
+                        emitExceptionTypeCheck(
+                            catchType: binding.parameterType,
+                            exceptionSlot: exceptionSlot,
+                            exceptionTypeSlot: exceptionTypeSlot,
+                            matchResult: matchResult,
+                            boolType: boolType,
+                            intType: intType,
+                            sema: sema,
+                            interner: interner,
+                            arena: arena,
+                            instructions: &instructions
+                        )
                     }
                     instructions.append(.jumpIfEqual(lhs: matchResult, rhs: falseValue, target: catchMissLabels[index]))
                 }
@@ -608,6 +582,100 @@ final class ControlFlowLowerer {
 
         instructions.append(.label(endLabel))
         return tryResult
+    }
+
+    /// Emits instructions to check whether a caught exception matches a specific catch clause type.
+    ///
+    /// When the exception type token is known (non-zero), this performs a fast integer
+    /// comparison against the encoded catch type token. When the token is UNKNOWN (0) --
+    /// which happens for exceptions thrown by external/runtime calls -- this falls back
+    /// to a runtime `kk_op_is` call that inspects the actual exception object, providing
+    /// precise type matching instead of blindly matching all catch clauses.
+    ///
+    /// Generated control flow:
+    /// ```
+    ///   typeMatches = (exceptionTypeSlot == catchTypeToken)
+    ///   if typeMatches -> matchResult = true
+    ///   typeUnknown = (exceptionTypeSlot == 0)
+    ///   if !typeUnknown -> matchResult = false
+    ///   matchResult = kk_op_is(exceptionSlot, catchTypeToken)  // runtime fallback
+    /// ```
+    func emitExceptionTypeCheck(
+        catchType: TypeID,
+        exceptionSlot: KIRExprID,
+        exceptionTypeSlot: KIRExprID,
+        matchResult: KIRExprID,
+        boolType: TypeID,
+        intType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner,
+        arena: KIRArena,
+        instructions: inout [KIRInstruction]
+    ) {
+        let encodedToken = RuntimeTypeCheckToken.encode(type: catchType, sema: sema, interner: interner)
+        let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
+        let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+        let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+
+        instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
+        instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
+
+        // Fast path: exact token match (exception type is known)
+        instructions.append(.binary(
+            op: .equal,
+            lhs: exceptionTypeSlot,
+            rhs: tokenExpr,
+            result: typeMatches
+        ))
+
+        // Check if the exception type is UNKNOWN (token == 0)
+        instructions.append(.binary(
+            op: .equal,
+            lhs: exceptionTypeSlot,
+            rhs: unknownTypeToken,
+            result: typeUnknown
+        ))
+
+        // When token is UNKNOWN, call kk_op_is for precise runtime type checking
+        // instead of blindly matching all catch clauses.
+        let runtimeCheckLabel = driver.ctx.makeLoopLabel()
+        let tokenMatchedLabel = driver.ctx.makeLoopLabel()
+        let checkDoneLabel = driver.ctx.makeLoopLabel()
+
+        let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
+        let falseForCheck = arena.appendExpr(.boolLiteral(false), type: boolType)
+        instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
+        instructions.append(.constValue(result: falseForCheck, value: .boolLiteral(false)))
+
+        // If typeMatches (exact token match), jump to matched
+        instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: falseForCheck, target: runtimeCheckLabel))
+        instructions.append(.copy(from: trueValue, to: matchResult))
+        instructions.append(.jump(checkDoneLabel))
+
+        // Runtime check path: only reached when token did not match exactly
+        instructions.append(.label(runtimeCheckLabel))
+        // If the token is NOT unknown (i.e., known but different), it's a definite miss
+        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseForCheck, target: tokenMatchedLabel))
+
+        // Token is 0 (UNKNOWN) -- use kk_op_is for runtime type checking
+        let runtimeIsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_op_is"),
+            arguments: [exceptionSlot, tokenExpr],
+            result: runtimeIsResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        instructions.append(.copy(from: runtimeIsResult, to: matchResult))
+        instructions.append(.jump(checkDoneLabel))
+
+        // Token was known but didn't match -- definite miss
+        instructions.append(.label(tokenMatchedLabel))
+        instructions.append(.copy(from: falseForCheck, to: matchResult))
+
+        instructions.append(.label(checkDoneLabel))
     }
 
     func appendThrowAwareInstructions(

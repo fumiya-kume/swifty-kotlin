@@ -336,8 +336,8 @@
   - 現状: 単なるラムダとして生成されており、リフレクション API での利用が不可
 - [ ] CODE-001: `return`, `break`, `continue` の際、囲んでいる `finally` ブロックを確実に実行するようにする
   - 現状: `ExprLowerer+ControlFlowAndBlocks.swift` で直接 `returnValue` / `jump` を発行しており、`finally` がスキップされる
-- [ ] CODE-002: 例外型チェックの精度を向上させる (UNKNOWN token 0 の対応)
-  - 現状: トークンが 0 の場合に全 catch 節にマッチしてしまう可能性がある。`kk_throwable_is_instance` による実行時チェックを導入する
+- [x] CODE-002: 例外型チェックの精度を向上させる (UNKNOWN token 0 の対応)
+  - 完了: トークンが 0 (UNKNOWN) の場合、`kk_op_is` を呼び出して実行時型チェックを行うように変更。全 catch 節に無条件マッチする問題を修正
 - [ ] CORO-001: コルーチンのサスペンドを真に非ブロッキングにする
   - 現状: `waitForResumeSignal` で `DispatchSemaphore` を使用してスレッドをブロックしている。本来は継続（Continuation）を保存してスレッドを解放すべき
 - [ ] CORO-002: `Flow` の評価を遅延（Lazy）にする
