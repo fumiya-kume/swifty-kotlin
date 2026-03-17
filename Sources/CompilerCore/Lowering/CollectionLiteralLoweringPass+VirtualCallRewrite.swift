@@ -706,6 +706,7 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
             || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
             || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
+            || callee == lookup.distinctByName
         else {
             return false
         }
@@ -726,6 +727,7 @@ extension CollectionLiteralLoweringPass {
         case lookup.minByOrNullName: lookup.kkListMinByOrNullName
         case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
         case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
+        case lookup.distinctByName: lookup.kkListDistinctByName
         default: callee
         }
 
@@ -780,7 +782,8 @@ extension CollectionLiteralLoweringPass {
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody
         )
-        if callee == lookup.sortedByName || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName,
+        if callee == lookup.sortedByName || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
+            || callee == lookup.distinctByName,
            let result
         {
             listExprIDs.insert(result.rawValue)

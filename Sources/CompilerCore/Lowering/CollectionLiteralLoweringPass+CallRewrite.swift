@@ -1799,6 +1799,7 @@ extension CollectionLiteralLoweringPass {
                     // 1-param lambda HOFs with [receiver, lambda, closureRaw?]
                     if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName
                         || callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName
+                        || callee == lookup.distinctByName
                     {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
@@ -1819,6 +1820,7 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.associateByName: lookup.kkListAssociateByName
                                 case lookup.associateWithName: lookup.kkListAssociateWithName
                                 case lookup.associateName: lookup.kkListAssociateName
+                                case lookup.distinctByName: lookup.kkListDistinctByName
                                 default: callee
                                 }
                                 let hofResult = module.arena.appendExpr(
@@ -1832,7 +1834,7 @@ extension CollectionLiteralLoweringPass {
                                     canThrow: canThrow,
                                     thrownResult: thrownResult
                                 ))
-                                if callee == lookup.sortedByName, let result {
+                                if callee == lookup.sortedByName || callee == lookup.distinctByName, let result {
                                     listExprIDs.insert(result.rawValue)
                                     listExprIDs.insert(hofResult.rawValue)
                                 }
