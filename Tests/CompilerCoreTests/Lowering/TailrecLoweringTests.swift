@@ -258,6 +258,129 @@ final class TailrecLoweringTests: XCTestCase {
         XCTAssertFalse(TailrecLoweringPass().shouldRun(module: module, ctx: ctx))
     }
 
+    /// LOWER-005: Verify that a tailrec function's self-recursive call
+    /// through a `$default` stub is recognized and optimized into a loop.
+    func testTailrecRewritesDefaultStubCallToLoop() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let fnSymbol = SymbolID(rawValue: 400)
+        let defaultStubSymbol = SyntheticSymbolScheme.defaultStubSymbol(for: fnSymbol)
+        let paramN = SymbolID(rawValue: 401)
+        let paramAcc = SymbolID(rawValue: 402)
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nExpr = arena.appendExpr(.symbolRef(paramN))
+        let accExpr = arena.appendExpr(.symbolRef(paramAcc))
+        let zeroExpr = arena.appendExpr(.intLiteral(0))
+        let oneExpr = arena.appendExpr(.intLiteral(1))
+        let subResult = arena.appendExpr(.temporary(0))
+        // Sentinel value for the defaulted second parameter
+        let sentinelExpr = arena.appendExpr(.intLiteral(0))
+        // Default mask: bit 1 set means param index 1 uses default
+        let maskExpr = arena.appendExpr(.intLiteral(2))
+        let callResult = arena.appendExpr(.temporary(1))
+
+        let tailrecFunction = KIRFunction(
+            symbol: fnSymbol,
+            name: interner.intern("countdown"),
+            params: [KIRParameter(symbol: paramN, type: intType), KIRParameter(symbol: paramAcc, type: intType)],
+            returnType: intType,
+            body: [
+                .beginBlock,
+                .constValue(result: nExpr, value: .symbolRef(paramN)),
+                .constValue(result: accExpr, value: .symbolRef(paramAcc)),
+                // if (n == 0) jump to base case
+                .jumpIfEqual(lhs: nExpr, rhs: zeroExpr, target: 1),
+                // recursive case: countdown$default(n - 1, 0_sentinel, mask=2)
+                .binary(op: .subtract, lhs: nExpr, rhs: oneExpr, result: subResult),
+                .constValue(result: sentinelExpr, value: .intLiteral(0)),
+                .constValue(result: maskExpr, value: .intLiteral(2)),
+                .call(
+                    symbol: defaultStubSymbol,
+                    callee: interner.intern("countdown$default"),
+                    arguments: [subResult, sentinelExpr, maskExpr],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+                // base case
+                .label(1),
+                .returnValue(accExpr),
+                .endBlock,
+            ],
+            isSuspend: false,
+            isInline: false,
+            isTailrec: true
+        )
+
+        let fnID = arena.appendDecl(.function(tailrecFunction))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
+            arena: arena
+        )
+
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "TailrecDefaultStub",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            interner: interner
+        )
+
+        try TailrecLoweringPass().run(module: module, ctx: ctx)
+
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected lowered function")
+            return
+        }
+
+        // The loop-head label should be present.
+        let hasLoopLabel = lowered.body.contains { instruction in
+            if case let .label(id) = instruction {
+                return id >= tailrecLoopLabelBase
+            }
+            return false
+        }
+        XCTAssertTrue(hasLoopLabel, "Expected loop-head label")
+
+        // The jump back to loop head should be present.
+        let hasJumpBack = lowered.body.contains { instruction in
+            if case let .jump(target) = instruction {
+                return target >= tailrecLoopLabelBase
+            }
+            return false
+        }
+        XCTAssertTrue(hasJumpBack, "Expected jump back to loop head")
+
+        // The $default stub call should be gone.
+        let hasDefaultStubCall = lowered.body.contains { instruction in
+            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+                return true
+            }
+            return false
+        }
+        XCTAssertFalse(hasDefaultStubCall, "$default stub call should have been eliminated by tailrec lowering")
+
+        // Only the first parameter (n) should be reassigned; the second
+        // parameter (acc, mask bit 1 set) should NOT have a copy target.
+        // Count copy instructions — we expect 1 copy-to-temp + 1 copy-to-param = 2
+        // (only for the non-defaulted param).
+        let copyCount = lowered.body.filter { instruction in
+            if case .copy = instruction { return true }
+            return false
+        }.count
+        // 1 argument temp + 1 param assignment = 2 copies for the single non-defaulted param
+        XCTAssertEqual(copyCount, 2, "Expected exactly 2 copy instructions (only for the non-defaulted parameter)")
+    }
+
     // MARK: - Sema warning test
 
     /// Verify that KSWIFTK-SEMA-TAILREC warning is emitted when the last
