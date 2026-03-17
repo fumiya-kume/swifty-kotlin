@@ -6,6 +6,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) {
         let javaIOPkg = ensureJavaIOPackage(symbols: symbols, interner: interner)
+        let javaIOPkgSymbol = symbols.lookup(fqName: javaIOPkg)
 
         let fileSymbol = ensureClassSymbol(
             named: "File",
@@ -13,6 +14,9 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: fileSymbol)
+        }
         let fileType = types.make(.classType(ClassType(
             classSymbol: fileSymbol, args: [], nullability: .nonNull
         )))
@@ -20,6 +24,9 @@ extension DataFlowSemaPhase {
 
         // List<File> type for listFiles return
         let listSymbol = resolveListSymbol(symbols: symbols, interner: interner)
+        if listSymbol == nil {
+            assertionFailure("kotlin.collections.List symbol not found; File IO stubs will use Any as fallback")
+        }
         let listOfFileType: TypeID = if let listSym = listSymbol {
             types.make(.classType(ClassType(
                 classSymbol: listSym,
@@ -311,6 +318,11 @@ extension DataFlowSemaPhase {
             return existingSignature.receiverType == ownerType
                 && existingSignature.parameterTypes == parameters.map(\.type)
         }) {
+            // Only overwrite synthetic symbols to avoid clobbering user/stdlib declarations
+            guard let existingInfo = symbols.symbol(existing),
+                  existingInfo.flags.contains(.synthetic) || existingInfo.declSite == nil else {
+                return
+            }
             symbols.setExternalLinkName(externalLinkName, for: existing)
             // Update the signature if the return type diverges from the intended type
             if let existingSignature = symbols.functionSignature(for: existing),
@@ -419,6 +431,11 @@ extension DataFlowSemaPhase {
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
             symbols.symbol(symbolID)?.kind == .property
         }) {
+            // Only overwrite synthetic symbols to avoid clobbering user/stdlib declarations
+            guard let existingInfo = symbols.symbol(existing),
+                  existingInfo.flags.contains(.synthetic) || existingInfo.declSite == nil else {
+                return
+            }
             symbols.setExternalLinkName(externalLinkName, for: existing)
             symbols.setPropertyType(returnType, for: existing)
             return
