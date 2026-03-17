@@ -227,6 +227,43 @@ public func kk_math_round(_ value: Int) -> Int {
     kk_double_to_bits(round(kk_bits_to_double(value)))
 }
 
+// Trigonometric functions (STDLIB-430)
+
+@_cdecl("kk_math_sin")
+public func kk_math_sin(_ value: Int) -> Int {
+    kk_double_to_bits(sin(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_cos")
+public func kk_math_cos(_ value: Int) -> Int {
+    kk_double_to_bits(cos(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_tan")
+public func kk_math_tan(_ value: Int) -> Int {
+    kk_double_to_bits(tan(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_asin")
+public func kk_math_asin(_ value: Int) -> Int {
+    kk_double_to_bits(asin(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_acos")
+public func kk_math_acos(_ value: Int) -> Int {
+    kk_double_to_bits(acos(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_atan")
+public func kk_math_atan(_ value: Int) -> Int {
+    kk_double_to_bits(atan(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_atan2")
+public func kk_math_atan2(_ y: Int, _ x: Int) -> Int {
+    kk_double_to_bits(atan2(kk_bits_to_double(y), kk_bits_to_double(x)))
+}
+
 @_cdecl("kk_println_char")
 public func kk_println_char(_ value: Int) {
     if let scalar = UnicodeScalar(value) {
