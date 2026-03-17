@@ -312,6 +312,28 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-589: Result.recover ---
+        // recover(transform: (Throwable) -> T): Result<T>
+        let recoverTransformType = types.make(.functionType(FunctionType(
+            receiver: nil,
+            params: [throwableType],
+            returnType: tType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+        registerResultMemberFunction(
+            named: "recover",
+            externalLinkName: "kk_result_recover",
+            ownerSymbol: resultSymbol,
+            ownerType: resultType,
+            parameters: [("transform", recoverTransformType, false, false)],
+            returnType: resultType,
+            typeParameterSymbols: [tSymbol],
+            classTypeParameterCount: 1,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Result Helpers

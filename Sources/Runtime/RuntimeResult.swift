@@ -233,3 +233,31 @@ public func kk_result_onFailure(
     }
     return resultRaw
 }
+
+// MARK: - STDLIB-589: Result.recover
+
+@_cdecl("kk_result_recover")
+public func kk_result_recover(
+    _ resultRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = resultBoxFromRaw(resultRaw) else {
+        return registerRuntimeObject(RuntimeResultBox(isSuccess: false, value: 0, exception: runtimeAllocateThrowable(message: "Result is null")))
+    }
+    if box.isSuccess {
+        // Success — return as-is
+        return resultRaw
+    }
+    // Failure — apply the transform to produce a new success value
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let recovered = lambda(closureRaw, box.exception, &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return registerRuntimeObject(RuntimeResultBox(isSuccess: true, value: recovered, exception: 0))
+}
