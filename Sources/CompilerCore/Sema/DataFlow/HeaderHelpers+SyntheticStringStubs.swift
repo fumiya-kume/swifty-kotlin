@@ -14,7 +14,10 @@ extension DataFlowSemaPhase {
         let charType = types.make(.primitive(.char, .nonNull))
         let nullableIntType = types.make(.primitive(.int, .nullable))
         let nullableDoubleType = types.make(.primitive(.double, .nullable))
+        let nullableLongType = types.make(.primitive(.long, .nullable))
+        let nullableFloatType = types.make(.primitive(.float, .nullable))
         let nullableCharType = types.make(.primitive(.char, .nullable))
+        let floatType = types.floatType
         let doubleType = types.doubleType
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
         let listCharType = makeListType(
@@ -193,6 +196,51 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [],
             returnType: nullableDoubleType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-420: String.toLong / toLongOrNull / toFloat / toFloatOrNull
+        registerSyntheticStringExtensionFunction(
+            named: "toLong",
+            externalLinkName: "kk_string_toLong",
+            receiverType: stringType,
+            parameters: [],
+            returnType: longType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toLongOrNull",
+            externalLinkName: "kk_string_toLongOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableLongType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toFloat",
+            externalLinkName: "kk_string_toFloat",
+            receiverType: stringType,
+            parameters: [],
+            returnType: floatType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "toFloatOrNull",
+            externalLinkName: "kk_string_toFloatOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableFloatType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

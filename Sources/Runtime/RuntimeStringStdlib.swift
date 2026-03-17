@@ -537,6 +537,85 @@ public func kk_string_toDoubleOrNull(_ strRaw: Int) -> Int {
     return Int(bitPattern: UInt(truncatingIfNeeded: parsed.bitPattern))
 }
 
+// MARK: - STDLIB-420 String.toLong / toLongOrNull / toFloat / toFloatOrNull
+
+@_cdecl("kk_string_toLong")
+public func kk_string_toLong(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int64(source) else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(source)\""
+        )
+        return 0
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toLongOrNull")
+public func kk_string_toLongOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let value = Int64(source) else {
+        return runtimeNullSentinelInt
+    }
+    return Int(value)
+}
+
+@_cdecl("kk_string_toFloat")
+public func kk_string_toFloat(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.isEmpty {
+        runtimeSetThrown(outThrown, message: "NumberFormatException: empty String")
+        return 0
+    }
+
+    let value: Float? = switch trimmed {
+    case "NaN":
+        .nan
+    case "Infinity", "+Infinity":
+        .infinity
+    case "-Infinity":
+        -.infinity
+    default:
+        Float(trimmed)
+    }
+    guard let parsed = value else {
+        runtimeSetThrown(
+            outThrown,
+            message: "NumberFormatException: For input string: \"\(trimmed)\""
+        )
+        return 0
+    }
+    return Int(parsed.bitPattern)
+}
+
+@_cdecl("kk_string_toFloatOrNull")
+public func kk_string_toFloatOrNull(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+
+    let value: Float? = switch trimmed {
+    case "NaN":
+        .nan
+    case "Infinity", "+Infinity":
+        .infinity
+    case "-Infinity":
+        -.infinity
+    default:
+        Float(trimmed)
+    }
+    guard let parsed = value else {
+        return runtimeNullSentinelInt
+    }
+    return Int(parsed.bitPattern)
+}
+
 @_cdecl("kk_string_indexOf")
 public func kk_string_indexOf(_ strRaw: Int, _ otherRaw: Int) -> Int {
     let source = runtimeStringScalars(strRaw)
