@@ -6,8 +6,8 @@ public extension RuntimeABIExterns {
         kk_string_builder_append_obj,
         kk_string_builder_toString,
         kk_string_builder_length_prop,
-        kk_string_builder_appendLine_obj,
-        kk_string_builder_appendLine_noarg_obj,
+        kk_string_builder_append_line_obj,
+        kk_string_builder_append_line_noarg_obj,
         kk_string_builder_insert_obj,
         kk_string_builder_delete_obj,
         kk_string_builder_clear,
@@ -46,14 +46,14 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    static let kk_string_builder_appendLine_obj = ExternDecl(
-        name: "kk_string_builder_appendLine_obj",
+    static let kk_string_builder_append_line_obj = ExternDecl(
+        name: "kk_string_builder_append_line_obj",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
-    static let kk_string_builder_appendLine_noarg_obj = ExternDecl(
-        name: "kk_string_builder_appendLine_noarg_obj",
+    static let kk_string_builder_append_line_noarg_obj = ExternDecl(
+        name: "kk_string_builder_append_line_noarg_obj",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

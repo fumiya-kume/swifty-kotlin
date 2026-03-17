@@ -66,16 +66,20 @@ public func kk_string_builder_length_prop(_ sbRaw: Int) -> Int {
     return sb.value.utf8.count
 }
 
-@_cdecl("kk_string_builder_appendLine_obj")
-public func kk_string_builder_appendLine_obj(_ sbRaw: Int, _ valueRaw: Int) -> Int {
+// ABI note: The old camelCase symbols (kk_string_builder_appendLine_obj) were never part of
+// a shipped/stable ABI. This rename to snake_case happened before any release, so there are
+// no pre-existing compiled artifacts that reference the old names.
+@_cdecl("kk_string_builder_append_line_obj")
+public func kk_string_builder_append_line_obj(_ sbRaw: Int, _ valueRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     sb.value.append(runtimeElementToString(valueRaw))
     sb.value.append("\n")
     return sbRaw
 }
 
-@_cdecl("kk_string_builder_appendLine_noarg_obj")
-public func kk_string_builder_appendLine_noarg_obj(_ sbRaw: Int) -> Int {
+// ABI note: Same as above — old camelCase symbol never shipped; rename is safe.
+@_cdecl("kk_string_builder_append_line_noarg_obj")
+public func kk_string_builder_append_line_noarg_obj(_ sbRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     sb.value.append("\n")
     return sbRaw

@@ -149,8 +149,8 @@ public extension RuntimeABIExterns {
         kk_build_map,
         kk_build_set,
         kk_string_builder_append,
-        kk_string_builder_appendLine,
-        kk_string_builder_appendLine_noarg,
+        kk_string_builder_append_line,
+        kk_string_builder_append_line_noarg,
         kk_string_builder_insert,
         kk_string_builder_delete,
         kk_string_builder_length,
@@ -1176,15 +1176,16 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    /// StringBuilder enhancements (STDLIB-311)
-    static let kk_string_builder_appendLine = ExternDecl(
-        name: "kk_string_builder_appendLine",
+    /// StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
+    /// (object-oriented StringBuilder externs live in RuntimeABIExterns+StringBuilder.swift)
+    static let kk_string_builder_append_line = ExternDecl(
+        name: "kk_string_builder_append_line",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
-    static let kk_string_builder_appendLine_noarg = ExternDecl(
-        name: "kk_string_builder_appendLine_noarg",
+    static let kk_string_builder_append_line_noarg = ExternDecl(
+        name: "kk_string_builder_append_line_noarg",
         parameterTypes: [],
         returnType: "intptr_t"
     )

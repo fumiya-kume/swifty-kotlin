@@ -54,7 +54,7 @@ extension DataFlowSemaPhase {
         // appendLine(Any?): StringBuilder
         registerStringBuilderMemberFunction(
             named: "appendLine",
-            externalLinkName: "kk_string_builder_appendLine_obj",
+            externalLinkName: "kk_string_builder_append_line_obj",
             ownerSymbol: sbSymbol,
             ownerType: sbType,
             parameters: [("value", nullableAnyType, false, false)],
@@ -66,7 +66,7 @@ extension DataFlowSemaPhase {
         // appendLine(): StringBuilder (no-arg overload)
         registerStringBuilderMemberFunction(
             named: "appendLine",
-            externalLinkName: "kk_string_builder_appendLine_noarg_obj",
+            externalLinkName: "kk_string_builder_append_line_noarg_obj",
             ownerSymbol: sbSymbol,
             ownerType: sbType,
             parameters: [],

@@ -41,7 +41,7 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_builder_appendLine_obj",
+            name: "kk_string_builder_append_line_obj",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),
                 RuntimeABIParameter(name: "valueRaw", type: .intptr),
@@ -50,7 +50,7 @@ public extension RuntimeABISpec {
             section: "StringBuilder"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_builder_appendLine_noarg_obj",
+            name: "kk_string_builder_append_line_noarg_obj",
             parameters: [
                 RuntimeABIParameter(name: "sbRaw", type: .intptr),
             ],
