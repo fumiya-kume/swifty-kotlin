@@ -53,11 +53,21 @@ private func runtimeSequenceSourceElementsOrPanic(from rawValue: Int, caller: St
 
 private final class SequenceTraversalState {
     var stop = false
+    var limitReached = false
     var takeCounts: [Int: Int] = [:]
     var dropCounts: [Int: Int] = [:]
     var distinctSeen: [Int: [Int]] = [:]
     var zipIndices: [Int: Int] = [:]
 }
+
+// MARK: - Shared error message constants
+
+/// Error message for `first()` / `last()` on an empty sequence.
+private let kEmptySequenceNoSuchElement = "NoSuchElementException: Sequence is empty."
+/// Error message for `reduce` on an empty sequence.
+private let kEmptySequenceCannotReduce = "UnsupportedOperationException: Empty sequence can't be reduced."
+/// Error message when a generator sequence exceeds the traversal hard limit.
+private let kSequenceGeneratorLimitReached = "IllegalStateException: Sequence generator exceeded traversal hard limit."
 
 private func runtimeSequenceTransformElement(
     _ element: Int,
@@ -251,8 +261,11 @@ private func runtimeSequenceTransformElement(
     }
 }
 
-private func runtimeTraverseSequence(
+/// Traverse a sequence box lazily, allowing the caller to supply its own
+/// `SequenceTraversalState` so that `limitReached` can be inspected afterwards.
+private func runtimeTraverseSequenceWithState(
     _ seq: RuntimeSequenceBox,
+    state: SequenceTraversalState,
     outThrown: UnsafeMutablePointer<Int>?,
     yield: @escaping (Int) -> Bool
 ) {
@@ -264,7 +277,6 @@ private func runtimeTraverseSequence(
             true
         }
     }
-    let state = SequenceTraversalState()
     let emit: (Int) -> Void = { element in
         runtimeSequenceTransformElement(
             element,
@@ -305,11 +317,24 @@ private func runtimeTraverseSequence(
                 current = unboxed
                 generatedCount += 1
             }
+            if generatedCount >= hardLimit, !state.stop {
+                state.limitReached = true
+            }
             return
         case .mapStep, .filterStep, .takeStep, .dropStep, .distinctStep, .zipStep, .takeWhileStep, .dropWhileStep, .onEachStep:
             continue
         }
     }
+}
+
+/// Convenience wrapper that creates its own `SequenceTraversalState`.
+private func runtimeTraverseSequence(
+    _ seq: RuntimeSequenceBox,
+    outThrown: UnsafeMutablePointer<Int>?,
+    yield: @escaping (Int) -> Bool
+) {
+    let state = SequenceTraversalState()
+    runtimeTraverseSequenceWithState(seq, state: state, outThrown: outThrown, yield: yield)
 }
 
 /// Extracts source elements from a sequence step, if applicable.
@@ -846,79 +871,103 @@ public func kk_sequence_sortedDescending(_ seqRaw: Int) -> Int {
 
 @_cdecl("kk_sequence_first")
 public func kk_sequence_first(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var found = false
+    var result = 0
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var firstElement: Int?
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
-            firstElement = elem
-            return false // stop after first element
+            result = elem
+            found = true
+            return false
         }
-        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
-        if let first = firstElement { return first }
-        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
-        outThrown?.pointee = err
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        if let first = elements.first {
+            result = first
+            found = true
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if !found {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
         return 0
     }
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    if elements.isEmpty {
-        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
-        outThrown?.pointee = err
-        return 0
-    }
-    return elements[0]
+    return result
 }
 
 @_cdecl("kk_sequence_firstOrNull")
 public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var found = false
+    var result = 0
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var firstElement: Int?
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
-            firstElement = elem
-            return false // stop after first element
+            result = elem
+            found = true
+            return false
         }
-        if let thrown = outThrown?.pointee, thrown != 0 { return runtimeNullSentinelInt }
-        return firstElement ?? runtimeNullSentinelInt
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        if let first = elements.first {
+            result = first
+            found = true
+        }
     }
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    if elements.isEmpty { return runtimeNullSentinelInt }
-    return elements[0]
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    return found ? result : runtimeNullSentinelInt
 }
 
 @_cdecl("kk_sequence_last")
 public func kk_sequence_last(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var found = false
+    var result = 0
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var lastElement: Int?
-        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
-            lastElement = elem
-            return true // continue to find last element
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
+            result = elem
+            found = true
+            return true
         }
-        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
-        if let last = lastElement { return last }
-        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
-        outThrown?.pointee = err
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        if let last = elements.last {
+            result = last
+            found = true
+        }
+    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
         return 0
     }
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    if elements.isEmpty {
-        let err = runtimeAllocateThrowable(message: "Sequence is empty.")
-        outThrown?.pointee = err
+    if !found {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceNoSuchElement)
         return 0
     }
-    return elements[elements.count - 1]
+    return result
 }
 
 @_cdecl("kk_sequence_count")
 public func kk_sequence_count(_ seqRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    var count = 0
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        var count = 0
-        runtimeTraverseSequence(seq, outThrown: outThrown) { _ in
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { _ in
             count += 1
-            return true // continue counting
+            return true
         }
-        if let thrown = outThrown?.pointee, thrown != 0 { return 0 }
-        return count
+    } else {
+        let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
+        count = elements.count
     }
-    let elements = runtimeSequenceSourceElements(from: seqRaw) ?? []
-    return elements.count
+    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
+    return count
 }
 
 // MARK: - Sequence Terminal Operations: any/all/none/fold/reduce (STDLIB-274)
@@ -1126,7 +1175,7 @@ public func kk_sequence_reduce(
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
     if !hasAccumulator {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "UnsupportedOperationException: Empty sequence can't be reduced.")
+        outThrown?.pointee = runtimeAllocateThrowable(message: kEmptySequenceCannotReduce)
         return 0
     }
     return acc

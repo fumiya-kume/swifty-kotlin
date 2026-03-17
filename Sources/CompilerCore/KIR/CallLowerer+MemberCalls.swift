@@ -1926,6 +1926,12 @@ extension CallLowerer {
                 let firstOrNullID = interner.intern("firstOrNull")
                 let lastID = interner.intern("last")
                 let countID = interner.intern("count")
+
+                let seqFirstCallee = interner.intern("kk_sequence_first")
+                let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
+                let seqLastCallee = interner.intern("kk_sequence_last")
+                let seqCountCallee = interner.intern("kk_sequence_count")
+
                 let runtimeCallee: InternedString? = switch calleeName {
                 case toListID:
                     interner.intern("kk_sequence_to_list")
@@ -1940,21 +1946,21 @@ extension CallLowerer {
                 case withIndexID:
                     interner.intern("kk_sequence_withIndex")
                 case firstID:
-                    interner.intern("kk_sequence_first")
+                    seqFirstCallee
                 case firstOrNullID:
-                    interner.intern("kk_sequence_firstOrNull")
+                    seqFirstOrNullCallee
                 case lastID:
-                    interner.intern("kk_sequence_last")
+                    seqLastCallee
                 case countID:
-                    interner.intern("kk_sequence_count")
+                    seqCountCallee
                 default:
                     nil
                 }
                 if let runtimeCallee {
-                    let canThrow = runtimeCallee == interner.intern("kk_sequence_first")
-                        || runtimeCallee == interner.intern("kk_sequence_last")
-                        || runtimeCallee == interner.intern("kk_sequence_firstOrNull")
-                        || runtimeCallee == interner.intern("kk_sequence_count")
+                    let canThrow = runtimeCallee == seqFirstCallee
+                        || runtimeCallee == seqFirstOrNullCallee
+                        || runtimeCallee == seqLastCallee
+                        || runtimeCallee == seqCountCallee
                     instructions.append(.call(
                         symbol: nil,
                         callee: runtimeCallee,
