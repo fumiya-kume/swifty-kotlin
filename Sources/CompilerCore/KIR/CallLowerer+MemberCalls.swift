@@ -2791,9 +2791,9 @@ extension CallLowerer {
             ) {
                 return unresolvedSynthetic
             }
-            // Collection interface members (size, isEmpty) resolved on a
-            // concrete receiver (List, Array, Map, Set) must be lowered to
-            // the matching runtime function instead of virtual dispatch.
+            // Collection interface members (size property, isEmpty function)
+            // resolved on a concrete receiver (List, Array, Map, Set) must be
+            // lowered to the matching runtime function instead of virtual dispatch.
             if let collectionProperty = unresolvedCollectionPropertyCallee(
                 memberName: fallbackName,
                 receiverType: receiverType,
@@ -3089,6 +3089,11 @@ extension CallLowerer {
 
     // swiftlint:enable cyclomatic_complexity
 
+    /// Resolves collection-level property-like members to their concrete
+    /// runtime callee.  Despite the name, this handles both the `size`
+    /// property and the `isEmpty()` function call — both are lightweight
+    /// accessors on the underlying collection and share the same dispatch
+    /// logic (map receiver kind -> runtime symbol).
     private func unresolvedCollectionPropertyCallee(
         memberName: String,
         receiverType: TypeID,

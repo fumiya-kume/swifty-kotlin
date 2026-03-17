@@ -502,7 +502,9 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // size: Int — Kotlin val property, registered as .property kind
+        // size: Int — Kotlin val property, registered as .property kind.
+        // NOTE: size is registered inline (not via defineCollectionFunctionMember)
+        // because it is a property (.property kind), not a function.
         let sizeName = interner.intern("size")
         let sizeFQName = collectionFQName + [sizeName]
         if symbols.lookup(fqName: sizeFQName) == nil {
@@ -526,7 +528,10 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
 
-        // contains(element: E): Boolean — operator for Kotlin `in`
+        // contains(element: E): Boolean — operator for Kotlin `in`.
+        // Variance note: Collection declares `out E`, but contains() uses E in
+        // parameter (contravariant) position. This matches Kotlin's own declaration
+        // where `contains` has `@UnsafeVariance E` — the mismatch is intentional.
         defineCollectionFunctionMember(
             name: "contains",
             parameterTypes: [typeParamType],
