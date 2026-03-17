@@ -435,39 +435,49 @@ extension DataFlowSemaPhase {
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
         _ = ensureSyntheticPackage(fqName: kotlinCollectionsPkg, symbols: symbols)
 
-        // Build proper collection return types (List<Nothing>, Set<Nothing>, Map<Nothing, Nothing>)
-        // by looking up the interface symbols registered by registerSyntheticCollectionStubs.
+        // These synthetic registrations are intentionally non-generic and return
+        // List<Nothing>/Set<Nothing>/Map<Nothing, Nothing>. This matches Kotlin's
+        // actual emptyList<T>() signature where T defaults to Nothing. Because
+        // Nothing is the bottom type and List/Set/Map are covariant (out T),
+        // List<Nothing> is a subtype of List<T> for all T, so the result is
+        // assignable to any typed collection variable via normal covariance.
         let listFQName = kotlinCollectionsPkg + [interner.intern("List")]
-        let emptyListReturnType: TypeID = if let listSymbol = symbols.lookup(fqName: listFQName) {
-            types.make(.classType(ClassType(
+        let emptyListReturnType: TypeID
+        if let listSymbol = symbols.lookup(fqName: listFQName) {
+            emptyListReturnType = types.make(.classType(ClassType(
                 classSymbol: listSymbol,
                 args: [.out(types.nothingType)],
                 nullability: .nonNull
             )))
         } else {
-            types.anyType
+            assertionFailure("List interface not found in symbol table; collection stubs must be registered before emptyList")
+            emptyListReturnType = types.anyType
         }
 
         let setFQName = kotlinCollectionsPkg + [interner.intern("Set")]
-        let emptySetReturnType: TypeID = if let setSymbol = symbols.lookup(fqName: setFQName) {
-            types.make(.classType(ClassType(
+        let emptySetReturnType: TypeID
+        if let setSymbol = symbols.lookup(fqName: setFQName) {
+            emptySetReturnType = types.make(.classType(ClassType(
                 classSymbol: setSymbol,
                 args: [.out(types.nothingType)],
                 nullability: .nonNull
             )))
         } else {
-            types.anyType
+            assertionFailure("Set interface not found in symbol table; collection stubs must be registered before emptySet")
+            emptySetReturnType = types.anyType
         }
 
         let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
-        let emptyMapReturnType: TypeID = if let mapSymbol = symbols.lookup(fqName: mapFQName) {
-            types.make(.classType(ClassType(
+        let emptyMapReturnType: TypeID
+        if let mapSymbol = symbols.lookup(fqName: mapFQName) {
+            emptyMapReturnType = types.make(.classType(ClassType(
                 classSymbol: mapSymbol,
                 args: [.out(types.nothingType), .out(types.nothingType)],
                 nullability: .nonNull
             )))
         } else {
-            types.anyType
+            assertionFailure("Map interface not found in symbol table; collection stubs must be registered before emptyMap")
+            emptyMapReturnType = types.anyType
         }
 
         registerSyntheticTopLevelFunction(

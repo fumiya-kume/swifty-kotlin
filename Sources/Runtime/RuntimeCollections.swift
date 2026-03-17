@@ -72,6 +72,14 @@ func runtimeNormalizeMapEntries(keys: [Int], values: [Int]) -> ([Int], [Int]) {
     return (normalizedKeys, normalizedValues)
 }
 
+// MARK: - Cached singleton empty collections (STDLIB-410)
+// Empty collections are immutable, so we cache a single instance per kind
+// to avoid redundant allocations when emptyList()/emptySet()/emptyMap() are
+// called repeatedly.
+private let cachedEmptyList: Int = registerRuntimeObject(RuntimeListBox(elements: []))
+private let cachedEmptySet: Int = registerRuntimeObject(RuntimeSetBox(elements: []))
+private let cachedEmptyMap: Int = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
 // MARK: - List Functions (STDLIB-001)
 
 @_cdecl("kk_list_of")
@@ -83,10 +91,10 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
-// STDLIB-410: emptyList<T>()
+// STDLIB-410: emptyList<T>() - returns cached singleton (empty lists are immutable)
 @_cdecl("kk_emptyList")
 public func kk_emptyList() -> Int {
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    return cachedEmptyList
 }
 
 @_cdecl("kk_list_size")
@@ -680,10 +688,10 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
-// STDLIB-410: emptySet<T>()
+// STDLIB-410: emptySet<T>() - returns cached singleton (empty sets are immutable)
 @_cdecl("kk_emptySet")
 public func kk_emptySet() -> Int {
-    return registerRuntimeObject(RuntimeSetBox(elements: []))
+    return cachedEmptySet
 }
 
 @_cdecl("kk_set_size")
@@ -864,10 +872,10 @@ public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) 
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
 }
 
-// STDLIB-410: emptyMap<K,V>()
+// STDLIB-410: emptyMap<K,V>() - returns cached singleton (empty maps are immutable)
 @_cdecl("kk_emptyMap")
 public func kk_emptyMap() -> Int {
-    return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    return cachedEmptyMap
 }
 
 @_cdecl("kk_mutable_map_put")
