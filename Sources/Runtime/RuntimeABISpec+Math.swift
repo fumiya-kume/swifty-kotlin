@@ -121,6 +121,178 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
+        // STDLIB-500..513: Float overloads for trig / rounding / sqrt
+        RuntimeABIFunctionSpec(
+            name: "kk_math_sin_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_cos_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_tan_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_asin_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_acos_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_atan_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_atan2_float",
+            parameters: [
+                RuntimeABIParameter(name: "y", type: .intptr),
+                RuntimeABIParameter(name: "x", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_sqrt_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_round_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_ceil_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_floor_float",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        // STDLIB-510..511: roundToInt / roundToLong
+        RuntimeABIFunctionSpec(
+            name: "kk_float_roundToInt",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_roundToInt",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_roundToLong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_roundToLong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        // STDLIB-512..513: ulp / nextUp / nextDown
+        RuntimeABIFunctionSpec(
+            name: "kk_double_ulp",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_nextUp",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_nextDown",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_ulp",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_nextUp",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_nextDown",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
         // STDLIB-431: exp/ln/log functions
         RuntimeABIFunctionSpec(
             name: "kk_math_exp",

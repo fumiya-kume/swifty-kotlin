@@ -107,6 +107,7 @@ extension ABILoweringPass {
             interner.intern("kk_math_PI"),
             interner.intern("kk_math_E"),
             // STDLIB-500~513: Float overloads + roundToInt/roundToLong + ulp/nextUp/nextDown
+            // STDLIB-500..513: Float math overloads + extension functions/properties
             interner.intern("kk_math_sin_float"),
             interner.intern("kk_math_cos_float"),
             interner.intern("kk_math_tan_float"),

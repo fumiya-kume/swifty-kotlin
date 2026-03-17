@@ -16,6 +16,30 @@ public extension RuntimeABIExterns {
         kk_math_acos,
         kk_math_atan,
         kk_math_atan2,
+        // STDLIB-500..513: Float overloads
+        kk_math_sin_float,
+        kk_math_cos_float,
+        kk_math_tan_float,
+        kk_math_asin_float,
+        kk_math_acos_float,
+        kk_math_atan_float,
+        kk_math_atan2_float,
+        kk_math_sqrt_float,
+        kk_math_round_float,
+        kk_math_ceil_float,
+        kk_math_floor_float,
+        // STDLIB-510..511: roundToInt / roundToLong
+        kk_float_roundToInt,
+        kk_double_roundToInt,
+        kk_float_roundToLong,
+        kk_double_roundToLong,
+        // STDLIB-512..513: ulp / nextUp / nextDown
+        kk_double_ulp,
+        kk_double_nextUp,
+        kk_double_nextDown,
+        kk_float_ulp,
+        kk_float_nextUp,
+        kk_float_nextDown,
         // STDLIB-431: exp/ln/log functions
         kk_math_exp,
         kk_math_ln,
@@ -91,6 +115,138 @@ public extension RuntimeABIExterns {
 
     static let kk_math_round = ExternDecl(
         name: "kk_math_round",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-500..513: Float overloads
+
+    static let kk_math_sin_float = ExternDecl(
+        name: "kk_math_sin_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_cos_float = ExternDecl(
+        name: "kk_math_cos_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_tan_float = ExternDecl(
+        name: "kk_math_tan_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_asin_float = ExternDecl(
+        name: "kk_math_asin_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_acos_float = ExternDecl(
+        name: "kk_math_acos_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_atan_float = ExternDecl(
+        name: "kk_math_atan_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_atan2_float = ExternDecl(
+        name: "kk_math_atan2_float",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_sqrt_float = ExternDecl(
+        name: "kk_math_sqrt_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_round_float = ExternDecl(
+        name: "kk_math_round_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_ceil_float = ExternDecl(
+        name: "kk_math_ceil_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_floor_float = ExternDecl(
+        name: "kk_math_floor_float",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-510..511: roundToInt / roundToLong
+
+    static let kk_float_roundToInt = ExternDecl(
+        name: "kk_float_roundToInt",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_double_roundToInt = ExternDecl(
+        name: "kk_double_roundToInt",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_float_roundToLong = ExternDecl(
+        name: "kk_float_roundToLong",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_double_roundToLong = ExternDecl(
+        name: "kk_double_roundToLong",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-512..513: ulp / nextUp / nextDown
+
+    static let kk_double_ulp = ExternDecl(
+        name: "kk_double_ulp",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_double_nextUp = ExternDecl(
+        name: "kk_double_nextUp",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_double_nextDown = ExternDecl(
+        name: "kk_double_nextDown",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_float_ulp = ExternDecl(
+        name: "kk_float_ulp",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_float_nextUp = ExternDecl(
+        name: "kk_float_nextUp",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_float_nextDown = ExternDecl(
+        name: "kk_float_nextDown",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

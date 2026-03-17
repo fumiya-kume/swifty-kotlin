@@ -39,6 +39,39 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
         }
     }
 
+    // STDLIB-500..509: Float overloads resolve alongside Double overloads
+    func testFloatMathOverloadsHaveExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        // Each of these names should have at least two overloads registered
+        // (Double and Float). Verify the Float variant has a link name.
+        let floatOverloads: [(String, String)] = [
+            ("sin", "kk_math_sin_float"),
+            ("cos", "kk_math_cos_float"),
+            ("tan", "kk_math_tan_float"),
+            ("asin", "kk_math_asin_float"),
+            ("acos", "kk_math_acos_float"),
+            ("atan", "kk_math_atan_float"),
+            ("atan2", "kk_math_atan2_float"),
+            ("sqrt", "kk_math_sqrt_float"),
+            ("round", "kk_math_round_float"),
+            ("ceil", "kk_math_ceil_float"),
+            ("floor", "kk_math_floor_float"),
+        ]
+
+        for (name, expectedLink) in floatOverloads {
+            let fq = ["kotlin", "math", name].map { interner.intern($0) }
+            let allSymbols = sema.symbols.lookupAll(fqName: fq)
+            let hasFloatLink = allSymbols.contains { sym in
+                sema.symbols.externalLinkName(for: sym) == expectedLink
+            }
+            XCTAssertTrue(
+                hasFloatLink,
+                "Float overload for \(name) should link to \(expectedLink)"
+            )
+        }
+    }
+
     func testMathTopLevelCallsResolveViaDefaultImport() throws {
         let source = """
         fun sample(x: Int, y: Double): Double {
