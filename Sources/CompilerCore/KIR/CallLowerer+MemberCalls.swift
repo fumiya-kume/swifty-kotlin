@@ -753,10 +753,15 @@ extension CallLowerer {
         }
 
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        // NOTE: This bit-count lowering logic is intentionally duplicated in
+        // CallLowerer+SafeMemberCalls.swift for the safe-call (?.) path.
+        // If you change the callee-name -> runtime-name mapping here, update
+        // the other file as well. Consider extracting a shared helper if the
+        // number of bit-operation intrinsics grows further.
         if args.isEmpty {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
-                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let intType = sema.types.intType
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
                 if nonNullReceiverType == intType {

@@ -1245,7 +1245,7 @@ extension CallTypeChecker {
         if args.isEmpty {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
-                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let intType = sema.types.intType
                 let receiverForCheck = safeCall
                     ? sema.types.makeNonNullable(lookupReceiverType)
                     : lookupReceiverType
