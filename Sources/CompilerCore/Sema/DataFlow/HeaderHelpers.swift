@@ -590,6 +590,7 @@ extension DataFlowSemaPhase {
         registerSyntheticCoercionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticEnumStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticFileIOStubs(symbols: symbols, types: types, interner: interner)
+        registerSyntheticCloseableStubs(symbols: symbols, types: types, interner: interner)
     }
 
     func registerSyntheticContractStubs(

@@ -9,6 +9,13 @@ public final class TypeSystem {
     /// The symbol ID of the synthetic `kotlin.Comparable` interface, set during registration.
     public internal(set) var comparableInterfaceSymbol: SymbolID?
 
+    /// The symbol ID of the synthetic `kotlin.io.Closeable` interface, set during registration.
+    public internal(set) var closeableInterfaceSymbol: SymbolID?
+
+    /// Cached TypeID for `kotlin.io.Closeable` (non-null), set alongside `closeableInterfaceSymbol`.
+    /// Avoids repeated `make(...)` allocations on the hot path in `isCloseableReceiver`.
+    public internal(set) var closeableTypeID: TypeID?
+
     /// Symbol table reference for SAM (fun interface) subtyping. Set during DataFlowSemaPhase.
     public weak var symbolTable: SymbolTable?
 

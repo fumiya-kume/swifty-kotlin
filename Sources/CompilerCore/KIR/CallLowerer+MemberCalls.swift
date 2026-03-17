@@ -3629,6 +3629,127 @@ extension CallLowerer {
             }
             return result
 
+        case .scopeUse:
+            // use: like `let`, lambda takes `it` as explicit parameter,
+            // but receiver.close() is called in a finally block (try-finally semantics).
+            // If the block throws, close() is still called before the exception propagates.
+            let loweredLambdaID = driver.lowerExpr(
+                args[0].expr,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: boundType
+            )
+            guard let info = driver.ctx.callableValueInfo(for: loweredLambdaID) else {
+                return nil
+            }
+
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+
+            // Exception tracking slots for try-finally.
+            let exceptionSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.nullableAnyType)
+            let exceptionTypeSlot = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+            let nullExceptionValue = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+            let zeroTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: nullExceptionValue, value: .null))
+            instructions.append(.constValue(result: zeroTypeToken, value: .intLiteral(0)))
+            instructions.append(.copy(from: nullExceptionValue, to: exceptionSlot))
+            instructions.append(.copy(from: zeroTypeToken, to: exceptionTypeSlot))
+
+            let finallyLabel = driver.ctx.makeLoopLabel()
+            let rethrowLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+
+            // try: invoke the block lambda.
+            var blockInstructions: [KIRInstruction] = []
+            let callArgs: [KIRExprID]
+            if info.hasClosureParam {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                blockInstructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                callArgs = info.captureArguments + [zeroExpr, loweredReceiverID]
+            } else {
+                callArgs = info.captureArguments + [loweredReceiverID]
+            }
+            blockInstructions.append(.call(
+                symbol: info.symbol,
+                callee: info.callee,
+                arguments: callArgs,
+                result: result,
+                canThrow: true,
+                thrownResult: nil
+            ))
+
+            // Wrap block call with throw-aware instructions so exceptions are
+            // captured into exceptionSlot and control jumps to finallyLabel.
+            driver.controlFlowLowerer.appendThrowAwareInstructions(
+                blockInstructions,
+                exceptionSlot: exceptionSlot,
+                exceptionTypeSlot: exceptionTypeSlot,
+                thrownTarget: finallyLabel,
+                sema: sema,
+                interner: interner,
+                arena: arena,
+                instructions: &instructions
+            )
+            instructions.append(.jump(finallyLabel))
+
+            // finally: always call close() on the receiver via virtual dispatch.
+            // close() is an interface method on Closeable and requires dynamic dispatch
+            // through the itable so that concrete implementations are invoked correctly.
+            instructions.append(.label(finallyLabel))
+            let closeName = interner.intern("close")
+            let closeResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.unitType
+            )
+            // Resolve the close() symbol from the Closeable interface and use
+            // virtualCall with interface dispatch instead of a static .call.
+            let closeableFQName: [InternedString] = [
+                interner.intern("kotlin"), interner.intern("io"), interner.intern("Closeable")
+            ]
+            let closeFQName = closeableFQName + [closeName]
+            let closeSymbol = sema.symbols.lookup(fqName: closeFQName)
+            let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
+            let closeDispatch: KIRDispatchKind? = closeSymbol.flatMap { sym in
+                resolveVirtualDispatch(callee: sym, receiverTypeID: receiverTypeForDispatch, sema: sema)
+            }
+            if let closeDispatch, let closeSymbol {
+                instructions.append(.virtualCall(
+                    symbol: closeSymbol,
+                    callee: closeName,
+                    receiver: loweredReceiverID,
+                    arguments: [],
+                    result: closeResult,
+                    canThrow: true,
+                    thrownResult: nil,
+                    dispatch: closeDispatch
+                ))
+            } else {
+                // Fallback: if dispatch resolution fails (e.g. synthetic-only receiver),
+                // emit a static call so compilation still proceeds.
+                instructions.append(.call(
+                    symbol: closeSymbol,
+                    callee: closeName,
+                    arguments: [loweredReceiverID],
+                    result: closeResult,
+                    canThrow: true,
+                    thrownResult: nil
+                ))
+            }
+
+            // After finally: rethrow if an exception was caught, otherwise continue.
+            instructions.append(.jumpIfNotNull(value: exceptionSlot, target: rethrowLabel))
+            instructions.append(.jump(endLabel))
+
+            instructions.append(.label(rethrowLabel))
+            instructions.append(.rethrow(value: exceptionSlot))
+
+            instructions.append(.label(endLabel))
+            return result
+
         case .scopeWith:
             return nil // with is handled in lowerCallExpr
 

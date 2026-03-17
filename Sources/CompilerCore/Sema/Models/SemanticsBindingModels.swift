@@ -43,6 +43,8 @@ public enum ScopeFunctionKind: Equatable {
     case scopeApply
     case scopeAlso
     case scopeTopLevelRun
+    /// Closeable.use { } (STDLIB-520): like `let`, but wraps in try-finally calling close().
+    case scopeUse
 }
 
 /// Identifies takeIf / takeUnless extension calls (STDLIB-160).

@@ -272,6 +272,7 @@ extension CallTypeChecker {
             case "run": .scopeRun
             case "apply": .scopeApply
             case "also": .scopeAlso
+            case "use" where isCloseableReceiver(receiverType, sema: sema): .scopeUse
             default: nil
             }
             let hasUserDefinedMember = if scopeKind != nil {
@@ -373,6 +374,36 @@ extension CallTypeChecker {
                     let finalType = safeCall
                         ? sema.types.makeNullable(nonNullReceiverType)
                         : nonNullReceiverType
+                    sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case .scopeUse:
+                    // use: lambda receives `it` parameter typed as T, returns R.
+                    // Semantically equivalent to `let` but wraps in try-finally { close() }.
+                    // NOTE: The lambda inference below intentionally duplicates scopeLet logic.
+                    // The duplication is deliberate — use and let share the same type inference
+                    // semantics (receiver passed as `it`, lambda return type becomes call result)
+                    // but differ in lowering (use emits try-finally with close()).
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [nonNullReceiverType],
+                        returnType: expectedType ?? sema.types.anyType
+                    )))
+                    let lambdaType = driver.inferExpr(
+                        args[0].expr, ctx: ctx, locals: &locals,
+                        expectedType: lambdaExpectedType
+                    )
+                    let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                            if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                                return fnType.returnType
+                            }
+                            return nil
+                        } ?? sema.types.anyType
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
                     sema.bindings.markScopeFunctionExpr(id, kind: scopeKind)
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
@@ -3464,5 +3495,18 @@ extension CallTypeChecker {
         case ("Double", "NEGATIVE_INFINITY"): return (types.doubleType, .doubleLiteral(-Double.infinity))
         default: return nil
         }
+    }
+
+    /// Returns true if `receiverType` conforms to Closeable,
+    /// so that `.use {}` is only treated as a scope function on Closeable receivers.
+    /// Note: AutoCloseable is registered as a typealias to Closeable (see
+    /// HeaderHelpers+SyntheticCloseableStubs.swift), so checking Closeable alone
+    /// covers both Closeable and AutoCloseable receivers.
+    private func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule) -> Bool {
+        guard let closeableType = sema.types.closeableTypeID else {
+            return false
+        }
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        return sema.types.isSubtype(nonNullReceiver, closeableType)
     }
 }
