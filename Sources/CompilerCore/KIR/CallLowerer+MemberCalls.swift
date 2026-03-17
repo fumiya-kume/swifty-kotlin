@@ -934,6 +934,45 @@ extension CallLowerer {
             }
         }
 
+        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
+        // Decompose the range into first/last and delegate to kk_{int,long}_coerceIn.
+        if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+                let argExprID = args[0].expr
+                if sema.bindings.isRangeExpr(argExprID) {
+                    let intType = sema.types.intType
+                    let firstExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                    let lastExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_range_first"),
+                        arguments: [loweredArgIDs[0]],
+                        result: firstExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_range_last"),
+                        arguments: [loweredArgIDs[0]],
+                        result: lastExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(prefix + "_coerceIn"),
+                        arguments: [loweredReceiverID, firstExpr, lastExpr],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
