@@ -551,6 +551,48 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // foldIndexed on sequence → kk_sequence_foldIndexed (STDLIB-556)
+        // Args: initial, lambda (2 from Kotlin: initial + operation)
+        if callee == lookup.foldIndexedName, arguments.count == 2,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceFoldIndexedName,
+                receiver: receiver,
+                arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            _ = hofResult
+            return true
+        }
+
+        // reduceIndexed on sequence → kk_sequence_reduceIndexed (STDLIB-557)
+        // Args: lambda (1 from Kotlin: operation)
+        if callee == lookup.reduceIndexedName, arguments.count == 1,
+           sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceReduceIndexedName,
+                receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            _ = hofResult
+            return true
+        }
+
         return false
     }
 

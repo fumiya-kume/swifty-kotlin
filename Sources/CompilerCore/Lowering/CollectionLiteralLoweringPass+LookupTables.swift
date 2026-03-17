@@ -208,6 +208,8 @@ struct CollectionLiteralLookupTables {
     let kkSequenceMaxOrNullName: InternedString
     let kkSequenceMinOrNullName: InternedString
     let kkSequenceFlattenName: InternedString
+    let kkSequenceFoldIndexedName: InternedString
+    let kkSequenceReduceIndexedName: InternedString
 
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
@@ -326,6 +328,8 @@ struct CollectionLiteralLookupTables {
     let onEachName: InternedString
     let onEachIndexedName: InternedString
     let mapIndexedName: InternedString
+    let foldIndexedName: InternedString
+    let reduceIndexedName: InternedString
     let sumOfName: InternedString
     let maxOrNullName: InternedString
     let minOrNullName: InternedString
@@ -676,6 +680,8 @@ struct CollectionLiteralLookupTables {
         kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
         kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
         kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
+        kkSequenceFoldIndexedName = interner.intern("kk_sequence_foldIndexed")
+        kkSequenceReduceIndexedName = interner.intern("kk_sequence_reduceIndexed")
 
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
@@ -788,6 +794,8 @@ struct CollectionLiteralLookupTables {
         onEachName = interner.intern("onEach")
         onEachIndexedName = interner.intern("onEachIndexed")
         mapIndexedName = interner.intern("mapIndexed")
+        foldIndexedName = interner.intern("foldIndexed")
+        reduceIndexedName = interner.intern("reduceIndexed")
         sumOfName = interner.intern("sumOf")
         maxOrNullName = interner.intern("maxOrNull")
         minOrNullName = interner.intern("minOrNull")

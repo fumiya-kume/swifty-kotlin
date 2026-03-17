@@ -53,6 +53,8 @@ public extension RuntimeABIExterns {
         kk_sequence_maxOrNull,
         kk_sequence_minOrNull,
         kk_sequence_flatten,
+        kk_sequence_foldIndexed,
+        kk_sequence_reduceIndexed,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -372,6 +374,20 @@ public extension RuntimeABIExterns {
     static let kk_sequence_flatten = ExternDecl(
         name: "kk_sequence_flatten",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-556: foldIndexed
+    static let kk_sequence_foldIndexed = ExternDecl(
+        name: "kk_sequence_foldIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-557: reduceIndexed
+    static let kk_sequence_reduceIndexed = ExternDecl(
+        name: "kk_sequence_reduceIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 }
