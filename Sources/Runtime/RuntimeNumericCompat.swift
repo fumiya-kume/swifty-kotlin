@@ -321,6 +321,9 @@ public func kk_float_to_long(_ value: Int) -> Int {
     return Int(Int64(f))
 }
 
+// Long→* conversions: `Int` (intptr_t) is used for Long values.
+// This is correct on 64-bit macOS where Int == Int64; see the note above
+// kk_long_coerceIn for the full rationale.
 @_cdecl("kk_long_to_int")
 public func kk_long_to_int(_ value: Int) -> Int {
     Int(Int32(truncatingIfNeeded: value))
@@ -369,6 +372,13 @@ public func kk_int_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
 }
 
 // Long coercion (STDLIB-500) — Long uses the same Int representation on 64-bit.
+//
+// NOTE: All kk_long_* entrypoints take and return Swift `Int` (intptr_t).
+// On the current macOS-only 64-bit target Int and Int64 are identical, so
+// Kotlin Long (64-bit signed) maps directly to intptr_t without loss.
+// If the compiler ever targets 32-bit platforms this assumption must be
+// revisited: Long would need a dedicated 64-bit representation distinct
+// from the pointer-sized Int used for Kotlin Int.
 @_cdecl("kk_long_coerceIn")
 public func kk_long_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
     if value < minimum { return minimum }

@@ -7,6 +7,26 @@ final class CallLowerer {
         self.driver = driver
     }
 
+    /// Maps a non-nullable numeric receiver type to its runtime symbol prefix
+    /// (e.g. "kk_int", "kk_long", "kk_double", "kk_float"), or nil if the
+    /// receiver is not one of the four coercion-eligible numeric types.
+    /// Shared by both normal and safe-call member lowering paths.
+    func numericCoercionRuntimePrefix(
+        receiverType: TypeID,
+        sema: SemaModule
+    ) -> String? {
+        let nonNull = sema.types.makeNonNullable(receiverType)
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let longType = sema.types.make(.primitive(.long, .nonNull))
+        let doubleType = sema.types.make(.primitive(.double, .nonNull))
+        let floatType = sema.types.make(.primitive(.float, .nonNull))
+        if nonNull == intType { return "kk_int" }
+        if nonNull == longType { return "kk_long" }
+        if nonNull == doubleType { return "kk_double" }
+        if nonNull == floatType { return "kk_float" }
+        return nil
+    }
+
     // swiftlint:disable:next cyclomatic_complexity
     func lowerCallExpr(
         _ exprID: ExprID,
