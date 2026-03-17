@@ -156,6 +156,7 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.inner) { value.insert(.innerClass) }
         if modifiers.contains(.abstract) { value.insert(.abstractType) }
         if modifiers.contains(.open) { value.insert(.openType) }
+        if modifiers.contains(.value) { value.insert(.valueType) }
     }
 
     private func insertMemberFlags(

@@ -32,6 +32,7 @@ public final class LoweringPhase: CompilerPhase {
         LambdaClosureConversionPass(),
         InlineLoweringPass(),
         CoroutineLoweringPass(),
+        ValueClassUnboxingPass(),
         ABILoweringPass(),
     ]
 

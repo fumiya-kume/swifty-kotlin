@@ -339,6 +339,96 @@ final class NameManglerTests: XCTestCase {
         XCTAssertTrue(sig.contains("I"))
     }
 
+    // MARK: - Value Class Mangling
+
+    func testEncodeTypeUnboxesValueClassToUnderlyingType() throws {
+        let mangler = NameMangler()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        // Define a value class "Meter" wrapping Int
+        let meterSym = symbols.define(
+            kind: .class,
+            name: interner.intern("Meter"),
+            fqName: [interner.intern("Meter")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.valueType]
+        )
+        let intType = types.make(.primitive(.int, .nonNull))
+        symbols.setValueClassUnderlyingType(intType, for: meterSym)
+
+        let meterType = types.make(.classType(ClassType(classSymbol: meterSym, args: [], nullability: .nonNull)))
+        let encoded = mangler.encodeType(meterType, symbols: symbols, types: types, nameResolver: { interner.resolve($0) })
+        // Non-null value class should encode as the underlying Int type ("I")
+        XCTAssertEqual(encoded, "I")
+    }
+
+    func testEncodeTypeNullableValueClassNotUnboxed() throws {
+        let mangler = NameMangler()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        let meterSym = symbols.define(
+            kind: .class,
+            name: interner.intern("Meter"),
+            fqName: [interner.intern("Meter")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.valueType]
+        )
+        let intType = types.make(.primitive(.int, .nonNull))
+        symbols.setValueClassUnderlyingType(intType, for: meterSym)
+
+        let nullableMeterType = types.make(.classType(ClassType(classSymbol: meterSym, args: [], nullability: .nullable)))
+        let encoded = mangler.encodeType(nullableMeterType, symbols: symbols, types: types, nameResolver: { interner.resolve($0) })
+        // Nullable value class should NOT be unboxed; should contain class name
+        XCTAssertTrue(encoded.contains("Meter"))
+    }
+
+    func testMangledSignatureForFunctionWithValueClassParam() throws {
+        let mangler = NameMangler()
+        let interner = StringInterner()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+
+        let meterSym = symbols.define(
+            kind: .class,
+            name: interner.intern("Meter"),
+            fqName: [interner.intern("Meter")],
+            declSite: nil,
+            visibility: .public,
+            flags: [.valueType]
+        )
+        let intType = types.make(.primitive(.int, .nonNull))
+        symbols.setValueClassUnderlyingType(intType, for: meterSym)
+        let meterType = types.make(.classType(ClassType(classSymbol: meterSym, args: [], nullability: .nonNull)))
+
+        let fnSym = symbols.define(
+            kind: .function,
+            name: interner.intern("measure"),
+            fqName: [interner.intern("measure")],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(parameterTypes: [meterType], returnType: intType),
+            for: fnSym
+        )
+
+        let sig = try mangler.mangledSignature(
+            for: XCTUnwrap(symbols.symbol(fnSym)),
+            symbols: symbols,
+            types: types,
+            nameResolver: { interner.resolve($0) }
+        )
+        // The signature should encode the Meter param as Int ("I"), not as a class reference
+        XCTAssertTrue(sig.contains("I"))
+        XCTAssertFalse(sig.contains("Meter"))
+    }
+
     func testMangledSignatureForFunctionWithoutSignatureReturnsUnderscore() throws {
         let mangler = NameMangler()
         let interner = StringInterner()

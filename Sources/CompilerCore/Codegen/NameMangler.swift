@@ -197,6 +197,18 @@ public final class NameMangler {
             return applyNullability(encoded, nullability: nullability)
 
         case let .classType(classType):
+            // Value class mangling: encode the underlying type instead of the
+            // wrapper class so that mangled names reflect the unboxed ABI.
+            // Nullable value class types are boxed at the ABI level, so we
+            // only substitute for non-null value classes.
+            if classType.nullability == .nonNull,
+               let sym = symbols.symbol(classType.classSymbol),
+               sym.flags.contains(.valueType),
+               let underlyingType = symbols.valueClassUnderlyingType(for: classType.classSymbol)
+            {
+                return encodeType(underlyingType, symbols: symbols, types: types, nameResolver: nameResolver)
+            }
+
             let className: String = if let classSymbol = symbols.symbol(classType.classSymbol) {
                 classSymbol.fqName
                     .map { render(name: $0, nameResolver: nameResolver) }
