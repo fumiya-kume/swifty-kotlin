@@ -1086,6 +1086,13 @@ final class CallTypeChecker {
                         interner: interner,
                         elementType: explicitTypeArg
                     )
+                } else if name == "emptyList" {
+                    collectionType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: sema.types.nothingType
+                    )
                 } else if !argTypes.isEmpty,
                           name == "sequenceOf"
                 {
@@ -1143,6 +1150,13 @@ final class CallTypeChecker {
                         types: sema.types,
                         interner: interner,
                         elementType: explicitTypeArg
+                    )
+                } else if name == "emptySet" {
+                    collectionType = makeSyntheticSetType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
                           name == "setOf" || name == "emptySet" || name == "mutableSetOf"
@@ -1213,6 +1227,14 @@ final class CallTypeChecker {
                             valueType: inferredMapTypes.valueType
                         )
                     }
+                } else if name == "emptyMap" {
+                    collectionType = makeSyntheticMapType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        keyType: sema.types.nothingType,
+                        valueType: sema.types.nothingType
+                    )
                 } else if name == "mapOf" || name == "emptyMap" || name == "mutableMapOf" {
                     collectionType = if name == "mutableMapOf" {
                         makeSyntheticMutableMapType(
