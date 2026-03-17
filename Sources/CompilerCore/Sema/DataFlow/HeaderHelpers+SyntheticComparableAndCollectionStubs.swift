@@ -1128,13 +1128,16 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
+        // NOTE: Kotlin's toHashSet() returns MutableSet<T> (HashSet<T>), but we
+        // model it as Set<T> because mutable collection types are not yet
+        // supported in the type system.  This is a known limitation.
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
             fqName: memberFQName,
             declSite: nil,
             visibility: .public,
-            flags: [.synthetic, .operatorFunction]
+            flags: [.synthetic]
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_toHashSet", for: memberSymbol)

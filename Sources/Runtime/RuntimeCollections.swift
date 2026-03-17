@@ -1,7 +1,7 @@
 import Foundation
 
 /// Hashable wrapper around an opaque runtime value (`Int`) that uses
-/// `runtimeAnyHashCode` / `runtimeValuesEqual` so it can be stored in a
+/// `kk_any_hashCode` / `runtimeValuesEqual` so it can be stored in a
 /// Swift `Set` for O(1) amortised lookups.
 private struct RuntimeElementKey: Hashable {
     let value: Int
@@ -18,7 +18,7 @@ private struct RuntimeElementKey: Hashable {
 /// Extracts elements from an opaque `otherRaw` handle that may be either a
 /// set or a list box.  Used by intersect / union / subtract to avoid
 /// duplicating the same unboxing logic.
-func runtimeUnboxCollectionElements(_ otherRaw: Int) -> [Int] {
+private func runtimeUnboxCollectionElements(_ otherRaw: Int) -> [Int] {
     if let otherSet = runtimeSetBox(from: otherRaw) {
         return otherSet.elements
     }
@@ -259,7 +259,11 @@ public func kk_list_to_set(_ listRaw: Int) -> Int {
 public func kk_list_intersect(_ listRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeListBox(from: listRaw)?.elements ?? []
     let otherElements = runtimeUnboxCollectionElements(otherRaw)
-    let otherKeys = Set(otherElements.map { RuntimeElementKey(value: $0) })
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
     let result = runtimeDeduplicatePreservingOrder(selfElements).filter { elem in
         otherKeys.contains(RuntimeElementKey(value: elem))
     }
@@ -278,7 +282,11 @@ public func kk_list_union(_ listRaw: Int, _ otherRaw: Int) -> Int {
 public func kk_list_subtract(_ listRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeListBox(from: listRaw)?.elements ?? []
     let otherElements = runtimeUnboxCollectionElements(otherRaw)
-    let otherKeys = Set(otherElements.map { RuntimeElementKey(value: $0) })
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
     let result = runtimeDeduplicatePreservingOrder(selfElements).filter { elem in
         !otherKeys.contains(RuntimeElementKey(value: elem))
     }
