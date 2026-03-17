@@ -43,11 +43,12 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // 3-arg overloads: Int, Long, Double
+        // 3-arg overloads: Int, Long, Double, Float
         let threeArgTypes: [(TypeID, TypeID)] = [
             (types.intType, types.intType),
             (types.longType, types.longType),
             (types.doubleType, types.doubleType),
+            (types.floatType, types.floatType),
         ]
         for (paramType, returnType) in threeArgTypes {
             registerSyntheticComparisonFunction(
