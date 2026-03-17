@@ -91,7 +91,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("emptyList"), "emptyList should be rewritten")
-        XCTAssertTrue(callees.contains("kk_list_of"), "emptyList should become kk_list_of")
+        XCTAssertTrue(callees.contains("kk_emptyList"), "emptyList should become kk_emptyList")
     }
 
     func testListOfNotNullRewrittenToKkListOf() throws {
@@ -152,7 +152,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("emptyMap"), "emptyMap should be rewritten")
-        XCTAssertTrue(callees.contains("kk_map_of"), "emptyMap should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_emptyMap"), "emptyMap should become kk_emptyMap")
     }
 
     func testMapCountRewriteToKkMapCount() throws {

@@ -1,6 +1,7 @@
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
+        kk_emptyList,
         kk_list_size,
         kk_list_get,
         kk_list_component1,
@@ -28,6 +29,7 @@ public extension RuntimeABIExterns {
         kk_list_subList,
         kk_list_binarySearch,
         kk_set_of,
+        kk_emptySet,
         kk_set_size,
         kk_set_contains,
         kk_set_containsAll,
@@ -103,6 +105,7 @@ public extension RuntimeABIExterns {
         kk_list_takeLastWhile,
         kk_list_dropLastWhile,
         kk_map_of,
+        kk_emptyMap,
         kk_map_size,
         kk_map_get,
         kk_map_contains_key,
@@ -234,6 +237,25 @@ public extension RuntimeABIExterns {
     static let kk_list_of = ExternDecl(
         name: "kk_list_of",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-410: emptyList/emptySet/emptyMap
+    static let kk_emptyList = ExternDecl(
+        name: "kk_emptyList",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_emptySet = ExternDecl(
+        name: "kk_emptySet",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_emptyMap = ExternDecl(
+        name: "kk_emptyMap",
+        parameterTypes: [],
         returnType: "intptr_t"
     )
 

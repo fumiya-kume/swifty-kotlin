@@ -30,6 +30,9 @@ struct CollectionLiteralLookupTables {
 
     // Runtime ABI names
     let kkListOfName: InternedString
+    let kkEmptyListName: InternedString
+    let kkEmptySetName: InternedString
+    let kkEmptyMapName: InternedString
     let kkListSizeName: InternedString
     let kkListGetName: InternedString
     let kkListContainsName: InternedString
@@ -491,6 +494,9 @@ struct CollectionLiteralLookupTables {
         linkedHashSetName = interner.intern("LinkedHashSet")
 
         kkListOfName = interner.intern("kk_list_of")
+        kkEmptyListName = interner.intern("kk_emptyList")
+        kkEmptySetName = interner.intern("kk_emptySet")
+        kkEmptyMapName = interner.intern("kk_emptyMap")
         kkListSizeName = interner.intern("kk_list_size")
         kkListGetName = interner.intern("kk_list_get")
         kkListContainsName = interner.intern("kk_list_contains")

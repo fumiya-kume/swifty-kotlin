@@ -430,6 +430,42 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-410: emptyList/emptySet/emptyMap ---
+        let kotlinCollectionsPkg = ensureSyntheticPackage(
+            path: [interner.intern("kotlin"), interner.intern("collections")],
+            symbols: symbols
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "emptyList",
+            packageFQName: kotlinCollectionsPkg,
+            parameters: [],
+            returnType: types.anyType,
+            externalLinkName: "kk_emptyList",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "emptySet",
+            packageFQName: kotlinCollectionsPkg,
+            parameters: [],
+            returnType: types.anyType,
+            externalLinkName: "kk_emptySet",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticTopLevelFunction(
+            named: "emptyMap",
+            packageFQName: kotlinCollectionsPkg,
+            parameters: [],
+            returnType: types.anyType,
+            externalLinkName: "kk_emptyMap",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureSyntheticObjectSymbol(

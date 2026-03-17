@@ -83,6 +83,12 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+// STDLIB-410: emptyList<T>()
+@_cdecl("kk_emptyList")
+public func kk_emptyList() -> Int {
+    return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
 @_cdecl("kk_list_size")
 public func kk_list_size(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -674,6 +680,12 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+// STDLIB-410: emptySet<T>()
+@_cdecl("kk_emptySet")
+public func kk_emptySet() -> Int {
+    return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
 @_cdecl("kk_set_size")
 public func kk_set_size(_ setRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
@@ -850,6 +862,17 @@ public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) 
     }
     (keys, values) = runtimeNormalizeMapEntries(keys: keys, values: values)
     let box = RuntimeMapBox(keys: keys, values: values)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+// STDLIB-410: emptyMap<K,V>()
+@_cdecl("kk_emptyMap")
+public func kk_emptyMap() -> Int {
+    let box = RuntimeMapBox(keys: [], values: [])
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in
         state.objectPointers.insert(UInt(bitPattern: opaque))

@@ -53,19 +53,15 @@ extension CollectionLiteralLoweringPass {
             for instruction in function.body {
                 switch instruction {
                 case let .call(symbol, callee, arguments, result, canThrow, thrownResult, _):
-                    // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of ---
+                    // --- Rewrite listOf/mutableListOf/emptyList → kk_list_of / kk_emptyList ---
                     if lookup.listFactoryNames.contains(callee) {
                         let count = arguments.count
                         if count == 0 {
-                            // emptyList() / listOf() → kk_list_of(0, 0)
-                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                            let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                            // emptyList() / listOf() → kk_emptyList()
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListOfName,
-                                arguments: [nullExpr, zeroExpr],
+                                callee: lookup.kkEmptyListName,
+                                arguments: [],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
@@ -197,18 +193,15 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of ---
+                    // --- Rewrite setOf/mutableSetOf/emptySet → kk_set_of / kk_emptySet ---
                     if lookup.setFactoryNames.contains(callee) {
                         let count = arguments.count
                         if count == 0 {
-                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                            let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
+                            // emptySet() / setOf() → kk_emptySet()
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkSetOfName,
-                                arguments: [nullExpr, zeroExpr],
+                                callee: lookup.kkEmptySetName,
+                                arguments: [],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
@@ -254,20 +247,15 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
-                    // --- Rewrite mapOf/mutableMapOf/emptyMap → kk_map_of ---
+                    // --- Rewrite mapOf/mutableMapOf/emptyMap → kk_map_of / kk_emptyMap ---
                     if lookup.mapFactoryNames.contains(callee) {
                         let count = arguments.count
                         if count == 0 {
-                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-                            let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
-                            let nullExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
-                            loweredBody.append(.constValue(result: nullExpr2, value: .intLiteral(0)))
+                            // emptyMap() / mapOf() → kk_emptyMap()
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkMapOfName,
-                                arguments: [nullExpr, nullExpr2, zeroExpr],
+                                callee: lookup.kkEmptyMapName,
+                                arguments: [],
                                 result: result,
                                 canThrow: false,
                                 thrownResult: nil
