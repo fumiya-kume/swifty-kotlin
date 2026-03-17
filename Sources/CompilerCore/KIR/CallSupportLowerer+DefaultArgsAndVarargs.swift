@@ -102,7 +102,9 @@ extension CallSupportLowerer {
     func loweredRuntimeBuiltinCallee(
         for callee: InternedString,
         argumentCount: Int,
-        interner: StringInterner
+        argumentTypes: [TypeID],
+        interner: StringInterner,
+        types: TypeSystem
     ) -> InternedString? {
         switch interner.resolve(callee) {
         case "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray":
@@ -115,6 +117,23 @@ extension CallSupportLowerer {
             case 1:
                 return interner.intern("kk_regex_create")
             case 2:
+                // Two 2-arg overloads exist: Regex(String, RegexOption) and
+                // Regex(String, Set<RegexOption>). Disambiguate by inspecting
+                // the second argument's type.
+                let secondArgType = argumentTypes.count > 1 ? argumentTypes[1] : nil
+                if let secondType = secondArgType {
+                    let kind = types.kind(of: secondType)
+                    if case .classType(let classType) = kind,
+                       let symbolTable = types.symbolTable,
+                       let symbolInfo = symbolTable.symbol(classType.classSymbol),
+                       symbolInfo.name != .invalid
+                    {
+                        let name = interner.resolve(symbolInfo.name)
+                        if name == "Set" {
+                            return interner.intern("kk_regex_create_with_options")
+                        }
+                    }
+                }
                 return interner.intern("kk_regex_create_with_option")
             default:
                 return nil

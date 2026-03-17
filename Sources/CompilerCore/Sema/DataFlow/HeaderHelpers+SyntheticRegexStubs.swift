@@ -125,19 +125,23 @@ extension DataFlowSemaPhase {
         )
 
         // --- STDLIB-480: Regex(pattern, options) constructor ---
-        let setRegexOptionType = makeSetType(
+        // Only register the Set<RegexOption> overload if kotlin.collections.Set
+        // is available. Otherwise we would create an unintended Regex(String, Any)
+        // overload that confuses overload resolution.
+        if let setRegexOptionType = makeSetType(
             symbols: symbols, types: types, interner: interner,
             elementType: regexOptionType
-        )
-        registerRegexTopLevelFunction(
-            named: "Regex",
-            packageFQName: kotlinTextPkg,
-            parameters: [("pattern", stringType), ("options", setRegexOptionType)],
-            returnType: regexType,
-            externalLinkName: "kk_regex_create_with_option",
-            symbols: symbols,
-            interner: interner
-        )
+        ) {
+            registerRegexTopLevelFunction(
+                named: "Regex",
+                packageFQName: kotlinTextPkg,
+                parameters: [("pattern", stringType), ("options", setRegexOptionType)],
+                returnType: regexType,
+                externalLinkName: "kk_regex_create_with_option",
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- STDLIB-480: Regex.containsMatchIn(input) ---
         let boolType = types.make(.primitive(.boolean, .nonNull))
@@ -446,14 +450,16 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         elementType: TypeID
-    ) -> TypeID {
+    ) -> TypeID? {
         let setFQName: [InternedString] = [
             interner.intern("kotlin"),
             interner.intern("collections"),
             interner.intern("Set"),
         ]
         guard let setSymbol = symbols.lookup(fqName: setFQName) else {
-            return types.anyType
+            // Do not fall back to anyType -- that would register an unintended
+            // Regex(pattern, options: Any) overload.
+            return nil
         }
         return types.make(.classType(ClassType(
             classSymbol: setSymbol,

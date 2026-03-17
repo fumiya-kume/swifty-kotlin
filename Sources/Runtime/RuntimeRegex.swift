@@ -238,7 +238,16 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
 
 // MARK: - STDLIB-480: Regex(pattern, option) / Regex.containsMatchIn
 
-/// Maps a Kotlin RegexOption ordinal to NSRegularExpression.Options.
+/// Maps a Kotlin `RegexOption` enum ordinal to `NSRegularExpression.Options`.
+///
+/// **Coupling note**: The ordinal values here must stay in sync with the
+/// enum entry registration order in
+/// `HeaderHelpers+SyntheticRegexStubs.swift` (`ensureRegexOptionEnumClass`).
+/// The canonical order is defined by Kotlin's `kotlin.text.RegexOption`:
+///   0 = IGNORE_CASE, 1 = MULTILINE, 2 = DOT_MATCHES_ALL,
+///   3 = LITERAL, 4 = UNIX_LINES, 5 = COMMENTS, 6 = CANON_EQ
+/// If the compiler-side entry order changes, these ordinals must be updated
+/// to match.
 private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Options {
     switch ordinal {
     case 0: return .caseInsensitive          // IGNORE_CASE
