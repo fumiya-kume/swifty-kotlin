@@ -22,6 +22,7 @@ public struct BuiltinTypeNames {
     public let doubleArray: InternedString
     public let floatArray: InternedString
     public let booleanArray: InternedString
+    public let charArray: InternedString
 
     public init(interner: StringInterner) {
         self.int = interner.intern("Int")
@@ -44,6 +45,7 @@ public struct BuiltinTypeNames {
         self.doubleArray = interner.intern("DoubleArray")
         self.floatArray = interner.intern("FloatArray")
         self.booleanArray = interner.intern("BooleanArray")
+        self.charArray = interner.intern("CharArray")
     }
 
     /// Resolve an InternedString to a PrimitiveType, or nil if not a primitive.

@@ -82,22 +82,23 @@ struct TypeCheckHelpers {
         interner: StringInterner
     ) -> TypeID? {
         let builtinNames = BuiltinTypeNames(interner: interner)
-        let knownNames = KnownCompilerNames(interner: interner)
         guard case let .classType(classType) = sema.types.kind(of: arrayType),
               let symbol = sema.symbols.symbol(classType.classSymbol)
         else {
             return nil
         }
         switch symbol.name {
-        case builtinNames.intArray, knownNames.longArray:
+        case builtinNames.intArray:
             return sema.types.intType
-        case knownNames.doubleArray:
+        case builtinNames.longArray:
+            return sema.types.longType
+        case builtinNames.doubleArray:
             return sema.types.doubleType
-        case knownNames.floatArray:
+        case builtinNames.floatArray:
             return sema.types.floatType
-        case knownNames.booleanArray:
+        case builtinNames.booleanArray:
             return sema.types.booleanType
-        case knownNames.charArray:
+        case builtinNames.charArray:
             return sema.types.charType
         default:
             // For generic collection types (e.g. List<String?>, MutableList<Int>),

@@ -322,8 +322,7 @@ final class CallTypeChecker {
 
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086) ---
         if let calleeName,
-           ["Array", "IntArray", "LongArray", "DoubleArray", "FloatArray", "BooleanArray", "CharArray"]
-           .contains(interner.resolve(calleeName)),
+           knownNames.isPrimitiveArrayConstructorTypeName(interner.resolve(calleeName)),
            args.count == 2,
            locals[calleeName] == nil
         {
@@ -766,20 +765,9 @@ final class CallTypeChecker {
                 locals: &locals
             )
             if let calleeName {
-                switch interner.resolve(calleeName) {
-                case "listOf", "mutableListOf", "emptyList",
-                     "arrayOf", "intArrayOf", "longArrayOf",
-                     "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
-                     "mapOf", "mutableMapOf", "emptyMap",
-                     "setOf", "mutableSetOf", "emptySet",
-                     "listOfNotNull",
-                     "sequenceOf",
-                     "ArrayList",
-                     "HashMap", "LinkedHashMap",
-                     "HashSet", "LinkedHashSet":
+                let resolvedName = interner.resolve(calleeName)
+                if KnownCompilerNames.stdlibCollectionFactoryNames.contains(resolvedName) {
                     sema.bindings.markCollectionExpr(id)
-                default:
-                    break
                 }
             }
             sema.bindings.bindExprType(id, type: returnType)
@@ -943,17 +931,7 @@ final class CallTypeChecker {
         // Collection literal factory functions (P5-84).
         if let calleeName {
             let name = interner.resolve(calleeName)
-            switch name {
-            case "listOf", "mutableListOf", "emptyList",
-                 "arrayOf", "intArrayOf", "longArrayOf",
-                 "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
-                 "mapOf", "mutableMapOf", "emptyMap",
-                 "setOf", "mutableSetOf", "emptySet",
-                 "listOfNotNull",
-                 "sequenceOf", "generateSequence",
-                 "ArrayList",
-                 "HashMap", "LinkedHashMap",
-                 "HashSet", "LinkedHashSet":
+            if KnownCompilerNames.stdlibCollectionFactoryNames.contains(name) {
                 sema.bindings.markCollectionExpr(id)
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
@@ -1204,6 +1182,7 @@ final class CallTypeChecker {
                 }
                 sema.bindings.bindExprType(id, type: collectionType)
                 return collectionType
+            } else { switch name {
             case "Regex":
                 guard args.count == 1 else {
                     break
@@ -1288,7 +1267,7 @@ final class CallTypeChecker {
                 return sbType
             default:
                 break
-            }
+            } }
         }
         // STDLIB-004: Inside receiver lambdas (run/apply/with), unqualified
         // function calls resolve as member calls on the implicit receiver.

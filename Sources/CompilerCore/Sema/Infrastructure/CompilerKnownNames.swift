@@ -381,6 +381,34 @@ struct KnownCompilerNames {
             || name == charArray
     }
 
+    /// Returns true if the resolved name is a primitive array constructor type name
+    /// (e.g. "Array", "IntArray", "LongArray", etc.).
+    func isPrimitiveArrayConstructorTypeName(_ resolved: String) -> Bool {
+        switch resolved {
+        case "Array", "IntArray", "LongArray", "DoubleArray",
+             "FloatArray", "BooleanArray", "CharArray":
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// The set of stdlib collection factory function names used for marking
+    /// collection literal expressions. Shared across call type-checking sites
+    /// to avoid duplication.
+    static let stdlibCollectionFactoryNames: Set<String> = [
+        "listOf", "mutableListOf", "emptyList",
+        "arrayOf", "intArrayOf", "longArrayOf",
+        "doubleArrayOf", "floatArrayOf", "booleanArrayOf", "charArrayOf",
+        "mapOf", "mutableMapOf", "emptyMap",
+        "setOf", "mutableSetOf", "emptySet",
+        "listOfNotNull",
+        "sequenceOf", "generateSequence",
+        "ArrayList",
+        "HashMap", "LinkedHashMap",
+        "HashSet", "LinkedHashSet",
+    ]
+
     func isConcreteListLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         symbol.name == list || symbol.name == mutableList
             || symbolMatches(symbol, fqName: kotlinCollectionsListFQName)
