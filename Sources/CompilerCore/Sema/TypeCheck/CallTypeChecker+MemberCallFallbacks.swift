@@ -179,6 +179,8 @@ extension CallTypeChecker {
             listStringType
         case ("windowed", 2):
             listStringType
+        case ("windowed", 3):
+            listStringType
         default:
             nil
         }
@@ -239,6 +241,9 @@ extension CallTypeChecker {
             }
             if args.indices.contains(1) {
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            }
+            if args.indices.contains(2) {
+                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
             }
         }
 
@@ -643,10 +648,14 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("windowed"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("subList"):
             return argCount == 2
         case interner.intern("reduceIndexed"):
             return argCount == 1
+        case interner.intern("windowed"):
+            return argCount == 2 || argCount == 3
+        case interner.intern("chunked"):
+            return argCount == 1 || argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
             return argCount == 0 || argCount == 1
         default:

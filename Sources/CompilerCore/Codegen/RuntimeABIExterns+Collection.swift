@@ -95,7 +95,9 @@ public extension RuntimeABIExterns {
         kk_list_indexOfLast,
         kk_list_filterIsInstance,
         kk_list_chunked,
+        kk_list_chunked_transform,
         kk_list_windowed,
+        kk_list_windowed_partial,
         kk_list_sortedDescending,
         kk_list_sortedByDescending,
         kk_list_sortedWith,
@@ -1119,9 +1121,21 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_chunked_transform = ExternDecl(
+        name: "kk_list_chunked_transform",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t*"],
+        returnType: "intptr_t"
+    )
+
     static let kk_list_windowed = ExternDecl(
         name: "kk_list_windowed",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_windowed_partial = ExternDecl(
+        name: "kk_list_windowed_partial",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

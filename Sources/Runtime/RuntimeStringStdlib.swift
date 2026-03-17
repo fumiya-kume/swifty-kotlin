@@ -1031,6 +1031,25 @@ public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
     return runtimeMakeStringListRaw(windows)
 }
 
+@_cdecl("kk_string_windowed_partial")
+public func kk_string_windowed_partial(_ strRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard size > 0, step > 0 else {
+        return runtimeMakeStringListRaw([])
+    }
+    let scalars = Array(source.unicodeScalars)
+    let partial = partialWindows != 0
+    var windows: [String] = []
+    var i = 0
+    while i < scalars.count {
+        let end = min(i + size, scalars.count)
+        if !partial && end - i < size { break }
+        windows.append(runtimeStringFromScalars(scalars[i ..< end]))
+        i += step
+    }
+    return runtimeMakeStringListRaw(windows)
+}
+
 // MARK: - STDLIB-318: String.commonPrefixWith / commonSuffixWith
 
 @_cdecl("kk_string_commonPrefixWith")

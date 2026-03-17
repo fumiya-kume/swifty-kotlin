@@ -1774,6 +1774,26 @@ extension CallLowerer {
             }
         }
 
+        // String stdlib: windowed(size, step, partialWindows) — STDLIB-549
+        if args.count == 3 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let calleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "windowed"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_windowed_partial"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
         // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
         if args.count == 2, interner.resolve(calleeName) == "replaceFirst" {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
