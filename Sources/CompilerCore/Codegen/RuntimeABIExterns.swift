@@ -1665,6 +1665,24 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    public static let kk_int_countOneBits = ExternDecl(
+        name: "kk_int_countOneBits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_countLeadingZeroBits = ExternDecl(
+        name: "kk_int_countLeadingZeroBits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_int_countTrailingZeroBits = ExternDecl(
+        name: "kk_int_countTrailingZeroBits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Any methods (STDLIB-306)
 
     public static let kk_any_to_string = ExternDecl(
@@ -2097,6 +2115,9 @@ public enum RuntimeABIExterns {
             kk_op_shr,
             kk_op_ushr,
             kk_int_toString_radix,
+            kk_int_countOneBits,
+            kk_int_countLeadingZeroBits,
+            kk_int_countTrailingZeroBits,
         ]
         all += mathExterns
         all += randomExterns

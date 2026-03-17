@@ -1241,6 +1241,22 @@ extension CallTypeChecker {
             }
         }
 
+        // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() → Int (STDLIB-501)
+        if args.isEmpty {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let receiverForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                if receiverForCheck == intType {
+                    let finalType = safeCall ? sema.types.makeNullable(intType) : intType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
         // Primitive member function: Int/Long.toString() / toString(radix: Int) → String (EXPR-003)
         if interner.resolve(calleeName) == "toString",
            args.count <= 1

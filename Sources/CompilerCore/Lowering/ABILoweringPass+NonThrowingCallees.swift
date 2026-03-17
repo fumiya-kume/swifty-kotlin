@@ -344,6 +344,9 @@ extension ABILoweringPass {
             interner.intern("kk_op_shr"),
             interner.intern("kk_op_ushr"),
             interner.intern("kk_int_toString_radix"),
+            interner.intern("kk_int_countOneBits"),
+            interner.intern("kk_int_countLeadingZeroBits"),
+            interner.intern("kk_int_countTrailingZeroBits"),
             // Sequence (STDLIB-003) — these are non-throwing extern C functions.
             interner.intern("kk_sequence_from_list"),
             interner.intern("kk_sequence_map"),

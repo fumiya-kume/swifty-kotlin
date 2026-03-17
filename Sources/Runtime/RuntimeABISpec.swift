@@ -2306,6 +2306,30 @@ public enum RuntimeABISpec {
             returnType: .opaquePointer,
             section: "Bitwise"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_countOneBits",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_countLeadingZeroBits",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_int_countTrailingZeroBits",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
     ]
 
     /// Regex (STDLIB-100/101/102/103)

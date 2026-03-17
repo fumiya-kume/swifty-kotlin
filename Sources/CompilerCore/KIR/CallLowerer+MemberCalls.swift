@@ -752,6 +752,33 @@ extension CallLowerer {
             return result
         }
 
+        // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        if args.isEmpty {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "countOneBits" || calleeStr == "countLeadingZeroBits" || calleeStr == "countTrailingZeroBits" {
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if nonNullReceiverType == intType {
+                    let runtimeName: String = switch calleeStr {
+                    case "countOneBits": "kk_int_countOneBits"
+                    case "countLeadingZeroBits": "kk_int_countLeadingZeroBits"
+                    case "countTrailingZeroBits": "kk_int_countTrailingZeroBits"
+                    default: "kk_int_countOneBits"
+                    }
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeName),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+        }
+
         // Boolean.not() → kk_op_not (STDLIB-308)
         if calleeName == interner.intern("not"),
            args.isEmpty

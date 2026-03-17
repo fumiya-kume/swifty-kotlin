@@ -402,6 +402,21 @@ public func kk_long_to_short(_ value: Int) -> Int {
     Int(Int16(truncatingIfNeeded: value))
 }
 
+@_cdecl("kk_int_countOneBits")
+public func kk_int_countOneBits(_ value: Int) -> Int {
+    value.nonzeroBitCount
+}
+
+@_cdecl("kk_int_countLeadingZeroBits")
+public func kk_int_countLeadingZeroBits(_ value: Int) -> Int {
+    value.leadingZeroBitCount
+}
+
+@_cdecl("kk_int_countTrailingZeroBits")
+public func kk_int_countTrailingZeroBits(_ value: Int) -> Int {
+    value.trailingZeroBitCount
+}
+
 @_cdecl("kk_int_coerceIn")
 public func kk_int_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
     precondition(minimum <= maximum, "Cannot coerce value to an empty range: maximum \(maximum) is less than minimum \(minimum).")

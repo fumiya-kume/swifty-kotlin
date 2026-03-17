@@ -182,6 +182,45 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // Int.countOneBits(): Int (STDLIB-501)
+        registerSyntheticCoercionFunction(
+            named: "countOneBits",
+            externalLinkName: "kk_int_countOneBits",
+            receiverType: types.intType,
+            parameters: [],
+            returnType: types.intType,
+            packageFQName: kotlinPkg,
+            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Int.countLeadingZeroBits(): Int (STDLIB-501)
+        registerSyntheticCoercionFunction(
+            named: "countLeadingZeroBits",
+            externalLinkName: "kk_int_countLeadingZeroBits",
+            receiverType: types.intType,
+            parameters: [],
+            returnType: types.intType,
+            packageFQName: kotlinPkg,
+            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Int.countTrailingZeroBits(): Int (STDLIB-501)
+        registerSyntheticCoercionFunction(
+            named: "countTrailingZeroBits",
+            externalLinkName: "kk_int_countTrailingZeroBits",
+            receiverType: types.intType,
+            parameters: [],
+            returnType: types.intType,
+            packageFQName: kotlinPkg,
+            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticCoercionFunction(
