@@ -236,6 +236,92 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
     return registerRuntimeObject(matchResult)
 }
 
+// MARK: - STDLIB-480: Regex(pattern, option) / Regex.containsMatchIn
+
+/// Maps a Kotlin `RegexOption` enum ordinal to `NSRegularExpression.Options`.
+///
+/// **Coupling note**: The ordinal values here must stay in sync with the
+/// enum entry registration order in
+/// `HeaderHelpers+SyntheticRegexStubs.swift` (`ensureRegexOptionEnumClass`).
+/// The canonical order is defined by Kotlin's `kotlin.text.RegexOption`:
+///   0 = IGNORE_CASE, 1 = MULTILINE, 2 = DOT_MATCHES_ALL,
+///   3 = LITERAL, 4 = UNIX_LINES, 5 = COMMENTS, 6 = CANON_EQ
+/// If the compiler-side entry order changes, these ordinals must be updated
+/// to match.
+private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Options {
+    switch ordinal {
+    case 0: return .caseInsensitive          // IGNORE_CASE
+    case 1: return .anchorsMatchLines        // MULTILINE
+    case 2: return .dotMatchesLineSeparators  // DOT_MATCHES_ALL
+    case 3: return []                        // LITERAL (handled via escapedPattern)
+    case 4: return .useUnixLineSeparators     // UNIX_LINES
+    case 5: return .allowCommentsAndWhitespace // COMMENTS
+    case 6: return []                        // CANON_EQ (no direct equivalent)
+    default:
+        assertionFailure("KSwiftK: unknown RegexOption ordinal \(ordinal) – compiler/runtime enum mismatch?")
+        return []
+    }
+}
+
+// NOTE: kk_regex_create_with_option and kk_regex_create_with_options share the
+// same "effective pattern + try compile + fallback + box" logic.  A shared
+// private helper (e.g., createRegexBox(pattern:isLiteral:options:)) could
+// reduce drift; kept inline for now as the two functions differ in how they
+// collect options (single ordinal vs set iteration).
+@_cdecl("kk_regex_create_with_option")
+public func kk_regex_create_with_option(_ patternRaw: Int, _ optionRaw: Int) -> Int {
+    let pattern = regexStringFromRaw(patternRaw) ?? ""
+    let ordinal = kk_unbox_int(optionRaw)
+    let isLiteral = ordinal == 3
+    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
+    let options = nsRegexOption(fromOrdinal: Int(ordinal))
+    guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: options) else {
+        do {
+            let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+        } catch {
+            fatalError("Failed to create fallback NSRegularExpression")
+        }
+    }
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
+}
+
+/// Creates a Regex from a pattern and a `Set<RegexOption>`.
+/// Iterates the set elements, unboxes each as an ordinal, and combines the
+/// corresponding `NSRegularExpression.Options`.
+@_cdecl("kk_regex_create_with_options")
+public func kk_regex_create_with_options(_ patternRaw: Int, _ optionsSetRaw: Int) -> Int {
+    let pattern = regexStringFromRaw(patternRaw) ?? ""
+    var combined: NSRegularExpression.Options = []
+    var isLiteral = false
+    if let setBox = runtimeSetBox(from: optionsSetRaw) {
+        for element in setBox.elements {
+            let ordinal = Int(kk_unbox_int(element))
+            if ordinal == 3 { isLiteral = true }
+            combined.insert(nsRegexOption(fromOrdinal: ordinal))
+        }
+    }
+    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
+    guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: combined) else {
+        do {
+            let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+        } catch {
+            fatalError("Failed to create fallback NSRegularExpression")
+        }
+    }
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
+}
+
+@_cdecl("kk_regex_containsMatchIn")
+public func kk_regex_containsMatchIn(_ regexRaw: Int, _ inputRaw: Int) -> Int {
+    let input = regexStringFromRaw(inputRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    let range = NSRange(input.startIndex..., in: input)
+    let match = regexBox.regex.firstMatch(in: input, options: [], range: range)
+    return kk_box_bool(match != nil ? 1 : 0)
+}
+
 // MARK: - STDLIB-103: String.toRegex() / Regex.pattern
 
 @_cdecl("kk_string_toRegex")

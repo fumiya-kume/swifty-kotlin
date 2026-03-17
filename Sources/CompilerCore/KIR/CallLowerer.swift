@@ -501,7 +501,9 @@ final class CallLowerer {
                 driver.callSupportLowerer.loweredRuntimeBuiltinCallee(
                     for: sourceCalleeName,
                     argumentCount: finalArgIDs.count,
-                    interner: interner
+                    argumentTypes: finalArgIDs.map { arena.exprType($0) ?? sema.types.anyType },
+                    interner: interner,
+                    types: sema.types
                 ) ?? sourceCalleeName
             } else {
                 sourceCalleeName

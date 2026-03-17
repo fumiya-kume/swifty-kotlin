@@ -103,6 +103,59 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-480: RegexOption enum class ---
+        let regexOptionSymbol = ensureRegexOptionEnumClass(
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let regexOptionType = types.make(.classType(ClassType(
+            classSymbol: regexOptionSymbol, args: [], nullability: .nonNull
+        )))
+
+        // --- STDLIB-480: Regex(pattern, option) constructor ---
+        registerRegexTopLevelFunction(
+            named: "Regex",
+            packageFQName: kotlinTextPkg,
+            parameters: [("pattern", stringType), ("option", regexOptionType)],
+            returnType: regexType,
+            externalLinkName: "kk_regex_create_with_option",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- STDLIB-480: Regex(pattern, options) constructor ---
+        // Only register the Set<RegexOption> overload if kotlin.collections.Set
+        // is available. Otherwise we would create an unintended Regex(String, Any)
+        // overload that confuses overload resolution.
+        if let setRegexOptionType = makeSetType(
+            symbols: symbols, types: types, interner: interner,
+            elementType: regexOptionType
+        ) {
+            registerRegexTopLevelFunction(
+                named: "Regex",
+                packageFQName: kotlinTextPkg,
+                parameters: [("pattern", stringType), ("options", setRegexOptionType)],
+                returnType: regexType,
+                externalLinkName: "kk_regex_create_with_options",
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // --- STDLIB-480: Regex.containsMatchIn(input) ---
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        registerRegexMemberFunction(
+            named: "containsMatchIn",
+            externalLinkName: "kk_regex_containsMatchIn",
+            ownerSymbol: regexSymbol,
+            ownerType: regexType,
+            parameters: [("input", stringType, false, false)],
+            returnType: boolType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-351: Regex.replace(input) { lambda } ---
         let matchResultToStringLambda = types.make(.functionType(FunctionType(
             params: [matchResultType],
@@ -342,5 +395,76 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
         symbols.setPropertyType(returnType, for: propertySymbol)
+    }
+
+    // MARK: - STDLIB-480: RegexOption enum
+
+    private func ensureRegexOptionEnumClass(
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let name = interner.intern("RegexOption")
+        let fqName = pkg + [name]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        let symbol = symbols.define(
+            kind: .enumClass,
+            name: name,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let pkgSymbol = symbols.lookup(fqName: pkg), pkgSymbol != .invalid {
+            symbols.setParentSymbol(pkgSymbol, for: symbol)
+        }
+
+        // Register enum entries
+        let entries = [
+            "IGNORE_CASE", "MULTILINE", "DOT_MATCHES_ALL", "LITERAL",
+            "UNIX_LINES", "COMMENTS", "CANON_EQ",
+        ]
+        for entry in entries {
+            let entryName = interner.intern(entry)
+            let entryFQName = fqName + [entryName]
+            if symbols.lookup(fqName: entryFQName) != nil {
+                continue
+            }
+            let entrySymbol = symbols.define(
+                kind: .property,
+                name: entryName,
+                fqName: entryFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .static]
+            )
+            symbols.setParentSymbol(symbol, for: entrySymbol)
+        }
+        return symbol
+    }
+
+    private func makeSetType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID? {
+        let setFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Set"),
+        ]
+        guard let setSymbol = symbols.lookup(fqName: setFQName), setSymbol != .invalid else {
+            // Do not fall back to anyType -- that would register an unintended
+            // Regex(pattern, options: Any) overload.
+            return nil
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: setSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 }

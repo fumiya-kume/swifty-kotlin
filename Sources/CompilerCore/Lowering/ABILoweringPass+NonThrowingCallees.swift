@@ -382,6 +382,10 @@ extension ABILoweringPass {
             interner.intern("kk_regex_pattern"),
             interner.intern("kk_match_result_value"),
             interner.intern("kk_match_result_groupValues"),
+            // Regex (STDLIB-480)
+            interner.intern("kk_regex_create_with_option"),
+            interner.intern("kk_regex_create_with_options"),
+            interner.intern("kk_regex_containsMatchIn"),
             // Reverse numeric conversions (STDLIB-151)
             interner.intern("kk_double_to_int"),
             interner.intern("kk_float_to_int"),
