@@ -128,10 +128,8 @@ extension CallSupportLowerer {
                        let symbolInfo = symbolTable.symbol(classType.classSymbol),
                        symbolInfo.name != .invalid
                     {
-                        let name = interner.resolve(symbolInfo.name)
-                        // TODO: Use fully-qualified name (kotlin.collections.Set) instead of
-                        // simple name to avoid false matches from user-defined Set types.
-                        if name == "Set" {
+                        let knownNames = KnownCompilerNames(interner: interner)
+                        if knownNames.isSetLikeSymbol(symbolInfo) {
                             return interner.intern("kk_regex_create_with_options")
                         }
                     }
