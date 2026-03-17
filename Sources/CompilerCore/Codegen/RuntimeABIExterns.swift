@@ -329,6 +329,25 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-317: String.asIterable() — lazy Iterable<Char>
+    public static let kk_string_asIterable = ExternDecl(
+        name: "kk_string_asIterable",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterable_toList = ExternDecl(
+        name: "kk_string_iterable_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_iterable_iterator = ExternDecl(
+        name: "kk_string_iterable_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_take = ExternDecl(
         name: "kk_string_take",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2029,6 +2048,9 @@ public enum RuntimeABIExterns {
             kk_string_reversed,
             kk_string_toList,
             kk_string_toCharArray,
+            kk_string_asIterable,
+            kk_string_iterable_toList,
+            kk_string_iterable_iterator,
             kk_string_iterator,
             kk_string_iterator_hasNext,
             kk_string_iterator_next,

@@ -801,6 +801,31 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-317: String.asIterable() — lazy Iterable<Char>
+        RuntimeABIFunctionSpec(
+            name: "kk_string_asIterable",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_iterable_toList",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_iterable_iterator",
+            parameters: [
+                RuntimeABIParameter(name: "iterableRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_iterator",
             parameters: [

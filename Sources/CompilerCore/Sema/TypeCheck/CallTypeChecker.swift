@@ -1390,6 +1390,7 @@ final class CallTypeChecker {
                     case "reversed": sema.types.stringType
                     case "toList": listCharType
                     case "toCharArray": charArrayType
+                    case "asIterable": listCharType
                     default: nil
                     }
                 } else if args.count == 1 {

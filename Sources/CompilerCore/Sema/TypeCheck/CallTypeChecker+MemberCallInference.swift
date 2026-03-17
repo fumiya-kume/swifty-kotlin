@@ -2007,7 +2007,7 @@ extension CallTypeChecker {
                             )
                         }
                         switch calleeStr {
-                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray":
+                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray", "asIterable":
                             sema.bindings.markCollectionExpr(id)
                         default:
                             break

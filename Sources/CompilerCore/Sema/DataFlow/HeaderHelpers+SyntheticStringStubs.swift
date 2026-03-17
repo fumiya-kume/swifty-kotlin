@@ -419,6 +419,24 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-317: String.asIterable() — returns lazy Iterable<Char>
+        let iterableCharType = makeIterableType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: charType
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "asIterable",
+            externalLinkName: "kk_string_asIterable",
+            receiverType: stringType,
+            parameters: [],
+            returnType: iterableCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticStringExtensionFunction(
             named: "padStart",
             externalLinkName: "kk_string_padStart",
@@ -1256,6 +1274,28 @@ extension DataFlowSemaPhase {
         interner: StringInterner
     ) -> TypeID {
         makeListType(symbols: symbols, types: types, interner: interner, elementType: types.stringType)
+    }
+
+    private func makeIterableType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
+            // Fallback to List<Char> if Iterable is not yet registered.
+            return makeListType(symbols: symbols, types: types, interner: interner, elementType: elementType)
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: iterableSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     private func makeNominalType(

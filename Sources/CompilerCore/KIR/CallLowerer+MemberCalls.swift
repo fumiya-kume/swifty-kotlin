@@ -88,7 +88,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "replaceFirstChar",
@@ -1302,6 +1302,17 @@ extension CallLowerer {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_toList"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "asIterable" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_asIterable"),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: false,
