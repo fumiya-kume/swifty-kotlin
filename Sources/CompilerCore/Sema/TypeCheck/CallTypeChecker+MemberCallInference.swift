@@ -461,7 +461,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -784,6 +784,53 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = collectionElementType
+
+            case "scan", "runningFold":
+                guard args.count == 2 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [initialType, collectionElementType],
+                    returnType: initialType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.invariant(initialType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
+
+            case "runningReduce":
+                guard args.count == 1 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSymbol,
+                        args: [.invariant(collectionElementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
 
             case "groupBy":
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(

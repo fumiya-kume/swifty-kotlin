@@ -468,6 +468,52 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     return acc
 }
 
+// MARK: - List scan / runningFold / runningReduce (STDLIB-442)
+
+@_cdecl("kk_list_scan")
+public func kk_list_scan(
+    _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = initial
+    var results = [acc]
+    for elem in list.elements {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: elem, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
+@_cdecl("kk_list_runningFold")
+public func kk_list_runningFold(
+    _ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return kk_list_scan(listRaw, initial, fnPtr, closureRaw, outThrown)
+}
+
+@_cdecl("kk_list_runningReduce")
+public func kk_list_runningReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+    }
+    var acc = list.elements[0]
+    var results = [acc]
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 @_cdecl("kk_list_groupBy")
 public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
