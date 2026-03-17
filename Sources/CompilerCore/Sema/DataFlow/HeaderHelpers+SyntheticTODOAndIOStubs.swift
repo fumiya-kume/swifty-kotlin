@@ -96,6 +96,12 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner
         )
+        registerSyntheticSequenceBuilderStub(
+            packageFQName: kotlinSequencesPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
 
         // --- Grouping type (STDLIB-285/286) ---
         registerSyntheticGroupingStub(
@@ -164,6 +170,14 @@ extension DataFlowSemaPhase {
             returnType: iteratorReturnType,
             externalLinkName: "kk_iterator_builder_build",
             symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-330: sequence { yield(x) } builder
+        registerSyntheticSequenceBuilderStub(
+            packageFQName: kotlinSequencesPkg,
+            symbols: symbols,
+            types: types,
             interner: interner
         )
 
@@ -782,6 +796,153 @@ extension DataFlowSemaPhase {
         return sequenceSymbol
     }
 
+    private func registerSyntheticSequenceBuilderStub(
+        packageFQName: [InternedString],
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinSequencesPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("sequences")],
+            symbols: symbols
+        )
+        let sequenceSymbol = registerSyntheticSequenceStub(
+            packageFQName: kotlinSequencesPkg,
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+
+        let scopeName = interner.intern("SequenceScope")
+        let scopeFQName = kotlinSequencesPkg + [scopeName]
+        let scopeSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: scopeFQName) {
+            scopeSymbol = existing
+        } else {
+            let sym = symbols.define(
+                kind: .class,
+                name: scopeName,
+                fqName: scopeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinSequencesPkg) {
+                symbols.setParentSymbol(packageSymbol, for: sym)
+            }
+            scopeSymbol = sym
+        }
+        let scopeTypeParamName = interner.intern("T")
+        let scopeTypeParamFQName = scopeFQName + [scopeTypeParamName]
+        let scopeTypeParamSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: scopeTypeParamFQName) {
+            scopeTypeParamSymbol = existing
+        } else {
+            let param = symbols.define(
+                kind: .typeParameter,
+                name: scopeTypeParamName,
+                fqName: scopeTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            symbols.setParentSymbol(scopeSymbol, for: param)
+            scopeTypeParamSymbol = param
+        }
+        types.setNominalTypeParameterSymbols([scopeTypeParamSymbol], for: scopeSymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: scopeSymbol)
+
+        let scopeTypeParamType = types.make(.typeParam(TypeParamType(symbol: scopeTypeParamSymbol)))
+        let scopeReceiverType = types.make(.classType(ClassType(
+            classSymbol: scopeSymbol,
+            args: [.invariant(scopeTypeParamType)],
+            nullability: .nonNull
+        )))
+        registerSequenceScopeMember(
+            named: "yield",
+            sequenceScopeSymbol: scopeSymbol,
+            sequenceScopeFQName: scopeFQName,
+            receiverType: scopeReceiverType,
+            parameters: [(name: "value", type: scopeTypeParamType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_sequence_builder_yield",
+            symbols: symbols,
+            interner: interner
+        )
+
+        let functionName = interner.intern("sequence")
+        let functionFQName = kotlinSequencesPkg + [functionName]
+        guard symbols.lookup(fqName: functionFQName) == nil else {
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinSequencesPkg) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName("kk_sequence_builder_build", for: functionSymbol)
+
+        let functionTypeParamName = interner.intern("T")
+        let functionTypeParamFQName = functionFQName + [functionTypeParamName]
+        let functionTypeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: functionTypeParamName,
+            fqName: functionTypeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        symbols.setParentSymbol(functionSymbol, for: functionTypeParamSymbol)
+
+        let builderTypeParamType = types.make(.typeParam(TypeParamType(symbol: functionTypeParamSymbol)))
+        let sequenceReturnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(builderTypeParamType)],
+            nullability: .nonNull
+        )))
+        let builderScopeType = types.make(.classType(ClassType(
+            classSymbol: scopeSymbol,
+            args: [.invariant(builderTypeParamType)],
+            nullability: .nonNull
+        )))
+        let blockType = types.make(.functionType(FunctionType(
+            receiver: builderScopeType,
+            params: [],
+            returnType: types.unitType,
+            isSuspend: true
+        )))
+
+        let blockParamName = interner.intern("block")
+        let blockParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: blockParamName,
+            fqName: functionFQName + [blockParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(functionSymbol, for: blockParamSymbol)
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [blockType],
+                returnType: sequenceReturnType,
+                valueParameterSymbols: [blockParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [functionTypeParamSymbol]
+            ),
+            for: functionSymbol
+        )
+    }
+
     private func makeFileListOfStringType(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1190,6 +1351,63 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             symbols: symbols,
             interner: interner
+        )
+    }
+
+    private func registerSequenceScopeMember(
+        named name: String,
+        sequenceScopeSymbol: SymbolID,
+        sequenceScopeFQName: [InternedString],
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let memberName = interner.intern(name)
+        let memberFQName = sequenceScopeFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(sequenceScopeSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
         )
     }
 
