@@ -480,16 +480,16 @@ symbol s478 kind=valueParameter fq=kotlin.run.block vis=private flags=synthetic
 symbol s479 kind=function fq=kotlin.run vis=public flags=inlineFunction|synthetic sig=recv=_ params=[() -> T#477] ret=T#477 suspend=0 defaults=[0] vararg=[0]
 symbol s480 kind=typeParameter fq=kotlin.run.T vis=private flags=_
 symbol s481 kind=function fq=kotlin.run vis=public flags=inlineFunction|synthetic sig=recv=T#480 params=[T#480.() -> T#477] ret=T#477 suspend=0 defaults=[0] vararg=[0]
-symbol s482 kind=typeParameter fq=kotlin.let.T vis=private flags=_
-symbol s483 kind=typeParameter fq=kotlin.let.R vis=private flags=_
-symbol s484 kind=valueParameter fq=kotlin.let.block vis=private flags=synthetic
-symbol s485 kind=function fq=kotlin.let vis=public flags=inlineFunction|synthetic sig=recv=T#482 params=[(T#482) -> T#483] ret=T#483 suspend=0 defaults=[0] vararg=[0]
-symbol s486 kind=typeParameter fq=kotlin.apply.T vis=private flags=_
-symbol s487 kind=valueParameter fq=kotlin.apply.block vis=private flags=synthetic
-symbol s488 kind=function fq=kotlin.apply vis=public flags=inlineFunction|synthetic sig=recv=T#486 params=[T#486.() -> Unit] ret=T#486 suspend=0 defaults=[0] vararg=[0]
-symbol s489 kind=typeParameter fq=kotlin.also.T vis=private flags=_
-symbol s490 kind=valueParameter fq=kotlin.also.block vis=private flags=synthetic
-symbol s491 kind=function fq=kotlin.also vis=public flags=inlineFunction|synthetic sig=recv=T#489 params=[(T#489) -> Unit] ret=T#489 suspend=0 defaults=[0] vararg=[0]
+symbol s482 kind=typeParameter fq=kotlin.takeIf.T vis=private flags=_
+symbol s483 kind=valueParameter fq=kotlin.takeIf.predicate vis=private flags=synthetic
+symbol s484 kind=function fq=kotlin.takeIf vis=public flags=inlineFunction|synthetic sig=recv=T#482 params=[(T#482) -> Boolean] ret=T#482? suspend=0 defaults=[0] vararg=[0]
+symbol s485 kind=typeParameter fq=kotlin.takeUnless.T vis=private flags=_
+symbol s486 kind=valueParameter fq=kotlin.takeUnless.predicate vis=private flags=synthetic
+symbol s487 kind=function fq=kotlin.takeUnless vis=public flags=inlineFunction|synthetic sig=recv=T#485 params=[(T#485) -> Boolean] ret=T#485? suspend=0 defaults=[0] vararg=[0]
+symbol s488 kind=typeParameter fq=kotlin.let.T vis=private flags=_
+symbol s489 kind=typeParameter fq=kotlin.let.R vis=private flags=_
+symbol s490 kind=valueParameter fq=kotlin.let.block vis=private flags=synthetic
+symbol s491 kind=function fq=kotlin.let vis=public flags=inlineFunction|synthetic sig=recv=T#488 params=[(T#488) -> T#489] ret=T#489 suspend=0 defaults=[0] vararg=[0]
 symbol s492 kind=class fq=kotlin.Throwable vis=public flags=synthetic type=Class#492
 symbol s493 kind=class fq=kotlin.Exception vis=public flags=synthetic type=Class#493
 symbol s494 kind=class fq=kotlin.RuntimeException vis=public flags=synthetic type=Class#494
