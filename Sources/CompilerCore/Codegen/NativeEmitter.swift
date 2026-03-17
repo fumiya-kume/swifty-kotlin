@@ -38,6 +38,8 @@ struct NativeEmitter {
     let interner: StringInterner
     let sourceManager: SourceManager?
     let fileFacadeNamesByFileID: [Int32: String]
+    /// REFL-004: Metadata records to embed as runtime reflection metadata.
+    let reflectionMetadataRecords: [MetadataRecord]
 
     init(
         target: TargetTriple,
@@ -47,7 +49,8 @@ struct NativeEmitter {
         module: KIRModule,
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
-        fileFacadeNamesByFileID: [Int32: String] = [:]
+        fileFacadeNamesByFileID: [Int32: String] = [:],
+        reflectionMetadataRecords: [MetadataRecord] = []
     ) {
         self.target = target
         self.optLevel = optLevel
@@ -57,6 +60,7 @@ struct NativeEmitter {
         self.interner = interner
         self.sourceManager = sourceManager
         self.fileFacadeNamesByFileID = fileFacadeNamesByFileID
+        self.reflectionMetadataRecords = reflectionMetadataRecords
     }
 
     func emitLLVMIR(outputPath: String) throws {
@@ -224,6 +228,17 @@ struct NativeEmitter {
                 bindings.disposeContext(context)
                 throw error
             }
+        }
+
+        // REFL-004: Emit runtime reflection metadata as global constants.
+        if !reflectionMetadataRecords.isEmpty {
+            RuntimeReflectionMetadataEmitter.emitGlobals(
+                records: reflectionMetadataRecords,
+                bindings: bindings,
+                module: llvmModule,
+                context: context,
+                int64Type: int64Type
+            )
         }
 
         if let diContext {
