@@ -432,8 +432,7 @@ extension DataFlowSemaPhase {
         )
 
         // --- STDLIB-410: emptyList/emptySet/emptyMap ---
-        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
-        _ = ensureSyntheticPackage(fqName: kotlinCollectionsPkg, symbols: symbols)
+        // kotlinCollectionsPkg already declared above (line 148)
 
         // These synthetic registrations are intentionally non-generic and return
         // List<Nothing>/Set<Nothing>/Map<Nothing, Nothing>. This matches Kotlin's
