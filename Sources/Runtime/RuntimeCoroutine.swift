@@ -13,6 +13,9 @@ final class RuntimeContinuationState {
     // If the jobHandle is deallocated before cancellation is observed, the continuation
     // will simply not be woken by cancellation, which is an accepted behavior.
     weak var jobHandle: RuntimeJobHandle?
+    /// CORO-003: The coroutine scope is carried in the continuation context instead
+    /// of Thread Local Storage, so it survives suspend/resume across threads.
+    var scope: RuntimeCoroutineScope?
     private let stateLock = NSLock()
     private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
@@ -219,17 +222,78 @@ final class RuntimeJobHandle: @unchecked Sendable {
 }
 
 /// A coroutine scope that tracks child jobs and supports structured cancellation.
+///
+/// CORO-003: Scope is no longer stored in Thread Local Storage. Instead it is
+/// carried inside `RuntimeContinuationState.scope` (the coroutine context),
+/// so it survives suspend/resume across different GCD threads. A lightweight
+/// per-task accessor (`RuntimeCoroutineScope.activeScopeForCurrentTask`)
+/// bridges the gap for the few call-sites that don't have a continuation handle.
 final class RuntimeCoroutineScope {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
     fileprivate var parent: RuntimeCoroutineScope?
 
-    private static let currentScopeKey = "kk_coroutine_scope_current"
+    // CORO-003: Task-local scope registry (replaces TLS).
+    // Maps an opaque task token (assigned by the suspend-entry loop on entry) to
+    // the scope that is current for that execution context. This allows
+    // `RuntimeCoroutineScope.current` to work from code that runs inside a
+    // suspend-entry loop without an explicit continuation handle.
+    private static let taskScopeLock = NSLock()
+    // Protected by taskScopeLock — all accesses go through installScope/removeScope/scopeForTask.
+    nonisolated(unsafe) private static var taskScopeMap: [ObjectIdentifier: RuntimeCoroutineScope] = [:]
 
+    /// Install scope for the given task key. Called at the top of the
+    /// suspend-entry loop so that launched children can discover their parent scope.
+    static func installScope(_ scope: RuntimeCoroutineScope?, forTask key: ObjectIdentifier) {
+        taskScopeLock.lock()
+        if let scope {
+            taskScopeMap[key] = scope
+        } else {
+            taskScopeMap.removeValue(forKey: key)
+        }
+        taskScopeLock.unlock()
+    }
+
+    /// Remove the task-scope mapping when a suspend-entry loop finishes.
+    static func removeScope(forTask key: ObjectIdentifier) {
+        taskScopeLock.lock()
+        taskScopeMap.removeValue(forKey: key)
+        taskScopeLock.unlock()
+    }
+
+    /// Look up the scope installed for the current GCD dispatch work-item.
+    /// Falls back to nil if the current thread is not inside a suspend-entry loop.
+    static func scopeForTask(_ key: ObjectIdentifier) -> RuntimeCoroutineScope? {
+        taskScopeLock.lock()
+        defer { taskScopeLock.unlock() }
+        return taskScopeMap[key]
+    }
+
+    /// Convenience accessor used by launch/async when they don't have a
+    /// continuation handle.  Uses the thread-level task key installed by the
+    /// nearest enclosing suspend-entry loop.
+    ///
+    /// NOTE: This is *not* TLS for the scope itself -- the scope lives on the
+    /// continuation.  The task key is only used to *find* which continuation's
+    /// scope is active on this thread right now.
     static var current: RuntimeCoroutineScope? {
-        get { Thread.current.threadDictionary[currentScopeKey] as? RuntimeCoroutineScope }
-        set { Thread.current.threadDictionary[currentScopeKey] = newValue }
+        get {
+            let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
+            taskScopeLock.lock()
+            defer { taskScopeLock.unlock() }
+            return taskScopeMap[key]
+        }
+        set {
+            let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
+            taskScopeLock.lock()
+            if let newValue {
+                taskScopeMap[key] = newValue
+            } else {
+                taskScopeMap.removeValue(forKey: key)
+            }
+            taskScopeLock.unlock()
+        }
     }
 
     func registerChild(_ handle: Int) {
@@ -290,6 +354,44 @@ final class RuntimeCoroutineScope {
                 }
             }
         }
+    }
+}
+
+/// CORO-003: Per-thread task key used to index into the task-scope map.
+///
+/// Each thread participating in a suspend-entry loop gets a unique sentinel
+/// object stored in its thread dictionary.  This is *not* the scope itself --
+/// it is only a key that lets `RuntimeCoroutineScope.current` find which scope
+/// is active on this thread.  The actual scope lives in the continuation
+/// context and is propagated to child coroutines explicitly.
+enum RuntimeCoroutineScopeTaskKey {
+    private static let tlsKey = "kk_coro_task_key"
+
+    /// A lightweight sentinel whose only purpose is to provide a stable
+    /// `ObjectIdentifier` for the lifetime of a suspend-entry loop invocation.
+    private final class Token {}
+
+    /// Get-or-create a task key for the current thread.
+    static var currentTaskKey: ObjectIdentifier {
+        if let existing = Thread.current.threadDictionary[tlsKey] as? Token {
+            return ObjectIdentifier(existing)
+        }
+        let token = Token()
+        Thread.current.threadDictionary[tlsKey] = token
+        return ObjectIdentifier(token)
+    }
+
+    /// Install a fresh task key for this thread and return it.
+    /// Called at the top of each suspend-entry loop invocation.
+    static func installFreshKey() -> ObjectIdentifier {
+        let token = Token()
+        Thread.current.threadDictionary[tlsKey] = token
+        return ObjectIdentifier(token)
+    }
+
+    /// Remove the task key for this thread.
+    static func removeKey() {
+        Thread.current.threadDictionary.removeObject(forKey: tlsKey)
     }
 }
 
@@ -412,9 +514,14 @@ public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
         state.jobHandle = job
     }
 
-    // Register with current scope if any
-    if let scope = RuntimeCoroutineScope.current {
-        scope.registerChild(Int(bitPattern: jobPtr))
+    // CORO-003: Capture caller's scope from context (not TLS) and register child
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    // Propagate caller's scope to child continuation context
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
     }
 
     KxMiniRuntime.launch {
@@ -432,9 +539,10 @@ public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     let task = RuntimeAsyncTask()
     let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
 
-    // Register with current scope if any
-    if let scope = RuntimeCoroutineScope.current {
-        scope.registerChild(Int(bitPattern: taskPtr))
+    // CORO-003: Capture caller's scope from context (not TLS) and register child
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: taskPtr))
     }
 
     KxMiniRuntime.launch {
@@ -475,14 +583,19 @@ public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int
     }
 
     // Link job to continuation state
-    if let state = runtimeContinuationState(from: continuation) {
-        job.continuationState = state
-        state.jobHandle = job
+    if let contState = runtimeContinuationState(from: continuation) {
+        job.continuationState = contState
+        contState.jobHandle = job
     }
 
-    // Register with current scope if any
-    if let scope = RuntimeCoroutineScope.current {
-        scope.registerChild(Int(bitPattern: jobPtr))
+    // CORO-003: Capture caller's scope from context and register child
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: jobPtr))
+    }
+    // Propagate caller's scope to child continuation context
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
     }
 
     KxMiniRuntime.launch {
@@ -497,9 +610,14 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
     let task = RuntimeAsyncTask()
     let taskPtr = UnsafeMutableRawPointer(Unmanaged.passRetained(task).toOpaque())
 
-    // Register with current scope if any
-    if let scope = RuntimeCoroutineScope.current {
-        scope.registerChild(Int(bitPattern: taskPtr))
+    // CORO-003: Capture caller's scope from context and register child
+    let callerScope = RuntimeCoroutineScope.current
+    if let callerScope {
+        callerScope.registerChild(Int(bitPattern: taskPtr))
+    }
+    // Propagate caller's scope to child continuation context
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
     }
 
     KxMiniRuntime.launch {
@@ -1059,7 +1177,8 @@ private func runtimeReadArrayElement(arrayRaw: Int, index: Int) -> Int {
 
 // MARK: - Structured Concurrency C ABI (P5-89)
 
-/// Creates a new coroutine scope and pushes it as the current scope on the thread-local stack.
+/// Creates a new coroutine scope and installs it as the current scope in the
+/// task-scope registry (CORO-003: no TLS for the scope itself).
 @_cdecl("kk_coroutine_scope_new")
 public func kk_coroutine_scope_new() -> Int {
     let scope = RuntimeCoroutineScope()
@@ -1068,7 +1187,7 @@ public func kk_coroutine_scope_new() -> Int {
         state.objectPointers.insert(UInt(bitPattern: ptr))
     }
 
-    // Push: save parent scope and set this as current
+    // Push: save parent scope and set this as current via the task-scope map
     scope.parent = RuntimeCoroutineScope.current
     RuntimeCoroutineScope.current = scope
 
@@ -1095,7 +1214,7 @@ public func kk_coroutine_scope_wait(_ scopeHandle: Int) -> Int {
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(ptr).takeUnretainedValue()
     scope.waitForChildren()
 
-    // Pop: restore parent scope
+    // Pop: restore parent scope in the task-scope map (CORO-003)
     RuntimeCoroutineScope.current = scope.parent
 
     // Release the scope
@@ -1276,6 +1395,13 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         return 0
     }
 
+    // CORO-003: Install the scope carried by this continuation into the
+    // task-scope map so that child launches dispatched on this thread can
+    // discover their parent scope without TLS.
+    let contState = runtimeContinuationState(from: continuation)
+    var currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+    RuntimeCoroutineScope.installScope(contState?.scope, forTask: currentTaskKey)
+
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
     var outThrown = 0
 
@@ -1283,15 +1409,23 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         outThrown = 0
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {
+            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
             _ = kk_coroutine_state_exit(continuation, 0)
             return 0
         }
         if result != suspendedToken {
+            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
             return result
         }
         guard let state = runtimeContinuationState(from: continuation) else {
+            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
             return 0
         }
         state.waitForResumeSignal()
+        // CORO-003: After suspend/resume we may be on a different thread.
+        // Re-install the task key so the scope map lookup still works.
+        RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+        currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+        RuntimeCoroutineScope.installScope(state.scope, forTask: currentTaskKey)
     }
 }
