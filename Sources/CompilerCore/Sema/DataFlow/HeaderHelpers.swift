@@ -112,6 +112,19 @@ extension DataFlowSemaPhase {
         return .public
     }
 
+    func restrictedVisibility(_ lhs: Visibility, _ rhs: Visibility) -> Visibility {
+        switch (lhs, rhs) {
+        case (.private, _), (_, .private):
+            .private
+        case (.protected, _), (_, .protected):
+            .protected
+        case (.internal, _), (_, .internal):
+            .internal
+        default:
+            .public
+        }
+    }
+
     func primaryConstructorVisibility(
         for classDecl: ClassDecl,
         classKind: SymbolKind,
@@ -465,7 +478,7 @@ extension DataFlowSemaPhase {
                 name: componentName,
                 fqName: componentFQName,
                 declSite: classDecl.range,
-                visibility: .public,
+                visibility: restrictedVisibility(symbols.symbol(ownerSymbol)?.visibility ?? .public, .public),
                 flags: [.synthetic, .operatorFunction]
             )
             symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
