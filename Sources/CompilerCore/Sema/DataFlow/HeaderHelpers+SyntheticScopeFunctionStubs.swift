@@ -1,7 +1,8 @@
 import Foundation
 
-/// Synthetic stdlib stub for kotlin.with (STDLIB-061).
-/// with<T, R>(receiver: T, block: T.() -> R): R
+/// Synthetic stdlib stubs for Kotlin scope functions.
+/// - with<T, R>(receiver: T, block: T.() -> R): R   (STDLIB-061)
+/// - T.let<T, R>(block: (T) -> R): R                (STDLIB-400)
 /// Inline-expanded by CallLowerer; no runtime call.
 extension DataFlowSemaPhase {
     func registerSyntheticScopeFunctionStubs(
@@ -20,6 +21,18 @@ extension DataFlowSemaPhase {
                 flags: [.synthetic]
             )
         }
+
+        registerWithStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+        registerLetStub(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)
+    }
+
+    /// `with<T, R>(receiver: T, block: T.() -> R): R` (STDLIB-061)
+    private func registerWithStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString]
+    ) {
         let withName = interner.intern("with")
         let withFQName = kotlinPkg + [withName]
 
@@ -107,6 +120,97 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 0
             ),
             for: withSymbol
+        )
+    }
+
+    /// `T.let<T, R>(block: (T) -> R): R` (STDLIB-400)
+    /// Inline extension function on Any?. The block receives T as its parameter (`it`).
+    private func registerLetStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString]
+    ) {
+        let letName = interner.intern("let")
+        let letFQName = kotlinPkg + [letName]
+
+        if symbols.lookup(fqName: letFQName) != nil {
+            return
+        }
+
+        let tName = interner.intern("T")
+        let rName = interner.intern("R")
+        let tFQName = letFQName + [tName]
+        let rFQName = letFQName + [rName]
+
+        let tSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tName,
+            fqName: tFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let rSymbol = symbols.define(
+            kind: .typeParameter,
+            name: rName,
+            fqName: rFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+
+        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+
+        // block: (T) -> R — lambda that takes T as an explicit parameter (not a receiver)
+        let blockType = types.make(.functionType(FunctionType(
+            params: [tType],
+            returnType: rType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let blockName = interner.intern("block")
+        let blockSymbol = symbols.define(
+            kind: .valueParameter,
+            name: blockName,
+            fqName: letFQName + [blockName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+
+        let letSymbol = symbols.define(
+            kind: .function,
+            name: letName,
+            fqName: letFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+            symbols.setParentSymbol(packageSymbol, for: letSymbol)
+        }
+        symbols.setParentSymbol(letSymbol, for: tSymbol)
+        symbols.setParentSymbol(letSymbol, for: rSymbol)
+        symbols.setParentSymbol(letSymbol, for: blockSymbol)
+
+        // Extension function: receiverType is T (nullable to match Any?)
+        let nullableTType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nullable)))
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: nullableTType,
+                parameterTypes: [blockType],
+                returnType: rType,
+                isSuspend: false,
+                valueParameterSymbols: [blockSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: [tSymbol, rSymbol],
+                classTypeParameterCount: 0
+            ),
+            for: letSymbol
         )
     }
 }
