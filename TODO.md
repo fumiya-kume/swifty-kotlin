@@ -362,8 +362,8 @@
   - 現状: `InlineLoweringPass.swift` で return が単純にインライン化されるだけで、外側の関数を抜けるセマンティクスがない
 - [ ] INLINE-002: Inline 関数に渡されたラムダ引数のインライン展開
   - 現状: ラムダはインライン化されず、単なる間接呼び出しとして残るため overhead が削減されない
-- [ ] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装
-  - 現状: `LambdaClosureConversionPass.swift` は rename のみの stub。キャプチャした変数を保持するオブジェクト構造と、ポリモーフィックな `kk_lambda_invoke` が未実装
+- [x] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装
+  - 完了: キャプチャ変数を `kk_closure_obj_*` オブジェクトに格納し、`kk_closure_invoke_*` ラッパー経由で呼び出す closure conversion を実装
 - [ ] ENUM-002: `enumValues()` が正しい Array オブジェクトを返すようにする
   - 現状: 現在は `count` (Int) のみを返しており、Kotlin の Array<T> セマンティクスを満たしていない（`DataEnumSealedSynthesisPass.swift:494`）
 - [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
