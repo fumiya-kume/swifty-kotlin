@@ -131,6 +131,35 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-331: iterator {} builder → Iterator<T>
+        let iteratorBlockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType
+        )))
+        // Use Iterator<Any> as return type if the Iterator interface is already registered
+        // (registerSyntheticCollectionStubs runs before this method).
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        let iteratorFQName = kotlinCollectionsPkg + [interner.intern("Iterator")]
+        let iteratorReturnType: TypeID
+        if let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) {
+            iteratorReturnType = types.make(.classType(ClassType(
+                classSymbol: iteratorSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            iteratorReturnType = types.anyType
+        }
+        registerSyntheticTopLevelFunction(
+            named: "iterator",
+            packageFQName: kotlinSequencesPkg,
+            parameters: [(name: "block", type: iteratorBlockType)],
+            returnType: iteratorReturnType,
+            externalLinkName: "kk_iterator_builder_build",
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticSequenceJoinToStringMember(
             symbols: symbols,
             types: types,

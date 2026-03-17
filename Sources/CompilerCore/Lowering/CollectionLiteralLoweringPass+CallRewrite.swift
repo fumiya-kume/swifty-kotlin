@@ -1458,6 +1458,26 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // iterator { ... } builder → kk_iterator_builder_build (STDLIB-331)
+                    // Only rewrite calls whose symbol resolves to kotlin.sequences.iterator
+                    // (FQN check) to avoid accidentally lowering user-defined iterator(...)
+                    // calls in other scopes.
+                    // The runtime ABI function is non-throwing, so force canThrow=false.
+                    if callee == lookup.iteratorBuilderName, arguments.count == 1,
+                       let sym = symbol,
+                       ctx.sema?.symbols.symbol(sym)?.fqName == lookup.iteratorBuilderFQName
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkIteratorBuilderBuildName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // yield(value) inside sequence builder → kk_sequence_builder_yield
                     if callee == lookup.yieldName, arguments.count == 2 {
                         loweredBody.append(.call(

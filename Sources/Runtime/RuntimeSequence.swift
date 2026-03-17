@@ -1324,3 +1324,22 @@ public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.builder(elements: builder.elements)])
     return registerRuntimeObject(seq)
 }
+
+// MARK: - Iterator Builder (iterator { yield(x) }) (STDLIB-331)
+
+@_cdecl("kk_iterator_builder_build")
+public func kk_iterator_builder_build(_ fnPtr: Int) -> Int {
+    let builder = RuntimeSequenceBuilderBox()
+    let builderHandle = registerRuntimeObject(builder)
+
+    var thrown = 0
+    _ = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: builderHandle, outThrown: &thrown)
+
+    if thrown != 0 {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: iterator lambda threw but no outThrown available")
+    }
+
+    // Return a list-backed iterator over the collected elements.
+    let iteratorBox = RuntimeListIteratorBox(elements: builder.elements)
+    return registerRuntimeObject(iteratorBox)
+}
