@@ -41,6 +41,41 @@ public extension RuntimeABISpec {
             section: "Comparator"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_multi_selectors",
+            parameters: [
+                RuntimeABIParameter(name: "sel1Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel1Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel2Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel2Closure", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_multi_selectors3",
+            parameters: [
+                RuntimeABIParameter(name: "sel1Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel1Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel2Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel2Closure", type: .intptr),
+                RuntimeABIParameter(name: "sel3Fn", type: .intptr),
+                RuntimeABIParameter(name: "sel3Closure", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_comparator_from_multi_selectors_trampoline",
+            parameters: [
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Comparator"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_comparator_then_by",
             parameters: [
                 RuntimeABIParameter(name: "c1Fn", type: .intptr),

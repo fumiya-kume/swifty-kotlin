@@ -58,6 +58,61 @@ public func kk_comparator_from_selector_descending(_ selectorFn: Int, _ selector
     kk_comparator_from_selector(selectorFn, selectorClosure)
 }
 
+// MARK: - Multi-selector compareBy (STDLIB-613)
+
+/// Creates a comparator closure from multiple selectors.
+/// Stores the (fn, closure) pairs in a RuntimeListBox for the trampoline to iterate.
+@_cdecl("kk_comparator_from_multi_selectors")
+public func kk_comparator_from_multi_selectors(
+    _ sel1Fn: Int, _ sel1Closure: Int,
+    _ sel2Fn: Int, _ sel2Closure: Int
+) -> Int {
+    let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure])
+    return registerRuntimeObject(box)
+}
+
+/// 3-selector variant.
+@_cdecl("kk_comparator_from_multi_selectors3")
+public func kk_comparator_from_multi_selectors3(
+    _ sel1Fn: Int, _ sel1Closure: Int,
+    _ sel2Fn: Int, _ sel2Closure: Int,
+    _ sel3Fn: Int, _ sel3Closure: Int
+) -> Int {
+    let box = RuntimeListBox(elements: [sel1Fn, sel1Closure, sel2Fn, sel2Closure, sel3Fn, sel3Closure])
+    return registerRuntimeObject(box)
+}
+
+/// Trampoline for multi-selector compareBy.
+@_cdecl("kk_comparator_from_multi_selectors_trampoline")
+public func kk_comparator_from_multi_selectors_trampoline(
+    _ closureRaw: Int,
+    _ a: Int,
+    _ b: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: closureRaw),
+          runtimeStorage.withLock({ state in state.objectPointers.contains(UInt(bitPattern: ptr)) }),
+          let listBox = tryCast(ptr, to: RuntimeListBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid comparator closure in kk_comparator_from_multi_selectors_trampoline")
+    }
+    let elements = listBox.elements
+    // Elements are packed as [fn1, closure1, fn2, closure2, ...]
+    let selectorCount = elements.count / 2
+    var thrown = 0
+    for i in 0..<selectorCount {
+        let selectorFn = elements[i * 2]
+        let selectorClosure = elements[i * 2 + 1]
+        let keyA = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: a, outThrown: &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let keyB = runtimeInvokeCollectionLambda1(fnPtr: selectorFn, closureRaw: selectorClosure, value: b, outThrown: &thrown)
+        if thrown != 0 { outThrown?.pointee = thrown; return 0 }
+        let cmp = runtimeCompareValues(keyA, keyB)
+        if cmp != 0 { return cmp }
+    }
+    return 0
+}
+
 // MARK: - Chained comparators (STDLIB-176)
 
 /// thenBy: first comparator, then selector for tie-breaker.

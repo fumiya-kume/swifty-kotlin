@@ -29,6 +29,15 @@ extension DataFlowSemaPhase {
             comparatorSymbol: comparatorSymbol
         )
 
+        registerCompareByMultiSelector(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            comparisonsPkg: comparisonsPkg,
+            comparisonsPackageSymbol: comparisonsPackageSymbol,
+            comparatorSymbol: comparatorSymbol
+        )
+
         registerThenByAndReversed(
             symbols: symbols,
             types: types,
@@ -234,6 +243,93 @@ extension DataFlowSemaPhase {
                     valueParameterSymbols: [selectorParamSymbol],
                     valueParameterHasDefaultValues: [false],
                     valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tParamSymbol],
+                    typeParameterUpperBoundsList: [[]]
+                ),
+                for: funcSymbol
+            )
+        }
+    }
+
+    /// Register compareBy overloads that take 2 or 3 selectors (STDLIB-613).
+    private func registerCompareByMultiSelector(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        comparisonsPkg: [InternedString],
+        comparisonsPackageSymbol: SymbolID,
+        comparatorSymbol: SymbolID
+    ) {
+        let comparatorFQName = symbols.symbol(comparatorSymbol)?.fqName ?? comparisonsPkg
+        let tParamName = interner.intern("T")
+        let tParamFQName = comparatorFQName + [tParamName]
+        guard let tParamSymbol = symbols.lookup(fqName: tParamFQName) else { return }
+        let tParamType = types.make(.typeParam(TypeParamType(
+            symbol: tParamSymbol, nullability: .nonNull
+        )))
+
+        let comparatorType = types.make(.classType(ClassType(
+            classSymbol: comparatorSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+        let selectorType = types.make(.functionType(FunctionType(
+            params: [tParamType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        let functionName = interner.intern("compareBy")
+        let functionFQName = comparisonsPkg + [functionName]
+
+        // Register 2-selector and 3-selector overloads
+        for arity in 2...3 {
+            let paramTypes = Array(repeating: selectorType, count: arity)
+
+            // Check if this overload already exists
+            if symbols.lookupAll(fqName: functionFQName).contains(where: { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == paramTypes && sig.returnType == comparatorType
+            }) {
+                continue
+            }
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: functionName,
+                fqName: functionFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(comparisonsPackageSymbol, for: funcSymbol)
+            let extLink = arity == 2 ? "kk_comparator_from_multi_selectors" : "kk_comparator_from_multi_selectors3"
+            symbols.setExternalLinkName(extLink, for: funcSymbol)
+
+            var paramSymbols: [SymbolID] = []
+            for i in 0..<arity {
+                let paramName = interner.intern("selector\(i + 1)")
+                let paramSymbol = symbols.define(
+                    kind: .valueParameter,
+                    name: paramName,
+                    fqName: functionFQName + [paramName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(funcSymbol, for: paramSymbol)
+                paramSymbols.append(paramSymbol)
+            }
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: paramTypes,
+                    returnType: comparatorType,
+                    isSuspend: false,
+                    valueParameterSymbols: paramSymbols,
+                    valueParameterHasDefaultValues: Array(repeating: false, count: arity),
+                    valueParameterIsVararg: Array(repeating: false, count: arity),
                     typeParameterSymbols: [tParamSymbol],
                     typeParameterUpperBoundsList: [[]]
                 ),

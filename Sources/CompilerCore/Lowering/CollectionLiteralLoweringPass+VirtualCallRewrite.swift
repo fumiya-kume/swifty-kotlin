@@ -796,6 +796,7 @@ extension CollectionLiteralLoweringPass {
     private enum ComparatorSource {
         case ascending
         case descending
+        case multiSelector
         case naturalOrder
         case reverseOrder
         case unknown
@@ -806,8 +807,10 @@ extension CollectionLiteralLoweringPass {
         body: [KIRInstruction],
         ascendingCallee: InternedString,
         descendingCallee: InternedString,
+        multiSelectorCallee: InternedString,
         naturalOrderCallee: InternedString,
-        reverseOrderCallee: InternedString
+        reverseOrderCallee: InternedString,
+        multiSelector3Callee: InternedString? = nil
     ) -> ComparatorSource {
         for inst in body {
             switch inst {
@@ -815,6 +818,8 @@ extension CollectionLiteralLoweringPass {
                 if let result, result.rawValue == exprID.rawValue {
                     if callee == ascendingCallee { return .ascending }
                     if callee == descendingCallee { return .descending }
+                    if callee == multiSelectorCallee { return .multiSelector }
+                    if let ms3 = multiSelector3Callee, callee == ms3 { return .multiSelector }
                     if callee == naturalOrderCallee { return .naturalOrder }
                     if callee == reverseOrderCallee { return .reverseOrder }
                     return .unknown
@@ -826,8 +831,10 @@ extension CollectionLiteralLoweringPass {
                         body: body,
                         ascendingCallee: ascendingCallee,
                         descendingCallee: descendingCallee,
+                        multiSelectorCallee: multiSelectorCallee,
                         naturalOrderCallee: naturalOrderCallee,
-                        reverseOrderCallee: reverseOrderCallee
+                        reverseOrderCallee: reverseOrderCallee,
+                        multiSelector3Callee: multiSelector3Callee
                     )
                 }
             default:
@@ -889,14 +896,19 @@ extension CollectionLiteralLoweringPass {
                 body: context.functionBody,
                 ascendingCallee: lookup.kkComparatorFromSelectorName,
                 descendingCallee: lookup.kkComparatorFromSelectorDescendingName,
+                multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
                 naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
-                reverseOrderCallee: lookup.kkComparatorReverseOrderName
+                reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name
             )
             let trampolineName: InternedString
             let closureExpr: KIRExprID
             switch source {
             case .descending:
                 trampolineName = lookup.kkComparatorFromSelectorDescendingTrampolineName
+                closureExpr = comparatorExpr
+            case .multiSelector:
+                trampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
                 closureExpr = comparatorExpr
             case .naturalOrder:
                 trampolineName = lookup.kkComparatorNaturalOrderTrampolineName

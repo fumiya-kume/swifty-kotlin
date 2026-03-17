@@ -143,11 +143,14 @@ struct CollectionLiteralLookupTables {
     let kkListTakeLastWhileName: InternedString
     let kkListDropLastWhileName: InternedString
 
-    // Comparator ABI names (STDLIB-175, STDLIB-177)
+    // Comparator ABI names (STDLIB-175, STDLIB-177, STDLIB-613)
     let kkComparatorFromSelectorName: InternedString
     let kkComparatorFromSelectorDescendingName: InternedString
     let kkComparatorFromSelectorTrampolineName: InternedString
     let kkComparatorFromSelectorDescendingTrampolineName: InternedString
+    let kkComparatorFromMultiSelectorsName: InternedString
+    let kkComparatorFromMultiSelectors3Name: InternedString
+    let kkComparatorFromMultiSelectorsTrampolineName: InternedString
     let kkComparatorNaturalOrderName: InternedString
     let kkComparatorReverseOrderName: InternedString
     let kkComparatorNaturalOrderTrampolineName: InternedString
@@ -619,6 +622,9 @@ struct CollectionLiteralLookupTables {
         kkComparatorFromSelectorDescendingName = interner.intern("kk_comparator_from_selector_descending")
         kkComparatorFromSelectorTrampolineName = interner.intern("kk_comparator_from_selector_trampoline")
         kkComparatorFromSelectorDescendingTrampolineName = interner.intern("kk_comparator_from_selector_descending_trampoline")
+        kkComparatorFromMultiSelectorsName = interner.intern("kk_comparator_from_multi_selectors")
+        kkComparatorFromMultiSelectors3Name = interner.intern("kk_comparator_from_multi_selectors3")
+        kkComparatorFromMultiSelectorsTrampolineName = interner.intern("kk_comparator_from_multi_selectors_trampoline")
         kkComparatorNaturalOrderName = interner.intern("kk_comparator_natural_order")
         kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
         kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
