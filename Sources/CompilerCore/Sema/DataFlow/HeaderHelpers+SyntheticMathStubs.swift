@@ -175,6 +175,111 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-431: exp/ln/log functions
+
+        registerSyntheticMathTopLevelFunction(
+            named: "exp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_exp",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "ln",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_ln",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log2",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log2",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log10",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log10",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: types.doubleType),
+                (name: "base", type: types.doubleType),
+            ],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-432: sign/hypot + PI/E constants
+
+        registerSyntheticMathTopLevelFunction(
+            named: "sign",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_sign",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "hypot",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: types.doubleType),
+                (name: "y", type: types.doubleType),
+            ],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_hypot",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "PI",
+            packageFQName: kotlinMathPkg,
+            parameters: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_PI",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "E",
+            packageFQName: kotlinMathPkg,
+            parameters: [],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_E",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticMathTopLevelFunction(

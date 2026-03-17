@@ -16,6 +16,17 @@ public extension RuntimeABIExterns {
         kk_math_acos,
         kk_math_atan,
         kk_math_atan2,
+        // STDLIB-431: exp/ln/log functions
+        kk_math_exp,
+        kk_math_ln,
+        kk_math_log2,
+        kk_math_log10,
+        kk_math_log,
+        // STDLIB-432: sign/hypot + PI/E constants
+        kk_math_sign,
+        kk_math_hypot,
+        kk_math_PI,
+        kk_math_E,
     ]
 
     static let kk_math_abs_int = ExternDecl(
@@ -101,6 +112,64 @@ public extension RuntimeABIExterns {
     static let kk_math_atan2 = ExternDecl(
         name: "kk_math_atan2",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-431: exp/ln/log functions
+
+    static let kk_math_exp = ExternDecl(
+        name: "kk_math_exp",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_ln = ExternDecl(
+        name: "kk_math_ln",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_log2 = ExternDecl(
+        name: "kk_math_log2",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_log10 = ExternDecl(
+        name: "kk_math_log10",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_log = ExternDecl(
+        name: "kk_math_log",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-432: sign/hypot + PI/E constants
+
+    static let kk_math_sign = ExternDecl(
+        name: "kk_math_sign",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_hypot = ExternDecl(
+        name: "kk_math_hypot",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_PI = ExternDecl(
+        name: "kk_math_PI",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    static let kk_math_E = ExternDecl(
+        name: "kk_math_E",
+        parameterTypes: [],
         returnType: "intptr_t"
     )
 }
