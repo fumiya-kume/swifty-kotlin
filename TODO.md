@@ -268,7 +268,7 @@
 - [ ] STDLIB-611: `Comparator.thenBy` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-612: `Comparator.thenByDescending` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-613: `compareBy` の複数セレクタオーバーロード
-- [ ] STDLIB-614: `minOf` / `maxOf` の 3 引数以上オーバーロード
+- [x] STDLIB-614: `minOf` / `maxOf` の 3 引数以上オーバーロード
 - [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
