@@ -72,21 +72,6 @@ func runtimeNormalizeMapEntries(keys: [Int], values: [Int]) -> ([Int], [Int]) {
     return (normalizedKeys, normalizedValues)
 }
 
-// MARK: - Cached singleton empty collections (STDLIB-410)
-// Empty collections are immutable, so we cache a single instance per kind
-// to avoid redundant allocations when emptyList()/emptySet()/emptyMap() are
-// called repeatedly.
-// SAFETY: These singletons are safe because Kotlin's emptyList/emptySet/emptyMap
-// return read-only collection interfaces.  Mutable runtime operations (e.g.,
-// kk_mutable_list_add, kk_mutable_map_put) operate on distinct MutableList/
-// MutableMap boxes and will never receive these cached handles through correct
-// lowering.  If a future lowering bug or unsafe cast routes a mutable operation
-// to one of these singletons, the shared state would be corrupted; at that point
-// the fix belongs in the lowering/type-check layer, not here.
-private let cachedEmptyList: Int = registerRuntimeObject(RuntimeListBox(elements: []))
-private let cachedEmptySet: Int = registerRuntimeObject(RuntimeSetBox(elements: []))
-private let cachedEmptyMap: Int = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
-
 // MARK: - List Functions (STDLIB-001)
 
 @_cdecl("kk_list_of")
@@ -98,10 +83,11 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
-// STDLIB-410: emptyList<T>() - returns cached singleton (empty lists are immutable)
+// STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
+// aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("kk_emptyList")
 public func kk_emptyList() -> Int {
-    return cachedEmptyList
+    return registerRuntimeObject(RuntimeListBox(elements: []))
 }
 
 @_cdecl("kk_list_size")
@@ -695,10 +681,11 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
-// STDLIB-410: emptySet<T>() - returns cached singleton (empty sets are immutable)
+// STDLIB-410: emptySet<T>() - allocates a fresh empty set each call to avoid
+// aliasing with mutable collection operations.
 @_cdecl("kk_emptySet")
 public func kk_emptySet() -> Int {
-    return cachedEmptySet
+    return registerRuntimeObject(RuntimeSetBox(elements: []))
 }
 
 @_cdecl("kk_set_size")
@@ -879,10 +866,11 @@ public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) 
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
 }
 
-// STDLIB-410: emptyMap<K,V>() - returns cached singleton (empty maps are immutable)
+// STDLIB-410: emptyMap<K,V>() - allocates a fresh empty map each call to avoid
+// aliasing with mutable collection operations (e.g., kk_mutable_map_put).
 @_cdecl("kk_emptyMap")
 public func kk_emptyMap() -> Int {
-    return cachedEmptyMap
+    return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
 }
 
 @_cdecl("kk_mutable_map_put")

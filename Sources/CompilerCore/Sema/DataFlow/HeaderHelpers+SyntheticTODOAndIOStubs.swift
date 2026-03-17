@@ -450,7 +450,7 @@ extension DataFlowSemaPhase {
             )))
         } else {
             assertionFailure("List interface not found in symbol table; collection stubs must be registered before emptyList")
-            emptyListReturnType = types.anyType
+            emptyListReturnType = types.errorType
         }
 
         let setFQName = kotlinCollectionsPkg + [interner.intern("Set")]
@@ -463,7 +463,7 @@ extension DataFlowSemaPhase {
             )))
         } else {
             assertionFailure("Set interface not found in symbol table; collection stubs must be registered before emptySet")
-            emptySetReturnType = types.anyType
+            emptySetReturnType = types.errorType
         }
 
         let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
@@ -476,7 +476,7 @@ extension DataFlowSemaPhase {
             )))
         } else {
             assertionFailure("Map interface not found in symbol table; collection stubs must be registered before emptyMap")
-            emptyMapReturnType = types.anyType
+            emptyMapReturnType = types.errorType
         }
 
         registerSyntheticTopLevelFunction(
