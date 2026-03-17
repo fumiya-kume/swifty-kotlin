@@ -55,6 +55,18 @@ public enum StdlibSpecialCallKind: Equatable {
     case repeatLoop
     case maxOfInt
     case minOfInt
+    case maxOfLong
+    case minOfLong
+    case maxOfDouble
+    case minOfDouble
+    case maxOfFloat
+    case minOfFloat
+    case maxOfInt3
+    case minOfInt3
+    case maxOfLong3
+    case minOfLong3
+    case maxOfDouble3
+    case minOfDouble3
     case arrayConstructor
     case measureTimeMillis
     case enumValues

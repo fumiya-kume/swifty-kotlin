@@ -3,6 +3,8 @@ import Foundation
 extension CallTypeChecker {
     func comparisonSpecialCallKind(
         for calleeName: InternedString,
+        argCount: Int,
+        resolvedParamType: TypeID?,
         ctx: TypeInferenceContext,
         locals: LocalBindings
     ) -> StdlibSpecialCallKind? {
@@ -25,10 +27,40 @@ extension CallTypeChecker {
         guard onlySyntheticComparisonCandidates else {
             return nil
         }
-        return switch ctx.interner.resolve(calleeName) {
-        case "maxOf": .maxOfInt
-        case "minOf": .minOfInt
-        default: nil
+        let resolvedName = ctx.interner.resolve(calleeName)
+        let types = ctx.sema.types
+
+        if argCount == 3 {
+            let paramType = resolvedParamType ?? types.intType
+            switch resolvedName {
+            case "maxOf":
+                if paramType == types.longType { return .maxOfLong3 }
+                if paramType == types.doubleType { return .maxOfDouble3 }
+                return .maxOfInt3
+            case "minOf":
+                if paramType == types.longType { return .minOfLong3 }
+                if paramType == types.doubleType { return .minOfDouble3 }
+                return .minOfInt3
+            default:
+                return nil
+            }
+        }
+
+        // 2-arg overloads
+        let paramType = resolvedParamType ?? types.intType
+        switch resolvedName {
+        case "maxOf":
+            if paramType == types.longType { return .maxOfLong }
+            if paramType == types.doubleType { return .maxOfDouble }
+            if paramType == types.floatType { return .maxOfFloat }
+            return .maxOfInt
+        case "minOf":
+            if paramType == types.longType { return .minOfLong }
+            if paramType == types.doubleType { return .minOfDouble }
+            if paramType == types.floatType { return .minOfFloat }
+            return .minOfInt
+        default:
+            return nil
         }
     }
 }

@@ -11,22 +11,68 @@ extension DataFlowSemaPhase {
         _ = ensureSyntheticPackage(fqName: kotlinPkg, symbols: symbols)
         let comparisonsPackageSymbol = ensureSyntheticPackage(fqName: comparisonsPkg, symbols: symbols)
 
-        registerSyntheticIntComparisonFunction(
-            named: "maxOf",
-            packageFQName: comparisonsPkg,
-            packageSymbol: comparisonsPackageSymbol,
-            types: types,
-            symbols: symbols,
-            interner: interner
-        )
-        registerSyntheticIntComparisonFunction(
-            named: "minOf",
-            packageFQName: comparisonsPkg,
-            packageSymbol: comparisonsPackageSymbol,
-            types: types,
-            symbols: symbols,
-            interner: interner
-        )
+        // 2-arg overloads: Int, Long, Double, Float
+        let twoArgTypes: [(TypeID, TypeID)] = [
+            (types.intType, types.intType),
+            (types.longType, types.longType),
+            (types.doubleType, types.doubleType),
+            (types.floatType, types.floatType),
+        ]
+        for (paramType, returnType) in twoArgTypes {
+            registerSyntheticComparisonFunction(
+                named: "maxOf",
+                parameterTypes: [paramType, paramType],
+                returnType: returnType,
+                parameterNames: ["a", "b"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticComparisonFunction(
+                named: "minOf",
+                parameterTypes: [paramType, paramType],
+                returnType: returnType,
+                parameterNames: ["a", "b"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // 3-arg overloads: Int, Long, Double
+        let threeArgTypes: [(TypeID, TypeID)] = [
+            (types.intType, types.intType),
+            (types.longType, types.longType),
+            (types.doubleType, types.doubleType),
+        ]
+        for (paramType, returnType) in threeArgTypes {
+            registerSyntheticComparisonFunction(
+                named: "maxOf",
+                parameterTypes: [paramType, paramType, paramType],
+                returnType: returnType,
+                parameterNames: ["a", "b", "c"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticComparisonFunction(
+                named: "minOf",
+                parameterTypes: [paramType, paramType, paramType],
+                returnType: returnType,
+                parameterNames: ["a", "b", "c"],
+                packageFQName: comparisonsPkg,
+                packageSymbol: comparisonsPackageSymbol,
+                types: types,
+                symbols: symbols,
+                interner: interner
+            )
+        }
     }
 
     private func ensureSyntheticPackage(
@@ -49,8 +95,11 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func registerSyntheticIntComparisonFunction(
+    private func registerSyntheticComparisonFunction(
         named name: String,
+        parameterTypes: [TypeID],
+        returnType: TypeID,
+        parameterNames: [String],
         packageFQName: [InternedString],
         packageSymbol: SymbolID,
         types: TypeSystem,
@@ -63,8 +112,8 @@ extension DataFlowSemaPhase {
             guard let signature = symbols.functionSignature(for: symbolID) else {
                 return false
             }
-            return signature.parameterTypes == [types.intType, types.intType]
-                && signature.returnType == types.intType
+            return signature.parameterTypes == parameterTypes
+                && signature.returnType == returnType
         }) {
             return
         }
@@ -79,35 +128,29 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(packageSymbol, for: functionSymbol)
 
-        let aName = interner.intern("a")
-        let bName = interner.intern("b")
-        let aSymbol = symbols.define(
-            kind: .valueParameter,
-            name: aName,
-            fqName: functionFQName + [aName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        let bSymbol = symbols.define(
-            kind: .valueParameter,
-            name: bName,
-            fqName: functionFQName + [bName],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        symbols.setParentSymbol(functionSymbol, for: aSymbol)
-        symbols.setParentSymbol(functionSymbol, for: bSymbol)
+        var paramSymbols: [SymbolID] = []
+        for paramName in parameterNames {
+            let internedName = interner.intern(paramName)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: internedName,
+                fqName: functionFQName + [internedName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: paramSymbol)
+            paramSymbols.append(paramSymbol)
+        }
 
         symbols.setFunctionSignature(
             FunctionSignature(
-                parameterTypes: [types.intType, types.intType],
-                returnType: types.intType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
                 isSuspend: false,
-                valueParameterSymbols: [aSymbol, bSymbol],
-                valueParameterHasDefaultValues: [false, false],
-                valueParameterIsVararg: [false, false]
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameterNames.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameterNames.count)
             ),
             for: functionSymbol
         )
