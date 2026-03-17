@@ -147,6 +147,12 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
+        registerIterableAsSequenceMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            iterableInterfaceSymbol: iterableInterfaceSymbol
+        )
+
         let collectionInterfaceSymbol = registerSyntheticCollectionStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -742,6 +748,109 @@ extension DataFlowSemaPhase {
         }
 
         return iterableInterfaceSymbol
+    }
+
+    /// Register `Iterable<E>.asSequence(): Sequence<E>` member stub (STDLIB-555).
+    ///
+    /// Kotlin defines `asSequence()` on `Iterable<T>`, so any receiver typed as
+    /// `Iterable` (not just `List` or `Array`) should resolve this member.  At
+    /// runtime we delegate to `kk_list_asSequence` because every concrete
+    /// `Iterable` handle in our runtime is backed by a list box.
+    private func registerIterableAsSequenceMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let iterableFQName = symbols.symbol(iterableInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("asSequence")
+        let memberFQName = iterableFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        // Retrieve the type parameter E from Iterable<E>.
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = iterableFQName + [typeParamName]
+        guard let typeParamSymbol = symbols.lookup(fqName: typeParamFQName) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        // Return type is Sequence<E> — ensure the Sequence interface stub exists.
+        let kotlinSequencesPkg: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("sequences")
+        ]
+        if symbols.lookup(fqName: kotlinSequencesPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("sequences"),
+                fqName: kotlinSequencesPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        // Register a type parameter T on Sequence so generic substitution works.
+        let seqTypeParamName = interner.intern("T")
+        let seqTypeParamFQName = sequenceFQName + [seqTypeParamName]
+        if symbols.lookup(fqName: seqTypeParamFQName) == nil {
+            let seqTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: seqTypeParamName,
+                fqName: seqTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            types.setNominalTypeParameterSymbols([seqTypeParamSymbol], for: sequenceSymbol)
+            types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+        }
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
+        // At runtime, Iterable handles are list boxes, so reuse kk_list_asSequence.
+        symbols.setExternalLinkName("kk_list_asSequence", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     func registerLateListIndexedMembers(
