@@ -27,6 +27,8 @@ extension TypeSystem {
                 return nullabilitySubtype(.nullable, tp.nullability)
             case let .functionType(ft):
                 return nullabilitySubtype(.nullable, ft.nullability)
+            case let .kClassType(kc):
+                return nullabilitySubtype(.nullable, kc.nullability)
             case let .intersection(parts):
                 return parts.allSatisfy { isSubtype(subtype, $0) }
             default:
@@ -68,6 +70,8 @@ extension TypeSystem {
                 return nullabilitySubtype(functionType.nullability, .nonNull)
             case let .typeParam(typeParam):
                 return nullabilitySubtype(typeParam.nullability, .nonNull)
+            case let .kClassType(kClassType):
+                return nullabilitySubtype(kClassType.nullability, .nonNull)
             case .intersection:
                 return isSubtype(subtype, supertype)
             default:
@@ -224,6 +228,14 @@ extension TypeSystem {
 
         case let (.any(leftNullability), .any(rightNullability)):
             return nullabilitySubtype(leftNullability, rightNullability)
+
+        // KClass<T> subtyping: KClass<A> <: KClass<B> iff A == B (invariant) and nullability is compatible.
+        case let (.kClassType(leftKClass), .kClassType(rightKClass)):
+            guard nullabilitySubtype(leftKClass.nullability, rightKClass.nullability) else {
+                return false
+            }
+            // KClass type argument is invariant
+            return leftKClass.argument == rightKClass.argument
 
         default:
             return false

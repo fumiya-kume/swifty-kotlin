@@ -118,6 +118,8 @@ public final class TypeSystem {
             ft.nullability == .nonNull
         case let .typeParam(tp):
             tp.nullability == .nonNull
+        case let .kClassType(kc):
+            kc.nullability == .nonNull
         case let .intersection(parts):
             // T & Any is definitely non-null; any part being non-null suffices
             parts.contains { isDefinitelyNonNull($0) }
@@ -138,6 +140,8 @@ public final class TypeSystem {
             ft.nullability
         case let .typeParam(tp):
             tp.nullability
+        case let .kClassType(kc):
+            kc.nullability
         case let .intersection(parts):
             parts.contains { nullability(of: $0) == .nonNull } ? .nonNull : .nullable
         }
@@ -210,6 +214,9 @@ public final class TypeSystem {
         case let .functionType(ft):
             if ft.nullability == nullability { return type }
             return make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: nullability)))
+        case let .kClassType(kc):
+            if kc.nullability == nullability { return type }
+            return make(.kClassType(KClassType(argument: kc.argument, nullability: nullability)))
         }
     }
 
@@ -294,6 +301,8 @@ public final class TypeSystem {
                 return true
             }
             return typeContainsTypeParam(ft.returnType, symbol: symbol)
+        case let .kClassType(kc):
+            return typeContainsTypeParam(kc.argument, symbol: symbol)
         case let .intersection(parts):
             return parts.contains { typeContainsTypeParam($0, symbol: symbol) }
         default:
@@ -307,5 +316,11 @@ public final class TypeSystem {
 
     public func nominalSupertypeTypeArgs(for child: SymbolID, supertype parent: SymbolID) -> [TypeArg] {
         nominalSupertypeTypeArgsMap[child]?[parent] ?? []
+    }
+
+    /// Creates a `KClass<T>` type for the given argument type.
+    /// In Kotlin, `T::class` has type `KClass<T>`.
+    public func makeKClassType(argument: TypeID, nullability: Nullability = .nonNull) -> TypeID {
+        make(.kClassType(KClassType(argument: argument, nullability: nullability)))
     }
 }

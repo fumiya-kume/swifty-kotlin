@@ -17,7 +17,7 @@ symbol s15 kind=function fq=kotlin.Pair.component1 vis=public flags=synthetic|op
 symbol s16 kind=function fq=kotlin.Pair.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#12<out T#13, out T#14> params=[] ret=T#14 suspend=0 defaults=[] vararg=[]
 symbol s17 kind=property fq=kotlin.Pair.first vis=public flags=synthetic type=T#13
 symbol s18 kind=property fq=kotlin.Pair.second vis=public flags=synthetic type=T#14
-symbol s19 kind=function fq=kotlin.Pair.toList vis=public flags=synthetic sig=recv=Class#12<out T#13, out T#14> params=[] ret=Class#45<out Any?> suspend=0 defaults=[] vararg=[]
+symbol s19 kind=function fq=kotlin.Pair.toList vis=public flags=synthetic sig=recv=Class#12<out T#13, out T#14> params=[] ret=Any? suspend=0 defaults=[] vararg=[]
 symbol s20 kind=class fq=kotlin.Triple vis=public flags=synthetic
 symbol s21 kind=typeParameter fq=kotlin.Triple.A vis=private flags=_
 symbol s22 kind=typeParameter fq=kotlin.Triple.B vis=private flags=_
@@ -28,7 +28,7 @@ symbol s26 kind=function fq=kotlin.Triple.component3 vis=public flags=synthetic|
 symbol s27 kind=property fq=kotlin.Triple.first vis=public flags=synthetic type=T#21
 symbol s28 kind=property fq=kotlin.Triple.second vis=public flags=synthetic type=T#22
 symbol s29 kind=property fq=kotlin.Triple.third vis=public flags=synthetic type=T#23
-symbol s30 kind=function fq=kotlin.Triple.toList vis=public flags=synthetic sig=recv=Class#20<out T#21, out T#22, out T#23> params=[] ret=Class#45<out Any?> suspend=0 defaults=[] vararg=[]
+symbol s30 kind=function fq=kotlin.Triple.toList vis=public flags=synthetic sig=recv=Class#20<out T#21, out T#22, out T#23> params=[] ret=Any? suspend=0 defaults=[] vararg=[]
 symbol s31 kind=package fq=kotlin.collections vis=public flags=synthetic
 symbol s32 kind=interface fq=kotlin.collections.Iterable vis=public flags=synthetic
 symbol s33 kind=typeParameter fq=kotlin.collections.Iterable.E vis=private flags=_
@@ -61,11 +61,11 @@ symbol s59 kind=function fq=kotlin.collections.List.sorted vis=public flags=synt
 symbol s60 kind=function fq=kotlin.collections.List.distinct vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s61 kind=function fq=kotlin.collections.List.shuffled vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s62 kind=function fq=kotlin.collections.List.flatten vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
-symbol s63 kind=function fq=kotlin.collections.List.chunked vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int] ret=Class#45<out Class#45<out T#46>> suspend=0 defaults=[] vararg=[]
-symbol s64 kind=function fq=kotlin.collections.List.windowed vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int,Int] ret=Class#45<out Class#45<out T#46>> suspend=0 defaults=[] vararg=[]
+symbol s63 kind=function fq=kotlin.collections.List.chunked vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
+symbol s64 kind=function fq=kotlin.collections.List.windowed vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int,Int] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s65 kind=function fq=kotlin.collections.List.sortedDescending vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s66 kind=function fq=kotlin.collections.List.subList vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int,Int] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
-symbol s67 kind=function fq=kotlin.collections.List.distinctBy vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any?] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
+symbol s67 kind=function fq=kotlin.collections.List.distinctBy vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s68 kind=function fq=kotlin.collections.List.maxOrNull vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=T#46? suspend=0 defaults=[] vararg=[]
 symbol s69 kind=function fq=kotlin.collections.List.minOrNull vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=T#46? suspend=0 defaults=[] vararg=[]
 symbol s70 kind=function fq=kotlin.collections.List.maxByOrNull vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any] ret=T#46? suspend=0 defaults=[] vararg=[]
@@ -797,7 +797,7 @@ symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synth
 symbol s796 kind=class fq=golden.sema.Counter vis=public flags=_
 symbol s797 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#796 params=[Int] ret=Class#796 suspend=0 defaults=[0] vararg=[0]
 symbol s798 kind=valueParameter fq=golden.sema.Counter.<init>.$797.initial0 vis=private flags=_
-symbol s799 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s799 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Any suspend=0 defaults=[] vararg=[]
 symbol s800 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#796 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s801 kind=property fq=golden.sema.Counter.initial vis=public flags=_ type=Int
 symbol s802 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int

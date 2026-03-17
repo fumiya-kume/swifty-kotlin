@@ -245,6 +245,11 @@ public final class NameMangler {
             let encoded = "\(prefix)\(functionType.params.count)<\(components.joined(separator: ","))>"
             return applyNullability(encoded, nullability: functionType.nullability)
 
+        case let .kClassType(kClassType):
+            let argEncoded = encodeType(kClassType.argument, symbols: symbols, types: types, nameResolver: nameResolver)
+            let encoded = "KC<\(argEncoded)>"
+            return applyNullability(encoded, nullability: kClassType.nullability)
+
         case let .intersection(parts):
             let encodedParts = parts.map {
                 encodeType($0, symbols: symbols, types: types, nameResolver: nameResolver)

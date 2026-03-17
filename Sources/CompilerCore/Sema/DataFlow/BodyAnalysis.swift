@@ -412,6 +412,10 @@ extension DataFlowSemaPhase {
             let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
             return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
+        case let .kClassType(kc):
+            let newArg = applySubstitution(kc.argument, argSubstitution: argSubstitution, types: types, symbols: symbols)
+            if newArg == kc.argument { return typeID }
+            return types.make(.kClassType(KClassType(argument: newArg, nullability: kc.nullability)))
         case .primitive, .any, .unit, .nothing, .error:
             return typeID
         case let .intersection(parts):
