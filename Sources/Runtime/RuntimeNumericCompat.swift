@@ -356,6 +356,7 @@ public func kk_long_to_short(_ value: Int) -> Int {
 
 @_cdecl("kk_int_coerceIn")
 public func kk_int_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    precondition(minimum <= maximum, "Cannot coerce value to an empty range: maximum \(maximum) is less than minimum \(minimum).")
     if value < minimum { return minimum }
     if value > maximum { return maximum }
     return value
@@ -379,8 +380,15 @@ public func kk_int_coerceAtMost(_ value: Int, _ maximum: Int) -> Int {
 // If the compiler ever targets 32-bit platforms this assumption must be
 // revisited: Long would need a dedicated 64-bit representation distinct
 // from the pointer-sized Int used for Kotlin Int.
+//
+// Compile-time assertion: Long == Int requires 64-bit Int.
+#if !arch(arm64) && !arch(x86_64)
+#error("KSwiftK runtime requires a 64-bit platform where Int == Int64.")
+#endif
+
 @_cdecl("kk_long_coerceIn")
 public func kk_long_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
+    precondition(minimum <= maximum, "Cannot coerce value to an empty range: maximum \(maximum) is less than minimum \(minimum).")
     if value < minimum { return minimum }
     if value > maximum { return maximum }
     return value
@@ -402,6 +410,7 @@ public func kk_double_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> 
     let v = kk_bits_to_double(value)
     let lo = kk_bits_to_double(minimum)
     let hi = kk_bits_to_double(maximum)
+    precondition(!(lo > hi), "Cannot coerce value to an empty range: maximum \(hi) is less than minimum \(lo).")
     if v < lo { return minimum }
     if v > hi { return maximum }
     return value
@@ -427,6 +436,7 @@ public func kk_float_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> I
     let v = kk_bits_to_float(value)
     let lo = kk_bits_to_float(minimum)
     let hi = kk_bits_to_float(maximum)
+    precondition(!(lo > hi), "Cannot coerce value to an empty range: maximum \(hi) is less than minimum \(lo).")
     if v < lo { return minimum }
     if v > hi { return maximum }
     return value

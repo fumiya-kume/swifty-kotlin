@@ -7,9 +7,10 @@ final class CallLowerer {
         self.driver = driver
     }
 
-    /// Maps a non-nullable numeric receiver type to its runtime symbol prefix
-    /// (e.g. "kk_int", "kk_long", "kk_double", "kk_float"), or nil if the
-    /// receiver is not one of the four coercion-eligible numeric types.
+    /// Maps a numeric receiver type (nullable or non-nullable) to its runtime
+    /// symbol prefix (e.g. "kk_int", "kk_long", "kk_double", "kk_float"), or
+    /// nil if the receiver is not one of the four coercion-eligible numeric
+    /// types. Nullable receivers are normalized to non-nullable for dispatch.
     /// Shared by both normal and safe-call member lowering paths.
     func numericCoercionRuntimePrefix(
         receiverType: TypeID,

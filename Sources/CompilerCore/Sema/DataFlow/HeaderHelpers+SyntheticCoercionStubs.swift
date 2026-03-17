@@ -1,6 +1,8 @@
 import Foundation
 
 // Coercion extension stubs (STDLIB-150) for kotlin.ranges.
+// TODO: Add golden/smoke tests for Long/Double/Float coercion (STDLIB-500)
+// covering normal calls, safe calls, boundary clamping, and NaN behavior.
 
 extension DataFlowSemaPhase {
     func registerSyntheticCoercionStubs(
