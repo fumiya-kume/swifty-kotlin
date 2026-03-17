@@ -217,12 +217,11 @@ public func kk_file_bufferedReader(_ fileRaw: Int, _ outThrown: UnsafeMutablePoi
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_bufferedReader received invalid File handle")
     }
     do {
-        let content = try String(contentsOfFile: file.path, encoding: .utf8)
-        let lines = content.components(separatedBy: "\n")
-        return registerRuntimeObject(RuntimeBufferedReaderBox(lines: lines))
+        let fileHandle = try FileHandle(forReadingFrom: URL(fileURLWithPath: file.path))
+        return registerRuntimeObject(RuntimeBufferedReaderBox(fileHandle: fileHandle))
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
-        return registerRuntimeObject(RuntimeBufferedReaderBox(lines: []))
+        return 0
     }
 }
 
