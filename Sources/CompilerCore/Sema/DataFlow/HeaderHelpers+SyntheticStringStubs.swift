@@ -1331,15 +1331,7 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         elementType: TypeID
     ) -> TypeID {
-        let listFQName: [InternedString] = [
-            interner.intern("kotlin"),
-            interner.intern("collections"),
-            interner.intern("List"),
-        ]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
-            assertionFailure("kotlin.collections.List symbol not found — stdlib headers may not have been loaded before registering string stubs")
-            return types.anyType
-        }
+        let listSymbol = ensureListSymbol(symbols: symbols, types: types, interner: interner)
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
             args: [.out(elementType)],
@@ -1531,6 +1523,48 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+    }
+
+    private func ensureListSymbol(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> SymbolID {
+        let collectionsPkg = ensurePackage(
+            path: ["kotlin", "collections"],
+            symbols: symbols,
+            interner: interner
+        )
+        let listName = interner.intern("List")
+        let listFQName = collectionsPkg + [listName]
+        if let existing = symbols.lookup(fqName: listFQName) {
+            return existing
+        }
+        let interfaceSymbol = symbols.define(
+            kind: .interface,
+            name: listName,
+            fqName: listFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        let typeParamName = interner.intern("E")
+        let typeParamFQName = listFQName + [typeParamName]
+        let typeParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: typeParamName,
+            fqName: typeParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: interfaceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: interfaceSymbol)
+        return interfaceSymbol
     }
 
     private func registerSyntheticStringExtensionFunction(
