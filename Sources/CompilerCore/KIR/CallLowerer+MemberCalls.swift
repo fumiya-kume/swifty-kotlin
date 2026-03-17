@@ -2776,6 +2776,11 @@ extension CallLowerer {
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
             interner.intern("kk_list_random"),
+            interner.intern("kk_list_fold"),
+            interner.intern("kk_list_reduce"),
+            interner.intern("kk_list_scan"),
+            interner.intern("kk_list_runningFold"),
+            interner.intern("kk_list_runningReduce"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
