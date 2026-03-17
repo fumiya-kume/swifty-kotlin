@@ -390,3 +390,39 @@ final class RuntimeVetoableBox {
 final class RuntimeNotNullBox {
     var currentValue: Int?
 }
+
+// MARK: - BufferedReader (STDLIB-567)
+
+/// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.
+/// Wraps file content split into lines, supporting `readLine()` and `readLines()`.
+final class RuntimeBufferedReaderBox {
+    private let lines: [String]
+    private var cursor: Int
+    private var closed: Bool
+
+    init(lines: [String]) {
+        self.lines = lines
+        self.cursor = 0
+        self.closed = false
+    }
+
+    /// Returns the next line, or `nil` when all lines have been consumed.
+    func readLine() -> String? {
+        guard !closed, cursor < lines.count else { return nil }
+        let line = lines[cursor]
+        cursor += 1
+        return line
+    }
+
+    /// Returns all remaining lines as an array.
+    func readLines() -> [String] {
+        guard !closed else { return [] }
+        let remaining = Array(lines[cursor...])
+        cursor = lines.count
+        return remaining
+    }
+
+    func close() {
+        closed = true
+    }
+}

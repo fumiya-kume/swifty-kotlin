@@ -1902,6 +1902,31 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-567: File.bufferedReader()
+    public static let kk_file_bufferedReader = ExternDecl(
+        name: "kk_file_bufferedReader",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLine = ExternDecl(
+        name: "kk_buffered_reader_readLine",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLines = ExternDecl(
+        name: "kk_buffered_reader_readLines",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_close = ExternDecl(
+        name: "kk_buffered_reader_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -1917,6 +1942,10 @@ public enum RuntimeABIExterns {
         kk_file_mkdirs,
         kk_file_listFiles,
         kk_file_walk,
+        kk_file_bufferedReader,
+        kk_buffered_reader_readLine,
+        kk_buffered_reader_readLines,
+        kk_buffered_reader_close,
     ]
 
     public static let regexExterns: [ExternDecl] = [
