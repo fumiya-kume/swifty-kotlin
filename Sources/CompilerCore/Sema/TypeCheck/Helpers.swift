@@ -93,6 +93,8 @@ struct TypeCheckHelpers {
             return sema.types.intType
         case knownNames.doubleArray:
             return sema.types.doubleType
+        case knownNames.floatArray:
+            return sema.types.floatType
         case knownNames.booleanArray:
             return sema.types.booleanType
         case knownNames.charArray:
@@ -149,6 +151,7 @@ struct TypeCheckHelpers {
              knownNames.intArray,
              knownNames.longArray,
              knownNames.doubleArray,
+             knownNames.floatArray,
              knownNames.booleanArray,
              knownNames.charArray:
             guard argumentCount == 1 else { return nil }

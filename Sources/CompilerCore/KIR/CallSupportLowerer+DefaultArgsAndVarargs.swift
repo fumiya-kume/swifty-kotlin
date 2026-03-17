@@ -105,7 +105,7 @@ extension CallSupportLowerer {
         interner: StringInterner
     ) -> InternedString? {
         switch interner.resolve(callee) {
-        case "IntArray", "LongArray", "DoubleArray", "BooleanArray", "CharArray":
+        case "IntArray", "LongArray", "DoubleArray", "FloatArray", "BooleanArray", "CharArray":
             guard argumentCount == 1 else {
                 return nil
             }
