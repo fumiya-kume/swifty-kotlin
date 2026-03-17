@@ -195,6 +195,7 @@ struct CollectionLiteralLookupTables {
     let kkMapSizeName: InternedString
     let kkMapGetName: InternedString
     let kkMapContainsKeyName: InternedString
+    let kkMapContainsValueName: InternedString
     let kkMapIsEmptyName: InternedString
     let kkMapForEachName: InternedString
     let kkMapMapName: InternedString
@@ -263,6 +264,7 @@ struct CollectionLiteralLookupTables {
     let containsName: InternedString
     let containsAllName: InternedString
     let containsKeyName: InternedString
+    let containsValueName: InternedString
     let isEmptyName: InternedString
     let countName: InternedString
     let addName: InternedString
@@ -597,6 +599,7 @@ struct CollectionLiteralLookupTables {
         kkMapSizeName = interner.intern("kk_map_size")
         kkMapGetName = interner.intern("kk_map_get")
         kkMapContainsKeyName = interner.intern("kk_map_contains_key")
+        kkMapContainsValueName = interner.intern("kk_map_contains_value")
         kkMapIsEmptyName = interner.intern("kk_map_is_empty")
         kkMapForEachName = interner.intern("kk_map_forEach")
         kkMapMapName = interner.intern("kk_map_map")
@@ -661,6 +664,7 @@ struct CollectionLiteralLookupTables {
         containsName = interner.intern("contains")
         containsAllName = interner.intern("containsAll")
         containsKeyName = interner.intern("containsKey")
+        containsValueName = interner.intern("containsValue")
         isEmptyName = interner.intern("isEmpty")
         countName = interner.intern("count")
         addName = interner.intern("add")

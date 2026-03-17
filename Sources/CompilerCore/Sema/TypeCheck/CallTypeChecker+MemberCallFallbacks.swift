@@ -512,6 +512,7 @@ extension CallTypeChecker {
         ]
         let mapOnlyMembers: Set = [
             interner.intern("containsKey"),
+            interner.intern("containsValue"),
             interner.intern("mapValues"),
             interner.intern("mapKeys"),
             knownNames.getValue,
