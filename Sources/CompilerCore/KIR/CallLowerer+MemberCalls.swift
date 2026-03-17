@@ -1926,29 +1926,57 @@ extension CallLowerer {
             if isSequenceLikeType(nonNullReceiverType, sema: sema, interner: interner)
                 || sema.bindings.isCollectionExpr(receiverExpr) && !isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
             {
-                let runtimeCallee: String? = switch interner.resolve(calleeName) {
-                case "toList":
-                    "kk_sequence_to_list"
-                case "distinct":
-                    "kk_sequence_distinct"
-                case "sorted":
-                    "kk_sequence_sorted"
-                case "sortedDescending":
-                    "kk_sequence_sortedDescending"
-                case "filterNotNull":
-                    "kk_sequence_filterNotNull"
-                case "withIndex":
-                    "kk_sequence_withIndex"
+                let toListID = interner.intern("toList")
+                let distinctID = interner.intern("distinct")
+                let sortedID = interner.intern("sorted")
+                let sortedDescendingID = interner.intern("sortedDescending")
+                let filterNotNullID = interner.intern("filterNotNull")
+                let withIndexID = interner.intern("withIndex")
+                let firstID = interner.intern("first")
+                let firstOrNullID = interner.intern("firstOrNull")
+                let lastID = interner.intern("last")
+                let countID = interner.intern("count")
+
+                let seqFirstCallee = interner.intern("kk_sequence_first")
+                let seqFirstOrNullCallee = interner.intern("kk_sequence_firstOrNull")
+                let seqLastCallee = interner.intern("kk_sequence_last")
+                let seqCountCallee = interner.intern("kk_sequence_count")
+
+                let runtimeCallee: InternedString? = switch calleeName {
+                case toListID:
+                    interner.intern("kk_sequence_to_list")
+                case distinctID:
+                    interner.intern("kk_sequence_distinct")
+                case sortedID:
+                    interner.intern("kk_sequence_sorted")
+                case sortedDescendingID:
+                    interner.intern("kk_sequence_sortedDescending")
+                case filterNotNullID:
+                    interner.intern("kk_sequence_filterNotNull")
+                case withIndexID:
+                    interner.intern("kk_sequence_withIndex")
+                case firstID:
+                    seqFirstCallee
+                case firstOrNullID:
+                    seqFirstOrNullCallee
+                case lastID:
+                    seqLastCallee
+                case countID:
+                    seqCountCallee
                 default:
                     nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == seqFirstCallee
+                        || runtimeCallee == seqFirstOrNullCallee
+                        || runtimeCallee == seqLastCallee
+                        || runtimeCallee == seqCountCallee
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern(runtimeCallee),
+                        callee: runtimeCallee,
                         arguments: [loweredReceiverID],
                         result: result,
-                        canThrow: false,
+                        canThrow: canThrow,
                         thrownResult: nil
                     ))
                     return result
@@ -2696,15 +2724,8 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
             callArguments = []
         }
-        let canThrow = loweredCallee == interner.intern("kk_list_random")
-            || loweredCallee == interner.intern("kk_sequence_sortedBy")
-            || loweredCallee == interner.intern("kk_sequence_sumOf")
-            || loweredCallee == interner.intern("kk_sequence_associate")
-            || loweredCallee == interner.intern("kk_sequence_associateBy")
-            || loweredCallee == interner.intern("kk_map_getValue")
-            || loweredCallee == interner.intern("kk_sequence_mapNotNull")
-            || loweredCallee == interner.intern("kk_sequence_mapIndexed")
-            || loweredCallee == interner.intern("kk_sequence_ifEmpty")
+        let throwingCallees = Self.throwingMemberCalleeNames(interner: interner)
+        let canThrow = throwingCallees.contains(loweredCallee)
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2714,6 +2735,27 @@ extension CallLowerer {
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
+    }
+
+    /// Cached set of runtime callee names whose `.call` should be emitted
+    /// with `canThrow: true`. Hoisted from per-call `interner.intern()`
+    /// invocations to avoid repeated interning in the hot lowering path.
+    private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
+        Set([
+            interner.intern("kk_list_random"),
+            interner.intern("kk_sequence_sortedBy"),
+            interner.intern("kk_sequence_sumOf"),
+            interner.intern("kk_sequence_associate"),
+            interner.intern("kk_sequence_associateBy"),
+            interner.intern("kk_map_getValue"),
+            interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_ifEmpty"),
+            interner.intern("kk_sequence_first"),
+            interner.intern("kk_sequence_last"),
+            interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_count"),
+        ])
     }
 
     private func materializeJoinToStringDefaultArguments(
@@ -3042,6 +3084,10 @@ extension CallLowerer {
             let sumOfName = interner.intern("sumOf")
             let associateName = interner.intern("associate")
             let associateByName = interner.intern("associateBy")
+            let firstName = interner.intern("first")
+            let firstOrNullName = interner.intern("firstOrNull")
+            let lastName = interner.intern("last")
+            let countName = interner.intern("count")
             switch internedMemberName {
             case mapName:
                 return interner.intern("kk_sequence_map")
@@ -3095,6 +3141,14 @@ extension CallLowerer {
                 return interner.intern("kk_sequence_onEach")
             case interner.intern("ifEmpty"):
                 return interner.intern("kk_sequence_ifEmpty")
+            case firstName:
+                return interner.intern("kk_sequence_first")
+            case firstOrNullName:
+                return interner.intern("kk_sequence_firstOrNull")
+            case lastName:
+                return interner.intern("kk_sequence_last")
+            case countName:
+                return interner.intern("kk_sequence_count")
             default:
                 break
             }
