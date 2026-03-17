@@ -314,6 +314,7 @@ struct CollectionLiteralLookupTables {
     let takeName: InternedString
     let sequenceName: InternedString
     let iteratorBuilderName: InternedString
+    let iteratorBuilderFQName: [InternedString]
     let yieldName: InternedString
 
     // Sequence factory names (STDLIB-097)
@@ -675,6 +676,7 @@ struct CollectionLiteralLookupTables {
         takeName = interner.intern("take")
         sequenceName = interner.intern("sequence")
         iteratorBuilderName = interner.intern("iterator")
+        iteratorBuilderFQName = [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("iterator")]
         yieldName = interner.intern("yield")
 
         sequenceOfName = interner.intern("sequenceOf")

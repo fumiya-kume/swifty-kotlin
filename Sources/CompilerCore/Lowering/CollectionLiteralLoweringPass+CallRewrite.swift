@@ -1459,13 +1459,13 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // iterator { ... } builder → kk_iterator_builder_build (STDLIB-331)
-                    // Only rewrite calls that resolve to the stdlib kotlin.sequences.iterator
-                    // (externalLinkName == "kk_iterator_builder_build") to avoid accidentally
-                    // lowering user-defined iterator(...) calls in other scopes.
+                    // Only rewrite calls whose symbol resolves to kotlin.sequences.iterator
+                    // (FQN check) to avoid accidentally lowering user-defined iterator(...)
+                    // calls in other scopes.
                     // The runtime ABI function is non-throwing, so force canThrow=false.
                     if callee == lookup.iteratorBuilderName, arguments.count == 1,
                        let sym = symbol,
-                       ctx.sema?.symbols.externalLinkName(for: sym) == "kk_iterator_builder_build"
+                       ctx.sema?.symbols.symbol(sym)?.fqName == lookup.iteratorBuilderFQName
                     {
                         loweredBody.append(.call(
                             symbol: nil,
