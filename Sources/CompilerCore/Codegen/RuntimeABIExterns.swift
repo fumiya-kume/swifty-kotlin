@@ -1118,6 +1118,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // Flow terminal operators & flowOf (STDLIB-088)
+
+    public static let kk_flow_of = ExternDecl(
+        name: "kk_flow_of",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_to_list = ExternDecl(
+        name: "kk_flow_to_list",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_first = ExternDecl(
+        name: "kk_flow_first",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_count = ExternDecl(
+        name: "kk_flow_count",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_fold = ExternDecl(
+        name: "kk_flow_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_reduce = ExternDecl(
+        name: "kk_flow_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // Dispatchers / withContext (P5-133)
 
     public static let kk_dispatcher_default = ExternDecl(
@@ -2120,6 +2158,13 @@ public enum RuntimeABIExterns {
             kk_flow_collect,
             kk_flow_retain,
             kk_flow_release,
+            // Flow terminal operators & flowOf (STDLIB-088)
+            kk_flow_of,
+            kk_flow_to_list,
+            kk_flow_first,
+            kk_flow_count,
+            kk_flow_fold,
+            kk_flow_reduce,
             // Dispatchers / withContext
             kk_dispatcher_default,
             kk_dispatcher_io,
