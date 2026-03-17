@@ -1807,7 +1807,13 @@ public enum RuntimeABIExterns {
     )
 
     // MARK: - File I/O (STDLIB-320/322)
-    // Parameter type strings must match RuntimeABICType.rawValue in RuntimeABISpec.
+
+    // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
+    // "intptr_t * _Nullable") must exactly match the corresponding
+    // `RuntimeABICType.rawValue` values used in RuntimeABISpec (Runtime module).
+    // The ABI reconciliation tests in RuntimeTests verify this at build time,
+    // but if you add or change a parameter type here, update RuntimeABISpec
+    // (and vice-versa) to keep both sides in sync.
 
     private static let intptr = "intptr_t"
     private static let nullableIntptrPtr = "intptr_t * _Nullable"
