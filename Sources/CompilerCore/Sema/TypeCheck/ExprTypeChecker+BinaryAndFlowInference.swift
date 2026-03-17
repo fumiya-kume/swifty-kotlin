@@ -314,9 +314,14 @@ extension ExprTypeChecker {
                 }
             }
         case .rangeTo, .rangeUntil, .downTo:
-            // LongRange when either operand is Long; IntRange otherwise.
+            // LongRange when either operand is Long; UIntRange when UInt (STDLIB-523);
+            // ULongRange when ULong; IntRange otherwise.
             if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
             } else {
                 type = intType
             }
@@ -326,9 +331,14 @@ extension ExprTypeChecker {
                 sema.bindings.markCharRangeExpr(id)
             }
         case .step:
-            // LongRange when the receiver (lhs) is Long; IntRange otherwise.
+            // LongRange when the receiver (lhs) is Long; UIntRange when UInt (STDLIB-523);
+            // ULongRange when ULong; IntRange otherwise.
             if lhs == longType {
                 type = longType
+            } else if lhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType {
+                type = uintType
             } else {
                 type = intType
             }
