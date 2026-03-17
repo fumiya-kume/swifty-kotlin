@@ -1481,21 +1481,17 @@ extension DataFlowSemaPhase {
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
 
         // distinctBy (HOF, selector lambda)
-        // NOTE: The selector return type is hard-coded to non-null `Any` instead of
-        // introducing a second type parameter `K : Any`. This mirrors the pattern used
-        // by other HOF selectors (sortedByDescending, etc.) and is sufficient because
-        // the runtime compares keys by handle/unboxed-value identity, not structural
-        // equality. Introducing `K` would require plumbing a second type parameter
-        // through KIR and codegen with no runtime behaviour change.
-        // KNOWN LIMITATION: Nullable keys (selectors returning `K?`) are not supported.
         // Kotlin's `distinctBy` signature is `fun <T, K> Iterable<T>.distinctBy(selector: (T) -> K): List<T>`
-        // where `K` can be nullable, but this stub rejects selectors that return null.
+        // where `K` can be nullable. We use `Any?` as the selector return type so that
+        // selectors returning nullable keys (e.g., `{ it.name }` where `name` is `String?`)
+        // are accepted without a type error.  The runtime compares keys by handle/unboxed-value
+        // identity, so nullable vs non-null makes no behavioural difference at the ABI level.
         let distinctByName = interner.intern("distinctBy")
         let distinctByFQName = listFQName + [distinctByName]
         if symbols.lookup(fqName: distinctByFQName) == nil {
             let selectorType = types.make(.functionType(FunctionType(
                 params: [listTypeParamType],
-                returnType: types.anyType,
+                returnType: types.nullableAnyType,
                 isSuspend: false,
                 nullability: .nonNull
             )))
