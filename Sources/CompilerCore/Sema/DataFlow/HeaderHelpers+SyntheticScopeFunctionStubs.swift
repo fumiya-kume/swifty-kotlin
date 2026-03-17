@@ -124,7 +124,8 @@ extension DataFlowSemaPhase {
     }
 
     /// `T.let<T, R>(block: (T) -> R): R` (STDLIB-400)
-    /// Inline extension function on Any?. The block receives T as its parameter (`it`).
+    /// Inline extension function on T (upper bound Any?, so T is nullable-capable).
+    /// The block receives T as its parameter (`it`).
     private func registerLetStub(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -160,8 +161,9 @@ extension DataFlowSemaPhase {
             flags: []
         )
 
-        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
-        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+        // T and R have upper bound Any? (nullable-capable) per Kotlin spec
+        let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nullable)))
+        let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nullable)))
 
         // block: (T) -> R — lambda that takes T as an explicit parameter (not a receiver)
         let blockType = types.make(.functionType(FunctionType(
@@ -196,11 +198,10 @@ extension DataFlowSemaPhase {
         symbols.setParentSymbol(letSymbol, for: rSymbol)
         symbols.setParentSymbol(letSymbol, for: blockSymbol)
 
-        // Extension function: receiverType is T (nullable to match Any?)
-        let nullableTType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nullable)))
+        // Extension function: receiverType is T (already nullable-capable, no double-wrapping)
         symbols.setFunctionSignature(
             FunctionSignature(
-                receiverType: nullableTType,
+                receiverType: tType,
                 parameterTypes: [blockType],
                 returnType: rType,
                 isSuspend: false,
