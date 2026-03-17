@@ -323,6 +323,96 @@ extension DataFlowSemaPhase {
             ),
             for: runSymbol
         )
+
+        // --- takeIf / takeUnless (STDLIB-404) ---
+        registerSyntheticTakeIfTakeUnlessStubs(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinPkg: kotlinPkg
+        )
+    }
+
+    /// Synthetic stdlib stubs for T.takeIf and T.takeUnless (STDLIB-404).
+    /// fun <T> T.takeIf(predicate: (T) -> Boolean): T?
+    /// fun <T> T.takeUnless(predicate: (T) -> Boolean): T?
+    /// Inline-expanded by CallLowerer; no runtime call.
+    private func registerSyntheticTakeIfTakeUnlessStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString]
+    ) {
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        for name in ["takeIf", "takeUnless"] {
+            let funcName = interner.intern(name)
+            let funcFQName = kotlinPkg + [funcName]
+
+            // Skip if already registered.
+            if symbols.lookup(fqName: funcFQName) != nil {
+                continue
+            }
+
+            let tName = interner.intern("T")
+            let tFQName = funcFQName + [tName]
+            let tSymbol = symbols.define(
+                kind: .typeParameter,
+                name: tName,
+                fqName: tFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let tType = types.make(.typeParam(TypeParamType(symbol: tSymbol, nullability: .nonNull)))
+            let tNullableType = types.makeNullable(tType)
+
+            // predicate: (T) -> Boolean
+            let predicateType = types.make(.functionType(FunctionType(
+                params: [tType],
+                returnType: boolType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
+            let predicateName = interner.intern("predicate")
+            let predicateSymbol = symbols.define(
+                kind: .valueParameter,
+                name: predicateName,
+                fqName: funcFQName + [predicateName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+
+            let funcSymbol = symbols.define(
+                kind: .function,
+                name: funcName,
+                fqName: funcFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            if let packageSymbol = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(packageSymbol, for: funcSymbol)
+            }
+            symbols.setParentSymbol(funcSymbol, for: tSymbol)
+            symbols.setParentSymbol(funcSymbol, for: predicateSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    parameterTypes: [predicateType],
+                    returnType: tNullableType,
+                    isSuspend: false,
+                    valueParameterSymbols: [predicateSymbol],
+                    valueParameterHasDefaultValues: [false],
+                    valueParameterIsVararg: [false],
+                    typeParameterSymbols: [tSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: funcSymbol
+            )
+        }
     }
 
     // MARK: - fun <T, R> T.let(block: (T) -> R): R  (STDLIB-400)
