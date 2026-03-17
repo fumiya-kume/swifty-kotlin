@@ -875,7 +875,7 @@ extension DataFlowSemaPhase {
     ) {
         let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
         let collectionsPkg = kotlinPkg + [interner.intern("collections")]
-        _ = ensureSyntheticPackage(path: collectionsPkg, symbols: symbols)
+        _ = ensureSyntheticPackage(fqName: collectionsPkg, symbols: symbols)
 
         let groupingName = interner.intern("Grouping")
         let groupingFQName = collectionsPkg + [groupingName]
