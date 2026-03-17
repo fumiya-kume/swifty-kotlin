@@ -4416,6 +4416,11 @@ extension DataFlowSemaPhase {
         let aliasFQName = kotlinCollectionsPkg + [internedAlias]
         guard symbols.lookup(fqName: aliasFQName) == nil else { return }
 
+        // Validate target symbol exists before registering alias
+        let internedTarget = interner.intern(targetName)
+        let targetFQName = kotlinCollectionsPkg + [internedTarget]
+        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
+
         let aliasSymbol = symbols.define(
             kind: .typeAlias,
             name: internedAlias,
@@ -4437,11 +4442,6 @@ extension DataFlowSemaPhase {
             flags: []
         )
         symbols.setTypeAliasTypeParameters([typeParamSymbol], for: aliasSymbol)
-
-        // Resolve target interface symbol (e.g. MutableList)
-        let internedTarget = interner.intern(targetName)
-        let targetFQName = kotlinCollectionsPkg + [internedTarget]
-        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
 
         // Build underlying type: TargetType<E>
         let typeParamType = types.make(.typeParam(TypeParamType(
@@ -4467,6 +4467,11 @@ extension DataFlowSemaPhase {
         let internedAlias = interner.intern(aliasName)
         let aliasFQName = kotlinCollectionsPkg + [internedAlias]
         guard symbols.lookup(fqName: aliasFQName) == nil else { return }
+
+        // Validate target symbol exists before registering alias
+        let internedTarget = interner.intern(targetName)
+        let targetFQName = kotlinCollectionsPkg + [internedTarget]
+        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
 
         let aliasSymbol = symbols.define(
             kind: .typeAlias,
@@ -4499,11 +4504,6 @@ extension DataFlowSemaPhase {
             flags: []
         )
         symbols.setTypeAliasTypeParameters([keyParamSymbol, valueParamSymbol], for: aliasSymbol)
-
-        // Resolve target interface symbol (e.g. MutableMap)
-        let internedTarget = interner.intern(targetName)
-        let targetFQName = kotlinCollectionsPkg + [internedTarget]
-        guard let targetSymbol = symbols.lookup(fqName: targetFQName) else { return }
 
         // Build underlying type: TargetType<K, V>
         let keyType = types.make(.typeParam(TypeParamType(
