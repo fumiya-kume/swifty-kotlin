@@ -227,6 +227,12 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.toListName, sequenceExprIDs.contains(src) {
             listExprIDs.insert(result.rawValue)
+        } else if callee == lookup.toMapName, sequenceExprIDs.contains(src) {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.groupByName, sequenceExprIDs.contains(src) {
+            mapExprIDs.insert(result.rawValue)
+        } else if callee == lookup.flattenName, sequenceExprIDs.contains(src) {
+            sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.takeName
             || callee == lookup.flatMapName || callee == lookup.dropName
             || callee == lookup.distinctName || callee == lookup.zipName,

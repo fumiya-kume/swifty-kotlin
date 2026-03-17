@@ -176,6 +176,14 @@ struct CollectionLiteralLookupTables {
     let kkSequenceLastName: InternedString
     let kkSequenceCountName: InternedString
 
+    // STDLIB-470: Sequence terminal ops
+    let kkSequenceToSetName: InternedString
+    let kkSequenceToMapName: InternedString
+    let kkSequenceGroupByName: InternedString
+    let kkSequenceMaxOrNullName: InternedString
+    let kkSequenceMinOrNullName: InternedString
+    let kkSequenceFlattenName: InternedString
+
     let kkMapOfName: InternedString
     let kkMapSizeName: InternedString
     let kkMapGetName: InternedString
@@ -318,6 +326,8 @@ struct CollectionLiteralLookupTables {
     // Sequence member names (STDLIB-003)
     let asSequenceName: InternedString
     let toListName: InternedString
+    let toSetName: InternedString
+    let toMapName: InternedString
     let takeName: InternedString
     let sequenceName: InternedString
     let iteratorBuilderName: InternedString
@@ -553,6 +563,13 @@ struct CollectionLiteralLookupTables {
         kkSequenceLastName = interner.intern("kk_sequence_last")
         kkSequenceCountName = interner.intern("kk_sequence_count")
 
+        kkSequenceToSetName = interner.intern("kk_sequence_toSet")
+        kkSequenceToMapName = interner.intern("kk_sequence_toMap")
+        kkSequenceGroupByName = interner.intern("kk_sequence_groupBy")
+        kkSequenceMaxOrNullName = interner.intern("kk_sequence_maxOrNull")
+        kkSequenceMinOrNullName = interner.intern("kk_sequence_minOrNull")
+        kkSequenceFlattenName = interner.intern("kk_sequence_flatten")
+
         kkMapOfName = interner.intern("kk_map_of")
         kkMapSizeName = interner.intern("kk_map_size")
         kkMapGetName = interner.intern("kk_map_get")
@@ -687,6 +704,8 @@ struct CollectionLiteralLookupTables {
 
         asSequenceName = interner.intern("asSequence")
         toListName = interner.intern("toList")
+        toSetName = interner.intern("toSet")
+        toMapName = interner.intern("toMap")
         takeName = interner.intern("take")
         sequenceName = interner.intern("sequence")
         iteratorBuilderName = interner.intern("iterator")

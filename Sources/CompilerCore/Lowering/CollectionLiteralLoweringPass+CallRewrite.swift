@@ -1137,6 +1137,133 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // toSet() on sequence → kk_sequence_toSet (STDLIB-470)
+                    if callee == lookup.toSetName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let toSetResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceToSetName,
+                                arguments: [receiverID],
+                                result: toSetResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                setExprIDs.insert(result.rawValue)
+                                setExprIDs.insert(toSetResult.rawValue)
+                                loweredBody.append(.copy(from: toSetResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // toMap() on sequence → kk_sequence_toMap (STDLIB-470)
+                    if callee == lookup.toMapName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let toMapResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceToMapName,
+                                arguments: [receiverID],
+                                result: toMapResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(toMapResult.rawValue)
+                                loweredBody.append(.copy(from: toMapResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // groupBy on sequence → kk_sequence_groupBy (STDLIB-470)
+                    if callee == lookup.groupByName,
+                       arguments.count == 2 || arguments.count == 3
+                    {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let lambdaID = arguments[1]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceGroupByName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(hofResult.rawValue)
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // maxOrNull / minOrNull on sequence (STDLIB-470)
+                    if callee == lookup.maxOrNullName || callee == lookup.minOrNullName {
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if sequenceExprIDs.contains(receiverID.rawValue) {
+                                let kkName: InternedString = callee == lookup.maxOrNullName
+                                    ? lookup.kkSequenceMaxOrNullName
+                                    : lookup.kkSequenceMinOrNullName
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID],
+                                    result: hofResult,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    // flatten on sequence → kk_sequence_flatten (STDLIB-470)
+                    if callee == lookup.flattenName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceFlattenName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
                     if callee == lookup.dropName, arguments.count == 2 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {

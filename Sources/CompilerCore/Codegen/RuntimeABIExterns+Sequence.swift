@@ -40,6 +40,12 @@ public extension RuntimeABIExterns {
         kk_sequence_firstOrNull,
         kk_sequence_last,
         kk_sequence_count,
+        kk_sequence_toSet,
+        kk_sequence_toMap,
+        kk_sequence_groupBy,
+        kk_sequence_maxOrNull,
+        kk_sequence_minOrNull,
+        kk_sequence_flatten,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -278,6 +284,43 @@ public extension RuntimeABIExterns {
     static let kk_sequence_count = ExternDecl(
         name: "kk_sequence_count",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-470: toSet, toMap, groupBy, maxOrNull, minOrNull, flatten
+    static let kk_sequence_toSet = ExternDecl(
+        name: "kk_sequence_toSet",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_toMap = ExternDecl(
+        name: "kk_sequence_toMap",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_groupBy = ExternDecl(
+        name: "kk_sequence_groupBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_maxOrNull = ExternDecl(
+        name: "kk_sequence_maxOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_minOrNull = ExternDecl(
+        name: "kk_sequence_minOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_flatten = ExternDecl(
+        name: "kk_sequence_flatten",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 }

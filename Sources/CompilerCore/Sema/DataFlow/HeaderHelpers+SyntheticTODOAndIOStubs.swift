@@ -1057,4 +1057,198 @@ extension DataFlowSemaPhase {
             for: memberSymbol
         )
     }
+
+    // MARK: - STDLIB-470: Sequence.toSet/toMap/groupBy/maxOrNull/minOrNull/flatten
+
+    private func registerSyntheticSequenceTerminalMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinSequencesPkg: [InternedString]
+    ) {
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        let typeParamName = interner.intern("T")
+        let typeParamFQName = sequenceFQName + [typeParamName]
+        let typeParamSymbol: SymbolID = if let existing = symbols.lookup(fqName: typeParamFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .typeParameter,
+                name: typeParamName,
+                fqName: typeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+        }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol,
+            nullability: .nonNull
+        )))
+        types.setNominalTypeParameterSymbols([typeParamSymbol], for: sequenceSymbol)
+        types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        // toSet(): Set<T>
+        registerSequenceMemberStub(
+            named: "toSet",
+            externalLinkName: "kk_sequence_toSet",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.anyType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // toMap(): Map<K,V>
+        registerSequenceMemberStub(
+            named: "toMap",
+            externalLinkName: "kk_sequence_toMap",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.anyType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // groupBy(keySelector: (T) -> K): Map<K, List<T>>
+        registerSequenceMemberStub(
+            named: "groupBy",
+            externalLinkName: "kk_sequence_groupBy",
+            receiverType: receiverType,
+            parameters: [("keySelector", types.anyType)],
+            returnType: types.anyType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // maxOrNull(): T?
+        registerSequenceMemberStub(
+            named: "maxOrNull",
+            externalLinkName: "kk_sequence_maxOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(types.anyType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // minOrNull(): T?
+        registerSequenceMemberStub(
+            named: "minOrNull",
+            externalLinkName: "kk_sequence_minOrNull",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.makeNullable(types.anyType),
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // flatten(): Sequence<T>
+        registerSequenceMemberStub(
+            named: "flatten",
+            externalLinkName: "kk_sequence_flatten",
+            receiverType: receiverType,
+            parameters: [],
+            returnType: types.anyType,
+            sequenceSymbol: sequenceSymbol,
+            sequenceFQName: sequenceFQName,
+            typeParamSymbol: typeParamSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+    }
+
+    private func registerSequenceMemberStub(
+        named name: String,
+        externalLinkName: String,
+        receiverType: TypeID,
+        parameters: [(name: String, type: TypeID)],
+        returnType: TypeID,
+        sequenceSymbol: SymbolID,
+        sequenceFQName: [InternedString],
+        typeParamSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let memberName = interner.intern(name)
+        let memberFQName = sequenceFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(sequenceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+
+        var parameterTypes: [TypeID] = []
+        var parameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let parameterSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: memberFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(memberSymbol, for: parameterSymbol)
+            parameterTypes.append(parameter.type)
+            parameterSymbols.append(parameterSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: parameterTypes,
+                returnType: returnType,
+                valueParameterSymbols: parameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: parameters.count),
+                valueParameterIsVararg: Array(repeating: false, count: parameters.count),
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
 }

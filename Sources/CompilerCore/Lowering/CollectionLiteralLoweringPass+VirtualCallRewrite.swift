@@ -38,7 +38,7 @@ extension CollectionLiteralLoweringPass {
         if rewriteSequenceVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, module: module, lookup: lookup,
-            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
+            listExprIDs: &listExprIDs, setExprIDs: &setExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -101,6 +101,7 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
@@ -407,6 +408,85 @@ extension CollectionLiteralLoweringPass {
                 }
                 return true
             }
+        }
+
+        // toSet() on sequence → kk_sequence_toSet (STDLIB-470)
+        if callee == lookup.toSetName, arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue) {
+            let toSetResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceToSetName,
+                arguments: [receiver],
+                result: toSetResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                setExprIDs.insert(result.rawValue)
+                setExprIDs.insert(toSetResult.rawValue)
+                loweredBody.append(.copy(from: toSetResult, to: result))
+            }
+            return true
+        }
+
+        // toMap() on sequence → kk_sequence_toMap (STDLIB-470)
+        if callee == lookup.toMapName, arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue) {
+            let toMapResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceToMapName,
+                arguments: [receiver],
+                result: toMapResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                mapExprIDs.insert(result.rawValue)
+                mapExprIDs.insert(toMapResult.rawValue)
+                loweredBody.append(.copy(from: toMapResult, to: result))
+            }
+            return true
+        }
+
+        // maxOrNull / minOrNull on sequence (STDLIB-470)
+        if (callee == lookup.maxOrNullName || callee == lookup.minOrNullName),
+           arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let kkName = callee == lookup.maxOrNullName
+                ? lookup.kkSequenceMaxOrNullName : lookup.kkSequenceMinOrNullName
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: kkName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        // flatten on sequence → kk_sequence_flatten (STDLIB-470)
+        if callee == lookup.flattenName, arguments.isEmpty, sequenceExprIDs.contains(receiver.rawValue) {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceFlattenName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
         }
 
         return false
