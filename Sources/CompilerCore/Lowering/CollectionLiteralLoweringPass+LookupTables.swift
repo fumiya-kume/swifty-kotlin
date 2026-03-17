@@ -183,6 +183,11 @@ struct CollectionLiteralLookupTables {
     let kkSequenceLastName: InternedString
     let kkSequenceCountName: InternedString
 
+    // STDLIB-558, 559, 560: Sequence scan / runningFold / runningReduce
+    let kkSequenceScanName: InternedString
+    let kkSequenceRunningFoldName: InternedString
+    let kkSequenceRunningReduceName: InternedString
+
     // STDLIB-470: Sequence terminal ops
     let kkSequenceToSetName: InternedString
     let kkSequenceToMapName: InternedString
@@ -587,6 +592,10 @@ struct CollectionLiteralLookupTables {
         kkSequenceFirstOrNullName = interner.intern("kk_sequence_firstOrNull")
         kkSequenceLastName = interner.intern("kk_sequence_last")
         kkSequenceCountName = interner.intern("kk_sequence_count")
+
+        kkSequenceScanName = interner.intern("kk_sequence_scan")
+        kkSequenceRunningFoldName = interner.intern("kk_sequence_runningFold")
+        kkSequenceRunningReduceName = interner.intern("kk_sequence_runningReduce")
 
         kkSequenceToSetName = interner.intern("kk_sequence_toSet")
         kkSequenceToMapName = interner.intern("kk_sequence_toMap")

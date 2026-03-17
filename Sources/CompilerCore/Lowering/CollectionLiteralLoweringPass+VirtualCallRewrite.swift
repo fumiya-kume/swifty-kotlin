@@ -38,7 +38,8 @@ extension CollectionLiteralLoweringPass {
 
         if rewriteSequenceVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
-            result: result, module: module, lookup: lookup,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, setExprIDs: &setExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -99,6 +100,8 @@ extension CollectionLiteralLoweringPass {
         receiver: KIRExprID,
         arguments: [KIRExprID],
         result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
@@ -494,6 +497,47 @@ extension CollectionLiteralLoweringPass {
                 thrownResult: nil
             ))
             if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // scan / runningFold on sequence → kk_sequence_scan / kk_sequence_runningFold (STDLIB-558, 560)
+        if (callee == lookup.scanName || callee == lookup.runningFoldName),
+           arguments.count == 2, sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let kkName = callee == lookup.scanName
+                ? lookup.kkSequenceScanName : lookup.kkSequenceRunningFoldName
+            let hofResult = emitHOFCall(
+                kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        // runningReduce on sequence → kk_sequence_runningReduce (STDLIB-559)
+        if callee == lookup.runningReduceName,
+           arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue)
+        {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkSequenceRunningReduceName, receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
             return true
         }
 

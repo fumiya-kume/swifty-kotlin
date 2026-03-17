@@ -40,6 +40,9 @@ public extension RuntimeABIExterns {
         kk_sequence_firstOrNull,
         kk_sequence_last,
         kk_sequence_count,
+        kk_sequence_scan,
+        kk_sequence_runningFold,
+        kk_sequence_runningReduce,
         kk_sequence_toSet,
         kk_sequence_toMap,
         kk_sequence_groupBy,
@@ -284,6 +287,25 @@ public extension RuntimeABIExterns {
     static let kk_sequence_count = ExternDecl(
         name: "kk_sequence_count",
         parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-558, 559, 560: scan, runningFold, runningReduce
+    static let kk_sequence_scan = ExternDecl(
+        name: "kk_sequence_scan",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_runningFold = ExternDecl(
+        name: "kk_sequence_runningFold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_runningReduce = ExternDecl(
+        name: "kk_sequence_runningReduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

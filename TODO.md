@@ -191,9 +191,9 @@
 - [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
 - [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張
 - [ ] STDLIB-557: `foldIndexed` の Sequence 拡張
-- [ ] STDLIB-558: `runningFold` の Sequence 拡張
-- [ ] STDLIB-559: `runningReduce` の Sequence 拡張
-- [ ] STDLIB-560: `scan` の Sequence 拡張
+- [x] STDLIB-558: `runningFold` の Sequence 拡張
+- [x] STDLIB-559: `runningReduce` の Sequence 拡張
+- [x] STDLIB-560: `scan` の Sequence 拡張
 - [ ] STDLIB-561: `Sequence.plus(other)` の実装
 - [ ] STDLIB-562: `Sequence.minus(element)` の実装
 - [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース）
