@@ -621,7 +621,9 @@ extension CallTypeChecker {
                             let keyType: TypeID
                             let valueType: TypeID
                             if case let .classType(pairClass) = sema.types.kind(of: nonNullBodyType),
-                               pairClass.args.count == 2
+                               pairClass.args.count == 2,
+                               let pairSym = sema.symbols.symbol(pairClass.classSymbol),
+                               pairSym.name == interner.intern("Pair")
                             {
                                 keyType = switch pairClass.args[0] {
                                 case let .invariant(id), let .out(id), let .in(id): id
@@ -3245,16 +3247,21 @@ extension CallTypeChecker {
         }
     }
 
-    /// Extract the element type from a collection/list type.
-    /// If the type is List<R> (or similar single-type-arg collection), returns R.
-    /// Otherwise returns `anyType`.
+    /// Extract the element type from a List type.
+    /// If the type is List<R> (or similar single-type-arg list), returns R.
+    /// Returns `anyType` for non-list types to avoid mis-inferring element types
+    /// from unrelated generic types (e.g., Pair<K,V>).
     private func extractListElementType(
         _ type: TypeID,
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
+        let knownNames = KnownCompilerNames(interner: interner)
         let nonNullType = sema.types.makeNonNullable(type)
         guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              knownNames.isConcreteListLikeSymbol(symbol),
+              classType.args.count == 1,
               let firstArg = classType.args.first
         else {
             return sema.types.anyType
