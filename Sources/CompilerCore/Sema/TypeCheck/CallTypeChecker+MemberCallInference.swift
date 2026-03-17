@@ -272,7 +272,7 @@ extension CallTypeChecker {
             case "run": .scopeRun
             case "apply": .scopeApply
             case "also": .scopeAlso
-            case "use": .scopeUse
+            case "use" where isCloseableReceiver(receiverType, sema: sema): .scopeUse
             default: nil
             }
             let hasUserDefinedMember = if scopeKind != nil {
@@ -3472,5 +3472,18 @@ extension CallTypeChecker {
         case ("Double", "NEGATIVE_INFINITY"): return (types.doubleType, .doubleLiteral(-Double.infinity))
         default: return nil
         }
+    }
+
+    /// Returns true if `receiverType` conforms to Closeable or AutoCloseable,
+    /// so that `.use {}` is only treated as a scope function on Closeable receivers.
+    private func isCloseableReceiver(_ receiverType: TypeID, sema: SemaModule) -> Bool {
+        guard let closeableSymbol = sema.types.closeableInterfaceSymbol else {
+            return false
+        }
+        let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        let closeableType = sema.types.make(.classType(ClassType(
+            classSymbol: closeableSymbol, args: [], nullability: .nonNull
+        )))
+        return sema.types.isSubtype(nonNullReceiver, closeableType)
     }
 }

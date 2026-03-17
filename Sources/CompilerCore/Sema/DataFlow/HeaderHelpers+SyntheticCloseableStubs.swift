@@ -1,5 +1,3 @@
-import Foundation
-
 /// Synthetic stdlib stubs for Closeable / AutoCloseable and the .use {} extension (STDLIB-520).
 ///
 /// Kotlin defines:
