@@ -348,6 +348,7 @@ extension CallTypeChecker {
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
+            args: args,
             sema: sema,
             interner: interner
         )
@@ -427,6 +428,9 @@ extension CallTypeChecker {
             interner.intern("all"),
             interner.intern("fold"),
             interner.intern("reduce"),
+            interner.intern("scan"),
+            interner.intern("runningFold"),
+            interner.intern("runningReduce"),
             interner.intern("groupBy"),
             interner.intern("groupingBy"),
             interner.intern("sortedBy"),
@@ -543,6 +547,7 @@ extension CallTypeChecker {
             interner.intern("takeWhile"), interner.intern("dropWhile"),
             interner.intern("subList"),
             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
+            interner.intern("scan"), interner.intern("runningFold"), interner.intern("runningReduce"),
         ]
         let setReturningMembers: Set = [
             interner.intern("intersect"),
@@ -588,7 +593,7 @@ extension CallTypeChecker {
              interner.intern("contains"), interner.intern("containsAll"), interner.intern("indexOf"), interner.intern("lastIndexOf"), interner.intern("indexOfFirst"), interner.intern("indexOfLast"), interner.intern("binarySearch"),
              interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("forEach"), interner.intern("flatMap"),
              interner.intern("any"), interner.intern("none"), interner.intern("all"),
-             interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
+             interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("sortedBy"), interner.intern("find"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associate"), interner.intern("reduce"), interner.intern("runningReduce"), interner.intern("take"), interner.intern("drop"), interner.intern("zip"),
              interner.intern("forEachIndexed"), interner.intern("mapIndexed"), interner.intern("sumOf"), interner.intern("chunked"), interner.intern("onEach"), interner.intern("onEachIndexed"),
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
@@ -615,7 +620,7 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("windowed"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("windowed"), interner.intern("subList"):
             return argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
             return argCount == 0 || argCount == 1
@@ -629,6 +634,7 @@ extension CallTypeChecker {
         receiverElementType: TypeID,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
+        args: [CallArgument],
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID {
@@ -755,6 +761,34 @@ extension CallTypeChecker {
             return sema.types.make(.classType(ClassType(
                 classSymbol: listSymbol,
                 args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("runningReduce"),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        if (memberName == interner.intern("scan") || memberName == interner.intern("runningFold")),
+           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+        {
+            // scan/runningFold return List<R> where R is the accumulator type,
+            // derived from the initial value (first argument).
+            let accumulatorType: TypeID
+            if args.count >= 1, let inferredInitType = sema.bindings.exprTypes[args[0].expr] {
+                accumulatorType = inferredInitType
+            } else {
+                accumulatorType = sema.types.anyType
+            }
+            return sema.types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.invariant(accumulatorType)],
                 nullability: .nonNull
             )))
         }
@@ -915,6 +949,30 @@ extension CallTypeChecker {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if (memberName == interner.intern("scan") || memberName == interner.intern("runningFold")), argCount == 2 {
+            // scan/runningFold: (acc: R, element: T) -> R
+            // The accumulator type is unknown in the fallback path, so use Any;
+            // but the element type (second param) is the receiver element type.
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.anyType, receiverElementType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("runningReduce"), argCount == 1 {
+            // runningReduce: (acc: T, element: T) -> T
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType, receiverElementType],
+                returnType: receiverElementType,
                 isSuspend: false,
                 nullability: .nonNull
             )))

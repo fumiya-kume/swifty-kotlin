@@ -79,6 +79,9 @@ struct CollectionLiteralLookupTables {
     // Additional higher-order collection function ABI names (STDLIB-005)
     let kkListFoldName: InternedString
     let kkListReduceName: InternedString
+    let kkListScanName: InternedString
+    let kkListRunningFoldName: InternedString
+    let kkListRunningReduceName: InternedString
     let kkListGroupByName: InternedString
     let kkListSortedByName: InternedString
     let kkListAssociateByName: InternedString
@@ -277,6 +280,9 @@ struct CollectionLiteralLookupTables {
     // Additional higher-order collection member names (STDLIB-005)
     let foldName: InternedString
     let reduceName: InternedString
+    let scanName: InternedString
+    let runningFoldName: InternedString
+    let runningReduceName: InternedString
     let groupByName: InternedString
     let sortedByName: InternedString
     let findName: InternedString
@@ -476,6 +482,9 @@ struct CollectionLiteralLookupTables {
 
         kkListFoldName = interner.intern("kk_list_fold")
         kkListReduceName = interner.intern("kk_list_reduce")
+        kkListScanName = interner.intern("kk_list_scan")
+        kkListRunningFoldName = interner.intern("kk_list_runningFold")
+        kkListRunningReduceName = interner.intern("kk_list_runningReduce")
         kkListGroupByName = interner.intern("kk_list_groupBy")
         kkListSortedByName = interner.intern("kk_list_sortedBy")
         kkListAssociateByName = interner.intern("kk_list_associateBy")
@@ -665,6 +674,9 @@ struct CollectionLiteralLookupTables {
 
         foldName = interner.intern("fold")
         reduceName = interner.intern("reduce")
+        scanName = interner.intern("scan")
+        runningFoldName = interner.intern("runningFold")
+        runningReduceName = interner.intern("runningReduce")
         groupByName = interner.intern("groupBy")
         sortedByName = interner.intern("sortedBy")
         findName = interner.intern("find")
