@@ -487,4 +487,60 @@ final class RuntimeCollectionHOFTests: XCTestCase {
     private func runtimeStringValue(_ raw: Int) -> String {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
+
+    // MARK: - reduceOrNull / scanReduce / scan / runningFold / runningReduce (STDLIB-526..530)
+
+    func testReduceOrNullReturnsResultForNonEmptyList() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(result, 6) // 1 + 2 + 3
+    }
+
+    func testReduceOrNullReturnsZeroForEmptyList() {
+        let source = makeList([])
+        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(result, 0) // null sentinel
+    }
+
+    func testReduceOrNullSingleElementReturnsThatElement() {
+        let source = makeList([42])
+        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(result, 42)
+    }
+
+    func testScanReturnsIntermediateResults() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_scan(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [0, 1, 3, 6]) // [0, 0+1, 0+1+2, 0+1+2+3]
+    }
+
+    func testScanEmptyListReturnsInitialOnly() {
+        let source = makeList([])
+        let result = kk_list_scan(source, 10, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [10])
+    }
+
+    func testRunningFoldDelegatesToScan() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_runningFold(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [0, 1, 3, 6])
+    }
+
+    func testRunningReduceReturnsIntermediateResults() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_runningReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [1, 3, 6]) // [1, 1+2, 1+2+3]
+    }
+
+    func testScanReduceDelegatesToRunningReduce() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_scanReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [1, 3, 6])
+    }
+
+    func testScanReduceWithOrderOperation() {
+        let source = makeList([1, 2, 3])
+        let result = kk_list_scanReduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil)
+        XCTAssertEqual(listElements(result), [1, 12, 123]) // [1, 1*10+2, (1*10+2)*10+3]
+    }
 }
