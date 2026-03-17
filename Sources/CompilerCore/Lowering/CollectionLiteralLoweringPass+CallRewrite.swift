@@ -973,15 +973,18 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite sequence member calls (STDLIB-003) ---
-                    // asSequence() on collection → kk_sequence_from_list
+                    // --- Rewrite sequence member calls (STDLIB-003 / STDLIB-471) ---
+                    // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
                     // Sema already restricts asSequence to collection expressions,
                     // so we rewrite unconditionally (no listExprIDs guard needed).
                     if callee == lookup.asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
+                        let kkName = arrayExprIDs.contains(receiverID.rawValue)
+                            ? lookup.kkArrayAsSequenceName
+                            : lookup.kkListAsSequenceName
                         loweredBody.append(.call(
                             symbol: nil,
-                            callee: lookup.kkSequenceFromListName,
+                            callee: kkName,
                             arguments: [receiverID],
                             result: result,
                             canThrow: false,

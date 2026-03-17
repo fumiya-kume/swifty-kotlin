@@ -1450,3 +1450,23 @@ public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     }
     return 0
 }
+
+// MARK: - asSequence (STDLIB-471)
+
+@_cdecl("kk_list_asSequence")
+public func kk_list_asSequence(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_asSequence")
+    }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: list.elements)])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_array_asSequence")
+public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_asSequence")
+    }
+    let seq = RuntimeSequenceBox(steps: [.source(elements: Array(array.elements))])
+    return registerRuntimeObject(seq)
+}

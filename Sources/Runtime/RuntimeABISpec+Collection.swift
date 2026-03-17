@@ -682,6 +682,23 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // asSequence (STDLIB-471)
+        RuntimeABIFunctionSpec(
+            name: "kk_list_asSequence",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_array_asSequence",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // Pair (FUNC-002)
         RuntimeABIFunctionSpec(
             name: "kk_pair_new",

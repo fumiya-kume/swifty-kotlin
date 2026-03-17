@@ -258,6 +258,8 @@ extension ABILoweringPass {
             interner.intern("kk_array_copyOf"),
             interner.intern("kk_array_copyOfRange"),
             interner.intern("kk_array_fill"),
+            interner.intern("kk_list_asSequence"),
+            interner.intern("kk_array_asSequence"),
             // NOTE: kk_array_map/filter/forEach/any/none are NOT non-throwing
             // — the lambda argument can throw.
             interner.intern("kk_set_of"),

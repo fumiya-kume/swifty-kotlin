@@ -134,6 +134,8 @@ public extension RuntimeABIExterns {
         kk_array_copyOf,
         kk_array_copyOfRange,
         kk_array_fill,
+        kk_list_asSequence,
+        kk_array_asSequence,
         kk_pair_new,
         kk_pair_first,
         kk_pair_second,
@@ -720,6 +722,20 @@ public extension RuntimeABIExterns {
     static let kk_array_fill = ExternDecl(
         name: "kk_array_fill",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // asSequence (STDLIB-471)
+
+    static let kk_list_asSequence = ExternDecl(
+        name: "kk_list_asSequence",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_asSequence = ExternDecl(
+        name: "kk_array_asSequence",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

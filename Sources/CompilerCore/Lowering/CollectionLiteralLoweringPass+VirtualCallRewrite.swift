@@ -32,6 +32,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
+            sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -108,7 +109,7 @@ extension CollectionLiteralLoweringPass {
         if callee == lookup.asSequenceName, arguments.isEmpty {
             loweredBody.append(.call(
                 symbol: nil,
-                callee: lookup.kkSequenceFromListName,
+                callee: lookup.kkListAsSequenceName,
                 arguments: [receiver],
                 result: result,
                 canThrow: false,
@@ -917,6 +918,7 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard arrayExprIDs.contains(receiver.rawValue) else { return false }
@@ -1062,6 +1064,20 @@ extension CollectionLiteralLoweringPass {
                 canThrow: false,
                 thrownResult: nil
             ))
+            return true
+        }
+
+        // asSequence on array → kk_array_asSequence (STDLIB-471)
+        if callee == lookup.asSequenceName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayAsSequenceName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
             return true
         }
 

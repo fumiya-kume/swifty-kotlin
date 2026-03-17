@@ -1324,6 +1324,48 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// Register `List<E>.asSequence(): Sequence<E>` member stub (STDLIB-471).
+    private func registerListAsSequenceMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("asSequence")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        // Return type is Sequence<E> — resolve as anyType (erased) since
+        // Sequence is in kotlin.sequences and lowering rewrites the call.
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_asSequence", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: types.anyType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     private func registerListTransformMembers(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -2036,6 +2078,12 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType,
             setInterfaceSymbol: setInterfaceSymbol
+        )
+        registerListAsSequenceMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
         )
     }
 
