@@ -1222,15 +1222,13 @@ public func kk_sequence_scan(
             let nextAcc = lambda(closureRaw, acc, elem, &thrown)
             if thrown != 0 {
                 outThrown?.pointee = thrown
-                return registerRuntimeObject(RuntimeListBox(elements: results))
+                return 0
             }
             acc = maybeUnbox(nextAcc)
             results.append(acc)
         }
     }
-    if let outThrown, outThrown.pointee != 0 {
-        return registerRuntimeObject(RuntimeListBox(elements: results))
-    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
@@ -1282,11 +1280,8 @@ public func kk_sequence_runningReduce(
         }
     }
 
-    if let outThrown, outThrown.pointee != 0 {
-        return registerRuntimeObject(RuntimeListBox(elements: results))
-    }
+    if let outThrown, outThrown.pointee != 0 { return 0 }
     if !hasAccumulator {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "Empty sequence can't be reduced.")
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
     return registerRuntimeObject(RuntimeListBox(elements: results))

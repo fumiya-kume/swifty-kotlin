@@ -18,6 +18,20 @@ private let throwingSelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int
     return 0
 }
 
+private let accumulatingSum: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, acc, value, _ in
+    acc + value
+}
+
+private let throwingAccumulator: @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence accumulator failed")
+    return 0
+}
+
+private let throwingSequenceGenerator: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "sequence generator failed")
+    return 0
+}
+
 private func runtimeTestStringHandle(_ value: String) -> Int {
     let bytes = Array(value.utf8)
     return bytes.withUnsafeBufferPointer { buffer in
@@ -74,6 +88,104 @@ final class RuntimeSequenceTests: XCTestCase {
         )
 
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
+    }
+
+    func testScanIncludesInitialAccumulator() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_scan(
+            seq,
+            10,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [10, 11, 13, 16])
+    }
+
+    func testRunningFoldIncludesInitialAccumulator() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_runningFold(
+            seq,
+            5,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [5, 6, 8, 11])
+    }
+
+    func testRunningReduceEmptySequenceReturnsEmptyList() {
+        let seq = makeSequence([])
+        var thrown = 0
+
+        let result = kk_sequence_runningReduce(
+            seq,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertEqual(thrown, 0)
+        XCTAssertEqual(listElements(result), [])
+    }
+
+    func testScanReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_scan(
+            seq,
+            0,
+            unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testRunningReduceReturnsZeroWhenLambdaThrows() {
+        let seq = makeSequence([1, 2, 3])
+        var thrown = 0
+
+        let result = kk_sequence_runningReduce(
+            seq,
+            unsafeBitCast(throwingAccumulator, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
+    }
+
+    func testScanReturnsZeroWhenSequenceTraversalThrows() {
+        let seq = kk_sequence_generate(
+            1,
+            unsafeBitCast(throwingSequenceGenerator, to: Int.self),
+            0
+        )
+        var thrown = 0
+
+        let result = kk_sequence_scan(
+            seq,
+            0,
+            unsafeBitCast(accumulatingSum, to: Int.self),
+            0,
+            &thrown
+        )
+
+        XCTAssertNotEqual(thrown, 0)
+        XCTAssertEqual(result, 0)
     }
 
     private func makeArray(_ elements: [Int]) -> Int {

@@ -2357,7 +2357,8 @@ extension CollectionLiteralLoweringPass {
                     // emitHOFCall is a private method on the VirtualCallRewrite extension and not
                     // visible from this file-scope rewrite path.  Kept inline to avoid coupling
                     // the two rewrite paths; extracting a shared helper is a future cleanup.
-                    if (callee == lookup.scanName || callee == lookup.runningFoldName), arguments.count == 3 || arguments.count == 4 {
+                    if (callee == lookup.scanName || callee == lookup.runningFoldName),
+                       (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
@@ -2391,7 +2392,8 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // runningReduce: args = [receiver, lambda, closureRaw?]
-                    if callee == lookup.runningReduceName, arguments.count == 2 || arguments.count == 3 {
+                    if callee == lookup.runningReduceName,
+                       (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
