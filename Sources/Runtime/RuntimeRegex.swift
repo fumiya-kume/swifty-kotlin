@@ -254,7 +254,7 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
     case 1: return .anchorsMatchLines        // MULTILINE
     case 2: return .dotMatchesLineSeparators  // DOT_MATCHES_ALL
     case 3: return []                        // LITERAL (handled via escapedPattern)
-    case 4: return []                        // UNIX_LINES (no direct NSRegularExpression equivalent)
+    case 4: return .useUnixLineSeparators     // UNIX_LINES
     case 5: return .allowCommentsAndWhitespace // COMMENTS
     case 6: return []                        // CANON_EQ (no direct equivalent)
     default: return []
@@ -269,6 +269,33 @@ public func kk_regex_create_with_option(_ patternRaw: Int, _ optionRaw: Int) -> 
     let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
     let options = nsRegexOption(fromOrdinal: Int(ordinal))
     guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: options) else {
+        do {
+            let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+        } catch {
+            fatalError("Failed to create fallback NSRegularExpression")
+        }
+    }
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
+}
+
+/// Creates a Regex from a pattern and a `Set<RegexOption>`.
+/// Iterates the set elements, unboxes each as an ordinal, and combines the
+/// corresponding `NSRegularExpression.Options`.
+@_cdecl("kk_regex_create_with_options")
+public func kk_regex_create_with_options(_ patternRaw: Int, _ optionsSetRaw: Int) -> Int {
+    let pattern = regexStringFromRaw(patternRaw) ?? ""
+    var combined: NSRegularExpression.Options = []
+    var isLiteral = false
+    if let setBox = runtimeSetBox(from: optionsSetRaw) {
+        for element in setBox.elements {
+            let ordinal = Int(kk_unbox_int(element))
+            if ordinal == 3 { isLiteral = true }
+            combined.insert(nsRegexOption(fromOrdinal: ordinal))
+        }
+    }
+    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
+    guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: combined) else {
         do {
             let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
             return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))

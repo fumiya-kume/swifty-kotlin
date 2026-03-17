@@ -91,8 +91,9 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_split_regex, kk_string_toRegex, kk_regex_pattern,
         // kk_match_result_value, kk_match_result_groupValues,
         // kk_regex_replace_lambda, kk_regex_matchEntire,
-        // kk_regex_create_with_option, kk_regex_containsMatchIn
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 13)
+        // kk_regex_create_with_option, kk_regex_create_with_options,
+        // kk_regex_containsMatchIn
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 21)
     }
 
     func testPrintlnFunctionCount() {

@@ -137,7 +137,7 @@ extension DataFlowSemaPhase {
                 packageFQName: kotlinTextPkg,
                 parameters: [("pattern", stringType), ("options", setRegexOptionType)],
                 returnType: regexType,
-                externalLinkName: "kk_regex_create_with_option",
+                externalLinkName: "kk_regex_create_with_options",
                 symbols: symbols,
                 interner: interner
             )
