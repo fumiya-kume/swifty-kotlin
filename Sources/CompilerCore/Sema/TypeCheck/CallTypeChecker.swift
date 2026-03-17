@@ -341,11 +341,7 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "measureTimeMillis",
            args.count == 1,
-           locals[calleeName] == nil,
-           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
-               guard let sym = ctx.cachedSymbol(candidate) else { return false }
-               return !sym.flags.contains(.synthetic)
-           })
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
             let longType = sema.types.longType
             // Intentionally passing expectedType:nil — the block's return type is
@@ -367,11 +363,7 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "measureNanoTime",
            args.count == 1,
-           locals[calleeName] == nil,
-           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
-               guard let sym = ctx.cachedSymbol(candidate) else { return false }
-               return !sym.flags.contains(.synthetic)
-           })
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
             let longType = sema.types.longType
             // Intentionally passing expectedType:nil — same rationale as
@@ -1817,6 +1809,22 @@ final class CallTypeChecker {
         ctx: TypeInferenceContext
     ) -> Bool {
         ctx.cachedScopeLookup(calleeName).contains { candidate in
+            guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            return !sym.flags.contains(.synthetic)
+        }
+    }
+
+    /// Returns true when `name` is shadowed by a non-synthetic (user-defined) symbol,
+    /// either as a local variable binding or as a scope-visible declaration.
+    /// Used to guard stdlib special-call paths (measureTimeMillis, measureNanoTime, etc.)
+    /// so that user-defined functions with the same name are not misidentified as stdlib intrinsics.
+    private func isShadowedByNonSyntheticSymbol(
+        _ name: InternedString,
+        locals: LocalBindings,
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        if locals[name] != nil { return true }
+        return ctx.cachedScopeLookup(name).contains { candidate in
             guard let sym = ctx.cachedSymbol(candidate) else { return false }
             return !sym.flags.contains(.synthetic)
         }
