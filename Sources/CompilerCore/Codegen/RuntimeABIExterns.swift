@@ -1807,17 +1807,21 @@ public enum RuntimeABIExterns {
     )
 
     // MARK: - File I/O (STDLIB-320/322)
+    // Parameter type strings must match RuntimeABICType.rawValue in RuntimeABISpec.
+
+    private static let intptr = "intptr_t"
+    private static let nullableIntptrPtr = "intptr_t * _Nullable"
 
     public static let kk_file_new = ExternDecl(
         name: "kk_file_new",
-        parameterTypes: ["intptr_t"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr],
+        returnType: intptr
     )
 
     public static let kk_file_forEachLine = ExternDecl(
         name: "kk_file_forEachLine",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
-        returnType: "intptr_t"
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
     )
 
     public static let fileIOExterns: [ExternDecl] = [
