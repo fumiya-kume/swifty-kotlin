@@ -289,7 +289,9 @@ extension CollectionLiteralLoweringPass {
             // downstream toList/filter rewrites fire correctly.
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.groupByName || callee == lookup.associateByName
-            || callee == lookup.associateWithName || callee == lookup.associateName,
+            || callee == lookup.associateWithName || callee == lookup.associateName
+            || callee == lookup.associateByToName || callee == lookup.associateWithToName
+            || callee == lookup.groupByToName,
             listExprIDs.contains(src)
         {
             mapExprIDs.insert(result.rawValue)
@@ -373,6 +375,8 @@ extension CollectionLiteralLoweringPass {
         if listExprIDs.contains(receiverRaw) {
             if callee == lookup.groupByName || callee == lookup.associateByName
                 || callee == lookup.associateWithName || callee == lookup.associateName
+                || callee == lookup.associateByToName || callee == lookup.associateWithToName
+                || callee == lookup.groupByToName
             {
                 if let result { mapExprIDs.insert(result.rawValue) }
             } else if callee == lookup.takeName || callee == lookup.dropName

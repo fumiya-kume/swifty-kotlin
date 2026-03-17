@@ -582,6 +582,14 @@ extension CollectionLiteralLoweringPass {
             loweredBody: &loweredBody
         ) { return true }
 
+        if rewriteAssociateToHOF(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, context: context,
+            listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
         if rewriteZipUnzipAndIndexedHOF(
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
@@ -948,6 +956,58 @@ extension CollectionLiteralLoweringPass {
         if callee == lookup.associateByName || callee == lookup.associateWithName || callee == lookup.associateName,
            let result
         {
+            mapExprIDs.insert(result.rawValue)
+            mapExprIDs.insert(hofResult.rawValue)
+        }
+        return true
+    }
+
+    // STDLIB-535/536/537: associateByTo / associateWithTo / groupByTo
+    private func rewriteAssociateToHOF(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        context: VirtualCallRewriteContext,
+        listExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        let module = context.module
+        let lookup = context.lookup
+        guard callee == lookup.associateByToName || callee == lookup.associateWithToName
+            || callee == lookup.groupByToName
+        else {
+            return false
+        }
+        // arguments: [destination, lambda] (receiver already split off)
+        guard arguments.count == 2,
+              listExprIDs.contains(receiver.rawValue)
+        else { return false }
+
+        let destID = arguments[0]
+        let lambdaID = arguments[1]
+
+        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+
+        let kkName: InternedString = switch callee {
+        case lookup.associateByToName: lookup.kkListAssociateByToName
+        case lookup.associateWithToName: lookup.kkListAssociateWithToName
+        case lookup.groupByToName: lookup.kkListGroupByToName
+        default: callee
+        }
+
+        let hofResult = emitHOFCall(
+            kkName: kkName, receiver: receiver,
+            arguments: [destID, lambdaID, zeroExpr],
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module,
+            loweredBody: &loweredBody
+        )
+        if let result {
             mapExprIDs.insert(result.rawValue)
             mapExprIDs.insert(hofResult.rawValue)
         }

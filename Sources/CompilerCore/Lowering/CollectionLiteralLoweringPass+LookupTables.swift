@@ -95,6 +95,9 @@ struct CollectionLiteralLookupTables {
     let kkListAssociateByName: InternedString
     let kkListAssociateWithName: InternedString
     let kkListAssociateName: InternedString
+    let kkListAssociateByToName: InternedString
+    let kkListAssociateWithToName: InternedString
+    let kkListGroupByToName: InternedString
     let kkListCountName: InternedString
     let kkListFirstName: InternedString
     let kkListLastName: InternedString
@@ -322,6 +325,9 @@ struct CollectionLiteralLookupTables {
     let associateByName: InternedString
     let associateWithName: InternedString
     let associateName: InternedString
+    let associateByToName: InternedString
+    let associateWithToName: InternedString
+    let groupByToName: InternedString
     let mapValuesName: InternedString
     let mapKeysName: InternedString
     let zipName: InternedString
@@ -574,6 +580,9 @@ struct CollectionLiteralLookupTables {
         kkListAssociateByName = interner.intern("kk_list_associateBy")
         kkListAssociateWithName = interner.intern("kk_list_associateWith")
         kkListAssociateName = interner.intern("kk_list_associate")
+        kkListAssociateByToName = interner.intern("kk_list_associateByTo")
+        kkListAssociateWithToName = interner.intern("kk_list_associateWithTo")
+        kkListGroupByToName = interner.intern("kk_list_groupByTo")
         kkListCountName = interner.intern("kk_list_count")
         kkListFirstName = interner.intern("kk_list_first")
         kkListLastName = interner.intern("kk_list_last")
@@ -791,6 +800,9 @@ struct CollectionLiteralLookupTables {
         associateByName = interner.intern("associateBy")
         associateWithName = interner.intern("associateWith")
         associateName = interner.intern("associate")
+        associateByToName = interner.intern("associateByTo")
+        associateWithToName = interner.intern("associateWithTo")
+        groupByToName = interner.intern("groupByTo")
         mapValuesName = interner.intern("mapValues")
         mapKeysName = interner.intern("mapKeys")
         zipName = interner.intern("zip")

@@ -65,6 +65,9 @@ public extension RuntimeABIExterns {
         kk_list_associateBy,
         kk_list_associateWith,
         kk_list_associate,
+        kk_list_associateByTo,
+        kk_list_associateWithTo,
+        kk_list_groupByTo,
         kk_list_zip,
         kk_list_unzip,
         kk_list_withIndex,
@@ -509,6 +512,24 @@ public extension RuntimeABIExterns {
     static let kk_list_associate = ExternDecl(
         name: "kk_list_associate",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_associateByTo = ExternDecl(
+        name: "kk_list_associateByTo",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_associateWithTo = ExternDecl(
+        name: "kk_list_associateWithTo",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_groupByTo = ExternDecl(
+        name: "kk_list_groupByTo",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

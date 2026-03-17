@@ -2194,6 +2194,50 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-535/536/537: *To variants with [receiver, dest, lambda, closureRaw?] ---
+                    if callee == lookup.associateByToName || callee == lookup.associateWithToName
+                        || callee == lookup.groupByToName
+                    {
+                        if (arguments.count == 3 || arguments.count == 4),
+                           listExprIDs.contains(arguments[0].rawValue)
+                        {
+                            let receiverID = arguments[0]
+                            let destID = arguments[1]
+                            let lambdaID = arguments[2]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 4 {
+                                closureRawID = arguments[3]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let kkName: InternedString = switch callee {
+                            case lookup.associateByToName: lookup.kkListAssociateByToName
+                            case lookup.associateWithToName: lookup.kkListAssociateWithToName
+                            case lookup.groupByToName: lookup.kkListGroupByToName
+                            default: callee
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: kkName,
+                                arguments: [receiverID, destID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                mapExprIDs.insert(result.rawValue)
+                                mapExprIDs.insert(hofResult.rawValue)
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     if callee == lookup.zipName, arguments.count == 2 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {

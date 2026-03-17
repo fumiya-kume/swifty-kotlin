@@ -463,16 +463,16 @@ extension CallTypeChecker {
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
             "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
-            "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
+            "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
-            "indexOfFirst", "indexOfLast", "binarySearch",
+            "sumOf", "maxOrNull", "minOrNull",
+            "indexOfFirst", "indexOfLast",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
             "maxByOrNull", "minByOrNull",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
         let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
@@ -608,7 +608,7 @@ extension CallTypeChecker {
                             let lambdaBodyType = inferredLambdaReturnType(
                                 argExpr: args[0].expr, ast: ast, sema: sema
                             )
-                            let innerElementType = extractCollectionElementType(
+                            let innerElementType = extractListElementType(
                                 lambdaBodyType, sema: sema, interner: interner
                             )
                             resultType = sema.types.make(.classType(ClassType(
@@ -853,6 +853,7 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceIndexedLambdaType)
                 resultType = collectionElementType
 
+
             case "scan", "runningFold":
                 guard args.count == 2 else {
                     ctx.semaCtx.diagnostics.error(
@@ -881,11 +882,11 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "runningReduce", "scanReduce":
+            case "runningReduce":
                 guard args.count == 1 else {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0024",
-                        "\(calleeStr)() expects 1 argument (a lambda), but \(args.count) were supplied.",
+                        "runningReduce() expects 1 argument (a lambda), but \(args.count) were supplied.",
                         range: ast.arena.exprRange(id)
                     )
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)
@@ -936,6 +937,25 @@ extension CallTypeChecker {
                 } else {
                     resultType = sema.types.anyType
                 }
+
+            case "associateByTo", "associateWithTo", "groupByTo":
+                // *To(destination, keySelector/valueSelector): returns the destination map
+                guard args.count == 2 else {
+                    sema.bindings.bindExprType(id, type: sema.types.anyType)
+                    return sema.types.anyType
+                }
+                // Infer the destination map argument first
+                let destType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType2 = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType2)
+                // Return type is the destination map type
+                resultType = destType
 
             case "groupingBy":
                 guard args.count == 1 else {
@@ -1080,46 +1100,6 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = sema.types.intType
 
-            case "binarySearch":
-                // STDLIB-547: binarySearch(comparison: (T) -> Int) — comparison lambda overload
-                guard args.count == 1 else {
-                    // Wrong arity — fall through with Int result
-                    sema.bindings.bindExprType(id, type: sema.types.intType)
-                    return sema.types.intType
-                }
-                // Check if the argument is a function-typed expression (lambda literal,
-                // callable reference, or identifier with function type) to distinguish
-                // the comparison overload from the element-based overload.
-                let argExpr = ast.arena.expr(args[0].expr)
-                let isFunctionArg: Bool
-                if let expr = argExpr, case .lambdaLiteral = expr {
-                    isFunctionArg = true
-                } else if let expr = argExpr, case .callableRef = expr {
-                    isFunctionArg = true
-                } else {
-                    // Check inferred type: infer first, then see if it's a function type
-                    let inferredType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
-                    if case .functionType = sema.types.kind(of: inferredType) {
-                        isFunctionArg = true
-                    } else {
-                        isFunctionArg = false
-                    }
-                }
-                guard isFunctionArg else {
-                    // Element-based overload
-                    sema.bindings.bindExprType(id, type: sema.types.intType)
-                    return sema.types.intType
-                }
-                let bsLambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [collectionElementType],
-                    returnType: sema.types.intType
-                )))
-                // Mark all function-typed arguments (lambda literals, callable references,
-                // and function-typed variables) as HOF lambdas for correct closure expansion.
-                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: bsLambdaExpectedType)
-                resultType = sema.types.intType
-
             case "forEachIndexed", "mapIndexed", "onEachIndexed":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
@@ -1220,123 +1200,52 @@ extension CallTypeChecker {
                 } else {
                     sema.types.anyType
                 }
-                let selectorKind = sema.types.kind(of: selectorType)
-                if case .typeParam = selectorKind {} else {
-                    do {
-                        let primitiveComparableTypes: Set<TypeID> = [
-                            sema.types.intType,
-                            sema.types.longType,
-                            sema.types.floatType,
-                            sema.types.doubleType,
-                            sema.types.charType,
-                            sema.types.stringType,
-                            sema.types.make(.primitive(.uint, .nonNull)),
-                            sema.types.make(.primitive(.ulong, .nonNull)),
-                        ]
-                        let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
-                        let isNominalComparable: Bool
-                        if let comparableSymbol = sema.types.comparableInterfaceSymbol {
-                            let comparableSelectorType = sema.types.make(.classType(ClassType(
-                                classSymbol: comparableSymbol,
-                                args: [.invariant(selectorType)],
-                                nullability: .nonNull
-                            )))
-                            isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
-                        } else {
-                            isNominalComparable = false
-                        }
-                        if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
-                            ctx.semaCtx.diagnostics.error(
-                                "KSWIFTK-SEMA-BOUND",
-                                "Type argument does not satisfy upper bound constraint.",
-                                range: ast.arena.exprRange(id)
-                            )
-                            let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
-                            sema.bindings.bindExprType(id, type: failedType)
-                            return failedType
-                        }
+                do {
+                    let primitiveComparableTypes: Set<TypeID> = [
+                        sema.types.intType,
+                        sema.types.longType,
+                        sema.types.floatType,
+                        sema.types.doubleType,
+                        sema.types.charType,
+                        sema.types.stringType,
+                        sema.types.make(.primitive(.uint, .nonNull)),
+                        sema.types.make(.primitive(.ulong, .nonNull)),
+                    ]
+                    let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
+                    let isNominalComparable: Bool
+                    if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                        let comparableSelectorType = sema.types.make(.classType(ClassType(
+                            classSymbol: comparableSymbol,
+                            args: [.invariant(selectorType)],
+                            nullability: .nonNull
+                        )))
+                        isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
+                    } else {
+                        isNominalComparable = false
+                    }
+                    if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-BOUND",
+                            "Type argument does not satisfy upper bound constraint.",
+                            range: ast.arena.exprRange(id)
+                        )
+                        let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                        sema.bindings.bindExprType(id, type: failedType)
+                        return failedType
                     }
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
-
-            case "maxOfOrNull", "minOfOrNull":
-                guard args.count == 1 else {
-                    let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-0024",
-                        "No viable overload found for call.",
-                        range: ast.arena.exprRange(id)
-                    )
-                    sema.bindings.bindExprType(id, type: failedType)
-                    return failedType
-                }
-                let ofLambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [collectionElementType],
-                    returnType: sema.types.anyType
-                )))
-                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
-                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-                }
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: ofLambdaExpectedType)
-                let ofSelectorType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
-                    sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
-                } else if let lambdaExprType = sema.bindings.exprType(for: args[0].expr),
-                          case let .functionType(fnType) = sema.types.kind(of: lambdaExprType)
-                {
-                    sema.types.makeNonNullable(fnType.returnType)
-                } else {
-                    sema.types.anyType
-                }
-                let ofSelectorKind = sema.types.kind(of: ofSelectorType)
-                if case .typeParam = ofSelectorKind {} else {
-                    do {
-                        let primitiveComparableTypes: Set<TypeID> = [
-                            sema.types.intType,
-                            sema.types.longType,
-                            sema.types.floatType,
-                            sema.types.doubleType,
-                            sema.types.charType,
-                            sema.types.stringType,
-                            sema.types.make(.primitive(.uint, .nonNull)),
-                            sema.types.make(.primitive(.ulong, .nonNull)),
-                        ]
-                        let isPrimitiveComparable = primitiveComparableTypes.contains(ofSelectorType)
-                        let isNominalComparable: Bool
-                        if let comparableSymbol = sema.types.comparableInterfaceSymbol {
-                            let comparableSelectorType = sema.types.make(.classType(ClassType(
-                                classSymbol: comparableSymbol,
-                                args: [.invariant(ofSelectorType)],
-                                nullability: .nonNull
-                            )))
-                            isNominalComparable = sema.types.isSubtype(ofSelectorType, comparableSelectorType)
-                        } else {
-                            isNominalComparable = false
-                        }
-                        if ofSelectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
-                            ctx.semaCtx.diagnostics.error(
-                                "KSWIFTK-SEMA-BOUND",
-                                "Type argument does not satisfy upper bound constraint.",
-                                range: ast.arena.exprRange(id)
-                            )
-                            let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
-                            sema.bindings.bindExprType(id, type: failedType)
-                            return failedType
-                        }
-                    }
-                }
-                resultType = sema.types.makeNullable(ofSelectorType)
 
             case "distinctBy":
                 guard args.count == 1 else {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                // Match the synthetic stub: selector is (T) -> Any? (nullable, non-suspend).
-                // Nullable return type allows selectors that produce nullable keys.
-                // Keep in sync with the stub in HeaderHelpers+SyntheticComparableAndCollectionStubs.swift.
+                // Match the synthetic stub: selector is (T) -> Any (non-null, non-suspend).
+                // KNOWN LIMITATION: nullable keys are not supported; see stub comment.
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.nullableAnyType,
+                    returnType: sema.types.anyType,
                     isSuspend: false,
                     nullability: .nonNull
                 )))
@@ -1501,37 +1410,6 @@ extension CallTypeChecker {
                 let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
-            }
-        }
-
-        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
-        // Currently only recognizes range expression literals (e.g. `1..10`)
-        // via the `isRangeExpr` marker. Precomputed range values
-        // (e.g. `val r = 1..10; x.coerceIn(r)`) are not yet supported because
-        // the type system does not distinguish range types (IntRange/LongRange)
-        // from their element types (Int/Long). The element-type equality check
-        // (argType == receiverForCheck) rejects mismatched combinations such as
-        // Int.coerceIn(1L..10L).
-        //
-        // TODO: When a distinct ClosedRange<T> type is introduced in the type
-        // system, switch to a type-conformance check so that arbitrary
-        // ClosedRange-typed expressions (e.g. val r: IntRange = 1..10;
-        // x.coerceIn(r)) are also accepted without needing the isRangeExpr flag.
-        if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
-            let intType = sema.types.make(.primitive(.int, .nonNull))
-            let longType = sema.types.make(.primitive(.long, .nonNull))
-            let receiverForCheck = safeCall
-                ? sema.types.makeNonNullable(lookupReceiverType)
-                : lookupReceiverType
-            if receiverForCheck == intType || receiverForCheck == longType {
-                let argExpr = args[0].expr
-                let argType = driver.inferExpr(argExpr, ctx: ctx, locals: &locals, expectedType: nil)
-                if sema.bindings.isRangeExpr(argExpr),
-                   argType == receiverForCheck {
-                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
-                }
             }
         }
 
@@ -2208,7 +2086,7 @@ extension CallTypeChecker {
                             )
                         }
                         switch calleeStr {
-                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray", "asIterable":
+                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray":
                             sema.bindings.markCollectionExpr(id)
                         default:
                             break
@@ -2256,38 +2134,9 @@ extension CallTypeChecker {
                         return resultType
                     }
                 }
-                // STDLIB-532/533/534: orEmpty() on nullable String?, List?, Map? receivers
-                if !isNullLiteralReceiver, calleeStr == "orEmpty" {
-                    let baseType = sema.types.makeNonNullable(lookupReceiverType)
-                    if sema.types.isSubtype(baseType, sema.types.stringType) {
-                        let resultType = sema.types.stringType
-                        sema.bindings.bindExprType(id, type: resultType)
-                        return resultType
-                    }
-                    // List?.orEmpty() -> List<T>
-                    if isListLikeType(baseType, sema: sema, interner: interner) {
-                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
-                        sema.bindings.bindExprType(id, type: resultType)
-                        sema.bindings.markCollectionExpr(id)
-                        return resultType
-                    }
-                    // Map?.orEmpty() -> Map<K,V>
-                    if isMapLikeCollectionType(baseType, sema: sema, interner: interner) {
-                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
-                        sema.bindings.bindExprType(id, type: resultType)
-                        sema.bindings.markCollectionExpr(id)
-                        return resultType
-                    }
-                }
             }
             // String stdlib: 0-arg methods (STDLIB-006)
             let listCharType = makeSyntheticListType(
-                symbols: sema.symbols,
-                types: sema.types,
-                interner: interner,
-                elementType: sema.types.make(.primitive(.char, .nonNull))
-            )
-            let iterableCharType = makeSyntheticIterableType(
                 symbols: sema.symbols,
                 types: sema.types,
                 interner: interner,
@@ -2326,8 +2175,6 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "toList":
                         listCharType
-                    case "asIterable":
-                        iterableCharType
                     case "toCharArray":
                         charArrayType
                     case "toBoolean", "toBooleanStrict":
@@ -2370,27 +2217,10 @@ extension CallTypeChecker {
                         ) {
                             return boundType
                         }
-                        switch calleeStr {
-                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray", "asIterable":
-                            sema.bindings.markCollectionExpr(id)
-                        default:
-                            break
-                        }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
-                }
-                // STDLIB-574: ByteArray/List<Int>.decodeToString() -> String
-                // Guard: only match zero-argument form on list/collection receivers (not String)
-                if interner.resolve(calleeName) == "decodeToString",
-                   args.isEmpty,
-                   !sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
-                    let finalType = safeCall
-                        ? sema.types.makeNullable(sema.types.stringType)
-                        : sema.types.stringType
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
                 }
             }
             // String stdlib: 1-arg methods (STDLIB-006)
@@ -3688,12 +3518,11 @@ extension CallTypeChecker {
         }
     }
 
-    /// Extract the element type from a collection-like type.
-    /// If the type is List<R>, Collection<R>, Set<R>, Iterable<R>, Sequence<R>,
-    /// or similar single-type-arg collection, returns R.
-    /// Returns `anyType` for non-collection types to avoid mis-inferring element
-    /// types from unrelated generic types (e.g., Pair<K,V>).
-    private func extractCollectionElementType(
+    /// Extract the element type from a List type.
+    /// If the type is List<R> (or similar single-type-arg list), returns R.
+    /// Returns `anyType` for non-list types to avoid mis-inferring element types
+    /// from unrelated generic types (e.g., Pair<K,V>).
+    private func extractListElementType(
         _ type: TypeID,
         sema: SemaModule,
         interner: StringInterner
@@ -3702,16 +3531,10 @@ extension CallTypeChecker {
         let nonNullType = sema.types.makeNonNullable(type)
         guard case let .classType(classType) = sema.types.kind(of: nonNullType),
               let symbol = sema.symbols.symbol(classType.classSymbol),
+              knownNames.isConcreteListLikeSymbol(symbol),
               classType.args.count == 1,
               let firstArg = classType.args.first
         else {
-            return sema.types.anyType
-        }
-        // Accept any single-type-arg collection-like symbol (List, MutableList,
-        // Collection, Set, MutableSet, Sequence, etc.) but reject unrelated
-        // generics like Pair<K,V>. The standard Map<K,V> shape is naturally
-        // excluded because it does not satisfy the single-type-argument check.
-        guard knownNames.isCollectionLikeSymbol(symbol) else {
             return sema.types.anyType
         }
         return switch firstArg {

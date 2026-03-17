@@ -165,9 +165,9 @@
 - [ ] STDLIB-532: `Map?.orEmpty()` 拡張
 - [ ] STDLIB-533: `List?.orEmpty()` 拡張
 - [ ] STDLIB-534: `String?.orEmpty()` 拡張
-- [ ] STDLIB-535: `associateByTo` の stub と Runtime
-- [ ] STDLIB-536: `associateWithTo` の stub と Runtime
-- [ ] STDLIB-537: `groupByTo` の stub と Runtime
+- [x] STDLIB-535: `associateByTo` の stub と Runtime
+- [x] STDLIB-536: `associateWithTo` の stub と Runtime
+- [x] STDLIB-537: `groupByTo` の stub と Runtime
 - [ ] STDLIB-538: `ListIterator.hasPrevious()` / `previous()`
 - [ ] STDLIB-539: `ArrayList` 型エイリアスの golden テスト
 - [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト

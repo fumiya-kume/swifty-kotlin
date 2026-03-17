@@ -771,6 +771,82 @@ public func kk_list_associate(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     return registerRuntimeObject(RuntimeMapBox(keys: normalized.0, values: normalized.1))
 }
 
+// MARK: - STDLIB-535/536/537: associateByTo / associateWithTo / groupByTo
+
+@_cdecl("kk_list_associateByTo")
+public func kk_list_associateByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    for elem in list.elements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let unboxedKey = maybeUnbox(key)
+        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
+            dest.values[index] = elem
+        } else {
+            dest.keys.append(unboxedKey)
+            dest.values.append(elem)
+        }
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_associateWithTo")
+public func kk_list_associateWithTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    for elem in list.elements {
+        var thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let unboxedValue = maybeUnbox(value)
+        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, elem) }) {
+            dest.values[index] = unboxedValue
+        } else {
+            dest.keys.append(elem)
+            dest.values.append(unboxedValue)
+        }
+    }
+    return destRaw
+}
+
+@_cdecl("kk_list_groupByTo")
+public func kk_list_groupByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard let dest = runtimeMapBox(from: destRaw) else {
+        invalidContainerPanic(#function, "map")
+    }
+    for elem in list.elements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let unboxedKey = maybeUnbox(key)
+        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
+            // Append to existing list
+            if let existingList = runtimeListBox(from: dest.values[index]) {
+                existingList.elements.append(elem)
+            } else {
+                dest.values[index] = registerRuntimeObject(RuntimeListBox(elements: [elem]))
+            }
+        } else {
+            dest.keys.append(unboxedKey)
+            dest.values.append(registerRuntimeObject(RuntimeListBox(elements: [elem])))
+        }
+    }
+    return destRaw
+}
+
 @_cdecl("kk_list_zip")
 public func kk_list_zip(_ listRaw: Int, _ otherRaw: Int) -> Int {
     guard let lhsBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

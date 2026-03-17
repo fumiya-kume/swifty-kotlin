@@ -457,6 +457,9 @@ extension CallTypeChecker {
             interner.intern("associateBy"),
             interner.intern("associateWith"),
             interner.intern("associate"),
+            interner.intern("associateByTo"),
+            interner.intern("associateWithTo"),
+            interner.intern("groupByTo"),
             interner.intern("zip"),
             interner.intern("unzip"),
             interner.intern("withIndex"),
@@ -560,7 +563,7 @@ extension CallTypeChecker {
     ) -> Bool {
         let collectionReturningMembers: Set = [
             interner.intern("asSequence"), interner.intern("map"), interner.intern("filter"), interner.intern("mapNotNull"), interner.intern("filterNotNull"),
-            interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("associateBy"), interner.intern("associateWith"),
+            interner.intern("flatMap"), interner.intern("sortedBy"), interner.intern("groupBy"), interner.intern("groupingBy"), interner.intern("associateBy"), interner.intern("associateWith"), interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"),
             interner.intern("associate"), interner.intern("zip"), interner.intern("toList"), interner.intern("toTypedArray"), interner.intern("take"), interner.intern("drop"), interner.intern("reversed"), interner.intern("asReversed"),
             interner.intern("sorted"), interner.intern("distinct"), interner.intern("distinctBy"), interner.intern("flatten"), interner.intern("chunked"), interner.intern("windowed"), interner.intern("withIndex"), interner.intern("mapIndexed"),
             interner.intern("sortedDescending"), interner.intern("sortedByDescending"), interner.intern("sortedWith"),
@@ -622,6 +625,8 @@ extension CallTypeChecker {
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return argCount == 1
+        case interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
+            return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
         case interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
@@ -960,6 +965,9 @@ extension CallTypeChecker {
             interner.intern("associateBy"),
             interner.intern("associateWith"),
             interner.intern("associate"),
+            interner.intern("associateByTo"),
+            interner.intern("associateWithTo"),
+            interner.intern("groupByTo"),
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
