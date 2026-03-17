@@ -1,4 +1,14 @@
-/// Synthetic stubs for java.io.File type (STDLIB-320/321/322/323).
+/// Synthetic stubs for java.io.File type.
+///
+/// Covers:
+/// - STDLIB-320: `File(String)` constructor, `readText`, `writeText`, `readLines`
+/// - STDLIB-321: `name`, `path` properties; `exists()`, `isFile()`, `isDirectory()` query methods
+/// - STDLIB-322: `forEachLine(action:)` member function
+/// - STDLIB-323: `delete()`, `mkdirs()`, `listFiles()`, `walk()` filesystem operations
+///
+/// Each stub registers the java.io.File class, its constructor, member properties,
+/// and member functions in the symbol table so that name resolution and type
+/// checking succeed without requiring a full java.io runtime on the classpath.
 extension DataFlowSemaPhase {
     func registerSyntheticFileIOStubs(
         symbols: SymbolTable,
