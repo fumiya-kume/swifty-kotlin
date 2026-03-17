@@ -42,6 +42,7 @@ public enum ScopeFunctionKind: Equatable {
     case scopeWith
     case scopeApply
     case scopeAlso
+    case scopeTopLevelRun
 }
 
 /// Identifies takeIf / takeUnless extension calls (STDLIB-160).

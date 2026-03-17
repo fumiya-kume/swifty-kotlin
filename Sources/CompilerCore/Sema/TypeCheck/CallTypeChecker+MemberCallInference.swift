@@ -379,6 +379,9 @@ extension CallTypeChecker {
 
                 case .scopeWith:
                     break // with is handled in inferCallExpr (top-level function)
+
+                case .scopeTopLevelRun:
+                    break // top-level run is handled in inferCallExpr
                 }
             }
         }

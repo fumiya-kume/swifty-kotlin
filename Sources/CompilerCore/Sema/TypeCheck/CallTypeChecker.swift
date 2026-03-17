@@ -142,6 +142,46 @@ final class CallTypeChecker {
             return returnType
         }
 
+        // --- Scope function: top-level run(block) (STDLIB-401) ---
+        // `run { expr }` simply executes the block lambda and returns the result.
+        // Intercept when no local or user-defined (non-synthetic) `run` shadows the stdlib helper.
+        // The single argument must be a lambda literal or callable reference;
+        // otherwise (e.g. `run(123)`) fall through to normal call resolution.
+        if isTopLevelRunCandidate(
+            calleeName: calleeName,
+            args: args,
+            knownNames: knownNames,
+            ast: ast,
+            ctx: ctx,
+            locals: locals
+        ) {
+            let lambdaExpectedType: TypeID? = if let expectedType {
+                sema.types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: expectedType
+                )))
+            } else {
+                nil
+            }
+            let lambdaType = driver.inferExpr(
+                args[0].expr, ctx: ctx, locals: &locals,
+                expectedType: lambdaExpectedType
+            )
+            let returnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            sema.bindings.markScopeFunctionExpr(id, kind: .scopeTopLevelRun)
+            sema.bindings.bindExprType(id, type: returnType)
+            return returnType
+        }
+
         // --- Flow builder function (CORO-003) ---
         // `flow { emit(...) }` is treated as a builtin cold stream factory.
         // We infer the lambda with a flow-builder scope so unqualified `emit`
@@ -1679,6 +1719,54 @@ final class CallTypeChecker {
             return symbol.fqName != KnownCompilerNames(interner: ctx.interner).kotlinxCoroutinesFlowFQName
         }
         return !hasConflictingUserDefinedCandidate
+    }
+
+    // MARK: - Top-level run helpers (STDLIB-401)
+
+    /// Returns true when the call site looks like a top-level `run { ... }` or
+    /// `run(::ref)` that should be intercepted by the scope-function path.
+    private func isTopLevelRunCandidate(
+        calleeName: InternedString?,
+        args: [CallArgument],
+        knownNames: KnownCompilerNames,
+        ast: ASTModule,
+        ctx: TypeInferenceContext,
+        locals: LocalBindings
+    ) -> Bool {
+        guard let calleeName, args.count == 1,
+              calleeName == knownNames.run,
+              locals[calleeName] == nil
+        else {
+            return false
+        }
+        return isLambdaOrCallableRefArg(args[0].expr, ast: ast)
+            && !isShadowedByUserDefinedRun(calleeName, ctx: ctx)
+    }
+
+    /// Returns true when `exprID` is a lambda literal or callable reference.
+    private func isLambdaOrCallableRefArg(_ exprID: ExprID, ast: ASTModule) -> Bool {
+        guard let argExpr = ast.arena.expr(exprID) else { return false }
+        switch argExpr {
+        case .lambdaLiteral, .callableRef:
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// Returns true when a non-synthetic (user-defined) `run` shadows the
+    /// synthetic stdlib helper.
+    /// KNOWN LIMITATION: This treats any non-synthetic symbol named `run` as
+    /// shadowing, regardless of whether it is a top-level or extension overload.
+    /// A more precise check would compare signatures/receiver types.
+    private func isShadowedByUserDefinedRun(
+        _ calleeName: InternedString,
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        ctx.cachedScopeLookup(calleeName).contains { candidate in
+            guard let sym = ctx.cachedSymbol(candidate) else { return false }
+            return !sym.flags.contains(.synthetic)
+        }
     }
 }
 

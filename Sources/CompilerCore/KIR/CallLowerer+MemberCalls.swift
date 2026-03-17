@@ -3551,6 +3551,9 @@ extension CallLowerer {
 
         case .scopeWith:
             return nil // with is handled in lowerCallExpr
+
+        case .scopeTopLevelRun:
+            return nil // top-level run is handled in lowerCallExpr
         }
     }
 }
