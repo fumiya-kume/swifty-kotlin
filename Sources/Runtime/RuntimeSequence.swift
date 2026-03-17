@@ -1635,6 +1635,24 @@ public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
     return 0
 }
 
+// MARK: - yieldAll(iterable) (STDLIB-553)
+
+@_cdecl("kk_sequence_builder_yieldAll")
+public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int) -> Int {
+    guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid builder handle")
+    }
+    // Accept List, Array, or Sequence as the iterable source.
+    if let elements = runtimeSequenceSourceElements(from: collectionRaw) {
+        builder.elements.append(contentsOf: elements)
+    } else if let set = runtimeSetBox(from: collectionRaw) {
+        builder.elements.append(contentsOf: set.elements)
+    } else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle")
+    }
+    return 0
+}
+
 @_cdecl("kk_sequence_builder_build")
 public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     let builder = RuntimeSequenceBuilderBox()
