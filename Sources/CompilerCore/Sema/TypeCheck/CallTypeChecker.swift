@@ -341,7 +341,11 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "measureTimeMillis",
            args.count == 1,
-           locals[calleeName] == nil
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
         {
             let longType = sema.types.longType
             // Intentionally passing expectedType:nil — the block's return type is
@@ -363,7 +367,11 @@ final class CallTypeChecker {
         if let calleeName,
            interner.resolve(calleeName) == "measureNanoTime",
            args.count == 1,
-           locals[calleeName] == nil
+           locals[calleeName] == nil,
+           !ctx.cachedScopeLookup(calleeName).contains(where: { candidate in
+               guard let sym = ctx.cachedSymbol(candidate) else { return false }
+               return !sym.flags.contains(.synthetic)
+           })
         {
             let longType = sema.types.longType
             // Intentionally passing expectedType:nil — same rationale as
