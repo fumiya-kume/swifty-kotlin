@@ -117,6 +117,7 @@ public extension RuntimeABIExterns {
         kk_map_iterator_next,
         kk_array_of,
         kk_array_size,
+        kk_array_is_empty,
         kk_array_toList,
         kk_array_toMutableList,
         kk_list_toTypedArray,
@@ -609,6 +610,12 @@ public extension RuntimeABIExterns {
 
     static let kk_array_size = ExternDecl(
         name: "kk_array_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_array_is_empty = ExternDecl(
+        name: "kk_array_is_empty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

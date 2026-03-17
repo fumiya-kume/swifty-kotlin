@@ -327,6 +327,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_subList"),
             interner.intern("kk_array_of"),
             interner.intern("kk_array_size"),
+            interner.intern("kk_array_is_empty"),
             // Bitwise/shift (P5-103)
             interner.intern("kk_bitwise_and"),
             interner.intern("kk_bitwise_or"),

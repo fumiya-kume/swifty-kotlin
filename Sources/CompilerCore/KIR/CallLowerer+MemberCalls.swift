@@ -3123,6 +3123,8 @@ extension CallLowerer {
                 return interner.intern("kk_map_is_empty")
             case .set?:
                 return interner.intern("kk_set_is_empty")
+            case .array?:
+                return interner.intern("kk_array_is_empty")
             case .list?, .collection?:
                 return interner.intern("kk_list_is_empty")
             default:

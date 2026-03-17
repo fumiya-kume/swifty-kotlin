@@ -470,27 +470,30 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        let collectionMemberDefs: [(String, TypeID)] = [
-            ("size", types.intType),
-            ("isEmpty", types.booleanType),
-        ]
-        for (name, returnType) in collectionMemberDefs {
+        // Helper to define a synthetic Collection function member and register
+        // its parent + function signature in one place.
+        func defineCollectionFunctionMember(
+            name: String,
+            parameterTypes: [TypeID],
+            returnType: TypeID,
+            flags: SymbolFlags
+        ) {
             let memberName = interner.intern(name)
             let memberFQName = collectionFQName + [memberName]
-            guard symbols.lookup(fqName: memberFQName) == nil else { continue }
+            guard symbols.lookup(fqName: memberFQName) == nil else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
                 fqName: memberFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic]
+                flags: flags
             )
             symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: collectionReceiverType,
-                    parameterTypes: [],
+                    parameterTypes: parameterTypes,
                     returnType: returnType,
                     typeParameterSymbols: [typeParamSymbol],
                     classTypeParameterCount: 1
@@ -499,30 +502,37 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // contains(element: E): Boolean
-        let containsName = interner.intern("contains")
-        let containsFQName = collectionFQName + [containsName]
-        if symbols.lookup(fqName: containsFQName) == nil {
-            let containsSymbol = symbols.define(
-                kind: .function,
-                name: containsName,
-                fqName: containsFQName,
+        // size: Int — Kotlin val property, registered as .property kind
+        let sizeName = interner.intern("size")
+        let sizeFQName = collectionFQName + [sizeName]
+        if symbols.lookup(fqName: sizeFQName) == nil {
+            let sizeSymbol = symbols.define(
+                kind: .property,
+                name: sizeName,
+                fqName: sizeFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic, .operatorFunction]
+                flags: [.synthetic]
             )
-            symbols.setParentSymbol(collectionInterfaceSymbol, for: containsSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: collectionReceiverType,
-                    parameterTypes: [typeParamType],
-                    returnType: types.booleanType,
-                    typeParameterSymbols: [typeParamSymbol],
-                    classTypeParameterCount: 1
-                ),
-                for: containsSymbol
-            )
+            symbols.setParentSymbol(collectionInterfaceSymbol, for: sizeSymbol)
+            symbols.setPropertyType(types.intType, for: sizeSymbol)
         }
+
+        // isEmpty(): Boolean
+        defineCollectionFunctionMember(
+            name: "isEmpty",
+            parameterTypes: [],
+            returnType: types.booleanType,
+            flags: [.synthetic]
+        )
+
+        // contains(element: E): Boolean — operator for Kotlin `in`
+        defineCollectionFunctionMember(
+            name: "contains",
+            parameterTypes: [typeParamType],
+            returnType: types.booleanType,
+            flags: [.synthetic, .operatorFunction]
+        )
 
         return collectionInterfaceSymbol
     }
