@@ -1,18 +1,12 @@
 fun main() {
-    val len = "hello".let { it.length }
-    println(len)
-
-    val runLen = "hello".run { length }
-    println(runLen)
-
-    "test".also { println(it) }
-
-    val alsoResult = "hello".also { println(it) }
-    println(alsoResult)
-
-    val applyResult = "hello".apply { println(length) }
-    println(applyResult)
-
-    val withLen = with("hello") { length }
-    println(withLen)
+    val result1 = "hello".let { it.uppercase() }
+    println(result1)
+    val result2 = "world".run { this.length }
+    println(result2)
+    val result3 = with("kotlin") { length }
+    println(result3)
+    val sb = StringBuilder().apply { append("a"); append("b") }
+    println(sb.toString())
+    val result4 = "test".also { println(it) }
+    println(result4)
 }
