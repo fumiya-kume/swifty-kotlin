@@ -513,6 +513,25 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     return acc
 }
 
+// MARK: - reduceOrNull (STDLIB-526)
+
+@_cdecl("kk_list_reduceOrNull")
+public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return 0 // null for empty collection
+    }
+    var acc = list.elements[0]
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
 // MARK: - List scan / runningFold / runningReduce (STDLIB-442)
 
 @_cdecl("kk_list_scan")
@@ -584,6 +603,7 @@ public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
 
 // Deprecated: kk_list_scanReduce is a deprecated alias for kk_list_runningReduce.
 // Kotlin renamed scanReduce to runningReduce; this entrypoint is kept for ABI compatibility.
+// STDLIB-528/530: scanReduce is an alias for runningReduce
 @_cdecl("kk_list_scanReduce")
 public func kk_list_scanReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     return kk_list_runningReduce(listRaw, fnPtr, closureRaw, outThrown)

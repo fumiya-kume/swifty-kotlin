@@ -51,6 +51,7 @@ public extension RuntimeABIExterns {
         kk_list_filterNotNull,
         kk_list_fold,
         kk_list_reduce,
+        kk_list_reduceOrNull,
         kk_list_scan,
         kk_list_runningFold,
         kk_list_runningReduce,
@@ -875,6 +876,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_reduce = ExternDecl(
         name: "kk_list_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_reduceOrNull = ExternDecl(
+        name: "kk_list_reduceOrNull",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
