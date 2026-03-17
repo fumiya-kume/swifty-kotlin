@@ -197,20 +197,17 @@ final class CallLowerer {
             } else {
                 // Callable reference or other non-lambda callable: invoke it
                 // so that `run(::foo)` calls foo() rather than returning the
-                // reference itself.
+                // reference itself.  Use the already-lowered ID to avoid
+                // double-lowering the lambda argument expression.
                 let invokeName = interner.intern("invoke")
-                return lowerMemberCallExpr(
-                    exprID,
-                    receiverExpr: args[0].expr,
-                    calleeName: invokeName,
-                    args: [],
-                    ast: ast,
-                    sema: sema,
-                    arena: arena,
-                    interner: interner,
-                    propertyConstantInitializers: propertyConstantInitializers,
-                    instructions: &instructions
-                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: invokeName,
+                    arguments: [loweredLambdaID],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
             }
             return result
         }

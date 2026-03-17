@@ -1775,6 +1775,9 @@ final class CallTypeChecker {
 
     /// Returns true when a non-synthetic (user-defined) `run` shadows the
     /// synthetic stdlib helper.
+    /// KNOWN LIMITATION: This treats any non-synthetic symbol named `run` as
+    /// shadowing, regardless of whether it is a top-level or extension overload.
+    /// A more precise check would compare signatures/receiver types.
     private func isShadowedByUserDefinedRun(
         _ calleeName: InternedString,
         ctx: TypeInferenceContext

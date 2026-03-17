@@ -135,10 +135,18 @@ extension DataFlowSemaPhase {
         let runFQName = kotlinPkg + [runName]
 
         // Skip if already registered.
+        // KNOWN LIMITATION: This checks any symbol at kotlin.run FQN.  The extension
+        // overload shares the same FQN, so if it is registered first, this check
+        // incorrectly skips the top-level overload.  In practice the top-level stub
+        // is registered before the extension stub in registerScopeFunctionStubs(),
+        // so this ordering dependency is safe but fragile.
         if symbols.lookup(fqName: runFQName) != nil {
             return
         }
 
+        // NOTE: The type parameter R shares FQN kotlin.run.R with the extension
+        // overload's R.  The symbol table accepts this because typeParameter symbols
+        // are scoped by their parent function symbol, not by FQN uniqueness.
         let rName = interner.intern("R")
         let rFQName = runFQName + [rName]
 
@@ -222,6 +230,9 @@ extension DataFlowSemaPhase {
             return
         }
 
+        // NOTE: T and R type parameters share FQNs (kotlin.run.T, kotlin.run.R)
+        // with the top-level overload's R.  This is acceptable because type parameter
+        // symbols are scoped by their parent function symbol.
         let tName = interner.intern("T")
         let rName = interner.intern("R")
         let tFQName = extRunFQName + [tName]
