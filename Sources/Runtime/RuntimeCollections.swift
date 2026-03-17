@@ -1486,3 +1486,23 @@ public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
     return registerRuntimeObject(seq)
 }
+
+// MARK: - STDLIB-533: List?.orEmpty()
+
+@_cdecl("kk_list_orEmpty")
+public func kk_list_orEmpty(_ listRaw: Int) -> Int {
+    if listRaw == runtimeNullSentinelInt || listRaw == 0 {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    return listRaw
+}
+
+// MARK: - STDLIB-532: Map?.orEmpty()
+
+@_cdecl("kk_map_orEmpty")
+public func kk_map_orEmpty(_ mapRaw: Int) -> Int {
+    if mapRaw == runtimeNullSentinelInt || mapRaw == 0 {
+        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+    }
+    return mapRaw
+}

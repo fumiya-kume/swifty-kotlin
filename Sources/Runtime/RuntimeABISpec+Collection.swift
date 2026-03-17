@@ -1674,6 +1674,24 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                // STDLIB-533: List?.orEmpty()
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_orEmpty",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                // STDLIB-532: Map?.orEmpty()
+                RuntimeABIFunctionSpec(
+                    name: "kk_map_orEmpty",
+                    parameters: [
+                        RuntimeABIParameter(name: "mapRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
             ]
     }()
 }

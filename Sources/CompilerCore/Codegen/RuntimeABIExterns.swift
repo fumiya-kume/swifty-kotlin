@@ -562,6 +562,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-534: String?.orEmpty()
+    public static let kk_string_orEmpty = ExternDecl(
+        name: "kk_string_orEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_split = ExternDecl(
         name: "kk_string_split",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2070,6 +2077,7 @@ public enum RuntimeABIExterns {
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
             kk_string_zipWithNext,
+            kk_string_orEmpty,
             // Print / Println
             kk_print_any,
             kk_println_any,
