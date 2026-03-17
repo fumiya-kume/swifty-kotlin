@@ -456,7 +456,7 @@ extension DataFlowSemaPhase {
             interner.intern("collections"),
             interner.intern("Set"),
         ]
-        guard let setSymbol = symbols.lookup(fqName: setFQName) else {
+        guard let setSymbol = symbols.lookup(fqName: setFQName), setSymbol != .invalid else {
             // Do not fall back to anyType -- that would register an unintended
             // Regex(pattern, options: Any) overload.
             return nil

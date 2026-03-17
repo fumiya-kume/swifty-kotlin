@@ -257,10 +257,17 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
     case 4: return .useUnixLineSeparators     // UNIX_LINES
     case 5: return .allowCommentsAndWhitespace // COMMENTS
     case 6: return []                        // CANON_EQ (no direct equivalent)
-    default: return []
+    default:
+        assertionFailure("KSwiftK: unknown RegexOption ordinal \(ordinal) – compiler/runtime enum mismatch?")
+        return []
     }
 }
 
+// NOTE: kk_regex_create_with_option and kk_regex_create_with_options share the
+// same "effective pattern + try compile + fallback + box" logic.  A shared
+// private helper (e.g., createRegexBox(pattern:isLiteral:options:)) could
+// reduce drift; kept inline for now as the two functions differ in how they
+// collect options (single ordinal vs set iteration).
 @_cdecl("kk_regex_create_with_option")
 public func kk_regex_create_with_option(_ patternRaw: Int, _ optionRaw: Int) -> Int {
     let pattern = regexStringFromRaw(patternRaw) ?? ""
