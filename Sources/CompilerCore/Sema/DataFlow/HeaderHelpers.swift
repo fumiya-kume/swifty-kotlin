@@ -367,6 +367,9 @@ extension DataFlowSemaPhase {
         scope: Scope,
         interner: StringInterner
     ) {
+        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+            return
+        }
         let toStringName = interner.intern("toString")
         let toStringFQName = ownerFQName + [toStringName]
         let stringType = types.make(.primitive(.string, .nonNull))
@@ -420,6 +423,9 @@ extension DataFlowSemaPhase {
         scope: Scope,
         interner: StringInterner
     ) {
+        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+            return
+        }
         let equalsName = interner.intern("equals")
         let equalsFQName = ownerFQName + [equalsName]
         let boolType = types.make(.primitive(.boolean, .nonNull))

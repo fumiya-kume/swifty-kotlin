@@ -202,12 +202,40 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
     }
 
-    /// Returns the property symbols of a data class, sorted by ID (declaration order).
+    /// Returns the primary-constructor data properties of a data class, sorted by constructor order.
     private func dataClassPropertySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
-        symbols.children(ofFQName: owner.fqName)
+        let primaryConstructorParamNames: [InternedString] = symbols.children(ofFQName: owner.fqName)
             .compactMap { symbols.symbol($0) }
-            .filter { $0.kind == .property }
+            .filter { $0.kind == .constructor }
             .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            .first
+            .flatMap { constructor in
+                symbols.functionSignature(for: constructor.id)?.valueParameterSymbols.compactMap { paramSymbol in
+                    symbols.symbol(paramSymbol)?.name
+                }
+            } ?? []
+        guard !primaryConstructorParamNames.isEmpty else {
+            return []
+        }
+
+        let propertiesByName = Dictionary(
+            uniqueKeysWithValues: symbols.children(ofFQName: owner.fqName)
+                .compactMap { symbols.symbol($0) }
+                .filter { $0.kind == .property && !$0.flags.contains(.synthetic) }
+                .map { ($0.name, $0) }
+        )
+        return primaryConstructorParamNames.compactMap { propertiesByName[$0] }
+    }
+
+    private func anyToStringTag(for type: TypeID, sema: SemaModule) -> Int64 {
+        switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
+        case .primitive(.boolean, _):
+            2
+        case .primitive(.string, _):
+            3
+        default:
+            1
+        }
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
@@ -549,12 +577,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 thrownResult: nil
             ))
 
-            // Convert to string via kk_any_to_string(value, tag=0)
+            // Convert to string via kk_any_to_string using the same tag convention
+            // as Any.toString lowering.
+            let anyTag = anyToStringTag(for: propType, sema: sema)
             let tagExpr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)),
                 type: intType
             )
-            body.append(.constValue(result: tagExpr, value: .intLiteral(0)))
+            body.append(.constValue(result: tagExpr, value: .intLiteral(anyTag)))
 
             let propStr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)),
@@ -680,7 +710,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         let otherParam = KIRParameter(symbol: paramSymbol, type: nullableAnyType)
 
         var body: [KIRInstruction] = []
-        var labelCounter: Int32 = 7000
+        var nextLabel: Int32 = 0
+        func allocateLabel() -> Int32 {
+            defer { nextLabel += 1 }
+            return nextLabel
+        }
 
         // If there are no properties, fall back to identity comparison (kk_op_eq)
         if properties.isEmpty {
@@ -702,6 +736,33 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             ))
             body.append(.returnValue(resultExpr))
         } else {
+            let intType = sema.types.intType
+            let falseExpr = module.arena.appendExpr(.boolLiteral(false), type: boolType)
+            body.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+
+            let typeTokenValue = RuntimeTypeCheckToken.encode(type: receiverType, sema: sema, interner: interner)
+            let typeTokenExpr = module.arena.appendExpr(.intLiteral(typeTokenValue), type: intType)
+            body.append(.constValue(result: typeTokenExpr, value: .intLiteral(typeTokenValue)))
+
+            let otherAnyRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+            body.append(.constValue(result: otherAnyRef, value: .symbolRef(paramSymbol)))
+
+            let isSameTypeExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: boolType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_is"),
+                arguments: [otherAnyRef, typeTokenExpr],
+                result: isSameTypeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            let returnFalseLabel = allocateLabel()
+            body.append(.jumpIfEqual(lhs: isSameTypeExpr, rhs: falseExpr, target: returnFalseLabel))
+
             // For each property, compare this.prop == other.prop
             // If any differ, return false
             for property in properties {
@@ -726,7 +787,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 ))
 
                 // Load other.prop
-                let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+                let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: receiverType)
                 body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
                 let otherProp = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
@@ -755,31 +816,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     thrownResult: nil
                 ))
 
-                // If not equal, jump to return-false
-                let falseExpr = module.arena.appendExpr(
-                    .boolLiteral(false),
-                    type: boolType
-                )
-                body.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
-
-                let returnFalseLabel = labelCounter
-                labelCounter += 1
-                let continueLabel = labelCounter
-                labelCounter += 1
-
                 body.append(.jumpIfEqual(lhs: cmpResult, rhs: falseExpr, target: returnFalseLabel))
-                body.append(.jump(continueLabel))
-
-                // Return false
-                body.append(.label(returnFalseLabel))
-                let falseResult = module.arena.appendExpr(
-                    .boolLiteral(false),
-                    type: boolType
-                )
-                body.append(.constValue(result: falseResult, value: .boolLiteral(false)))
-                body.append(.returnValue(falseResult))
-
-                body.append(.label(continueLabel))
             }
 
             // All properties matched — return true
@@ -789,6 +826,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
             body.append(.constValue(result: trueResult, value: .boolLiteral(true)))
             body.append(.returnValue(trueResult))
+
+            body.append(.label(returnFalseLabel))
+            let falseResult = module.arena.appendExpr(
+                .boolLiteral(false),
+                type: boolType
+            )
+            body.append(.constValue(result: falseResult, value: .boolLiteral(false)))
+            body.append(.returnValue(falseResult))
         }
 
         let signature = FunctionSignature(

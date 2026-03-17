@@ -323,7 +323,7 @@ extension LoweringPassRegressionTests {
         let packageName = interner.intern("demo")
         let packagePath = [packageName]
 
-        // Define data class Point with properties x and y
+        // Define data class Point with primary-constructor properties x and y.
         let pointName = interner.intern("Point")
         let pointFQName = packagePath + [pointName]
         let pointSymbol = symbols.define(
@@ -333,6 +333,29 @@ extension LoweringPassRegressionTests {
             declSite: nil,
             visibility: .public,
             flags: [.dataType]
+        )
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: pointName,
+            fqName: pointFQName + [pointName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setParentSymbol(pointSymbol, for: constructorSymbol)
+        let ctorXParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("x"),
+            fqName: pointFQName + [pointName, interner.intern("x")],
+            declSite: nil,
+            visibility: .private
+        )
+        let ctorYParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("y"),
+            fqName: pointFQName + [pointName, interner.intern("y")],
+            declSite: nil,
+            visibility: .private
         )
 
         // Register properties x: Int and y: Int
@@ -359,6 +382,18 @@ extension LoweringPassRegressionTests {
         symbols.setPropertyType(intType, for: ySymbol)
         symbols.setParentSymbol(pointSymbol, for: ySymbol)
 
+        // Non-constructor member properties should not participate in synthesized data methods.
+        let zName = interner.intern("z")
+        let zSymbol = symbols.define(
+            kind: .property,
+            name: zName,
+            fqName: pointFQName + [zName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setPropertyType(intType, for: zSymbol)
+        symbols.setParentSymbol(pointSymbol, for: zSymbol)
+
         // Register synthetic toString and equals stubs (as Sema would)
         let pointType = types.make(.classType(ClassType(
             classSymbol: pointSymbol,
@@ -368,6 +403,19 @@ extension LoweringPassRegressionTests {
         let stringType = types.make(.primitive(.string, .nonNull))
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let nullableAnyType = types.nullableAnyType
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: pointType,
+                parameterTypes: [intType, intType],
+                returnType: pointType,
+                isSuspend: false,
+                valueParameterSymbols: [ctorXParamSymbol, ctorYParamSymbol],
+                valueParameterHasDefaultValues: [false, false],
+                valueParameterIsVararg: [false, false],
+                typeParameterSymbols: []
+            ),
+            for: constructorSymbol
+        )
 
         let toStringName = interner.intern("toString")
         let toStringSymbol = symbols.define(
@@ -466,6 +514,7 @@ extension LoweringPassRegressionTests {
         // Should call property getters for x and y
         XCTAssertTrue(toStringCallees.contains("x$get"), "toString should call x$get")
         XCTAssertTrue(toStringCallees.contains("y$get"), "toString should call y$get")
+        XCTAssertFalse(toStringCallees.contains("z$get"), "toString should ignore non-constructor properties")
 
         // Verify toString body contains the class name prefix "Point("
         let toStringStringLiterals = toStringFn.body.compactMap { inst -> String? in
@@ -480,10 +529,22 @@ extension LoweringPassRegressionTests {
         // Verify equals body uses kk_op_eq for property comparison
         let equalsFn = try findKIRFunction(named: "equals", in: module, interner: interner)
         let equalsCallees = extractCallees(from: equalsFn.body, interner: interner)
+        XCTAssertTrue(equalsCallees.contains("kk_op_is"), "equals should type-check other before reading properties")
         XCTAssertTrue(equalsCallees.contains("kk_op_eq"), "equals should use kk_op_eq for comparison")
         XCTAssertTrue(equalsCallees.contains("x$get"), "equals should call x$get")
         XCTAssertTrue(equalsCallees.contains("y$get"), "equals should call y$get")
+        XCTAssertFalse(equalsCallees.contains("z$get"), "equals should ignore non-constructor properties")
         // Should have receiver + other parameter
         XCTAssertEqual(equalsFn.params.count, 2, "equals should have receiver + other parameter")
+
+        let xGetterCalls = equalsFn.body.compactMap { instruction -> KIRInstruction? in
+            guard case let .call(_, callee, _, _, _, _, _) = instruction,
+                  interner.resolve(callee) == "x$get"
+            else {
+                return nil
+            }
+            return instruction
+        }
+        XCTAssertEqual(xGetterCalls.count, 2, "equals should compare both receiver and narrowed other")
     }
 }
