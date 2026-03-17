@@ -14,7 +14,9 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
     return tryCast(ptr, to: RuntimeDurationBox.self)
 }
 
-// MARK: - Duration factory: Int.seconds, Int.milliseconds, etc.
+// TODO: Add RuntimeTests covering duration factories (kk_duration_from_seconds etc.),
+// inWhole* accessor unit conversions, toString() formatting across units (ns/us/ms/s),
+// and measureTime returning non-negative duration with correct outThrown propagation.
 
 /// Clamp-safe multiplication: returns `Int64.max` / `Int64.min` on overflow
 /// instead of trapping, matching Kotlin's Duration saturation semantics.
@@ -107,9 +109,10 @@ public func kk_duration_toString(_ durationRaw: Int) -> Int {
     } else {
         str = "\(ns)ns"
     }
-    let utf8 = Array(str.utf8)
-    return Int(bitPattern: utf8.withUnsafeBufferPointer { buf in
-        kk_string_from_utf8(buf.baseAddress!, Int32(buf.count))
+    return Int(bitPattern: str.withCString { cstr in
+        cstr.withMemoryRebound(to: UInt8.self, capacity: str.utf8.count) { pointer in
+            kk_string_from_utf8(pointer, Int32(str.utf8.count))
+        }
     })
 }
 

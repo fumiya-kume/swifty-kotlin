@@ -34,7 +34,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        let kotlinIOPkg = ensureSyntheticPackage(path: [interner.intern("kotlin"), interner.intern("io")], symbols: symbols)
+        let kotlinIOPkg = ensureSyntheticPackageHierarchy(fqName: [interner.intern("kotlin"), interner.intern("io")], symbols: symbols)
 
         registerSyntheticTopLevelFunction(
             named: "println",
@@ -86,8 +86,8 @@ extension DataFlowSemaPhase {
         )
 
         // --- Sequence factory functions (STDLIB-097) ---
-        let kotlinSequencesPkg = ensureSyntheticPackage(
-            path: [interner.intern("kotlin"), interner.intern("sequences")],
+        let kotlinSequencesPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("sequences")],
             symbols: symbols
         )
         _ = registerSyntheticSequenceStub(
@@ -139,8 +139,8 @@ extension DataFlowSemaPhase {
         )
 
         // --- kotlin.system package functions (STDLIB-131/132) ---
-        let kotlinSystemPkg = ensureSyntheticPackage(
-            path: [interner.intern("kotlin"), interner.intern("system")],
+        let kotlinSystemPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("system")],
             symbols: symbols
         )
 
@@ -203,8 +203,8 @@ extension DataFlowSemaPhase {
         )
 
         // --- java.io.File (STDLIB-320) ---
-        let javaIOPkg = ensureSyntheticPackage(
-            path: [interner.intern("java"), interner.intern("io")],
+        let javaIOPkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("java"), interner.intern("io")],
             symbols: symbols
         )
         let fileSymbol = ensureClassSymbol(
@@ -270,11 +270,14 @@ extension DataFlowSemaPhase {
         )
 
         // --- kotlin.time package (STDLIB-230/231) ---
-        let kotlinTimePkg = ensureSyntheticPackage(
-            path: [interner.intern("kotlin"), interner.intern("time")],
+        let kotlinTimePkg = ensureSyntheticPackageHierarchy(
+            fqName: [interner.intern("kotlin"), interner.intern("time")],
             symbols: symbols
         )
 
+        // NOTE: (block: Any) -> Any follows the established synthetic stub pattern used by
+        // measureTimeMillis, synchronized, generateSequence, etc. The runtime entrypoint handles
+        // the actual callable dispatch; type erasure to Any is intentional at the synthetic level.
         registerSyntheticTopLevelFunction(
             named: "measureTime",
             packageFQName: kotlinTimePkg,
@@ -490,8 +493,8 @@ extension DataFlowSemaPhase {
         )
     }
 
-    private func ensureSyntheticPackage(
-        path: [InternedString],
+    private func ensureSyntheticPackageHierarchy(
+        fqName path: [InternedString],
         symbols: SymbolTable
     ) -> [InternedString] {
         var fqName: [InternedString] = []
