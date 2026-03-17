@@ -1148,6 +1148,30 @@ public func kk_list_indexOfLast(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
     return lastIdx
 }
 
+// MARK: - binarySearch with comparison lambda (STDLIB-547)
+
+@_cdecl("kk_list_binarySearch_compare")
+public func kk_list_binarySearch_compare(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var low = 0
+    var high = list.elements.count - 1
+    while low <= high {
+        let mid = (low + high) / 2
+        var thrown = 0
+        let cmp = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[mid], outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let cmpVal = maybeUnbox(cmp)
+        if cmpVal < 0 {
+            low = mid + 1
+        } else if cmpVal > 0 {
+            high = mid - 1
+        } else {
+            return mid
+        }
+    }
+    return -(low + 1)
+}
+
 // MARK: - filterIsInstance (STDLIB-114)
 
 @_cdecl("kk_list_filterIsInstance")

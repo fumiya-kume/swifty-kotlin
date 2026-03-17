@@ -177,7 +177,7 @@
 - [ ] STDLIB-544: `lastOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-545: `singleOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-546: `asReversed()` と `reversed()` の区別 diff 検証
-- [ ] STDLIB-547: `binarySearch(compare)` オーバーロード
+- [x] STDLIB-547: `binarySearch(compare)` オーバーロード
 - [ ] STDLIB-548: `chunked(step)` オプション
 - [ ] STDLIB-549: `windowed(step, partialWindows)` オプション
 - [ ] STDLIB-550: `zip` の Pair 型 diff 検証

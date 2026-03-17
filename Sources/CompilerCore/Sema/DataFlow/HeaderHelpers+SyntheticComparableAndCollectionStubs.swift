@@ -1855,6 +1855,39 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-547: binarySearch(comparison: (T) -> Int) — HOF, comparison lambda
+        let binarySearchCompareName = interner.intern("binarySearch")
+        // Use a distinct FQ name to differentiate from the element-based overload
+        let binarySearchCompareFQName = listFQName + [interner.intern("binarySearch$compare")]
+        if symbols.lookup(fqName: binarySearchCompareFQName) == nil {
+            let comparisonType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: binarySearchCompareName,
+                fqName: binarySearchCompareFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_binarySearch_compare", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [comparisonType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
         // indexOfFirst / indexOfLast (HOF, predicate lambda)
         let predicateType = types.make(.functionType(FunctionType(
             params: [listTypeParamType],

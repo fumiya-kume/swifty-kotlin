@@ -1789,8 +1789,6 @@ extension CallLowerer {
                     "kk_list_elementAtOrNull"
                 case "containsAll":
                     "kk_list_containsAll"
-                case "binarySearch":
-                    "kk_list_binarySearch"
                 default:
                     nil
                 }
@@ -2163,7 +2161,7 @@ extension CallLowerer {
             "forEachIndexed", "mapIndexed", "sumOf", "mapValues", "mapKeys",
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull",
-            "indexOfFirst", "indexOfLast",
+            "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition",
             "takeWhile", "dropWhile",
             "replaceFirstChar",

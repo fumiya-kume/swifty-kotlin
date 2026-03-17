@@ -81,6 +81,7 @@ public extension RuntimeABIExterns {
         kk_list_flatten,
         kk_list_indexOf,
         kk_list_lastIndexOf,
+        kk_list_binarySearch_compare,
         kk_list_indexOfFirst,
         kk_list_indexOfLast,
         kk_list_filterIsInstance,
@@ -1160,6 +1161,13 @@ public extension RuntimeABIExterns {
     static let kk_list_binarySearch = ExternDecl(
         name: "kk_list_binarySearch",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-547: List.binarySearch(comparison: (T) -> Int)
+    static let kk_list_binarySearch_compare = ExternDecl(
+        name: "kk_list_binarySearch_compare",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
