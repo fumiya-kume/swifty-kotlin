@@ -1339,4 +1339,20 @@ final class ListSyntheticMemberLinkTests: XCTestCase {
             XCTAssertEqual(elementType, sema.types.intType)
         }
     }
+
+    func testStringAsIterableImplicitReceiverDoesNotExposeListOnlyMembers() throws {
+        let source = """
+        fun probe(): Char = with("hello") {
+            asIterable().get(0)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runFrontend(ctx)
+            try? SemaPhase().run(ctx)
+
+            assertHasDiagnostic("KSWIFTK-SEMA-0024", in: ctx)
+        }
+    }
 }

@@ -1370,6 +1370,12 @@ final class CallTypeChecker {
                     interner: interner,
                     elementType: sema.types.make(.primitive(.char, .nonNull))
                 )
+                let iterableCharType = makeSyntheticIterableType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: sema.types.make(.primitive(.char, .nonNull))
+                )
                 let charArrayType = makeSyntheticNominalType(
                     symbols: sema.symbols,
                     types: sema.types,
@@ -1390,7 +1396,7 @@ final class CallTypeChecker {
                     case "reversed": sema.types.stringType
                     case "toList": listCharType
                     case "toCharArray": charArrayType
-                    case "asIterable": listCharType
+                    case "asIterable": iterableCharType
                     default: nil
                     }
                 } else if args.count == 1 {
@@ -1492,6 +1498,32 @@ final class CallTypeChecker {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    private func makeSyntheticIterableType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
+            return makeSyntheticListType(
+                symbols: symbols,
+                types: types,
+                interner: interner,
+                elementType: elementType
+            )
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: iterableSymbol,
             args: [.out(elementType)],
             nullability: .nonNull
         )))

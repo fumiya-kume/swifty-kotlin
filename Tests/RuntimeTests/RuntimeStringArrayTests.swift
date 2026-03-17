@@ -241,6 +241,28 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(list?.elements.count, 0)
     }
 
+    func testStringAsIterablePrintDoesNotMaterialiseList() {
+        let strRaw = rawFromRuntimeString("aé🐻")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let baselineObjectCount = kk_runtime_heap_object_count()
+
+        let output = capturePrintln {
+            kk_println_any(UnsafeMutableRawPointer(bitPattern: iterableRaw))
+        }
+
+        XCTAssertEqual(output, "[a, é, 🐻]")
+        XCTAssertEqual(kk_runtime_heap_object_count(), baselineObjectCount)
+    }
+
+    func testStringAsIterableRenderDoesNotMaterialiseList() {
+        let strRaw = rawFromRuntimeString("abc")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let baselineObjectCount = kk_runtime_heap_object_count()
+
+        XCTAssertEqual(runtimeRenderAnyForPrint(iterableRaw), "[a, b, c]")
+        XCTAssertEqual(kk_runtime_heap_object_count(), baselineObjectCount)
+    }
+
     func testStringFunctionsWithNonASCII() {
         let text = "aé🐻"
         XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString(text))), "🐻éa")
