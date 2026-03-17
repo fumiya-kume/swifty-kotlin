@@ -84,6 +84,19 @@ final class CallLowerer {
             return loweredMeasureTime
         }
 
+        if let loweredMeasureNano = lowerMeasureNanoTimeCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredMeasureNano
+        }
+
         if let loweredArrayConstructor = lowerArrayConstructorCallExpr(
             exprID,
             args: args,

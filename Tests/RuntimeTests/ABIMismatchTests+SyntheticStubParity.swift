@@ -28,6 +28,8 @@ extension ABIMismatchTests {
             "kk_sequence_generate",
             "kk_system_exitProcess",
             "kk_system_currentTimeMillis",
+            "kk_system_measureTimeMillis",
+            "kk_system_measureNanoTime",
         ]
 
         for linkName in syntheticLinkNames {

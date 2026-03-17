@@ -343,19 +343,39 @@ final class CallTypeChecker {
            args.count == 1,
            locals[calleeName] == nil
         {
-            let unitType = sema.types.unitType
             let longType = sema.types.longType
-            let blockExpectedType = sema.types.make(.functionType(FunctionType(
-                params: [],
-                returnType: unitType
-            )))
+            // Intentionally passing expectedType:nil — the block's return type is
+            // not constrained here because KIR lowering discards the lambda result.
+            // The synthetic stub already declares the parameter as () -> Unit,
+            // which is enforced during overload resolution.
             _ = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
                 locals: &locals,
-                expectedType: blockExpectedType
+                expectedType: nil
             )
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureTimeMillis)
+            sema.bindings.bindExprType(id, type: longType)
+            return longType
+        }
+
+        // --- Stdlib measureNanoTime { ... } (STDLIB-550) ---
+        if let calleeName,
+           interner.resolve(calleeName) == "measureNanoTime",
+           args.count == 1,
+           locals[calleeName] == nil
+        {
+            let longType = sema.types.longType
+            // Intentionally passing expectedType:nil — same rationale as
+            // measureTimeMillis above: KIR lowering discards the lambda result
+            // and the synthetic stub enforces the () -> Unit contract.
+            _ = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: nil
+            )
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureNanoTime)
             sema.bindings.bindExprType(id, type: longType)
             return longType
         }

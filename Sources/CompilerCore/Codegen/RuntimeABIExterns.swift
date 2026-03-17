@@ -896,6 +896,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_system_nanoTime = ExternDecl(
+        name: "kk_system_nanoTime",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_system_measureTimeMillis = ExternDecl(
+        name: "kk_system_measureTimeMillis",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_system_measureNanoTime = ExternDecl(
+        name: "kk_system_measureNanoTime",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - GC
 
     public static let kk_register_global_root = ExternDecl(
@@ -1932,6 +1950,9 @@ public enum RuntimeABIExterns {
             // System
             kk_system_exitProcess,
             kk_system_currentTimeMillis,
+            kk_system_nanoTime,
+            kk_system_measureTimeMillis,
+            kk_system_measureNanoTime,
             // GC
             kk_register_global_root,
             kk_unregister_global_root,
