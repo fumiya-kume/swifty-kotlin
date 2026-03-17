@@ -1512,7 +1512,7 @@ final class CallTypeChecker {
         )))
     }
 
-    private func makeSyntheticSequenceType(
+    func makeSyntheticSequenceType(
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,

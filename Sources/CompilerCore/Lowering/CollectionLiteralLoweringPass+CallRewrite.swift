@@ -982,6 +982,21 @@ extension CollectionLiteralLoweringPass {
                     // They fall through to virtual-call rewrite or original symbol
                     // linkage.  A future improvement could use the receiver's static
                     // type (from KIR type info) to dispatch regardless of tracking.
+
+                    // When the callee is already the runtime name (e.g., resolved
+                    // via the synthetic stub's externalLinkName), track the result as
+                    // a sequence expression so downstream map/filter/toList rewrites fire.
+                    if callee == lookup.kkListAsSequenceName || callee == lookup.kkArrayAsSequenceName
+                        || callee == lookup.kkSequenceMapName || callee == lookup.kkSequenceFilterName
+                        || callee == lookup.kkSequenceTakeName || callee == lookup.kkSequenceFlatMapName
+                        || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
+                        || callee == lookup.kkSequenceZipName
+                    {
+                        loweredBody.append(instruction)
+                        if let result { sequenceExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
                     if callee == lookup.asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
                         let kkName: InternedString?

@@ -58,6 +58,7 @@ enum KnownCollectionKind {
     case map
     case collection
     case array
+    case sequence
 }
 
 struct KnownCompilerNames {
@@ -452,6 +453,7 @@ struct KnownCompilerNames {
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsCollectionFQName)
             || isMapLikeSymbol(symbol)
+            || isSequenceSymbol(symbol)
     }
 
     func collectionKind(of symbol: SemanticSymbol) -> KnownCollectionKind? {
@@ -472,6 +474,9 @@ struct KnownCompilerNames {
         }
         if symbol.name == collection || symbolMatches(symbol, fqName: kotlinCollectionsCollectionFQName) {
             return .collection
+        }
+        if isSequenceSymbol(symbol) {
+            return .sequence
         }
         return nil
     }

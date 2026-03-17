@@ -1347,23 +1347,54 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
-        // Return type is Sequence<E> — use proper Sequence type if available.
-        let sequenceFQName: [InternedString] = [
-            interner.intern("kotlin"), interner.intern("sequences"), interner.intern("Sequence")
+        // Return type is Sequence<E> — ensure the Sequence interface stub exists.
+        let kotlinSequencesPkg: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("sequences")
         ]
-        let returnType: TypeID
-        if let sequenceSymbol = symbols.lookup(fqName: sequenceFQName) {
-            returnType = types.make(.classType(ClassType(
-                classSymbol: sequenceSymbol,
-                args: [.out(listTypeParamType)],
-                nullability: .nonNull
-            )))
-        } else {
-            // TODO: Replace this fallback with a precondition or register the
-            // Sequence stub earlier so misconfiguration fails loudly instead
-            // of silently degrading the return type.
-            returnType = types.anyType
+        if symbols.lookup(fqName: kotlinSequencesPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("sequences"),
+                fqName: kotlinSequencesPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
         }
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        // Register a type parameter T on Sequence so generic substitution works.
+        let seqTypeParamName = interner.intern("T")
+        let seqTypeParamFQName = sequenceFQName + [seqTypeParamName]
+        if symbols.lookup(fqName: seqTypeParamFQName) == nil {
+            let seqTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: seqTypeParamName,
+                fqName: seqTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            types.setNominalTypeParameterSymbols([seqTypeParamSymbol], for: sequenceSymbol)
+            types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+        }
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: sequenceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
