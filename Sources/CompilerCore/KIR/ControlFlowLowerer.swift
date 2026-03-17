@@ -313,6 +313,12 @@ final class ControlFlowLowerer {
         let catchBodyLabels = catchClauses.map { _ in driver.ctx.makeLoopLabel() }
         let unmatchedCatchLabel = driver.ctx.makeLoopLabel()
 
+        // CODE-001: Push finally block so that return/break/continue inside the
+        // try body or catch bodies will inline the finally code before transferring.
+        if let finallyExpr {
+            driver.ctx.pushFinallyBlock(finallyExpr)
+        }
+
         var bodyInstructions: [KIRInstruction] = []
         let bodyResultID = driver.lowerExpr(
             bodyExpr,
@@ -551,6 +557,12 @@ final class ControlFlowLowerer {
 
             instructions.append(.label(unmatchedCatchLabel))
             instructions.append(.jump(finallyLabel))
+        }
+
+        // CODE-001: Pop the finally block before lowering the finally label itself,
+        // so that the finally body lowering does not see itself on the stack.
+        if finallyExpr != nil {
+            driver.ctx.popFinallyBlock()
         }
 
         instructions.append(.label(finallyLabel))

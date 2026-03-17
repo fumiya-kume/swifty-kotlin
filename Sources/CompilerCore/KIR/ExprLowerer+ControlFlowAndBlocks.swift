@@ -430,6 +430,18 @@ extension ExprLowerer {
             )
 
         case let .breakExpr(label, _):
+            // CODE-001: Inline enclosing finally blocks before break.
+            for finallyExprID in driver.ctx.enclosingFinallyBlocks().reversed() {
+                _ = lowerExpr(
+                    finallyExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let targetLabel: Int32? = if let label {
                 driver.ctx.breakLabel(for: label)
             } else {
@@ -443,6 +455,18 @@ extension ExprLowerer {
             return unit
 
         case let .continueExpr(label, _):
+            // CODE-001: Inline enclosing finally blocks before continue.
+            for finallyExprID in driver.ctx.enclosingFinallyBlocks().reversed() {
+                _ = lowerExpr(
+                    finallyExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
             let targetLabel: Int32? = if let label {
                 driver.ctx.continueLabel(for: label)
             } else {
@@ -916,8 +940,32 @@ extension ExprLowerer {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                // CODE-001: Inline enclosing finally blocks before return.
+                for finallyExprID in driver.ctx.enclosingFinallyBlocks().reversed() {
+                    _ = lowerExpr(
+                        finallyExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
                 instructions.append(.returnValue(lowered))
             } else {
+                // CODE-001: Inline enclosing finally blocks before return.
+                for finallyExprID in driver.ctx.enclosingFinallyBlocks().reversed() {
+                    _ = lowerExpr(
+                        finallyExprID,
+                        ast: ast,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
                 instructions.append(.returnUnit)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.nothingType)

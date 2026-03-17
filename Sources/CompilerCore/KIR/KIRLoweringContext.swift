@@ -15,6 +15,11 @@ final class KIRLoweringContext {
     var currentImplicitReceiverSymbol: SymbolID?
     var currentFunctionSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
+    /// Stack of enclosing finally block AST expression IDs.
+    /// When a `return`, `break`, or `continue` is lowered inside a try-finally,
+    /// the compiler inlines the finally block code before the control-flow transfer
+    /// so that finally semantics are preserved (CODE-001).
+    var finallyBlockStack: [ExprID] = []
     var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
@@ -40,6 +45,7 @@ final class KIRLoweringContext {
         let currentImplicitReceiverSymbol: SymbolID?
         let currentFunctionSymbol: SymbolID?
         let loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)]
+        let finallyBlockStack: [ExprID]
         let nextLoopLabel: Int32
     }
 
@@ -51,6 +57,7 @@ final class KIRLoweringContext {
             currentImplicitReceiverSymbol: currentImplicitReceiverSymbol,
             currentFunctionSymbol: currentFunctionSymbol,
             loopControlStack: loopControlStack,
+            finallyBlockStack: finallyBlockStack,
             nextLoopLabel: nextLoopLabel
         )
     }
@@ -62,6 +69,7 @@ final class KIRLoweringContext {
         currentImplicitReceiverSymbol = snapshot.currentImplicitReceiverSymbol
         currentFunctionSymbol = snapshot.currentFunctionSymbol
         loopControlStack = snapshot.loopControlStack
+        finallyBlockStack = snapshot.finallyBlockStack
         nextLoopLabel = snapshot.nextLoopLabel
     }
 
@@ -81,6 +89,7 @@ final class KIRLoweringContext {
         currentImplicitReceiverSymbol = nil
         currentFunctionSymbol = nil
         loopControlStack.removeAll(keepingCapacity: true)
+        finallyBlockStack.removeAll(keepingCapacity: true)
         nextLoopLabel = 10000
     }
 
@@ -153,6 +162,22 @@ final class KIRLoweringContext {
 
     func pushLoopControl(continueLabel: Int32, breakLabel: Int32, name: InternedString?) {
         loopControlStack.append((continueLabel: continueLabel, breakLabel: breakLabel, name: name))
+    }
+
+    // MARK: - Finally Block Stack (CODE-001)
+
+    func pushFinallyBlock(_ exprID: ExprID) {
+        finallyBlockStack.append(exprID)
+    }
+
+    @discardableResult
+    func popFinallyBlock() -> ExprID? {
+        finallyBlockStack.popLast()
+    }
+
+    /// Returns the current stack of enclosing finally blocks (outermost first).
+    func enclosingFinallyBlocks() -> [ExprID] {
+        finallyBlockStack
     }
 
     @discardableResult
