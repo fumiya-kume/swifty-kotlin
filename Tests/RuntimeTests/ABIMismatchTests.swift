@@ -100,8 +100,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testPrintlnFunctionCount() {
-        // kk_print_any, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 4)
+        // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
+        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 5)
     }
 
     func testIOFunctionCount() {

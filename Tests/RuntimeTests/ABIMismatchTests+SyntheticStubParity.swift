@@ -21,6 +21,7 @@ extension ABIMismatchTests {
             "kk_todo",
             "kk_println_newline",
             "kk_println_any",
+            "kk_print_noarg",
             "kk_print_any",
             "kk_readline",
             "kk_readln",

@@ -58,6 +58,15 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "print",
             packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_print_noarg",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "print",
+            packageFQName: kotlinIOPkg,
             parameters: [(name: "message", type: types.makeNullable(types.anyType))],
             returnType: types.unitType,
             externalLinkName: "kk_print_any",

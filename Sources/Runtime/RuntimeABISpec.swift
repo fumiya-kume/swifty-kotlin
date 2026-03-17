@@ -1173,6 +1173,12 @@ public enum RuntimeABISpec {
             section: "Println"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_print_noarg",
+            parameters: [],
+            returnType: .void,
+            section: "Println"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_println_newline",
             parameters: [],
             returnType: .void,

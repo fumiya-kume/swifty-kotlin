@@ -587,6 +587,13 @@ public func kk_print_any(_ obj: UnsafeMutableRawPointer?) {
     Swift.print(runtimeRenderAnyForPrint(intValue), terminator: "")
 }
 
+/// Runtime support for kotlin.io.print() with no arguments (STDLIB-572).
+/// Prints nothing (no output, no newline).
+@_cdecl("kk_print_noarg")
+public func kk_print_noarg() {
+    // Intentionally empty — Kotlin's print() with no args is a no-op.
+}
+
 /// Runtime support for kotlin.io.println() (STDLIB-063).
 /// Prints a newline with no arguments.
 @_cdecl("kk_println_newline")
