@@ -173,10 +173,14 @@ extension CallLowerer {
             if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let unitType = sema.types.unitType
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
+                let thrownResult = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
                 instructions.append(.call(
                     symbol: callableInfo.symbol, callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments,
-                    result: actionResult, canThrow: true, thrownResult: nil
+                    result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
             }
         }
@@ -239,10 +243,14 @@ extension CallLowerer {
             if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
                 let unitType = sema.types.unitType
                 let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
+                let thrownResult = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
                 instructions.append(.call(
                     symbol: callableInfo.symbol, callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments,
-                    result: actionResult, canThrow: true, thrownResult: nil
+                    result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
             }
         }
