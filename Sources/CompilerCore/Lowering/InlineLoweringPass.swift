@@ -3,10 +3,19 @@ import Foundation
 struct InlineExpansion {
     let instructions: [KIRInstruction]
     let returnedExpr: KIRExprID?
+    /// True when the expansion contains non-local returns that exit the caller.
+    let hasNonLocalReturn: Bool
 }
+
+/// Label offset used for non-local return exit labels to avoid collision
+/// with user labels and coroutine dispatch labels.
+let nonLocalReturnLabelBase: Int32 = 5000
 
 final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
+
+    /// Counter used to generate unique non-local return exit labels.
+    private var nextNonLocalReturnLabel: Int32 = nonLocalReturnLabelBase
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         for decl in module.arena.declarations {
@@ -95,13 +104,54 @@ final class InlineLoweringPass: LoweringPass {
                 continue
             }
 
-            loweredBody.append(contentsOf: expansion.instructions)
-            if let result {
-                if let returnedExpr = expansion.returnedExpr {
-                    aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
-                } else {
-                    let unitExpr = module.arena.appendExpr(.unit, type: unitType)
-                    aliases[result] = unitExpr
+            if expansion.hasNonLocalReturn {
+                // The expansion contains non-local returns from lambdas.
+                // These are already emitted as returnValue/returnUnit in
+                // the expansion instructions (converted from nonLocalReturn).
+                // We need to emit the expansion, then add a skip label so
+                // that the normal (non-return) path can continue past.
+                let exitLabel = nextNonLocalReturnLabel
+                nextNonLocalReturnLabel += 1
+
+                // Rewrite nonLocalReturn instructions in the expansion:
+                // each nonLocalReturn becomes a real return from the caller.
+                // Code after a non-local return in the expansion is dead,
+                // but we emit it all and let the backend handle dead code.
+                for expandedInstruction in expansion.instructions {
+                    switch expandedInstruction {
+                    case let .nonLocalReturn(value):
+                        if let value {
+                            loweredBody.append(.returnValue(resolveAlias(of: value, aliases: aliases)))
+                        } else {
+                            loweredBody.append(.returnUnit)
+                        }
+                    default:
+                        loweredBody.append(expandedInstruction)
+                    }
+                }
+
+                // After the inlined body, place the exit label so normal
+                // control flow (from the inline function's own return)
+                // continues here.
+                loweredBody.append(.label(exitLabel))
+                if let result {
+                    if let returnedExpr = expansion.returnedExpr {
+                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
+                    } else {
+                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                        aliases[result] = unitExpr
+                    }
+                }
+            } else {
+                // No non-local returns -- use the original simple expansion path.
+                loweredBody.append(contentsOf: expansion.instructions)
+                if let result {
+                    if let returnedExpr = expansion.returnedExpr {
+                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
+                    } else {
+                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                        aliases[result] = unitExpr
+                    }
                 }
             }
         }
@@ -135,6 +185,7 @@ final class InlineLoweringPass: LoweringPass {
         var lowered: [KIRInstruction] = []
         lowered.reserveCapacity(inlineTarget.body.count)
         var returnedExpr: KIRExprID?
+        var hasNonLocalReturn = false
 
         for instruction in inlineTarget.body {
             switch instruction {
@@ -164,6 +215,17 @@ final class InlineLoweringPass: LoweringPass {
 
             case let .returnValue(value):
                 returnedExpr = resolveAlias(of: value, aliases: localExprMap)
+
+            case let .nonLocalReturn(value):
+                // Non-local return from a lambda inside this inline function.
+                // Preserve it so the caller's inlineTransform can convert it
+                // to a real return from the enclosing function.
+                hasNonLocalReturn = true
+                if let value {
+                    lowered.append(.nonLocalReturn(resolveAlias(of: value, aliases: localExprMap)))
+                } else {
+                    lowered.append(.nonLocalReturn(nil))
+                }
 
             case let .constValue(result, value):
                 if case let .symbolRef(symbol) = value,
@@ -300,7 +362,11 @@ final class InlineLoweringPass: LoweringPass {
             }
         }
 
-        return InlineExpansion(instructions: lowered, returnedExpr: returnedExpr)
+        return InlineExpansion(
+            instructions: lowered,
+            returnedExpr: returnedExpr,
+            hasNonLocalReturn: hasNonLocalReturn
+        )
     }
 
     private func buildTypeParamTokenValues(
@@ -361,6 +427,9 @@ final class InlineLoweringPass: LoweringPass {
 
         case let .returnValue(value):
             .returnValue(resolveAlias(of: value, aliases: aliases))
+
+        case let .nonLocalReturn(value):
+            .nonLocalReturn(value.map { resolveAlias(of: $0, aliases: aliases) })
 
         case let .returnIfEqual(lhs, rhs):
             .returnIfEqual(

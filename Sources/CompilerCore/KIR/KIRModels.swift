@@ -108,6 +108,10 @@ public enum KIRInstruction: Equatable, Sendable {
     case returnIfEqual(lhs: KIRExprID, rhs: KIRExprID)
     case returnUnit
     case returnValue(KIRExprID)
+    /// Non-local return from a lambda passed to an inline function.
+    /// During inline expansion this is converted into a real return
+    /// from the enclosing (caller) function.
+    case nonLocalReturn(KIRExprID?)
 }
 
 public struct KIRFunction: Sendable {
@@ -376,6 +380,12 @@ public final class KIRModule {
             return "returnUnit"
         case let .returnValue(value):
             return "return r\(value.rawValue)"
+        case let .nonLocalReturn(value):
+            if let value {
+                return "nonLocalReturn r\(value.rawValue)"
+            } else {
+                return "nonLocalReturnUnit"
+            }
         }
     }
 }

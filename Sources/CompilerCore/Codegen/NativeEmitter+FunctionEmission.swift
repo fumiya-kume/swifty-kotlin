@@ -176,7 +176,7 @@ extension NativeEmitter {
                 return [result]
             case .jump, .label, .jumpIfEqual, .jumpIfNotNull,
                  .storeGlobal, .rethrow, .returnIfEqual, .returnUnit, .returnValue,
-                 .beginBlock, .endBlock, .nop:
+                 .beginBlock, .endBlock, .nop, .nonLocalReturn:
                 return []
             }
         }
@@ -1353,6 +1353,19 @@ extension NativeEmitter {
                 }
                 emitFramePop("ret_val_\(instructionIndex)")
                 _ = bindings.buildRet(builder, value: resolveValue(value))
+
+            case let .nonLocalReturn(value):
+                // Non-local returns should have been lowered by InlineLoweringPass.
+                // Treat as a normal return as a safety fallback.
+                guard !bindings.hasTerminator(currentBlock) else {
+                    continue
+                }
+                emitFramePop("ret_nonlocal_\(instructionIndex)")
+                if let value {
+                    _ = bindings.buildRet(builder, value: resolveValue(value))
+                } else {
+                    _ = bindings.buildRet(builder, value: zeroValue)
+                }
             }
         }
 

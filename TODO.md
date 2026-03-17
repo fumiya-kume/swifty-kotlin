@@ -358,8 +358,8 @@
   - 現状: `DataEnumSealedSynthesisPass.swift` に実装が皆無
 - [ ] DATA-004: 複数プロパティを持つ Data Class の `equals()` / `toString()` 修正
   - 現状: `object`（シングルトン）以外ではプロパティを考慮した比較・文字列表現が生成されない
-- [ ] INLINE-001: Inline 関数における非局所 return (Non-local return) の実装
-  - 現状: `InlineLoweringPass.swift` で return が単純にインライン化されるだけで、外側の関数を抜けるセマンティクスがない
+- [x] INLINE-001: Inline 関数における非局所 return (Non-local return) の実装
+  - KIRInstruction に `nonLocalReturn` 命令を追加し、InlineLoweringPass でインライン展開時に caller の `returnValue`/`returnUnit` へ変換する仕組みを実装済み
 - [ ] INLINE-002: Inline 関数に渡されたラムダ引数のインライン展開
   - 現状: ラムダはインライン化されず、単なる間接呼び出しとして残るため overhead が削減されない
 - [ ] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装

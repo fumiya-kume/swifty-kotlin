@@ -266,6 +266,12 @@ public final class CodegenPhase: CompilerPhase {
             return "loadGlobal result=\(result.rawValue) symbol=\(symbol.rawValue)"
         case let .rethrow(value):
             return "rethrow value=\(value.rawValue)"
+        case let .nonLocalReturn(value):
+            if let value {
+                return "nonLocalReturn value=\(value.rawValue)"
+            } else {
+                return "nonLocalReturnUnit"
+            }
         }
     }
 
