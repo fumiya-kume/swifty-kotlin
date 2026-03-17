@@ -1410,6 +1410,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_kclass_create = ExternDecl(
+        name: "kk_kclass_create",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_simple_name = ExternDecl(
+        name: "kk_kclass_simple_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_qualified_name = ExternDecl(
+        name: "kk_kclass_qualified_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_is = ExternDecl(
         name: "kk_op_is",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2174,6 +2192,9 @@ public enum RuntimeABIExterns {
             kk_object_register_itable_method,
             kk_type_token_simple_name,
             kk_type_token_qualified_name,
+            kk_kclass_create,
+            kk_kclass_simple_name,
+            kk_kclass_qualified_name,
             kk_op_is,
             kk_op_cast,
             kk_op_safe_cast,

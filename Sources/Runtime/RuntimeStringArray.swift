@@ -365,6 +365,42 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
     kk_type_token_simple_name(typeToken, nameHint)
 }
 
+/// Creates a `KClass<T>` metadata object from a type token and name hint.
+/// Returns an opaque pointer to a `RuntimeKClassBox`.
+@_cdecl("kk_kclass_create")
+public func kk_kclass_create(_ typeToken: Int, _ nameHint: Int) -> Int {
+    let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
+    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+    }
+    return Int(bitPattern: opaque)
+}
+
+/// Returns the `simpleName` of a `KClass<T>` metadata object.
+/// Delegates to `kk_type_token_simple_name` using the stored token and hint.
+@_cdecl("kk_kclass_simple_name")
+public func kk_kclass_simple_name(_ kclassRaw: Int) -> Int {
+    guard kclassRaw != 0, kclassRaw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: kclassRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let box = Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).takeUnretainedValue()
+    return kk_type_token_simple_name(box.typeToken, box.nameHint)
+}
+
+/// Returns the `qualifiedName` of a `KClass<T>` metadata object.
+/// Delegates to `kk_type_token_qualified_name` using the stored token and hint.
+@_cdecl("kk_kclass_qualified_name")
+public func kk_kclass_qualified_name(_ kclassRaw: Int) -> Int {
+    guard kclassRaw != 0, kclassRaw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: kclassRaw) else {
+        return runtimeNullSentinelInt
+    }
+    let box = Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).takeUnretainedValue()
+    return kk_type_token_qualified_name(box.typeToken, box.nameHint)
+}
+
 @_cdecl("kk_type_register_super")
 public func kk_type_register_super(_ childTypeId: Int, _ superTypeId: Int) -> Int {
     runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(superTypeId))
