@@ -2714,19 +2714,8 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
             callArguments = []
         }
-        let canThrow = loweredCallee == interner.intern("kk_list_random")
-            || loweredCallee == interner.intern("kk_sequence_sortedBy")
-            || loweredCallee == interner.intern("kk_sequence_sumOf")
-            || loweredCallee == interner.intern("kk_sequence_associate")
-            || loweredCallee == interner.intern("kk_sequence_associateBy")
-            || loweredCallee == interner.intern("kk_map_getValue")
-            || loweredCallee == interner.intern("kk_sequence_mapNotNull")
-            || loweredCallee == interner.intern("kk_sequence_mapIndexed")
-            || loweredCallee == interner.intern("kk_sequence_ifEmpty")
-            || loweredCallee == interner.intern("kk_sequence_first")
-            || loweredCallee == interner.intern("kk_sequence_last")
-            || loweredCallee == interner.intern("kk_sequence_firstOrNull")
-            || loweredCallee == interner.intern("kk_sequence_count")
+        let throwingCallees = Self.throwingMemberCalleeNames(interner: interner)
+        let canThrow = throwingCallees.contains(loweredCallee)
         instructions.append(.call(
             symbol: chosenCallee,
             callee: loweredCallee,
@@ -2736,6 +2725,27 @@ extension CallLowerer {
             thrownResult: nil,
             isSuperCall: isSuperCall
         ))
+    }
+
+    /// Cached set of runtime callee names whose `.call` should be emitted
+    /// with `canThrow: true`. Hoisted from per-call `interner.intern()`
+    /// invocations to avoid repeated interning in the hot lowering path.
+    private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
+        Set([
+            interner.intern("kk_list_random"),
+            interner.intern("kk_sequence_sortedBy"),
+            interner.intern("kk_sequence_sumOf"),
+            interner.intern("kk_sequence_associate"),
+            interner.intern("kk_sequence_associateBy"),
+            interner.intern("kk_map_getValue"),
+            interner.intern("kk_sequence_mapNotNull"),
+            interner.intern("kk_sequence_mapIndexed"),
+            interner.intern("kk_sequence_ifEmpty"),
+            interner.intern("kk_sequence_first"),
+            interner.intern("kk_sequence_last"),
+            interner.intern("kk_sequence_firstOrNull"),
+            interner.intern("kk_sequence_count"),
+        ])
     }
 
     private func materializeJoinToStringDefaultArguments(

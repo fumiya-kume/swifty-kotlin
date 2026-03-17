@@ -60,14 +60,26 @@ private final class SequenceTraversalState {
     var zipIndices: [Int: Int] = [:]
 }
 
-// MARK: - Shared error message constants
+// MARK: - Shared constants
+
+/// Hard limit for generator-backed sequence traversal.
+///
+/// Generator sequences (created via `generateSequence`) are potentially infinite,
+/// so we cap evaluation at this many elements to prevent unbounded computation.
+/// Terminal operations like `last()` and `count()` that must consume the entire
+/// sequence will report a `kSequenceGeneratorLimitReached` error via `outThrown`
+/// when this limit is hit.
+///
+/// This limit only applies to generator steps; source-backed sequences (from lists,
+/// arrays, or `sequenceOf`) are not affected.
+private let kSequenceGeneratorHardLimit = 100_000
 
 /// Error message for `first()` / `last()` on an empty sequence.
 private let kEmptySequenceNoSuchElement = "NoSuchElementException: Sequence is empty."
 /// Error message for `reduce` on an empty sequence.
 private let kEmptySequenceCannotReduce = "UnsupportedOperationException: Empty sequence can't be reduced."
 /// Error message when a generator sequence exceeds the traversal hard limit.
-private let kSequenceGeneratorLimitReached = "IllegalStateException: Sequence generator exceeded traversal hard limit."
+private let kSequenceGeneratorLimitReached = "IllegalStateException: Sequence generator exceeded traversal hard limit (\(kSequenceGeneratorHardLimit))."
 
 private func runtimeSequenceTransformElement(
     _ element: Int,
@@ -302,9 +314,8 @@ private func runtimeTraverseSequenceWithState(
             emit(current)
             if state.stop { return }
 
-            let hardLimit = 100_000
             var generatedCount = 1
-            while generatedCount < hardLimit, !state.stop {
+            while generatedCount < kSequenceGeneratorHardLimit, !state.stop {
                 var thrown = 0
                 let next = nextFn(closureRaw, current, &thrown)
                 if thrown != 0 {
@@ -317,7 +328,7 @@ private func runtimeTraverseSequenceWithState(
                 current = unboxed
                 generatedCount += 1
             }
-            if generatedCount >= hardLimit, !state.stop {
+            if generatedCount >= kSequenceGeneratorHardLimit, !state.stop {
                 state.limitReached = true
             }
             return
@@ -445,8 +456,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
         if case let .generator(seed, fnPtr, closureRaw) = step {
             var current = seed
             var generated: [Int] = [current]
-            let hardLimit = 100_000
-            while generated.count < hardLimit {
+            while generated.count < kSequenceGeneratorHardLimit {
                 var thrown = 0
                 let next = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: current, outThrown: &thrown)
                 if thrown != 0 { break }
@@ -911,7 +921,7 @@ public func kk_sequence_firstOrNull(_ seqRaw: Int, _ outThrown: UnsafeMutablePoi
             found = true
         }
     }
-    if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let outThrown, outThrown.pointee != 0 { return runtimeNullSentinelInt }
     return found ? result : runtimeNullSentinelInt
 }
 
