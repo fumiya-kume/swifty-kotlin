@@ -1149,8 +1149,8 @@ public func kk_list_takeWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
             return registerRuntimeObject(RuntimeListBox(elements: result))
         }
     }
-    // Predicate was true for all elements — return original handle.
-    return listRaw
+    // Predicate was true for all elements — always return a new list (Kotlin snapshot semantics).
+    return registerRuntimeObject(RuntimeListBox(elements: list.elements))
 }
 
 @_cdecl("kk_list_dropWhile")
@@ -1181,8 +1181,6 @@ public func kk_list_takeLastWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
         if !satisfied { break }
         count += 1
     }
-    // Short-circuit: predicate matched all elements — return original handle.
-    if count == list.elements.count { return listRaw }
     let result = Array(list.elements.suffix(count))
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
@@ -1198,8 +1196,6 @@ public func kk_list_dropLastWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
         if !satisfied { break }
         dropCount += 1
     }
-    // Short-circuit: nothing to drop — return original handle.
-    if dropCount == 0 { return listRaw }
     // Short-circuit: all elements dropped — return empty list.
     if dropCount == list.elements.count {
         return registerRuntimeObject(RuntimeListBox(elements: []))
