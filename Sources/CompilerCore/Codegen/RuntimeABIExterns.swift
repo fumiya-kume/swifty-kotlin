@@ -135,7 +135,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_synchronized = ExternDecl(
         name: "kk_synchronized",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t* _Nullable"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -161,6 +161,48 @@ public enum RuntimeABIExterns {
 
     public static let kk_duration_toString = ExternDecl(
         name: "kk_duration_toString",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_seconds = ExternDecl(
+        name: "kk_duration_from_seconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_milliseconds = ExternDecl(
+        name: "kk_duration_from_milliseconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_microseconds = ExternDecl(
+        name: "kk_duration_from_microseconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_nanoseconds = ExternDecl(
+        name: "kk_duration_from_nanoseconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_minutes = ExternDecl(
+        name: "kk_duration_from_minutes",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_hours = ExternDecl(
+        name: "kk_duration_from_hours",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_inWholeNanoseconds = ExternDecl(
+        name: "kk_duration_inWholeNanoseconds",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1718,10 +1760,6 @@ public enum RuntimeABIExterns {
             kk_check,
             kk_require_lazy,
             kk_synchronized,
-            kk_measureTime,
-            kk_duration_inWholeMilliseconds,
-            kk_duration_inWholeSeconds,
-            kk_duration_toString,
             kk_check_lazy,
             kk_error,
             kk_todo,
@@ -2001,7 +2039,14 @@ public enum RuntimeABIExterns {
             kk_measureTime,
             kk_duration_inWholeMilliseconds,
             kk_duration_inWholeSeconds,
+            kk_duration_inWholeNanoseconds,
             kk_duration_toString,
+            kk_duration_from_seconds,
+            kk_duration_from_milliseconds,
+            kk_duration_from_microseconds,
+            kk_duration_from_nanoseconds,
+            kk_duration_from_minutes,
+            kk_duration_from_hours,
         ]
         return all
     }()

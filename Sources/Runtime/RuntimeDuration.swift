@@ -1,3 +1,4 @@
+import Dispatch
 import Foundation
 
 // MARK: - kotlin.time.Duration Runtime (STDLIB-230/231)
@@ -15,21 +16,32 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
 
 // MARK: - Duration factory: Int.seconds, Int.milliseconds, etc.
 
+/// Clamp-safe multiplication: returns `Int64.max` / `Int64.min` on overflow
+/// instead of trapping, matching Kotlin's Duration saturation semantics.
+private func saturatingMultiply(_ a: Int64, _ b: Int64) -> Int64 {
+    let (result, overflow) = a.multipliedReportingOverflow(by: b)
+    if overflow {
+        // If signs differ the overflow is negative, otherwise positive
+        return (a ^ b) < 0 ? Int64.min : Int64.max
+    }
+    return result
+}
+
 @_cdecl("kk_duration_from_seconds")
 public func kk_duration_from_seconds(_ value: Int) -> Int {
-    let box = RuntimeDurationBox(nanoseconds: Int64(value) * 1_000_000_000)
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000_000_000))
     return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_duration_from_milliseconds")
 public func kk_duration_from_milliseconds(_ value: Int) -> Int {
-    let box = RuntimeDurationBox(nanoseconds: Int64(value) * 1_000_000)
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000_000))
     return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_duration_from_microseconds")
 public func kk_duration_from_microseconds(_ value: Int) -> Int {
-    let box = RuntimeDurationBox(nanoseconds: Int64(value) * 1_000)
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000))
     return registerRuntimeObject(box)
 }
 
@@ -41,13 +53,13 @@ public func kk_duration_from_nanoseconds(_ value: Int) -> Int {
 
 @_cdecl("kk_duration_from_minutes")
 public func kk_duration_from_minutes(_ value: Int) -> Int {
-    let box = RuntimeDurationBox(nanoseconds: Int64(value) * 60 * 1_000_000_000)
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 60 * 1_000_000_000))
     return registerRuntimeObject(box)
 }
 
 @_cdecl("kk_duration_from_hours")
 public func kk_duration_from_hours(_ value: Int) -> Int {
-    let box = RuntimeDurationBox(nanoseconds: Int64(value) * 3600 * 1_000_000_000)
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 3600 * 1_000_000_000))
     return registerRuntimeObject(box)
 }
 
@@ -114,7 +126,9 @@ public func kk_measureTime(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeM
         outThrown?.pointee = thrown
         return 0
     }
-    let elapsed = Int64(end) - Int64(start)
-    let box = RuntimeDurationBox(nanoseconds: elapsed)
+    // Compute delta in UInt64 first (always non-negative), then clamp to Int64 range.
+    let delta = end &- start
+    let elapsedNs = delta <= UInt64(Int64.max) ? Int64(delta) : Int64.max
+    let box = RuntimeDurationBox(nanoseconds: elapsedNs)
     return registerRuntimeObject(box)
 }
