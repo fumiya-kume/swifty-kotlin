@@ -346,8 +346,8 @@
   - 現状: サスペンド・レジュームが別スレッドで行われた場合にスコープが消失する。コルーチンコンテキストに含めるべき
 - [ ] REFL-004: 実行時リフレクション用メタデータの生成 (MetadataSerializer の活用)
   - 現状: コンパイル時のリンク用メタデータはあるが、実行時に `KClass` からアクセス可能なバイナリメタデータが存在しない
-- [ ] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
-  - 現状: 合成ロジックが未実装。`CallLowerer+EnumStdlib.swift` が参照するシンボルが生成されていない
+- [x] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
+  - 完了: `DataEnumSealedSynthesisPass` が `__enum_static_init_<ClassName>` 関数を合成し、各エントリの KIRGlobal と ordinal 初期化を生成
 - [ ] VAL-001: Value Class のアンボックス化（Unboxing）とマングリングの実装
   - 現状: 単なる class として扱われており、最適化（インライン化）が行われていない
 - [ ] DATA-001: Data Class の `copy()` 生成を完備する
