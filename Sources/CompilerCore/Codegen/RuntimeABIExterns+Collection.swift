@@ -1147,7 +1147,8 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    /// StringBuilder enhancements (STDLIB-311)
+    /// StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
+    /// (object-oriented StringBuilder externs live in RuntimeABIExterns+StringBuilder.swift)
     static let kk_string_builder_append_line = ExternDecl(
         name: "kk_string_builder_append_line",
         parameterTypes: ["intptr_t"],

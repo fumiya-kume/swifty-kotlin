@@ -395,7 +395,7 @@ extension ABILoweringPass {
             interner.intern("kk_result_getOrNull"),
             interner.intern("kk_result_getOrDefault"),
             interner.intern("kk_result_exceptionOrNull"),
-            // StringBuilder enhancements (STDLIB-311)
+            // StringBuilder enhancements (STDLIB-311) — buildString DSL helpers
             interner.intern("kk_string_builder_append"),
             interner.intern("kk_string_builder_append_line"),
             interner.intern("kk_string_builder_append_line_noarg"),
