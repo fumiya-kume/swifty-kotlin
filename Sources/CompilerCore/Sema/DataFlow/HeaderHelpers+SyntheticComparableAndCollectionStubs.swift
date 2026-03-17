@@ -1816,6 +1816,39 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // takeWhile / dropWhile / takeLastWhile / dropLastWhile (STDLIB-440)
+        for (funcName, linkName) in [
+            ("takeWhile", "kk_list_takeWhile"),
+            ("dropWhile", "kk_list_dropWhile"),
+            ("takeLastWhile", "kk_list_takeLastWhile"),
+            ("dropLastWhile", "kk_list_dropLastWhile"),
+        ] {
+            let name = interner.intern(funcName)
+            let fqName = listFQName + [name]
+            if symbols.lookup(fqName: fqName) == nil {
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: name,
+                    fqName: fqName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(linkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [predicateType],
+                        returnType: receiverType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+        }
+
         let sumOfName = interner.intern("sumOf")
         let sumOfFQName = listFQName + [sumOfName]
         if symbols.lookup(fqName: sumOfFQName) == nil {

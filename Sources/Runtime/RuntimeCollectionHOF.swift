@@ -1122,6 +1122,73 @@ public func kk_list_sortedWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: sorted))
 }
 
+// MARK: - takeWhile / dropWhile / takeLastWhile / dropLastWhile (STDLIB-440)
+
+@_cdecl("kk_list_takeWhile")
+public func kk_list_takeWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var result: [Int] = []
+    for elem in list.elements {
+        var thrown = 0
+        let predResult = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(predResult) == 0 { break }
+        result.append(elem)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_list_dropWhile")
+public func kk_list_dropWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var dropping = true
+    var result: [Int] = []
+    for elem in list.elements {
+        if dropping {
+            var thrown = 0
+            let predResult = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+            if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+            if maybeUnbox(predResult) == 0 {
+                dropping = false
+                result.append(elem)
+            }
+        } else {
+            result.append(elem)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_list_takeLastWhile")
+public func kk_list_takeLastWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var count = 0
+    for elem in list.elements.reversed() {
+        var thrown = 0
+        let predResult = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(predResult) == 0 { break }
+        count += 1
+    }
+    let result = Array(list.elements.suffix(count))
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+@_cdecl("kk_list_dropLastWhile")
+public func kk_list_dropLastWhile(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var dropCount = 0
+    for elem in list.elements.reversed() {
+        var thrown = 0
+        let predResult = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(predResult) == 0 { break }
+        dropCount += 1
+    }
+    let result = Array(list.elements.dropLast(dropCount))
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
 // MARK: - onEach / onEachIndexed (STDLIB-300)
 
 @_cdecl("kk_list_onEach")

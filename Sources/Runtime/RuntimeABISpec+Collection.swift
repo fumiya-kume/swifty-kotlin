@@ -1410,6 +1410,10 @@ public extension RuntimeABISpec {
                 hofSpec("kk_list_sortedByDescending"),
                 hofSpec("kk_list_sortedWith"),
                 hofSpec("kk_list_partition"),
+                hofSpec("kk_list_takeWhile"),
+                hofSpec("kk_list_dropWhile"),
+                hofSpec("kk_list_takeLastWhile"),
+                hofSpec("kk_list_dropLastWhile"),
                 RuntimeABIFunctionSpec(
                     name: "kk_list_maxByOrNull",
                     parameters: [

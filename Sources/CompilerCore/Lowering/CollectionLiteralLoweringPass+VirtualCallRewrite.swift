@@ -609,6 +609,8 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.forEachName || callee == lookup.onEachName
             || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName
             || callee == lookup.allName
+            || callee == lookup.takeWhileName || callee == lookup.dropWhileName
+            || callee == lookup.takeLastWhileName || callee == lookup.dropLastWhileName
         else { return false }
         guard arguments.count == 1, listExprIDs.contains(receiver.rawValue) else { return false }
 
@@ -622,12 +624,18 @@ extension CollectionLiteralLoweringPass {
         case lookup.anyName: lookup.kkListAnyName
         case lookup.noneName: lookup.kkListNoneName
         case lookup.allName: lookup.kkListAllName
+        case lookup.takeWhileName: lookup.kkListTakeWhileName
+        case lookup.dropWhileName: lookup.kkListDropWhileName
+        case lookup.takeLastWhileName: lookup.kkListTakeLastWhileName
+        case lookup.dropLastWhileName: lookup.kkListDropLastWhileName
         default: callee
         }
         let needsListTag = callee == lookup.mapName
             || callee == lookup.mapNotNullName
             || callee == lookup.flatMapName || callee == lookup.filterName
             || callee == lookup.onEachName
+            || callee == lookup.takeWhileName || callee == lookup.dropWhileName
+            || callee == lookup.takeLastWhileName || callee == lookup.dropLastWhileName
         let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
         loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
         let hofResult = emitHOFCall(

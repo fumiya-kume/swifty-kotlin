@@ -89,6 +89,10 @@ public extension RuntimeABIExterns {
         kk_list_partition,
         kk_list_onEach,
         kk_list_onEachIndexed,
+        kk_list_takeWhile,
+        kk_list_dropWhile,
+        kk_list_takeLastWhile,
+        kk_list_dropLastWhile,
         kk_map_of,
         kk_map_size,
         kk_map_get,
@@ -1065,6 +1069,31 @@ public extension RuntimeABIExterns {
 
     static let kk_list_onEachIndexed = ExternDecl(
         name: "kk_list_onEachIndexed",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-440: takeWhile / dropWhile / takeLastWhile / dropLastWhile
+    static let kk_list_takeWhile = ExternDecl(
+        name: "kk_list_takeWhile",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_dropWhile = ExternDecl(
+        name: "kk_list_dropWhile",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_takeLastWhile = ExternDecl(
+        name: "kk_list_takeLastWhile",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_dropLastWhile = ExternDecl(
+        name: "kk_list_dropLastWhile",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
