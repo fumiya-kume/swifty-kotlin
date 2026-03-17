@@ -272,7 +272,7 @@
 - [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
-- [ ] STDLIB-618: `builder_dsl.kt` の diff 通過確認
+- [x] STDLIB-618: `builder_dsl.kt` の diff 通過確認
 - [ ] STDLIB-619: `require_check_error.kt` の diff 通過確認
 - [ ] STDLIB-620: `regex_basic.kt` の diff 通過確認
 
