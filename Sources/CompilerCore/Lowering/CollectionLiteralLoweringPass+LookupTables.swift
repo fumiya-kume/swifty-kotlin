@@ -230,6 +230,8 @@ struct CollectionLiteralLookupTables {
     let kkArrayCopyOfName: InternedString
     let kkArrayCopyOfRangeName: InternedString
     let kkArrayFillName: InternedString
+    let kkListAsSequenceName: InternedString
+    let kkArrayAsSequenceName: InternedString
 
     // Range iterator names (emitted by ForLoweringPass)
     let kkRangeIteratorName: InternedString
@@ -629,6 +631,8 @@ struct CollectionLiteralLookupTables {
         kkArrayCopyOfName = interner.intern("kk_array_copyOf")
         kkArrayCopyOfRangeName = interner.intern("kk_array_copyOfRange")
         kkArrayFillName = interner.intern("kk_array_fill")
+        kkListAsSequenceName = interner.intern("kk_list_asSequence")
+        kkArrayAsSequenceName = interner.intern("kk_array_asSequence")
 
         kkRangeIteratorName = interner.intern("kk_range_iterator")
         kkRangeHasNextName = interner.intern("kk_range_hasNext")

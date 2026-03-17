@@ -1450,3 +1450,31 @@ public func kk_array_fill(_ arrayRaw: Int, _ value: Int) -> Int {
     }
     return 0
 }
+
+// MARK: - asSequence (STDLIB-471)
+
+@_cdecl("kk_list_asSequence")
+public func kk_list_asSequence(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_asSequence")
+    }
+    // KNOWN DEVIATION: Kotlin's `Iterable.asSequence()` is lazy and delegates
+    // to `iterator()` at iteration time, so mutations between the call and
+    // iteration are observable.  Our implementation captures a COW snapshot of
+    // `list.elements` (a Swift Array value) at the point of call, so later
+    // mutations to the original list are NOT reflected in the sequence.
+    // This is an intentional simplification for the current runtime; a future
+    // version may store the list reference and obtain an iterator lazily.
+    let seq = RuntimeSequenceBox(steps: [.source(elements: list.elements)])
+    return registerRuntimeObject(seq)
+}
+
+@_cdecl("kk_array_asSequence")
+public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
+    guard let array = runtimeArrayBox(from: arrayRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_asSequence")
+    }
+    // Same COW-snapshot semantics (known Kotlin deviation) as kk_list_asSequence above.
+    let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
+    return registerRuntimeObject(seq)
+}

@@ -32,6 +32,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, arrayExprIDs: &arrayExprIDs,
+            sequenceExprIDs: &sequenceExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -106,10 +107,17 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        if callee == lookup.asSequenceName, arguments.isEmpty {
+        // asSequence() → kk_list_asSequence only when receiver is a tracked list.
+        // Array receivers are handled by rewriteArrayVirtualCall (guarded by arrayExprIDs).
+        // KNOWN LIMITATION: Non-tracked receivers (e.g., List parameter, function return)
+        // fall through so the original symbol linkage is preserved.  A future improvement
+        // could use the receiver's static type for dispatch instead of *ExprIDs membership.
+        if callee == lookup.asSequenceName, arguments.isEmpty,
+           listExprIDs.contains(receiver.rawValue)
+        {
             loweredBody.append(.call(
                 symbol: nil,
-                callee: lookup.kkSequenceFromListName,
+                callee: lookup.kkListAsSequenceName,
                 arguments: [receiver],
                 result: result,
                 canThrow: false,
@@ -1005,8 +1013,13 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
         arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
+        // KNOWN LIMITATION: Only tracked array receivers are rewritten.
+        // Array.asSequence() for non-tracked receivers (e.g., function parameters)
+        // is not rewritten here.  A dedicated Sema stub or type-based dispatch
+        // would be needed to handle those cases.
         guard arrayExprIDs.contains(receiver.rawValue) else { return false }
 
         // toList on array → kk_array_toList (result is List)
@@ -1150,6 +1163,20 @@ extension CollectionLiteralLoweringPass {
                 canThrow: false,
                 thrownResult: nil
             ))
+            return true
+        }
+
+        // asSequence on array → kk_array_asSequence (STDLIB-471)
+        if callee == lookup.asSequenceName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkArrayAsSequenceName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
             return true
         }
 

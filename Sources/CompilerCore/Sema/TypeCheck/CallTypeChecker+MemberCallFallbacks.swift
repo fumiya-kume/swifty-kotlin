@@ -343,7 +343,7 @@ extension CallTypeChecker {
             sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
         }
 
-        let resultType = collectionFallbackResultType(
+        var resultType = collectionFallbackResultType(
             memberName: calleeName,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
@@ -352,6 +352,21 @@ extension CallTypeChecker {
             sema: sema,
             interner: interner
         )
+        // When the receiver is Sequence, sequence-returning operations (map,
+        // filter, etc.) should return Sequence<E> so the KIR builder's
+        // sequence HOF handler recognises chained calls (STDLIB-471).
+        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
+        if isSequenceReceiver,
+           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
+           resultType == sema.types.anyType
+        {
+            resultType = makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: receiverElementType
+            )
+        }
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -1103,6 +1118,29 @@ extension CallTypeChecker {
         }
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
         return isCollectionLikeType(receiverType, sema: sema, interner: interner)
+    }
+
+    private func isSequenceLikeReceiver(
+        receiverID: ExprID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        return isSequenceLikeType(receiverType, sema: sema, interner: interner)
+    }
+
+    private func isSequenceLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isSequenceSymbol(symbol)
     }
 
     func isCollectionLikeType(

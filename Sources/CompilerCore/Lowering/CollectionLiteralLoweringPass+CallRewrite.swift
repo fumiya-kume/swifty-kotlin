@@ -973,22 +973,62 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite sequence member calls (STDLIB-003) ---
-                    // asSequence() on collection → kk_sequence_from_list
-                    // Sema already restricts asSequence to collection expressions,
-                    // so we rewrite unconditionally (no listExprIDs guard needed).
-                    if callee == lookup.asSequenceName, arguments.count == 1 {
-                        let receiverID = arguments[0]
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: lookup.kkSequenceFromListName,
-                            arguments: [receiverID],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
+                    // --- Rewrite sequence member calls (STDLIB-003 / STDLIB-471) ---
+                    // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
+                    // Guard with arrayExprIDs / listExprIDs so we only rewrite
+                    // receivers whose concrete collection kind is known.
+                    // KNOWN LIMITATION: Non-tracked receivers (e.g., a List<Int>
+                    // parameter or a function return value) are not rewritten here.
+                    // They fall through to virtual-call rewrite or original symbol
+                    // linkage.  A future improvement could use the receiver's static
+                    // type (from KIR type info) to dispatch regardless of tracking.
+
+                    // When the callee is already the runtime name (e.g., resolved
+                    // via the synthetic stub's externalLinkName), track the result as
+                    // a sequence expression so downstream map/filter/toList rewrites fire.
+                    if callee == lookup.kkListAsSequenceName || callee == lookup.kkArrayAsSequenceName
+                        || callee == lookup.kkSequenceMapName || callee == lookup.kkSequenceFilterName
+                        || callee == lookup.kkSequenceTakeName || callee == lookup.kkSequenceFlatMapName
+                        || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
+                        || callee == lookup.kkSequenceZipName
+                    {
+                        loweredBody.append(instruction)
                         if let result { sequenceExprIDs.insert(result.rawValue) }
                         continue
+                    }
+
+                    if callee == lookup.asSequenceName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if arrayExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkArrayAsSequenceName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        } else if listExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListAsSequenceName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        } else {
+                            // Receiver is not a tracked list/array literal — skip
+                            // the rewrite and let virtual-call rewrite or the
+                            // original symbol linkage handle it. Still mark the
+                            // result as a sequence so downstream map/filter/take
+                            // rewrites fire correctly for chained calls.
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                        }
                     }
 
                     // map/filter on sequence → kk_sequence_map/kk_sequence_filter

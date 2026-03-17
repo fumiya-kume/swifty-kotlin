@@ -223,7 +223,10 @@ extension CollectionLiteralLoweringPass {
     ) {
         guard let result, !arguments.isEmpty else { return }
         let src = arguments[0].rawValue
-        if callee == lookup.asSequenceName {
+        if callee == lookup.asSequenceName
+            || callee == lookup.kkListAsSequenceName
+            || callee == lookup.kkArrayAsSequenceName
+        {
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.toListName, sequenceExprIDs.contains(src) {
             listExprIDs.insert(result.rawValue)
@@ -238,6 +241,15 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.distinctName || callee == lookup.zipName,
             sequenceExprIDs.contains(src)
         {
+            sequenceExprIDs.insert(result.rawValue)
+        } else if callee == lookup.kkSequenceMapName || callee == lookup.kkSequenceFilterName
+            || callee == lookup.kkSequenceTakeName || callee == lookup.kkSequenceFlatMapName
+            || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
+            || callee == lookup.kkSequenceZipName
+        {
+            // The KIR builder's sequence HOF handler may emit kk_sequence_*
+            // directly.  Track these results as sequence expressions so that
+            // downstream toList/filter rewrites fire correctly.
             sequenceExprIDs.insert(result.rawValue)
         } else if callee == lookup.groupByName || callee == lookup.associateByName
             || callee == lookup.associateWithName || callee == lookup.associateName,
