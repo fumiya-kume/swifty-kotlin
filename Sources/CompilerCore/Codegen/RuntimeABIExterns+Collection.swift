@@ -81,6 +81,7 @@ public extension RuntimeABIExterns {
         kk_list_distinct,
         kk_list_distinctBy,
         kk_list_shuffled,
+        kk_list_shuffled_random,
         kk_list_random,
         kk_list_randomOrNull,
         kk_list_flatten,
@@ -1019,6 +1020,12 @@ public extension RuntimeABIExterns {
     static let kk_list_shuffled = ExternDecl(
         name: "kk_list_shuffled",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_shuffled_random = ExternDecl(
+        name: "kk_list_shuffled_random",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

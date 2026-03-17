@@ -1546,6 +1546,53 @@ extension DataFlowSemaPhase {
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
+
+        // shuffled(random: Random) overload (STDLIB-531)
+        // Registered explicitly because registerMember short-circuits when
+        // the no-arg overload already occupies the name.
+        do {
+            let shuffledRandomName = interner.intern("shuffled")
+            let shuffledRandomFQName = listFQName + [shuffledRandomName]
+            // Look up the Random class type from kotlin.random.Random.
+            let kotlinRandomPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("random")]
+            let randomClassName = interner.intern("Random")
+            let randomFQName = kotlinRandomPkg + [randomClassName]
+            if let randomSymbol = symbols.lookup(fqName: randomFQName) {
+                let randomParamType = types.make(.classType(ClassType(
+                    classSymbol: randomSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                // Only register if there isn't already an overload with this exact signature.
+                let alreadyRegistered = symbols.lookupAll(fqName: shuffledRandomFQName).contains { symbolID in
+                    guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                    return sig.parameterTypes == [randomParamType]
+                }
+                if !alreadyRegistered {
+                    let memberSymbol = symbols.define(
+                        kind: .function,
+                        name: shuffledRandomName,
+                        fqName: shuffledRandomFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic]
+                    )
+                    symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                    symbols.setExternalLinkName("kk_list_shuffled_random", for: memberSymbol)
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: receiverType,
+                            parameterTypes: [randomParamType],
+                            returnType: listReturnType,
+                            typeParameterSymbols: [listTypeParamSymbol],
+                            classTypeParameterCount: 1
+                        ),
+                        for: memberSymbol
+                    )
+                }
+            }
+        }
+
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
 
         // chunked(size: Int): List<List<E>> and windowed(size: Int, step: Int): List<List<E>>

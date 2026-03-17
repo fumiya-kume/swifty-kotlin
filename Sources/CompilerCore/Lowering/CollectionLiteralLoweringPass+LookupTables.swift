@@ -117,6 +117,7 @@ struct CollectionLiteralLookupTables {
     let kkListDistinctName: InternedString
     let kkListDistinctByName: InternedString
     let kkListShuffledName: InternedString
+    let kkListShuffledRandomName: InternedString
     let kkListPlusElementName: InternedString
     let kkListPlusCollectionName: InternedString
     let kkListMinusElementName: InternedString
@@ -574,6 +575,7 @@ struct CollectionLiteralLookupTables {
         kkListDistinctName = interner.intern("kk_list_distinct")
         kkListDistinctByName = interner.intern("kk_list_distinctBy")
         kkListShuffledName = interner.intern("kk_list_shuffled")
+        kkListShuffledRandomName = interner.intern("kk_list_shuffled_random")
         kkListPlusElementName = interner.intern("kk_list_plus_element")
         kkListPlusCollectionName = interner.intern("kk_list_plus_collection")
         kkListMinusElementName = interner.intern("kk_list_minus_element")
