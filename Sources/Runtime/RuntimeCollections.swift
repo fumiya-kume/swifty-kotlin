@@ -39,7 +39,7 @@ private func runtimeUnboxCollectionElements(_ otherRaw: Int) -> [Int] {
     if let otherList = runtimeListBox(from: otherRaw) {
         return otherList.elements
     }
-    return []
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: unexpected runtime handle in runtimeUnboxCollectionElements – neither set nor list")
 }
 
 func runtimeDeduplicatePreservingOrder(_ elements: [Int]) -> [Int] {
@@ -307,6 +307,10 @@ public func kk_list_subtract(_ listRaw: Int, _ otherRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: result))
 }
 
+// NOTE: This duplicates the logic in kk_list_to_set.  Kept as a separate
+// entry point because Kotlin distinguishes toSet() and toHashSet() at the API
+// level.  If deduplication/boxing logic changes, consider delegating to a
+// shared helper to avoid drift.
 @_cdecl("kk_list_toHashSet")
 public func kk_list_toHashSet(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -718,7 +722,11 @@ public func kk_set_toList(_ setRaw: Int) -> Int {
 public func kk_set_intersect(_ setRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
     let otherElements = runtimeUnboxCollectionElements(otherRaw)
-    let otherKeys = Set(otherElements.map { RuntimeElementKey(value: $0) })
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
     let result = selfElements.filter { elem in
         otherKeys.contains(RuntimeElementKey(value: elem))
     }
@@ -737,7 +745,11 @@ public func kk_set_union(_ setRaw: Int, _ otherRaw: Int) -> Int {
 public func kk_set_subtract(_ setRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
     let otherElements = runtimeUnboxCollectionElements(otherRaw)
-    let otherKeys = Set(otherElements.map { RuntimeElementKey(value: $0) })
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
     let result = selfElements.filter { elem in
         !otherKeys.contains(RuntimeElementKey(value: elem))
     }
