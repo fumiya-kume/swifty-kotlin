@@ -760,11 +760,12 @@ extension CallLowerer {
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
                 if nonNullReceiverType == intType {
-                    let runtimeName: String = switch calleeStr {
-                    case "countOneBits": "kk_int_countOneBits"
-                    case "countLeadingZeroBits": "kk_int_countLeadingZeroBits"
-                    case "countTrailingZeroBits": "kk_int_countTrailingZeroBits"
-                    default: "kk_int_countOneBits"
+                    let runtimeName: String
+                    switch calleeStr {
+                    case "countOneBits": runtimeName = "kk_int_countOneBits"
+                    case "countLeadingZeroBits": runtimeName = "kk_int_countLeadingZeroBits"
+                    case "countTrailingZeroBits": runtimeName = "kk_int_countTrailingZeroBits"
+                    default: fatalError("unreachable: calleeStr already guarded to countOneBits|countLeadingZeroBits|countTrailingZeroBits")
                     }
                     instructions.append(.call(
                         symbol: nil,

@@ -183,7 +183,11 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Int.countOneBits(): Int (STDLIB-501)
+        // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
+        guard let kotlinPackageSymbol = symbols.lookup(fqName: kotlinPkg) else {
+            return
+        }
+
         registerSyntheticCoercionFunction(
             named: "countOneBits",
             externalLinkName: "kk_int_countOneBits",
@@ -191,12 +195,11 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.intType,
             packageFQName: kotlinPkg,
-            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            packageSymbol: kotlinPackageSymbol,
             symbols: symbols,
             interner: interner
         )
 
-        // Int.countLeadingZeroBits(): Int (STDLIB-501)
         registerSyntheticCoercionFunction(
             named: "countLeadingZeroBits",
             externalLinkName: "kk_int_countLeadingZeroBits",
@@ -204,12 +207,11 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.intType,
             packageFQName: kotlinPkg,
-            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            packageSymbol: kotlinPackageSymbol,
             symbols: symbols,
             interner: interner
         )
 
-        // Int.countTrailingZeroBits(): Int (STDLIB-501)
         registerSyntheticCoercionFunction(
             named: "countTrailingZeroBits",
             externalLinkName: "kk_int_countTrailingZeroBits",
@@ -217,7 +219,7 @@ extension DataFlowSemaPhase {
             parameters: [],
             returnType: types.intType,
             packageFQName: kotlinPkg,
-            packageSymbol: symbols.lookup(fqName: kotlinPkg)!,
+            packageSymbol: kotlinPackageSymbol,
             symbols: symbols,
             interner: interner
         )
