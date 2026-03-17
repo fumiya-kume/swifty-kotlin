@@ -242,7 +242,7 @@
 
 #### J. kotlin.io.Closeable / その他
 
-- [ ] STDLIB-594: `Closeable.use { }` の Runtime 実装（try-finally 相当）
+- [x] STDLIB-594: `Closeable.use { }` の Runtime 実装（try-finally 相当）
 - [ ] STDLIB-595: `UInt.toInt` / `toLong` / `toUInt` の diff 検証
 - [ ] STDLIB-596: `ULong.toLong` / `toULong` の diff 検証
 - [ ] STDLIB-597: `RegexOption.MULTILINE` の互換性確認
