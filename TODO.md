@@ -216,8 +216,8 @@
 - [x] STDLIB-574: `ByteArray.decodeToString()` の実装（デフォルト UTF-8、charset 引数なし）
 - [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
-- [ ] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
-- [ ] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
+- [x] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
+- [x] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-579: `buildString.appendLine` の完全性確認
 - [ ] STDLIB-580: `buildString.appendRange` の完全性確認
 - [x] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）

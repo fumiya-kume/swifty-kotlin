@@ -1687,6 +1687,18 @@ extension CallLowerer {
                     ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
                 case "commonSuffixWith":
                     ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
+                case "padStart":
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_padStart", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_padStart_default", [loweredReceiverID, loweredArgIDs[0]])
+                    }
+                case "padEnd":
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_padEnd", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_padEnd_default", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 default:
                     nil
                 }
