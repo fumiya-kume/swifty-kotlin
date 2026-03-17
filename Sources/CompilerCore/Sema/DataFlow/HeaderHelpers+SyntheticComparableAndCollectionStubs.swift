@@ -1325,6 +1325,11 @@ extension DataFlowSemaPhase {
     }
 
     /// Register `List<E>.asSequence(): Sequence<E>` member stub (STDLIB-471).
+    ///
+    /// Note: `Array<E>.asSequence()` does not need a separate Sema stub because
+    /// array member calls are resolved through the collection member-call
+    /// fallback path (`CallTypeChecker+MemberCallFallbacks`), and the lowering
+    /// pass routes to `kk_array_asSequence` via `arrayExprIDs` tracking.
     private func registerListAsSequenceMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1366,6 +1371,10 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
         symbols.setExternalLinkName("kk_list_asSequence", for: memberSymbol)
+        // typeParameterSymbols lists all type params (class + function-level).
+        // classTypeParameterCount: 1 marks the first entry (E) as belonging to
+        // List<E>, not to asSequence itself.  This is the standard pattern used
+        // by every other List member stub in this file.
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,

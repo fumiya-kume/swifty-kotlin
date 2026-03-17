@@ -1458,6 +1458,11 @@ public func kk_list_asSequence(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid list handle in kk_list_asSequence")
     }
+    // Intentional snapshot: `list.elements` is a Swift Array value, so this
+    // captures a COW snapshot at the point of call.  This matches Kotlin's
+    // `Iterable.asSequence()` semantics where the returned sequence iterates
+    // over the elements present at the time of the call.  Mutations to the
+    // original list after this point are not reflected in the sequence.
     let seq = RuntimeSequenceBox(steps: [.source(elements: list.elements)])
     return registerRuntimeObject(seq)
 }
@@ -1467,6 +1472,7 @@ public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_asSequence")
     }
+    // Same COW-snapshot semantics as kk_list_asSequence above.
     let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
     return registerRuntimeObject(seq)
 }
