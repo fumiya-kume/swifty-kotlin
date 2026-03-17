@@ -381,16 +381,16 @@ struct KnownCompilerNames {
             || name == charArray
     }
 
-    /// Returns true if the resolved name is a primitive array constructor type name
-    /// (e.g. "Array", "IntArray", "LongArray", etc.).
-    func isPrimitiveArrayConstructorTypeName(_ resolved: String) -> Bool {
-        switch resolved {
-        case "Array", "IntArray", "LongArray", "DoubleArray",
-             "FloatArray", "BooleanArray", "CharArray":
-            return true
-        default:
-            return false
-        }
+    /// Returns true if the name is a primitive array constructor type name
+    /// (e.g. Array, IntArray, LongArray, etc.).
+    func isPrimitiveArrayConstructorTypeName(_ name: InternedString) -> Bool {
+        name == array
+            || name == intArray
+            || name == longArray
+            || name == doubleArray
+            || name == floatArray
+            || name == booleanArray
+            || name == charArray
     }
 
     /// The set of stdlib collection factory function names used for marking

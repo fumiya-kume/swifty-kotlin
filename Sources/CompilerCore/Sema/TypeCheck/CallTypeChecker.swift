@@ -322,7 +322,7 @@ final class CallTypeChecker {
 
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086) ---
         if let calleeName,
-           knownNames.isPrimitiveArrayConstructorTypeName(interner.resolve(calleeName)),
+           knownNames.isPrimitiveArrayConstructorTypeName(calleeName),
            args.count == 2,
            locals[calleeName] == nil
         {
@@ -1182,7 +1182,9 @@ final class CallTypeChecker {
                 }
                 sema.bindings.bindExprType(id, type: collectionType)
                 return collectionType
-            } else { switch name {
+            }
+
+            switch name {
             case "Regex":
                 guard args.count == 1 else {
                     break
@@ -1267,7 +1269,7 @@ final class CallTypeChecker {
                 return sbType
             default:
                 break
-            } }
+            }
         }
         // STDLIB-004: Inside receiver lambdas (run/apply/with), unqualified
         // function calls resolve as member calls on the implicit receiver.
