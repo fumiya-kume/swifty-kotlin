@@ -1467,6 +1467,6 @@ public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
     guard let array = runtimeArrayBox(from: arrayRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid array handle in kk_array_asSequence")
     }
-    let seq = RuntimeSequenceBox(steps: [.source(elements: Array(array.elements))])
+    let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
     return registerRuntimeObject(seq)
 }

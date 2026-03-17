@@ -1342,8 +1342,20 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
-        // Return type is Sequence<E> — resolve as anyType (erased) since
-        // Sequence is in kotlin.sequences and lowering rewrites the call.
+        // Return type is Sequence<E> — use proper Sequence type if available.
+        let sequenceFQName: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("sequences"), interner.intern("Sequence")
+        ]
+        let returnType: TypeID
+        if let sequenceSymbol = symbols.lookup(fqName: sequenceFQName) {
+            returnType = types.make(.classType(ClassType(
+                classSymbol: sequenceSymbol,
+                args: [.out(listTypeParamType)],
+                nullability: .nonNull
+            )))
+        } else {
+            returnType = types.anyType
+        }
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
@@ -1358,7 +1370,7 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [],
-                returnType: types.anyType,
+                returnType: returnType,
                 typeParameterSymbols: [listTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
