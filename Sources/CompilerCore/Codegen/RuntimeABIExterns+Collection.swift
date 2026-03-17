@@ -18,6 +18,10 @@ public extension RuntimeABIExterns {
         kk_list_to_mutable_list,
         kk_list_joinToString,
         kk_list_to_set,
+        kk_list_intersect,
+        kk_list_union,
+        kk_list_subtract,
+        kk_list_toHashSet,
         kk_list_toMap,
         kk_list_subList,
         kk_set_of,
@@ -302,6 +306,31 @@ public extension RuntimeABIExterns {
 
     static let kk_list_to_set = ExternDecl(
         name: "kk_list_to_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-510: List.intersect / union / subtract / toHashSet
+    static let kk_list_intersect = ExternDecl(
+        name: "kk_list_intersect",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_union = ExternDecl(
+        name: "kk_list_union",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_subtract = ExternDecl(
+        name: "kk_list_subtract",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_toHashSet = ExternDecl(
+        name: "kk_list_toHashSet",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

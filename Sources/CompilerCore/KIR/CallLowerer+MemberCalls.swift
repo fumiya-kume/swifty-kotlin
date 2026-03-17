@@ -97,6 +97,7 @@ extension CallLowerer {
         "firstOrNull", "lastOrNull",
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
+        "toHashSet",
         "containsAll", "binarySearch",
         "addFirst", "addLast",
         "to", // FUNC-002

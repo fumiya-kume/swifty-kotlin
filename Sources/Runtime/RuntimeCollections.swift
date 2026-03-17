@@ -1,12 +1,56 @@
 import Foundation
 
+/// Hashable wrapper around an opaque runtime value (`Int`) that uses
+/// `kk_any_hashCode` / `runtimeValuesEqual` so it can be stored in a
+/// Swift `Set` for O(1) amortised lookups.
+private struct RuntimeElementKey: Hashable {
+    let value: Int
+
+    func hash(into hasher: inout Hasher) {
+        // Normalise ±0.0 so that IEEE-equal values (-0.0 == +0.0) produce
+        // identical hashes, keeping the Hashable contract intact.
+        var h = kk_any_hashCode(value, 0)
+        if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+            let isObj = runtimeStorage.withLock { $0.objectPointers.contains(UInt(bitPattern: ptr)) }
+            if isObj {
+                if let fb = tryCast(ptr, to: RuntimeFloatBox.self), fb.value == 0 {
+                    h = kk_float_to_bits(Float(0))
+                } else if let db = tryCast(ptr, to: RuntimeDoubleBox.self), db.value == 0 {
+                    let bits = Int64(bitPattern: UInt64(bitPattern: Int64(kk_double_to_bits(Double(0)))))
+                    h = Int(truncatingIfNeeded: bits ^ (bits >> 32))
+                }
+            }
+        }
+        hasher.combine(h)
+    }
+
+    static func == (lhs: RuntimeElementKey, rhs: RuntimeElementKey) -> Bool {
+        runtimeValuesEqual(lhs.value, rhs.value)
+    }
+}
+
+/// Extracts elements from an opaque `otherRaw` handle that may be either a
+/// set or a list box.  Used by intersect / union / subtract to avoid
+/// duplicating the same unboxing logic.
+private func runtimeUnboxCollectionElements(_ otherRaw: Int) -> [Int] {
+    if let otherSet = runtimeSetBox(from: otherRaw) {
+        return otherSet.elements
+    }
+    if let otherList = runtimeListBox(from: otherRaw) {
+        return otherList.elements
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: unexpected runtime handle in runtimeUnboxCollectionElements – neither set nor list")
+}
+
 func runtimeDeduplicatePreservingOrder(_ elements: [Int]) -> [Int] {
-    var seen: [Int] = []
+    var seen = Set<RuntimeElementKey>()
+    seen.reserveCapacity(elements.count)
     var unique: [Int] = []
     unique.reserveCapacity(elements.count)
-    for element in elements where !seen.contains(where: { runtimeValuesEqual($0, element) }) {
-        seen.append(element)
-        unique.append(element)
+    for element in elements {
+        if seen.insert(RuntimeElementKey(value: element)).inserted {
+            unique.append(element)
+        }
     }
     return unique
 }
@@ -217,6 +261,58 @@ public func kk_list_toMap(_ listRaw: Int) -> Int {
 
 @_cdecl("kk_list_to_set")
 public func kk_list_to_set(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
+}
+
+// MARK: - List intersect / union / subtract / toHashSet (STDLIB-510)
+
+@_cdecl("kk_list_intersect")
+public func kk_list_intersect(_ listRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeListBox(from: listRaw)?.elements ?? []
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
+    let result = runtimeDeduplicatePreservingOrder(selfElements).filter { elem in
+        otherKeys.contains(RuntimeElementKey(value: elem))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}
+
+@_cdecl("kk_list_union")
+public func kk_list_union(_ listRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeListBox(from: listRaw)?.elements ?? []
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    let combined = selfElements + otherElements
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(combined)))
+}
+
+@_cdecl("kk_list_subtract")
+public func kk_list_subtract(_ listRaw: Int, _ otherRaw: Int) -> Int {
+    let selfElements = runtimeListBox(from: listRaw)?.elements ?? []
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
+    }
+    let result = runtimeDeduplicatePreservingOrder(selfElements).filter { elem in
+        !otherKeys.contains(RuntimeElementKey(value: elem))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: result))
+}
+
+// NOTE: This duplicates the logic in kk_list_to_set.  Kept as a separate
+// entry point because Kotlin distinguishes toSet() and toHashSet() at the API
+// level.  If deduplication/boxing logic changes, consider delegating to a
+// shared helper to avoid drift.
+@_cdecl("kk_list_toHashSet")
+public func kk_list_toHashSet(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         return registerRuntimeObject(RuntimeSetBox(elements: []))
     }
@@ -625,14 +721,14 @@ public func kk_set_toList(_ setRaw: Int) -> Int {
 @_cdecl("kk_set_intersect")
 public func kk_set_intersect(_ setRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
-    var otherElements: [Int] = []
-    if let otherSet = runtimeSetBox(from: otherRaw) {
-        otherElements = otherSet.elements
-    } else if let otherList = runtimeListBox(from: otherRaw) {
-        otherElements = otherList.elements
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
     }
     let result = selfElements.filter { elem in
-        otherElements.contains(where: { runtimeValuesEqual($0, elem) })
+        otherKeys.contains(RuntimeElementKey(value: elem))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: result))
 }
@@ -640,12 +736,7 @@ public func kk_set_intersect(_ setRaw: Int, _ otherRaw: Int) -> Int {
 @_cdecl("kk_set_union")
 public func kk_set_union(_ setRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
-    var otherElements: [Int] = []
-    if let otherSet = runtimeSetBox(from: otherRaw) {
-        otherElements = otherSet.elements
-    } else if let otherList = runtimeListBox(from: otherRaw) {
-        otherElements = otherList.elements
-    }
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
     let combined = selfElements + otherElements
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(combined)))
 }
@@ -653,14 +744,14 @@ public func kk_set_union(_ setRaw: Int, _ otherRaw: Int) -> Int {
 @_cdecl("kk_set_subtract")
 public func kk_set_subtract(_ setRaw: Int, _ otherRaw: Int) -> Int {
     let selfElements = runtimeSetBox(from: setRaw)?.elements ?? []
-    var otherElements: [Int] = []
-    if let otherSet = runtimeSetBox(from: otherRaw) {
-        otherElements = otherSet.elements
-    } else if let otherList = runtimeListBox(from: otherRaw) {
-        otherElements = otherList.elements
+    let otherElements = runtimeUnboxCollectionElements(otherRaw)
+    var otherKeys = Set<RuntimeElementKey>()
+    otherKeys.reserveCapacity(otherElements.count)
+    for elem in otherElements {
+        otherKeys.insert(RuntimeElementKey(value: elem))
     }
     let result = selfElements.filter { elem in
-        !otherElements.contains(where: { runtimeValuesEqual($0, elem) })
+        !otherKeys.contains(RuntimeElementKey(value: elem))
     }
     return registerRuntimeObject(RuntimeSetBox(elements: result))
 }

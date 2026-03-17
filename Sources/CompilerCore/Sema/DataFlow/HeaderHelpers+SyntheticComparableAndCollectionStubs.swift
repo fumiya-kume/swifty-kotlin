@@ -183,7 +183,8 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
             listInterfaceSymbol: listInterfaceSymbol,
-            mapInterfaceSymbol: mapSymbols.mapSymbol
+            mapInterfaceSymbol: mapSymbols.mapSymbol,
+            collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
         registerSyntheticMutableMapStub(
@@ -1050,6 +1051,114 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// STDLIB-510: Register `List<T>.intersect(other)`, `.union(other)`, `.subtract(other)` returning `Set<T>`.
+    /// Kotlin stdlib declares the parameter as `Iterable<T>`.
+    private func registerListSetOperationMembers(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        setInterfaceSymbol: SymbolID,
+        iterableInterfaceSymbol: SymbolID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let paramType = types.make(.classType(ClassType(
+            classSymbol: iterableInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        for (memberName, externName) in [
+            ("intersect", "kk_list_intersect"),
+            ("union", "kk_list_union"),
+            ("subtract", "kk_list_subtract"),
+        ] {
+            let internedName = interner.intern(memberName)
+            let memberFQName = listFQName + [internedName]
+            guard symbols.lookup(fqName: memberFQName) == nil else { continue }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: internedName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externName, for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [paramType],
+                    returnType: returnType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+    }
+
+    /// STDLIB-510: Register `List<T>.toHashSet()` returning `Set<T>`.
+    private func registerListToHashSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        setInterfaceSymbol: SymbolID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toHashSet")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let setType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        // NOTE: Kotlin's toHashSet() returns MutableSet<T> (HashSet<T>), but we
+        // model it as Set<T> because mutable collection types are not yet
+        // supported in the type system.  This is a known limitation.
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_toHashSet", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: setType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     private func registerListToMapMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1746,7 +1855,8 @@ extension DataFlowSemaPhase {
         interner: StringInterner,
         kotlinCollectionsPkg: [InternedString],
         listInterfaceSymbol: SymbolID,
-        mapInterfaceSymbol: SymbolID
+        mapInterfaceSymbol: SymbolID,
+        collectionInterfaceSymbol: SymbolID
     ) {
         guard let listTypeParamSymbol = symbols.lookup(
             fqName: kotlinCollectionsPkg + [interner.intern("List"), interner.intern("E")]
@@ -1781,6 +1891,24 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             listInterfaceSymbol: listInterfaceSymbol,
             mapInterfaceSymbol: mapInterfaceSymbol
+        )
+        let iterableSymbolForOps = symbols.lookup(
+            fqName: kotlinCollectionsPkg + [interner.intern("Iterable")]
+        ) ?? collectionInterfaceSymbol
+        registerListSetOperationMembers(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType,
+            setInterfaceSymbol: setInterfaceSymbol,
+            iterableInterfaceSymbol: iterableSymbolForOps
+        )
+        registerListToHashSetMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType,
+            setInterfaceSymbol: setInterfaceSymbol
         )
     }
 
