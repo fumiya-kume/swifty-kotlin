@@ -1,5 +1,3 @@
-import Foundation
-
 /// Synthetic stubs for java.io.File type (STDLIB-320/321/322/323).
 extension DataFlowSemaPhase {
     func registerSyntheticFileIOStubs(
@@ -25,13 +23,32 @@ extension DataFlowSemaPhase {
         let listOfFileType: TypeID = if let listSym = listSymbol {
             types.make(.classType(ClassType(
                 classSymbol: listSym,
-                args: [.invariant(fileType)],
+                args: [.out(fileType)],
                 nullability: .nonNull
             )))
         } else {
             types.anyType
         }
         let nullableListOfFileType = types.makeNullable(listOfFileType)
+
+        // List<String> type for readLines return
+        let listOfStringType: TypeID = if let listSym = listSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: listSym,
+                args: [.out(types.stringType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        // (String) -> Unit function type for forEachLine action parameter
+        let stringToUnitType = types.make(.functionType(FunctionType(
+            params: [types.stringType],
+            returnType: types.unitType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
 
         // MARK: - File(String) constructor (STDLIB-320)
 
@@ -129,7 +146,7 @@ extension DataFlowSemaPhase {
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [],
-            returnType: types.anyType,
+            returnType: listOfStringType,
             symbols: symbols,
             interner: interner
         )
@@ -141,7 +158,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_file_forEachLine",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
-            parameters: [("action", types.anyType)],
+            parameters: [("action", stringToUnitType)],
             returnType: types.unitType,
             symbols: symbols,
             interner: interner
@@ -295,6 +312,22 @@ extension DataFlowSemaPhase {
                 && existingSignature.parameterTypes == parameters.map(\.type)
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            // Update the signature if the return type diverges from the intended type
+            if let existingSignature = symbols.functionSignature(for: existing),
+               existingSignature.returnType != returnType {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSignature.receiverType,
+                        parameterTypes: existingSignature.parameterTypes,
+                        returnType: returnType,
+                        isSuspend: existingSignature.isSuspend,
+                        valueParameterSymbols: existingSignature.valueParameterSymbols,
+                        valueParameterHasDefaultValues: existingSignature.valueParameterHasDefaultValues,
+                        valueParameterIsVararg: existingSignature.valueParameterIsVararg
+                    ),
+                    for: existing
+                )
+            }
             return
         }
 
