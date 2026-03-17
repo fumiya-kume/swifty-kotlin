@@ -1619,3 +1619,121 @@ private func runtimeIsObjectPointer(_ pointer: UnsafeMutableRawPointer) -> Bool 
         state.objectPointers.contains(UInt(bitPattern: pointer))
     }
 }
+
+// MARK: - STDLIB-319: String.toBigDecimal() / String.toBigInteger()
+
+/// BigDecimal and BigInteger are represented as boxed strings in KSwiftK.
+/// The runtime validates the format and stores the string representation.
+final class RuntimeBigNumberBox {
+    let value: String
+    let kind: BigNumberKind
+
+    enum BigNumberKind { case decimal, integer }
+
+    init(value: String, kind: BigNumberKind) {
+        self.value = value
+        self.kind = kind
+    }
+}
+
+/// Locale-independent validation for BigDecimal format matching Kotlin/Java:
+/// `[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?`
+///
+/// Note: We intentionally avoid `Decimal(string:)` or `NumberFormatter` because
+/// Foundation's decimal parsing is locale-sensitive (e.g., decimal separator may
+/// vary by locale). Instead, this hand-written parser validates against a fixed
+/// POSIX-style grammar that matches Kotlin/JVM BigDecimal semantics.
+private func isValidBigDecimalFormat(_ s: String) -> Bool {
+    var i = s.startIndex
+    guard i < s.endIndex else { return false }
+    // Optional leading sign
+    if s[i] == "+" || s[i] == "-" {
+        i = s.index(after: i)
+        guard i < s.endIndex else { return false }
+    }
+    // Must have at least one digit before or after the decimal point
+    let digitStart = i
+    while i < s.endIndex, s[i] >= "0", s[i] <= "9" { i = s.index(after: i) }
+    let hasIntPart = i > digitStart
+    var hasFracPart = false
+    if i < s.endIndex, s[i] == "." {
+        i = s.index(after: i)
+        let fracStart = i
+        while i < s.endIndex, s[i] >= "0", s[i] <= "9" { i = s.index(after: i) }
+        hasFracPart = i > fracStart
+    }
+    guard hasIntPart || hasFracPart else { return false }
+    // Optional exponent
+    if i < s.endIndex, s[i] == "e" || s[i] == "E" {
+        i = s.index(after: i)
+        guard i < s.endIndex else { return false }
+        if s[i] == "+" || s[i] == "-" {
+            i = s.index(after: i)
+            guard i < s.endIndex else { return false }
+        }
+        let expStart = i
+        while i < s.endIndex, s[i] >= "0", s[i] <= "9" { i = s.index(after: i) }
+        guard i > expStart else { return false }
+    }
+    return i == s.endIndex
+}
+
+@_cdecl("kk_string_toBigDecimal")
+public func kk_string_toBigDecimal(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let str = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_toBigDecimal received invalid string handle")
+    }
+    // No whitespace trimming: Kotlin/JVM throws NumberFormatException on
+    // leading/trailing whitespace, so we validate the raw string as-is.
+    guard isValidBigDecimalFormat(str) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
+        return 0
+    }
+    let box = RuntimeBigNumberBox(value: str, kind: .decimal)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_string_toBigInteger")
+public func kk_string_toBigInteger(_ strRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let str = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_toBigInteger received invalid string handle")
+    }
+    // Validate integer format: [+-]?\d+ (optional single leading sign, then digits).
+    // No whitespace trimming: Kotlin/JVM throws NumberFormatException on
+    // leading/trailing whitespace, so we validate the raw string as-is.
+    var idx = str.startIndex
+    guard idx < str.endIndex else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
+        return 0
+    }
+    if str[idx] == "+" || str[idx] == "-" {
+        idx = str.index(after: idx)
+    }
+    let digitStart = idx
+    while idx < str.endIndex, str[idx] >= "0", str[idx] <= "9" {
+        idx = str.index(after: idx)
+    }
+    let isValid = idx > digitStart && idx == str.endIndex
+    guard isValid else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "NumberFormatException: For input string: \"\(str)\"")
+        return 0
+    }
+    let box = RuntimeBigNumberBox(value: str, kind: .integer)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_bignum_toString")
+public func kk_bignum_toString(_ numRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: numRaw),
+          let box = tryCast(ptr, to: RuntimeBigNumberBox.self)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bignum_toString received invalid BigNumber handle")
+    }
+    return runtimeMakeStringRaw(box.value)
+}

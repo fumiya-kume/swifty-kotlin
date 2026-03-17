@@ -189,7 +189,7 @@ public func kk_vetoable_get_value(_ handle: Int) -> Int {
     return box.currentValue
 }
 
-/// Invokes the callback **before** the value is changed; non-zero → accept, zero → veto.
+/// Invokes the callback **before** the value is changed; non-zero -> accept, zero -> veto.
 @_cdecl("kk_vetoable_set_value")
 public func kk_vetoable_set_value(_ handle: Int, _ newValue: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
