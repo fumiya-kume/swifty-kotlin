@@ -94,6 +94,9 @@ extension DataFlowSemaPhase {
         )
 
         // Trigonometric functions (STDLIB-430)
+        // TODO: Kotlin's kotlin.math exposes Float overloads for all trig functions
+        // (sin, cos, tan, asin, acos, atan, atan2). Add Float variants once
+        // the runtime ABI supports them (tracked as part of STDLIB-430).
         registerSyntheticMathTopLevelFunction(
             named: "sin",
             packageFQName: kotlinMathPkg,

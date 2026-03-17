@@ -60,6 +60,10 @@ public extension RuntimeABISpec {
             section: "Math"
         ),
         // Trigonometric functions (STDLIB-430)
+        // Note: Each trig entry is spelled out individually rather than generated
+        // programmatically. This repetition is intentional — the ABI spec must be
+        // a plain, auditable list so that any ABI-breaking change is visible in
+        // code review as a concrete diff, not hidden behind abstraction.
         RuntimeABIFunctionSpec(
             name: "kk_math_sin",
             parameters: [
