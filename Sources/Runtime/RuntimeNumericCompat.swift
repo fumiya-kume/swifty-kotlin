@@ -375,6 +375,29 @@ public func kk_math_acos_float(_ value: Int) -> Int {
 @_cdecl("kk_math_atan_float")
 public func kk_math_atan_float(_ value: Int) -> Int {
     kk_float_to_bits(atan(kk_bits_to_float(value)))
+// MARK: - STDLIB-500~509: Float trig/math overloads
+//
+// Float values are transported as bit-encoded Int (intptr_t), just like Double.
+// The low 32 bits carry the IEEE 754 single-precision payload; upper bits are
+// ignored on decode and zero-extended on encode.
+public func kk_math_sin_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(sinf(f))
+public func kk_math_cos_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(cosf(f))
+public func kk_math_tan_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(tanf(f))
+public func kk_math_asin_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(asinf(f))
+public func kk_math_acos_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(acosf(f))
+public func kk_math_atan_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(atanf(f))
 }
 
 @_cdecl("kk_math_atan2_float")
@@ -400,6 +423,21 @@ public func kk_math_ceil_float(_ value: Int) -> Int {
 @_cdecl("kk_math_floor_float")
 public func kk_math_floor_float(_ value: Int) -> Int {
     kk_float_to_bits(floor(kk_bits_to_float(value)))
+    let fy = kk_bits_to_float(y)
+    let fx = kk_bits_to_float(x)
+    return kk_float_to_bits(atan2f(fy, fx))
+public func kk_math_sqrt_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(sqrtf(f))
+public func kk_math_round_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(roundf(f))
+public func kk_math_ceil_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(ceilf(f))
+public func kk_math_floor_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(floorf(f))
 }
 
 // MARK: - STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
@@ -518,6 +556,34 @@ public func kk_double_roundToLong(_ value: Int) -> Int {
     if d >= Double(Int64.max) { return Int(Int64.max) }
     if d <= Double(Int64.min) { return Int(Int64.min) }
     return Int(Int64(d))
+public func kk_float_roundToInt(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    if f.isNaN { return 0 }
+    let rounded = roundf(f)
+    if rounded >= Float(Int32.max) { return Int(Int32.max) }
+    if rounded <= Float(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(rounded))
+public func kk_double_roundToInt(_ v: Int) -> Int {
+    let d = kk_bits_to_double(v)
+    if d.isNaN { return 0 }
+    let rounded = round(d)
+    if rounded >= Double(Int32.max) { return Int(Int32.max) }
+    if rounded <= Double(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(rounded))
+public func kk_float_roundToLong(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    if f.isNaN { return 0 }
+    let rounded = roundf(f)
+    if rounded >= Float(Int64.max) { return Int(Int64.max) }
+    if rounded <= Float(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(rounded))
+public func kk_double_roundToLong(_ v: Int) -> Int {
+    let d = kk_bits_to_double(v)
+    if d.isNaN { return 0 }
+    let rounded = round(d)
+    if rounded >= Double(Int64.max) { return Int(Int64.max) }
+    if rounded <= Double(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(rounded))
 }
 
 // MARK: - STDLIB-512~513: ulp / nextUp / nextDown extensions
@@ -550,6 +616,18 @@ public func kk_float_nextUp(_ value: Int) -> Int {
 @_cdecl("kk_float_nextDown")
 public func kk_float_nextDown(_ value: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(value).nextDown)
+public func kk_double_ulp(_ v: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(v).ulp)
+public func kk_double_nextUp(_ v: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(v).nextUp)
+public func kk_double_nextDown(_ v: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(v).nextDown)
+public func kk_float_ulp(_ v: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(v).ulp)
+public func kk_float_nextUp(_ v: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(v).nextUp)
+public func kk_float_nextDown(_ v: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(v).nextDown)
 }
 
 @_cdecl("kk_println_char")
