@@ -210,8 +210,8 @@ public func kk_string_builder_append(_ strRaw: Int) -> Int {
     return 0
 }
 
-@_cdecl("kk_string_builder_appendLine")
-public func kk_string_builder_appendLine(_ valueRaw: Int) -> Int {
+@_cdecl("kk_string_builder_append_line")
+public func kk_string_builder_append_line(_ valueRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: valueRaw),
           let string = extractString(from: pointer)
     else {
@@ -222,8 +222,8 @@ public func kk_string_builder_appendLine(_ valueRaw: Int) -> Int {
     return 0
 }
 
-@_cdecl("kk_string_builder_appendLine_noarg")
-public func kk_string_builder_appendLine_noarg() -> Int {
+@_cdecl("kk_string_builder_append_line_noarg")
+public func kk_string_builder_append_line_noarg() -> Int {
     runtimeBuilderState.appendString("\n")
     return 0
 }

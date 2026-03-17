@@ -66,16 +66,16 @@ public func kk_string_builder_length_prop(_ sbRaw: Int) -> Int {
     return sb.value.utf8.count
 }
 
-@_cdecl("kk_string_builder_appendLine_obj")
-public func kk_string_builder_appendLine_obj(_ sbRaw: Int, _ valueRaw: Int) -> Int {
+@_cdecl("kk_string_builder_append_line_obj")
+public func kk_string_builder_append_line_obj(_ sbRaw: Int, _ valueRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     sb.value.append(runtimeElementToString(valueRaw))
     sb.value.append("\n")
     return sbRaw
 }
 
-@_cdecl("kk_string_builder_appendLine_noarg_obj")
-public func kk_string_builder_appendLine_noarg_obj(_ sbRaw: Int) -> Int {
+@_cdecl("kk_string_builder_append_line_noarg_obj")
+public func kk_string_builder_append_line_noarg_obj(_ sbRaw: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     sb.value.append("\n")
     return sbRaw

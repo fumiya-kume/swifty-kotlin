@@ -1791,7 +1791,7 @@ extension CallLowerer {
                 let runtimeCallee: String? = if calleeName == sbNames.append {
                     "kk_string_builder_append_obj"
                 } else if calleeName == sbNames.appendLine {
-                    "kk_string_builder_appendLine_obj"
+                    "kk_string_builder_append_line_obj"
                 } else if calleeName == sbNames.deleteCharAt {
                     "kk_string_builder_deleteCharAt"
                 } else if calleeName == sbNames.get {
@@ -1967,7 +1967,7 @@ extension CallLowerer {
                 } else if calleeName == sbNames.reverse {
                     "kk_string_builder_reverse"
                 } else if calleeName == sbNames.appendLine {
-                    "kk_string_builder_appendLine_noarg_obj"
+                    "kk_string_builder_append_line_noarg_obj"
                 } else if calleeName == sbNames.length {
                     "kk_string_builder_length_prop"
                 } else {

@@ -824,7 +824,7 @@ public extension RuntimeABISpec {
         ),
         // StringBuilder enhancements (STDLIB-311)
         RuntimeABIFunctionSpec(
-            name: "kk_string_builder_appendLine",
+            name: "kk_string_builder_append_line",
             parameters: [
                 RuntimeABIParameter(name: "valueRaw", type: .intptr),
             ],
@@ -832,7 +832,7 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_string_builder_appendLine_noarg",
+            name: "kk_string_builder_append_line_noarg",
             parameters: [],
             returnType: .intptr,
             section: "Collection"
