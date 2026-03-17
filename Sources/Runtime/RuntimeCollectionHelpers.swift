@@ -278,6 +278,9 @@ func runtimeElementToString(_ elem: Int) -> String {
         let third = runtimeElementToString(tripleBox.third)
         return "(\(first), \(second), \(third))"
     }
+    if let rangeBox = tryCast(ptr, to: RuntimeRangeBox.self) {
+        return "\(rangeBox.first)..\(rangeBox.last)"
+    }
     if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"
