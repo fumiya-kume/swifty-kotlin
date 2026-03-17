@@ -303,17 +303,12 @@ final class CallTypeChecker {
            args.count == 1,
            locals[calleeName] == nil
         {
-            let unitType = sema.types.unitType
             let longType = sema.types.longType
-            let blockExpectedType = sema.types.make(.functionType(FunctionType(
-                params: [],
-                returnType: unitType
-            )))
             _ = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
                 locals: &locals,
-                expectedType: blockExpectedType
+                expectedType: nil
             )
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureTimeMillis)
             sema.bindings.bindExprType(id, type: longType)
@@ -326,17 +321,12 @@ final class CallTypeChecker {
            args.count == 1,
            locals[calleeName] == nil
         {
-            let unitType = sema.types.unitType
             let longType = sema.types.longType
-            let blockExpectedType = sema.types.make(.functionType(FunctionType(
-                params: [],
-                returnType: unitType
-            )))
             _ = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
                 locals: &locals,
-                expectedType: blockExpectedType
+                expectedType: nil
             )
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureNanoTime)
             sema.bindings.bindExprType(id, type: longType)

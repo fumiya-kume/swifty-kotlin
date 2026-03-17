@@ -176,7 +176,7 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: callableInfo.symbol, callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments,
-                    result: actionResult, canThrow: false, thrownResult: nil
+                    result: actionResult, canThrow: true, thrownResult: nil
                 ))
             }
         }
@@ -242,7 +242,7 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: callableInfo.symbol, callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments,
-                    result: actionResult, canThrow: false, thrownResult: nil
+                    result: actionResult, canThrow: true, thrownResult: nil
                 ))
             }
         }

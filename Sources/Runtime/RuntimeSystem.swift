@@ -20,13 +20,13 @@ public func kk_system_currentTimeMillis() -> Int {
 /// Returns monotonic uptime in nanoseconds (not wall-clock).
 @_cdecl("kk_system_nanoTime")
 public func kk_system_nanoTime() -> Int {
-    Int(DispatchTime.now().uptimeNanoseconds)
+    Int(clamping: DispatchTime.now().uptimeNanoseconds)
 }
 
 // MARK: - measureTimeMillis / measureNanoTime (STDLIB-550)
 
 /// Runtime support for kotlin.system.measureTimeMillis { block }.
-/// Executes [block], measures elapsed wall-clock time and returns it in milliseconds.
+/// Executes [block], measures elapsed monotonic time and returns it in milliseconds.
 @_cdecl("kk_system_measureTimeMillis")
 public func kk_system_measureTimeMillis(
     _ fnPtr: Int,
@@ -40,11 +40,11 @@ public func kk_system_measureTimeMillis(
         return 0
     }
     let end = DispatchTime.now().uptimeNanoseconds
-    return Int((end - start) / 1_000_000)
+    return Int(clamping: (end - start) / 1_000_000)
 }
 
 /// Runtime support for kotlin.system.measureNanoTime { block }.
-/// Executes [block], measures elapsed wall-clock time and returns it in nanoseconds.
+/// Executes [block], measures elapsed monotonic time and returns it in nanoseconds.
 @_cdecl("kk_system_measureNanoTime")
 public func kk_system_measureNanoTime(
     _ fnPtr: Int,
@@ -58,5 +58,5 @@ public func kk_system_measureNanoTime(
         return 0
     }
     let end = DispatchTime.now().uptimeNanoseconds
-    return Int(end - start)
+    return Int(clamping: end - start)
 }
