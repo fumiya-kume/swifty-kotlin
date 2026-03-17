@@ -204,6 +204,10 @@ public extension RuntimeABIExterns {
         kk_arraydeque_size,
         kk_arraydeque_isEmpty,
         kk_arraydeque_toString,
+        kk_list_groupingBy,
+        kk_grouping_eachCount,
+        kk_grouping_fold,
+        kk_grouping_reduce,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1443,5 +1447,30 @@ public extension RuntimeABIExterns {
         name: "kk_arraydeque_toString",
         parameterTypes: ["intptr_t"],
         returnType: "void *"
+    )
+
+    /// Grouping (STDLIB-285/286)
+    static let kk_list_groupingBy = ExternDecl(
+        name: "kk_list_groupingBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_eachCount = ExternDecl(
+        name: "kk_grouping_eachCount",
+        parameterTypes: ["intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_fold = ExternDecl(
+        name: "kk_grouping_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_grouping_reduce = ExternDecl(
+        name: "kk_grouping_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
     )
 }
