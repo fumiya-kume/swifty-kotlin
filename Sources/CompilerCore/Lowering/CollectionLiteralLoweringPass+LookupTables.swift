@@ -39,6 +39,8 @@ struct CollectionLiteralLookupTables {
     let kkListIteratorName: InternedString
     let kkListIteratorHasNextName: InternedString
     let kkListIteratorNextName: InternedString
+    let kkListIteratorHasPreviousName: InternedString
+    let kkListIteratorPreviousName: InternedString
     let kkListToStringName: InternedString
     let kkSetOfName: InternedString
     let kkSetSizeName: InternedString
@@ -270,6 +272,10 @@ struct CollectionLiteralLookupTables {
     let addName: InternedString
     let removeName: InternedString
 
+    // ListIterator member names (STDLIB-538)
+    let hasPreviousName: InternedString
+    let previousName: InternedString
+
     // Higher-order collection member names (FUNC-003)
     let mapName: InternedString
     let filterName: InternedString
@@ -450,6 +456,8 @@ struct CollectionLiteralLookupTables {
         kkListIteratorName = interner.intern("kk_list_iterator")
         kkListIteratorHasNextName = interner.intern("kk_list_iterator_hasNext")
         kkListIteratorNextName = interner.intern("kk_list_iterator_next")
+        kkListIteratorHasPreviousName = interner.intern("kk_list_iterator_hasPrevious")
+        kkListIteratorPreviousName = interner.intern("kk_list_iterator_previous")
         kkListToStringName = interner.intern("kk_list_to_string")
         kkSetOfName = interner.intern("kk_set_of")
         kkSetSizeName = interner.intern("kk_set_size")
@@ -669,6 +677,10 @@ struct CollectionLiteralLookupTables {
         countName = interner.intern("count")
         addName = interner.intern("add")
         removeName = interner.intern("remove")
+
+        // ListIterator member names (STDLIB-538)
+        hasPreviousName = interner.intern("hasPrevious")
+        previousName = interner.intern("previous")
 
         mapName = interner.intern("map")
         filterName = interner.intern("filter")

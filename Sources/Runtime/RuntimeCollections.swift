@@ -180,6 +180,26 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
     return value
 }
 
+@_cdecl("kk_list_iterator_hasPrevious")
+public func kk_list_iterator_hasPrevious(_ iterRaw: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    return iter.index > 0 ? 1 : 0
+}
+
+@_cdecl("kk_list_iterator_previous")
+public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
+    guard let iter = runtimeListIteratorBox(from: iterRaw) else {
+        return 0
+    }
+    guard iter.index > 0 else {
+        return 0
+    }
+    iter.index -= 1
+    return iter.elements[iter.index]
+}
+
 @_cdecl("kk_list_to_string")
 public func kk_list_to_string(_ listRaw: Int) -> UnsafeMutableRawPointer {
     guard let list = runtimeListBox(from: listRaw) else {
