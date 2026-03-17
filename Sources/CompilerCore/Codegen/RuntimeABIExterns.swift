@@ -1824,6 +1824,24 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_readText = ExternDecl(
+        name: "kk_file_readText",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_file_writeText = ExternDecl(
+        name: "kk_file_writeText",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_file_readLines = ExternDecl(
+        name: "kk_file_readLines",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let kk_file_forEachLine = ExternDecl(
         name: "kk_file_forEachLine",
         parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
@@ -1832,6 +1850,9 @@ public enum RuntimeABIExterns {
 
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
+        kk_file_readText,
+        kk_file_writeText,
+        kk_file_readLines,
         kk_file_forEachLine,
     ]
 
