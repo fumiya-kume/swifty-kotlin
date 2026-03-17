@@ -999,21 +999,10 @@ extension CollectionLiteralLoweringPass {
 
                     if callee == lookup.asSequenceName, arguments.count == 1 {
                         let receiverID = arguments[0]
-                        let kkName: InternedString?
                         if arrayExprIDs.contains(receiverID.rawValue) {
-                            kkName = lookup.kkArrayAsSequenceName
-                        } else if listExprIDs.contains(receiverID.rawValue) {
-                            kkName = lookup.kkListAsSequenceName
-                        } else {
-                            // Receiver is not a tracked list/array literal — fall
-                            // through and let the virtual-call rewrite (or the
-                            // original symbol linkage) handle it.
-                            kkName = nil
-                        }
-                        if let kkName {
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: kkName,
+                                callee: lookup.kkArrayAsSequenceName,
                                 arguments: [receiverID],
                                 result: result,
                                 canThrow: false,
@@ -1021,6 +1010,24 @@ extension CollectionLiteralLoweringPass {
                             ))
                             if let result { sequenceExprIDs.insert(result.rawValue) }
                             continue
+                        } else if listExprIDs.contains(receiverID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListAsSequenceName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        } else {
+                            // Receiver is not a tracked list/array literal — skip
+                            // the rewrite and let virtual-call rewrite or the
+                            // original symbol linkage handle it. Still mark the
+                            // result as a sequence so downstream map/filter/take
+                            // rewrites fire correctly for chained calls.
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
                         }
                     }
 
