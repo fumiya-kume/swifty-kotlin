@@ -228,6 +228,17 @@ public func kk_math_round(_ value: Int) -> Int {
 }
 
 // Trigonometric functions (STDLIB-430)
+//
+// Architecture assumption: Double bit-pattern transport via Int/intptr_t relies
+// on Int being 64-bit (MemoryLayout<Int>.size == 8) so that the full 64-bit
+// IEEE 754 payload is preserved. This is true on all Apple Silicon and x86_64
+// targets; 32-bit platforms are not supported by this runtime.
+//
+// Note: Each @_cdecl wrapper is spelled out individually rather than factored
+// through a shared closure helper. This repetition is intentional — keeping
+// every entry point as a plain, self-contained function ensures the C ABI
+// surface is auditable in code review and prevents optimizer surprises from
+// indirect-call thunks in hot numeric paths.
 
 @_cdecl("kk_math_sin")
 public func kk_math_sin(_ value: Int) -> Int {
