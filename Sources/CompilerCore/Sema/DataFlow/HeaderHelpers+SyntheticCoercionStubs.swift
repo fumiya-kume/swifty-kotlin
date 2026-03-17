@@ -66,6 +66,120 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- Long coercion (STDLIB-500) ---
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_long_coerceIn",
+            receiverType: types.longType,
+            parameters: [
+                (name: "minimumValue", type: types.longType),
+                (name: "maximumValue", type: types.longType),
+            ],
+            returnType: types.longType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_long_coerceAtLeast",
+            receiverType: types.longType,
+            parameters: [(name: "minimumValue", type: types.longType)],
+            returnType: types.longType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_long_coerceAtMost",
+            receiverType: types.longType,
+            parameters: [(name: "maximumValue", type: types.longType)],
+            returnType: types.longType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- Double coercion (STDLIB-500) ---
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_double_coerceIn",
+            receiverType: types.doubleType,
+            parameters: [
+                (name: "minimumValue", type: types.doubleType),
+                (name: "maximumValue", type: types.doubleType),
+            ],
+            returnType: types.doubleType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_double_coerceAtLeast",
+            receiverType: types.doubleType,
+            parameters: [(name: "minimumValue", type: types.doubleType)],
+            returnType: types.doubleType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_double_coerceAtMost",
+            receiverType: types.doubleType,
+            parameters: [(name: "maximumValue", type: types.doubleType)],
+            returnType: types.doubleType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- Float coercion (STDLIB-500) ---
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_float_coerceIn",
+            receiverType: types.floatType,
+            parameters: [
+                (name: "minimumValue", type: types.floatType),
+                (name: "maximumValue", type: types.floatType),
+            ],
+            returnType: types.floatType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtLeast",
+            externalLinkName: "kk_float_coerceAtLeast",
+            receiverType: types.floatType,
+            parameters: [(name: "minimumValue", type: types.floatType)],
+            returnType: types.floatType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceAtMost",
+            externalLinkName: "kk_float_coerceAtMost",
+            receiverType: types.floatType,
+            parameters: [(name: "maximumValue", type: types.floatType)],
+            returnType: types.floatType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticCoercionFunction(

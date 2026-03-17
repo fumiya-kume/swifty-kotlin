@@ -823,16 +823,24 @@ extension CallLowerer {
             }
         }
 
-        // Int.coerceIn(min, max) (STDLIB-150)
+        // Int/Long/Double/Float.coerceIn(min, max) (STDLIB-150, STDLIB-500)
         if interner.resolve(calleeName) == "coerceIn", args.count == 2 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
+            let doubleType = sema.types.make(.primitive(.double, .nonNull))
+            let floatType = sema.types.make(.primitive(.float, .nonNull))
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-            if nonNullReceiverType == intType || nonNullReceiverType == longType {
+            let coerceInName: String?
+            if nonNullReceiverType == intType { coerceInName = "kk_int_coerceIn" }
+            else if nonNullReceiverType == longType { coerceInName = "kk_long_coerceIn" }
+            else if nonNullReceiverType == doubleType { coerceInName = "kk_double_coerceIn" }
+            else if nonNullReceiverType == floatType { coerceInName = "kk_float_coerceIn" }
+            else { coerceInName = nil }
+            if let runtimeName = coerceInName {
                 instructions.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_int_coerceIn"),
+                    callee: interner.intern(runtimeName),
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
                     result: result,
                     canThrow: false,
@@ -842,19 +850,27 @@ extension CallLowerer {
             }
         }
 
-        // Int.coerceAtLeast(min) / Int.coerceAtMost(max) (STDLIB-150)
+        // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
                 let longType = sema.types.make(.primitive(.long, .nonNull))
+                let doubleType = sema.types.make(.primitive(.double, .nonNull))
+                let floatType = sema.types.make(.primitive(.float, .nonNull))
                 let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
                 let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
-                if nonNullReceiverType == intType || nonNullReceiverType == longType {
-                    let runtimeName = calleeStr == "coerceAtLeast" ? "kk_int_coerceAtLeast" : "kk_int_coerceAtMost"
+                let prefix: String?
+                if nonNullReceiverType == intType { prefix = "kk_int" }
+                else if nonNullReceiverType == longType { prefix = "kk_long" }
+                else if nonNullReceiverType == doubleType { prefix = "kk_double" }
+                else if nonNullReceiverType == floatType { prefix = "kk_float" }
+                else { prefix = nil }
+                if let prefix = prefix {
+                    let suffix = calleeStr == "coerceAtLeast" ? "_coerceAtLeast" : "_coerceAtMost"
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern(runtimeName),
+                        callee: interner.intern(prefix + suffix),
                         arguments: [loweredReceiverID, loweredArgIDs[0]],
                         result: result,
                         canThrow: false,

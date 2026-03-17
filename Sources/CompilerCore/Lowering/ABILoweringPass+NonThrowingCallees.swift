@@ -385,10 +385,19 @@ extension ABILoweringPass {
             interner.intern("kk_double_to_float"),
             interner.intern("kk_long_to_byte"),
             interner.intern("kk_long_to_short"),
-            // Numeric coercion (STDLIB-150)
+            // Numeric coercion (STDLIB-150, STDLIB-500)
             interner.intern("kk_int_coerceIn"),
             interner.intern("kk_int_coerceAtLeast"),
             interner.intern("kk_int_coerceAtMost"),
+            interner.intern("kk_long_coerceIn"),
+            interner.intern("kk_long_coerceAtLeast"),
+            interner.intern("kk_long_coerceAtMost"),
+            interner.intern("kk_double_coerceIn"),
+            interner.intern("kk_double_coerceAtLeast"),
+            interner.intern("kk_double_coerceAtMost"),
+            interner.intern("kk_float_coerceIn"),
+            interner.intern("kk_float_coerceAtLeast"),
+            interner.intern("kk_float_coerceAtMost"),
             // Result non-throwing functions (STDLIB-281/282)
             interner.intern("kk_result_isSuccess"),
             interner.intern("kk_result_isFailure"),

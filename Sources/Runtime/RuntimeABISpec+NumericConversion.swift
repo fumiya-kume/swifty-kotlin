@@ -134,5 +134,92 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "NumericConversion"
         ),
+        // Long coercion (STDLIB-500)
+        RuntimeABIFunctionSpec(
+            name: "kk_long_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_long_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        // Double coercion (STDLIB-500)
+        RuntimeABIFunctionSpec(
+            name: "kk_double_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_double_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        // Float coercion (STDLIB-500)
+        RuntimeABIFunctionSpec(
+            name: "kk_float_coerceIn",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_coerceAtLeast",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "minimum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_float_coerceAtMost",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+                RuntimeABIParameter(name: "maximum", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "NumericConversion"
+        ),
     ]
 }
