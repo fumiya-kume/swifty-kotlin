@@ -867,14 +867,31 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
+        // Build Map<K, V> return types when Map symbol is available
+        let mapName = interner.intern("Map")
+        let mapSymbol = symbols.lookup(fqName: collectionsPkg + [mapName])
+            ?? symbols.lookupByShortName(mapName).first
+
+        let kTypeParam = types.make(.typeParam(TypeParamType(symbol: kParamSymbol)))
+
         // eachCount() -> Map<K, Int>
+        let eachCountReturnType: TypeID
+        if let mapSymbol {
+            eachCountReturnType = types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.invariant(kTypeParam), .invariant(types.intType)],
+                nullability: .nonNull
+            )))
+        } else {
+            eachCountReturnType = types.anyType
+        }
         registerGroupingMember(
             named: "eachCount",
             groupingFQName: groupingFQName,
             groupingSymbol: groupingSymbol,
             receiverType: groupingType,
             parameters: [],
-            returnType: types.anyType,
+            returnType: eachCountReturnType,
             externalLinkName: "kk_grouping_eachCount",
             symbols: symbols,
             types: types,
@@ -882,6 +899,20 @@ extension DataFlowSemaPhase {
         )
 
         // fold(initialValue: R, operation: (R, T) -> R) -> Map<K, R>
+        let foldOperationType = types.make(.functionType(FunctionType(
+            params: [types.anyType, types.anyType],
+            returnType: types.anyType
+        )))
+        let foldReturnType: TypeID
+        if let mapSymbol {
+            foldReturnType = types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.invariant(kTypeParam), .invariant(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            foldReturnType = types.anyType
+        }
         registerGroupingMember(
             named: "fold",
             groupingFQName: groupingFQName,
@@ -889,9 +920,9 @@ extension DataFlowSemaPhase {
             receiverType: groupingType,
             parameters: [
                 (name: "initialValue", type: types.anyType),
-                (name: "operation", type: types.anyType),
+                (name: "operation", type: foldOperationType),
             ],
-            returnType: types.anyType,
+            returnType: foldReturnType,
             externalLinkName: "kk_grouping_fold",
             symbols: symbols,
             types: types,
@@ -899,15 +930,29 @@ extension DataFlowSemaPhase {
         )
 
         // reduce(operation: (S, T) -> S) -> Map<K, S>
+        let reduceOperationType = types.make(.functionType(FunctionType(
+            params: [types.anyType, types.anyType],
+            returnType: types.anyType
+        )))
+        let reduceReturnType: TypeID
+        if let mapSymbol {
+            reduceReturnType = types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.invariant(kTypeParam), .invariant(types.anyType)],
+                nullability: .nonNull
+            )))
+        } else {
+            reduceReturnType = types.anyType
+        }
         registerGroupingMember(
             named: "reduce",
             groupingFQName: groupingFQName,
             groupingSymbol: groupingSymbol,
             receiverType: groupingType,
             parameters: [
-                (name: "operation", type: types.anyType),
+                (name: "operation", type: reduceOperationType),
             ],
-            returnType: types.anyType,
+            returnType: reduceReturnType,
             externalLinkName: "kk_grouping_reduce",
             symbols: symbols,
             types: types,

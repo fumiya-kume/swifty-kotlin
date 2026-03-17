@@ -3004,7 +3004,9 @@ extension CallLowerer {
             return interner.intern("kk_list_containsAll")
         case "binarySearch":
             return interner.intern("kk_list_binarySearch")
-        case "groupingBy":
+        case "groupingBy" where isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            || isConcreteCollectionLikeType(nonNullReceiverType, sema: sema, interner: interner)
+            || sema.bindings.isCollectionExpr(receiverExpr):
             return interner.intern("kk_list_groupingBy")
         default:
             break

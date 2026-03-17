@@ -1334,9 +1334,9 @@ private func runtimeGroupingBox(from rawValue: Int) -> RuntimeGroupingBox? {
 /// `list.groupingBy { keySelector }` — creates a RuntimeGroupingBox capturing the source and key selector.
 @_cdecl("kk_list_groupingBy")
 public func kk_list_groupingBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
-    let elements: [Int] = runtimeListBox(from: listRaw)?.elements ?? []
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     return registerRuntimeObject(RuntimeGroupingBox(
-        sourceElements: elements,
+        sourceElements: list.elements,
         keyFnPtr: fnPtr,
         keyClosureRaw: closureRaw
     ))
@@ -1347,10 +1347,11 @@ public func kk_list_groupingBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int) 
 public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "grouping")
     }
     var keys: [Int] = []
     var counts: [Int] = []
+    var keyIndex: [Int: Int] = [:]  // normalizedKey -> index (O(1) lookup for immediate values)
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -1359,9 +1360,15 @@ public func kk_grouping_eachCount(_ groupingRaw: Int, _ outThrown: UnsafeMutable
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let normalizedKey = maybeUnbox(key)
-        if let idx = keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) }) {
+        if let idx = keyIndex[normalizedKey] {
+            counts[idx] += 1
+        } else if let idx = keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) }) {
+            // Fallback: hash collision or boxed value — linear scan
+            keyIndex[normalizedKey] = idx
             counts[idx] += 1
         } else {
+            let newIdx = keys.count
+            keyIndex[normalizedKey] = newIdx
             keys.append(normalizedKey)
             counts.append(1)
         }
@@ -1377,10 +1384,11 @@ public func kk_grouping_fold(
 ) -> Int {
     outThrown?.pointee = 0
     guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "grouping")
     }
     var keys: [Int] = []
     var accumulators: [Int] = []
+    var keyIndex: [Int: Int] = [:]
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -1389,7 +1397,10 @@ public func kk_grouping_fold(
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let normalizedKey = maybeUnbox(key)
-        if let idx = keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) }) {
+        let idx: Int? = keyIndex[normalizedKey]
+            ?? keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) })
+        if let idx {
+            keyIndex[normalizedKey] = idx
             var thrown2 = 0
             accumulators[idx] = maybeUnbox(runtimeInvokeCollectionLambda2(
                 fnPtr: fnPtr, closureRaw: closureRaw,
@@ -1397,6 +1408,8 @@ public func kk_grouping_fold(
             ))
             if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
         } else {
+            let newIdx = keys.count
+            keyIndex[normalizedKey] = newIdx
             keys.append(normalizedKey)
             var thrown2 = 0
             let foldResult = maybeUnbox(runtimeInvokeCollectionLambda2(
@@ -1410,7 +1423,7 @@ public func kk_grouping_fold(
     return registerRuntimeObject(RuntimeMapBox(keys: keys, values: accumulators))
 }
 
-/// `grouping.reduce { key, acc, element -> ... }` — reduces per key, returns Map<K, T>.
+/// `grouping.reduce { acc, element -> ... }` — reduces per key, returns Map<K, T>.
 /// The lambda receives (accumulator, element); the first element of each group becomes the initial accumulator.
 @_cdecl("kk_grouping_reduce")
 public func kk_grouping_reduce(
@@ -1419,10 +1432,11 @@ public func kk_grouping_reduce(
 ) -> Int {
     outThrown?.pointee = 0
     guard let grouping = runtimeGroupingBox(from: groupingRaw) else {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        invalidContainerPanic(#function, "grouping")
     }
     var keys: [Int] = []
     var accumulators: [Int] = []
+    var keyIndex: [Int: Int] = [:]
     for elem in grouping.sourceElements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(
@@ -1431,7 +1445,10 @@ public func kk_grouping_reduce(
         )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let normalizedKey = maybeUnbox(key)
-        if let idx = keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) }) {
+        let idx: Int? = keyIndex[normalizedKey]
+            ?? keys.firstIndex(where: { runtimeValuesEqual($0, normalizedKey) })
+        if let idx {
+            keyIndex[normalizedKey] = idx
             var thrown2 = 0
             accumulators[idx] = maybeUnbox(runtimeInvokeCollectionLambda2(
                 fnPtr: fnPtr, closureRaw: closureRaw,
@@ -1439,6 +1456,8 @@ public func kk_grouping_reduce(
             ))
             if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
         } else {
+            let newIdx = keys.count
+            keyIndex[normalizedKey] = newIdx
             keys.append(normalizedKey)
             accumulators.append(elem)
         }
