@@ -364,16 +364,14 @@ private func runtimeTraverseSequence(
 }
 
 /// Extracts source elements from a sequence step, if applicable.
-/// For `.stringSource`, materializes characters at this point (terminal evaluation).
+/// `.stringSource` is NOT extracted here — it is handled lazily in evaluateSequence
+/// and runtimeTraverseSequence to avoid eager materialization.
 private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
     switch step {
     case let .source(sourceElements):
         return sourceElements
     case let .builder(builderElements):
         return builderElements
-    case let .stringSource(strRaw):
-        let str = runtimeResolveStringOrPanic(strRaw, caller: "kk_string_asSequence")
-        return str.unicodeScalars.map { kk_box_char(Int($0.value)) }
     default:
         return nil
     }
@@ -473,6 +471,12 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     for step in seq.steps {
         if let source = extractSourceElements(from: step) {
             elements = source
+            break
+        }
+        if case let .stringSource(strRaw) = step {
+            // Materialize characters lazily from the string handle (only at terminal evaluation)
+            let str = runtimeResolveStringOrPanic(strRaw, caller: "kk_string_asSequence")
+            elements = str.unicodeScalars.map { kk_box_char(Int($0.value)) }
             break
         }
         if case let .generator(seed, fnPtr, closureRaw) = step {

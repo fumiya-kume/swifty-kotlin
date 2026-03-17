@@ -1361,6 +1361,7 @@ extension DataFlowSemaPhase {
             interner.intern("Sequence"),
         ]
         guard let sequenceSymbol = symbols.lookup(fqName: sequenceFQName) else {
+            assertionFailure("STDLIB-317: kotlin.sequences.Sequence not found in symbol table; falling back to Any")
             return types.anyType
         }
         return types.make(.classType(ClassType(
@@ -1382,6 +1383,7 @@ extension DataFlowSemaPhase {
             interner.intern("Iterable"),
         ]
         guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
+            assertionFailure("STDLIB-317: kotlin.collections.Iterable not found in symbol table; falling back to Any")
             return types.anyType
         }
         return types.make(.classType(ClassType(
