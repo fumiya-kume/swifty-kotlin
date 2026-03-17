@@ -141,8 +141,10 @@ final class ABIMismatchTests: XCTestCase {
 
     func testMathFunctionCount() {
         // kk_math_abs_int, kk_math_abs, kk_math_sqrt, kk_math_pow,
-        // kk_math_ceil, kk_math_floor, kk_math_round
-        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 7)
+        // kk_math_ceil, kk_math_floor, kk_math_round,
+        // kk_math_exp, kk_math_ln, kk_math_log2, kk_math_log10, kk_math_log,
+        // kk_math_sign, kk_math_hypot, kk_math_PI, kk_math_E
+        XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 16)
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
     }
 

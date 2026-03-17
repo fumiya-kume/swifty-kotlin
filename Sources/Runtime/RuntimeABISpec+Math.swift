@@ -121,5 +121,77 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
+        // STDLIB-431: exp/ln/log functions
+        RuntimeABIFunctionSpec(
+            name: "kk_math_exp",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_ln",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_log2",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_log10",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_log",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "base", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        // STDLIB-432: sign/hypot + PI/E constants
+        RuntimeABIFunctionSpec(
+            name: "kk_math_sign",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_hypot",
+            parameters: [
+                RuntimeABIParameter(name: "x", type: .intptr),
+                RuntimeABIParameter(name: "y", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_PI",
+            parameters: [],
+            returnType: .intptr,
+            section: "Math"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_math_E",
+            parameters: [],
+            returnType: .intptr,
+            section: "Math"
+        ),
     ]
 }

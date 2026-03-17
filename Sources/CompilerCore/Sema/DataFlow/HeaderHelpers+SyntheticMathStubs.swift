@@ -175,6 +175,109 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-431: exp/ln/log functions
+
+        registerSyntheticMathTopLevelFunction(
+            named: "exp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_exp",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "ln",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_ln",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log2",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log2",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log10",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log10",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: types.doubleType),
+                (name: "base", type: types.doubleType),
+            ],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_log",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-432: sign/hypot + PI/E constants
+
+        registerSyntheticMathTopLevelFunction(
+            named: "sign",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_sign",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "hypot",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: types.doubleType),
+                (name: "y", type: types.doubleType),
+            ],
+            returnType: types.doubleType,
+            externalLinkName: "kk_math_hypot",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelProperty(
+            named: "PI",
+            packageFQName: kotlinMathPkg,
+            type: types.doubleType,
+            externalLinkName: "kk_math_PI",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelProperty(
+            named: "E",
+            packageFQName: kotlinMathPkg,
+            type: types.doubleType,
+            externalLinkName: "kk_math_E",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func registerSyntheticMathTopLevelFunction(
@@ -259,6 +362,39 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func registerSyntheticMathTopLevelProperty(
+        named name: String,
+        packageFQName: [InternedString],
+        type: TypeID,
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let propertyName = interner.intern(name)
+        let propertyFQName = packageFQName + [propertyName]
+        if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in
+            symbols.symbol(symbolID)?.kind == .property
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(type, for: existing)
+            return
+        }
+
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: propertySymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        symbols.setPropertyType(type, for: propertySymbol)
     }
 
     private func ensureSyntheticPackage(

@@ -275,6 +275,63 @@ public func kk_math_atan2(_ y: Int, _ x: Int) -> Int {
     kk_double_to_bits(atan2(kk_bits_to_double(y), kk_bits_to_double(x)))
 }
 
+// MARK: - STDLIB-431: exp/ln/log functions
+
+@_cdecl("kk_math_exp")
+public func kk_math_exp(_ value: Int) -> Int {
+    kk_double_to_bits(exp(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_ln")
+public func kk_math_ln(_ value: Int) -> Int {
+    kk_double_to_bits(log(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_log2")
+public func kk_math_log2(_ value: Int) -> Int {
+    kk_double_to_bits(log2(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_log10")
+public func kk_math_log10(_ value: Int) -> Int {
+    kk_double_to_bits(log10(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_log")
+public func kk_math_log(_ x: Int, _ base: Int) -> Int {
+    let rawX = kk_bits_to_double(x)
+    let rawBase = kk_bits_to_double(base)
+    return kk_double_to_bits(log(rawX) / log(rawBase))
+}
+
+// MARK: - STDLIB-432: sign/hypot + PI/E constants
+
+@_cdecl("kk_math_sign")
+public func kk_math_sign(_ value: Int) -> Int {
+    let d = kk_bits_to_double(value)
+    if d.isNaN { return kk_double_to_bits(Double.nan) }
+    if d > 0 { return kk_double_to_bits(1.0) }
+    if d < 0 { return kk_double_to_bits(-1.0) }
+    return kk_double_to_bits(0.0)
+}
+
+@_cdecl("kk_math_hypot")
+public func kk_math_hypot(_ x: Int, _ y: Int) -> Int {
+    let rawX = kk_bits_to_double(x)
+    let rawY = kk_bits_to_double(y)
+    return kk_double_to_bits(hypot(rawX, rawY))
+}
+
+@_cdecl("kk_math_PI")
+public func kk_math_PI() -> Int {
+    kk_double_to_bits(Double.pi)
+}
+
+@_cdecl("kk_math_E")
+public func kk_math_E() -> Int {
+    kk_double_to_bits(M_E)
+}
+
 @_cdecl("kk_println_char")
 public func kk_println_char(_ value: Int) {
     if let scalar = UnicodeScalar(value) {
