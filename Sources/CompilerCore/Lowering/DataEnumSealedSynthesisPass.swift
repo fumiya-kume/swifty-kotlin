@@ -93,8 +93,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
         }
         appendSyntheticEnumValuesIfNeeded(
-            name: ctx.interner.intern("values"), owner: nominalSymbol, entries: entries,
-            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols
+            name: ctx.interner.intern("values"), owner: nominalSymbol,
+            enumSymbol: nominalSymbol, entries: entries,
+            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
         )
         appendSyntheticEnumOrdinalToNameIfNeeded(
             owner: nominalSymbol,
@@ -461,37 +463,88 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    /// Synthesizes `values()` which calls `kk_enum_values_<ClassName>` with
-    /// the count of entries. The runtime or codegen is expected to return an
-    /// array-like representation. The body emits a call to a well-known
-    /// helper `kk_enum_values` passing the count as argument.
+    /// Synthesizes `values()` which returns an `Array<T>` containing all
+    /// enum entry singletons.
+    /// The body is: kk_array_new(count) -> kk_array_set for each entry -> kk_enum_make_values_array.
     private func appendSyntheticEnumValuesIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
+        enumSymbol: SemanticSymbol,
         entries: [SemanticSymbol],
         module: KIRModule,
         sema: SemaModule,
-        existingFunctionSymbols: Set<SymbolID>
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        // values() returns an Int (count) which codegen interprets as the
-        // number of entries in the enum. Each entry's ordinal/name can be
-        // retrieved through the per-entry helpers.
-        let signature = FunctionSignature(parameterTypes: [], returnType: intType, isSuspend: false)
+        // Compute the enum entry type from the enum symbol
+        let entryType = sema.types.make(.classType(ClassType(
+            classSymbol: enumSymbol.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let returnType = entryType
+
+        let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
         var body: [KIRInstruction] = []
 
-        // Emit count constant
+        // count constant
         let countExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: intType
+            .temporary(Int32(module.arena.expressions.count)), type: intType
         )
         body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
 
-        // Directly return the count; the runtime helper for building an
-        // Array<T> will be introduced when the full array return type is wired.
-        body.append(.returnValue(countExpr))
+        // kk_array_new(count) -- intermediate array uses anyType
+        let arrayExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: arrayExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        // kk_array_set(array, index, entrySymbolRef) for each entry
+        for (ordinal, entry) in entries.enumerated() {
+            let indexExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: intType
+            )
+            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
+
+            let entryRef = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: entryType
+            )
+            body.append(.constValue(result: entryRef, value: .symbolRef(entry.id)))
+
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [arrayExpr, indexExpr, entryRef],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        // kk_enum_make_values_array(array, count) -- result uses the enum type
+        let listExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: returnType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_enum_make_values_array"),
+            arguments: [arrayExpr, countExpr],
+            result: listExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        body.append(.returnValue(listExpr))
 
         appendSyntheticFunctionIfNeeded(
             name: name,
