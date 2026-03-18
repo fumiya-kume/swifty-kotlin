@@ -216,9 +216,20 @@ extension ExprTypeChecker {
             if case .step = op, lhsIsUnsigned, rhsIsSigned {
                 // UIntProgression.step expects Int
                 if lhs == uintType { return rhs == intType }
-                // ULongProgression.step expects Long, but Int literals are
-                // implicitly widened to Long in Kotlin, so accept both.
-                if lhs == ulongType { return rhs == longType || rhs == intType }
+                // ULongProgression.step expects Long. Kotlin does not perform
+                // implicit numeric widening for non-literals; only integer
+                // literal constants adapt to the expected parameter type.
+                // Accept Int only when the rhs is a literal constant.
+                if lhs == ulongType {
+                    if rhs == longType { return true }
+                    if rhs == intType {
+                        if let rhsExpr = ast.arena.expr(rhsID),
+                           case .intLiteral = rhsExpr {
+                            return true
+                        }
+                        return false
+                    }
+                }
             }
             return false
         }()

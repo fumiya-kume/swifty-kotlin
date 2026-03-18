@@ -59,7 +59,7 @@ public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int) -> Int {
     guard stepValue > 0, let range = runtimeRangeBox(from: rangeRaw) else {
         return rangeRaw
     }
-    let nextStep = range.step < 0 ? -stepValue : stepValue
+    let nextStep = range.step < 0 ? (0 &- stepValue) : stepValue
     // Align 'last' to the step like Kotlin's getProgressionLastElement:
     // last is the final value in the progression that stays within the range.
     // Guard empty ranges first — Kotlin returns 'last' unchanged for empty
@@ -78,7 +78,7 @@ public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int) -> Int {
             return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: range.last, step: nextStep))
         }
         let diff = range.first &- range.last
-        let remainder = diff % (-nextStep)
+        let remainder = diff % (0 &- nextStep)
         alignedLast = range.last &+ remainder
     }
     return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: alignedLast, step: nextStep))
@@ -295,7 +295,7 @@ public func kk_range_reversed(_ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_reversed")
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: -range.step))
+    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: 0 &- range.step))
 }
 
 @_cdecl("kk_vtable_lookup")
