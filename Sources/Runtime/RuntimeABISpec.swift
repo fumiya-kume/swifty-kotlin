@@ -2652,6 +2652,40 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        // STDLIB-567: File.bufferedReader()
+        RuntimeABIFunctionSpec(
+            name: "kk_file_bufferedReader",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_readLine",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_readLines",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_close",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
     ]
 
     // MARK: - Duration / measureTime (STDLIB-230/231)
