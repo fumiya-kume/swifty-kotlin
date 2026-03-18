@@ -65,7 +65,10 @@ final class ABILoweringPass: LoweringPass {
             while idx < function.body.count {
                 let instruction = function.body[idx]
                 if case let .virtualCall(vcSymbol, vcCallee, vcReceiver, vcArguments, vcResult, _, vcThrownResult, vcDispatch) = instruction {
-                    let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
+                    let vcIsClosureInvoke = ctx.interner.resolve(vcCallee)
+                        .hasPrefix("kk_closure_invoke_")
+                    let vcCanThrow = !vcIsClosureInvoke
+                        && !nonThrowingCallees.contains(vcCallee)
                     var vcSignature: FunctionSignature?
                     if let symbols, let vcSymbol {
                         vcSignature = symbols.functionSignature(for: vcSymbol)
@@ -196,7 +199,15 @@ final class ABILoweringPass: LoweringPass {
                     guard let s = callSymbol else { return false }
                     return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
-                let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
+                // Closure invoke wrappers (kk_closure_invoke_*) are synthesized
+                // by LambdaClosureConversionPass only for non-throwing lambdas
+                // (detectCanThrow filters throwing ones).  Their names are dynamic
+                // so they cannot be in the static nonThrowingCallees set.
+                let isClosureInvokeWrapper = ctx.interner.resolve(callee)
+                    .hasPrefix("kk_closure_invoke_")
+                let canThrow = !isSyntheticAccessor
+                    && !isClosureInvokeWrapper
+                    && !nonThrowingCallees.contains(callee)
 
                 var signature: FunctionSignature?
                 if let symbols, let callSymbol {
