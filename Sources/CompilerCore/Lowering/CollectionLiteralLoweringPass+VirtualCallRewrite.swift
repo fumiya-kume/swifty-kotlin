@@ -1339,8 +1339,11 @@ extension CollectionLiteralLoweringPass {
     // MARK: - IntRange operations (STDLIB-090/091/092/093)
     // Also handles UIntRange/ULongRange (STDLIB-523) via the same kk_range_*
     // runtime helpers — no separate unsigned tracking is needed because all
-    // numeric ranges share the same RuntimeRangeBox (Int, i.e. 64-bit) layout
-    // and unsigned values are non-negative, so signed comparisons are correct.
+    // numeric ranges share the same RuntimeRangeBox (Int, i.e. 64-bit) layout.
+    // UInt values fit in the non-negative half of Int64, so signed comparisons
+    // are correct. ULong values > Int64.max are stored via bit-pattern
+    // reinterpretation and may produce incorrect results — this is a known
+    // limitation until unsigned comparison helpers are added to the runtime.
     // Only CharRange requires distinct helpers (kk_char_range_*) for box/unbox.
 
     private func rewriteRangeVirtualCall(

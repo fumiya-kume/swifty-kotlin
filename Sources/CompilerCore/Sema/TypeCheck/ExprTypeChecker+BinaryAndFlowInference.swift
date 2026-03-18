@@ -205,12 +205,16 @@ extension ExprTypeChecker {
         let lhsIsUnsigned = sema.types.isUnsigned(lhs)
         let rhsIsSigned = sema.types.isSigned(rhs)
 
-        let allowsMixedSignedness = switch op {
-        case .step:
-            true
-        default:
-            false
-        }
+        // Kotlin's UIntProgression.step and ULongProgression.step take Int,
+        // so mixed signedness is valid only when receiver is unsigned and step
+        // operand is signed. The reverse (signed..signed step unsigned) is
+        // rejected because IntProgression.step takes Int, not UInt.
+        let allowsMixedSignedness: Bool = {
+            if case .step = op {
+                return lhsIsUnsigned && rhsIsSigned
+            }
+            return false
+        }()
 
         if !allowsMixedSignedness, ((lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned)) {
             ctx.semaCtx.diagnostics.error(
