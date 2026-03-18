@@ -143,10 +143,12 @@ public func kk_range_count(_ rangeRaw: Int) -> Int {
     }
     if range.step > 0 {
         guard range.first <= range.last else { return 0 }
-        return (range.last - range.first) / range.step + 1
+        // Use wrapping arithmetic to avoid trapping on extreme ranges
+        // (e.g., first == Int.min, last == Int.max).
+        return (range.last &- range.first) / range.step &+ 1
     } else if range.step < 0 {
         guard range.first >= range.last else { return 0 }
-        return (range.first - range.last) / (-range.step) + 1
+        return (range.first &- range.last) / (0 &- range.step) &+ 1
     }
     return 0
 }

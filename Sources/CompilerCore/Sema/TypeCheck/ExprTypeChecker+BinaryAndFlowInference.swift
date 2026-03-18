@@ -208,14 +208,17 @@ extension ExprTypeChecker {
         // Kotlin's UIntProgression.step(Int) and ULongProgression.step(Long)
         // take a signed parameter, so mixed signedness is valid only when the
         // receiver is unsigned and the step operand matches the expected signed
-        // type: Int for UIntProgression, Long for ULongProgression.
+        // type: Int for UIntProgression, Int or Long for ULongProgression
+        // (Int is implicitly widened to Long in Kotlin).
         // The reverse (signed..signed step unsigned) is rejected because
         // IntProgression.step takes Int, not UInt.
         let allowsMixedSignedness: Bool = {
             if case .step = op, lhsIsUnsigned, rhsIsSigned {
-                // UIntProgression.step expects Int; ULongProgression.step expects Long
+                // UIntProgression.step expects Int
                 if lhs == uintType { return rhs == intType }
-                if lhs == ulongType { return rhs == longType }
+                // ULongProgression.step expects Long, but Int literals are
+                // implicitly widened to Long in Kotlin, so accept both.
+                if lhs == ulongType { return rhs == longType || rhs == intType }
             }
             return false
         }()
