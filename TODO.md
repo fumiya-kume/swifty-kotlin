@@ -186,7 +186,7 @@
 
 #### E. kotlin.sequences — 単一 API 単位
 
-- [ ] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
+- [x] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
 - [ ] STDLIB-554: `List.asSequence()` の stub と Lowering
 - [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
 - [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張

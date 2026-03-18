@@ -1726,6 +1726,19 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // yieldAll(iterable) inside sequence builder → kk_sequence_builder_yieldAll (STDLIB-553)
+                    if callee == lookup.yieldAllName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkSequenceBuilderYieldAllName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite higher-order collection member calls (FUNC-003) ---
                     if callee == lookup.mapName || callee == lookup.filterName || callee == lookup.mapNotNullName || callee == lookup.forEachName || callee == lookup.onEachName
                         || callee == lookup.flatMapName || callee == lookup.anyName || callee == lookup.noneName

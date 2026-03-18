@@ -860,6 +860,22 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-553: yieldAll(iterable) — yields all elements from a collection/sequence
+        // Note: Uses `anyType` because Kotlin's Iterable<T> interface is not yet
+        // fully modeled in the type system. The runtime validates the actual collection
+        // kind (List, Array, Set, Sequence) and rejects unsupported types at runtime.
+        registerSequenceScopeMember(
+            named: "yieldAll",
+            sequenceScopeSymbol: scopeSymbol,
+            sequenceScopeFQName: scopeFQName,
+            receiverType: scopeReceiverType,
+            parameters: [(name: "elements", type: types.anyType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_sequence_builder_yieldAll",
+            symbols: symbols,
+            interner: interner
+        )
+
         let functionName = interner.intern("sequence")
         let functionFQName = kotlinSequencesPkg + [functionName]
         guard symbols.lookup(fqName: functionFQName) == nil else {

@@ -154,6 +154,7 @@ struct CollectionLiteralLookupTables {
     let kkSequenceToListName: InternedString
     let kkSequenceBuilderBuildName: InternedString
     let kkSequenceBuilderYieldName: InternedString
+    let kkSequenceBuilderYieldAllName: InternedString
     let kkIteratorBuilderBuildName: InternedString
     let kkIteratorBuilderYieldName: InternedString
     let kkIteratorBuilderHasNextName: InternedString
@@ -358,6 +359,7 @@ struct CollectionLiteralLookupTables {
     let iteratorBuilderName: InternedString
     let iteratorBuilderFQName: [InternedString]
     let yieldName: InternedString
+    let yieldAllName: InternedString
 
     // Sequence factory names (STDLIB-097)
     let sequenceOfName: InternedString
@@ -595,6 +597,7 @@ struct CollectionLiteralLookupTables {
         kkSequenceToListName = interner.intern("kk_sequence_to_list")
         kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
         kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
+        kkSequenceBuilderYieldAllName = interner.intern("kk_sequence_builder_yieldAll")
         kkIteratorBuilderBuildName = interner.intern("kk_iterator_builder_build")
         kkIteratorBuilderYieldName = interner.intern("kk_iterator_builder_yield")
         kkIteratorBuilderHasNextName = interner.intern("kk_iterator_builder_hasNext")
@@ -790,6 +793,7 @@ struct CollectionLiteralLookupTables {
         iteratorBuilderName = interner.intern("iterator")
         iteratorBuilderFQName = [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("iterator")]
         yieldName = interner.intern("yield")
+        yieldAllName = interner.intern("yieldAll")
 
         sequenceOfName = interner.intern("sequenceOf")
         generateSequenceName = interner.intern("generateSequence")
