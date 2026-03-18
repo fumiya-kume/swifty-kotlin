@@ -356,15 +356,16 @@ final class ControlFlowLowerer {
         } else if catchClauses.count == 1 {
             let clause = catchClauses[0]
             let binding = catchBindings[0]
-            let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
-            let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
-            let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
-            instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
-            instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
-            instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
 
             let noMatchLabel = driver.ctx.makeLoopLabel()
             if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
+                let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+                let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
+                let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+                instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
+                instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
+
                 let matchResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                 if isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner) {
                     instructions.append(.call(
@@ -639,15 +640,21 @@ final class ControlFlowLowerer {
         let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
 
+        let exactMatchLabel = driver.ctx.makeLoopLabel()
+        let knownMismatchLabel = driver.ctx.makeLoopLabel()
+        let runtimeFallbackLabel = driver.ctx.makeLoopLabel()
+        let doneLabel = driver.ctx.makeLoopLabel()
+
         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
 
-        // Fast path: exact token match (exception type is known)
+        // Fast path: exact token match (exception type is known and matches)
         instructions.append(.binary(
             op: .equal,
             lhs: exceptionTypeSlot,
             rhs: tokenExpr,
             result: typeMatches
         ))
+        instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: trueValue, target: exactMatchLabel))
 
         // Check if the exception type is UNKNOWN (token == 0)
         instructions.append(.binary(
@@ -656,17 +663,34 @@ final class ControlFlowLowerer {
             rhs: unknownTypeToken,
             result: typeUnknown
         ))
+        // If not unknown (known type but different) -> definite miss
+        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseValue, target: knownMismatchLabel))
 
-        // matchResult = typeMatches || typeUnknown
-        // When token is UNKNOWN (0), conservatively match any catch clause.
-        // The runtime does not yet support kk_op_is for precise exception type
-        // discrimination, so matching all clauses is the safe behavior.
-        instructions.append(.binary(
-            op: .logicalOr,
-            lhs: typeMatches,
-            rhs: typeUnknown,
-            result: matchResult
+        // Runtime fallback: token is UNKNOWN (0), use kk_op_is for precise type check
+        instructions.append(.label(runtimeFallbackLabel))
+        let runtimeResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_op_is"),
+            arguments: [exceptionSlot, tokenExpr],
+            result: runtimeResult,
+            canThrow: false,
+            thrownResult: nil
         ))
+        instructions.append(.copy(from: runtimeResult, to: matchResult))
+        instructions.append(.jump(doneLabel))
+
+        // Exact match: set matchResult = true
+        instructions.append(.label(exactMatchLabel))
+        instructions.append(.copy(from: trueValue, to: matchResult))
+        instructions.append(.jump(doneLabel))
+
+        // Known mismatch: set matchResult = false
+        instructions.append(.label(knownMismatchLabel))
+        instructions.append(.copy(from: falseValue, to: matchResult))
+        instructions.append(.jump(doneLabel))
+
+        instructions.append(.label(doneLabel))
     }
 
     func appendThrowAwareInstructions(
