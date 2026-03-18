@@ -120,6 +120,10 @@ public func kk_any_equals(_ lhs: Int, _ lhsTag: Int32, _ rhs: Int, _ rhsTag: Int
     return kk_box_bool(runtimeValuesEqual(lhs, rhs) ? 1 : 0)
 }
 
+/// Encode a Float's IEEE 754 bit pattern into an Int for transport across the
+/// C ABI boundary. Uses `bitPattern`-based (non-trapping) conversions throughout,
+/// mirroring `kk_double_to_bits`. On 64-bit platforms `UInt(UInt32)` zero-extends;
+/// on a hypothetical 32-bit target the cast is a no-op since UInt32 == UInt.
 @_cdecl("kk_float_to_bits")
 public func kk_float_to_bits(_ value: Float) -> Int {
     Int(bitPattern: UInt(value.bitPattern))

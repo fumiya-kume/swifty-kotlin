@@ -73,6 +73,9 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         // Normal values
         XCTAssertEqual(kk_float_roundToInt(floatToBits(2.3)), 2)
         XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.3)), -2)
+        // Saturation beyond Int32 bounds
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(3e9))), Int(Int32.max))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float(-3e9))), Int(Int32.min))
     }
 
     func testDoubleRoundToIntEdgeCases() {
@@ -102,6 +105,9 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_float_roundToLong(floatToBits(-1.5)), -1)
         XCTAssertEqual(kk_float_roundToLong(floatToBits(-0.5)), 0)
         XCTAssertEqual(kk_float_roundToLong(floatToBits(0.5)), 1)
+        // Saturation beyond Int64 bounds
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(1e19))), Int(Int64.max))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float(-1e19))), Int(Int64.min))
     }
 
     func testDoubleRoundToLongEdgeCases() {
@@ -112,6 +118,9 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_double_roundToLong(doubleToBits(-0.5)), 0)
         XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.5)), 1)
         XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.49999999999999994)), 0)
+        // Saturation beyond Int64 bounds
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(1e19)), Int(Int64.max))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1e19)), Int(Int64.min))
     }
 
     // MARK: - Float trig / rounding (STDLIB-500..509)
