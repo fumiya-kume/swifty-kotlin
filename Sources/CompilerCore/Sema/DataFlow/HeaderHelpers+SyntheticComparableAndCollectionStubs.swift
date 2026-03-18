@@ -1579,21 +1579,21 @@ extension DataFlowSemaPhase {
             let kotlinRandomPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("random")]
             let randomClassName = interner.intern("Random")
             let randomFQName = kotlinRandomPkg + [randomClassName]
-            guard let randomSymbol = symbols.lookup(fqName: randomFQName) else {
+            if let randomSymbol = symbols.lookup(fqName: randomFQName) {
+                let randomParamType = types.make(.classType(ClassType(
+                    classSymbol: randomSymbol,
+                    args: [],
+                    nullability: .nonNull
+                )))
+                registerMemberOverload(
+                    memberName: shuffledRandomName,
+                    memberFQName: shuffledRandomFQName,
+                    parameterTypes: [randomParamType],
+                    externalLinkName: "kk_list_shuffled_random"
+                )
+            } else {
                 assertionFailure("kotlin.random.Random must be registered before collection stubs")
-                return
             }
-            let randomParamType = types.make(.classType(ClassType(
-                classSymbol: randomSymbol,
-                args: [],
-                nullability: .nonNull
-            )))
-            registerMemberOverload(
-                memberName: shuffledRandomName,
-                memberFQName: shuffledRandomFQName,
-                parameterTypes: [randomParamType],
-                externalLinkName: "kk_list_shuffled_random"
-            )
         }
 
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
