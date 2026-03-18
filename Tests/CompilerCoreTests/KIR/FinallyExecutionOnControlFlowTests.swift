@@ -1,5 +1,4 @@
 @testable import CompilerCore
-import Foundation
 import XCTest
 
 /// CODE-001: Regression tests ensuring `finally` blocks execute on
@@ -126,15 +125,39 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "loopWithBreak", in: module, interner: ctx.interner)
 
+            // Identify the break target label: in a while loop the break label
+            // is the label that follows the loop body.  We find it by looking
+            // for labels that are jumped to but are *not* the loop condition
+            // (continue) label.  The break target is the label whose .label()
+            // entry appears after the loop back-edge.
+            //
+            // Heuristic: collect all jump targets and all label definitions.
+            // The break label is the one that appears after the last back-edge
+            // jump.  For a simple while(true){break} the break jump target is
+            // the label placed after the entire while construct.
+            var labelDefinitions = Set<Int32>()
+            for instr in body {
+                if case let .label(l) = instr { labelDefinitions.insert(l) }
+            }
+
+            // Find the first label defined in the body (the while-condition label).
+            let firstLabelIndex = body.firstIndex(where: { if case .label = $0 { return true }; return false })
+            var conditionLabel: Int32?
+            if let idx = firstLabelIndex, case let .label(l) = body[idx] {
+                conditionLabel = l
+            }
+
             // cleanup() should appear in the lowered body before the break jump.
             let cleanupCallIndices = body.indices.filter { index in
                 guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
-            // Find jump instructions that represent the break transfer.
-            let jumpIndices = body.indices.filter { index in
-                if case .jump = body[index] { return true }
-                return false
+
+            // Find jump instructions whose target is NOT the continue (condition) label,
+            // i.e. break jumps.  This filters out loop back-edges and condition branches.
+            let breakJumpIndices = body.indices.filter { index in
+                guard case let .jump(target) = body[index] else { return false }
+                return target != conditionLabel
             }
 
             XCTAssertGreaterThanOrEqual(
@@ -142,18 +165,19 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
                 "Expected at least one inlined cleanup() call for finally block on break"
             )
             XCTAssertGreaterThanOrEqual(
-                jumpIndices.count, 1,
+                breakJumpIndices.count, 1,
                 "Expected at least one jump instruction for break"
             )
 
-            // At least one cleanup call must appear before a jump (the break).
-            let hasCleanupBeforeJump = cleanupCallIndices.contains { cleanupIndex in
-                jumpIndices.contains { jumpIndex in
+            // At least one cleanup call must appear immediately before a break jump
+            // (within the same basic block).
+            let hasCleanupBeforeBreakJump = cleanupCallIndices.contains { cleanupIndex in
+                breakJumpIndices.contains { jumpIndex in
                     cleanupIndex < jumpIndex
                 }
             }
             XCTAssertTrue(
-                hasCleanupBeforeJump,
+                hasCleanupBeforeBreakJump,
                 "finally block (cleanup()) must execute before the break jump"
             )
         }
@@ -182,14 +206,37 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "loopWithContinue", in: module, interner: ctx.interner)
 
+            // Identify the continue target label: in a while loop the continue
+            // label is the first label defined in the function body (the loop
+            // condition check label).
+            var conditionLabel: Int32?
+            for instr in body {
+                if case let .label(l) = instr {
+                    conditionLabel = l
+                    break
+                }
+            }
+
             let cleanupCallIndices = body.indices.filter { index in
                 guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
-            // Find jump instructions that represent the continue transfer.
-            let jumpIndices = body.indices.filter { index in
-                if case .jump = body[index] { return true }
-                return false
+
+            // Find jump instructions whose target IS the continue (condition) label.
+            // This specifically identifies continue transfers, excluding break jumps
+            // and other control flow.
+            let continueJumpIndices: [Int]
+            if let target = conditionLabel {
+                continueJumpIndices = body.indices.filter { index in
+                    guard case let .jump(dest) = body[index] else { return false }
+                    return dest == target
+                }
+            } else {
+                // Fallback: if we cannot identify the condition label, match any jump.
+                continueJumpIndices = body.indices.filter { index in
+                    if case .jump = body[index] { return true }
+                    return false
+                }
             }
 
             XCTAssertGreaterThanOrEqual(
@@ -197,18 +244,18 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
                 "Expected at least one inlined cleanup() call for finally block on continue"
             )
             XCTAssertGreaterThanOrEqual(
-                jumpIndices.count, 1,
+                continueJumpIndices.count, 1,
                 "Expected at least one jump instruction for continue"
             )
 
-            // At least one cleanup call must appear before a jump (the continue).
-            let hasCleanupBeforeJump = cleanupCallIndices.contains { cleanupIndex in
-                jumpIndices.contains { jumpIndex in
+            // At least one cleanup call must appear before a continue jump.
+            let hasCleanupBeforeContinueJump = cleanupCallIndices.contains { cleanupIndex in
+                continueJumpIndices.contains { jumpIndex in
                     cleanupIndex < jumpIndex
                 }
             }
             XCTAssertTrue(
-                hasCleanupBeforeJump,
+                hasCleanupBeforeContinueJump,
                 "finally block (cleanup()) must execute before the continue jump"
             )
         }

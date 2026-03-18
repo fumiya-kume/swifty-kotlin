@@ -19,7 +19,10 @@ final class KIRLoweringContext {
     /// When a `return`, `break`, or `continue` is lowered inside a try-finally,
     /// the compiler inlines the finally block code before the control-flow transfer
     /// so that finally semantics are preserved (CODE-001).
-    var finallyBlockStack: [ExprID] = []
+    ///
+    /// Use `pushFinallyBlock`, `popFinallyBlock`, and `withFinallyStackDepth`
+    /// instead of mutating this property directly.
+    private(set) var finallyBlockStack: [ExprID] = []
     var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
@@ -178,6 +181,17 @@ final class KIRLoweringContext {
     /// Returns the current stack of enclosing finally blocks (outermost first).
     func enclosingFinallyBlocks() -> [ExprID] {
         finallyBlockStack
+    }
+
+    /// Temporarily trim the finally block stack to `depth` entries, execute
+    /// `body`, then restore the stack to its previous state.  This avoids
+    /// allocating intermediate arrays when lowering inlined finally blocks
+    /// with progressively trimmed stacks (CODE-001).
+    func withFinallyStackDepth<T>(_ depth: Int, _ body: () throws -> T) rethrows -> T {
+        let saved = finallyBlockStack
+        finallyBlockStack.removeSubrange(depth..<finallyBlockStack.count)
+        defer { finallyBlockStack = saved }
+        return try body()
     }
 
     @discardableResult

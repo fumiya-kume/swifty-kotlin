@@ -24,15 +24,19 @@ extension ExprLowerer {
     /// entries whose scope the target label falls inside of.
     ///
     /// **Known limitation – exception routing**: Inlined finally
-    /// instructions are appended into the same instruction buffer
+    /// instructions are currently appended into the same instruction buffer
     /// (bodyInstructions / catchBodyInstructions) that
     /// `appendThrowAwareInstructions` later wraps.  If the inlined finally
     /// throws, the exception is routed to the *same* try-catch's dispatch
-    /// label instead of propagating outward.  Fixing this requires either
-    /// emitting the inlined finally as a separate instruction sequence
-    /// spliced after throw-aware wrapping, or marking inlined finally
-    /// instructions so that `appendThrowAwareInstructions` can use a
-    /// different thrown target for them.
+    /// label instead of propagating outward.
+    ///
+    /// TODO(CODE-001): Fix exception routing for inlined finally blocks.
+    /// The correct approach is to lower inlined finally blocks into a
+    /// separate instruction list and splice them *after* the throw-aware
+    /// wrapping of the surrounding body/catch instructions, or to extend
+    /// `appendThrowAwareInstructions` to accept an alternate thrown target
+    /// for inlined-finally instructions so they propagate to the *outer*
+    /// exception handler rather than re-entering the same try-catch dispatch.
     private func inlineEnclosingFinallyBlocks(
         ast: ASTModule,
         sema: SemaModule,
@@ -41,29 +45,27 @@ extension ExprLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) {
-        let snapshot = driver.ctx.finallyBlockStack
-        guard !snapshot.isEmpty else { return }
+        let blocks = driver.ctx.enclosingFinallyBlocks()
+        guard !blocks.isEmpty else { return }
 
         // Process innermost-first (reversed) so that the stack is trimmed
-        // correctly: for each finally block at index i, we set the stack to
-        // snapshot[0..<i] so that re-entrant lowering only sees outer blocks.
-        for i in stride(from: snapshot.count - 1, through: 0, by: -1) {
-            let finallyExprID = snapshot[i]
-            // Trim the stack to exclude this block and anything inner.
-            driver.ctx.finallyBlockStack = Array(snapshot[0..<i])
-            _ = lowerExpr(
-                finallyExprID,
-                ast: ast,
-                sema: sema,
-                arena: arena,
-                interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
+        // correctly: for each finally block at index i, we temporarily set the
+        // stack depth to i so that re-entrant lowering only sees outer blocks.
+        // Uses withFinallyStackDepth to avoid O(n^2) array allocations.
+        for i in stride(from: blocks.count - 1, through: 0, by: -1) {
+            let finallyExprID = blocks[i]
+            driver.ctx.withFinallyStackDepth(i) {
+                _ = lowerExpr(
+                    finallyExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
         }
-
-        // Restore the original stack so that surrounding code is unaffected.
-        driver.ctx.finallyBlockStack = snapshot
     }
 
     private func wrapLateinitReadIfNeeded(
