@@ -350,7 +350,7 @@ public func kk_math_floor_float(_ value: Int) -> Int {
 public func kk_float_roundToInt(_ value: Int) -> Int {
     let f = kk_bits_to_float(value)
     if f.isNaN { return 0 }
-    let rounded = f.rounded(.toNearestOrEven)
+    let rounded = f.rounded(.toNearestOrAwayFromZero)
     if rounded >= Float(Int32.max) { return Int(Int32.max) }
     if rounded <= Float(Int32.min) { return Int(Int32.min) }
     return Int(Int32(rounded))
@@ -360,7 +360,7 @@ public func kk_float_roundToInt(_ value: Int) -> Int {
 public func kk_double_roundToInt(_ value: Int) -> Int {
     let d = kk_bits_to_double(value)
     if d.isNaN { return 0 }
-    let rounded = d.rounded(.toNearestOrEven)
+    let rounded = d.rounded(.toNearestOrAwayFromZero)
     if rounded >= Double(Int32.max) { return Int(Int32.max) }
     if rounded <= Double(Int32.min) { return Int(Int32.min) }
     return Int(Int32(rounded))
@@ -370,7 +370,7 @@ public func kk_double_roundToInt(_ value: Int) -> Int {
 public func kk_float_roundToLong(_ value: Int) -> Int {
     let f = kk_bits_to_float(value)
     if f.isNaN { return 0 }
-    let rounded = f.rounded(.toNearestOrEven)
+    let rounded = f.rounded(.toNearestOrAwayFromZero)
     if rounded >= Float(Int64.max) { return Int(Int64.max) }
     if rounded <= Float(Int64.min) { return Int(Int64.min) }
     return Int(Int64(rounded))
@@ -380,7 +380,7 @@ public func kk_float_roundToLong(_ value: Int) -> Int {
 public func kk_double_roundToLong(_ value: Int) -> Int {
     let d = kk_bits_to_double(value)
     if d.isNaN { return 0 }
-    let rounded = d.rounded(.toNearestOrEven)
+    let rounded = d.rounded(.toNearestOrAwayFromZero)
     if rounded >= Double(Int64.max) { return Int(Int64.max) }
     if rounded <= Double(Int64.min) { return Int(Int64.min) }
     return Int(Int64(rounded))
