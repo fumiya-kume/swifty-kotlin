@@ -3,7 +3,9 @@ fun main() {
     println(list.reversed())
     println(list.asReversed())
     val mutable = mutableListOf(1, 2, 3)
+    println(mutable.reversed())
     val rev = mutable.asReversed()
     println(rev)
     println(listOf<Int>().reversed())
+    println(listOf<Int>().asReversed())
 }
