@@ -1021,6 +1021,18 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
+        // chunked(size, transform): transform receives List<T> and returns R
+        if memberName == interner.intern("chunked"), argCount == 2 {
+            let listType = sema.types.anyType // List<T> simplified to Any in fallback
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [listType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
         if memberName == interner.intern("fold"), argCount == 2 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
