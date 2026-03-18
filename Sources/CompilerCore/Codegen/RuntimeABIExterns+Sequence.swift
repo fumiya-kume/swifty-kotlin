@@ -11,6 +11,9 @@ public extension RuntimeABIExterns {
         kk_sequence_builder_yield,
         kk_sequence_builder_build,
         kk_iterator_builder_build,
+        kk_iterator_builder_yield,
+        kk_iterator_builder_hasNext,
+        kk_iterator_builder_next,
         kk_sequence_of,
         kk_sequence_generate,
         kk_sequence_forEach,
@@ -96,9 +99,27 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // STDLIB-331: iterator {} builder
+    // STDLIB-331/564: iterator {} builder
     static let kk_iterator_builder_build = ExternDecl(
         name: "kk_iterator_builder_build",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_iterator_builder_yield = ExternDecl(
+        name: "kk_iterator_builder_yield",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_iterator_builder_hasNext = ExternDecl(
+        name: "kk_iterator_builder_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_iterator_builder_next = ExternDecl(
+        name: "kk_iterator_builder_next",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

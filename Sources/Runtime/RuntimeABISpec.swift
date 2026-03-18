@@ -1195,6 +1195,12 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "IO"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_readlnOrNull",
+            parameters: [],
+            returnType: .intptr,
+            section: "IO"
+        ),
     ]
 
     public static let systemFunctions: [RuntimeABIFunctionSpec] = [
@@ -1521,6 +1527,64 @@ public enum RuntimeABISpec {
             name: "kk_flow_release",
             parameters: [
                 RuntimeABIParameter(name: "flowHandle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        // Flow terminal operators & flowOf (STDLIB-088)
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_of",
+            parameters: [
+                RuntimeABIParameter(name: "arrayHandle", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_to_list",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_first",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_count",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_fold",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "operationFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_flow_reduce",
+            parameters: [
+                RuntimeABIParameter(name: "flowHandle", type: .intptr),
+                RuntimeABIParameter(name: "operationFnPtr", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2648,6 +2712,51 @@ public enum RuntimeABISpec {
             name: "kk_file_walk",
             parameters: [
                 RuntimeABIParameter(name: "fileRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        // STDLIB-567: File.bufferedReader()
+        RuntimeABIFunctionSpec(
+            name: "kk_file_bufferedReader",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_readLine",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_readLines",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_buffered_reader_close",
+            parameters: [
+                RuntimeABIParameter(name: "readerRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_file_useLines",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "FileIO"

@@ -37,6 +37,39 @@ final class RuntimeKPropertyStub {
     }
 }
 
+private func runtimeTagCallableRef(
+    _ callable: Int,
+    name: Int,
+    arity: Int,
+    kind: RuntimeCallableRefKind
+) -> Int {
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[callable] = RuntimeCallableRefMetadata(
+            nameRaw: name,
+            arity: arity,
+            kind: kind
+        )
+    }
+    return callable
+}
+
+@_cdecl("kk_callable_ref_tag_kfunction")
+public func kk_callable_ref_tag_kfunction(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .function)
+}
+
+@_cdecl("kk_callable_ref_tag_kproperty")
+public func kk_callable_ref_tag_kproperty(_ callable: Int, _ name: Int, _ arity: Int) -> Int {
+    runtimeTagCallableRef(callable, name: name, arity: arity, kind: .property)
+}
+
+@_cdecl("kk_callable_ref_name")
+public func kk_callable_ref_name(_ tagged: Int) -> Int {
+    runtimeStorage.withLock { state in
+        state.callableRefMetadataByValue[tagged]?.nameRaw ?? runtimeNullSentinelInt
+    }
+}
+
 @_cdecl("kk_kproperty_stub_create")
 public func kk_kproperty_stub_create(_ nameStr: Int, _ returnTypeStr: Int) -> Int {
     let stub = RuntimeKPropertyStub(name: nameStr, returnType: returnTypeStr)
