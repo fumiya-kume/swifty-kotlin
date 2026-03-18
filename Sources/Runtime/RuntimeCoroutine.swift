@@ -228,7 +228,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
 /// so it survives suspend/resume across different GCD threads. A lightweight
 /// per-task accessor (`RuntimeCoroutineScope.current`)
 /// bridges the gap for the few call-sites that don't have a continuation handle.
-final class RuntimeCoroutineScope {
+final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
@@ -1420,7 +1420,9 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     let semaphore = DispatchSemaphore(value: 0)
-    var result = 0
+    let resultPtr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+    resultPtr.initialize(to: 0)
+    defer { resultPtr.deallocate() }
 
     queue.async {
         // Propagate the coroutine scope to the target thread.
@@ -1428,7 +1430,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         RuntimeCoroutineScope.current = parentScope
         defer { RuntimeCoroutineScope.current = savedScope }
 
-        result = runSuspendEntryLoopWithContinuation(
+        resultPtr.pointee = runSuspendEntryLoopWithContinuation(
             entryPointRaw: blockFnPtr,
             continuation: continuation
         )
@@ -1436,7 +1438,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     semaphore.wait()
-    return result
+    return resultPtr.pointee
 }
 
 // MARK: - Channel Runtime Stubs (P5-134)
