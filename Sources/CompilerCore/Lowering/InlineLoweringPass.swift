@@ -12,6 +12,8 @@ struct InlineExpansion {
 
 final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
+    /// Counter for generating unique merge labels in lambda body expansions.
+    private var inlineLabelCounter: Int32 = 9000
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         for decl in module.arena.declarations {
@@ -440,6 +442,13 @@ final class InlineLoweringPass: LoweringPass {
                         localExprMap[result] = cloned
                         if let lambdaReturn = lambdaExpansion.returnedExpr {
                             localExprMap[cloned] = lambdaReturn
+                        } else {
+                            // Unit-returning lambda: synthesize a unit constant
+                            // so that downstream references to the result resolve
+                            // to a valid expression instead of dangling.
+                            let unitExpr = module.arena.appendExpr(.unit, type: nil)
+                            lowered.append(.constValue(result: unitExpr, value: .unit))
+                            localExprMap[cloned] = unitExpr
                         }
                     }
                     break
@@ -613,10 +622,39 @@ final class InlineLoweringPass: LoweringPass {
         lowered.reserveCapacity(lambdaFunction.body.count)
         var returnedExpr: KIRExprID?
 
-        // Use a labeled loop so that return instructions can stop cloning.
-        // Without this, instructions following a return in the lambda body
-        // would be incorrectly included in the inlined expansion.
-        cloneLoop: for instruction in lambdaFunction.body {
+        // Count return instructions to decide whether we need a merge label.
+        // Lambda bodies with control flow (if/else branches) can contain
+        // multiple return instructions; breaking at the first one would
+        // truncate the remaining branches.
+        let returnCount = lambdaFunction.body.reduce(0) { count, inst in
+            switch inst {
+            case .returnUnit, .returnValue: return count + 1
+            default: return count
+            }
+        }
+        let needsMergeLabel = returnCount > 1
+        let exitLabel: Int32
+        var mergeResult: KIRExprID?
+        if needsMergeLabel {
+            exitLabel = inlineLabelCounter
+            inlineLabelCounter += 1
+            // For value-returning lambdas, allocate a merge expression to
+            // hold the returned value from whichever branch executes.
+            let hasValueReturn = lambdaFunction.body.contains {
+                if case .returnValue = $0 { return true }
+                return false
+            }
+            if hasValueReturn {
+                mergeResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: nil
+                )
+            }
+        } else {
+            exitLabel = -1
+        }
+
+        for instruction in lambdaFunction.body {
             switch instruction {
             case .beginBlock, .endBlock:
                 continue
@@ -640,12 +678,22 @@ final class InlineLoweringPass: LoweringPass {
                 )
 
             case .returnUnit:
-                returnedExpr = nil
-                break cloneLoop
+                if needsMergeLabel {
+                    returnedExpr = nil
+                    lowered.append(.jump(exitLabel))
+                } else {
+                    returnedExpr = nil
+                }
 
             case let .returnValue(value):
-                returnedExpr = resolveAlias(of: value, aliases: localExprMap)
-                break cloneLoop
+                let resolved = resolveAlias(of: value, aliases: localExprMap)
+                if needsMergeLabel, let dest = mergeResult {
+                    lowered.append(.copy(from: resolved, to: dest))
+                    lowered.append(.jump(exitLabel))
+                    returnedExpr = dest
+                } else {
+                    returnedExpr = resolved
+                }
 
             case let .constValue(result, value):
                 if case let .symbolRef(symbol) = value,
@@ -780,6 +828,11 @@ final class InlineLoweringPass: LoweringPass {
                     )
                 )
             }
+        }
+
+        // Emit merge label so all branches converge after the inlined body.
+        if needsMergeLabel {
+            lowered.append(.label(exitLabel))
         }
 
         return InlineExpansion(
