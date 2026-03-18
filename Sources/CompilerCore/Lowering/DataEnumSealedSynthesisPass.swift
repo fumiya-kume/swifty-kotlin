@@ -251,32 +251,142 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             args: [],
             nullability: .nonNull
         )))
-        let parameterName = interner.intern("$self")
+        let selfParamName = interner.intern("$self")
         let fqName = owner.fqName + [name]
-        let parameterSymbol = sema.symbols.define(
+        let selfParamSymbol = sema.symbols.define(
             kind: .valueParameter,
-            name: parameterName,
-            fqName: fqName + [parameterName],
+            name: selfParamName,
+            fqName: fqName + [selfParamName],
             declSite: owner.declSite,
             visibility: .private,
             flags: [.synthetic]
         )
-        let parameter = KIRParameter(symbol: parameterSymbol, type: receiverType)
+        let selfParam = KIRParameter(symbol: selfParamSymbol, type: receiverType)
+
+        // Look up the primary constructor to get property parameter types.
+        let initName = interner.intern("<init>")
+        let ctorFQName = owner.fqName + [initName]
+        let ctorSymbol = sema.symbols.lookupAll(fqName: ctorFQName).first { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .constructor
+        }
+
+        // Guard: if no constructor is found, emit a simple self-returning copy()
+        // to avoid generating an invalid .call instruction with nil symbol.
+        guard let resolvedCtorSymbol = ctorSymbol,
+              let ctorSignature = sema.symbols.functionSignature(for: resolvedCtorSymbol)
+        else {
+            let resultExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: receiverType
+            )
+            let body: [KIRInstruction] = [
+                .constValue(result: resultExpr, value: .symbolRef(selfParamSymbol)),
+                .returnValue(resultExpr),
+            ]
+            let signature = FunctionSignature(
+                parameterTypes: [receiverType],
+                returnType: receiverType,
+                isSuspend: false,
+                valueParameterSymbols: [selfParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            )
+            appendSyntheticFunctionIfNeeded(
+                name: name,
+                owner: owner,
+                module: module,
+                sema: sema,
+                signature: signature,
+                params: [selfParam],
+                body: body,
+                existingFunctionSymbols: existingFunctionSymbols
+            )
+            return
+        }
+
+        // Collect constructor value parameters (excluding receiver).
+        // The constructor signature stores symbols in valueParameterSymbols and
+        // types in parameterTypes. When a receiver type is prepended to
+        // parameterTypes (but not to valueParameterSymbols), we strip the leading
+        // receiver entry from parameterTypes so that both arrays align 1-to-1.
+        let ctorParamSymbols = ctorSignature.valueParameterSymbols
+        var ctorParamTypes = ctorSignature.parameterTypes
+        if ctorParamTypes.count > ctorParamSymbols.count,
+           ctorParamTypes.first == receiverType {
+            ctorParamTypes.removeFirst()
+        }
+
+        // Pair up symbols and types, truncating to the shorter array for safety.
+        let pairCount = min(ctorParamSymbols.count, ctorParamTypes.count)
+        let propertyParams: [(symbol: SymbolID, type: TypeID)] = (0..<pairCount).map { i in
+            (ctorParamSymbols[i], ctorParamTypes[i])
+        }
+
+        // Build KIR parameters and body for copy().
+        // Each copy parameter mirrors the corresponding constructor parameter name
+        // (e.g. name, age) so diagnostics and dumps reflect Kotlin's copy(name=..., age=...).
+        var allParams: [KIRParameter] = [selfParam]
+        var allParamSymbols: [SymbolID] = [selfParamSymbol]
+        var allParamTypes: [TypeID] = [receiverType]
+        var allParamHasDefault: [Bool] = [false]
+        var allParamIsVararg: [Bool] = [false]
+        var copyParamSymbols: [SymbolID] = []
+
+        for (ctorSym, paramType) in propertyParams {
+            // Reuse the constructor parameter's name for the copy() parameter.
+            let ctorParamName = sema.symbols.symbol(ctorSym)?.name ?? interner.intern("$copy_\(allParams.count)")
+            let paramSymbol = sema.symbols.define(
+                kind: .valueParameter,
+                name: ctorParamName,
+                fqName: fqName + [ctorParamName],
+                declSite: owner.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            allParams.append(KIRParameter(symbol: paramSymbol, type: paramType))
+            allParamSymbols.append(paramSymbol)
+            allParamTypes.append(paramType)
+            allParamHasDefault.append(true)
+            allParamIsVararg.append(false)
+            copyParamSymbols.append(paramSymbol)
+        }
+
+        var body: [KIRInstruction] = []
+
+        // Load each copy parameter.
+        var ctorArgExprs: [KIRExprID] = []
+        for (index, paramSymbol) in copyParamSymbols.enumerated() {
+            let paramType = propertyParams[index].type
+            let paramExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: paramType
+            )
+            body.append(.constValue(result: paramExpr, value: .symbolRef(paramSymbol)))
+            ctorArgExprs.append(paramExpr)
+        }
+
+        // Call the constructor with the (possibly overridden) parameters.
         let resultExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
             type: receiverType
         )
-        let body: [KIRInstruction] = [
-            .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
-            .returnValue(resultExpr),
-        ]
+        body.append(.call(
+            symbol: resolvedCtorSymbol,
+            callee: initName,
+            arguments: ctorArgExprs,
+            result: resultExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        body.append(.returnValue(resultExpr))
+
         let signature = FunctionSignature(
-            parameterTypes: [receiverType],
+            parameterTypes: allParamTypes,
             returnType: receiverType,
             isSuspend: false,
-            valueParameterSymbols: [parameterSymbol],
-            valueParameterHasDefaultValues: [false],
-            valueParameterIsVararg: [false]
+            valueParameterSymbols: allParamSymbols,
+            valueParameterHasDefaultValues: allParamHasDefault,
+            valueParameterIsVararg: allParamIsVararg
         )
         appendSyntheticFunctionIfNeeded(
             name: name,
@@ -284,7 +394,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             module: module,
             sema: sema,
             signature: signature,
-            params: [parameter],
+            params: allParams,
             body: body,
             existingFunctionSymbols: existingFunctionSymbols
         )
@@ -1071,8 +1181,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 returnType: signature.returnType,
                 isSuspend: signature.isSuspend,
                 valueParameterSymbols: params.map(\.symbol),
-                valueParameterHasDefaultValues: params.map { _ in false },
-                valueParameterIsVararg: params.map { _ in false },
+                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues.isEmpty
+                    ? params.map { _ in false }
+                    : signature.valueParameterHasDefaultValues,
+                valueParameterIsVararg: signature.valueParameterIsVararg.isEmpty
+                    ? params.map { _ in false }
+                    : signature.valueParameterIsVararg,
                 typeParameterSymbols: []
             ),
             for: functionSymbol
