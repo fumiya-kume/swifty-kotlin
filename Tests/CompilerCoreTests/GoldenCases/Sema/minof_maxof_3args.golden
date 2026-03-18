@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=_root_ vis=public flags=_
+symbol s0 kind=package fq=golden.sema vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -794,46 +794,76 @@ symbol s792 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s793 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s794 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#792 params=[(T#792) -> T#793] ret=T#793 suspend=0 defaults=[0] vararg=[0]
-symbol s796 kind=class fq=Point vis=public flags=dataType
-symbol s797 kind=constructor fq=Point.<init> vis=public flags=_ sig=recv=Class#796 params=[Int,Int] ret=Class#796 suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s798 kind=valueParameter fq=Point.<init>.$797.x vis=private flags=_
-symbol s799 kind=valueParameter fq=Point.<init>.$797.y vis=private flags=_
-symbol s800 kind=function fq=Point.copy vis=public flags=synthetic sig=recv=Class#796 params=[Int,Int] ret=Class#796 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s801 kind=valueParameter fq=Point.copy.$800.x vis=private flags=_
-symbol s802 kind=valueParameter fq=Point.copy.$800.y vis=private flags=_
-symbol s803 kind=property fq=Point.x vis=public flags=_ type=Int
-symbol s804 kind=property fq=Point.y vis=public flags=_ type=Int
-symbol s805 kind=function fq=basicDestructuring vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s806 kind=function fq=destructuringWithUnderscore vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s807 kind=local fq=__local_4.p vis=private flags=_
-symbol s808 kind=local fq=__destructuring_6.a vis=private flags=_ type=Any
-symbol s809 kind=local fq=__destructuring_6.b vis=private flags=_ type=Any
-symbol s810 kind=local fq=__local_17.p vis=private flags=_
-symbol s811 kind=local fq=__destructuring_19.second vis=private flags=_ type=Any
-file f0 package=_
-  decl d2 class Point sym=s796
-  decl d3 fun basicDestructuring suspend=0 inline=0 sym=s805
-  decl d4 fun destructuringWithUnderscore suspend=0 inline=0 sym=s806
-expr e0 name(Point) type=_
-expr e1 int(1) type=Int
-expr e2 int(2) type=Int
-expr e3 call callee=e0 args=[_:e1,_:e2] type=Class#796 call=s797 map=[0->0,1->1] targs=[]
-expr e4 localDecl p mutable=0 type=_ init=e3 type=Unit ref=s807
-expr e5 name(p) type=Class#796 ref=s807
-expr e6 destructuringDecl names=[a,b] mutable=0 init=e5 type=Unit
-expr e7 name(println) type=_
-expr e8 name(a) type=Any ref=s808
-expr e9 call callee=e7 args=[_:e8] type=Unit call=s677 map=[0->0] targs=[]
-expr e10 name(println) type=_
-expr e11 name(b) type=Any ref=s809
-expr e12 call callee=e10 args=[_:e11] type=Unit call=s677 map=[0->0] targs=[]
-expr e13 name(Point) type=_
-expr e14 int(3) type=Int
-expr e15 int(4) type=Int
-expr e16 call callee=e13 args=[_:e14,_:e15] type=Class#796 call=s797 map=[0->0,1->1] targs=[]
-expr e17 localDecl p mutable=0 type=_ init=e16 type=Unit ref=s810
-expr e18 name(p) type=Class#796 ref=s810
-expr e19 destructuringDecl names=[_,second] mutable=0 init=e18 type=Unit
-expr e20 name(println) type=_
-expr e21 name(second) type=Any ref=s811
-expr e22 call callee=e20 args=[_:e21] type=Unit call=s677 map=[0->0] targs=[]
+symbol s796 kind=function fq=golden.sema.twoArgInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s797 kind=function fq=golden.sema.twoArgMinInt vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s798 kind=function fq=golden.sema.threeArgMaxInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s799 kind=valueParameter fq=golden.sema.threeArgMaxInt.$798.a vis=private flags=_
+symbol s800 kind=valueParameter fq=golden.sema.threeArgMaxInt.$798.b vis=private flags=_
+symbol s801 kind=valueParameter fq=golden.sema.threeArgMaxInt.$798.c vis=private flags=_
+symbol s802 kind=function fq=golden.sema.threeArgMinInt vis=public flags=_ sig=recv=_ params=[Int,Int,Int] ret=Int suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s803 kind=valueParameter fq=golden.sema.threeArgMinInt.$802.a vis=private flags=_
+symbol s804 kind=valueParameter fq=golden.sema.threeArgMinInt.$802.b vis=private flags=_
+symbol s805 kind=valueParameter fq=golden.sema.threeArgMinInt.$802.c vis=private flags=_
+symbol s806 kind=function fq=golden.sema.threeArgMaxLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s807 kind=valueParameter fq=golden.sema.threeArgMaxLong.$806.a vis=private flags=_
+symbol s808 kind=valueParameter fq=golden.sema.threeArgMaxLong.$806.b vis=private flags=_
+symbol s809 kind=valueParameter fq=golden.sema.threeArgMaxLong.$806.c vis=private flags=_
+symbol s810 kind=function fq=golden.sema.threeArgMinLong vis=public flags=_ sig=recv=_ params=[Long,Long,Long] ret=Long suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s811 kind=valueParameter fq=golden.sema.threeArgMinLong.$810.a vis=private flags=_
+symbol s812 kind=valueParameter fq=golden.sema.threeArgMinLong.$810.b vis=private flags=_
+symbol s813 kind=valueParameter fq=golden.sema.threeArgMinLong.$810.c vis=private flags=_
+symbol s814 kind=function fq=golden.sema.threeArgMaxDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s815 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$814.a vis=private flags=_
+symbol s816 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$814.b vis=private flags=_
+symbol s817 kind=valueParameter fq=golden.sema.threeArgMaxDouble.$814.c vis=private flags=_
+symbol s818 kind=function fq=golden.sema.threeArgMinDouble vis=public flags=_ sig=recv=_ params=[Double,Double,Double] ret=Double suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s819 kind=valueParameter fq=golden.sema.threeArgMinDouble.$818.a vis=private flags=_
+symbol s820 kind=valueParameter fq=golden.sema.threeArgMinDouble.$818.b vis=private flags=_
+symbol s821 kind=valueParameter fq=golden.sema.threeArgMinDouble.$818.c vis=private flags=_
+file f0 package=golden.sema
+  decl d0 fun twoArgInt suspend=0 inline=0 sym=s796
+  decl d1 fun twoArgMinInt suspend=0 inline=0 sym=s797
+  decl d2 fun threeArgMaxInt suspend=0 inline=0 sym=s798
+  decl d3 fun threeArgMinInt suspend=0 inline=0 sym=s802
+  decl d4 fun threeArgMaxLong suspend=0 inline=0 sym=s806
+  decl d5 fun threeArgMinLong suspend=0 inline=0 sym=s810
+  decl d6 fun threeArgMaxDouble suspend=0 inline=0 sym=s814
+  decl d7 fun threeArgMinDouble suspend=0 inline=0 sym=s818
+expr e0 name(maxOf) type=_
+expr e1 int(3) type=Int
+expr e2 int(7) type=Int
+expr e3 call callee=e0 args=[_:e1,_:e2] type=Int call=s222 map=[0->0,1->1] targs=[]
+expr e4 name(minOf) type=_
+expr e5 int(3) type=Int
+expr e6 int(7) type=Int
+expr e7 call callee=e4 args=[_:e5,_:e6] type=Int call=s225 map=[0->0,1->1] targs=[]
+expr e8 name(maxOf) type=_
+expr e9 name(a) type=Int ref=s799
+expr e10 name(b) type=Int ref=s800
+expr e11 name(c) type=Int ref=s801
+expr e12 call callee=e8 args=[_:e9,_:e10,_:e11] type=Int call=s234 map=[0->0,1->1,2->2] targs=[]
+expr e13 name(minOf) type=_
+expr e14 name(a) type=Int ref=s803
+expr e15 name(b) type=Int ref=s804
+expr e16 name(c) type=Int ref=s805
+expr e17 call callee=e13 args=[_:e14,_:e15,_:e16] type=Int call=s236 map=[0->0,1->1,2->2] targs=[]
+expr e18 name(maxOf) type=_
+expr e19 name(a) type=Long ref=s807
+expr e20 name(b) type=Long ref=s808
+expr e21 name(c) type=Long ref=s809
+expr e22 call callee=e18 args=[_:e19,_:e20,_:e21] type=Long call=s238 map=[0->0,1->1,2->2] targs=[]
+expr e23 name(minOf) type=_
+expr e24 name(a) type=Long ref=s811
+expr e25 name(b) type=Long ref=s812
+expr e26 name(c) type=Long ref=s813
+expr e27 call callee=e23 args=[_:e24,_:e25,_:e26] type=Long call=s239 map=[0->0,1->1,2->2] targs=[]
+expr e28 name(maxOf) type=_
+expr e29 name(a) type=Double ref=s815
+expr e30 name(b) type=Double ref=s816
+expr e31 name(c) type=Double ref=s817
+expr e32 call callee=e28 args=[_:e29,_:e30,_:e31] type=Double call=s240 map=[0->0,1->1,2->2] targs=[]
+expr e33 name(minOf) type=_
+expr e34 name(a) type=Double ref=s819
+expr e35 name(b) type=Double ref=s820
+expr e36 name(c) type=Double ref=s821
+expr e37 call callee=e33 args=[_:e34,_:e35,_:e36] type=Double call=s241 map=[0->0,1->1,2->2] targs=[]
