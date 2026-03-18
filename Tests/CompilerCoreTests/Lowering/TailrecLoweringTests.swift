@@ -3,6 +3,9 @@ import Foundation
 import XCTest
 
 final class TailrecLoweringTests: XCTestCase {
+    /// Thrown after `XCTFail` in helpers that need to stop execution.
+    private struct TestFailure: Error {}
+
     // MARK: - Test Helpers
 
     /// Create a `KIRContext` with the given module name and a shared interner.
@@ -43,7 +46,8 @@ final class TailrecLoweringTests: XCTestCase {
         let ctx = makeKIRContext(moduleName: moduleName, interner: interner)
         try TailrecLoweringPass().run(module: module, ctx: ctx)
         guard case let .function(lowered)? = module.arena.decl(fnID) else {
-            throw XCTSkip("expected lowered function")
+            XCTFail("expected lowered function")
+            throw TestFailure()
         }
         return lowered
     }
