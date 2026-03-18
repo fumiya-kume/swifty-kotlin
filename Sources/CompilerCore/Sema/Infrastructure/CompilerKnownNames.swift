@@ -460,13 +460,20 @@ struct KnownCompilerNames {
         symbol.name == arrayDeque || symbolMatches(symbol, fqName: kotlinCollectionsArrayDequeFQName)
     }
 
+    func isSetLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
+        if symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
+            || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+        {
+            return true
+        }
+        // Fall back to simple name match only for synthetic symbols (no FQN)
+        return (symbol.name == set || symbol.name == mutableSet) && symbol.fqName.isEmpty
+    }
+
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
         isConcreteListLikeSymbol(symbol)
-            || symbol.name == set
-            || symbol.name == mutableSet
             || symbol.name == collection
-            || symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
-            || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+            || isSetLikeSymbol(symbol)
             || symbolMatches(symbol, fqName: kotlinCollectionsCollectionFQName)
             || isMapLikeSymbol(symbol)
             || isSequenceSymbol(symbol)
@@ -476,10 +483,7 @@ struct KnownCompilerNames {
         if isMapLikeSymbol(symbol) {
             return .map
         }
-        if symbol.name == set || symbol.name == mutableSet
-            || symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
-            || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
-        {
+        if isSetLikeSymbol(symbol) {
             return .set
         }
         if isArrayLikeName(symbol.name) {

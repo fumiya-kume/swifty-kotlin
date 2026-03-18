@@ -8,6 +8,8 @@ final class FlowLoweringPass: LoweringPass {
         case map = 1
         case filter = 2
         case take = 3
+        case onEach = 4
+        case distinctUntilChanged = 5
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {

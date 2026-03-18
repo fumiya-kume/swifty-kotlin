@@ -5,6 +5,7 @@
 /// - STDLIB-321: `name`, `path` properties; `exists()`, `isFile()`, `isDirectory()` query methods
 /// - STDLIB-322: `forEachLine(action:)` member function
 /// - STDLIB-323: `delete()`, `mkdirs()`, `listFiles()`, `walk()` filesystem operations
+/// - STDLIB-567: `bufferedReader()` returning `BufferedReader` with `readLine()`, `readLines()`, `close()`
 ///
 /// Each stub registers the java.io.File class, its constructor, member properties,
 /// and member functions in the symbol table so that name resolution and type
@@ -181,6 +182,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.useLines {} (STDLIB-566)
+
+        // (List<String>) -> T  (represented as Any for generic return)
+        let listOfStringToAnyType = types.make(.functionType(FunctionType(
+            params: [listOfStringType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        registerFileMemberFunction(
+            named: "useLines",
+            externalLinkName: "kk_file_useLines",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("block", listOfStringToAnyType)],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File filesystem operations (STDLIB-323)
 
         registerFileMemberFunction(
@@ -223,6 +245,72 @@ extension DataFlowSemaPhase {
             ownerType: fileType,
             parameters: [],
             returnType: listOfFileType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - BufferedReader type and File.bufferedReader() (STDLIB-567)
+
+        let bufferedReaderSymbol = ensureClassSymbol(
+            named: "BufferedReader",
+            in: javaIOPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        if let javaIOPkgSymbol {
+            symbols.setParentSymbol(javaIOPkgSymbol, for: bufferedReaderSymbol)
+        }
+        let bufferedReaderType = types.make(.classType(ClassType(
+            classSymbol: bufferedReaderSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(bufferedReaderType, for: bufferedReaderSymbol)
+
+        let nullableStringType = types.makeNullable(types.stringType)
+
+        // File.bufferedReader() -> BufferedReader
+        registerFileMemberFunction(
+            named: "bufferedReader",
+            externalLinkName: "kk_file_bufferedReader",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: bufferedReaderType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.readLine() -> String?
+        registerFileMemberFunction(
+            named: "readLine",
+            externalLinkName: "kk_buffered_reader_readLine",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: nullableStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.readLines() -> List<String>
+        registerFileMemberFunction(
+            named: "readLines",
+            externalLinkName: "kk_buffered_reader_readLines",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: listOfStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // BufferedReader.close() -> Unit
+        registerFileMemberFunction(
+            named: "close",
+            externalLinkName: "kk_buffered_reader_close",
+            ownerSymbol: bufferedReaderSymbol,
+            ownerType: bufferedReaderType,
+            parameters: [],
+            returnType: types.unitType,
             symbols: symbols,
             interner: interner
         )

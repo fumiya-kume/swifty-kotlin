@@ -47,11 +47,11 @@ extension CallLowerer {
             thrownResult: nil
         ))
 
-        for (index, entry) in entries.enumerated() {
+        for (index, _) in entries.enumerated() {
             let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
-            let entryExpr = arena.appendExpr(.symbolRef(entry.id), type: entryType)
+            let entryExpr = arena.appendExpr(.intLiteral(Int64(index)), type: entryType)
             instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
-            instructions.append(.constValue(result: entryExpr, value: .symbolRef(entry.id)))
+            instructions.append(.constValue(result: entryExpr, value: .intLiteral(Int64(index))))
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_array_set"),

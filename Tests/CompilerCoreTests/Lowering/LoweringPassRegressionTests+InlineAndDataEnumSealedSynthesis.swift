@@ -179,7 +179,131 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(functionNames.contains("Point$copy"))
 
         let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        // Point has no constructor registered, so copy() falls back to returning $self
         XCTAssertEqual(copyFunction.params.count, 1)
+
+        // Without a constructor, the body returns $self directly (no <init> call)
+        let copyCallees = extractCallees(from: copyFunction.body, interner: interner)
+        XCTAssertTrue(copyCallees.isEmpty, "copy() without ctor should not call <init>, got: \(copyCallees)")
+    }
+
+    func testDataCopySynthesisWithConstructorParameters() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        // data class Person(val name: String, val age: Int)
+        let personName = interner.intern("Person")
+        let personSymbol = symbols.define(
+            kind: .class,
+            name: personName,
+            fqName: packagePath + [personName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        // Define primary constructor <init>(name: String, age: Int)
+        let initName = interner.intern("<init>")
+        let ctorFQName = packagePath + [personName, initName]
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public
+        )
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let intType = types.make(.primitive(.int, .nonNull))
+        let personType = types.make(.classType(ClassType(
+            classSymbol: personSymbol, args: [], nullability: .nonNull
+        )))
+
+        let nameParamName = interner.intern("name")
+        let ageParamName = interner.intern("age")
+        let nameParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: nameParamName,
+            fqName: ctorFQName + [nameParamName],
+            declSite: nil,
+            visibility: .private
+        )
+        let ageParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: ageParamName,
+            fqName: ctorFQName + [ageParamName],
+            declSite: nil,
+            visibility: .private
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [stringType, intType],
+                returnType: personType,
+                isSuspend: false,
+                valueParameterSymbols: [nameParamSymbol, ageParamSymbol],
+                valueParameterHasDefaultValues: [false, false],
+                valueParameterIsVararg: [false, false]
+            ),
+            for: ctorSymbol
+        )
+
+        let arena = KIRArena()
+        let personDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: personSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [personDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopy",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let copyFunction = try findKIRFunction(named: "Person$copy", in: module, interner: interner)
+
+        // copy() should have: $self + one param per constructor parameter (name, age)
+        XCTAssertEqual(copyFunction.params.count, 3, "copy() should have $self + 2 constructor params, got \(copyFunction.params.count)")
+
+        // Verify the registered signature preserves default-value semantics for copy parameters.
+        let copySig = sema.symbols.functionSignature(for: copyFunction.symbol)
+        XCTAssertNotNil(copySig, "copy() function should have a registered signature")
+        if let sig = copySig {
+            // $self has no default; each copy parameter should have default=true
+            XCTAssertEqual(sig.valueParameterHasDefaultValues.count, 3,
+                           "signature should have 3 hasDefault entries ($self + 2 params)")
+            XCTAssertEqual(sig.valueParameterHasDefaultValues, [false, true, true],
+                           "copy params should have defaults (self=false, name=true, age=true)")
+        }
+
+        // Verify the body calls <init> with the copy parameters
+        let callees = extractCallees(from: copyFunction.body, interner: interner)
+        XCTAssertTrue(callees.contains("<init>"), "copy() body should call <init>, got: \(callees)")
+
+        // Verify the <init> call passes 2 arguments (name, age) and uses a non-nil symbol
+        let initCall = copyFunction.body.compactMap { inst -> (symbol: SymbolID?, args: [KIRExprID])? in
+            guard case let .call(symbol, callee, arguments, _, _, _, _) = inst,
+                  interner.resolve(callee) == "<init>"
+            else { return nil }
+            return (symbol, arguments)
+        }.first
+        XCTAssertNotNil(initCall, "<init> call should exist in copy() body")
+        XCTAssertEqual(initCall?.args.count, 2, "<init> should be called with 2 args (name, age)")
+        XCTAssertNotNil(initCall?.symbol, "<init> call should have a non-nil constructor symbol")
     }
 
     func testDataEnumSealedSynthesisAddsOrdinalNameValuesValueOf() throws {
@@ -268,6 +392,17 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(functionNames.contains("values"), "Missing values, got: \(functionNames)")
         XCTAssertTrue(functionNames.contains("valueOf"), "Missing valueOf, got: \(functionNames)")
 
+        // Verify values() builds a proper Array<T> via kk_array_new / kk_array_set / kk_enum_make_values_array
+        let valuesFn = try findKIRFunction(named: "values", in: module, interner: interner)
+        let valuesCallees = extractCallees(from: valuesFn.body, interner: interner)
+        XCTAssertTrue(valuesCallees.contains("kk_array_new"), "values() should call kk_array_new, got: \(valuesCallees)")
+        XCTAssertTrue(valuesCallees.contains("kk_enum_make_values_array"), "values() should call kk_enum_make_values_array, got: \(valuesCallees)")
+        // 3 entries -> 3 kk_array_set calls
+        XCTAssertEqual(valuesCallees.filter { $0 == "kk_array_set" }.count, 3, "values() should have 3 kk_array_set calls for RED/GREEN/BLUE")
+
+        // values() return type should be anyType (erased Array<T>), not the enum type itself
+        XCTAssertEqual(valuesFn.returnType, types.anyType, "values() return type should be anyType (Array<T>)")
+
         // Verify ordinal values are correct (0-based)
         let redOrdinal = try findKIRFunction(named: "RED$enumOrdinal", in: module, interner: interner)
         let greenOrdinal = try findKIRFunction(named: "GREEN$enumOrdinal", in: module, interner: interner)
@@ -308,5 +443,248 @@ extension LoweringPassRegressionTests {
         let valueOfCallees = extractCallees(from: valueOfFn.body, interner: interner)
         XCTAssertTrue(valueOfCallees.contains("kk_string_equals"), "valueOf should call kk_string_equals")
         XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
+    }
+
+    func testEnumStaticInitSynthesizesGlobalsAndInitFunction() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        let colorName = interner.intern("Color")
+        let colorSymbol = symbols.define(
+            kind: .enumClass,
+            name: colorName,
+            fqName: packagePath + [colorName],
+            declSite: nil,
+            visibility: .public
+        )
+        let redSymbol = symbols.define(
+            kind: .field,
+            name: interner.intern("RED"),
+            fqName: packagePath + [colorName, interner.intern("RED")],
+            declSite: nil,
+            visibility: .public
+        )
+        let greenSymbol = symbols.define(
+            kind: .field,
+            name: interner.intern("GREEN"),
+            fqName: packagePath + [colorName, interner.intern("GREEN")],
+            declSite: nil,
+            visibility: .public
+        )
+        let blueSymbol = symbols.define(
+            kind: .field,
+            name: interner.intern("BLUE"),
+            fqName: packagePath + [colorName, interner.intern("BLUE")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let arena = KIRArena()
+        let colorDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: colorSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [colorDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "EnumStaticInit",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // Verify __enum_static_init_Color function was synthesized
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case let .function(function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+        XCTAssertTrue(
+            functionNames.contains("__enum_static_init_Color"),
+            "Missing __enum_static_init_Color, got: \(functionNames)"
+        )
+
+        // Verify KIRGlobal declarations exist for each entry
+        let globalSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
+            guard case let .global(global) = decl else {
+                return nil
+            }
+            return global.symbol
+        })
+        XCTAssertTrue(globalSymbols.contains(redSymbol), "Missing KIRGlobal for RED")
+        XCTAssertTrue(globalSymbols.contains(greenSymbol), "Missing KIRGlobal for GREEN")
+        XCTAssertTrue(globalSymbols.contains(blueSymbol), "Missing KIRGlobal for BLUE")
+
+        // Verify the static init body stores ordinals (0, 1, 2) into the expected entry globals.
+        let staticInitFn = try findKIRFunction(named: "__enum_static_init_Color", in: module, interner: interner)
+
+        var ordinalStores: [(ordinal: Int64, target: SymbolID)] = []
+
+        for instruction in staticInitFn.body {
+            switch instruction {
+            case let .copy(from, to):
+                guard case let .intLiteral(ordinal)? = module.arena.expr(from),
+                      case let .symbolRef(target)? = module.arena.expr(to)
+                else {
+                    XCTFail("Static init copy should connect an ordinal literal to an entry global")
+                    continue
+                }
+                ordinalStores.append((ordinal, target))
+            case let .call(_, _, arguments, result, _, _, _):
+                guard arguments.count == 1,
+                      let result,
+                      case let .intLiteral(ordinal)? = module.arena.expr(arguments[0]),
+                      case let .symbolRef(target)? = module.arena.expr(result)
+                else {
+                    continue
+                }
+                ordinalStores.append((ordinal, target))
+            default:
+                break
+            }
+        }
+        XCTAssertEqual(ordinalStores.count, 3, "Static init should emit one ordinal store per enum entry")
+        XCTAssertEqual(ordinalStores.map(\.ordinal), [0, 1, 2], "Static init should store sequential ordinals")
+        XCTAssertEqual(
+            ordinalStores.map(\.target),
+            [redSymbol, greenSymbol, blueSymbol],
+            "Static init should store ordinals into RED, GREEN, BLUE globals in order"
+        )
+
+        // Verify the function ends with returnUnit.
+        guard let lastInstruction = staticInitFn.body.last else {
+            return XCTFail("Static init should not be empty")
+        }
+        guard case .returnUnit = lastInstruction else {
+            return XCTFail("Static init should end with returnUnit, got \(lastInstruction)")
+        }
+    }
+
+    func testEnumStaticInitSkipsWhenNoEntries() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        // Enum with no entries
+        let emptyName = interner.intern("Empty")
+        let emptySymbol = symbols.define(
+            kind: .enumClass,
+            name: emptyName,
+            fqName: packagePath + [emptyName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let arena = KIRArena()
+        let emptyDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: emptySymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [emptyDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "EnumStaticInitEmpty",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // Verify no __enum_static_init function was generated for empty enum
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case let .function(function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+        XCTAssertFalse(
+            functionNames.contains("__enum_static_init_Empty"),
+            "Should not synthesize static init for empty enum"
+        )
+    }
+
+    func testEnumStaticInitDoesNotDuplicateExistingGlobals() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        let statusName = interner.intern("Status")
+        let statusSymbol = symbols.define(
+            kind: .enumClass,
+            name: statusName,
+            fqName: packagePath + [statusName],
+            declSite: nil,
+            visibility: .public
+        )
+        let okSymbol = symbols.define(
+            kind: .field,
+            name: interner.intern("OK"),
+            fqName: packagePath + [statusName, interner.intern("OK")],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let arena = KIRArena()
+        // Pre-create the KIRGlobal as BuildKIR would for enumEntryDecl
+        _ = arena.appendDecl(.global(KIRGlobal(symbol: okSymbol, type: sema.types.anyType)))
+        let statusDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: statusSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [statusDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "EnumStaticInitNoDup",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // Count how many KIRGlobal declarations reference the OK symbol
+        let okGlobalCount = module.arena.declarations.filter { decl in
+            guard case let .global(global) = decl else { return false }
+            return global.symbol == okSymbol
+        }.count
+        XCTAssertEqual(okGlobalCount, 1, "Should not duplicate KIRGlobal for pre-existing entry")
     }
 }

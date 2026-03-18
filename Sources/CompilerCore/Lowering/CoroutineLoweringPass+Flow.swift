@@ -5,6 +5,8 @@ enum RuntimeFlowTag: Int64 {
     case map = 1
     case filter = 2
     case take = 3
+    case onEach = 4
+    case distinctUntilChanged = 5
 }
 
 struct FlowLoweringNames {

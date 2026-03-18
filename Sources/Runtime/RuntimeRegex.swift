@@ -5,10 +5,30 @@ import Foundation
 final class RuntimeRegexBox {
     let regex: NSRegularExpression
     let pattern: String
+    /// When true, input strings are NFC-normalized before matching to emulate
+    /// Kotlin's `RegexOption.CANON_EQ` (Unicode canonical equivalence).
+    /// The pattern itself is also NFC-normalized at creation time.
+    let canonEq: Bool
 
-    init(regex: NSRegularExpression, pattern: String) {
+    init(regex: NSRegularExpression, pattern: String, canonEq: Bool = false) {
         self.regex = regex
         self.pattern = pattern
+        self.canonEq = canonEq
+    }
+
+    /// Returns the input string NFC-normalized if `canonEq` is enabled,
+    /// otherwise returns it unchanged.
+    ///
+    /// **Limitation**: When `canonEq` is true, operations that return substrings
+    /// of the input (replace, split, find, findAll, matchEntire) will operate on
+    /// the NFC-normalized form. This means the returned strings may differ from
+    /// the original input's Unicode representation (e.g., a decomposed sequence
+    /// like U+0065 U+0301 becomes the precomposed U+00E9). Kotlin/JVM's
+    /// `CANON_EQ` uses the ICU regex engine which matches canonically equivalent
+    /// sequences without altering the input. A fully faithful implementation
+    /// would require mapping match ranges back to the original string.
+    func normalizeIfNeeded(_ str: String) -> String {
+        canonEq ? str.precomposedStringWithCanonicalMapping : str
     }
 }
 
@@ -106,8 +126,9 @@ public func kk_regex_create(_ patternRaw: Int) -> Int {
 
 @_cdecl("kk_string_matches_regex")
 public func kk_string_matches_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let match = regexBox.regex.firstMatch(in: str, options: [.anchored], range: range)
     let fullMatch = match != nil && match!.range.length == range.length
@@ -116,8 +137,9 @@ public func kk_string_matches_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
 
 @_cdecl("kk_string_contains_regex")
 public func kk_string_contains_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let match = regexBox.regex.firstMatch(in: str, options: [], range: range)
     return kk_box_bool(match != nil ? 1 : 0)
@@ -127,8 +149,9 @@ public func kk_string_contains_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
 
 @_cdecl("kk_regex_find")
 public func kk_regex_find(_ regexRaw: Int, _ strRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return runtimeNullSentinelInt }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     guard let result = regexBox.regex.firstMatch(in: str, options: [], range: range) else {
         return runtimeNullSentinelInt
@@ -139,8 +162,9 @@ public func kk_regex_find(_ regexRaw: Int, _ strRaw: Int) -> Int {
 
 @_cdecl("kk_regex_findAll")
 public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeListRaw([]) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let results = regexBox.regex.matches(in: str, options: [], range: range)
     let matchResults = results.map { result -> Int in
@@ -154,9 +178,10 @@ public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
 
 @_cdecl("kk_string_replace_regex")
 public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacementRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     let replacement = regexStringFromRaw(replacementRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw(str) }
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringRaw(rawStr) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let result = regexBox.regex.stringByReplacingMatches(in: str, options: [], range: range, withTemplate: replacement)
     return regexMakeStringRaw(result)
@@ -164,8 +189,9 @@ public func kk_string_replace_regex(_ strRaw: Int, _ regexRaw: Int, _ replacemen
 
 @_cdecl("kk_string_split_regex")
 public func kk_string_split_regex(_ strRaw: Int, _ regexRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
-    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringListRaw([str]) }
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
+    guard let regexBox = regexBoxFromRaw(regexRaw) else { return regexMakeStringListRaw([rawStr]) }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let matches = regexBox.regex.matches(in: str, options: [], range: range)
     if matches.isEmpty {
@@ -192,8 +218,9 @@ public func kk_regex_replace_lambda(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return strRaw }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     let matches = regexBox.regex.matches(in: str, options: [], range: range)
     if matches.isEmpty { return strRaw }
@@ -222,8 +249,9 @@ public func kk_regex_replace_lambda(
 
 @_cdecl("kk_regex_matchEntire")
 public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
-    let str = regexStringFromRaw(strRaw) ?? ""
+    let rawStr = regexStringFromRaw(strRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return runtimeNullSentinelInt }
+    let str = regexBox.normalizeIfNeeded(rawStr)
     let range = NSRange(str.startIndex..., in: str)
     guard let result = regexBox.regex.firstMatch(in: str, options: [], range: range) else {
         return runtimeNullSentinelInt
@@ -237,6 +265,12 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
 }
 
 // MARK: - STDLIB-480: Regex(pattern, option) / Regex.containsMatchIn
+
+// Named constants for Kotlin `RegexOption` enum ordinals.
+// These must stay in sync with the enum entry registration order in
+// `HeaderHelpers+SyntheticRegexStubs.swift` (`ensureRegexOptionEnumClass`).
+private let kRegexOptionOrdinalLiteral  = 3
+private let kRegexOptionOrdinalCanonEq  = 6
 
 /// Maps a Kotlin `RegexOption` enum ordinal to `NSRegularExpression.Options`.
 ///
@@ -253,10 +287,10 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
     case 0: return .caseInsensitive          // IGNORE_CASE
     case 1: return .anchorsMatchLines        // MULTILINE
     case 2: return .dotMatchesLineSeparators  // DOT_MATCHES_ALL
-    case 3: return []                        // LITERAL (handled via escapedPattern)
-    case 4: return .useUnixLineSeparators     // UNIX_LINES
-    case 5: return .allowCommentsAndWhitespace // COMMENTS
-    case 6: return []                        // CANON_EQ (no direct equivalent)
+    case kRegexOptionOrdinalLiteral: return []  // LITERAL (handled via escapedPattern)
+    case 4: return .useUnixLineSeparators        // UNIX_LINES
+    case 5: return .allowCommentsAndWhitespace   // COMMENTS
+    case kRegexOptionOrdinalCanonEq: return []   // CANON_EQ (handled via NFC normalization)
     default:
         assertionFailure("KSwiftK: unknown RegexOption ordinal \(ordinal) – compiler/runtime enum mismatch?")
         return []
@@ -272,18 +306,20 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
 public func kk_regex_create_with_option(_ patternRaw: Int, _ optionRaw: Int) -> Int {
     let pattern = regexStringFromRaw(patternRaw) ?? ""
     let ordinal = kk_unbox_int(optionRaw)
-    let isLiteral = ordinal == 3
-    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
+    let isLiteral = Int(ordinal) == kRegexOptionOrdinalLiteral
+    let isCanonEq = Int(ordinal) == kRegexOptionOrdinalCanonEq
+    let normalizedPattern = isCanonEq ? pattern.precomposedStringWithCanonicalMapping : pattern
+    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: normalizedPattern) : normalizedPattern
     let options = nsRegexOption(fromOrdinal: Int(ordinal))
     guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: options) else {
         do {
             let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
-            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern, canonEq: isCanonEq))
         } catch {
             fatalError("Failed to create fallback NSRegularExpression")
         }
     }
-    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern, canonEq: isCanonEq))
 }
 
 /// Creates a Regex from a pattern and a `Set<RegexOption>`.
@@ -294,29 +330,33 @@ public func kk_regex_create_with_options(_ patternRaw: Int, _ optionsSetRaw: Int
     let pattern = regexStringFromRaw(patternRaw) ?? ""
     var combined: NSRegularExpression.Options = []
     var isLiteral = false
+    var isCanonEq = false
     if let setBox = runtimeSetBox(from: optionsSetRaw) {
         for element in setBox.elements {
             let ordinal = Int(kk_unbox_int(element))
-            if ordinal == 3 { isLiteral = true }
+            if ordinal == kRegexOptionOrdinalLiteral { isLiteral = true }
+            if ordinal == kRegexOptionOrdinalCanonEq { isCanonEq = true }
             combined.insert(nsRegexOption(fromOrdinal: ordinal))
         }
     }
-    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: pattern) : pattern
+    let normalizedPattern = isCanonEq ? pattern.precomposedStringWithCanonicalMapping : pattern
+    let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: normalizedPattern) : normalizedPattern
     guard let regex = try? NSRegularExpression(pattern: effectivePattern, options: combined) else {
         do {
             let fallback = try NSRegularExpression(pattern: "(?!)", options: [])
-            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern))
+            return registerRuntimeObject(RuntimeRegexBox(regex: fallback, pattern: pattern, canonEq: isCanonEq))
         } catch {
             fatalError("Failed to create fallback NSRegularExpression")
         }
     }
-    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern))
+    return registerRuntimeObject(RuntimeRegexBox(regex: regex, pattern: pattern, canonEq: isCanonEq))
 }
 
 @_cdecl("kk_regex_containsMatchIn")
 public func kk_regex_containsMatchIn(_ regexRaw: Int, _ inputRaw: Int) -> Int {
-    let input = regexStringFromRaw(inputRaw) ?? ""
+    let rawInput = regexStringFromRaw(inputRaw) ?? ""
     guard let regexBox = regexBoxFromRaw(regexRaw) else { return kk_box_bool(0) }
+    let input = regexBox.normalizeIfNeeded(rawInput)
     let range = NSRange(input.startIndex..., in: input)
     let match = regexBox.regex.firstMatch(in: input, options: [], range: range)
     return kk_box_bool(match != nil ? 1 : 0)

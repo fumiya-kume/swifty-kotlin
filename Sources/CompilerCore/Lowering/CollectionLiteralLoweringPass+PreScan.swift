@@ -58,6 +58,9 @@ extension CollectionLiteralLoweringPass {
     func collectInitialCollectionExprIDs(
         function: KIRFunction,
         lookup: CollectionLiteralLookupTables,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
         listExprIDs: inout Set<Int32>,
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
@@ -67,6 +70,23 @@ extension CollectionLiteralLoweringPass {
         charRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
+        // Seed tracking sets from static type information (LOWERING-001).
+        // This covers function parameters, return values, and any expression
+        // whose KIR type is a known collection class (List, MutableList, Set,
+        // MutableSet, Map, MutableMap, etc.).
+        seedCollectionExprIDsFromStaticTypes(
+            function: function,
+            arena: arena,
+            sema: sema,
+            interner: interner,
+            listExprIDs: &listExprIDs,
+            setExprIDs: &setExprIDs,
+            mapExprIDs: &mapExprIDs,
+            arrayExprIDs: &arrayExprIDs,
+            sequenceExprIDs: &sequenceExprIDs,
+            stringExprIDs: &stringExprIDs
+        )
+
         // First pass: collect char-valued expression IDs to detect char range arguments (STDLIB-290)
         var charValuedExprIDs: Set<Int32> = []
         for instruction in function.body {
@@ -407,6 +427,137 @@ extension CollectionLiteralLoweringPass {
         }
         if stringExprIDs.contains(from.rawValue) {
             stringExprIDs.insert(to.rawValue)
+        }
+    }
+
+    // MARK: - Static type based collection classification (LOWERING-001)
+
+    /// Seed the collection tracking sets using the static type information
+    /// stored in the KIR arena's `exprTypes` map.  This handles expressions
+    /// whose concrete collection kind cannot be determined from factory/call
+    /// patterns alone, such as function parameters typed as `List<T>` or
+    /// return values from user-defined functions returning `Set<T>`.
+    private func seedCollectionExprIDsFromStaticTypes(
+        function: KIRFunction,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
+        listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
+    ) {
+        guard let sema else { return }
+        let types = sema.types
+        let symbols = sema.symbols
+
+        // For each expression referenced in this function's body that has
+        // a TypeID in the arena, resolve the TypeKind.  If it is a classType,
+        // check the classSymbol's simple name against known collection names.
+
+        // Collect expression IDs relevant to call/virtual-call rewriting
+        // from this function's body so we only classify relevant expressions.
+        // NOTE: This intentionally covers a subset of instruction kinds
+        // (call, virtualCall, copy, constValue, returnValue) that participate
+        // in collection-type propagation.  Other instruction kinds do not
+        // produce or consume collection-typed operands today.
+        var referencedExprIDs: Set<Int32> = []
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, _, arguments, result, _, _, _):
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .virtualCall(_, _, receiver, arguments, result, _, _, _):
+                referencedExprIDs.insert(receiver.rawValue)
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .copy(from, to):
+                referencedExprIDs.insert(from.rawValue)
+                referencedExprIDs.insert(to.rawValue)
+            case let .constValue(result, _):
+                referencedExprIDs.insert(result.rawValue)
+            case let .returnValue(expr):
+                referencedExprIDs.insert(expr.rawValue)
+            default:
+                break
+            }
+        }
+
+        for rawID in referencedExprIDs {
+            let exprID = KIRExprID(rawValue: rawID)
+            guard let typeID = arena.exprType(exprID) else { continue }
+            // Already classified by factory-call scan — skip.
+            if listExprIDs.contains(rawID) || setExprIDs.contains(rawID)
+                || mapExprIDs.contains(rawID) || arrayExprIDs.contains(rawID)
+                || sequenceExprIDs.contains(rawID) || stringExprIDs.contains(rawID)
+            {
+                continue
+            }
+            classifyExprByTypeID(
+                rawID: rawID, typeID: typeID,
+                types: types, symbols: symbols, interner: interner,
+                listExprIDs: &listExprIDs, setExprIDs: &setExprIDs,
+                mapExprIDs: &mapExprIDs, arrayExprIDs: &arrayExprIDs,
+                sequenceExprIDs: &sequenceExprIDs,
+                stringExprIDs: &stringExprIDs
+            )
+        }
+    }
+
+    private func classifyExprByTypeID(
+        rawID: Int32,
+        typeID: TypeID,
+        types: TypeSystem,
+        symbols: SymbolTable,
+        interner: StringInterner,
+        listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>,
+        stringExprIDs: inout Set<Int32>
+    ) {
+        let kind = types.kind(of: typeID)
+        guard case let .classType(classType) = kind else { return }
+
+        let classSymbol = classType.classSymbol
+        guard let symInfo = symbols.symbol(classSymbol) else { return }
+        guard let simpleName = symInfo.fqName.last else { return }
+
+        let resolved = interner.resolve(simpleName)
+
+        // TODO(LOWERING-001): This matches on simple name only.  A user-defined
+        // type named e.g. `foo.bar.List` would be misclassified as a stdlib
+        // collection.  Ideally we should validate the FQN prefix against
+        // `kotlin.collections.*` / `kotlin.*` before seeding the tracking sets.
+        // For now this is acceptable because the sema phase resolves stdlib
+        // symbols with canonical FQNs and user types rarely shadow them.
+        switch resolved {
+        // NOTE: We intentionally do NOT include "Collection" / "MutableCollection"
+        // here.  In Kotlin, Collection<T> is the common supertype of both
+        // List<T> and Set<T>.  Mapping it to listExprIDs would cause incorrect
+        // kk_list_* rewrites when the actual runtime value is a Set.
+        case "List", "MutableList", "ArrayList",
+             "AbstractList", "AbstractMutableList":
+            listExprIDs.insert(rawID)
+        case "Set", "MutableSet", "HashSet", "LinkedHashSet",
+             "AbstractSet", "AbstractMutableSet":
+            setExprIDs.insert(rawID)
+        case "Map", "MutableMap", "HashMap", "LinkedHashMap",
+             "AbstractMap", "AbstractMutableMap":
+            mapExprIDs.insert(rawID)
+        case "Array", "IntArray", "LongArray", "DoubleArray",
+             "FloatArray", "BooleanArray", "CharArray",
+             "ByteArray", "ShortArray", "UIntArray", "ULongArray":
+            arrayExprIDs.insert(rawID)
+        case "Sequence":
+            sequenceExprIDs.insert(rawID)
+        case "String":
+            stringExprIDs.insert(rawID)
+        default:
+            break
         }
     }
 }
