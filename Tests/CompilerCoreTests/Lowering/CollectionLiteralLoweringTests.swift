@@ -663,4 +663,193 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         let shouldRun = CollectionLiteralLoweringPass().shouldRun(module: module, ctx: ctx)
         XCTAssertTrue(shouldRun)
     }
+
+    // MARK: - LOWERING-001: Static type based collection classification
+
+    /// Helper to create a KIRContext with SemaModule that has collection type symbols.
+    private func makeKIRContextWithSema(
+        interner: StringInterner
+    ) -> (KIRContext, TypeSystem, SymbolTable) {
+        let types = TypeSystem()
+        let symbols = SymbolTable()
+        let bindings = BindingTable()
+        let diag = DiagnosticEngine()
+        let sema = SemaModule(
+            symbols: symbols,
+            types: types,
+            bindings: bindings,
+            diagnostics: diag
+        )
+        let options = CompilerOptions(
+            moduleName: "CollLiteralTest",
+            inputs: [],
+            outputPath: FileManager.default.temporaryDirectory
+                .appendingPathComponent(UUID().uuidString).path,
+            emit: .kirDump,
+            target: defaultTargetTriple()
+        )
+        let ctx = KIRContext(
+            diagnostics: diag,
+            options: options,
+            interner: interner,
+            sema: sema
+        )
+        return (ctx, types, symbols)
+    }
+
+    /// Define a nominal type symbol with the given simple name and return its SymbolID.
+    private func defineNominalSymbol(
+        name: String,
+        interner: StringInterner,
+        symbols: SymbolTable
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = [interner.intern("kotlin"), interner.intern("collections"), internedName]
+        return symbols.define(
+            kind: .interface,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: []
+        )
+    }
+
+    /// Build a one-function module with a single virtualCall on a receiver
+    /// whose static type is `receiverTypeName` (e.g. "List", "Set", "Map"),
+    /// run the lowering pass, and return the resulting callees.
+    private func buildAndLowerVirtualCall(
+        receiverTypeName: String,
+        callee: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> [String] {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
+
+        let symbolID = defineNominalSymbol(
+            name: receiverTypeName, interner: interner, symbols: symbols
+        )
+        let receiverType = types.make(.classType(ClassType(classSymbol: symbolID)))
+
+        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: receiverType)
+        let resultExpr = arena.appendExpr(.temporary(1))
+
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("foo"),
+            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: receiverType)],
+            returnType: types.unitType,
+            body: [
+                .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
+                .virtualCall(
+                    symbol: nil,
+                    callee: interner.intern(callee),
+                    receiver: paramExpr,
+                    arguments: [],
+                    result: resultExpr,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: .vtable(slot: 0)
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+
+        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
+
+        return calleesInDecl(declID, module: module, interner: interner)
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListSize() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "size")
+        XCTAssertTrue(
+            callees.contains("kk_list_size"),
+            "virtualCall(size) on List-typed parameter should be rewritten to kk_list_size, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSetTypedParameterRewritesToKkSetSize() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Set", callee: "size")
+        XCTAssertTrue(
+            callees.contains("kk_set_size"),
+            "virtualCall(size) on Set-typed parameter should be rewritten to kk_set_size, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnMapTypedParameterRewritesToKkMapSize() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Map", callee: "size")
+        XCTAssertTrue(
+            callees.contains("kk_map_size"),
+            "virtualCall(size) on Map-typed parameter should be rewritten to kk_map_size, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnMutableListTypedParameterRewritesToKkListIsEmpty() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "MutableList", callee: "isEmpty")
+        XCTAssertTrue(
+            callees.contains("kk_list_is_empty"),
+            "virtualCall(isEmpty) on MutableList-typed parameter should be rewritten to kk_list_is_empty, got: \(callees)"
+        )
+    }
+
+    func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+
+        // Create a parameter expression with a type but NO sema context.
+        let types = TypeSystem()
+        let dummySymbol = SymbolID(rawValue: 999)
+        let listType = types.make(.classType(ClassType(classSymbol: dummySymbol)))
+
+        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: listType)
+        let resultExpr = arena.appendExpr(.temporary(1))
+
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("foo"),
+            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: listType)],
+            returnType: types.unitType,
+            body: [
+                .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
+                .virtualCall(
+                    symbol: nil,
+                    callee: interner.intern("size"),
+                    receiver: paramExpr,
+                    arguments: [],
+                    result: resultExpr,
+                    canThrow: false,
+                    thrownResult: nil,
+                    dispatch: .vtable(slot: 0)
+                ),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        // Context without sema — should NOT rewrite.
+        let ctx = makeKIRContext(interner: interner)
+
+        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
+
+        // Virtual call should remain as-is (no kk_list_size call generated).
+        guard case let .function(resultFn) = module.arena.decl(declID) else {
+            XCTFail("Expected function"); return
+        }
+        let hasVirtualCall = resultFn.body.contains { instr in
+            if case .virtualCall = instr { return true }
+            return false
+        }
+        XCTAssertTrue(
+            hasVirtualCall,
+            "Without sema context, virtual call should remain unrewritten"
+        )
+    }
 }
