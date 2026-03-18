@@ -1,18 +1,18 @@
 fun main() {
-    // STDLIB-597: MULTILINE — baseline without option (false), then with option (true)
-    val multilineOff = Regex("^hello")
-    println(multilineOff.containsMatchIn("world\nhello"))
-    val multiline = Regex("^hello", RegexOption.MULTILINE)
-    println(multiline.containsMatchIn("world\nhello"))
+    // STDLIB-597: Regex.containsMatchIn
+    val regex = Regex("[a-z]+")
+    println(regex.containsMatchIn("hello123"))
+    println(regex.containsMatchIn("123"))
 
-    // STDLIB-598: IGNORE_CASE — baseline without option (false), then with option (true)
-    println("HELLO".matches(Regex("hello")))
-    val ignoreCase = Regex("hello", RegexOption.IGNORE_CASE)
-    println("HELLO".matches(ignoreCase))
-    println("Hello".matches(ignoreCase))
+    // STDLIB-598: String.matches(Regex)
+    println("hello".matches(Regex("[a-z]+")))
+    println("hello123".matches(Regex("[a-z]+")))
 
-    // STDLIB-599: DOT_MATCHES_ALL — baseline without option (false), then with option (true)
-    println("a\nb".matches(Regex("a.b")))
-    val dotAll = Regex("a.b", RegexOption.DOT_MATCHES_ALL)
-    println("a\nb".matches(dotAll))
+    // STDLIB-599: Regex.find, replace, split
+    val found = Regex("[0-9]+").find("abc123def")
+    println(found?.value)
+    println("abc123def456".replace(Regex("[0-9]+"), "X"))
+    println("one1two2three".split(Regex("[0-9]+")))
+    val r = "[a-z]+".toRegex()
+    println(r.pattern)
 }
