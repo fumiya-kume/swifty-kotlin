@@ -800,7 +800,7 @@ symbol s798 kind=class fq=golden.sema.Box vis=public flags=_
 symbol s799 kind=typeParameter fq=golden.sema.Box.$class798.T vis=private flags=_
 symbol s800 kind=constructor fq=golden.sema.Box.<init> vis=public flags=_ sig=recv=Class#798<T#799> params=[] ret=Class#798<T#799> suspend=0 defaults=[] vararg=[]
 symbol s801 kind=function fq=golden.sema.Box.get vis=public flags=_ sig=recv=Class#798<T#799> params=[] ret=T#799 suspend=0 defaults=[] vararg=[]
-symbol s802 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#798<T#799> params=[T#799] ret=Any suspend=0 defaults=[0] vararg=[0]
+symbol s802 kind=function fq=golden.sema.Box.set vis=public flags=_ sig=recv=Class#798<T#799> params=[T#799] ret=Unit suspend=0 defaults=[0] vararg=[0]
 symbol s803 kind=valueParameter fq=golden.sema.Box.set.$802.v vis=private flags=_
 symbol s804 kind=function fq=golden.sema.readOnly vis=public flags=_ sig=recv=_ params=[Class#798<out Any>] ret=Any suspend=0 defaults=[0] vararg=[0]
 symbol s805 kind=valueParameter fq=golden.sema.readOnly.$804.box vis=private flags=_
@@ -834,7 +834,7 @@ expr e6 int(42) type=Int
 expr e7 memberCall recv=e5 callee=set args=[_:e6] type=<error>
 expr e8 name(box) type=Class#798<in Int> ref=s809
 expr e9 int(42) type=Int
-expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Any call=s802 map=[0->0] targs=[Any?]
+expr e10 memberCall recv=e8 callee=set args=[_:e9] type=Unit call=s802 map=[0->0] targs=[Any?]
 expr e11 name(box) type=Class#798<*> ref=s811
 expr e12 memberCall recv=e11 callee=get args=[] type=Any? call=s801 map=[] targs=[Any?]
 expr e13 name(box) type=Class#798<*> ref=s813

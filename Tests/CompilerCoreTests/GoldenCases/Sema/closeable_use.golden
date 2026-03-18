@@ -796,7 +796,7 @@ symbol s794 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthet
 symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#792 params=[(T#792) -> T#793] ret=T#793 suspend=0 defaults=[0] vararg=[0]
 symbol s796 kind=class fq=golden.sema.MyResource vis=public flags=_
 symbol s797 kind=constructor fq=golden.sema.MyResource.<init> vis=public flags=_ sig=recv=Class#796 params=[] ret=Class#796 suspend=0 defaults=[] vararg=[]
-symbol s798 kind=function fq=golden.sema.MyResource.close vis=public flags=overrideMember sig=recv=Class#796 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s798 kind=function fq=golden.sema.MyResource.close vis=public flags=overrideMember sig=recv=Class#796 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s799 kind=function fq=golden.sema.useBasic vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s800 kind=function fq=golden.sema.useReturnValue vis=public flags=_ sig=recv=_ params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s801 kind=function fq=golden.sema.useWithIt vis=public flags=_ sig=recv=_ params=[] ret=String suspend=0 defaults=[] vararg=[]

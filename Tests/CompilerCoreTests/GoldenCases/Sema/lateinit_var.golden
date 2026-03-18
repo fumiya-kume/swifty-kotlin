@@ -797,7 +797,7 @@ symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synth
 symbol s796 kind=class fq=Config vis=public flags=_
 symbol s797 kind=constructor fq=Config.<init> vis=public flags=_ sig=recv=Class#796 params=[] ret=Class#796 suspend=0 defaults=[] vararg=[]
 symbol s798 kind=function fq=Config.isReady vis=public flags=_ sig=recv=Class#796 params=[] ret=Boolean suspend=0 defaults=[] vararg=[]
-symbol s799 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#796 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s799 kind=function fq=Config.setup vis=public flags=_ sig=recv=Class#796 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s800 kind=property fq=Config.name vis=public flags=mutable type=String
 symbol s801 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s802 kind=local fq=__local_7.c vis=private flags=_
@@ -828,7 +828,7 @@ expr e19 call callee=e17 args=[_:e18] type=Unit call=s677 map=[0->0] targs=[]
 expr e20 blockExpr stmts=[] trailing=e19 type=Unit ref=s803
 expr e21 try body=e16 catches=[e20] finally=_ type=Unit
 expr e22 name(c) type=Class#796 ref=s802
-expr e23 memberCall recv=e22 callee=setup args=[] type=Any call=s799 map=[] targs=[]
+expr e23 memberCall recv=e22 callee=setup args=[] type=Unit call=s799 map=[] targs=[]
 expr e24 name(println) type=_
 expr e25 name(c) type=Class#796 ref=s802
 expr e26 memberCall recv=e25 callee=isReady args=[] type=Boolean call=s798 map=[] targs=[]

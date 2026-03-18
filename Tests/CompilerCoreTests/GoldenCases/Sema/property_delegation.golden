@@ -803,7 +803,7 @@ symbol s801 kind=constructor fq=golden.sema.CustomDelegate.<init> vis=public fla
 symbol s802 kind=function fq=golden.sema.CustomDelegate.getValue vis=public flags=operatorFunction sig=recv=Class#800 params=[Any?,Any?] ret=String suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s803 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$802.thisRef vis=private flags=_
 symbol s804 kind=valueParameter fq=golden.sema.CustomDelegate.getValue.$802.property vis=private flags=_
-symbol s805 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#800 params=[Any?,Any?,String] ret=Any suspend=0 defaults=[0,0,0] vararg=[0,0,0]
+symbol s805 kind=function fq=golden.sema.CustomDelegate.setValue vis=public flags=operatorFunction sig=recv=Class#800 params=[Any?,Any?,String] ret=Unit suspend=0 defaults=[0,0,0] vararg=[0,0,0]
 symbol s806 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$805.thisRef vis=private flags=_
 symbol s807 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$805.property vis=private flags=_
 symbol s808 kind=valueParameter fq=golden.sema.CustomDelegate.setValue.$805.value vis=private flags=_

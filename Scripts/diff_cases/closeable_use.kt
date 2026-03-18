@@ -1,4 +1,4 @@
-import java.io.Closeable
+import kotlin.io.Closeable
 
 class MyResource : Closeable {
     override fun close() {

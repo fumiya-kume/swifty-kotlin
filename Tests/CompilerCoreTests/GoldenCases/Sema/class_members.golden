@@ -797,7 +797,7 @@ symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synth
 symbol s796 kind=class fq=golden.sema.Counter vis=public flags=_
 symbol s797 kind=constructor fq=golden.sema.Counter.<init> vis=public flags=_ sig=recv=Class#796 params=[Int] ret=Class#796 suspend=0 defaults=[0] vararg=[0]
 symbol s798 kind=valueParameter fq=golden.sema.Counter.<init>.$797.initial0 vis=private flags=_
-symbol s799 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s799 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s800 kind=function fq=golden.sema.Counter.get vis=public flags=_ sig=recv=Class#796 params=[] ret=Int suspend=0 defaults=[] vararg=[]
 symbol s801 kind=property fq=golden.sema.Counter.initial vis=public flags=_ type=Int
 symbol s802 kind=property fq=golden.sema.Counter.count vis=public flags=mutable type=Int

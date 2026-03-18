@@ -795,7 +795,7 @@ symbol s793 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s794 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s795 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#792 params=[(T#792) -> T#793] ret=T#793 suspend=0 defaults=[0] vararg=[0]
 symbol s796 kind=object fq=golden.sema.Counter vis=public flags=_
-symbol s797 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Any suspend=0 defaults=[] vararg=[]
+symbol s797 kind=function fq=golden.sema.Counter.increment vis=public flags=_ sig=recv=Class#796 params=[] ret=Unit suspend=0 defaults=[] vararg=[]
 symbol s798 kind=property fq=golden.sema.Counter.label vis=public flags=_ type=String
 symbol s799 kind=property fq=golden.sema.Counter.n vis=public flags=mutable type=Int
 symbol s800 kind=function fq=golden.sema.useCounter vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
@@ -813,6 +813,6 @@ expr e7 name(n) type=_
 expr e8 int(1) type=Int
 expr e9 localAssign n value=e8 type=Unit ref=s799
 expr e10 name(Counter) type=Class#796 ref=s796
-expr e11 memberCall recv=e10 callee=increment args=[] type=Any call=s797 map=[] targs=[]
+expr e11 memberCall recv=e10 callee=increment args=[] type=Unit call=s797 map=[] targs=[]
 expr e12 name(Counter) type=Class#796 ref=s796
-expr e13 memberCall recv=e12 callee=increment args=[] type=Any call=s797 map=[] targs=[]
+expr e13 memberCall recv=e12 callee=increment args=[] type=Unit call=s797 map=[] targs=[]
