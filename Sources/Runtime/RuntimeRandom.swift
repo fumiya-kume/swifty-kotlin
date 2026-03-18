@@ -8,7 +8,10 @@ public func kk_random_nextInt(_: Int) -> Int {
 }
 
 @_cdecl("kk_random_nextInt_until")
-public func kk_random_nextInt_until(_: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_random_nextInt_until(_ randomRaw: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    // TODO: Use randomRaw (Kotlin Random instance) to support seeded RNGs.
+    // Currently delegates to Swift's SystemRandomNumberGenerator.
+    _ = randomRaw
     outThrown?.pointee = 0
     guard until > 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
