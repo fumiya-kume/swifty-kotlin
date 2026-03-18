@@ -147,11 +147,8 @@ public func kk_string_builder_deleteCharAt(_ sbRaw: Int, _ index: Int) -> Int {
 public func kk_string_builder_appendRange_obj(_ sbRaw: Int, _ csqRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
     let csq = runtimeElementToString(csqRaw)
-    let csqChars = Array(csq)
-    guard startIndex >= 0, endIndex >= startIndex, endIndex <= csqChars.count else {
-        fatalError("IndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(csqChars.count)")
-    }
-    sb.value.append(contentsOf: csqChars[startIndex..<endIndex].map { String($0) }.joined())
+    // Use UTF-16 code unit indexing to match Kotlin CharSequence semantics.
+    sb.value.append(runtimeUTF16Substring(csq, startIndex: startIndex, endIndex: endIndex))
     return sbRaw
 }
 

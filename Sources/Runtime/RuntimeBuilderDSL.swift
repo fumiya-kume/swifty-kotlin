@@ -239,11 +239,8 @@ public func kk_string_builder_append_range(_ csqRaw: Int, _ startIndex: Int, _ e
     else {
         return 0
     }
-    let chars = Array(string)
-    guard startIndex >= 0, endIndex >= startIndex, endIndex <= chars.count else {
-        fatalError("IndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(chars.count)")
-    }
-    runtimeBuilderState.appendString(String(chars[startIndex..<endIndex]))
+    // Use shared UTF-16 helper to match Kotlin CharSequence indexing semantics.
+    runtimeBuilderState.appendString(runtimeUTF16Substring(string, startIndex: startIndex, endIndex: endIndex))
     return 0
 }
 

@@ -112,6 +112,32 @@ func tryCast<T: AnyObject>(_ ptr: UnsafeMutableRawPointer, to _: T.Type) -> T? {
     return anyObject as? T
 }
 
+// MARK: - UTF-16 Substring Helper (Kotlin-compatible indexing)
+
+/// Extracts a substring from `source` using UTF-16 code unit indices, matching Kotlin's
+/// `CharSequence.subSequence(startIndex, endIndex)` semantics.
+///
+/// Kotlin `StringBuilder.appendRange` and `CharSequence` use UTF-16 code unit indexing.
+/// Swift `String.Index` is based on `Character` (extended grapheme clusters) by default,
+/// which differs for non-BMP characters (emoji, surrogate pairs). This helper bridges the
+/// gap by operating on the `.utf16` view directly.
+///
+/// - Parameters:
+///   - source: The Swift string to slice.
+///   - startIndex: Start offset in UTF-16 code units (inclusive).
+///   - endIndex: End offset in UTF-16 code units (exclusive).
+/// - Returns: The substring, or triggers `fatalError` on out-of-bounds.
+func runtimeUTF16Substring(_ source: String, startIndex: Int, endIndex: Int) -> String {
+    let utf16 = source.utf16
+    let length = utf16.count
+    guard startIndex >= 0, endIndex >= startIndex, endIndex <= length else {
+        fatalError("IndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(length)")
+    }
+    let start = utf16.index(utf16.startIndex, offsetBy: startIndex)
+    let end = utf16.index(utf16.startIndex, offsetBy: endIndex)
+    return String(utf16[start..<end]) ?? ""
+}
+
 func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
