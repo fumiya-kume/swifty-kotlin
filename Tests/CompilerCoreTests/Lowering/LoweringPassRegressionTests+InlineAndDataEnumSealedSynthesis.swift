@@ -179,12 +179,12 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(functionNames.contains("Point$copy"))
 
         let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
-        // Point has no constructor params, so copy() only has $self
+        // Point has no constructor registered, so copy() falls back to returning $self
         XCTAssertEqual(copyFunction.params.count, 1)
 
-        // The body should call <init> to create a new instance
+        // Without a constructor, the body returns $self directly (no <init> call)
         let copyCallees = extractCallees(from: copyFunction.body, interner: interner)
-        XCTAssertTrue(copyCallees.contains("<init>"), "copy() body should call <init> constructor, got: \(copyCallees)")
+        XCTAssertTrue(copyCallees.isEmpty, "copy() without ctor should not call <init>, got: \(copyCallees)")
     }
 
     func testDataCopySynthesisWithConstructorParameters() throws {
@@ -279,18 +279,31 @@ extension LoweringPassRegressionTests {
         // copy() should have: $self + one param per constructor parameter (name, age)
         XCTAssertEqual(copyFunction.params.count, 3, "copy() should have $self + 2 constructor params, got \(copyFunction.params.count)")
 
+        // Verify the registered signature preserves default-value semantics for copy parameters.
+        let copySig = sema.symbols.functionSignature(for: copyFunction.symbol)
+        XCTAssertNotNil(copySig, "copy() function should have a registered signature")
+        if let sig = copySig {
+            // $self has no default; each copy parameter should have default=true
+            XCTAssertEqual(sig.valueParameterHasDefaultValues.count, 3,
+                           "signature should have 3 hasDefault entries ($self + 2 params)")
+            XCTAssertEqual(sig.valueParameterHasDefaultValues, [false, true, true],
+                           "copy params should have defaults (self=false, name=true, age=true)")
+        }
+
         // Verify the body calls <init> with the copy parameters
         let callees = extractCallees(from: copyFunction.body, interner: interner)
         XCTAssertTrue(callees.contains("<init>"), "copy() body should call <init>, got: \(callees)")
 
-        // Verify the <init> call passes 2 arguments (name, age)
-        let initCallArgCount = copyFunction.body.compactMap { inst -> Int? in
-            guard case let .call(_, callee, arguments, _, _, _, _) = inst,
+        // Verify the <init> call passes 2 arguments (name, age) and uses a non-nil symbol
+        let initCall = copyFunction.body.compactMap { inst -> (symbol: SymbolID?, args: [KIRExprID])? in
+            guard case let .call(symbol, callee, arguments, _, _, _, _) = inst,
                   interner.resolve(callee) == "<init>"
             else { return nil }
-            return arguments.count
+            return (symbol, arguments)
         }.first
-        XCTAssertEqual(initCallArgCount, 2, "<init> should be called with 2 args (name, age)")
+        XCTAssertNotNil(initCall, "<init> call should exist in copy() body")
+        XCTAssertEqual(initCall?.args.count, 2, "<init> should be called with 2 args (name, age)")
+        XCTAssertNotNil(initCall?.symbol, "<init> call should have a non-nil constructor symbol")
     }
 
     func testDataEnumSealedSynthesisAddsOrdinalNameValuesValueOf() throws {
