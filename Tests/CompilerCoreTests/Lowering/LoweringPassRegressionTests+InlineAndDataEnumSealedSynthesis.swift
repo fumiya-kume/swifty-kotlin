@@ -268,6 +268,17 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(functionNames.contains("values"), "Missing values, got: \(functionNames)")
         XCTAssertTrue(functionNames.contains("valueOf"), "Missing valueOf, got: \(functionNames)")
 
+        // Verify values() builds a proper Array<T> via kk_array_new / kk_array_set / kk_enum_make_values_array
+        let valuesFn = try findKIRFunction(named: "values", in: module, interner: interner)
+        let valuesCallees = extractCallees(from: valuesFn.body, interner: interner)
+        XCTAssertTrue(valuesCallees.contains("kk_array_new"), "values() should call kk_array_new, got: \(valuesCallees)")
+        XCTAssertTrue(valuesCallees.contains("kk_enum_make_values_array"), "values() should call kk_enum_make_values_array, got: \(valuesCallees)")
+        // 3 entries -> 3 kk_array_set calls
+        XCTAssertEqual(valuesCallees.filter { $0 == "kk_array_set" }.count, 3, "values() should have 3 kk_array_set calls for RED/GREEN/BLUE")
+
+        // values() return type should be anyType (erased Array<T>), not the enum type itself
+        XCTAssertEqual(valuesFn.returnType, types.anyType, "values() return type should be anyType (Array<T>)")
+
         // Verify ordinal values are correct (0-based)
         let redOrdinal = try findKIRFunction(named: "RED$enumOrdinal", in: module, interner: interner)
         let greenOrdinal = try findKIRFunction(named: "GREEN$enumOrdinal", in: module, interner: interner)
