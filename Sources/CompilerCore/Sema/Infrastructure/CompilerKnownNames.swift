@@ -461,9 +461,13 @@ struct KnownCompilerNames {
     }
 
     func isSetLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
-        symbol.name == set || symbol.name == mutableSet
-            || symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
+        if symbolMatches(symbol, fqName: kotlinCollectionsSetFQName)
             || symbolMatches(symbol, fqName: kotlinCollectionsMutableSetFQName)
+        {
+            return true
+        }
+        // Fall back to simple name match only for synthetic symbols (no FQN)
+        return (symbol.name == set || symbol.name == mutableSet) && symbol.fqName.isEmpty
     }
 
     func isCollectionLikeSymbol(_ symbol: SemanticSymbol) -> Bool {
