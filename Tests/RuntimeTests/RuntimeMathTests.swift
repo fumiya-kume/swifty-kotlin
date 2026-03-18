@@ -40,6 +40,25 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(2.5))), 3.0)
     }
 
+    func testRoundToIntLongSpecialValues() {
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.nan)), Int(0))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.infinity)), Int(Int32.max))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-Float.infinity)), Int(Int32.min))
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -1)
+
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.nan)), Int(0))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.infinity)), Int(Int32.max))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-Double.infinity)), Int(Int32.min))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -1)
+
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.nan)), Int(0))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.infinity)), Int(Int64.max))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-Float.infinity)), Int(Int64.min))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.nan)), Int(0))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.infinity)), Int(Int64.max))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-Double.infinity)), Int(Int64.min))
+    }
+
     func testIntToFloatConversion() {
         XCTAssertEqual(floatFromBits(kk_int_to_float(0)), 0.0)
         XCTAssertEqual(floatFromBits(kk_int_to_float(42)), 42.0)
@@ -66,6 +85,10 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
 
     private func doubleFromBits(_ raw: Int) -> Double {
         Double(bitPattern: UInt64(bitPattern: Int64(raw)))
+    }
+
+    private func floatToBits(_ value: Float) -> Int {
+        Int(truncatingIfNeeded: value.bitPattern)
     }
 
     private func floatFromBits(_ raw: Int) -> Float {

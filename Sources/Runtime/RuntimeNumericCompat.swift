@@ -333,6 +333,162 @@ public func kk_math_E() -> Int {
     kk_double_to_bits(M_E)
 }
 
+// MARK: - STDLIB-500~509: Float overloads for trig/math functions
+
+@_cdecl("kk_math_sin_float")
+public func kk_math_sin_float(_ value: Int) -> Int {
+    kk_float_to_bits(sin(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_cos_float")
+public func kk_math_cos_float(_ value: Int) -> Int {
+    kk_float_to_bits(cos(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_tan_float")
+public func kk_math_tan_float(_ value: Int) -> Int {
+    kk_float_to_bits(tan(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_asin_float")
+public func kk_math_asin_float(_ value: Int) -> Int {
+    kk_float_to_bits(asin(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_acos_float")
+public func kk_math_acos_float(_ value: Int) -> Int {
+    kk_float_to_bits(acos(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_atan_float")
+public func kk_math_atan_float(_ value: Int) -> Int {
+    kk_float_to_bits(atan(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_atan2_float")
+public func kk_math_atan2_float(_ y: Int, _ x: Int) -> Int {
+    kk_float_to_bits(atan2(kk_bits_to_float(y), kk_bits_to_float(x)))
+}
+
+@_cdecl("kk_math_sqrt_float")
+public func kk_math_sqrt_float(_ value: Int) -> Int {
+    kk_float_to_bits(sqrt(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_round_float")
+public func kk_math_round_float(_ value: Int) -> Int {
+    kk_float_to_bits(round(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_ceil_float")
+public func kk_math_ceil_float(_ value: Int) -> Int {
+    kk_float_to_bits(ceil(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_floor_float")
+public func kk_math_floor_float(_ value: Int) -> Int {
+    kk_float_to_bits(floor(kk_bits_to_float(value)))
+}
+
+// MARK: - STDLIB-510~511: roundToInt / roundToLong extensions
+
+// Kotlin's roundToInt/roundToLong use Math.round() semantics: ties round
+// towards positive infinity. For Float, we use a bit-manipulation algorithm
+// matching Java 7+ Math.round(float) to avoid precision loss from floorf(x + 0.5)
+// near half-integer boundaries (JDK-6430675). For Double, floor(x + 0.5) is
+// correct as it matches Kotlin/JVM behavior.
+
+/// Bit-manipulation rounding for Float matching Java 7+ Math.round(float).
+/// Avoids the precision loss of `floorf(raw + 0.5)` for values just below
+/// half-integer boundaries (e.g. Float(bitPattern: 0x3EFFFFFF) ~ 0.49999997).
+private func roundFloatJava7(_ raw: Float) -> Int64 {
+    let bits = raw.bitPattern
+    let biasedExp = Int((bits >> 23) & 0xFF)
+    let shift = 149 - biasedExp  // (23 - 1 + 127) - biasedExp
+    if (shift & ~31) == 0 {  // 0 <= shift <= 31
+        var r = Int32(bitPattern: (bits & 0x7F_FFFF) | 0x80_0000)
+        if Int32(bitPattern: bits) < 0 { r = -r }
+        return Int64((r >> shift) &+ 1) >> 1
+    } else {
+        // Exponent too small (magnitude < 0.5 → 0) or too large (already integral)
+        if raw >= Float(Int64.max) { return Int64.max }
+        if raw <= Float(Int64.min) { return Int64.min }
+        return Int64(raw)
+    }
+}
+
+@_cdecl("kk_float_roundToInt")
+public func kk_float_roundToInt(_ value: Int) -> Int {
+    let raw = kk_bits_to_float(value)
+    if raw.isNaN { return 0 }
+    let r = roundFloatJava7(raw)
+    if r >= Int64(Int32.max) { return Int(Int32.max) }
+    if r <= Int64(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(r))
+}
+
+@_cdecl("kk_double_roundToInt")
+public func kk_double_roundToInt(_ value: Int) -> Int {
+    let raw = kk_bits_to_double(value)
+    if raw.isNaN { return 0 }
+    let d = floor(raw + 0.5)
+    if d >= Double(Int32.max) { return Int(Int32.max) }
+    if d <= Double(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(d))
+}
+
+@_cdecl("kk_float_roundToLong")
+public func kk_float_roundToLong(_ value: Int) -> Int {
+    let raw = kk_bits_to_float(value)
+    if raw.isNaN { return 0 }
+    let r = roundFloatJava7(raw)
+    if r >= Int64.max { return Int(Int64.max) }
+    if r <= Int64.min { return Int(Int64.min) }
+    return Int(r)
+}
+
+@_cdecl("kk_double_roundToLong")
+public func kk_double_roundToLong(_ value: Int) -> Int {
+    let raw = kk_bits_to_double(value)
+    if raw.isNaN { return 0 }
+    let d = floor(raw + 0.5)
+    if d >= Double(Int64.max) { return Int(Int64.max) }
+    if d <= Double(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(d))
+}
+
+// MARK: - STDLIB-512~513: ulp / nextUp / nextDown extensions
+
+@_cdecl("kk_double_ulp")
+public func kk_double_ulp(_ value: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(value).ulp)
+}
+
+@_cdecl("kk_double_nextUp")
+public func kk_double_nextUp(_ value: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(value).nextUp)
+}
+
+@_cdecl("kk_double_nextDown")
+public func kk_double_nextDown(_ value: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(value).nextDown)
+}
+
+@_cdecl("kk_float_ulp")
+public func kk_float_ulp(_ value: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(value).ulp)
+}
+
+@_cdecl("kk_float_nextUp")
+public func kk_float_nextUp(_ value: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(value).nextUp)
+}
+
+@_cdecl("kk_float_nextDown")
+public func kk_float_nextDown(_ value: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(value).nextDown)
+}
+
 @_cdecl("kk_println_char")
 public func kk_println_char(_ value: Int) {
     if let scalar = UnicodeScalar(value) {
