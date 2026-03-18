@@ -1057,16 +1057,18 @@ public func kk_list_shuffled(_ listRaw: Int) -> Int {
 // MARK: - shuffled(random: Random) overload (STDLIB-531)
 
 @_cdecl("kk_list_shuffled_random")
-public func kk_list_shuffled_random(_ listRaw: Int, _ _randomRaw: Int) -> Int {
+public func kk_list_shuffled_random(_ listRaw: Int, _ randomRaw: Int) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
-    let elements = _listBox.elements
-    // NOTE: The _randomRaw parameter (Kotlin Random instance) is intentionally
-    // unused. The runtime delegates to Swift's SystemRandomNumberGenerator
-    // which matches Kotlin's Random.Default behavior. Seeded Random instances
-    // (e.g. Random(42)) will NOT produce deterministic results here -- this is
-    // a known limitation tracked for future work.
-    let shuffled = elements.shuffled()
-    return registerRuntimeObject(RuntimeListBox(elements: shuffled))
+    var elements = _listBox.elements
+    // Fisher-Yates shuffle using the provided Kotlin Random instance.
+    // This delegates to kk_random_nextInt_until which forwards randomRaw,
+    // so that seeded Random instances will produce deterministic results
+    // once the runtime fully supports seeded RNGs.
+    for i in stride(from: elements.count - 1, through: 1, by: -1) {
+        let j = kk_random_nextInt_until(randomRaw, i + 1, nil)
+        elements.swapAt(i, j)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
 @_cdecl("kk_list_random")

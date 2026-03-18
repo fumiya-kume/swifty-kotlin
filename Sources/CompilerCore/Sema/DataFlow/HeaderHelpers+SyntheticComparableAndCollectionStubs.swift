@@ -1508,8 +1508,8 @@ extension DataFlowSemaPhase {
         )))
         let listReturnType = receiverType
 
-        /// Register a synthetic member on List. Short-circuits when a symbol
-        /// with the same fully-qualified name already exists (first-wins).
+        // Register a synthetic member on List. Short-circuits when a symbol
+        // with the same fully-qualified name already exists (first-wins).
         func registerMember(
             name: String,
             parameterTypes: [TypeID],
@@ -1527,8 +1527,8 @@ extension DataFlowSemaPhase {
             )
         }
 
-        /// Register a synthetic member overload on List, checking for
-        /// duplicate registrations by comparing parameter signatures.
+        // Register a synthetic member overload on List, checking for
+        // duplicate registrations by comparing parameter signatures.
         func registerMemberOverload(
             memberName: InternedString,
             memberFQName: [InternedString],
