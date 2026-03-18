@@ -883,6 +883,19 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             let returnFalseLabel = allocateLabel()
             body.append(.jumpIfEqual(lhs: isSameTypeExpr, rhs: falseExpr, target: returnFalseLabel))
 
+            let otherTypedRef = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: receiverType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_safe_cast"),
+                arguments: [otherAnyRef, typeTokenExpr],
+                result: otherTypedRef,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
             // For each property, compare this.prop == other.prop
             // If any differ, return false
             for property in properties {
@@ -907,8 +920,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 ))
 
                 // Load other.prop
-                let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: receiverType)
-                body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
                 let otherProp = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: propType
@@ -916,7 +927,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 body.append(.call(
                     symbol: nil,
                     callee: getterName,
-                    arguments: [otherRef],
+                    arguments: [otherTypedRef],
                     result: otherProp,
                     canThrow: false,
                     thrownResult: nil

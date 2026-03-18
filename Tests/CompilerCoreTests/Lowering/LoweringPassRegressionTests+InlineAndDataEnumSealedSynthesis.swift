@@ -530,6 +530,7 @@ extension LoweringPassRegressionTests {
         let equalsFn = try findKIRFunction(named: "equals", in: module, interner: interner)
         let equalsCallees = extractCallees(from: equalsFn.body, interner: interner)
         XCTAssertTrue(equalsCallees.contains("kk_op_is"), "equals should type-check other before reading properties")
+        XCTAssertTrue(equalsCallees.contains("kk_op_safe_cast"), "equals should materialize a narrowed other receiver before getter calls")
         XCTAssertTrue(equalsCallees.contains("kk_op_eq"), "equals should use kk_op_eq for comparison")
         XCTAssertTrue(equalsCallees.contains("x$get"), "equals should call x$get")
         XCTAssertTrue(equalsCallees.contains("y$get"), "equals should call y$get")
