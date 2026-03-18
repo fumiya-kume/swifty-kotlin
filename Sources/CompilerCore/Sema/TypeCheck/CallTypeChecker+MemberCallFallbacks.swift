@@ -357,8 +357,7 @@ extension CallTypeChecker {
         // sequence HOF handler recognises chained calls (STDLIB-471).
         let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         if isSequenceReceiver,
-           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
-           resultType == sema.types.anyType
+           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner)
         {
             resultType = makeSyntheticSequenceType(
                 symbols: sema.symbols,
