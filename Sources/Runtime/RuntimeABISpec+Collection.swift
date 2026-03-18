@@ -1360,9 +1360,35 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let scanSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_scan",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let runningFoldSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_runningFold",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         return before.map { hofSpec($0) }
             + [filterNotNullSpec, foldSpec]
             + genericAfter.map { hofSpec($0) }
+            + [scanSpec, runningFoldSpec]
+            + ["kk_list_runningReduce", "kk_list_reduceOrNull", "kk_list_scanReduce"].map { hofSpec($0) }
             + [
                 associateBySpec, associateWithSpec, associateSpec,
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
@@ -1671,6 +1697,24 @@ public extension RuntimeABISpec {
                         RuntimeABIParameter(name: "fnPtr", type: .intptr),
                         RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                // STDLIB-533: List?.orEmpty()
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_orEmpty",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                // STDLIB-532: Map?.orEmpty()
+                RuntimeABIFunctionSpec(
+                    name: "kk_map_orEmpty",
+                    parameters: [
+                        RuntimeABIParameter(name: "mapRaw", type: .intptr),
                     ],
                     returnType: .intptr,
                     section: "Collection"

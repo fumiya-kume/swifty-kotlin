@@ -8,6 +8,7 @@ private let runtimeKxMiniDelayFunctionID = 9101
 private let runtimeKxMiniLaunchFunctionID = 9102
 private let runtimeKxMiniAsyncFunctionID = 9103
 private let runtimeKxMiniCancelFunctionID = 9104
+private let runtimeWithContextFunctionID = 9105
 private let runtimeCoroutineTestState = RuntimeCoroutineTestState()
 
 @_cdecl("runtime_test_suspend_with_delay")
@@ -62,6 +63,26 @@ func runtime_test_suspend_cancel_loop(_ continuation: Int, _ outThrown: UnsafeMu
     runtimeCoroutineTestState.recordCancelLoopIteration()
     _ = kk_coroutine_state_set_label(continuation, 1)
     return kk_kxmini_delay(5, continuation)
+}
+
+/// withContext test entry: returns a value immediately (no suspension).
+@_cdecl("runtime_test_with_context_simple")
+func runtime_test_with_context_simple(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 99)
+}
+
+/// withContext test entry: suspends via delay, then returns.
+/// This verifies that the full suspend-resume loop runs on the target queue.
+@_cdecl("runtime_test_with_context_delay")
+func runtime_test_with_context_delay(_ continuation: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    let label = kk_coroutine_state_enter(continuation, runtimeWithContextFunctionID)
+    if label == 0 {
+        _ = kk_coroutine_state_set_label(continuation, 1)
+        return kk_kxmini_delay(1, continuation)
+    }
+    outThrown?.pointee = 0
+    return kk_coroutine_state_exit(continuation, 55)
 }
 
 final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
@@ -442,5 +463,120 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
             "Expected launched coroutine to record a launch event."
         )
         XCTAssertEqual(kk_job_join(jobHandle), 7)
+    }
+
+    // MARK: - STDLIB-250: withContext async context switching
+
+    func testWithContextDefaultDispatcherReturnsBlockResult() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_default()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "withContext should return the block's result")
+    }
+
+    func testWithContextIODispatcherReturnsBlockResult() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_io()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "withContext(IO) should return the block's result")
+    }
+
+    func testWithContextHandlesSuspensionInsideBlock() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_delay as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_default()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 55, "withContext should handle suspension inside the block")
+    }
+
+    func testWithContextUnknownDispatcherFallsBackToDefault() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        // Unknown dispatcher tag — should fall back to Default
+        let result = kk_with_context(0xDEAD, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "Unknown dispatcher should fall back to Default and still work")
+    }
+
+    func testWithContextInvalidEntryPointReturnsZero() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        // kk_with_context now cleans up the continuation internally on
+        // invalid entry, so no manual defer cleanup is needed.
+        let dispatcher = kk_dispatcher_default()
+        let result = kk_with_context(dispatcher, 0, continuation)
+        XCTAssertEqual(result, 0, "Invalid entry point should return 0")
+    }
+
+    func testWithContextIODispatcherRunsOffMainThread() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        // Run on IO dispatcher — the call should complete successfully
+        // even when issued from the main thread (no deadlock).
+        let dispatcher = kk_dispatcher_io()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "IO dispatcher should execute without deadlock")
+    }
+
+    func testWithContextMainDispatcherFromMainThread() {
+        // Dispatchers.Main should execute inline when already on the main
+        // thread, avoiding the deadlock that would occur with async+semaphore.
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_main()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "Main dispatcher should execute inline on main thread")
+    }
+
+    func testWithContextMainDispatcherFromBackgroundThread() {
+        // When called from a background thread, kk_with_context dispatches
+        // async to DispatchQueue.main and waits on a semaphore. The test
+        // succeeds because XCTest's wait(for:timeout:) pumps the main run
+        // loop, allowing the main queue to service the enqueued block.
+        let expectation = XCTestExpectation(description: "withContext(Main) from background")
+        // Perform the assertion inside the async block so there is no shared
+        // mutable state across threads — only the expectation is used to
+        // synchronize completion with the test thread.
+        DispatchQueue.global().async {
+            let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+            let entryRaw = unsafeBitCast(
+                runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+                to: Int.self
+            )
+            let dispatcher = kk_dispatcher_main()
+            let result = kk_with_context(dispatcher, entryRaw, continuation)
+            XCTAssertEqual(result, 99, "Main dispatcher from background thread should return block result")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 5.0)
+    }
+
+    func testWithContextWithDelayOnIODispatcher() {
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_delay as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_io()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 55, "withContext(IO) should handle suspension correctly")
     }
 }

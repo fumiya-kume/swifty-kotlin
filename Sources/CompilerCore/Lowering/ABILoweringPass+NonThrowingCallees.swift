@@ -43,8 +43,13 @@ extension ABILoweringPass {
             interner.intern("kk_string_windowed"),
             interner.intern("kk_string_commonPrefixWith"),
             interner.intern("kk_string_commonSuffixWith"),
+            interner.intern("kk_string_commonPrefixWith_ignoreCase"),
+            interner.intern("kk_string_commonSuffixWith_ignoreCase"),
             interner.intern("kk_string_isNullOrEmpty"),
             interner.intern("kk_string_isNullOrBlank"),
+            interner.intern("kk_string_orEmpty"),
+            interner.intern("kk_list_orEmpty"),
+            interner.intern("kk_map_orEmpty"),
             interner.intern("kk_string_compareTo_member"),
             interner.intern("kk_string_compareToIgnoreCase"),
             interner.intern("kk_string_equals"),
@@ -54,6 +59,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_trimStart"),
             interner.intern("kk_string_trimEnd"),
             interner.intern("kk_string_toByteArray"),
+            interner.intern("kk_string_toByteArray_charset"),
             interner.intern("kk_string_removePrefix"),
             interner.intern("kk_string_removeSuffix"),
             interner.intern("kk_string_removeSurrounding"),
@@ -124,9 +130,11 @@ extension ABILoweringPass {
             // calls with synthetic symbols; canThrow is handled via symbol check below.
             interner.intern("kk_lambda_invoke"),
             interner.intern("kk_print_any"),
+            interner.intern("kk_print_noarg"),
             interner.intern("kk_println_any"),
             interner.intern("kk_println_newline"),
             interner.intern("kk_readline"),
+            interner.intern("kk_readlnOrNull"),
             interner.intern("kk_coroutine_suspended"),
             interner.intern("kk_coroutine_continuation_new"),
             interner.intern("kk_coroutine_state_enter"),
@@ -342,6 +350,7 @@ extension ABILoweringPass {
             interner.intern("kk_list_windowed"),
             interner.intern("kk_list_indexOf"),
             interner.intern("kk_list_lastIndexOf"),
+            interner.intern("kk_list_binarySearch"),
             interner.intern("kk_list_sortedDescending"),
             interner.intern("kk_list_filterIsInstance"),
             interner.intern("kk_list_subList"),
@@ -368,8 +377,12 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_to_list"),
             interner.intern("kk_sequence_builder_create"),
             interner.intern("kk_sequence_builder_yield"),
+            interner.intern("kk_sequence_builder_yieldAll"),
             interner.intern("kk_sequence_builder_build"),
             interner.intern("kk_iterator_builder_build"),
+            interner.intern("kk_iterator_builder_yield"),
+            interner.intern("kk_iterator_builder_hasNext"),
+            interner.intern("kk_iterator_builder_next"),
             // Sequence (STDLIB-095/096/097)
             interner.intern("kk_sequence_of"),
             interner.intern("kk_sequence_generate"),
@@ -465,6 +478,10 @@ extension ABILoweringPass {
             interner.intern("kk_arraydeque_toString"),
             // File I/O (STDLIB-320) — constructor is non-throwing
             interner.intern("kk_file_new"),
+            // BufferedReader (STDLIB-567) — readLine/readLines/close are non-throwing
+            interner.intern("kk_buffered_reader_readLine"),
+            interner.intern("kk_buffered_reader_readLines"),
+            interner.intern("kk_buffered_reader_close"),
             // StringBuilder (STDLIB-255/256/257)
             interner.intern("kk_string_builder_new"),
             interner.intern("kk_string_builder_new_from_string"),
@@ -479,6 +496,10 @@ extension ABILoweringPass {
             interner.intern("kk_string_builder_reverse"),
             interner.intern("kk_string_builder_deleteCharAt"),
             interner.intern("kk_string_builder_get"),
+            // Callable reference type identity (REFL-003)
+            interner.intern("kk_callable_ref_tag_kfunction"),
+            interner.intern("kk_callable_ref_tag_kproperty"),
+            interner.intern("kk_callable_ref_name"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

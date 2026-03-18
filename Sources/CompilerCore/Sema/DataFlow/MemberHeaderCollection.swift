@@ -513,6 +513,26 @@ extension DataFlowSemaPhase {
                 diagnostics: diagnostics,
                 interner: interner
             )
+            if nestedClass.modifiers.contains(.data) {
+                collectSyntheticDataClassToString(
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner
+                )
+                collectSyntheticDataClassEquals(
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner
+                )
+            }
             if let companionDeclID = nestedClass.companionObject {
                 collectCompanionObjectHeader(
                     companionDeclID: companionDeclID,

@@ -80,9 +80,11 @@ struct CollectionLiteralLookupTables {
     // Additional higher-order collection function ABI names (STDLIB-005)
     let kkListFoldName: InternedString
     let kkListReduceName: InternedString
+    let kkListReduceOrNullName: InternedString
     let kkListScanName: InternedString
     let kkListRunningFoldName: InternedString
     let kkListRunningReduceName: InternedString
+    let kkListScanReduceName: InternedString
     let kkListGroupByName: InternedString
     let kkListSortedByName: InternedString
     let kkListAssociateByName: InternedString
@@ -153,7 +155,11 @@ struct CollectionLiteralLookupTables {
     let kkSequenceToListName: InternedString
     let kkSequenceBuilderBuildName: InternedString
     let kkSequenceBuilderYieldName: InternedString
+    let kkSequenceBuilderYieldAllName: InternedString
     let kkIteratorBuilderBuildName: InternedString
+    let kkIteratorBuilderYieldName: InternedString
+    let kkIteratorBuilderHasNextName: InternedString
+    let kkIteratorBuilderNextName: InternedString
 
     // Sequence ABI names (STDLIB-095/096/097)
     let kkSequenceOfName: InternedString
@@ -285,9 +291,11 @@ struct CollectionLiteralLookupTables {
     // Additional higher-order collection member names (STDLIB-005)
     let foldName: InternedString
     let reduceName: InternedString
+    let reduceOrNullName: InternedString
     let scanName: InternedString
     let runningFoldName: InternedString
     let runningReduceName: InternedString
+    let scanReduceName: InternedString
     let groupByName: InternedString
     let sortedByName: InternedString
     let findName: InternedString
@@ -352,6 +360,7 @@ struct CollectionLiteralLookupTables {
     let iteratorBuilderName: InternedString
     let iteratorBuilderFQName: [InternedString]
     let yieldName: InternedString
+    let yieldAllName: InternedString
 
     // Sequence factory names (STDLIB-097)
     let sequenceOfName: InternedString
@@ -404,6 +413,35 @@ struct CollectionLiteralLookupTables {
     let kkStringBuilderInsertName: InternedString
     let kkStringBuilderDeleteName: InternedString
     let kkStringBuilderLengthName: InternedString
+
+    // File I/O names (STDLIB-565)
+    let fileConstructorName: InternedString
+    let kkFileNewName: InternedString
+    let readTextName: InternedString
+    let kkFileReadTextName: InternedString
+    let writeTextName: InternedString
+    let kkFileWriteTextName: InternedString
+    let readLinesName: InternedString
+    let kkFileReadLinesName: InternedString
+    let existsName: InternedString
+    let kkFileExistsName: InternedString
+    let isFileName: InternedString
+    let kkFileIsFileName: InternedString
+    let isDirectoryName: InternedString
+    let kkFileIsDirectoryName: InternedString
+    let namePropertyName: InternedString
+    let kkFileNameName: InternedString
+    let pathPropertyName: InternedString
+    let kkFilePathName: InternedString
+    let forEachLineName: InternedString
+    let kkFileForEachLineName: InternedString
+    let kkFileDeleteName: InternedString
+    let mkdirsName: InternedString
+    let kkFileMkdirsName: InternedString
+    let listFilesName: InternedString
+    let kkFileListFilesName: InternedString
+    let walkName: InternedString
+    let kkFileWalkName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -488,9 +526,11 @@ struct CollectionLiteralLookupTables {
 
         kkListFoldName = interner.intern("kk_list_fold")
         kkListReduceName = interner.intern("kk_list_reduce")
+        kkListReduceOrNullName = interner.intern("kk_list_reduceOrNull")
         kkListScanName = interner.intern("kk_list_scan")
         kkListRunningFoldName = interner.intern("kk_list_runningFold")
         kkListRunningReduceName = interner.intern("kk_list_runningReduce")
+        kkListScanReduceName = interner.intern("kk_list_scanReduce")
         kkListGroupByName = interner.intern("kk_list_groupBy")
         kkListSortedByName = interner.intern("kk_list_sortedBy")
         kkListAssociateByName = interner.intern("kk_list_associateBy")
@@ -559,7 +599,11 @@ struct CollectionLiteralLookupTables {
         kkSequenceToListName = interner.intern("kk_sequence_to_list")
         kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
         kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
+        kkSequenceBuilderYieldAllName = interner.intern("kk_sequence_builder_yieldAll")
         kkIteratorBuilderBuildName = interner.intern("kk_iterator_builder_build")
+        kkIteratorBuilderYieldName = interner.intern("kk_iterator_builder_yield")
+        kkIteratorBuilderHasNextName = interner.intern("kk_iterator_builder_hasNext")
+        kkIteratorBuilderNextName = interner.intern("kk_iterator_builder_next")
 
         kkSequenceOfName = interner.intern("kk_sequence_of")
         kkSequenceGenerateName = interner.intern("kk_sequence_generate")
@@ -684,9 +728,11 @@ struct CollectionLiteralLookupTables {
 
         foldName = interner.intern("fold")
         reduceName = interner.intern("reduce")
+        reduceOrNullName = interner.intern("reduceOrNull")
         scanName = interner.intern("scan")
         runningFoldName = interner.intern("runningFold")
         runningReduceName = interner.intern("runningReduce")
+        scanReduceName = interner.intern("scanReduce")
         groupByName = interner.intern("groupBy")
         sortedByName = interner.intern("sortedBy")
         findName = interner.intern("find")
@@ -749,6 +795,7 @@ struct CollectionLiteralLookupTables {
         iteratorBuilderName = interner.intern("iterator")
         iteratorBuilderFQName = [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("iterator")]
         yieldName = interner.intern("yield")
+        yieldAllName = interner.intern("yieldAll")
 
         sequenceOfName = interner.intern("sequenceOf")
         generateSequenceName = interner.intern("generateSequence")
@@ -795,6 +842,35 @@ struct CollectionLiteralLookupTables {
         kkStringBuilderInsertName = interner.intern("kk_string_builder_insert")
         kkStringBuilderDeleteName = interner.intern("kk_string_builder_delete")
         kkStringBuilderLengthName = interner.intern("kk_string_builder_length")
+
+        // File I/O names (STDLIB-565)
+        fileConstructorName = interner.intern("File")
+        kkFileNewName = interner.intern("kk_file_new")
+        readTextName = interner.intern("readText")
+        kkFileReadTextName = interner.intern("kk_file_readText")
+        writeTextName = interner.intern("writeText")
+        kkFileWriteTextName = interner.intern("kk_file_writeText")
+        readLinesName = interner.intern("readLines")
+        kkFileReadLinesName = interner.intern("kk_file_readLines")
+        existsName = interner.intern("exists")
+        kkFileExistsName = interner.intern("kk_file_exists")
+        isFileName = interner.intern("isFile")
+        kkFileIsFileName = interner.intern("kk_file_isFile")
+        isDirectoryName = interner.intern("isDirectory")
+        kkFileIsDirectoryName = interner.intern("kk_file_isDirectory")
+        namePropertyName = interner.intern("name")
+        kkFileNameName = interner.intern("kk_file_name")
+        pathPropertyName = interner.intern("path")
+        kkFilePathName = interner.intern("kk_file_path")
+        forEachLineName = interner.intern("forEachLine")
+        kkFileForEachLineName = interner.intern("kk_file_forEachLine")
+        kkFileDeleteName = interner.intern("kk_file_delete")
+        mkdirsName = interner.intern("mkdirs")
+        kkFileMkdirsName = interner.intern("kk_file_mkdirs")
+        listFilesName = interner.intern("listFiles")
+        kkFileListFilesName = interner.intern("kk_file_listFiles")
+        walkName = interner.intern("walk")
+        kkFileWalkName = interner.intern("kk_file_walk")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]

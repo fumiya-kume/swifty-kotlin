@@ -587,6 +587,13 @@ public func kk_print_any(_ obj: UnsafeMutableRawPointer?) {
     Swift.print(runtimeRenderAnyForPrint(intValue), terminator: "")
 }
 
+/// Runtime support for kotlin.io.print() with no arguments (STDLIB-572).
+/// Prints nothing (no output, no newline).
+@_cdecl("kk_print_noarg")
+public func kk_print_noarg() {
+    // Intentionally empty — Kotlin's print() with no args is a no-op.
+}
+
 /// Runtime support for kotlin.io.println() (STDLIB-063).
 /// Prints a newline with no arguments.
 @_cdecl("kk_println_newline")
@@ -620,6 +627,26 @@ public func kk_readln(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let line = readLine() else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "ReadAfterEOFException")
         return 0
+    }
+    let utf8 = Array(line.utf8)
+    if utf8.isEmpty {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Runtime support for kotlin.io.readlnOrNull() (STDLIB-571).
+/// Reads a line from stdin. Returns null (runtimeNullSentinelInt) on EOF
+/// instead of throwing.
+@_cdecl("kk_readlnOrNull")
+public func kk_readlnOrNull() -> Int {
+    guard let line = readLine() else {
+        return runtimeNullSentinelInt
     }
     let utf8 = Array(line.utf8)
     if utf8.isEmpty {
@@ -741,4 +768,17 @@ public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
         return kk_box_bool(0)
     }
     return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
+}
+
+// MARK: - STDLIB-534: String?.orEmpty()
+
+@_cdecl("kk_string_orEmpty")
+public func kk_string_orEmpty(_ strRaw: Int) -> Int {
+    if strRaw == runtimeNullSentinelInt || strRaw == 0 {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
+    return strRaw
 }

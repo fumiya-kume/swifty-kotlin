@@ -82,7 +82,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 92)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 101)
     }
 
     func testRegexFunctionCount() {
@@ -99,14 +99,14 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 21)
     }
 
-    func testPrintlnFunctionCount() {
-        // kk_print_any, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 4)
+    func testPrintAndPrintlnFunctionCount() {
+        // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
+        XCTAssertEqual(RuntimeABISpec.consolePrintFunctions.count, 5)
     }
 
     func testIOFunctionCount() {
-        // kk_readline, kk_readln
-        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 2)
+        // kk_readline, kk_readln, kk_readlnOrNull
+        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 3)
     }
 
     func testGCFunctionCount() {
@@ -119,8 +119,8 @@ final class ABIMismatchTests: XCTestCase {
 
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
-        // Includes CORO-002 cancellation and CORO-003 flow ownership helpers.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 44)
+        // Includes CORO-001 channel suspend, CORO-002 cancellation and CORO-003 flow ownership helpers.
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 45)
     }
 
     func testBoxingFunctionCount() {
@@ -160,7 +160,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.memoryFunctions,
             RuntimeABISpec.exceptionFunctions,
             RuntimeABISpec.stringFunctions,
-            RuntimeABISpec.printlnFunctions,
+            RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,
             RuntimeABISpec.systemFunctions,
             RuntimeABISpec.gcFunctions,
@@ -310,6 +310,82 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
     }
 
+    // MARK: - Collection HOF Scan/Reduce (STDLIB-526..530)
+
+    func testKKListReduceOrNullSignature() throws {
+        let spec = try requireSpec("kk_list_reduceOrNull")
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+        XCTAssertEqual(spec.returnType, .intptr)
+    }
+
+    func testKKListScanReduceSignature() throws {
+        let spec = try requireSpec("kk_list_scanReduce")
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+        XCTAssertEqual(spec.returnType, .intptr)
+    }
+
+    func testKKListScanSignature() throws {
+        let spec = try requireSpec("kk_list_scan")
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "initial")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+        XCTAssertEqual(spec.parameters[4].name, "outThrown")
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+        XCTAssertEqual(spec.returnType, .intptr)
+    }
+
+    func testKKListRunningFoldSignature() throws {
+        let spec = try requireSpec("kk_list_runningFold")
+        XCTAssertEqual(spec.parameters.count, 5)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "initial")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
+        XCTAssertEqual(spec.parameters[4].name, "outThrown")
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
+        XCTAssertEqual(spec.returnType, .intptr)
+    }
+
+    func testKKListRunningReduceSignature() throws {
+        let spec = try requireSpec("kk_list_runningReduce")
+        XCTAssertEqual(spec.parameters.count, 4)
+        XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
+        XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
+        XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
+        XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
+        XCTAssertEqual(spec.returnType, .intptr)
+    }
+
     // MARK: - C Declaration Generation
 
     func testCDeclarationForKKAlloc() throws {
@@ -383,7 +459,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Memory"))
         XCTAssertTrue(header.contains("Exception"))
         XCTAssertTrue(header.contains("String"))
-        XCTAssertTrue(header.contains("Println"))
+        XCTAssertTrue(header.contains("Print"))
         XCTAssertTrue(header.contains("GC"))
         XCTAssertTrue(header.contains("Coroutine"))
         XCTAssertTrue(header.contains("Boxing"))
