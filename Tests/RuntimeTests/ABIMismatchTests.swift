@@ -105,8 +105,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testIOFunctionCount() {
-        // kk_readline, kk_readln
-        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 2)
+        // kk_readline, kk_readln, kk_readlnOrNull
+        XCTAssertEqual(RuntimeABISpec.ioFunctions.count, 3)
     }
 
     func testGCFunctionCount() {

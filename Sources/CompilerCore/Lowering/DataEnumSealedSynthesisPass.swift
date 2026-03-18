@@ -93,8 +93,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
         }
         appendSyntheticEnumValuesIfNeeded(
-            name: ctx.interner.intern("values"), owner: nominalSymbol, entries: entries,
-            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols
+            name: ctx.interner.intern("values"), owner: nominalSymbol,
+            entries: entries,
+            module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
         )
         appendSyntheticEnumOrdinalToNameIfNeeded(
             owner: nominalSymbol,
@@ -129,6 +131,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 args: [],
                 nullability: .nonNull
             ))),
+            entries: entries,
+            module: module,
+            sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
+        )
+        appendSyntheticEnumStaticInitIfNeeded(
+            owner: nominalSymbol,
             entries: entries,
             module: module,
             sema: sema,
@@ -241,32 +251,142 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             args: [],
             nullability: .nonNull
         )))
-        let parameterName = interner.intern("$self")
+        let selfParamName = interner.intern("$self")
         let fqName = owner.fqName + [name]
-        let parameterSymbol = sema.symbols.define(
+        let selfParamSymbol = sema.symbols.define(
             kind: .valueParameter,
-            name: parameterName,
-            fqName: fqName + [parameterName],
+            name: selfParamName,
+            fqName: fqName + [selfParamName],
             declSite: owner.declSite,
             visibility: .private,
             flags: [.synthetic]
         )
-        let parameter = KIRParameter(symbol: parameterSymbol, type: receiverType)
+        let selfParam = KIRParameter(symbol: selfParamSymbol, type: receiverType)
+
+        // Look up the primary constructor to get property parameter types.
+        let initName = interner.intern("<init>")
+        let ctorFQName = owner.fqName + [initName]
+        let ctorSymbol = sema.symbols.lookupAll(fqName: ctorFQName).first { symbolID in
+            sema.symbols.symbol(symbolID)?.kind == .constructor
+        }
+
+        // Guard: if no constructor is found, emit a simple self-returning copy()
+        // to avoid generating an invalid .call instruction with nil symbol.
+        guard let resolvedCtorSymbol = ctorSymbol,
+              let ctorSignature = sema.symbols.functionSignature(for: resolvedCtorSymbol)
+        else {
+            let resultExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: receiverType
+            )
+            let body: [KIRInstruction] = [
+                .constValue(result: resultExpr, value: .symbolRef(selfParamSymbol)),
+                .returnValue(resultExpr),
+            ]
+            let signature = FunctionSignature(
+                parameterTypes: [receiverType],
+                returnType: receiverType,
+                isSuspend: false,
+                valueParameterSymbols: [selfParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false]
+            )
+            appendSyntheticFunctionIfNeeded(
+                name: name,
+                owner: owner,
+                module: module,
+                sema: sema,
+                signature: signature,
+                params: [selfParam],
+                body: body,
+                existingFunctionSymbols: existingFunctionSymbols
+            )
+            return
+        }
+
+        // Collect constructor value parameters (excluding receiver).
+        // The constructor signature stores symbols in valueParameterSymbols and
+        // types in parameterTypes. When a receiver type is prepended to
+        // parameterTypes (but not to valueParameterSymbols), we strip the leading
+        // receiver entry from parameterTypes so that both arrays align 1-to-1.
+        let ctorParamSymbols = ctorSignature.valueParameterSymbols
+        var ctorParamTypes = ctorSignature.parameterTypes
+        if ctorParamTypes.count > ctorParamSymbols.count,
+           ctorParamTypes.first == receiverType {
+            ctorParamTypes.removeFirst()
+        }
+
+        // Pair up symbols and types, truncating to the shorter array for safety.
+        let pairCount = min(ctorParamSymbols.count, ctorParamTypes.count)
+        let propertyParams: [(symbol: SymbolID, type: TypeID)] = (0..<pairCount).map { i in
+            (ctorParamSymbols[i], ctorParamTypes[i])
+        }
+
+        // Build KIR parameters and body for copy().
+        // Each copy parameter mirrors the corresponding constructor parameter name
+        // (e.g. name, age) so diagnostics and dumps reflect Kotlin's copy(name=..., age=...).
+        var allParams: [KIRParameter] = [selfParam]
+        var allParamSymbols: [SymbolID] = [selfParamSymbol]
+        var allParamTypes: [TypeID] = [receiverType]
+        var allParamHasDefault: [Bool] = [false]
+        var allParamIsVararg: [Bool] = [false]
+        var copyParamSymbols: [SymbolID] = []
+
+        for (ctorSym, paramType) in propertyParams {
+            // Reuse the constructor parameter's name for the copy() parameter.
+            let ctorParamName = sema.symbols.symbol(ctorSym)?.name ?? interner.intern("$copy_\(allParams.count)")
+            let paramSymbol = sema.symbols.define(
+                kind: .valueParameter,
+                name: ctorParamName,
+                fqName: fqName + [ctorParamName],
+                declSite: owner.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            allParams.append(KIRParameter(symbol: paramSymbol, type: paramType))
+            allParamSymbols.append(paramSymbol)
+            allParamTypes.append(paramType)
+            allParamHasDefault.append(true)
+            allParamIsVararg.append(false)
+            copyParamSymbols.append(paramSymbol)
+        }
+
+        var body: [KIRInstruction] = []
+
+        // Load each copy parameter.
+        var ctorArgExprs: [KIRExprID] = []
+        for (index, paramSymbol) in copyParamSymbols.enumerated() {
+            let paramType = propertyParams[index].type
+            let paramExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: paramType
+            )
+            body.append(.constValue(result: paramExpr, value: .symbolRef(paramSymbol)))
+            ctorArgExprs.append(paramExpr)
+        }
+
+        // Call the constructor with the (possibly overridden) parameters.
         let resultExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
             type: receiverType
         )
-        let body: [KIRInstruction] = [
-            .constValue(result: resultExpr, value: .symbolRef(parameterSymbol)),
-            .returnValue(resultExpr),
-        ]
+        body.append(.call(
+            symbol: resolvedCtorSymbol,
+            callee: initName,
+            arguments: ctorArgExprs,
+            result: resultExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        body.append(.returnValue(resultExpr))
+
         let signature = FunctionSignature(
-            parameterTypes: [receiverType],
+            parameterTypes: allParamTypes,
             returnType: receiverType,
             isSuspend: false,
-            valueParameterSymbols: [parameterSymbol],
-            valueParameterHasDefaultValues: [false],
-            valueParameterIsVararg: [false]
+            valueParameterSymbols: allParamSymbols,
+            valueParameterHasDefaultValues: allParamHasDefault,
+            valueParameterIsVararg: allParamIsVararg
         )
         appendSyntheticFunctionIfNeeded(
             name: name,
@@ -274,7 +394,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             module: module,
             sema: sema,
             signature: signature,
-            params: [parameter],
+            params: allParams,
             body: body,
             existingFunctionSymbols: existingFunctionSymbols
         )
@@ -461,37 +581,88 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
-    /// Synthesizes `values()` which calls `kk_enum_values_<ClassName>` with
-    /// the count of entries. The runtime or codegen is expected to return an
-    /// array-like representation. The body emits a call to a well-known
-    /// helper `kk_enum_values` passing the count as argument.
+    /// Synthesizes `values()` which returns an `Array<T>` containing all
+    /// enum entry singletons.
+    /// The body is: kk_array_new(count) -> kk_array_set for each entry -> kk_enum_make_values_array.
     private func appendSyntheticEnumValuesIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
         entries: [SemanticSymbol],
         module: KIRModule,
         sema: SemaModule,
-        existingFunctionSymbols: Set<SymbolID>
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        // values() returns an Int (count) which codegen interprets as the
-        // number of entries in the enum. Each entry's ordinal/name can be
-        // retrieved through the per-entry helpers.
-        let signature = FunctionSignature(parameterTypes: [], returnType: intType, isSuspend: false)
+        // Compute the enum entry type from the owner symbol
+        let entryType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        // values() returns Array<T>, represented as anyType at the erased level
+        let returnType = sema.types.anyType
+
+        let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
         var body: [KIRInstruction] = []
 
-        // Emit count constant
+        // count constant
         let countExpr = module.arena.appendExpr(
-            .temporary(Int32(module.arena.expressions.count)),
-            type: intType
+            .temporary(Int32(module.arena.expressions.count)), type: intType
         )
         body.append(.constValue(result: countExpr, value: .intLiteral(Int64(entries.count))))
 
-        // Directly return the count; the runtime helper for building an
-        // Array<T> will be introduced when the full array return type is wired.
-        body.append(.returnValue(countExpr))
+        // kk_array_new(count) -- intermediate array uses anyType
+        let arrayExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: sema.types.anyType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: arrayExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        // kk_array_set(array, index, entrySymbolRef) for each entry
+        for (ordinal, entry) in entries.enumerated() {
+            let indexExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: intType
+            )
+            body.append(.constValue(result: indexExpr, value: .intLiteral(Int64(ordinal))))
+
+            let entryRef = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: entryType
+            )
+            body.append(.constValue(result: entryRef, value: .symbolRef(entry.id)))
+
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_array_set"),
+                arguments: [arrayExpr, indexExpr, entryRef],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        // kk_enum_make_values_array(array, count) -- result uses the enum type
+        let listExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)), type: returnType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_enum_make_values_array"),
+            arguments: [arrayExpr, countExpr],
+            result: listExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        body.append(.returnValue(listExpr))
 
         appendSyntheticFunctionIfNeeded(
             name: name,
@@ -526,7 +697,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             args: [],
             nullability: .nonNull
         )))
-        let returnType = entryType
+        // entries getter returns Array<T>, represented as anyType at the erased level
+        let returnType = sema.types.anyType
 
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
@@ -868,6 +1040,83 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
     }
 
+    /// Synthesizes `__enum_static_init_<ClassName>()` which initialises the
+    /// global slots for each enum entry with their ordinal values, and ensures
+    /// KIRGlobal declarations exist so that codegen allocates LLVM global
+    /// variables for the entries. These globals model ordinal storage, so the
+    /// slot declarations and writes must stay typed as `Int`.
+    private func appendSyntheticEnumStaticInitIfNeeded(
+        owner: SemanticSymbol,
+        entries: [SemanticSymbol],
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard !entries.isEmpty else { return }
+
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        // Collect existing global symbols so we don't create duplicates.
+        var existingGlobalSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
+            guard case let .global(global) = decl else {
+                return nil
+            }
+            return global.symbol
+        })
+
+        // Ensure a KIRGlobal exists for every entry field. BuildKIR emits these
+        // for `enumEntryDecl` nodes, but when the enum class comes from a
+        // nominalType-only module (e.g. library metadata) the globals may be
+        // absent. Adding them here is idempotent thanks to the guard.
+        for entry in entries {
+            if !existingGlobalSymbols.contains(entry.id) {
+                _ = module.arena.appendDecl(.global(KIRGlobal(symbol: entry.id, type: intType)))
+                existingGlobalSymbols.insert(entry.id)
+            }
+        }
+
+        // Build the static initialiser body.
+        let ownerName = interner.resolve(owner.name)
+        let initName = interner.intern("__enum_static_init_\(ownerName)")
+
+        var body: [KIRInstruction] = []
+
+        for (ordinal, entry) in entries.enumerated() {
+            // Produce the ordinal value.
+            let ordinalExpr = module.arena.appendExpr(
+                .intLiteral(Int64(ordinal)),
+                type: intType
+            )
+            body.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
+
+            // Reference the entry's global slot.
+            let entryRef = module.arena.appendExpr(
+                .symbolRef(entry.id),
+                type: intType
+            )
+            body.append(.constValue(result: entryRef, value: .symbolRef(entry.id)))
+
+            // Store ordinal into the global slot.
+            body.append(.copy(from: ordinalExpr, to: entryRef))
+        }
+
+        body.append(.returnUnit)
+
+        let unitType = sema.types.unitType
+        let signature = FunctionSignature(parameterTypes: [], returnType: unitType, isSuspend: false)
+
+        appendSyntheticFunctionIfNeeded(
+            name: initName,
+            owner: owner,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [],
+            body: body,
+            existingFunctionSymbols: existingFunctionSymbols
+        )
+    }
+
     /// Appends a KIR function using an existing symbol (e.g. from Sema). Used when the symbol
     /// was already registered for resolution so call sites bind to the same symbol.
     private func appendSyntheticFunctionWithSymbol(
@@ -932,8 +1181,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 returnType: signature.returnType,
                 isSuspend: signature.isSuspend,
                 valueParameterSymbols: params.map(\.symbol),
-                valueParameterHasDefaultValues: params.map { _ in false },
-                valueParameterIsVararg: params.map { _ in false },
+                valueParameterHasDefaultValues: signature.valueParameterHasDefaultValues.isEmpty
+                    ? params.map { _ in false }
+                    : signature.valueParameterHasDefaultValues,
+                valueParameterIsVararg: signature.valueParameterIsVararg.isEmpty
+                    ? params.map { _ in false }
+                    : signature.valueParameterIsVararg,
                 typeParameterSymbols: []
             ),
             for: functionSymbol

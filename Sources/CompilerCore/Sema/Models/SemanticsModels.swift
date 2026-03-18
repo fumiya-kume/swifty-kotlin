@@ -873,6 +873,9 @@ public final class BindingTable {
     /// Maps nameRef expression IDs to their member name when they were resolved
     /// as implicit receiver member accesses (STDLIB-004).
     public private(set) var implicitReceiverMemberNames: [ExprID: InternedString] = [:]
+    /// Maps callable reference expression IDs to their kind (function vs property)
+    /// so that KIR lowering can emit KFunction / KProperty type identity (REFL-003).
+    public private(set) var callableRefKinds: [ExprID: CallableRefKind] = [:]
 
     public init() {}
 
@@ -1170,6 +1173,16 @@ public final class BindingTable {
     /// Mark a nameRef expression as an implicit receiver member access (STDLIB-004).
     public func markImplicitReceiverMember(_ expr: ExprID, name: InternedString) {
         implicitReceiverMemberNames[expr] = name
+    }
+
+    /// Bind a callable reference expression to its kind (REFL-003).
+    public func bindCallableRefKind(_ expr: ExprID, kind: CallableRefKind) {
+        callableRefKinds[expr] = kind
+    }
+
+    /// Query the callable reference kind for an expression (REFL-003).
+    public func callableRefKind(for expr: ExprID) -> CallableRefKind? {
+        callableRefKinds[expr]
     }
 }
 

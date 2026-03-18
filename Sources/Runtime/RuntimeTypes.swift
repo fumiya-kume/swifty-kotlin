@@ -288,6 +288,14 @@ final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
 }
 
+/// Runtime box for the `iterator { yield(x) }` builder (STDLIB-331/564).
+/// Accumulates yielded elements eagerly during builder block execution,
+/// then provides `hasNext` / `next` traversal over the collected values.
+final class RuntimeIteratorBuilderBox {
+    var elements: [Int] = []
+    var index: Int = 0
+}
+
 /// Runtime box for `Grouping<T, K>` returned by `groupingBy`.
 /// Stores the source elements and key selector function pointer/closure.
 final class RuntimeGroupingBox {
@@ -401,5 +409,105 @@ final class RuntimeKClassBox {
     init(typeToken: Int, nameHint: Int) {
         self.typeToken = typeToken
         self.nameHint = nameHint
+    }
+}
+
+// MARK: - BufferedReader (STDLIB-567)
+
+/// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.
+/// Wraps a streaming file reader, supporting `readLine()` and `readLines()`.
+final class RuntimeBufferedReaderBox {
+    private var fileHandle: FileHandle?
+    private var pendingData: Data
+    private var closed: Bool
+    private var reachedEOF: Bool
+    private let chunkSize: Int
+
+    init(fileHandle: FileHandle, chunkSize: Int = 4096) {
+        self.fileHandle = fileHandle
+        self.pendingData = Data()
+        self.closed = false
+        self.reachedEOF = false
+        self.chunkSize = max(1, chunkSize)
+    }
+
+    /// Returns the next line, or `nil` when all lines have been consumed.
+    func readLine() -> String? {
+        guard !closed else { return nil }
+
+        while true {
+            if let (lineLength, terminatorLength) = locateLineTerminator() {
+                let lineData = pendingData.prefix(lineLength)
+                pendingData.removeFirst(lineLength + terminatorLength)
+                return String(decoding: lineData, as: UTF8.self)
+            }
+
+            if reachedEOF {
+                guard !pendingData.isEmpty else { return nil }
+                let line = String(decoding: pendingData, as: UTF8.self)
+                pendingData.removeAll(keepingCapacity: false)
+                return line
+            }
+
+            if !readNextChunk() {
+                reachedEOF = true
+            }
+        }
+    }
+
+    /// Returns all remaining lines as an array.
+    func readLines() -> [String] {
+        guard !closed else { return [] }
+        var remaining: [String] = []
+        while let line = readLine() {
+            remaining.append(line)
+        }
+        return remaining
+    }
+
+    func close() {
+        guard !closed else { return }
+        try? fileHandle?.close()
+        fileHandle = nil
+        pendingData.removeAll(keepingCapacity: false)
+        closed = true
+    }
+
+    deinit {
+        close()
+    }
+
+    private func readNextChunk() -> Bool {
+        guard let fileHandle else { return false }
+        guard let chunk = try? fileHandle.read(upToCount: chunkSize), !chunk.isEmpty else {
+            return false
+        }
+        pendingData.append(chunk)
+        return true
+    }
+
+    private func locateLineTerminator() -> (lineLength: Int, terminatorLength: Int)? {
+        var index = pendingData.startIndex
+        while index < pendingData.endIndex {
+            let byte = pendingData[index]
+            if byte == 0x0A {
+                return (pendingData.distance(from: pendingData.startIndex, to: index), 1)
+            }
+            if byte == 0x0D {
+                let nextIndex = pendingData.index(after: index)
+                if nextIndex < pendingData.endIndex {
+                    let lineLength = pendingData.distance(from: pendingData.startIndex, to: index)
+                    return (lineLength, pendingData[nextIndex] == 0x0A ? 2 : 1)
+                }
+                if reachedEOF {
+                    return (pendingData.distance(from: pendingData.startIndex, to: index), 1)
+                }
+                return nil
+            }
+            index = pendingData.index(after: index)
+        }
+        return nil
+    }
+}
     }
 }

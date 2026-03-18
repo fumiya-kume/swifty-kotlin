@@ -536,6 +536,7 @@ extension ExprTypeChecker {
             if let propertySymbol = propertyCandidates.first {
                 let propertyType = sema.symbols.propertyType(for: propertySymbol) ?? sema.types.errorType
                 sema.bindings.bindIdentifier(id, symbol: propertySymbol)
+                sema.bindings.bindCallableRefKind(id, kind: .propertyRef)
                 sema.bindings.bindExprType(id, type: propertyType)
                 return propertyType
             }
@@ -587,6 +588,9 @@ extension ExprTypeChecker {
             }
             sema.bindings.bindIdentifier(id, symbol: chosen)
             sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+            // REFL-003: Tag the callable reference as KFunction so KIR
+            // lowering can emit type identity metadata.
+            sema.bindings.bindCallableRefKind(id, kind: .functionRef)
             let captures = receiver.map { recv in
                 driver.captureAnalyzer.collectCapturedOuterSymbols(
                     in: recv,

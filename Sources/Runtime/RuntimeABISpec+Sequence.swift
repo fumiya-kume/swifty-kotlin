@@ -75,11 +75,36 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
-        // Iterator builder (STDLIB-331)
+        // Iterator builder (STDLIB-331/564)
         RuntimeABIFunctionSpec(
             name: "kk_iterator_builder_build",
             parameters: [
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_iterator_builder_yield",
+            parameters: [
+                RuntimeABIParameter(name: "builderRaw", type: .intptr),
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_iterator_builder_hasNext",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_iterator_builder_next",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"
