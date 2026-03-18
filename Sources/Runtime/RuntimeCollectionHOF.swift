@@ -523,7 +523,7 @@ public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     guard !list.elements.isEmpty else {
         return 0 // null for empty collection
     }
-    var acc = list.elements[0]
+    var acc = maybeUnbox(list.elements[0])
     for idx in 1 ..< list.elements.count {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))

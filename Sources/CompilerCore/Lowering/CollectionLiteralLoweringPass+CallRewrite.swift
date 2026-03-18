@@ -2737,7 +2737,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // scanReduce: args = [receiver, lambda, closureRaw?] — alias for runningReduce
-                    if callee == lookup.scanReduceName, arguments.count == 2 || arguments.count == 3 {
+                    if callee == lookup.scanReduceName, (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
