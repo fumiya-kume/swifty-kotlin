@@ -26,6 +26,12 @@ private let lazyMessageThrows: @convention(c) (Int, UnsafeMutablePointer<Int>?) 
     return 0
 }
 
+/// Convert a @convention(c) function to an Int-sized raw pointer value,
+/// using UnsafeRawPointer + Int(bitPattern:) for portability across ABIs.
+private func fnPtrInt(_ fn: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int) -> Int {
+    Int(bitPattern: unsafeBitCast(fn, to: UnsafeRawPointer.self))
+}
+
 final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
 
     // MARK: - kk_require (non-lazy)
@@ -36,13 +42,12 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(outThrown, 0, "require(true) should not throw")
     }
 
-    func testRequireFailingConditionThrowsIllegalArgument() {
+    func testRequireFailingConditionThrowsIllegalArgument() throws {
         var outThrown = 0
         _ = kk_require(0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "require(false) should throw")
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box)
-        XCTAssertTrue(box?.message.contains("IllegalArgumentException") == true)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
+        XCTAssertTrue(box.message.contains("IllegalArgumentException"))
     }
 
     // MARK: - kk_check (non-lazy)
@@ -53,142 +58,129 @@ final class RuntimePreconditionLazyTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(outThrown, 0, "check(true) should not throw")
     }
 
-    func testCheckFailingConditionThrowsIllegalState() {
+    func testCheckFailingConditionThrowsIllegalState() throws {
         var outThrown = 0
         _ = kk_check(0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "check(false) should throw")
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box)
-        XCTAssertTrue(box?.message.contains("IllegalStateException") == true)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
+        XCTAssertTrue(box.message.contains("IllegalStateException"))
     }
 
     // MARK: - kk_require_lazy: condition passes
 
     func testRequireLazyPassingConditionDoesNotThrow() {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageReturnsString, to: Int.self)
-        _ = kk_require_lazy(1, fnPtr, 0, &outThrown)
+        _ = kk_require_lazy(1, fnPtrInt(lazyMessageReturnsString), 0, &outThrown)
         XCTAssertEqual(outThrown, 0, "require(true) { ... } should not throw")
     }
 
     // MARK: - kk_require_lazy: condition fails, lazy message succeeds
 
-    func testRequireLazyFailsWithCustomMessage() {
+    func testRequireLazyFailsWithCustomMessage() throws {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageReturnsString, to: Int.self)
-        _ = kk_require_lazy(0, fnPtr, 0, &outThrown)
+        _ = kk_require_lazy(0, fnPtrInt(lazyMessageReturnsString), 0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "require(false) { ... } should throw")
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box?.message.contains("custom message") == true,
-            "Should contain the lazy message, got: \(box?.message ?? "nil")"
+            box.message.contains("custom message"),
+            "Should contain the lazy message, got: \(box.message)"
         )
     }
 
     // MARK: - kk_require_lazy: condition fails, lazy message throws (STDLIB-257 core case)
 
-    func testRequireLazyMessageThrowsReportsPreconditionFailureWithCause() {
+    func testRequireLazyMessageThrowsReportsPreconditionFailureWithCause() throws {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageThrows, to: Int.self)
-        _ = kk_require_lazy(0, fnPtr, 0, &outThrown)
+        _ = kk_require_lazy(0, fnPtrInt(lazyMessageThrows), 0, &outThrown)
 
         XCTAssertNotEqual(outThrown, 0, "Should throw when condition is false")
 
         // The primary exception must be the precondition failure, not the lambda's exception.
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box, "outThrown should be a RuntimeThrowableBox")
+        let box = try XCTUnwrap(throwableBox(from: outThrown), "outThrown should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            box?.message.contains("IllegalArgumentException") == true,
-            "Primary exception must be IllegalArgumentException, got: \(box?.message ?? "nil")"
+            box.message.contains("IllegalArgumentException"),
+            "Primary exception must be IllegalArgumentException, got: \(box.message)"
         )
 
         // The lambda's exception must be attached as the cause.
-        XCTAssertNotEqual(box?.cause, 0, "cause must be set when lazy message threw")
-        let causeBox = throwableBox(from: box?.cause ?? 0)
-        XCTAssertNotNil(causeBox, "cause should be a RuntimeThrowableBox")
+        XCTAssertNotEqual(box.cause, 0, "cause must be set when lazy message threw")
+        let causeBox = try XCTUnwrap(throwableBox(from: box.cause), "cause should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            causeBox?.message.contains("LazyEvalError") == true,
-            "cause should contain the lambda's exception message, got: \(causeBox?.message ?? "nil")"
+            causeBox.message.contains("LazyEvalError"),
+            "cause should contain the lambda's exception message, got: \(causeBox.message)"
         )
     }
 
     // MARK: - kk_check_lazy: condition fails, lazy message throws (STDLIB-257 core case)
 
-    func testCheckLazyMessageThrowsReportsPreconditionFailureWithCause() {
+    func testCheckLazyMessageThrowsReportsPreconditionFailureWithCause() throws {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageThrows, to: Int.self)
-        _ = kk_check_lazy(0, fnPtr, 0, &outThrown)
+        _ = kk_check_lazy(0, fnPtrInt(lazyMessageThrows), 0, &outThrown)
 
         XCTAssertNotEqual(outThrown, 0, "Should throw when condition is false")
 
         // The primary exception must be the precondition failure, not the lambda's exception.
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box, "outThrown should be a RuntimeThrowableBox")
+        let box = try XCTUnwrap(throwableBox(from: outThrown), "outThrown should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            box?.message.contains("IllegalStateException") == true,
-            "Primary exception must be IllegalStateException, got: \(box?.message ?? "nil")"
+            box.message.contains("IllegalStateException"),
+            "Primary exception must be IllegalStateException, got: \(box.message)"
         )
 
         // The lambda's exception must be attached as the cause.
-        XCTAssertNotEqual(box?.cause, 0, "cause must be set when lazy message threw")
-        let causeBox = throwableBox(from: box?.cause ?? 0)
-        XCTAssertNotNil(causeBox, "cause should be a RuntimeThrowableBox")
+        XCTAssertNotEqual(box.cause, 0, "cause must be set when lazy message threw")
+        let causeBox = try XCTUnwrap(throwableBox(from: box.cause), "cause should be a RuntimeThrowableBox")
         XCTAssertTrue(
-            causeBox?.message.contains("LazyEvalError") == true,
-            "cause should contain the lambda's exception message, got: \(causeBox?.message ?? "nil")"
+            causeBox.message.contains("LazyEvalError"),
+            "cause should contain the lambda's exception message, got: \(causeBox.message)"
         )
     }
 
     // MARK: - kk_require_lazy: no lambda provided (fnPtr == 0) falls back to default
 
-    func testRequireLazyNoLambdaUsesDefaultMessage() {
+    func testRequireLazyNoLambdaUsesDefaultMessage() throws {
         var outThrown = 0
         _ = kk_require_lazy(0, 0, 0, &outThrown)
         XCTAssertNotEqual(outThrown, 0)
-        let box = throwableBox(from: outThrown)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box?.message.contains("IllegalArgumentException") == true,
+            box.message.contains("IllegalArgumentException"),
             "Should use default IllegalArgumentException message"
         )
-        XCTAssertEqual(box?.cause, 0, "No cause when lambda is absent")
+        XCTAssertEqual(box.cause, 0, "No cause when lambda is absent")
     }
 
     // MARK: - kk_check_lazy: no lambda provided (fnPtr == 0) falls back to default
 
-    func testCheckLazyNoLambdaUsesDefaultMessage() {
+    func testCheckLazyNoLambdaUsesDefaultMessage() throws {
         var outThrown = 0
         _ = kk_check_lazy(0, 0, 0, &outThrown)
         XCTAssertNotEqual(outThrown, 0)
-        let box = throwableBox(from: outThrown)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box?.message.contains("IllegalStateException") == true,
+            box.message.contains("IllegalStateException"),
             "Should use default IllegalStateException message"
         )
-        XCTAssertEqual(box?.cause, 0, "No cause when lambda is absent")
+        XCTAssertEqual(box.cause, 0, "No cause when lambda is absent")
     }
 
     // MARK: - kk_check_lazy: condition passes with lazy message
 
     func testCheckLazyPassingConditionDoesNotThrow() {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageReturnsString, to: Int.self)
-        _ = kk_check_lazy(1, fnPtr, 0, &outThrown)
+        _ = kk_check_lazy(1, fnPtrInt(lazyMessageReturnsString), 0, &outThrown)
         XCTAssertEqual(outThrown, 0, "check(true) { ... } should not throw")
     }
 
     // MARK: - kk_check_lazy: condition fails, lazy message succeeds
 
-    func testCheckLazyFailsWithCustomMessage() {
+    func testCheckLazyFailsWithCustomMessage() throws {
         var outThrown = 0
-        let fnPtr = unsafeBitCast(lazyMessageReturnsString, to: Int.self)
-        _ = kk_check_lazy(0, fnPtr, 0, &outThrown)
+        _ = kk_check_lazy(0, fnPtrInt(lazyMessageReturnsString), 0, &outThrown)
         XCTAssertNotEqual(outThrown, 0, "check(false) { ... } should throw")
-        let box = throwableBox(from: outThrown)
-        XCTAssertNotNil(box)
+        let box = try XCTUnwrap(throwableBox(from: outThrown))
         XCTAssertTrue(
-            box?.message.contains("custom message") == true,
-            "Should contain the lazy message, got: \(box?.message ?? "nil")"
+            box.message.contains("custom message"),
+            "Should contain the lazy message, got: \(box.message)"
         )
     }
 

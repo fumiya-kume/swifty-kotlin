@@ -35,6 +35,7 @@ public func kk_require_lazy(
         fnPtr,
         closureRaw,
         outThrown,
+        exceptionPrefix: "IllegalArgumentException",
         defaultMessage: "IllegalArgumentException: Failed requirement."
     )
 }
@@ -51,6 +52,7 @@ public func kk_check_lazy(
         fnPtr,
         closureRaw,
         outThrown,
+        exceptionPrefix: "IllegalStateException",
         defaultMessage: "IllegalStateException: Check failed."
     )
 }
@@ -83,6 +85,7 @@ private func preconditionWithLazyMessage(
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?,
+    exceptionPrefix: String,
     defaultMessage: String
 ) -> Int {
     outThrown?.pointee = 0
@@ -112,9 +115,11 @@ private func preconditionWithLazyMessage(
         return 0
     }
 
-    // Lazy message evaluated successfully — use it for the precondition failure
+    // Lazy message evaluated successfully — use it for the precondition failure.
+    // Prepend the exception type prefix for consistency with non-lazy paths
+    // (e.g. "IllegalArgumentException: custom message").
     let message = runtimePreconditionMessage(from: rawMessage)
-    outThrown?.pointee = runtimeAllocateThrowable(message: message)
+    outThrown?.pointee = runtimeAllocateThrowable(message: "\(exceptionPrefix): \(message)")
     return 0
 }
 
