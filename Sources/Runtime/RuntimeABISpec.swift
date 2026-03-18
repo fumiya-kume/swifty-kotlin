@@ -1145,6 +1145,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-534: String?.orEmpty()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_orEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
     public static let printlnFunctions: [RuntimeABIFunctionSpec] = [

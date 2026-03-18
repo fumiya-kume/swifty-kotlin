@@ -2056,6 +2056,29 @@ extension CallTypeChecker {
                         return resultType
                     }
                 }
+                // STDLIB-532/533/534: orEmpty() on nullable String?, List?, Map? receivers
+                if !isNullLiteralReceiver, calleeStr == "orEmpty" {
+                    let baseType = sema.types.makeNonNullable(lookupReceiverType)
+                    if sema.types.isSubtype(baseType, sema.types.stringType) {
+                        let resultType = sema.types.stringType
+                        sema.bindings.bindExprType(id, type: resultType)
+                        return resultType
+                    }
+                    // List?.orEmpty() -> List<T>
+                    if isListLikeType(baseType, sema: sema, interner: interner) {
+                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
+                        sema.bindings.bindExprType(id, type: resultType)
+                        sema.bindings.markCollectionExpr(id)
+                        return resultType
+                    }
+                    // Map?.orEmpty() -> Map<K,V>
+                    if isMapLikeCollectionType(baseType, sema: sema, interner: interner) {
+                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
+                        sema.bindings.bindExprType(id, type: resultType)
+                        sema.bindings.markCollectionExpr(id)
+                        return resultType
+                    }
+                }
             }
             // String stdlib: 0-arg methods (STDLIB-006)
             let listCharType = makeSyntheticListType(

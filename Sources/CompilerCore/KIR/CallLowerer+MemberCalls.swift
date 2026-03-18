@@ -559,6 +559,20 @@ extension CallLowerer {
             || symbol.fqName == knownNames.kotlinCollectionsMutableListFQName
     }
 
+    private func isMapLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isMapLikeSymbol(symbol)
+    }
+
     private func isArrayDequeLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -1195,6 +1209,44 @@ extension CallLowerer {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+            // STDLIB-532/533/534: orEmpty() on nullable String?, List?, Map? receivers
+            if sema.bindings.callBindings[exprID] == nil, calleeStr == "orEmpty" {
+                let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_orEmpty"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_list_orEmpty"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if isMapLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_map_orEmpty"),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: false,

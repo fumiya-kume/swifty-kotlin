@@ -762,3 +762,16 @@ public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
     }
     return kk_box_bool(str.allSatisfy(\.isWhitespace) ? 1 : 0)
 }
+
+// MARK: - STDLIB-534: String?.orEmpty()
+
+@_cdecl("kk_string_orEmpty")
+public func kk_string_orEmpty(_ strRaw: Int) -> Int {
+    if strRaw == runtimeNullSentinelInt || strRaw == 0 {
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
+    }
+    return strRaw
+}

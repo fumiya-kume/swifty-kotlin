@@ -221,6 +221,8 @@ public extension RuntimeABIExterns {
         kk_grouping_fold,
         kk_grouping_reduce,
         kk_use,
+        kk_list_orEmpty,
+        kk_map_orEmpty,
     ]
 
     static let kk_list_of = ExternDecl(
@@ -1567,6 +1569,20 @@ public extension RuntimeABIExterns {
     static let kk_use = ExternDecl(
         name: "kk_use",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-533: List?.orEmpty()
+    static let kk_list_orEmpty = ExternDecl(
+        name: "kk_list_orEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-532: Map?.orEmpty()
+    static let kk_map_orEmpty = ExternDecl(
+        name: "kk_map_orEmpty",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 }
