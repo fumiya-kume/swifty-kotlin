@@ -882,6 +882,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_readlnOrNull = ExternDecl(
+        name: "kk_readlnOrNull",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
     // MARK: - System
 
     public static let kk_system_exitProcess = ExternDecl(
@@ -2145,6 +2151,7 @@ public enum RuntimeABIExterns {
             // IO
             kk_readline,
             kk_readln,
+            kk_readlnOrNull,
             // System
             kk_system_exitProcess,
             kk_system_currentTimeMillis,

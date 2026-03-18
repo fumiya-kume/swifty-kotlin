@@ -85,6 +85,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticTopLevelFunction(
+            named: "readlnOrNull",
+            packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: types.makeNullable(types.stringType),
+            externalLinkName: "kk_readlnOrNull",
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- Sequence factory functions (STDLIB-097) ---
         let kotlinSequencesPkg = ensureSyntheticPackageHierarchy(
             fqName: [interner.intern("kotlin"), interner.intern("sequences")],
