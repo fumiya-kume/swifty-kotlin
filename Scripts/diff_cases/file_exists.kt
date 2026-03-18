@@ -1,7 +1,7 @@
 import java.io.File
 
 fun main() {
-    val base = "/tmp/kswiftk_exists_" + System.nanoTime()
+    val base = "/tmp/kswiftk_exists_" + System.currentTimeMillis()
     val dir = File(base)
     val file = File(base + "/test.txt")
     val missing = File(base + "/nonexistent")

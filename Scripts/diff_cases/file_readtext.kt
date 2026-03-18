@@ -1,7 +1,7 @@
 import java.io.File
 
 fun main() {
-    val f = File("/tmp/kswiftk_readtext_" + System.nanoTime() + ".txt")
+    val f = File("/tmp/kswiftk_readtext_" + System.currentTimeMillis() + ".txt")
     try {
         f.writeText("hello\nworld")
         val content = f.readText()

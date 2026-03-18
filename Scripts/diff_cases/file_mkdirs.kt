@@ -1,7 +1,7 @@
 import java.io.File
 
 fun main() {
-    val base = "/tmp/kswiftk_mkdirs_" + System.nanoTime()
+    val base = "/tmp/kswiftk_mkdirs_" + System.currentTimeMillis()
     val baseDir = File(base)
     val nested = File(base + "/a/b/c")
     val file = File(base + "/a/b/c/hello.txt")
