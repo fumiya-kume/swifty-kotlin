@@ -418,10 +418,14 @@ extension DataFlowSemaPhase {
         )
 
         // measureTime returns Duration (STDLIB-585)
+        let measureTimeBlockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.unitType
+        )))
         registerSyntheticTopLevelFunction(
             named: "measureTime",
             packageFQName: kotlinTimePkg,
-            parameters: [(name: "block", type: types.anyType)],
+            parameters: [(name: "block", type: measureTimeBlockType)],
             returnType: durationClassType,
             externalLinkName: "kk_measureTime",
             symbols: symbols,
