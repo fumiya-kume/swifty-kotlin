@@ -424,6 +424,7 @@ final class InlineLoweringPass: LoweringPass {
                 // caller passed a known lambda function, we expand the lambda body
                 // in place instead of emitting an indirect call.
                 if let symbol, lambdaParamSymbols.contains(symbol),
+                   canThrow == false, thrownResult == nil,
                    let argExpr = parameterValues[symbol],
                    let lambdaFunction = resolveLambdaFunction(
                        argExpr: argExpr,
@@ -438,17 +439,15 @@ final class InlineLoweringPass: LoweringPass {
                 {
                     lowered.append(contentsOf: lambdaExpansion.instructions)
                     if let result {
-                        let cloned = cloneExpr(result, in: module.arena)
-                        localExprMap[result] = cloned
                         if let lambdaReturn = lambdaExpansion.returnedExpr {
-                            localExprMap[cloned] = lambdaReturn
+                            localExprMap[result] = lambdaReturn
                         } else {
                             // Unit-returning lambda: synthesize a unit constant
                             // so that downstream references to the result resolve
                             // to a valid expression instead of dangling.
                             let unitExpr = module.arena.appendExpr(.unit, type: nil)
                             lowered.append(.constValue(result: unitExpr, value: .unit))
-                            localExprMap[cloned] = unitExpr
+                            localExprMap[result] = unitExpr
                         }
                     }
                     break
@@ -645,13 +644,26 @@ final class InlineLoweringPass: LoweringPass {
                 return false
             }
             if hasValueReturn {
+                let mergeId = Int32(module.arena.expressions.count)
                 mergeResult = module.arena.appendExpr(
-                    .temporary(Int32(module.arena.expressions.count)),
-                    type: nil
+                    .temporary(mergeId),
+                    type: lambdaFunction.returnType
                 )
             }
         } else {
             exitLabel = -1
+        }
+
+        // Build a label remapping so that each expansion gets unique label IDs.
+        // This prevents collisions when the same lambda is inlined multiple times
+        // or when the lambda's labels conflict with labels already in the caller.
+        var labelRemap: [Int32: Int32] = [:]
+        for instruction in lambdaFunction.body {
+            if case let .label(id) = instruction {
+                let freshLabel = inlineLabelCounter
+                inlineLabelCounter += 1
+                labelRemap[id] = freshLabel
+            }
         }
 
         for instruction in lambdaFunction.body {
@@ -663,17 +675,17 @@ final class InlineLoweringPass: LoweringPass {
                 lowered.append(.nop)
 
             case let .label(id):
-                lowered.append(.label(id))
+                lowered.append(.label(labelRemap[id] ?? id))
 
             case let .jump(target):
-                lowered.append(.jump(target))
+                lowered.append(.jump(labelRemap[target] ?? target))
 
             case let .jumpIfEqual(lhs, rhs, target):
                 lowered.append(
                     .jumpIfEqual(
                         lhs: resolveAlias(of: lhs, aliases: localExprMap),
                         rhs: resolveAlias(of: rhs, aliases: localExprMap),
-                        target: target
+                        target: labelRemap[target] ?? target
                     )
                 )
 
@@ -777,7 +789,7 @@ final class InlineLoweringPass: LoweringPass {
                 lowered.append(
                     .jumpIfNotNull(
                         value: resolveAlias(of: value, aliases: localExprMap),
-                        target: target
+                        target: labelRemap[target] ?? target
                     )
                 )
 
