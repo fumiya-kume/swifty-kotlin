@@ -6,6 +6,8 @@ fun main() {
     println(mutable.reversed())
     val rev = mutable.asReversed()
     println(rev)
+    mutable[0] = 10
+    println(rev)
     println(listOf<Int>().reversed())
     println(listOf<Int>().asReversed())
 }
