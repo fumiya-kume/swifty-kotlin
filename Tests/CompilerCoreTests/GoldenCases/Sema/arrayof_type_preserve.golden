@@ -194,19 +194,19 @@ symbol s192 kind=function fq=kotlin.collections.ArrayDeque.isEmpty vis=public fl
 symbol s193 kind=function fq=kotlin.collections.ArrayDeque.toString vis=public flags=synthetic|operatorFunction sig=recv=Class#182<T#183> params=[] ret=String suspend=0 defaults=[] vararg=[]
 symbol s194 kind=class fq=kotlin.Array vis=public flags=synthetic
 symbol s195 kind=typeParameter fq=kotlin.Array.T vis=private flags=_
-symbol s196 kind=function fq=kotlin.Array.size vis=public flags=synthetic|operatorFunction sig=recv=Class#194<T#195> params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s196 kind=property fq=kotlin.Array.size vis=public flags=synthetic type=Int
 symbol s197 kind=class fq=kotlin.IntArray vis=public flags=synthetic
-symbol s198 kind=function fq=kotlin.IntArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#197 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s198 kind=property fq=kotlin.IntArray.size vis=public flags=synthetic type=Int
 symbol s199 kind=class fq=kotlin.LongArray vis=public flags=synthetic
-symbol s200 kind=function fq=kotlin.LongArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#199 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s200 kind=property fq=kotlin.LongArray.size vis=public flags=synthetic type=Int
 symbol s201 kind=class fq=kotlin.DoubleArray vis=public flags=synthetic
-symbol s202 kind=function fq=kotlin.DoubleArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#201 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s202 kind=property fq=kotlin.DoubleArray.size vis=public flags=synthetic type=Int
 symbol s203 kind=class fq=kotlin.FloatArray vis=public flags=synthetic
-symbol s204 kind=function fq=kotlin.FloatArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#203 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s204 kind=property fq=kotlin.FloatArray.size vis=public flags=synthetic type=Int
 symbol s205 kind=class fq=kotlin.BooleanArray vis=public flags=synthetic
-symbol s206 kind=function fq=kotlin.BooleanArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#205 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s206 kind=property fq=kotlin.BooleanArray.size vis=public flags=synthetic type=Int
 symbol s207 kind=class fq=kotlin.CharArray vis=public flags=synthetic
-symbol s208 kind=function fq=kotlin.CharArray.size vis=public flags=synthetic|operatorFunction sig=recv=Class#207 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s208 kind=property fq=kotlin.CharArray.size vis=public flags=synthetic type=Int
 symbol s209 kind=typeAlias fq=kotlin.collections.ArrayList vis=public flags=synthetic
 symbol s210 kind=typeParameter fq=kotlin.collections.ArrayList.E vis=private flags=_
 symbol s211 kind=typeAlias fq=kotlin.collections.HashSet vis=public flags=synthetic
@@ -833,7 +833,7 @@ expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#194<Int>
 expr e5 localDecl a mutable=0 type=_ init=e4 type=Unit ref=s816
 expr e6 name(println) type=_
 expr e7 name(a) type=Class#194<Int> ref=s816
-expr e8 memberCall recv=e7 callee=size args=[] type=Int call=s196 map=[] targs=[]
+expr e8 memberCall recv=e7 callee=size args=[] type=Int ref=s196
 expr e9 call callee=e6 args=[_:e8] type=Unit call=s692 map=[0->0] targs=[]
 expr e10 name(arrayOf) type=_
 expr e11 string(hello) type=String
@@ -842,7 +842,7 @@ expr e13 call callee=e10 args=[_:e11,_:e12] type=Class#194<String>
 expr e14 localDecl b mutable=0 type=_ init=e13 type=Unit ref=s817
 expr e15 name(println) type=_
 expr e16 name(b) type=Class#194<String> ref=s817
-expr e17 memberCall recv=e16 callee=size args=[] type=Int call=s196 map=[] targs=[]
+expr e17 memberCall recv=e16 callee=size args=[] type=Int ref=s196
 expr e18 call callee=e15 args=[_:e17] type=Unit call=s692 map=[0->0] targs=[]
 expr e19 name(intArrayOf) type=_
 expr e20 int(10) type=Int
@@ -852,7 +852,7 @@ expr e23 call callee=e19 args=[_:e20,_:e21,_:e22] type=Class#197
 expr e24 localDecl c mutable=0 type=_ init=e23 type=Unit ref=s818
 expr e25 name(println) type=_
 expr e26 name(c) type=Class#197 ref=s818
-expr e27 memberCall recv=e26 callee=size args=[] type=Int call=s198 map=[] targs=[]
+expr e27 memberCall recv=e26 callee=size args=[] type=Int ref=s198
 expr e28 call callee=e25 args=[_:e27] type=Unit call=s692 map=[0->0] targs=[]
 expr e29 name(longArrayOf) type=_
 expr e30 long(1) type=Long
@@ -862,7 +862,7 @@ expr e33 call callee=e29 args=[_:e30,_:e31,_:e32] type=Class#199
 expr e34 localDecl d mutable=0 type=_ init=e33 type=Unit ref=s819
 expr e35 name(println) type=_
 expr e36 name(d) type=Class#199 ref=s819
-expr e37 memberCall recv=e36 callee=size args=[] type=Int call=s200 map=[] targs=[]
+expr e37 memberCall recv=e36 callee=size args=[] type=Int ref=s200
 expr e38 call callee=e35 args=[_:e37] type=Unit call=s692 map=[0->0] targs=[]
 expr e39 name(Array) type=_
 expr e40 int(5) type=Int
@@ -873,9 +873,9 @@ expr e44 name(it) type=Int ref=s-1012032
 expr e45 int(2) type=Int
 expr e46 binary(multiply) lhs=e44 rhs=e45 type=Int
 expr e47 lambda params=[] body=e46 type=(Int) -> Any
-expr e48 call callee=e39 args=[_:e40,_:e47] type=Class#194<Any>
+expr e48 call callee=e39 args=[_:e40,_:e47] type=Class#194<Int>
 expr e49 localDecl e mutable=0 type=_ init=e48 type=Unit ref=s820
 expr e50 name(println) type=_
-expr e51 name(e) type=Class#194<Any> ref=s820
-expr e52 memberCall recv=e51 callee=size args=[] type=Int call=s196 map=[] targs=[]
+expr e51 name(e) type=Class#194<Int> ref=s820
+expr e52 memberCall recv=e51 callee=size args=[] type=Int ref=s196
 expr e53 call callee=e50 args=[_:e52] type=Unit call=s692 map=[0->0] targs=[]

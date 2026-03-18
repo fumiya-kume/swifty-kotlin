@@ -5275,29 +5275,19 @@ extension DataFlowSemaPhase {
 
         // Register size property for Array<T>
         let sizeReturnType = types.intType
-        let tType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
-        let arrayOfT = types.make(.classType(ClassType(
-            classSymbol: arraySymbol,
-            args: [.invariant(tType)],
-            nullability: .nonNull
-        )))
         let sizeName = interner.intern("size")
         let sizeFQName = arrayFQName + [sizeName]
         if symbols.lookup(fqName: sizeFQName) == nil {
             let sizeSym = symbols.define(
-                kind: .function,
+                kind: .property,
                 name: sizeName,
                 fqName: sizeFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic, .operatorFunction]
+                flags: [.synthetic]
             )
-            symbols.setFunctionSignature(FunctionSignature(
-                receiverType: arrayOfT,
-                parameterTypes: [],
-                returnType: sizeReturnType
-            ), for: sizeSym)
             symbols.setParentSymbol(arraySymbol, for: sizeSym)
+            symbols.setPropertyType(sizeReturnType, for: sizeSym)
         }
 
         // --- Primitive array types: IntArray, LongArray, etc. ---
@@ -5310,37 +5300,36 @@ extension DataFlowSemaPhase {
             "CharArray",
         ]
         for name in primitiveArrayNames {
-            let fqName = kotlinPkg + [interner.intern(name)]
-            if symbols.lookup(fqName: fqName) == nil {
-                let sym = symbols.define(
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            // Ensure the class symbol exists, whether previously defined or not.
+            let sym: SymbolID = if let existing = symbols.lookup(fqName: fqName) {
+                existing
+            } else {
+                symbols.define(
                     kind: .class,
-                    name: interner.intern(name),
+                    name: primName,
                     fqName: fqName,
                     declSite: nil,
                     visibility: .public,
                     flags: [.synthetic]
                 )
-                // Register size property for primitive arrays
-                let primArrayType = types.make(.classType(ClassType(
-                    classSymbol: sym,
-                    args: [],
-                    nullability: .nonNull
-                )))
-                let primSizeFQName = fqName + [sizeName]
+            }
+            // Register size property independently of class existence,
+            // so that even if the class was defined elsewhere without size,
+            // we still add the property.
+            let primSizeFQName = fqName + [sizeName]
+            if symbols.lookup(fqName: primSizeFQName) == nil {
                 let primSizeSym = symbols.define(
-                    kind: .function,
+                    kind: .property,
                     name: sizeName,
                     fqName: primSizeFQName,
                     declSite: nil,
                     visibility: .public,
-                    flags: [.synthetic, .operatorFunction]
+                    flags: [.synthetic]
                 )
-                symbols.setFunctionSignature(FunctionSignature(
-                    receiverType: primArrayType,
-                    parameterTypes: [],
-                    returnType: sizeReturnType
-                ), for: primSizeSym)
                 symbols.setParentSymbol(sym, for: primSizeSym)
+                symbols.setPropertyType(sizeReturnType, for: primSizeSym)
             }
         }
     }

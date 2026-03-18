@@ -442,9 +442,23 @@ final class CallTypeChecker {
             )
             // Determine the element type from the expected type annotation or
             // the init lambda's return type, avoiding erasure to Any.
+            //
+            // Only extract the generic argument from the expected type when:
+            //   1. The callee is "Array" (not a primitive array like IntArray), AND
+            //   2. The expected type is actually kotlin.Array<...> (not some unrelated
+            //      generic type like List<String>).
+            // Primitive arrays (IntArray, LongArray, etc.) have fixed element types
+            // that must not be overridden by contextual expected types.
+            let arrayFQName: [InternedString] = [
+                interner.intern("kotlin"),
+                interner.intern("Array"),
+            ]
+            let kotlinArraySymbol = sema.symbols.lookup(fqName: arrayFQName)
             let elementReturnType: TypeID
-            if let expectedType, expectedType != sema.types.errorType,
+            if calleeNameStr == "Array",
+               let expectedType, expectedType != sema.types.errorType,
                case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+               expectedClassType.classSymbol == kotlinArraySymbol,
                let firstArg = expectedClassType.args.first
             {
                 switch firstArg {
@@ -455,6 +469,39 @@ final class CallTypeChecker {
                 }
             } else if let explicitTypeArg = explicitTypeArgs.first, calleeNameStr == "Array" {
                 elementReturnType = explicitTypeArg
+            } else if calleeNameStr == "Array" {
+                // No expected type and no explicit type argument for Array(size) { init }.
+                // Infer the lambda with `it` constrained to Int, then extract the
+                // actual body return type from bindings to avoid erasing to Any.
+                let lambdaExpected = sema.types.make(.functionType(FunctionType(
+                    params: [intType],
+                    returnType: sema.types.anyType
+                )))
+                _ = driver.inferExpr(
+                    args[1].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: lambdaExpected
+                )
+                // Read back the lambda body's actual inferred type.
+                let bodyType: TypeID? = if case let .lambdaLiteral(_, body, _, _) = ast.arena.expr(args[1].expr) {
+                    sema.bindings.exprTypes[body]
+                } else {
+                    nil
+                }
+                let inferred = bodyType ?? sema.types.anyType
+                elementReturnType = (inferred != sema.types.errorType) ? inferred : sema.types.anyType
+                // Lambda already inferred; build result and return early.
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
+                sema.bindings.markCollectionExpr(id)
+                let resultType = makeSyntheticArrayType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: elementReturnType
+                )
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
             } else {
                 // For primitive array constructors, the element type is fixed.
                 elementReturnType = switch calleeNameStr {
