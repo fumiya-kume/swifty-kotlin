@@ -457,8 +457,12 @@ extension CollectionLiteralLoweringPass {
         // a TypeID in the arena, resolve the TypeKind.  If it is a classType,
         // check the classSymbol's simple name against known collection names.
 
-        // Collect all expression IDs referenced in this function's body
-        // so we only classify relevant expressions.
+        // Collect expression IDs relevant to call/virtual-call rewriting
+        // from this function's body so we only classify relevant expressions.
+        // NOTE: This intentionally covers a subset of instruction kinds
+        // (call, virtualCall, copy, constValue, returnValue) that participate
+        // in collection-type propagation.  Other instruction kinds do not
+        // produce or consume collection-typed operands today.
         var referencedExprIDs: Set<Int32> = []
         for instruction in function.body {
             switch instruction {
@@ -524,8 +528,18 @@ extension CollectionLiteralLoweringPass {
 
         let resolved = interner.resolve(simpleName)
 
+        // TODO(LOWERING-001): This matches on simple name only.  A user-defined
+        // type named e.g. `foo.bar.List` would be misclassified as a stdlib
+        // collection.  Ideally we should validate the FQN prefix against
+        // `kotlin.collections.*` / `kotlin.*` before seeding the tracking sets.
+        // For now this is acceptable because the sema phase resolves stdlib
+        // symbols with canonical FQNs and user types rarely shadow them.
         switch resolved {
-        case "List", "MutableList", "ArrayList", "Collection", "MutableCollection",
+        // NOTE: We intentionally do NOT include "Collection" / "MutableCollection"
+        // here.  In Kotlin, Collection<T> is the common supertype of both
+        // List<T> and Set<T>.  Mapping it to listExprIDs would cause incorrect
+        // kk_list_* rewrites when the actual runtime value is a Set.
+        case "List", "MutableList", "ArrayList",
              "AbstractList", "AbstractMutableList":
             listExprIDs.insert(rawID)
         case "Set", "MutableSet", "HashSet", "LinkedHashSet",

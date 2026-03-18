@@ -715,32 +715,37 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
-    func testVirtualCallOnListTypedParameterRewritesToKkListSize() throws {
+    /// Build a one-function module with a single virtualCall on a receiver
+    /// whose static type is `receiverTypeName` (e.g. "List", "Set", "Map"),
+    /// run the lowering pass, and return the resulting callees.
+    private func buildAndLowerVirtualCall(
+        receiverTypeName: String,
+        callee: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> [String] {
         let interner = StringInterner()
         let arena = KIRArena()
         let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
 
-        // Register "List" as a class type in the type system.
-        let listSymbolID = defineNominalSymbol(name: "List", interner: interner, symbols: symbols)
-        let listType = types.make(.classType(ClassType(classSymbol: listSymbolID)))
+        let symbolID = defineNominalSymbol(
+            name: receiverTypeName, interner: interner, symbols: symbols
+        )
+        let receiverType = types.make(.classType(ClassType(classSymbol: symbolID)))
 
-        // Create a parameter expression with List type.
-        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: listType)
-
-        // Create a result expression.
+        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: receiverType)
         let resultExpr = arena.appendExpr(.temporary(1))
 
-        // Build a function with a virtualCall(size) on the List-typed parameter.
         let fn = KIRFunction(
             symbol: SymbolID(rawValue: 1),
             name: interner.intern("foo"),
-            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: listType)],
+            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: receiverType)],
             returnType: types.unitType,
             body: [
                 .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
                 .virtualCall(
                     symbol: nil,
-                    callee: interner.intern("size"),
+                    callee: interner.intern(callee),
                     receiver: paramExpr,
                     arguments: [],
                     result: resultExpr,
@@ -758,7 +763,11 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
 
-        let callees = calleesInDecl(declID, module: module, interner: interner)
+        return calleesInDecl(declID, module: module, interner: interner)
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListSize() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "size")
         XCTAssertTrue(
             callees.contains("kk_list_size"),
             "virtualCall(size) on List-typed parameter should be rewritten to kk_list_size, got: \(callees)"
@@ -766,44 +775,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     }
 
     func testVirtualCallOnSetTypedParameterRewritesToKkSetSize() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
-
-        let setSymbolID = defineNominalSymbol(name: "Set", interner: interner, symbols: symbols)
-        let setType = types.make(.classType(ClassType(classSymbol: setSymbolID)))
-
-        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: setType)
-        let resultExpr = arena.appendExpr(.temporary(1))
-
-        let fn = KIRFunction(
-            symbol: SymbolID(rawValue: 1),
-            name: interner.intern("foo"),
-            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: setType)],
-            returnType: types.unitType,
-            body: [
-                .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
-                .virtualCall(
-                    symbol: nil,
-                    callee: interner.intern("size"),
-                    receiver: paramExpr,
-                    arguments: [],
-                    result: resultExpr,
-                    canThrow: false,
-                    thrownResult: nil,
-                    dispatch: .vtable(slot: 0)
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let declID = arena.appendDecl(.function(fn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
-
-        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
-
-        let callees = calleesInDecl(declID, module: module, interner: interner)
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Set", callee: "size")
         XCTAssertTrue(
             callees.contains("kk_set_size"),
             "virtualCall(size) on Set-typed parameter should be rewritten to kk_set_size, got: \(callees)"
@@ -811,44 +783,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     }
 
     func testVirtualCallOnMapTypedParameterRewritesToKkMapSize() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
-
-        let mapSymbolID = defineNominalSymbol(name: "Map", interner: interner, symbols: symbols)
-        let mapType = types.make(.classType(ClassType(classSymbol: mapSymbolID)))
-
-        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: mapType)
-        let resultExpr = arena.appendExpr(.temporary(1))
-
-        let fn = KIRFunction(
-            symbol: SymbolID(rawValue: 1),
-            name: interner.intern("foo"),
-            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: mapType)],
-            returnType: types.unitType,
-            body: [
-                .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
-                .virtualCall(
-                    symbol: nil,
-                    callee: interner.intern("size"),
-                    receiver: paramExpr,
-                    arguments: [],
-                    result: resultExpr,
-                    canThrow: false,
-                    thrownResult: nil,
-                    dispatch: .vtable(slot: 0)
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let declID = arena.appendDecl(.function(fn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
-
-        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
-
-        let callees = calleesInDecl(declID, module: module, interner: interner)
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Map", callee: "size")
         XCTAssertTrue(
             callees.contains("kk_map_size"),
             "virtualCall(size) on Map-typed parameter should be rewritten to kk_map_size, got: \(callees)"
@@ -856,46 +791,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
     }
 
     func testVirtualCallOnMutableListTypedParameterRewritesToKkListIsEmpty() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
-
-        let mutableListSymbolID = defineNominalSymbol(
-            name: "MutableList", interner: interner, symbols: symbols
-        )
-        let mutableListType = types.make(.classType(ClassType(classSymbol: mutableListSymbolID)))
-
-        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: mutableListType)
-        let resultExpr = arena.appendExpr(.temporary(1))
-
-        let fn = KIRFunction(
-            symbol: SymbolID(rawValue: 1),
-            name: interner.intern("foo"),
-            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: mutableListType)],
-            returnType: types.unitType,
-            body: [
-                .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100))),
-                .virtualCall(
-                    symbol: nil,
-                    callee: interner.intern("isEmpty"),
-                    receiver: paramExpr,
-                    arguments: [],
-                    result: resultExpr,
-                    canThrow: false,
-                    thrownResult: nil,
-                    dispatch: .vtable(slot: 0)
-                ),
-                .returnUnit,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-        let declID = arena.appendDecl(.function(fn))
-        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
-
-        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
-
-        let callees = calleesInDecl(declID, module: module, interner: interner)
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "MutableList", callee: "isEmpty")
         XCTAssertTrue(
             callees.contains("kk_list_is_empty"),
             "virtualCall(isEmpty) on MutableList-typed parameter should be rewritten to kk_list_is_empty, got: \(callees)"
