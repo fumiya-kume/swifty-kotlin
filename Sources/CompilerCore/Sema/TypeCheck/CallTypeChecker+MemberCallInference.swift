@@ -1055,11 +1055,9 @@ extension CallTypeChecker {
                     params: [collectionElementType],
                     returnType: sema.types.intType
                 )))
-                if let expr = argExpr, case .lambdaLiteral = expr {
-                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-                } else if let expr = argExpr, case .callableRef = expr {
-                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
-                }
+                // Mark all function-typed arguments (lambda literals, callable references,
+                // and function-typed variables) as HOF lambdas for correct closure expansion.
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: bsLambdaExpectedType)
                 resultType = sema.types.intType
 
