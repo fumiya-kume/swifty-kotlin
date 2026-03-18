@@ -5,9 +5,13 @@ fun main() {
     println(list.firstOrNull { it > 2 })
     println(list.firstOrNull { it > 10 })
     println(list.lastOrNull { it < 2 })
+    println(list.lastOrNull { it > 10 })
     println(emptyList<Int>().firstOrNull())
     println(emptyList<Int>().lastOrNull())
     println(listOf(42).singleOrNull())
     println(listOf(1, 2).singleOrNull())
     println(emptyList<Int>().singleOrNull())
+    println(listOf(1, 2, 3).singleOrNull { it == 2 })
+    println(listOf(1, 2, 3).singleOrNull { it > 1 })
+    println(listOf(1, 2, 3).singleOrNull { it > 10 })
 }
