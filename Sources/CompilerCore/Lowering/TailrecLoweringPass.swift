@@ -107,9 +107,18 @@ final class TailrecLoweringPass: LoweringPass {
                instructionIndex + 1 < body.count,
                isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
             {
-                let defaultMask = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
+                let isDefault = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
+                let defaultMask = isDefault
                     ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
+                // If this is a $default stub call but the mask could not be
+                // resolved statically, skip tailrec to avoid miscompiling
+                // sentinel placeholder values as real arguments.
+                guard !isDefault || defaultMask != nil else {
+                    result.append(instruction)
+                    instructionIndex += 1
+                    continue
+                }
                 emitParameterReassignment(
                     arguments: arguments,
                     params: params,
@@ -131,9 +140,15 @@ final class TailrecLoweringPass: LoweringPass {
                instructionIndex + 1 < body.count,
                isReturnUnitInstruction(body[instructionIndex + 1])
             {
-                let defaultMask = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
+                let isDefault = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
+                let defaultMask = isDefault
                     ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
+                guard !isDefault || defaultMask != nil else {
+                    result.append(instruction)
+                    instructionIndex += 1
+                    continue
+                }
                 emitParameterReassignment(
                     arguments: arguments,
                     params: params,
