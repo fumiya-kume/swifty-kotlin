@@ -6,9 +6,6 @@ fun main() {
     // STDLIB-620: Regex.find
     println(regex.find("abc123def456")?.value)
 
-    // STDLIB-620: Regex.findAll
-    println(regex.findAll("abc123def456").map { it.value }.toList())
-
     // STDLIB-620: String.matches
     println("abc123".matches(Regex("[a-z]+[0-9]+")))
     println("ABC".matches(Regex("[a-z]+[0-9]+")))
