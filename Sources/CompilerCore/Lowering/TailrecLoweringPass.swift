@@ -111,13 +111,25 @@ final class TailrecLoweringPass: LoweringPass {
                 let defaultMask = isDefault
                     ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
-                // If this is a $default stub call but the mask could not be
-                // resolved statically, skip tailrec to avoid miscompiling
-                // sentinel placeholder values as real arguments.
-                guard !isDefault || defaultMask != nil else {
-                    result.append(instruction)
-                    instructionIndex += 1
-                    continue
+                // If this is a $default stub call, check whether we can
+                // safely optimize it.  We skip tailrec when:
+                //  - the mask could not be resolved statically (nil), or
+                //  - the mask is non-zero (some params use defaults).
+                // A non-zero mask means the $default stub would evaluate
+                // default expressions to fill in missing arguments.  At
+                // this lowering stage we don't have access to those
+                // default expressions, so keeping the parameter's value
+                // from the previous iteration would silently miscompile
+                // (the parameter retains a stale value instead of being
+                // reset to its default).  The only safe non-zero-mask
+                // optimisation would require inlining the default
+                // expressions, which is not yet implemented.
+                if isDefault {
+                    guard let mask = defaultMask, mask == 0 else {
+                        result.append(instruction)
+                        instructionIndex += 1
+                        continue
+                    }
                 }
                 emitParameterReassignment(
                     arguments: arguments,
@@ -144,10 +156,12 @@ final class TailrecLoweringPass: LoweringPass {
                 let defaultMask = isDefault
                     ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
-                guard !isDefault || defaultMask != nil else {
-                    result.append(instruction)
-                    instructionIndex += 1
-                    continue
+                if isDefault {
+                    guard let mask = defaultMask, mask == 0 else {
+                        result.append(instruction)
+                        instructionIndex += 1
+                        continue
+                    }
                 }
                 emitParameterReassignment(
                     arguments: arguments,
@@ -275,11 +289,12 @@ final class TailrecLoweringPass: LoweringPass {
     /// the recursive call arguments.  Also propagates expression types for
     /// the newly created temporaries and symbol refs.
     ///
-    /// When `defaultMask` is non-nil (i.e. the call goes through a
-    /// `$default` stub), parameters whose mask bit is set (1) are left
-    /// unchanged — they retain their value from the previous loop
-    /// iteration.  Only explicitly provided arguments (mask bit 0) are
-    /// reassigned.
+    /// When `defaultMask` is non-nil, it is expected to be 0 (all
+    /// arguments explicitly provided).  The caller skips tailrec for
+    /// non-zero masks because we cannot inline default expressions at
+    /// this lowering stage.  The mask-bit logic below is retained as
+    /// defense-in-depth and will become useful when default-expression
+    /// inlining is implemented.
     ///
     /// The default mask bits are 0-indexed on *value parameter* positions
     /// (excluding the receiver).  When the function has a receiver

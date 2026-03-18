@@ -259,8 +259,11 @@ final class TailrecLoweringTests: XCTestCase {
     }
 
     /// LOWER-005: Verify that a tailrec function's self-recursive call
-    /// through a `$default` stub is recognized and optimized into a loop.
-    func testTailrecRewritesDefaultStubCallToLoop() throws {
+    /// through a `$default` stub with a **non-zero mask** is NOT optimized
+    /// into a loop.  Because we cannot inline default expressions at the
+    /// lowering stage, the `$default` stub call must be preserved so that
+    /// the default values are correctly evaluated on each recursive call.
+    func testTailrecPreservesDefaultStubCallWithNonZeroMask() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -342,6 +345,119 @@ final class TailrecLoweringTests: XCTestCase {
             return
         }
 
+        // The $default stub call should be PRESERVED (not optimized)
+        // because the non-zero mask means some params use defaults and
+        // we cannot inline their default expressions at this stage.
+        let hasDefaultStubCall = lowered.body.contains { instruction in
+            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+                return true
+            }
+            return false
+        }
+        XCTAssertTrue(hasDefaultStubCall, "$default stub call with non-zero mask should be preserved (cannot inline default expressions)")
+
+        // No tailrec loop should have been created for this call.
+        let hasJumpToLoop = lowered.body.contains { instruction in
+            if case let .jump(target) = instruction {
+                return target >= tailrecLoopLabelBase
+            }
+            return false
+        }
+        XCTAssertFalse(hasJumpToLoop, "No tailrec loop jump expected when $default mask is non-zero")
+    }
+
+    /// LOWER-005: Verify that a `$default` stub call with mask=0 (all
+    /// arguments explicitly provided) IS optimized into a loop.
+    func testTailrecRewritesDefaultStubCallWithZeroMask() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let fnSymbol = SymbolID(rawValue: 450)
+        let defaultStubSymbol = SyntheticSymbolScheme.defaultStubSymbol(for: fnSymbol)
+        let paramN = SymbolID(rawValue: 451)
+        let paramAcc = SymbolID(rawValue: 452)
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nExpr = arena.appendExpr(.symbolRef(paramN))
+        let accExpr = arena.appendExpr(.symbolRef(paramAcc))
+        let zeroExpr = arena.appendExpr(.intLiteral(0))
+        let oneExpr = arena.appendExpr(.intLiteral(1))
+        let subResult = arena.appendExpr(.temporary(0))
+        let mulResult = arena.appendExpr(.temporary(1))
+        // mask=0: all arguments explicitly provided
+        let maskExpr = arena.appendExpr(.intLiteral(0))
+        let callResult = arena.appendExpr(.temporary(2))
+
+        let tailrecFunction = KIRFunction(
+            symbol: fnSymbol,
+            name: interner.intern("fact"),
+            params: [KIRParameter(symbol: paramN, type: intType), KIRParameter(symbol: paramAcc, type: intType)],
+            returnType: intType,
+            body: [
+                .beginBlock,
+                .constValue(result: nExpr, value: .symbolRef(paramN)),
+                .constValue(result: accExpr, value: .symbolRef(paramAcc)),
+                // if (n == 0) jump to base case
+                .jumpIfEqual(lhs: nExpr, rhs: zeroExpr, target: 1),
+                // recursive case: fact$default(n - 1, n * acc, mask=0)
+                .binary(op: .subtract, lhs: nExpr, rhs: oneExpr, result: subResult),
+                .binary(op: .multiply, lhs: nExpr, rhs: accExpr, result: mulResult),
+                .constValue(result: maskExpr, value: .intLiteral(0)),
+                .call(
+                    symbol: defaultStubSymbol,
+                    callee: interner.intern("fact$default"),
+                    arguments: [subResult, mulResult, maskExpr],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+                // base case
+                .label(1),
+                .returnValue(accExpr),
+                .endBlock,
+            ],
+            isSuspend: false,
+            isInline: false,
+            isTailrec: true
+        )
+
+        let fnID = arena.appendDecl(.function(tailrecFunction))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
+            arena: arena
+        )
+
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "TailrecDefaultZeroMask",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            interner: interner
+        )
+
+        try TailrecLoweringPass().run(module: module, ctx: ctx)
+
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected lowered function")
+            return
+        }
+
+        // The $default stub call should be eliminated (mask=0 is safe).
+        let hasDefaultStubCall = lowered.body.contains { instruction in
+            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+                return true
+            }
+            return false
+        }
+        XCTAssertFalse(hasDefaultStubCall, "$default stub call with mask=0 should be eliminated by tailrec lowering")
+
         // The loop-head label should be present.
         let hasLoopLabel = lowered.body.contains { instruction in
             if case let .label(id) = instruction {
@@ -349,7 +465,7 @@ final class TailrecLoweringTests: XCTestCase {
             }
             return false
         }
-        XCTAssertTrue(hasLoopLabel, "Expected loop-head label")
+        XCTAssertTrue(hasLoopLabel, "Expected loop-head label for mask=0 $default call")
 
         // The jump back to loop head should be present.
         let hasJumpBack = lowered.body.contains { instruction in
@@ -358,49 +474,15 @@ final class TailrecLoweringTests: XCTestCase {
             }
             return false
         }
-        XCTAssertTrue(hasJumpBack, "Expected jump back to loop head")
-
-        // The $default stub call should be gone.
-        let hasDefaultStubCall = lowered.body.contains { instruction in
-            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
-                return true
-            }
-            return false
-        }
-        XCTAssertFalse(hasDefaultStubCall, "$default stub call should have been eliminated by tailrec lowering")
-
-        // The first parameter (n) should be reassigned — there must be a
-        // copy whose destination is the canonical paramN expr.
-        let hasParamNCopy = lowered.body.contains { instruction in
-            guard case let .copy(_, to) = instruction else { return false }
-            if let exprKind = arena.expr(to),
-               case .symbolRef(paramN) = exprKind
-            {
-                return true
-            }
-            return to == nExpr
-        }
-        XCTAssertTrue(hasParamNCopy, "Expected a copy targeting paramN (the non-defaulted parameter)")
-
-        // The second parameter (acc, mask bit 1 set) must NOT be
-        // reassigned — no copy should target its canonical expr.
-        let hasParamAccCopy = lowered.body.contains { instruction in
-            guard case let .copy(_, to) = instruction else { return false }
-            if let exprKind = arena.expr(to),
-               case .symbolRef(paramAcc) = exprKind
-            {
-                return true
-            }
-            return to == accExpr
-        }
-        XCTAssertFalse(hasParamAccCopy, "Defaulted parameter (acc) should NOT be reassigned by tailrec lowering")
+        XCTAssertTrue(hasJumpBack, "Expected jump back to loop head for mask=0 $default call")
     }
 
     /// LOWER-005: Verify that the slow-path in `extractDefaultMask` correctly
-    /// resolves the mask when it is a `.temporary` populated via a preceding
-    /// `.constValue(result: temp, value: .intLiteral(...))` instruction,
-    /// rather than an inline `.intLiteral` arena expression.
-    func testTailrecRewritesDefaultStubCallWithTemporaryMask() throws {
+    /// resolves the mask via a preceding `.constValue` instruction (not an
+    /// inline `.intLiteral` arena expression).  With a non-zero mask, the
+    /// call should be preserved (not optimized) because we cannot inline
+    /// default expressions at the lowering stage.
+    func testTailrecPreservesDefaultStubCallWithTemporaryNonZeroMask() throws {
         let interner = StringInterner()
         let arena = KIRArena()
         let types = TypeSystem()
@@ -486,43 +568,133 @@ final class TailrecLoweringTests: XCTestCase {
             return
         }
 
-        // The $default stub call should be gone (optimized to loop).
+        // The $default stub call should be PRESERVED because the mask is
+        // non-zero (slow-path resolved mask=2).
         let hasDefaultStubCall = lowered.body.contains { instruction in
             if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
                 return true
             }
             return false
         }
-        XCTAssertFalse(hasDefaultStubCall, "$default stub call should have been eliminated by tailrec lowering (slow-path mask)")
+        XCTAssertTrue(hasDefaultStubCall, "$default stub call with non-zero mask should be preserved (slow-path mask test)")
+
+        // No tailrec loop should have been created for this call.
+        let hasJumpToLoop = lowered.body.contains { instruction in
+            if case let .jump(target) = instruction {
+                return target >= tailrecLoopLabelBase
+            }
+            return false
+        }
+        XCTAssertFalse(hasJumpToLoop, "No tailrec loop jump expected when $default mask is non-zero (slow-path mask test)")
+    }
+
+    /// LOWER-005: Verify that the slow-path in `extractDefaultMask` correctly
+    /// resolves a mask=0 via a preceding `.constValue` instruction and the
+    /// call IS optimized into a loop (since mask=0 means all args provided).
+    func testTailrecRewritesDefaultStubCallWithTemporaryZeroMask() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let types = TypeSystem()
+
+        let fnSymbol = SymbolID(rawValue: 550)
+        let defaultStubSymbol = SyntheticSymbolScheme.defaultStubSymbol(for: fnSymbol)
+        let paramN = SymbolID(rawValue: 551)
+        let paramAcc = SymbolID(rawValue: 552)
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let nExpr = arena.appendExpr(.symbolRef(paramN))
+        let accExpr = arena.appendExpr(.symbolRef(paramAcc))
+        let zeroExpr = arena.appendExpr(.intLiteral(0))
+        let oneExpr = arena.appendExpr(.intLiteral(1))
+        let subResult = arena.appendExpr(.temporary(0))
+        let mulResult = arena.appendExpr(.temporary(1))
+        // Use a .temporary expression for the mask (value 0) — exercises
+        // the slow-path backward scan in extractDefaultMask.
+        let maskTemp = arena.appendExpr(.temporary(99))
+        let callResult = arena.appendExpr(.temporary(2))
+
+        let tailrecFunction = KIRFunction(
+            symbol: fnSymbol,
+            name: interner.intern("fact"),
+            params: [KIRParameter(symbol: paramN, type: intType), KIRParameter(symbol: paramAcc, type: intType)],
+            returnType: intType,
+            body: [
+                .beginBlock,
+                .constValue(result: nExpr, value: .symbolRef(paramN)),
+                .constValue(result: accExpr, value: .symbolRef(paramAcc)),
+                // if (n == 0) jump to base case
+                .jumpIfEqual(lhs: nExpr, rhs: zeroExpr, target: 1),
+                // recursive case: fact$default(n - 1, n * acc, mask_temp=0)
+                .binary(op: .subtract, lhs: nExpr, rhs: oneExpr, result: subResult),
+                .binary(op: .multiply, lhs: nExpr, rhs: accExpr, result: mulResult),
+                // The mask is defined via constValue into a temporary
+                .constValue(result: maskTemp, value: .intLiteral(0)),
+                .call(
+                    symbol: defaultStubSymbol,
+                    callee: interner.intern("fact$default"),
+                    arguments: [subResult, mulResult, maskTemp],
+                    result: callResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callResult),
+                // base case
+                .label(1),
+                .returnValue(accExpr),
+                .endBlock,
+            ],
+            isSuspend: false,
+            isInline: false,
+            isTailrec: true
+        )
+
+        let fnID = arena.appendDecl(.function(tailrecFunction))
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [fnID])],
+            arena: arena
+        )
+
+        let ctx = KIRContext(
+            diagnostics: DiagnosticEngine(),
+            options: CompilerOptions(
+                moduleName: "TailrecSlowPathZeroMask",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory
+                    .appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            interner: interner
+        )
+
+        try TailrecLoweringPass().run(module: module, ctx: ctx)
+
+        guard case let .function(lowered)? = module.arena.decl(fnID) else {
+            XCTFail("expected lowered function")
+            return
+        }
+
+        // The $default stub call should be eliminated (mask=0 via slow path).
+        let hasDefaultStubCall = lowered.body.contains { instruction in
+            if case let .call(sym, _, _, _, _, _, _) = instruction, sym == defaultStubSymbol {
+                return true
+            }
+            return false
+        }
+        XCTAssertFalse(hasDefaultStubCall, "$default stub call with mask=0 should be eliminated (slow-path mask test)")
 
         // The loop-head label and jump should be present.
         let hasLoopLabel = lowered.body.contains { instruction in
             if case let .label(id) = instruction { return id >= tailrecLoopLabelBase }
             return false
         }
-        XCTAssertTrue(hasLoopLabel, "Expected loop-head label (slow-path mask test)")
+        XCTAssertTrue(hasLoopLabel, "Expected loop-head label (slow-path zero-mask test)")
 
         let hasJumpBack = lowered.body.contains { instruction in
             if case let .jump(target) = instruction { return target >= tailrecLoopLabelBase }
             return false
         }
-        XCTAssertTrue(hasJumpBack, "Expected jump back to loop head (slow-path mask test)")
-
-        // paramN (non-defaulted, mask bit 0 = 0) should be reassigned.
-        let hasParamNCopy = lowered.body.contains { instruction in
-            guard case let .copy(_, to) = instruction else { return false }
-            if let exprKind = arena.expr(to), case .symbolRef(paramN) = exprKind { return true }
-            return to == nExpr
-        }
-        XCTAssertTrue(hasParamNCopy, "Expected a copy targeting paramN (slow-path mask test)")
-
-        // paramAcc (defaulted, mask bit 1 = 1) must NOT be reassigned.
-        let hasParamAccCopy = lowered.body.contains { instruction in
-            guard case let .copy(_, to) = instruction else { return false }
-            if let exprKind = arena.expr(to), case .symbolRef(paramAcc) = exprKind { return true }
-            return to == accExpr
-        }
-        XCTAssertFalse(hasParamAccCopy, "Defaulted parameter (acc) should NOT be reassigned (slow-path mask test)")
+        XCTAssertTrue(hasJumpBack, "Expected jump back to loop head (slow-path zero-mask test)")
     }
 
     // MARK: - Sema warning test
