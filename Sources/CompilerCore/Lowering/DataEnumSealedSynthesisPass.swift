@@ -135,6 +135,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             existingFunctionSymbols: existingFunctionSymbols,
             interner: ctx.interner
         )
+        appendSyntheticEnumStaticInitIfNeeded(
+            owner: nominalSymbol,
+            entries: entries,
+            module: module,
+            sema: sema,
+            existingFunctionSymbols: existingFunctionSymbols,
+            interner: ctx.interner
+        )
     }
 
     private func synthesizeSealedHelper(
@@ -866,6 +874,83 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 existingFunctionSymbols: existingFunctionSymbols
             )
         }
+    }
+
+    /// Synthesizes `__enum_static_init_<ClassName>()` which initialises the
+    /// global slots for each enum entry with their ordinal values, and ensures
+    /// KIRGlobal declarations exist so that codegen allocates LLVM global
+    /// variables for the entries. These globals model ordinal storage, so the
+    /// slot declarations and writes must stay typed as `Int`.
+    private func appendSyntheticEnumStaticInitIfNeeded(
+        owner: SemanticSymbol,
+        entries: [SemanticSymbol],
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard !entries.isEmpty else { return }
+
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        // Collect existing global symbols so we don't create duplicates.
+        var existingGlobalSymbols = Set(module.arena.declarations.compactMap { decl -> SymbolID? in
+            guard case let .global(global) = decl else {
+                return nil
+            }
+            return global.symbol
+        })
+
+        // Ensure a KIRGlobal exists for every entry field. BuildKIR emits these
+        // for `enumEntryDecl` nodes, but when the enum class comes from a
+        // nominalType-only module (e.g. library metadata) the globals may be
+        // absent. Adding them here is idempotent thanks to the guard.
+        for entry in entries {
+            if !existingGlobalSymbols.contains(entry.id) {
+                _ = module.arena.appendDecl(.global(KIRGlobal(symbol: entry.id, type: intType)))
+                existingGlobalSymbols.insert(entry.id)
+            }
+        }
+
+        // Build the static initialiser body.
+        let ownerName = interner.resolve(owner.name)
+        let initName = interner.intern("__enum_static_init_\(ownerName)")
+
+        var body: [KIRInstruction] = []
+
+        for (ordinal, entry) in entries.enumerated() {
+            // Produce the ordinal value.
+            let ordinalExpr = module.arena.appendExpr(
+                .intLiteral(Int64(ordinal)),
+                type: intType
+            )
+            body.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
+
+            // Reference the entry's global slot.
+            let entryRef = module.arena.appendExpr(
+                .symbolRef(entry.id),
+                type: intType
+            )
+            body.append(.constValue(result: entryRef, value: .symbolRef(entry.id)))
+
+            // Store ordinal into the global slot.
+            body.append(.copy(from: ordinalExpr, to: entryRef))
+        }
+
+        body.append(.returnUnit)
+
+        let unitType = sema.types.unitType
+        let signature = FunctionSignature(parameterTypes: [], returnType: unitType, isSuspend: false)
+
+        appendSyntheticFunctionIfNeeded(
+            name: initName,
+            owner: owner,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [],
+            body: body,
+            existingFunctionSymbols: existingFunctionSymbols
+        )
     }
 
     /// Appends a KIR function using an existing symbol (e.g. from Sema). Used when the symbol
