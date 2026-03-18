@@ -307,116 +307,115 @@ extension CallLowerer {
             resultType = sema.types.anyType
         }
 
+        // Emit start nanoTime (shared by both inline and non-inline paths).
+        let startTimeExpr = emitNanoTimeCall(sema: sema, arena: arena, interner: interner, instructions: &instructions)
+
         if let actionExprNode = ast.arena.expr(args[0].expr),
            case let .lambdaLiteral(_, bodyExpr, _, _) = actionExprNode
         {
-            // Inline approach: lower the lambda body directly, then wrap
-            // with a kk_measureTime call. For inline lambdas we lower the
-            // body between two nanoTime calls, creating the Duration box
-            // manually at the KIR level (matching measureTimeMillis pattern
-            // but producing a Duration instead of Long).
-            let nanoTimeCallee = interner.intern("kk_system_nanoTime")
-            let longType = sema.types.longType
-
-            let startTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
-            instructions.append(.call(
-                symbol: nil, callee: nanoTimeCallee, arguments: [],
-                result: startTimeExpr, canThrow: false, thrownResult: nil
-            ))
-
+            // Inline approach: lower the lambda body directly between two
+            // nanoTime calls, then compute elapsed nanoseconds and wrap in a
+            // Duration via kk_duration_from_nanoseconds (matching the
+            // measureTimeMillis pattern but producing a Duration instead of Long).
             _ = driver.lowerExpr(
                 bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-
-            let endTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
-            instructions.append(.call(
-                symbol: nil, callee: nanoTimeCallee, arguments: [],
-                result: endTimeExpr, canThrow: false, thrownResult: nil
-            ))
-
-            let subCallee = interner.intern("kk_op_sub")
-            let elapsedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
-            instructions.append(.call(
-                symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
-                result: elapsedExpr, canThrow: false, thrownResult: nil
-            ))
-
-            let fromNanosCallee = interner.intern("kk_duration_from_nanoseconds")
-            let durationExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil, callee: fromNanosCallee, arguments: [elapsedExpr],
-                result: durationExpr, canThrow: false, thrownResult: nil
-            ))
-
-            return durationExpr
         } else {
-            // Non-inline: the argument is a callable reference. Call the lambda
-            // directly between nanoTime calls to produce a Duration, matching
-            // the inline pattern. (kk_measureTime expects fnPtr/closureRaw which
-            // are not available through callableValueInfo.)
-            let nanoTimeCallee = interner.intern("kk_system_nanoTime")
-            let longType = sema.types.longType
-
-            let startTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
-            instructions.append(.call(
-                symbol: nil, callee: nanoTimeCallee, arguments: [],
-                result: startTimeExpr, canThrow: false, thrownResult: nil
-            ))
-
+            // Non-inline: the argument is a callable reference. Call the
+            // callable between nanoTime calls to produce a Duration.
             let actionExpr = driver.lowerExpr(
                 args[0].expr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
-                let unitType = sema.types.unitType
-                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
-                let thrownResult = arena.appendExpr(
-                    .temporary(Int32(arena.expressions.count)),
-                    type: sema.types.nullableAnyType
+            guard let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) else {
+                // The sema phase guarantees the argument is a callable
+                // (lambda or callable reference) when .measureTime is
+                // marked.  Degrade gracefully in Release builds (the
+                // Duration will measure zero elapsed time).
+                return emitDurationFromElapsed(
+                    startTimeExpr: startTimeExpr, resultType: resultType,
+                    sema: sema, arena: arena, interner: interner, instructions: &instructions
                 )
-                instructions.append(.call(
-                    symbol: callableInfo.symbol, callee: callableInfo.callee,
-                    arguments: callableInfo.captureArguments,
-                    result: actionResult, canThrow: true, thrownResult: thrownResult
-                ))
-                // Propagate exceptions thrown by the callable so they are not
-                // silently swallowed.  If thrownResult is non-null the callable
-                // threw, so rethrow immediately.
-                let rethrowLabel = driver.ctx.makeLoopLabel()
-                let continueLabel = driver.ctx.makeLoopLabel()
-                instructions.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
-                instructions.append(.jump(continueLabel))
-                instructions.append(.label(rethrowLabel))
-                instructions.append(.rethrow(value: thrownResult))
-                instructions.append(.label(continueLabel))
-            } else {
-                assertionFailure("lowerMeasureTimeCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
             }
-
-            let endTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+            let unitType = sema.types.unitType
+            let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
+            let thrownResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.nullableAnyType
+            )
             instructions.append(.call(
-                symbol: nil, callee: nanoTimeCallee, arguments: [],
-                result: endTimeExpr, canThrow: false, thrownResult: nil
+                symbol: callableInfo.symbol, callee: callableInfo.callee,
+                arguments: callableInfo.captureArguments,
+                result: actionResult, canThrow: true, thrownResult: thrownResult
             ))
-
-            let subCallee = interner.intern("kk_op_sub")
-            let elapsedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
-            instructions.append(.call(
-                symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
-                result: elapsedExpr, canThrow: false, thrownResult: nil
-            ))
-
-            let fromNanosCallee = interner.intern("kk_duration_from_nanoseconds")
-            let durationExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-            instructions.append(.call(
-                symbol: nil, callee: fromNanosCallee, arguments: [elapsedExpr],
-                result: durationExpr, canThrow: false, thrownResult: nil
-            ))
-
-            return durationExpr
+            // Propagate exceptions thrown by the callable so they are not
+            // silently swallowed.  If thrownResult is non-null the callable
+            // threw, so rethrow immediately.
+            let rethrowLabel = driver.ctx.makeLoopLabel()
+            let continueLabel = driver.ctx.makeLoopLabel()
+            instructions.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+            instructions.append(.jump(continueLabel))
+            instructions.append(.label(rethrowLabel))
+            instructions.append(.rethrow(value: thrownResult))
+            instructions.append(.label(continueLabel))
         }
+
+        // Emit end nanoTime, subtract, and box into Duration (shared epilogue).
+        return emitDurationFromElapsed(
+            startTimeExpr: startTimeExpr, resultType: resultType,
+            sema: sema, arena: arena, interner: interner, instructions: &instructions
+        )
+    }
+
+    // MARK: - Helpers
+
+    /// Emits a `kk_system_nanoTime()` call and returns the result expression.
+    private func emitNanoTimeCall(
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let nanoTimeCallee = interner.intern("kk_system_nanoTime")
+        let longType = sema.types.longType
+        let timeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: nanoTimeCallee, arguments: [],
+            result: timeExpr, canThrow: false, thrownResult: nil
+        ))
+        return timeExpr
+    }
+
+    /// Emits end-nanoTime, elapsed subtraction, and `kk_duration_from_nanoseconds`
+    /// boxing.  Shared epilogue for both inline and non-inline measureTime paths.
+    private func emitDurationFromElapsed(
+        startTimeExpr: KIRExprID,
+        resultType: TypeID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let endTimeExpr = emitNanoTimeCall(sema: sema, arena: arena, interner: interner, instructions: &instructions)
+
+        let longType = sema.types.longType
+        let subCallee = interner.intern("kk_op_sub")
+        let elapsedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+        instructions.append(.call(
+            symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
+            result: elapsedExpr, canThrow: false, thrownResult: nil
+        ))
+
+        let fromNanosCallee = interner.intern("kk_duration_from_nanoseconds")
+        let durationExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil, callee: fromNanosCallee, arguments: [elapsedExpr],
+            result: durationExpr, canThrow: false, thrownResult: nil
+        ))
+
+        return durationExpr
     }
 }

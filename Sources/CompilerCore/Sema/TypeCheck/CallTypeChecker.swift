@@ -381,10 +381,13 @@ final class CallTypeChecker {
         }
 
         // --- Stdlib kotlin.time.measureTime { ... } (STDLIB-585) ---
+        // Verify both the name and that the resolved symbol is the synthetic
+        // kotlin.time.measureTime (not a user-defined function with the same name).
         if let calleeName,
            interner.resolve(calleeName) == "measureTime",
            args.count == 1,
-           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           isSyntheticStdlibSymbol(calleeName, fqComponents: ["kotlin", "time", "measureTime"], ctx: ctx)
         {
             // Infer the block argument with an expected function type () -> Unit
             // so non-callable arguments are caught during type checking.
@@ -1862,6 +1865,25 @@ final class CallTypeChecker {
         return ctx.cachedScopeLookup(name).contains { candidate in
             guard let sym = ctx.cachedSymbol(candidate) else { return false }
             return !sym.flags.contains(.synthetic)
+        }
+    }
+
+    /// Returns true when there is a synthetic symbol visible under `name` whose
+    /// fully-qualified name matches `fqComponents`.  Used to guard stdlib
+    /// special-call paths so that identically-named user or third-party
+    /// functions are not misclassified as stdlib intrinsics.
+    private func isSyntheticStdlibSymbol(
+        _ name: InternedString,
+        fqComponents: [String],
+        ctx: TypeInferenceContext
+    ) -> Bool {
+        let interner = ctx.interner
+        let internedFQ = fqComponents.map { interner.intern($0) }
+        return ctx.cachedScopeLookup(name).contains { candidate in
+            guard let sym = ctx.cachedSymbol(candidate),
+                  sym.flags.contains(.synthetic)
+            else { return false }
+            return sym.fqName == internedFQ
         }
     }
 }

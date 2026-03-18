@@ -1503,7 +1503,16 @@ extension DataFlowSemaPhase {
     ) {
         let memberName = interner.intern(name)
         let memberFQName = durationFQName + [memberName]
-        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        // If a symbol already exists at this fqName, ensure its linkage
+        // metadata is up-to-date (mirroring registerSyntheticTopLevelFunction).
+        if let existing = symbols.lookup(fqName: memberFQName) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            if isProperty {
+                symbols.setPropertyType(returnType, for: existing)
+            }
+            return
+        }
 
         if isProperty {
             let memberSymbol = symbols.define(
