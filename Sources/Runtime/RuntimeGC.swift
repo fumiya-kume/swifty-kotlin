@@ -23,6 +23,7 @@ struct RuntimeStorageState {
     var customDelegateBoxes: [UInt: RuntimeCustomDelegateBox] = [:]
     var objectTypeByPointer: [UInt: Int64] = [:]
     var objectItableMethods: [UInt: [UInt64: Int]] = [:]
+    var kClassBoxCache: [UInt64: Int] = [:]
     var typeParents: [Int64: Set<Int64>] = [:]
     var globalRootSlots: Set<UInt> = []
     var frameMaps: [UInt32: [Int32]] = [:]

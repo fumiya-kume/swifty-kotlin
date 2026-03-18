@@ -1261,7 +1261,6 @@ extension ExprLowerer {
                let classRefTargetType = sema.bindings.classRefTargetType(for: exprID)
             {
                 let intType = sema.types.make(.primitive(.int, .nonNull))
-                let stringType = sema.types.make(.primitive(.string, .nonNull))
 
                 // 1. Emit the type token.
                 let tokenExpr: KIRExprID
@@ -1275,11 +1274,16 @@ extension ExprLowerer {
                     instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
                 }
 
-                // 2. Emit the name-hint string.
+                // 2. Emit the name-hint.
+                // kk_kclass_create ABI expects (Int, Int) — both parameters are
+                // intptr_t.  The name hint is either a runtime string pointer
+                // (passed as an int-typed string literal that codegen materialises
+                // into a pointer bit-pattern) or 0 when no name is available.
+                // We always use intType here to stay consistent with the ABI.
                 let nameHintExpr: KIRExprID
                 if let name = RuntimeTypeCheckToken.simpleName(of: classRefTargetType, sema: sema, interner: interner) {
                     let internedName = interner.intern(name)
-                    nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: stringType)
+                    nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: intType)
                     instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
                 } else {
                     nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)

@@ -367,14 +367,28 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
 
 /// Creates a `KClass<T>` metadata object from a type token and name hint.
 /// Returns an opaque pointer to a `RuntimeKClassBox`.
+///
+/// KClass boxes are interned: repeated calls with the same `(typeToken, nameHint)`
+/// pair return the same pointer without allocating a new box. This avoids
+/// unbounded memory growth when `T::class` is evaluated in a loop. The boxes
+/// are tracked in `runtimeStorage.kClassBoxCache` and live for the duration of the
+/// process (same lifetime as other runtime metadata such as type-hierarchy edges).
 @_cdecl("kk_kclass_create")
 public func kk_kclass_create(_ typeToken: Int, _ nameHint: Int) -> Int {
-    let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
+    // Build a stable cache key from the two Int-sized values.
+    let cacheKey = (UInt64(UInt32(truncatingIfNeeded: typeToken)) << 32)
+                 | UInt64(UInt32(truncatingIfNeeded: nameHint))
+    return runtimeStorage.withLock { state in
+        if let cached = state.kClassBoxCache[cacheKey] {
+            return cached
+        }
+        let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
         state.objectPointers.insert(UInt(bitPattern: opaque))
+        let result = Int(bitPattern: opaque)
+        state.kClassBoxCache[cacheKey] = result
+        return result
     }
-    return Int(bitPattern: opaque)
 }
 
 /// Returns the `simpleName` of a `KClass<T>` metadata object.
@@ -391,6 +405,9 @@ public func kk_kclass_simple_name(_ kclassRaw: Int) -> Int {
 
 /// Returns the `qualifiedName` of a `KClass<T>` metadata object.
 /// Delegates to `kk_type_token_qualified_name` using the stored token and hint.
+/// NOTE: Currently returns the same value as `simpleName` because
+/// `kk_type_token_qualified_name` falls back to `kk_type_token_simple_name`.
+/// A future implementation may return package-qualified names for nominal types.
 @_cdecl("kk_kclass_qualified_name")
 public func kk_kclass_qualified_name(_ kclassRaw: Int) -> Int {
     guard kclassRaw != 0, kclassRaw != runtimeNullSentinelInt,
