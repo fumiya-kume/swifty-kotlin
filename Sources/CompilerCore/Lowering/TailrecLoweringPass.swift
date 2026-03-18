@@ -228,9 +228,22 @@ final class TailrecLoweringPass: LoweringPass {
         // Slow path: scan backwards from the call site for the closest
         // preceding constValue that defines the mask.  Scanning only
         // instructions before `callIndex` ensures the definition dominates
-        // the use.
+        // the use.  Stop at control-flow boundaries (labels, jumps,
+        // conditional branches) to stay within the same basic block —
+        // a linear backward scan cannot guarantee dominance across
+        // control flow.
         for i in stride(from: callIndex - 1, through: 0, by: -1) {
-            if case let .constValue(result, .intLiteral(value)) = body[i],
+            let inst = body[i]
+            // Stop at control-flow boundaries to ensure we stay in the
+            // same basic block.  Definitions across branches may not
+            // dominate the call site.
+            switch inst {
+            case .label, .jump, .jumpIfEqual, .jumpIfNotNull:
+                return nil
+            default:
+                break
+            }
+            if case let .constValue(result, .intLiteral(value)) = inst,
                result == maskExprID
             {
                 return value
@@ -289,11 +302,17 @@ final class TailrecLoweringPass: LoweringPass {
         // participate in parameter reassignment.
         let effectiveCount = min(arguments.count, params.count)
 
-        // Determine whether the first param is a synthetic receiver.
-        // The default mask bits do not include the receiver, so we must
-        // offset the bit index accordingly.
-        let receiverSymbol = SyntheticSymbolScheme.receiverParameterSymbol(for: functionSymbol)
-        let receiverOffset = (!params.isEmpty && params[0].symbol == receiverSymbol) ? 1 : 0
+        // Compute receiver offset only when we actually have a default
+        // mask — for non-$default calls the mask is nil and the offset
+        // is irrelevant, so we avoid the SyntheticSymbolScheme lookup
+        // on the non-$default hot path.
+        let receiverOffset: Int
+        if defaultMask != nil {
+            let receiverSymbol = SyntheticSymbolScheme.receiverParameterSymbol(for: functionSymbol)
+            receiverOffset = (!params.isEmpty && params[0].symbol == receiverSymbol) ? 1 : 0
+        } else {
+            receiverOffset = 0
+        }
 
         // First, copy arguments into fresh temporaries to avoid
         // overwriting a parameter that is used in a later argument expression.
@@ -302,16 +321,22 @@ final class TailrecLoweringPass: LoweringPass {
         for i in 0 ..< effectiveCount {
             // Skip sentinel arguments whose default mask bit is set.
             // The mask is indexed on value-parameter positions (excluding
-            // the receiver), so subtract `receiverOffset`.  Also guard
-            // against shifting Int64 by >= 64 which traps in Swift.
+            // the receiver), so subtract `receiverOffset`.  When the
+            // mask bit index exceeds Int64.bitWidth (>= 64 value params),
+            // we conservatively treat the argument as non-defaulted;
+            // this is safe because functions with that many defaulted
+            // parameters would use multiple mask words, and the caller
+            // already skips tailrec when the mask is unresolvable.
             if let mask = defaultMask {
                 let maskBitIndex = i - receiverOffset
-                if maskBitIndex >= 0,
-                   maskBitIndex < Int64.bitWidth,
-                   (mask >> maskBitIndex) & 1 != 0
-                {
-                    temporaries.append(.invalid)
-                    continue
+                if maskBitIndex >= 0 {
+                    if maskBitIndex >= Int64.bitWidth {
+                        // Out-of-range bit index — conservatively treat
+                        // as non-defaulted (copy the argument through).
+                    } else if (mask >> maskBitIndex) & 1 != 0 {
+                        temporaries.append(.invalid)
+                        continue
+                    }
                 }
             }
             let arg = arguments[i]
