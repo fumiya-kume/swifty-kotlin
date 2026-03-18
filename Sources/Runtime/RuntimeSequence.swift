@@ -2,7 +2,10 @@ import Foundation
 
 // MARK: - Sequence Functions (STDLIB-003)
 
-private func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
+/// Resolve a raw integer handle to a registered runtime object of the given type.
+/// Returns nil if the handle is zero/null, not a registered object pointer, or
+/// points to an object of a different type.
+private func resolveRuntimeHandle<T: AnyObject>(_ rawValue: Int, as _: T.Type) -> T? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
     }
@@ -12,20 +15,15 @@ private func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
     guard isObjectPointer else {
         return nil
     }
-    return tryCast(ptr, to: RuntimeSequenceBox.self)
+    return tryCast(ptr, to: T.self)
+}
+
+private func runtimeSequenceBox(from rawValue: Int) -> RuntimeSequenceBox? {
+    resolveRuntimeHandle(rawValue, as: RuntimeSequenceBox.self)
 }
 
 private func runtimeSequenceBuilderBox(from rawValue: Int) -> RuntimeSequenceBuilderBox? {
-    guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
-        return nil
-    }
-    let isObjectPointer = runtimeStorage.withLock { state in
-        state.objectPointers.contains(UInt(bitPattern: ptr))
-    }
-    guard isObjectPointer else {
-        return nil
-    }
-    return tryCast(ptr, to: RuntimeSequenceBuilderBox.self)
+    resolveRuntimeHandle(rawValue, as: RuntimeSequenceBuilderBox.self)
 }
 
 private func runtimeSequenceSourceElements(from rawValue: Int) -> [Int]? {
@@ -1629,11 +1627,17 @@ public func kk_sequence_builder_create() -> Int {
 
 @_cdecl("kk_sequence_builder_yield")
 public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
-    guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yield received invalid builder handle")
+    if let builder = runtimeSequenceBuilderBox(from: builderRaw) {
+        builder.elements.append(value)
+        return 0
     }
-    builder.elements.append(value)
-    return 0
+    // STDLIB-331/564: yield() is shared across sequence/iterator builders.
+    // When the builder handle is a RuntimeIteratorBuilderBox, delegate there.
+    if let iterBuilder = runtimeIteratorBuilderBox(from: builderRaw) {
+        iterBuilder.elements.append(value)
+        return 0
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yield received invalid builder handle")
 }
 
 @_cdecl("kk_sequence_builder_build")
@@ -1652,11 +1656,15 @@ public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
     return registerRuntimeObject(seq)
 }
 
-// MARK: - Iterator Builder (iterator { yield(x) }) (STDLIB-331)
+// MARK: - Iterator Builder (iterator { yield(x) }) (STDLIB-331/564)
+
+private func runtimeIteratorBuilderBox(from rawValue: Int) -> RuntimeIteratorBuilderBox? {
+    resolveRuntimeHandle(rawValue, as: RuntimeIteratorBuilderBox.self)
+}
 
 @_cdecl("kk_iterator_builder_build")
 public func kk_iterator_builder_build(_ fnPtr: Int) -> Int {
-    let builder = RuntimeSequenceBuilderBox()
+    let builder = RuntimeIteratorBuilderBox()
     let builderHandle = registerRuntimeObject(builder)
 
     var thrown = 0
@@ -1666,7 +1674,57 @@ public func kk_iterator_builder_build(_ fnPtr: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: iterator lambda threw but no outThrown available")
     }
 
-    // Return a list-backed iterator over the collected elements.
-    let iteratorBox = RuntimeListIteratorBox(elements: builder.elements)
-    return registerRuntimeObject(iteratorBox)
+    // The builder now holds all yielded elements; return it directly as
+    // the iterator handle.  hasNext / next operate on the same box.
+    return builderHandle
+}
+
+@_cdecl("kk_iterator_builder_yield")
+public func kk_iterator_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
+    guard let builder = runtimeIteratorBuilderBox(from: builderRaw) else {
+        // Fall back: the handle might be a RuntimeSequenceBuilderBox when yield
+        // is shared between sequence/iterator builders in older lowering paths.
+        if let seqBuilder = runtimeSequenceBuilderBox(from: builderRaw) {
+            seqBuilder.elements.append(value)
+            return 0
+        }
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_iterator_builder_yield received invalid builder handle")
+    }
+    builder.elements.append(value)
+    return 0
+}
+
+@_cdecl("kk_iterator_builder_hasNext")
+public func kk_iterator_builder_hasNext(_ iterRaw: Int) -> Int {
+    // Support both RuntimeIteratorBuilderBox and RuntimeListIteratorBox
+    // for backwards compatibility with older lowering paths.
+    if let iter = runtimeIteratorBuilderBox(from: iterRaw) {
+        return iter.index < iter.elements.count ? 1 : 0
+    }
+    if let iter = runtimeListIteratorBox(from: iterRaw) {
+        return iter.index < iter.elements.count ? 1 : 0
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_iterator_builder_hasNext received invalid iterator handle")
+}
+
+@_cdecl("kk_iterator_builder_next")
+public func kk_iterator_builder_next(_ iterRaw: Int) -> Int {
+    if let iter = runtimeIteratorBuilderBox(from: iterRaw) {
+        guard iter.index < iter.elements.count else {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: NoSuchElementException: Iterator has no more elements.")
+        }
+        let value = iter.elements[iter.index]
+        iter.index += 1
+        return value
+    }
+    // Backwards compatibility: older lowering paths may pass a RuntimeListIteratorBox.
+    if let iter = runtimeListIteratorBox(from: iterRaw) {
+        guard iter.index < iter.elements.count else {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: NoSuchElementException: Iterator has no more elements.")
+        }
+        let value = iter.elements[iter.index]
+        iter.index += 1
+        return value
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_iterator_builder_next received invalid iterator handle")
 }

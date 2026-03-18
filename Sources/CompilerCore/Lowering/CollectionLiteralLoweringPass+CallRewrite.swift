@@ -44,6 +44,7 @@ extension CollectionLiteralLoweringPass {
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
             var stringIteratorExprIDs: Set<Int32> = []
+            var iteratorBuilderExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -617,6 +618,14 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: iterator {} result is already an iterator; pass through
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            if let result {
+                                iteratorBuilderExprIDs.insert(result.rawValue)
+                                loweredBody.append(.copy(from: argID, to: result))
+                            }
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
@@ -656,6 +665,18 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: Rewrite kk_range_hasNext on iterator builder → kk_iterator_builder_hasNext
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
@@ -688,6 +709,18 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        // STDLIB-331/564: Rewrite kk_range_next on iterator builder → kk_iterator_builder_next
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderNextName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -1661,6 +1694,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result { iteratorBuilderExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -2592,6 +2626,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if stringIteratorExprIDs.contains(from.rawValue) {
                         stringIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if iteratorBuilderExprIDs.contains(from.rawValue) {
+                        iteratorBuilderExprIDs.insert(to.rawValue)
                     }
                     loweredBody.append(instruction)
 
