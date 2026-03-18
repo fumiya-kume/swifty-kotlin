@@ -47,6 +47,10 @@ extension LLVMCAPIBindings {
         setLinkageFn(value, 5)
     }
 
+    func setExternalLinkage(_ value: LLVMValueRef?) {
+        setLinkageFn(value, 0)
+    }
+
     func setInternalLinkage(_ value: LLVMValueRef?) {
         setLinkageFn(value, 8)
     }

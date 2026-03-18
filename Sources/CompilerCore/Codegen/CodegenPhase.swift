@@ -42,7 +42,8 @@ public final class CodegenPhase: CompilerPhase {
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionRecords
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedLLVMIRPath(path)
 
@@ -55,7 +56,8 @@ public final class CodegenPhase: CompilerPhase {
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionRecords
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedObjectPath(path)
 
@@ -68,7 +70,8 @@ public final class CodegenPhase: CompilerPhase {
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionRecords
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedObjectPath(path)
 

@@ -17,9 +17,9 @@ final class RuntimeReflectionMetadataEmitterTests: XCTestCase {
 
     func testSerializeMagicAndVersion() {
         let data = RuntimeReflectionMetadataEmitter.serialize([])
-        // Read magic bytes (little-endian "KKRM" = 0x4B4B524D)
+        // Read magic bytes (little-endian serialized as 0x4D524B4B).
         let magic = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: 0, as: UInt32.self) }
-        XCTAssertEqual(UInt32(littleEndian: magic), 0x4B4B_524D)
+        XCTAssertEqual(UInt32(littleEndian: magic), RuntimeReflectionMetadataEmitter.magic)
 
         // Read version
         let version = data.withUnsafeBytes { $0.loadUnaligned(fromByteOffset: 4, as: UInt32.self) }

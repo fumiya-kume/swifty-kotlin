@@ -163,33 +163,44 @@ public struct RuntimeReflectionMetadataEmitter {
         bindings: LLVMCAPIBindings,
         module: LLVMCAPIBindings.LLVMModuleRef,
         context _: LLVMCAPIBindings.LLVMContextRef,
-        int64Type: LLVMCAPIBindings.LLVMTypeRef
+        int64Type: LLVMCAPIBindings.LLVMTypeRef,
+        symbolPrefix: String? = nil
     ) {
-        // When there are no records we intentionally skip emitting any globals.
-        // The runtime loader checks for the existence of kk_reflection_metadata_size
-        // and treats a missing symbol as "no metadata available".
-        guard !records.isEmpty else { return }
-
-        let data = serialize(records)
-        let byteCount = data.count
+        let data = records.isEmpty ? nil : serialize(records)
+        let byteCount = data?.count ?? 0
+        let wordCount = (byteCount + 7) / 8
+        let namePrefix = metadataSymbolPrefix(symbolPrefix)
 
         // Emit the size global.
         if let sizeGlobal = bindings.addGlobal(
             module: module,
             type: int64Type,
-            name: "kk_reflection_metadata_size"
+            name: "\(namePrefix)kk_reflection_metadata_size"
         ) {
+            bindings.setExternalLinkage(sizeGlobal)
             if let sizeValue = bindings.constInt(int64Type, value: UInt64(byteCount)) {
                 bindings.setInitializer(sizeGlobal, value: sizeValue)
             }
         }
 
+        if let countGlobal = bindings.addGlobal(
+            module: module,
+            type: int64Type,
+            name: "\(namePrefix)kk_reflection_metadata_words"
+        ) {
+            bindings.setExternalLinkage(countGlobal)
+            if let countValue = bindings.constInt(int64Type, value: UInt64(wordCount)) {
+                bindings.setInitializer(countGlobal, value: countValue)
+            }
+        }
+
+        guard let data else {
+            return
+        }
+
         // Emit the metadata blob as a global byte array.
         // We store the metadata as an array of i64 values (padded to 8-byte alignment)
         // because i8 array types are not available through the current binding surface.
-        let wordCount = (byteCount + 7) / 8
-        guard wordCount > 0 else { return }
-
         // Pack bytes into i64 words (little-endian).
         var words: [UInt64] = []
         words.reserveCapacity(wordCount)
@@ -207,19 +218,10 @@ public struct RuntimeReflectionMetadataEmitter {
         // Emit each word as a separate named global for simplicity, since the
         // current LLVM bindings do not expose LLVMConstArray. A single "directory"
         // global holds the count, and indexed globals hold each word.
-        if let countGlobal = bindings.addGlobal(
-            module: module,
-            type: int64Type,
-            name: "kk_reflection_metadata_words"
-        ) {
-            if let countValue = bindings.constInt(int64Type, value: UInt64(wordCount)) {
-                bindings.setInitializer(countGlobal, value: countValue)
-            }
-        }
-
         for (i, word) in words.enumerated() {
-            let name = "kk_reflection_metadata_w\(i)"
+            let name = "\(namePrefix)kk_reflection_metadata_w\(i)"
             if let wordGlobal = bindings.addGlobal(module: module, type: int64Type, name: name) {
+                bindings.setExternalLinkage(wordGlobal)
                 if let wordValue = bindings.constInt(int64Type, value: word) {
                     bindings.setInitializer(wordGlobal, value: wordValue)
                 }
@@ -245,6 +247,16 @@ public struct RuntimeReflectionMetadataEmitter {
 
     private static func saturatingUInt32(_ value: Int) -> UInt32 {
         return UInt32(min(max(0, value), Int(UInt32.max)))
+    }
+
+    private static func metadataSymbolPrefix(_ moduleName: String?) -> String {
+        guard let moduleName, !moduleName.isEmpty else { return "" }
+        let normalized = moduleName.unicodeScalars.map { scalar in
+            CharacterSet.alphanumerics.contains(scalar) ? String(scalar) : "_"
+        }.joined()
+        let stripped = normalized.trimmingCharacters(in: CharacterSet(charactersIn: "_"))
+        guard !stripped.isEmpty else { return "" }
+        return "\(stripped)__"
     }
 
     // MARK: - String Table
@@ -287,20 +299,20 @@ public struct RuntimeReflectionMetadataEmitter {
 /// Decodes the binary reflection metadata format produced by
 /// `RuntimeReflectionMetadataEmitter.serialize(_:)`.
 /// This is primarily used for round-trip testing.
-public struct RuntimeReflectionMetadataDecoder {
-    public struct DecodedRecord {
-        public let kindOrdinal: UInt8
-        public let flags: UInt8
-        public let arity: UInt16
-        public let fqName: String
-        public let simpleName: String
-        public let superFqName: String?
-        public let fieldCount: UInt32?
-        public let instanceSizeWords: UInt32?
+struct RuntimeReflectionMetadataDecoder {
+    struct DecodedRecord {
+        let kindOrdinal: UInt8
+        let flags: UInt8
+        let arity: UInt16
+        let fqName: String
+        let simpleName: String
+        let superFqName: String?
+        let fieldCount: UInt32?
+        let instanceSizeWords: UInt32?
     }
 
     /// Decodes the binary metadata blob into decoded records.
-    public static func decode(_ data: Data) -> [DecodedRecord]? {
+    static func decode(_ data: Data) -> [DecodedRecord]? {
         guard data.count >= 16 else { return nil }
         var offset = 0
 
@@ -312,19 +324,24 @@ public struct RuntimeReflectionMetadataDecoder {
 
         let recordCount = readU32(data, at: &offset)
         let stringTableOffset = readU32(data, at: &offset)
-        guard recordCount <= UInt32(Int.max / recordSize) else { return nil }
-        let recordsSize = Int(recordCount) * recordSize
+        let recordSize = UInt64(RuntimeReflectionMetadataEmitter.recordSize)
+        let recordsSizeInBytes = UInt64(recordCount) * recordSize
+        guard recordsSizeInBytes <= UInt64(Int.max) else { return nil }
+        let recordsSize = Int(recordsSizeInBytes)
+        let recordBytesEnd = 16 + recordsSize
+
         let stringTableOffsetInt = Int(stringTableOffset)
         guard stringTableOffsetInt <= data.count,
-              stringTableOffsetInt >= 16 + recordsSize
+              stringTableOffsetInt >= recordBytesEnd
         else { return nil }
 
         // Decode string table first.
-        let strings = decodeStringTable(data, at: Int(stringTableOffset))
+        let strings = decodeStringTable(data, at: stringTableOffsetInt)
         guard let strings else { return nil }
 
         var records: [DecodedRecord] = []
-        for _ in 0 ..< recordCount {
+        let recordIterations = Int(recordCount)
+        for _ in 0..<recordIterations {
             guard offset + RuntimeReflectionMetadataEmitter.recordSize <= data.count else {
                 return nil
             }

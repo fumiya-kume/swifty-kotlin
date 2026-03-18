@@ -40,6 +40,7 @@ struct NativeEmitter {
     let fileFacadeNamesByFileID: [Int32: String]
     /// REFL-004: Metadata records to embed as runtime reflection metadata.
     let reflectionMetadataRecords: [MetadataRecord]
+    let reflectionMetadataSymbolPrefix: String?
 
     init(
         target: TargetTriple,
@@ -50,7 +51,8 @@ struct NativeEmitter {
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
         fileFacadeNamesByFileID: [Int32: String] = [:],
-        reflectionMetadataRecords: [MetadataRecord] = []
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) {
         self.target = target
         self.optLevel = optLevel
@@ -61,6 +63,7 @@ struct NativeEmitter {
         self.sourceManager = sourceManager
         self.fileFacadeNamesByFileID = fileFacadeNamesByFileID
         self.reflectionMetadataRecords = reflectionMetadataRecords
+        self.reflectionMetadataSymbolPrefix = reflectionMetadataSymbolPrefix
     }
 
     func emitLLVMIR(outputPath: String) throws {
@@ -231,15 +234,14 @@ struct NativeEmitter {
         }
 
         // REFL-004: Emit runtime reflection metadata as global constants.
-        if !reflectionMetadataRecords.isEmpty {
-            RuntimeReflectionMetadataEmitter.emitGlobals(
-                records: reflectionMetadataRecords,
-                bindings: bindings,
-                module: llvmModule,
-                context: context,
-                int64Type: int64Type
-            )
-        }
+        RuntimeReflectionMetadataEmitter.emitGlobals(
+            records: reflectionMetadataRecords,
+            bindings: bindings,
+            module: llvmModule,
+            context: context,
+            int64Type: int64Type,
+            symbolPrefix: reflectionMetadataSymbolPrefix
+        )
 
         if let diContext {
             finalizeDebugInfo(

@@ -36,7 +36,8 @@ public final class LLVMBackend {
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
         fileFacadeNamesByFileID: [Int32: String] = [:],
-        reflectionMetadataRecords: [MetadataRecord] = []
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -51,7 +52,8 @@ public final class LLVMBackend {
                     interner: interner,
                     sourceManager: sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionMetadataRecords
+                    reflectionMetadataRecords: reflectionMetadataRecords,
+                    reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
                 )
                 try emitter.emitObject(outputPath: outputObjectPath)
             }
@@ -65,7 +67,8 @@ public final class LLVMBackend {
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
         fileFacadeNamesByFileID: [Int32: String] = [:],
-        reflectionMetadataRecords: [MetadataRecord] = []
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -80,7 +83,8 @@ public final class LLVMBackend {
                     interner: interner,
                     sourceManager: sourceManager,
                     fileFacadeNamesByFileID: fileFacadeNamesByFileID,
-                    reflectionMetadataRecords: reflectionMetadataRecords
+                    reflectionMetadataRecords: reflectionMetadataRecords,
+                    reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
                 )
                 try emitter.emitLLVMIR(outputPath: outputIRPath)
             }
