@@ -18,11 +18,11 @@
 ## 未完了バックログ
 
 
-- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
+- [x] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
   - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
-  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
-  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
-  - [ ] lazy message throw の回帰ケースを追加する
+  - [x] [Sources/Runtime/RuntimePreconditions.swift](Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
+  - [x] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
+  - [x] lazy message throw の回帰ケースを追加する
   - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
 
 - [ ] STDLIB-258: `assert()` 関数を `kotlin.Preconditions` に追加する
@@ -186,7 +186,7 @@
 
 #### E. kotlin.sequences — 単一 API 単位
 
-- [ ] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
+- [x] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
 - [ ] STDLIB-554: `List.asSequence()` の stub と Lowering
 - [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
 - [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張
@@ -214,13 +214,13 @@
 
 - [ ] STDLIB-573: `String.encodeToByteArray(charset)` の実装
 - [ ] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
-- [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
-- [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
+- [x] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
+- [x] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-579: `buildString.appendLine` の完全性確認
 - [ ] STDLIB-580: `buildString.appendRange` の完全性確認
-- [ ] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
+- [x] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
 
 #### H. kotlin.time / kotlin.system
 
@@ -258,10 +258,10 @@
 - [ ] STDLIB-604: `countOneBits` のエッジケーステスト
 - [ ] STDLIB-605: `countLeadingZeroBits` のエッジケーステスト
 - [ ] STDLIB-606: `countTrailingZeroBits` のエッジケーステスト
-- [ ] STDLIB-607: diff_cases 全 198 ファイルの stdlib サポート状況棚卸し
-- [ ] STDLIB-608: `list_of.kt` の diff 通過確認
-- [ ] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
-- [ ] STDLIB-610: `string_stdlib.kt` の diff 通過確認
+- [x] STDLIB-607: diff_cases 全 197 .kt ファイルの stdlib サポート状況棚卸し (195 PASS, 2 SKIP, 0 FAIL)
+- [x] STDLIB-608: `list_of.kt` の diff 通過確認
+- [x] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
+- [x] STDLIB-610: `string_stdlib.kt` の diff 通過確認
 
 #### L. 既存・補足
 
@@ -272,7 +272,7 @@
 - [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
-- [ ] STDLIB-618: `builder_dsl.kt` の diff 通過確認
+- [x] STDLIB-618: `builder_dsl.kt` の diff 通過確認
 - [ ] STDLIB-619: `require_check_error.kt` の diff 通過確認
 - [ ] STDLIB-620: `regex_basic.kt` の diff 通過確認
 
@@ -284,14 +284,14 @@
  
 - [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
   - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
-- [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
-  - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
+- [x] STDLIB-250: `kk_with_context` を非同期実行に対応させる
+  - ディスパッチャタグを GCD キューにマッピングし、ブロックを対象キュー上で実行するように変更済み
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
   - 現状: `KKD\x01` などのタグを返すのみで、スレッド制御は未実装（`RuntimeCoroutine.swift`）
-- [ ] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
-  - 現状: `nsRegexOption(fromOrdinal:)` で `return []` として no-op（`RuntimeRegex.swift:259`）
+- [x] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
+  - NFC 正規化によるマッチングで実装済み（`RuntimeRegex.swift`）
 - [ ] STDLIB-331: `yieldAll` を `RuntimeSequence.swift` に実装し、Lowering と連携する
 - [ ] STDLIB-324: File I/O のメンバー呼び出し（`readText` / `readLines` / `exists` 等）を `VirtualCallRewrite.swift` に統合する
   - 現状: Runtime は実装済みだが、Lowering が未対応のため標準ライブラリ呼び出しがリンクされない
@@ -346,8 +346,8 @@
   - 現状: サスペンド・レジュームが別スレッドで行われた場合にスコープが消失する。コルーチンコンテキストに含めるべき
 - [ ] REFL-004: 実行時リフレクション用メタデータの生成 (MetadataSerializer の活用)
   - 現状: コンパイル時のリンク用メタデータはあるが、実行時に `KClass` からアクセス可能なバイナリメタデータが存在しない
-- [ ] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
-  - 現状: 合成ロジックが未実装。`CallLowerer+EnumStdlib.swift` が参照するシンボルが生成されていない
+- [x] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
+  - 完了: `DataEnumSealedSynthesisPass` が `__enum_static_init_<ClassName>` 関数を合成し、各エントリの KIRGlobal と ordinal 初期化を生成
 - [ ] VAL-001: Value Class のアンボックス化（Unboxing）とマングリングの実装
   - 現状: 単なる class として扱われており、最適化（インライン化）が行われていない
 - [ ] DATA-001: Data Class の `copy()` 生成を完備する

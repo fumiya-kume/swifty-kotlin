@@ -76,6 +76,81 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(extractString(from: UnsafeMutableRawPointer(bitPattern: renderedRaw)), "[1:2:3]")
     }
 
+    // MARK: - Iterator Builder Tests (STDLIB-331/564)
+
+    func testIteratorBuilderBuildYieldsElementsInOrder() {
+        // Closure thunk: yields 10, 20, 30 to the builder
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 10)
+            _ = kk_sequence_builder_yield(builderRaw, 20)
+            _ = kk_sequence_builder_yield(builderRaw, 30)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 10)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 20)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    func testIteratorBuilderEmptyHasNextReturnsFalse() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    func testIteratorBuilderYieldDirectlyAppendsToBuilder() {
+        // Test kk_iterator_builder_yield works directly with RuntimeIteratorBuilderBox
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_iterator_builder_yield(builderRaw, 100)
+            _ = kk_iterator_builder_yield(builderRaw, 200)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 100)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 200)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    func testIteratorBuilderSingleElement() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 42)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 42)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    // Backwards-compatibility: older lowering paths may pass a RuntimeListIteratorBox
+    // to kk_iterator_builder_hasNext / kk_iterator_builder_next.
+    func testIteratorBuilderBackwardsCompatWithListIterator() {
+        let listHandle = makeList([10, 20, 30])
+        let iterHandle = kk_list_iterator(listHandle)
+
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 10)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 20)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0

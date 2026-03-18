@@ -746,18 +746,19 @@ extension NativeEmitter {
                 let calleeName = interner.resolve(callee)
                 let argumentValues = arguments.map(resolveValue)
 
-                if calleeName == "kk_println_newline" {
-                    if let printFunction = declareExternalFunction(
-                        named: "kk_println_newline",
+                // Consolidated path for known void, zero-argument runtime calls.
+                if Self.knownVoidNoArgCallees.contains(calleeName) {
+                    if let runtimeFunction = declareExternalFunction(
+                        named: calleeName,
                         argumentCount: 0,
                         appendThrownChannel: false
                     ) {
                         _ = bindings.buildCall(
                             builder,
-                            functionType: printFunction.type,
-                            callee: printFunction.value,
+                            functionType: runtimeFunction.type,
+                            callee: runtimeFunction.value,
                             arguments: [],
-                            name: "println_newline_\(instructionIndex)"
+                            name: "\(calleeName)_\(instructionIndex)"
                         )
                     }
                     if usesThrownChannel, let thrownResult {

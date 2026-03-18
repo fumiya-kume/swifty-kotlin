@@ -563,6 +563,32 @@ public func kk_list_runningReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
+// MARK: - List reduceOrNull / scanReduce (STDLIB-526..530)
+
+@_cdecl("kk_list_reduceOrNull")
+public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var acc = maybeUnbox(list.elements[0])
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+// Deprecated: kk_list_scanReduce is a deprecated alias for kk_list_runningReduce.
+// Kotlin renamed scanReduce to runningReduce; this entrypoint is kept for ABI compatibility.
+@_cdecl("kk_list_scanReduce")
+public func kk_list_scanReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_list_runningReduce(listRaw, fnPtr, closureRaw, outThrown)
+}
+
 @_cdecl("kk_list_groupBy")
 public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -997,22 +1023,15 @@ public func kk_list_distinct(_ listRaw: Int) -> Int {
 
 /// Returns a list containing only elements with distinct keys returned by the selector.
 ///
-/// - Note: Key deduplication uses `Set<Int>` over the raw handle/unboxed value.
-///   For non-primitive keys (e.g. data classes), this compares by identity (handle)
-///   rather than structural equality. This is a known limitation — full value equality
-///   requires runtime-level `equals`/`hashCode` dispatch which is not yet implemented.
+/// Key deduplication uses `RuntimeElementKey` which delegates to
+/// `kk_any_hashCode` / `runtimeValuesEqual` for structural equality,
+/// so data-class and other reference-typed keys compare by value.
 @_cdecl("kk_list_distinctBy")
 public func kk_list_distinctBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
-    // KNOWN LIMITATION: Key deduplication uses raw Int values (identity for
-    // non-primitive, unboxed value for primitives).  Structural equality for
-    // String/data-class keys works only when the runtime canonicalizes them
-    // to the same handle (which it does for String via interning).  For other
-    // reference-typed keys (e.g., custom data classes), this may produce
-    // incorrect results until runtime-level equals/hashCode dispatch is added.
-    var seenKeys = Set<Int>()
+    var seenKeys = Set<RuntimeElementKey>()
     seenKeys.reserveCapacity(list.elements.count)
     var result: [Int] = []
     result.reserveCapacity(list.elements.count)
@@ -1020,8 +1039,7 @@ public func kk_list_distinctBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let unboxedKey = maybeUnbox(key)
-        if seenKeys.insert(unboxedKey).inserted {
+        if seenKeys.insert(RuntimeElementKey(value: key)).inserted {
             result.append(elem)
         }
     }

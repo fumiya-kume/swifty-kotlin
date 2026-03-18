@@ -3,7 +3,7 @@ import Foundation
 /// Hashable wrapper around an opaque runtime value (`Int`) that uses
 /// `kk_any_hashCode` / `runtimeValuesEqual` so it can be stored in a
 /// Swift `Set` for O(1) amortised lookups.
-private struct RuntimeElementKey: Hashable {
+internal struct RuntimeElementKey: Hashable {
     let value: Int
 
     func hash(into hasher: inout Hasher) {
@@ -1485,4 +1485,30 @@ public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
     // Same COW-snapshot semantics (known Kotlin deviation) as kk_list_asSequence above.
     let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
     return registerRuntimeObject(seq)
+}
+
+// MARK: - STDLIB-533: List?.orEmpty()
+
+/// Cached singleton handle for the empty list, allocated once on first use.
+private let cachedEmptyListHandle: Int = registerRuntimeObject(RuntimeListBox(elements: []))
+
+@_cdecl("kk_list_orEmpty")
+public func kk_list_orEmpty(_ listRaw: Int) -> Int {
+    if listRaw == runtimeNullSentinelInt || listRaw == 0 {
+        return cachedEmptyListHandle
+    }
+    return listRaw
+}
+
+// MARK: - STDLIB-532: Map?.orEmpty()
+
+/// Cached singleton handle for the empty map, allocated once on first use.
+private let cachedEmptyMapHandle: Int = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+@_cdecl("kk_map_orEmpty")
+public func kk_map_orEmpty(_ mapRaw: Int) -> Int {
+    if mapRaw == runtimeNullSentinelInt || mapRaw == 0 {
+        return cachedEmptyMapHandle
+    }
+    return mapRaw
 }

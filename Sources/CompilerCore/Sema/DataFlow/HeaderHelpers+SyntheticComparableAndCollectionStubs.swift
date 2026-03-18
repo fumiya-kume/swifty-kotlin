@@ -155,6 +155,13 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        // Now that List is registered, patch Pair.toList() and Triple.toList()
+        // return types from the provisional Any? to the correct List<Any?>.
+        patchPairTripleToListReturnTypes(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+
         registerSyntheticMutableListStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -337,9 +344,9 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
 
-        // Pair<A,B>.toList() returns List<Any?> in Kotlin (elements can be null).
-        // List symbol is registered after Pair, so we use nullable anyType as a temporary
-        // stand-in for the actual return type; it will be refined once List stubs are available.
+        // Pair<A,B>.toList() returns List<Any?> in Kotlin (elements can be nullable).
+        // The List symbol is registered after Pair, so we initially use nullable anyType
+        // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
         registerFunctionMember(
             name: "toList",
             returnType: types.makeNullable(types.anyType),
@@ -431,10 +438,70 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
         registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
         registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
-        // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be null).
-        // List symbol is registered after Triple, so we use nullable anyType as a temporary
-        // stand-in for the actual return type; it will be refined once List stubs are available.
+        // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be nullable).
+        // The List symbol is registered after Triple, so we initially use nullable anyType
+        // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
         registerFunctionMember(name: "toList", returnType: types.makeNullable(types.anyType), externalLinkName: "kk_triple_toList", flags: [.synthetic])
+    }
+
+    /// Patch the provisional `Any?` return types of `Pair.toList()` and `Triple.toList()`
+    /// with the correct `List<Any?>` now that the List symbol is available.
+    private func patchPairTripleToListReturnTypes(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID
+    ) {
+        let nullableAnyType = types.makeNullable(types.anyType)
+        let listOfNullableAny = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(nullableAnyType)],
+            nullability: .nonNull
+        )))
+
+        // Patch Pair<A,B>.toList() -> List<Any?>
+        let pairFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Pair")]
+        let pairToListFQName = pairFQName + [interner.intern("toList")]
+        if let pairToListSymbol = symbols.lookup(fqName: pairToListFQName) {
+            if let existingSig = symbols.functionSignature(for: pairToListSymbol) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSig.receiverType,
+                        parameterTypes: existingSig.parameterTypes,
+                        returnType: listOfNullableAny,
+                        typeParameterSymbols: existingSig.typeParameterSymbols,
+                        classTypeParameterCount: existingSig.classTypeParameterCount
+                    ),
+                    for: pairToListSymbol
+                )
+            } else {
+                assertionFailure("Pair.toList() symbol found but has no function signature; return type not patched")
+            }
+        } else {
+            assertionFailure("Pair.toList() symbol not found in symbol table; return type not patched")
+        }
+
+        // Patch Triple<A,B,C>.toList() -> List<Any?>
+        let tripleFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Triple")]
+        let tripleToListFQName = tripleFQName + [interner.intern("toList")]
+        if let tripleToListSymbol = symbols.lookup(fqName: tripleToListFQName) {
+            if let existingSig = symbols.functionSignature(for: tripleToListSymbol) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: existingSig.receiverType,
+                        parameterTypes: existingSig.parameterTypes,
+                        returnType: listOfNullableAny,
+                        typeParameterSymbols: existingSig.typeParameterSymbols,
+                        classTypeParameterCount: existingSig.classTypeParameterCount
+                    ),
+                    for: tripleToListSymbol
+                )
+            } else {
+                assertionFailure("Triple.toList() symbol found but has no function signature; return type not patched")
+            }
+        } else {
+            assertionFailure("Triple.toList() symbol not found in symbol table; return type not patched")
+        }
     }
 
     private func registerSyntheticCollectionStub(
@@ -1440,7 +1507,8 @@ extension DataFlowSemaPhase {
         func registerMember(
             name: String,
             parameterTypes: [TypeID],
-            externalLinkName: String
+            externalLinkName: String,
+            returnTypeOverride: TypeID? = nil
         ) {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
@@ -1459,7 +1527,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: parameterTypes,
-                    returnType: listReturnType,
+                    returnType: returnTypeOverride ?? listReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
@@ -1475,27 +1543,38 @@ extension DataFlowSemaPhase {
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
-        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked")
-        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed")
+
+        // chunked(size: Int): List<List<E>> and windowed(size: Int, step: Int): List<List<E>>
+        // These return List<List<E>>, not List<E>.
+        let listOfListReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listReturnType)],
+            nullability: .nonNull
+        )))
+
+        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked", returnTypeOverride: listOfListReturnType)
+        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed", returnTypeOverride: listOfListReturnType)
         registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
 
         // distinctBy (HOF, selector lambda)
-        // NOTE: The selector return type is hard-coded to non-null `Any` instead of
-        // introducing a second type parameter `K : Any`. This mirrors the pattern used
-        // by other HOF selectors (sortedByDescending, etc.) and is sufficient because
-        // the runtime compares keys by handle/unboxed-value identity, not structural
-        // equality. Introducing `K` would require plumbing a second type parameter
-        // through KIR and codegen with no runtime behaviour change.
-        // KNOWN LIMITATION: Nullable keys (selectors returning `K?`) are not supported.
-        // Kotlin's `distinctBy` signature is `fun <T, K> Iterable<T>.distinctBy(selector: (T) -> K): List<T>`
-        // where `K` can be nullable, but this stub rejects selectors that return null.
+        // Kotlin's `distinctBy` is declared as an extension on Iterable<T>:
+        //   fun <T, K> Iterable<T>.distinctBy(selector: (T) -> K): List<T>
+        // The compiler models this as a synthetic member on List (not Iterable) because
+        // the stub system registers members on concrete collection interfaces.
+        // We use `Any?` as the selector return type (erasing K) so that selectors
+        // returning nullable keys (e.g., `{ it.name }` where `name` is `String?`)
+        // are accepted without a type error.  The runtime compares keys by
+        // handle/unboxed-value identity, so nullable vs non-null makes no behavioural
+        // difference at the ABI level.
+        // NOTE: The selector type `(T) -> Any?` must stay in sync with the expected
+        // type in CallTypeChecker+MemberCallInference.swift (case "distinctBy").
         let distinctByName = interner.intern("distinctBy")
         let distinctByFQName = listFQName + [distinctByName]
         if symbols.lookup(fqName: distinctByFQName) == nil {
             let selectorType = types.make(.functionType(FunctionType(
                 params: [listTypeParamType],
-                returnType: types.anyType,
+                returnType: types.nullableAnyType,
                 isSuspend: false,
                 nullability: .nonNull
             )))
@@ -1849,6 +1928,7 @@ extension DataFlowSemaPhase {
                     parameterTypes: [listTypeParamType],
                     returnType: types.intType,
                     typeParameterSymbols: [listTypeParamSymbol],
+                    typeParameterUpperBoundsList: [comparableElementBounds],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol
@@ -2822,7 +2902,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
@@ -2867,7 +2947,7 @@ extension DataFlowSemaPhase {
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableListInterfaceSymbol,
-            args: [.out(mlTypeParamType)],
+            args: [.invariant(mlTypeParamType)],
             nullability: .nonNull
         )))
         let paramType = types.make(.classType(ClassType(
