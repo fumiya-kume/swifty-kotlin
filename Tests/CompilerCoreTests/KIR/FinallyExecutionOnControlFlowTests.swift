@@ -131,10 +131,30 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
                 guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
+            // Find jump instructions that represent the break transfer.
+            let jumpIndices = body.indices.filter { index in
+                if case .jump = body[index] { return true }
+                return false
+            }
 
             XCTAssertGreaterThanOrEqual(
                 cleanupCallIndices.count, 1,
                 "Expected at least one inlined cleanup() call for finally block on break"
+            )
+            XCTAssertGreaterThanOrEqual(
+                jumpIndices.count, 1,
+                "Expected at least one jump instruction for break"
+            )
+
+            // At least one cleanup call must appear before a jump (the break).
+            let hasCleanupBeforeJump = cleanupCallIndices.contains { cleanupIndex in
+                jumpIndices.contains { jumpIndex in
+                    cleanupIndex < jumpIndex
+                }
+            }
+            XCTAssertTrue(
+                hasCleanupBeforeJump,
+                "finally block (cleanup()) must execute before the break jump"
             )
         }
     }
@@ -166,10 +186,30 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
                 guard case let .call(_, callee, _, _, _, _, _) = body[index] else { return false }
                 return ctx.interner.resolve(callee) == "cleanup"
             }
+            // Find jump instructions that represent the continue transfer.
+            let jumpIndices = body.indices.filter { index in
+                if case .jump = body[index] { return true }
+                return false
+            }
 
             XCTAssertGreaterThanOrEqual(
                 cleanupCallIndices.count, 1,
                 "Expected at least one inlined cleanup() call for finally block on continue"
+            )
+            XCTAssertGreaterThanOrEqual(
+                jumpIndices.count, 1,
+                "Expected at least one jump instruction for continue"
+            )
+
+            // At least one cleanup call must appear before a jump (the continue).
+            let hasCleanupBeforeJump = cleanupCallIndices.contains { cleanupIndex in
+                jumpIndices.contains { jumpIndex in
+                    cleanupIndex < jumpIndex
+                }
+            }
+            XCTAssertTrue(
+                hasCleanupBeforeJump,
+                "finally block (cleanup()) must execute before the continue jump"
             )
         }
     }
