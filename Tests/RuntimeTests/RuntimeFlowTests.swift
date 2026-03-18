@@ -117,6 +117,24 @@ func runtime_test_flow_collect_throw_on_first(_: Int, _ value: Int, _ outThrown:
     return 0
 }
 
+/// Emits 10_000 values (1..10000) to simulate a very large / "infinite-ish" source.
+@_cdecl("runtime_test_flow_emitter_large_source")
+func runtime_test_flow_emitter_large_source(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    for value in 1 ... 10_000 {
+        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+    }
+    return 0
+}
+
+/// Filter that rejects every element (always returns 0 / false).
+@_cdecl("runtime_test_flow_filter_reject_all")
+func runtime_test_flow_filter_reject_all(_: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeFlowTestState.recordFilterCall()
+    outThrown?.pointee = 0
+    return 0
+}
+
 final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
     override func resetIsolatedRuntimeTestState() {
         runtimeFlowTestState.reset()
@@ -185,6 +203,29 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         let snapshot = runtimeFlowTestState.snapshot()
         XCTAssertEqual(snapshot.values, [1], "Collector throw should stop subsequent emissions.")
         XCTAssertEqual(snapshot.collectorCalls, 1)
+    }
+
+    func testTakeFollowedByRejectAllFilterTerminatesOverLargeSource() {
+        // Regression: .take(n) followed by a filter that drops everything must still
+        // terminate promptly -- the take counter exhaustion must propagate even when
+        // downstream ops drop the element via early return.
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_large_source as RuntimeFlowEmitterEntry, to: Int.self)
+        let filterPtr = unsafeBitCast(runtime_test_flow_filter_reject_all as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let taken = kk_flow_emit(flowHandle, 3, RuntimeFlowTag.take.rawValue)
+        let filtered = kk_flow_emit(taken, filterPtr, RuntimeFlowTag.filter.rawValue)
+
+        _ = kk_flow_collect(filtered, collectorPtr, 0)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        // The filter rejects everything so nothing reaches the collector.
+        XCTAssertEqual(snapshot.values, [], "No elements should pass the reject-all filter.")
+        // take(3) allows exactly 3 elements through before terminating.
+        // The filter runs on each of those 3 elements but rejects them all.
+        XCTAssertEqual(snapshot.filterCalls, 3, "Filter should run exactly take(n) times, then pipeline terminates.")
+        XCTAssertEqual(snapshot.collectorCalls, 0, "Collector should never be called when filter rejects all.")
     }
 
     func testFlowRetainReleaseKeepsHandleAliveUntilLastRelease() {
