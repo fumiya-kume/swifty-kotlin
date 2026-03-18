@@ -2,6 +2,121 @@
 import Foundation
 
 extension ExprLowerer {
+
+    // MARK: - Finally Block Inlining Helper (CODE-001)
+
+    /// Inline enclosing finally blocks before a control-flow transfer.
+    ///
+    /// For `return`, all enclosing finally blocks are inlined (a return always
+    /// exits every enclosing try scope).  For `break`/`continue`, use
+    /// `inlineFinallyBlocksForBreakOrContinue` instead, which only inlines
+    /// finally blocks whose try scope is exited by the jump.
+    ///
+    /// **Re-entrancy guard**: Each finally block is lowered with the stack
+    /// trimmed so that it (and any inner finally blocks already processed)
+    /// are excluded.  This prevents infinite recursion when a finally body
+    /// itself contains return/break/continue, because lowering that nested
+    /// control-flow will only see *outer* finally blocks on the stack.
+    ///
+    /// **Known limitation – exception routing**: Inlined finally
+    /// instructions are currently appended into the same instruction buffer
+    /// that `appendThrowAwareInstructions` later wraps.  If the inlined
+    /// finally throws, the exception may be routed to the *same* try-catch
+    /// dispatch label instead of propagating outward.
+    ///
+    /// TODO(CODE-001): Fix exception routing for inlined finally blocks.
+    /// The correct approach is to lower inlined finally blocks into a
+    /// separate instruction list and splice them *after* the throw-aware
+    /// wrapping, or to extend `appendThrowAwareInstructions` to accept an
+    /// alternate thrown target for inlined-finally instructions so they
+    /// propagate to the *outer* exception handler.
+    private func inlineAllEnclosingFinallyBlocks(
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) {
+        let blocks = driver.ctx.enclosingFinallyBlocks()
+        // For `return`, all enclosing finally blocks are inlined.  The blocks
+        // array corresponds 1:1 to finallyBlockStack, so stackIndex == array index.
+        let indexedBlocks = blocks.enumerated().map { (exprID: $0.element, stackIndex: $0.offset) }
+        inlineFinallyBlocks(
+            indexedBlocks,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+    }
+
+    /// Inline only the finally blocks whose try scope is exited by a
+    /// `break` or `continue` targeting the given loop label.
+    ///
+    /// A finally block is skipped when the target loop was pushed *after*
+    /// the try-finally scope was entered (meaning the loop is nested inside
+    /// the try body and the break/continue stays within the try scope).
+    private func inlineFinallyBlocksForBreakOrContinue(
+        label: InternedString?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) {
+        let targetDepth = driver.ctx.breakTargetLoopDepth(for: label)
+        let indexedBlocks = driver.ctx.enclosingFinallyBlocksForBreakOrContinue(targetLoopDepth: targetDepth)
+        inlineFinallyBlocks(
+            indexedBlocks.map { (exprID: $0.exprID, stackIndex: $0.stackIndex) },
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+    }
+
+    /// Core finally-inlining logic shared by return and break/continue paths.
+    ///
+    /// Each entry in `blocks` contains a `stackIndex` — the original position
+    /// of the finally block in `finallyBlockStack`.  This is used with
+    /// `withFinallyStackDepth` to trim the stack to the correct depth so that
+    /// re-entrant lowering (e.g., a `return` inside an inlined finally) only
+    /// sees the outer finally blocks that precede it in the original stack.
+    ///
+    /// For `return`, the indices are 0..<count (the full stack).  For
+    /// `break`/`continue`, only a filtered subset is passed, and the indices
+    /// are the *original* positions — not sequential starting from 0.
+    private func inlineFinallyBlocks(
+        _ blocks: [(exprID: ExprID, stackIndex: Int)],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) {
+        guard !blocks.isEmpty else { return }
+
+        // Process innermost-first (reversed) so that the stack is trimmed
+        // correctly: for each finally block, we temporarily set the stack
+        // depth to its original stack index so that re-entrant lowering only
+        // sees outer blocks.
+        for i in stride(from: blocks.count - 1, through: 0, by: -1) {
+            let entry = blocks[i]
+            driver.ctx.withFinallyStackDepth(entry.stackIndex) {
+                _ = lowerExpr(
+                    entry.exprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+            }
+        }
+    }
+
     private func wrapLateinitReadIfNeeded(
         _ valueExpr: KIRExprID,
         symbol: SymbolID,
@@ -430,6 +545,15 @@ extension ExprLowerer {
             )
 
         case let .breakExpr(label, _):
+            // CODE-001: Inline only finally blocks whose try scope is exited
+            // by this break.  If the loop is nested inside a try body,
+            // break stays within the try scope and should not trigger finally.
+            inlineFinallyBlocksForBreakOrContinue(
+                label: label,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
             let targetLabel: Int32? = if let label {
                 driver.ctx.breakLabel(for: label)
             } else {
@@ -443,6 +567,14 @@ extension ExprLowerer {
             return unit
 
         case let .continueExpr(label, _):
+            // CODE-001: Inline only finally blocks whose try scope is exited
+            // by this continue.
+            inlineFinallyBlocksForBreakOrContinue(
+                label: label,
+                ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
             let targetLabel: Int32? = if let label {
                 driver.ctx.continueLabel(for: label)
             } else {
@@ -916,8 +1048,20 @@ extension ExprLowerer {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                // CODE-001: Inline all enclosing finally blocks before return.
+                inlineAllEnclosingFinallyBlocks(
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
                 instructions.append(.returnValue(lowered))
             } else {
+                // CODE-001: Inline all enclosing finally blocks before return.
+                inlineAllEnclosingFinallyBlocks(
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
                 instructions.append(.returnUnit)
             }
             let unit = arena.appendExpr(.unit, type: sema.types.nothingType)
