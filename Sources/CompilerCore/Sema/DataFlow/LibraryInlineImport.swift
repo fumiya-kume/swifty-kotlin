@@ -231,6 +231,13 @@ extension DataFlowSemaPhase {
                 lhs: KIRExprID(rawValue: lhs),
                 rhs: KIRExprID(rawValue: rhs)
             )
+        case "nonLocalReturn":
+            guard let valueRaw = pairs["value"], let value = Int32(valueRaw) else {
+                return nil
+            }
+            return .nonLocalReturn(KIRExprID(rawValue: value))
+        case "nonLocalReturnUnit":
+            return .nonLocalReturn(nil)
         case "call":
             guard let calleeEncoded = pairs["calleeB64"],
                   let calleeName = decodeBase64String(calleeEncoded)

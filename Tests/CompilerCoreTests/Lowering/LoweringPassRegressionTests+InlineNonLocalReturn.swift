@@ -207,10 +207,10 @@ extension LoweringPassRegressionTests {
         let inlineParamSym = SymbolID(rawValue: 602)
 
         let inlineArgExpr = arena.appendExpr(.temporary(0))
-        let falseExpr = arena.appendExpr(.boolLiteral(false))
+        let falseExpr = arena.appendExpr(.temporary(1))
         let callerArg = arena.appendExpr(.temporary(2))
         let callerResult = arena.appendExpr(.temporary(3))
-        let oneExpr = arena.appendExpr(.intLiteral(1))
+        let oneExpr = arena.appendExpr(.temporary(4))
 
         // Inline function: if param == false, non-local return param; else normal return 1
         let inlineFn = KIRFunction(
@@ -292,12 +292,13 @@ extension LoweringPassRegressionTests {
             "Expected returns from both non-local path and caller's own return"
         )
 
-        // An exit label should be emitted (nonLocalReturnLabelBase range).
+        // An exit label should be emitted (dynamically allocated above existing labels).
         let labels = loweredCaller.body.compactMap { instruction -> Int32? in
             guard case let .label(id) = instruction else { return nil }
             return id
         }
-        let hasExitLabel = labels.contains { $0 >= nonLocalReturnLabelBase }
+        // The inline body uses label 10, so the exit label should be > 10.
+        let hasExitLabel = labels.contains { $0 > 10 }
         XCTAssertTrue(hasExitLabel, "Expected a non-local return exit label")
 
         // No residual nonLocalReturn.
@@ -397,12 +398,14 @@ extension LoweringPassRegressionTests {
         }
         XCTAssertFalse(hasNonLocalReturn)
 
-        // No exit labels from non-local return handling (labels >= nonLocalReturnLabelBase).
+        // No exit labels from non-local return handling should be present.
+        // The inline function body has no labels, so exit labels would be
+        // allocated starting from 0. With no non-local returns, no exit
+        // labels should be emitted at all.
         let labels = loweredCaller.body.compactMap { instruction -> Int32? in
             guard case let .label(id) = instruction else { return nil }
             return id
         }
-        let hasExitLabel = labels.contains { $0 >= nonLocalReturnLabelBase }
-        XCTAssertFalse(hasExitLabel, "No non-local return labels expected for normal inline expansion")
+        XCTAssertTrue(labels.isEmpty, "No non-local return labels expected for normal inline expansion")
     }
 }

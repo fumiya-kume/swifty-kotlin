@@ -7,15 +7,8 @@ struct InlineExpansion {
     let hasNonLocalReturn: Bool
 }
 
-/// Label offset used for non-local return exit labels to avoid collision
-/// with user labels and coroutine dispatch labels.
-let nonLocalReturnLabelBase: Int32 = 5000
-
 final class InlineLoweringPass: LoweringPass {
     static let name = "InlineLowering"
-
-    /// Counter used to generate unique non-local return exit labels.
-    private var nextNonLocalReturnLabel: Int32 = nonLocalReturnLabelBase
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
         for decl in module.arena.declarations {
@@ -57,6 +50,27 @@ final class InlineLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
+    /// Compute the next available label ID by scanning all labels in the body.
+    /// Returns `maxExistingLabel + 1`, ensuring no collisions with existing labels.
+    private func nextAvailableLabel(in body: [KIRInstruction]) -> Int32 {
+        var maxLabel: Int32 = -1
+        for instruction in body {
+            switch instruction {
+            case let .label(id):
+                maxLabel = max(maxLabel, id)
+            case let .jump(target):
+                maxLabel = max(maxLabel, target)
+            case let .jumpIfEqual(_, _, target):
+                maxLabel = max(maxLabel, target)
+            case let .jumpIfNotNull(_, target):
+                maxLabel = max(maxLabel, target)
+            default:
+                break
+            }
+        }
+        return maxLabel + 1
+    }
+
     private func inlineTransform(
         function: KIRFunction,
         inlineFunctionsBySymbol: [SymbolID: KIRFunction],
@@ -69,6 +83,9 @@ final class InlineLoweringPass: LoweringPass {
         var loweredBody: [KIRInstruction] = []
         loweredBody.reserveCapacity(function.body.count)
         var aliases: [KIRExprID: KIRExprID] = [:]
+
+        // Dynamically allocate exit labels above any existing label in the function.
+        var nextExitLabel = nextAvailableLabel(in: function.body)
 
         for originalInstruction in function.body {
             let instruction = rewriteInstruction(originalInstruction, aliases: aliases)
@@ -106,17 +123,17 @@ final class InlineLoweringPass: LoweringPass {
 
             if expansion.hasNonLocalReturn {
                 // The expansion contains non-local returns from lambdas.
-                // These are already emitted as returnValue/returnUnit in
-                // the expansion instructions (converted from nonLocalReturn).
-                // We need to emit the expansion, then add a skip label so
-                // that the normal (non-return) path can continue past.
-                let exitLabel = nextNonLocalReturnLabel
-                nextNonLocalReturnLabel += 1
+                // Rewrite each nonLocalReturn into a real return from the caller,
+                // then place an exit label so normal control flow continues past
+                // the expansion site.
 
-                // Rewrite nonLocalReturn instructions in the expansion:
-                // each nonLocalReturn becomes a real return from the caller.
-                // Code after a non-local return in the expansion is dead,
-                // but we emit it all and let the backend handle dead code.
+                // Account for labels inside the expansion before allocating.
+                let expansionMax = nextAvailableLabel(in: expansion.instructions)
+                nextExitLabel = max(nextExitLabel, expansionMax)
+
+                let exitLabel = nextExitLabel
+                nextExitLabel += 1
+
                 for expandedInstruction in expansion.instructions {
                     switch expandedInstruction {
                     case let .nonLocalReturn(value):
@@ -130,28 +147,22 @@ final class InlineLoweringPass: LoweringPass {
                     }
                 }
 
-                // After the inlined body, place the exit label so normal
-                // control flow (from the inline function's own return)
-                // continues here.
+                // Place exit label so the normal (non-return) path from the
+                // inline function's own return can continue in the caller.
                 loweredBody.append(.label(exitLabel))
-                if let result {
-                    if let returnedExpr = expansion.returnedExpr {
-                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
-                    } else {
-                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
-                        aliases[result] = unitExpr
-                    }
-                }
             } else {
                 // No non-local returns -- use the original simple expansion path.
                 loweredBody.append(contentsOf: expansion.instructions)
-                if let result {
-                    if let returnedExpr = expansion.returnedExpr {
-                        aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
-                    } else {
-                        let unitExpr = module.arena.appendExpr(.unit, type: unitType)
-                        aliases[result] = unitExpr
-                    }
+            }
+
+            // Alias the call result to the expansion's returned expression (shared
+            // for both non-local-return and normal paths).
+            if let result {
+                if let returnedExpr = expansion.returnedExpr {
+                    aliases[result] = resolveAlias(of: returnedExpr, aliases: aliases)
+                } else {
+                    let unitExpr = module.arena.appendExpr(.unit, type: unitType)
+                    aliases[result] = unitExpr
                 }
             }
         }
