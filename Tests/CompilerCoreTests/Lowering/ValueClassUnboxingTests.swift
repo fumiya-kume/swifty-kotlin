@@ -77,7 +77,6 @@ final class ValueClassUnboxingTests: XCTestCase {
         // Inspect the lowered KIR to confirm that constructor calls are
         // still present (not rewritten to .copy instructions).
         var hasConstructorCall = false
-        var hasCopyRewrite = false
         for decl in module.arena.declarations {
             guard case let .function(function) = decl else { continue }
             for instruction in function.body {
@@ -89,18 +88,15 @@ final class ValueClassUnboxingTests: XCTestCase {
                     {
                         hasConstructorCall = true
                     }
-                case .copy:
-                    hasCopyRewrite = true
                 default:
                     break
                 }
             }
         }
 
-        // Since the pass is disabled, the constructor call should remain
-        // and no .copy rewrite should have been introduced by this pass.
-        // Note: other lowering passes may legitimately introduce .copy
-        // instructions, so we only assert the constructor call survives.
+        // Since the pass is disabled, the constructor call should remain.
+        // Note: we do not assert absence of .copy instructions because
+        // other lowering passes may legitimately introduce them.
         XCTAssertTrue(
             hasConstructorCall,
             "Constructor call should be preserved when ValueClassUnboxingPass is disabled"
