@@ -695,33 +695,22 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- STDLIB-538: Rewrite hasPrevious()/previous() on list iterator ---
-                    if callee == lookup.hasPreviousName, arguments.count == 1 {
-                        let argID = arguments[0]
-                        if listIteratorExprIDs.contains(argID.rawValue) {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: lookup.kkListIteratorHasPreviousName,
-                                arguments: arguments,
-                                result: result,
-                                canThrow: false,
-                                thrownResult: nil
-                            ))
-                            continue
-                        }
-                    }
-                    if callee == lookup.previousName, arguments.count == 1 {
-                        let argID = arguments[0]
-                        if listIteratorExprIDs.contains(argID.rawValue) {
-                            loweredBody.append(.call(
-                                symbol: nil,
-                                callee: lookup.kkListIteratorPreviousName,
-                                arguments: arguments,
-                                result: result,
-                                canThrow: false,
-                                thrownResult: nil
-                            ))
-                            continue
-                        }
+                    let listIteratorMemberRewrites: [(InternedString, InternedString)] = [
+                        (lookup.hasPreviousName, lookup.kkListIteratorHasPreviousName),
+                        (lookup.previousName, lookup.kkListIteratorPreviousName),
+                    ]
+                    if arguments.count == 1,
+                       let runtimeCallee = listIteratorMemberRewrites.first(where: { $0.0 == callee })?.1,
+                       listIteratorExprIDs.contains(arguments[0].rawValue) {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: runtimeCallee,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
                     }
 
                     // --- Rewrite collection member calls ---
