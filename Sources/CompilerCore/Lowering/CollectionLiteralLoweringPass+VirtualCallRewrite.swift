@@ -1506,21 +1506,16 @@ extension CollectionLiteralLoweringPass {
 
         // readLines() → kk_file_readLines (throws, result is List<String>)
         if callee == lookup.readLinesName, arguments.isEmpty {
-            let readResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: nil
-            )
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkFileReadLinesName,
                 arguments: [receiver],
-                result: readResult,
+                result: result,
                 canThrow: origCanThrow,
                 thrownResult: origThrownResult
             ))
             if let result {
                 listExprIDs.insert(result.rawValue)
-                listExprIDs.insert(readResult.rawValue)
-                loweredBody.append(.copy(from: readResult, to: result))
             }
             return true
         }
@@ -1592,14 +1587,18 @@ extension CollectionLiteralLoweringPass {
 
         // forEachLine(action) → kk_file_forEachLine (throws)
         if callee == lookup.forEachLineName, arguments.count == 1 {
-            loweredBody.append(.call(
-                symbol: nil,
-                callee: lookup.kkFileForEachLineName,
-                arguments: [receiver] + arguments,
+            let closureRaw = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: closureRaw, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkFileForEachLineName,
+                receiver: receiver,
+                arguments: arguments + [closureRaw],
                 result: result,
-                canThrow: origCanThrow,
-                thrownResult: origThrownResult
-            ))
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
             return true
         }
 
@@ -1633,21 +1632,16 @@ extension CollectionLiteralLoweringPass {
         // Track result in listExprIDs so downstream list HOF rewrites fire
         // after null-check / safe-call unwrapping propagates via .copy.
         if callee == lookup.listFilesName, arguments.isEmpty {
-            let listResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: nil
-            )
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkFileListFilesName,
                 arguments: [receiver],
-                result: listResult,
+                result: result,
                 canThrow: false,
                 thrownResult: nil
             ))
             if let result {
                 listExprIDs.insert(result.rawValue)
-                listExprIDs.insert(listResult.rawValue)
-                loweredBody.append(.copy(from: listResult, to: result))
             }
             return true
         }
@@ -1656,21 +1650,16 @@ extension CollectionLiteralLoweringPass {
         // Track result in listExprIDs so chained operations like
         // file.walk().forEach { ... } are correctly rewritten.
         if callee == lookup.walkName, arguments.isEmpty {
-            let walkResult = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)), type: nil
-            )
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkFileWalkName,
                 arguments: [receiver],
-                result: walkResult,
+                result: result,
                 canThrow: false,
                 thrownResult: nil
             ))
             if let result {
                 listExprIDs.insert(result.rawValue)
-                listExprIDs.insert(walkResult.rawValue)
-                loweredBody.append(.copy(from: walkResult, to: result))
             }
             return true
         }
