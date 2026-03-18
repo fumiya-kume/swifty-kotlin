@@ -198,6 +198,13 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        registerCollectionToListMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+
         registerSyntheticMutableMapStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -627,6 +634,59 @@ extension DataFlowSemaPhase {
         )
 
         return collectionInterfaceSymbol
+    }
+
+    /// Register `Collection<E>.toList(): List<E>` so that `keys.toList()` / `values.toList()` resolve.
+    /// Must be called after both Collection and List stubs are registered.
+    private func registerCollectionToListMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        let collectionFQName = kotlinCollectionsPkg + [interner.intern("Collection")]
+        guard let typeParamSymbol = symbols.lookup(
+            fqName: collectionFQName + [interner.intern("E")]
+        ) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+        let collectionReceiverType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let listReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberName = interner.intern("toList")
+        let memberFQName = collectionFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_collection_toList", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: collectionReceiverType,
+                parameterTypes: [],
+                returnType: listReturnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     private func registerSyntheticIterableStub(
@@ -4217,6 +4277,7 @@ extension DataFlowSemaPhase {
             )
         }
         symbols.setDirectSupertypes([mapInterfaceSymbol], for: mutableMapSymbol)
+        types.setNominalDirectSupertypes([mapInterfaceSymbol], for: mutableMapSymbol)
 
         let keyName = interner.intern("K")
         let valueName = interner.intern("V")

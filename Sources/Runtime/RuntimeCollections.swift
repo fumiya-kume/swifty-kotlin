@@ -745,6 +745,17 @@ public func kk_set_toList(_ setRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: set.elements))
 }
 
+@_cdecl("kk_collection_toList")
+public func kk_collection_toList(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: list.elements))
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return registerRuntimeObject(RuntimeListBox(elements: set.elements))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
 // MARK: - Set Operations (STDLIB-266)
 
 @_cdecl("kk_set_intersect")
