@@ -15,14 +15,20 @@ final class KIRLoweringContext {
     var currentImplicitReceiverSymbol: SymbolID?
     var currentFunctionSymbol: SymbolID?
     var loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)] = []
-    /// Stack of enclosing finally block AST expression IDs.
+    /// Stack of enclosing finally block entries.
+    /// Each entry records the finally block expression ID and the loop-control-stack
+    /// depth at the time the try-finally scope was entered.  This depth is used to
+    /// determine whether a `break`/`continue` exits the try scope (and should inline
+    /// the finally block) or stays within the same try scope (and should skip it).
+    ///
     /// When a `return`, `break`, or `continue` is lowered inside a try-finally,
     /// the compiler inlines the finally block code before the control-flow transfer
     /// so that finally semantics are preserved (CODE-001).
     ///
-    /// Use `pushFinallyBlock`, `popFinallyBlock`, and `withFinallyStackDepth`
+    /// Use `pushFinallyBlock`, `popFinallyBlock`, `enclosingFinallyBlocks`,
+    /// `enclosingFinallyBlocksForControlFlow`, and `withFinallyStackDepth`
     /// instead of mutating this property directly.
-    private(set) var finallyBlockStack: [ExprID] = []
+    private(set) var finallyBlockStack: [(exprID: ExprID, loopDepth: Int)] = []
     var nextLoopLabel: Int32 = 10000
 
     // MARK: - Module-Level State (accumulated across entire pass)
@@ -48,7 +54,7 @@ final class KIRLoweringContext {
         let currentImplicitReceiverSymbol: SymbolID?
         let currentFunctionSymbol: SymbolID?
         let loopControlStack: [(continueLabel: Int32, breakLabel: Int32, name: InternedString?)]
-        let finallyBlockStack: [ExprID]
+        let finallyBlockStack: [(exprID: ExprID, loopDepth: Int)]
         let nextLoopLabel: Int32
     }
 
@@ -170,27 +176,60 @@ final class KIRLoweringContext {
     // MARK: - Finally Block Stack (CODE-001)
 
     func pushFinallyBlock(_ exprID: ExprID) {
-        finallyBlockStack.append(exprID)
+        finallyBlockStack.append((exprID: exprID, loopDepth: loopControlStack.count))
     }
 
     @discardableResult
     func popFinallyBlock() -> ExprID? {
-        finallyBlockStack.popLast()
+        finallyBlockStack.popLast()?.exprID
     }
 
-    /// Returns the current stack of enclosing finally blocks (outermost first).
+    /// Returns the current stack of enclosing finally block expression IDs (outermost first).
     func enclosingFinallyBlocks() -> [ExprID] {
+        finallyBlockStack.map(\.exprID)
+    }
+
+    /// Returns enclosing finally block expression IDs that should be inlined
+    /// for a `break` or `continue` targeting the loop at `targetLoopDepth`.
+    ///
+    /// A finally block should be inlined only when the break/continue exits
+    /// its enclosing try scope.  A finally entry with `loopDepth > targetLoopDepth`
+    /// means the try was entered when more loops were on the stack than the
+    /// target loop's position, i.e. the try is nested inside the target loop,
+    /// so the break/continue exits the try scope and must run finally.
+    ///
+    /// Entries with `loopDepth <= targetLoopDepth` mean the try encloses the
+    /// target loop, so break/continue stays within the try scope and the
+    /// finally block should NOT be inlined.
+    func enclosingFinallyBlocksForBreakOrContinue(targetLoopDepth: Int) -> [ExprID] {
         finallyBlockStack
+            .filter { $0.loopDepth > targetLoopDepth }
+            .map(\.exprID)
+    }
+
+    /// Returns the loop-control-stack depth for the loop targeted by a `break`.
+    /// This is the index of the target loop entry in `loopControlStack`.
+    func breakTargetLoopDepth(for name: InternedString?) -> Int {
+        if let name {
+            if let idx = loopControlStack.lastIndex(where: { $0.name == name }) {
+                return idx
+            }
+        }
+        return max(0, loopControlStack.count - 1)
+    }
+
+    /// Returns the loop-control-stack depth for the loop targeted by a `continue`.
+    func continueTargetLoopDepth(for name: InternedString?) -> Int {
+        breakTargetLoopDepth(for: name)
     }
 
     /// Temporarily trim the finally block stack to `depth` entries, execute
-    /// `body`, then restore the stack to its previous state.  This avoids
-    /// allocating intermediate arrays when lowering inlined finally blocks
-    /// with progressively trimmed stacks (CODE-001).
+    /// `body`, then restore the stack to its previous state.  Uses suffix
+    /// save/restore to avoid copy-on-write of the full array (CODE-001).
     func withFinallyStackDepth<T>(_ depth: Int, _ body: () throws -> T) rethrows -> T {
-        let saved = finallyBlockStack
+        let removedSuffix = Array(finallyBlockStack[depth...])
         finallyBlockStack.removeSubrange(depth..<finallyBlockStack.count)
-        defer { finallyBlockStack = saved }
+        defer { finallyBlockStack.append(contentsOf: removedSuffix) }
         return try body()
     }
 

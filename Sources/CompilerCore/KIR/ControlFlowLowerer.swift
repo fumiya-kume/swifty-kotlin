@@ -315,16 +315,11 @@ final class ControlFlowLowerer {
 
         // CODE-001: Push finally block so that return/break/continue inside the
         // try body or catch bodies will inline the finally code before transferring.
-        // We use a flag + defer to guarantee the stack is cleaned up even if an
-        // unexpected early return occurs between push and the explicit pop below.
-        var finallyBlockPopped = false
+        // The block is popped explicitly before lowering the finally body itself
+        // (see the pop site below) so that the finally body does not see itself
+        // on the stack.
         if let finallyExpr {
             driver.ctx.pushFinallyBlock(finallyExpr)
-        }
-        defer {
-            if !finallyBlockPopped, finallyExpr != nil {
-                driver.ctx.popFinallyBlock()
-            }
         }
 
         var bodyInstructions: [KIRInstruction] = []
@@ -569,10 +564,8 @@ final class ControlFlowLowerer {
 
         // CODE-001: Pop the finally block before lowering the finally label itself,
         // so that the finally body lowering does not see itself on the stack.
-        // Mark as popped so the defer guard above does not double-pop.
         if finallyExpr != nil {
             driver.ctx.popFinallyBlock()
-            finallyBlockPopped = true
         }
 
         instructions.append(.label(finallyLabel))

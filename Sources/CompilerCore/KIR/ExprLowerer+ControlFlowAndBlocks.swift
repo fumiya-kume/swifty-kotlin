@@ -5,8 +5,12 @@ extension ExprLowerer {
 
     // MARK: - Finally Block Inlining Helper (CODE-001)
 
-    /// Inline all enclosing finally blocks before a control-flow transfer
-    /// (return, break, or continue).
+    /// Inline enclosing finally blocks before a control-flow transfer.
+    ///
+    /// For `return`, all enclosing finally blocks are inlined (a return always
+    /// exits every enclosing try scope).  For `break`/`continue`, use
+    /// `inlineFinallyBlocksForBreakOrContinue` instead, which only inlines
+    /// finally blocks whose try scope is exited by the jump.
     ///
     /// **Re-entrancy guard**: Each finally block is lowered with the stack
     /// trimmed so that it (and any inner finally blocks already processed)
@@ -14,30 +18,19 @@ extension ExprLowerer {
     /// itself contains return/break/continue, because lowering that nested
     /// control-flow will only see *outer* finally blocks on the stack.
     ///
-    /// **Known limitation – scope filtering**: break/continue currently
-    /// inline *all* enclosing finally blocks regardless of whether the
-    /// target loop is inside or outside the try scope.  When a loop is
-    /// nested entirely within a try body, break/continue only exits the
-    /// loop, not the try scope, so the finally block should *not* execute
-    /// yet.  A future fix should associate each finally-stack entry with
-    /// the loop-control-stack depth at push time and skip inlining for
-    /// entries whose scope the target label falls inside of.
-    ///
     /// **Known limitation – exception routing**: Inlined finally
     /// instructions are currently appended into the same instruction buffer
-    /// (bodyInstructions / catchBodyInstructions) that
-    /// `appendThrowAwareInstructions` later wraps.  If the inlined finally
-    /// throws, the exception is routed to the *same* try-catch's dispatch
-    /// label instead of propagating outward.
+    /// that `appendThrowAwareInstructions` later wraps.  If the inlined
+    /// finally throws, the exception may be routed to the *same* try-catch
+    /// dispatch label instead of propagating outward.
     ///
     /// TODO(CODE-001): Fix exception routing for inlined finally blocks.
     /// The correct approach is to lower inlined finally blocks into a
     /// separate instruction list and splice them *after* the throw-aware
-    /// wrapping of the surrounding body/catch instructions, or to extend
-    /// `appendThrowAwareInstructions` to accept an alternate thrown target
-    /// for inlined-finally instructions so they propagate to the *outer*
-    /// exception handler rather than re-entering the same try-catch dispatch.
-    private func inlineEnclosingFinallyBlocks(
+    /// wrapping, or to extend `appendThrowAwareInstructions` to accept an
+    /// alternate thrown target for inlined-finally instructions so they
+    /// propagate to the *outer* exception handler.
+    private func inlineAllEnclosingFinallyBlocks(
         ast: ASTModule,
         sema: SemaModule,
         arena: KIRArena,
@@ -46,12 +39,55 @@ extension ExprLowerer {
         instructions: inout [KIRInstruction]
     ) {
         let blocks = driver.ctx.enclosingFinallyBlocks()
+        inlineFinallyBlocks(
+            blocks,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+    }
+
+    /// Inline only the finally blocks whose try scope is exited by a
+    /// `break` or `continue` targeting the given loop label.
+    ///
+    /// A finally block is skipped when the target loop was pushed *after*
+    /// the try-finally scope was entered (meaning the loop is nested inside
+    /// the try body and the break/continue stays within the try scope).
+    private func inlineFinallyBlocksForBreakOrContinue(
+        label: InternedString?,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) {
+        let targetDepth = driver.ctx.breakTargetLoopDepth(for: label)
+        let blocks = driver.ctx.enclosingFinallyBlocksForBreakOrContinue(targetLoopDepth: targetDepth)
+        inlineFinallyBlocks(
+            blocks,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+    }
+
+    /// Core finally-inlining logic shared by return and break/continue paths.
+    private func inlineFinallyBlocks(
+        _ blocks: [ExprID],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) {
         guard !blocks.isEmpty else { return }
 
         // Process innermost-first (reversed) so that the stack is trimmed
         // correctly: for each finally block at index i, we temporarily set the
         // stack depth to i so that re-entrant lowering only sees outer blocks.
-        // Uses withFinallyStackDepth to avoid O(n^2) array allocations.
+        // Uses withFinallyStackDepth to avoid full-array copy-on-write.
         for i in stride(from: blocks.count - 1, through: 0, by: -1) {
             let finallyExprID = blocks[i]
             driver.ctx.withFinallyStackDepth(i) {
@@ -496,8 +532,11 @@ extension ExprLowerer {
             )
 
         case let .breakExpr(label, _):
-            // CODE-001: Inline enclosing finally blocks before break.
-            inlineEnclosingFinallyBlocks(
+            // CODE-001: Inline only finally blocks whose try scope is exited
+            // by this break.  If the loop is nested inside a try body,
+            // break stays within the try scope and should not trigger finally.
+            inlineFinallyBlocksForBreakOrContinue(
+                label: label,
                 ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
@@ -515,8 +554,10 @@ extension ExprLowerer {
             return unit
 
         case let .continueExpr(label, _):
-            // CODE-001: Inline enclosing finally blocks before continue.
-            inlineEnclosingFinallyBlocks(
+            // CODE-001: Inline only finally blocks whose try scope is exited
+            // by this continue.
+            inlineFinallyBlocksForBreakOrContinue(
+                label: label,
                 ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
@@ -994,16 +1035,16 @@ extension ExprLowerer {
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
-                // CODE-001: Inline enclosing finally blocks before return.
-                inlineEnclosingFinallyBlocks(
+                // CODE-001: Inline all enclosing finally blocks before return.
+                inlineAllEnclosingFinallyBlocks(
                     ast: ast, sema: sema, arena: arena, interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
                 instructions.append(.returnValue(lowered))
             } else {
-                // CODE-001: Inline enclosing finally blocks before return.
-                inlineEnclosingFinallyBlocks(
+                // CODE-001: Inline all enclosing finally blocks before return.
+                inlineAllEnclosingFinallyBlocks(
                     ast: ast, sema: sema, arena: arena, interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions

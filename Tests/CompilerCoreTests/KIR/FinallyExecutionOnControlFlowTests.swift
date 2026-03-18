@@ -125,21 +125,6 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             let module = try XCTUnwrap(ctx.kir)
             let body = try findKIRFunctionBody(named: "loopWithBreak", in: module, interner: ctx.interner)
 
-            // Identify the break target label: in a while loop the break label
-            // is the label that follows the loop body.  We find it by looking
-            // for labels that are jumped to but are *not* the loop condition
-            // (continue) label.  The break target is the label whose .label()
-            // entry appears after the loop back-edge.
-            //
-            // Heuristic: collect all jump targets and all label definitions.
-            // The break label is the one that appears after the last back-edge
-            // jump.  For a simple while(true){break} the break jump target is
-            // the label placed after the entire while construct.
-            var labelDefinitions = Set<Int32>()
-            for instr in body {
-                if case let .label(l) = instr { labelDefinitions.insert(l) }
-            }
-
             // Find the first label defined in the body (the while-condition label).
             let firstLabelIndex = body.firstIndex(where: { if case .label = $0 { return true }; return false })
             var conditionLabel: Int32?
@@ -154,7 +139,8 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             }
 
             // Find jump instructions whose target is NOT the continue (condition) label,
-            // i.e. break jumps.  This filters out loop back-edges and condition branches.
+            // i.e. break jumps.  Match by specific target label to avoid false positives
+            // from unrelated jumps (back-edges, condition dispatch, etc.).
             let breakJumpIndices = body.indices.filter { index in
                 guard case let .jump(target) = body[index] else { return false }
                 return target != conditionLabel
@@ -170,15 +156,23 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
             )
 
             // At least one cleanup call must appear immediately before a break jump
-            // (within the same basic block).
-            let hasCleanupBeforeBreakJump = cleanupCallIndices.contains { cleanupIndex in
+            // with no intervening label (i.e., within the same basic block and adjacent).
+            let hasCleanupAdjacentToBreakJump = cleanupCallIndices.contains { cleanupIndex in
                 breakJumpIndices.contains { jumpIndex in
-                    cleanupIndex < jumpIndex
+                    guard cleanupIndex < jumpIndex else { return false }
+                    // Verify no label definitions between cleanup and jump
+                    // (which would indicate a different basic block).
+                    let between = (cleanupIndex + 1)..<jumpIndex
+                    let hasInterveningLabel = between.contains { idx in
+                        if case .label = body[idx] { return true }
+                        return false
+                    }
+                    return !hasInterveningLabel
                 }
             }
             XCTAssertTrue(
-                hasCleanupBeforeBreakJump,
-                "finally block (cleanup()) must execute before the break jump"
+                hasCleanupAdjacentToBreakJump,
+                "finally block (cleanup()) must execute before the break jump within the same basic block"
             )
         }
     }
@@ -248,15 +242,22 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
                 "Expected at least one jump instruction for continue"
             )
 
-            // At least one cleanup call must appear before a continue jump.
-            let hasCleanupBeforeContinueJump = cleanupCallIndices.contains { cleanupIndex in
+            // At least one cleanup call must appear before a continue jump
+            // with no intervening label (within the same basic block).
+            let hasCleanupAdjacentToContinueJump = cleanupCallIndices.contains { cleanupIndex in
                 continueJumpIndices.contains { jumpIndex in
-                    cleanupIndex < jumpIndex
+                    guard cleanupIndex < jumpIndex else { return false }
+                    let between = (cleanupIndex + 1)..<jumpIndex
+                    let hasInterveningLabel = between.contains { idx in
+                        if case .label = body[idx] { return true }
+                        return false
+                    }
+                    return !hasInterveningLabel
                 }
             }
             XCTAssertTrue(
-                hasCleanupBeforeContinueJump,
-                "finally block (cleanup()) must execute before the continue jump"
+                hasCleanupAdjacentToContinueJump,
+                "finally block (cleanup()) must execute before the continue jump within the same basic block"
             )
         }
     }
@@ -301,5 +302,37 @@ final class FinallyExecutionOnControlFlowTests: XCTestCase {
         ctx.restoreScope(snapshot)
         XCTAssertEqual(ctx.enclosingFinallyBlocks().count, 1)
         XCTAssertEqual(ctx.enclosingFinallyBlocks().first, expr1)
+    }
+
+    func testFinallyBlockScopeFilteringSkipsInnerTryForBreak() {
+        // Simulates: while { try { break } finally { cleanup() } }
+        // The finally was pushed AFTER the loop, so break exits the try scope
+        // and should inline the finally block.
+        let ctx = KIRLoweringContext()
+        ctx.pushLoopControl(continueLabel: 100, breakLabel: 101, name: nil)
+        ctx.pushFinallyBlock(ExprID(rawValue: 42))
+
+        let targetDepth = ctx.breakTargetLoopDepth(for: nil)
+        let blocks = ctx.enclosingFinallyBlocksForBreakOrContinue(targetLoopDepth: targetDepth)
+        XCTAssertEqual(blocks.count, 1, "break exiting try scope should inline the finally block")
+
+        ctx.popFinallyBlock()
+        ctx.popLoopControl()
+    }
+
+    func testFinallyBlockScopeFilteringSkipsWhenLoopInsideTry() {
+        // Simulates: try { while { break } } finally { cleanup() }
+        // The finally was pushed BEFORE the loop, so break stays within
+        // the try scope and should NOT inline the finally block.
+        let ctx = KIRLoweringContext()
+        ctx.pushFinallyBlock(ExprID(rawValue: 42))
+        ctx.pushLoopControl(continueLabel: 200, breakLabel: 201, name: nil)
+
+        let targetDepth = ctx.breakTargetLoopDepth(for: nil)
+        let blocks = ctx.enclosingFinallyBlocksForBreakOrContinue(targetLoopDepth: targetDepth)
+        XCTAssertEqual(blocks.count, 0, "break inside try scope should NOT inline the finally block")
+
+        ctx.popLoopControl()
+        ctx.popFinallyBlock()
     }
 }
