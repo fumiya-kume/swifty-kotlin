@@ -50,8 +50,9 @@ final class InlineLoweringPass: LoweringPass {
         module.recordLowering(Self.name)
     }
 
-    /// Compute the next available label ID by scanning all labels in the body.
-    /// Returns `maxExistingLabel + 1`, ensuring no collisions with existing labels.
+    /// Compute the next available label ID by scanning all label references in the body.
+    /// Returns `maxLabelID + 1`, ensuring no collisions with existing labels.
+    /// Labels are allocated dynamically as `maxExistingLabel + 1` (not at a fixed offset).
     private func nextAvailableLabel(in body: [KIRInstruction]) -> Int32 {
         var maxLabel: Int32 = -1
         for instruction in body {
@@ -71,6 +72,61 @@ final class InlineLoweringPass: LoweringPass {
         return maxLabel + 1
     }
 
+    /// Remap all label IDs (in `.label`, `.jump`, `.jumpIfEqual`, `.jumpIfNotNull`)
+    /// in the given instructions so they start at `baseLabel`, preventing collisions
+    /// with the caller's existing labels.
+    private func remapLabels(
+        in instructions: [KIRInstruction],
+        baseLabel: Int32
+    ) -> (remapped: [KIRInstruction], nextLabel: Int32) {
+        // Collect all label IDs used in the expansion.
+        var labelIDs = Set<Int32>()
+        for inst in instructions {
+            switch inst {
+            case let .label(id):
+                labelIDs.insert(id)
+            case let .jump(target):
+                labelIDs.insert(target)
+            case let .jumpIfEqual(_, _, target):
+                labelIDs.insert(target)
+            case let .jumpIfNotNull(_, target):
+                labelIDs.insert(target)
+            default:
+                break
+            }
+        }
+
+        // If there are no labels, no remapping needed.
+        guard !labelIDs.isEmpty else {
+            return (instructions, baseLabel)
+        }
+
+        // Build a mapping from old label -> new label.
+        var mapping: [Int32: Int32] = [:]
+        var nextLabel = baseLabel
+        for id in labelIDs.sorted() {
+            mapping[id] = nextLabel
+            nextLabel += 1
+        }
+
+        // Apply the mapping.
+        let remapped = instructions.map { inst -> KIRInstruction in
+            switch inst {
+            case let .label(id):
+                return .label(mapping[id] ?? id)
+            case let .jump(target):
+                return .jump(mapping[target] ?? target)
+            case let .jumpIfEqual(lhs, rhs, target):
+                return .jumpIfEqual(lhs: lhs, rhs: rhs, target: mapping[target] ?? target)
+            case let .jumpIfNotNull(value, target):
+                return .jumpIfNotNull(value: value, target: mapping[target] ?? target)
+            default:
+                return inst
+            }
+        }
+        return (remapped, nextLabel)
+    }
+
     private func inlineTransform(
         function: KIRFunction,
         inlineFunctionsBySymbol: [SymbolID: KIRFunction],
@@ -84,7 +140,8 @@ final class InlineLoweringPass: LoweringPass {
         loweredBody.reserveCapacity(function.body.count)
         var aliases: [KIRExprID: KIRExprID] = [:]
 
-        // Dynamically allocate exit labels above any existing label in the function.
+        // Dynamically allocate labels above any existing label in the caller.
+        // Labels are allocated as maxExistingLabel + 1 (not at a fixed offset).
         var nextExitLabel = nextAvailableLabel(in: function.body)
 
         for originalInstruction in function.body {
@@ -121,20 +178,35 @@ final class InlineLoweringPass: LoweringPass {
                 continue
             }
 
+            // Remap labels in the expansion into the caller's label namespace
+            // to prevent collisions between caller labels and inlined callee labels.
+            let (remappedInstructions, nextLabelAfterRemap) = remapLabels(
+                in: expansion.instructions,
+                baseLabel: nextExitLabel
+            )
+            nextExitLabel = nextLabelAfterRemap
+
             if expansion.hasNonLocalReturn {
                 // The expansion contains non-local returns from lambdas.
-                // Rewrite each nonLocalReturn into a real return from the caller,
-                // then place an exit label so normal control flow continues past
-                // the expansion site.
+                // Rewrite each nonLocalReturn into a real return from the caller.
+                // If there is a potential fallthrough path (i.e., the expansion has
+                // a normal return expression), emit an exit label and jump to it
+                // so normal control flow continues past the expansion site.
 
-                // Account for labels inside the expansion before allocating.
-                let expansionMax = nextAvailableLabel(in: expansion.instructions)
-                nextExitLabel = max(nextExitLabel, expansionMax)
+                let hasFallthroughPath = expansion.returnedExpr != nil
+                let exitLabel: Int32?
+                if hasFallthroughPath {
+                    exitLabel = nextExitLabel
+                    nextExitLabel += 1
+                } else {
+                    exitLabel = nil
+                }
 
-                let exitLabel = nextExitLabel
-                nextExitLabel += 1
+                // Track whether we just emitted a terminator so we can skip
+                // unreachable instructions until the next label.
+                var afterTerminator = false
 
-                for expandedInstruction in expansion.instructions {
+                for expandedInstruction in remappedInstructions {
                     switch expandedInstruction {
                     case let .nonLocalReturn(value):
                         if let value {
@@ -142,21 +214,35 @@ final class InlineLoweringPass: LoweringPass {
                         } else {
                             loweredBody.append(.returnUnit)
                         }
-                    default:
+                        afterTerminator = true
+                    case .label:
+                        // A label starts a new block, so we are no longer after a terminator.
+                        afterTerminator = false
                         loweredBody.append(expandedInstruction)
+                    case .returnValue, .returnUnit:
+                        // The inline body's own return: jump to exit label instead,
+                        // so normal control flow continues in the caller.
+                        if let exitLabel {
+                            loweredBody.append(.jump(exitLabel))
+                        }
+                        afterTerminator = true
+                    default:
+                        if !afterTerminator {
+                            loweredBody.append(expandedInstruction)
+                        }
                     }
                 }
 
-                // Place exit label so the normal (non-return) path from the
-                // inline function's own return can continue in the caller.
-                loweredBody.append(.label(exitLabel))
+                // Only emit the exit label when there is a fallthrough path
+                // (avoids unreachable labeled blocks when the expansion always
+                // executes nonLocalReturn).
+                if let exitLabel {
+                    loweredBody.append(.label(exitLabel))
+                }
             } else {
                 // No non-local returns -- use the original simple expansion path.
-                // Still track labels introduced by this expansion to prevent
-                // collisions with exit labels allocated by later expansions.
-                let expansionMax = nextAvailableLabel(in: expansion.instructions)
-                nextExitLabel = max(nextExitLabel, expansionMax)
-                loweredBody.append(contentsOf: expansion.instructions)
+                // Labels have already been remapped above; nextExitLabel is up to date.
+                loweredBody.append(contentsOf: remappedInstructions)
             }
 
             // Alias the call result to the expansion's returned expression (shared

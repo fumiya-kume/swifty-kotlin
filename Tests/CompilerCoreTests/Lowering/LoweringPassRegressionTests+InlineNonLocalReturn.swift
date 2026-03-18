@@ -87,11 +87,13 @@ extension LoweringPassRegressionTests {
         }
 
         // The non-local return should have been converted to a real returnValue.
+        // We expect at least 2: one from the non-local return conversion and one
+        // from the caller's own return statement.
         let returnValues = loweredCaller.body.compactMap { instruction -> KIRExprID? in
             guard case let .returnValue(expr) = instruction else { return nil }
             return expr
         }
-        XCTAssertGreaterThanOrEqual(returnValues.count, 1, "Expected at least one returnValue from non-local return conversion")
+        XCTAssertGreaterThanOrEqual(returnValues.count, 2, "Expected returnValue from both non-local return conversion and caller's own return")
 
         // The inlined call should be removed (no call to 'runAndReturn').
         let calleeNames = extractCallees(from: loweredCaller.body, interner: interner)
@@ -178,12 +180,17 @@ extension LoweringPassRegressionTests {
             return
         }
 
-        // Should have returnUnit from the non-local return conversion.
-        let hasReturnUnit = loweredCaller.body.contains { instruction in
+        // Should have at least 2 returnUnit instructions: one from the non-local
+        // return conversion and one from the caller's own return statement.
+        let returnUnitCount = loweredCaller.body.filter { instruction in
             if case .returnUnit = instruction { return true }
             return false
-        }
-        XCTAssertTrue(hasReturnUnit, "Non-local return nil should become returnUnit")
+        }.count
+        XCTAssertGreaterThanOrEqual(returnUnitCount, 2, "Expected returnUnit from both non-local return conversion and caller's own return")
+
+        // The inlined call should be removed (no call to 'earlyExit').
+        let calleeNames = extractCallees(from: loweredCaller.body, interner: interner)
+        XCTAssertFalse(calleeNames.contains("earlyExit"), "Inline call should be expanded")
 
         // No residual nonLocalReturn.
         let hasNonLocalReturn = loweredCaller.body.contains { instruction in
@@ -293,13 +300,16 @@ extension LoweringPassRegressionTests {
         )
 
         // An exit label should be emitted (dynamically allocated above existing labels).
+        // With label remapping, the inline body's label 10 is remapped into the
+        // caller's namespace, and the exit label is allocated after all remapped labels.
         let labels = loweredCaller.body.compactMap { instruction -> Int32? in
             guard case let .label(id) = instruction else { return nil }
             return id
         }
-        // The inline body uses label 10, so the exit label should be > 10.
-        let hasExitLabel = labels.contains { $0 > 10 }
-        XCTAssertTrue(hasExitLabel, "Expected a non-local return exit label")
+        // Expect at least 2 labels: one from the remapped inline body and the exit label.
+        XCTAssertGreaterThanOrEqual(labels.count, 2, "Expected remapped body label and exit label")
+        // All labels should be unique (no collisions from remapping).
+        XCTAssertEqual(Set(labels).count, labels.count, "All labels should be unique after remapping")
 
         // No residual nonLocalReturn.
         let hasNonLocalReturn = loweredCaller.body.contains { instruction in
