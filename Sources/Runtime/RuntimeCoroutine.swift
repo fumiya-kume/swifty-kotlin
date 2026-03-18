@@ -517,10 +517,13 @@ public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(
             entryPointRaw: entryPointRaw,
             continuation: continuation
         )
+        RuntimeCoroutineScope.current = nil
         job.complete(with: result)
     }
     return Int(bitPattern: jobPtr)
@@ -601,7 +604,10 @@ public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        RuntimeCoroutineScope.current = nil
         job.complete(with: result)
     }
     return Int(bitPattern: jobPtr)
@@ -623,7 +629,10 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        RuntimeCoroutineScope.current = nil
         task.complete(with: result)
     }
     return Int(bitPattern: taskPtr)
@@ -994,6 +1003,11 @@ private func runtimeFlowDeliverValue(
 public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
 }
+
+/// Sentinel value returned by `kk_flow_emit` to signal that the pipeline has
+/// terminated (e.g. a `.take` counter was exhausted or the collector threw).
+/// Emitters should check for this value and stop emitting when they see it.
+private let runtimeFlowStopSentinel: Int = Int.min
 
 @_cdecl("kk_flow_emit")
 public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {

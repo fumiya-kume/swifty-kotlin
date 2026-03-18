@@ -23,6 +23,7 @@ private final class RuntimeFlowTestState: @unchecked Sendable {
     private var mapCallCount = 0
     private var filterCallCount = 0
     private var collectorCallCount = 0
+    private var emitCallCount = 0
 
     func reset() {
         lock.lock()
@@ -30,6 +31,13 @@ private final class RuntimeFlowTestState: @unchecked Sendable {
         mapCallCount = 0
         filterCallCount = 0
         collectorCallCount = 0
+        emitCallCount = 0
+        lock.unlock()
+    }
+
+    func recordEmitCall() {
+        lock.lock()
+        emitCallCount += 1
         lock.unlock()
     }
 
@@ -55,9 +63,9 @@ private final class RuntimeFlowTestState: @unchecked Sendable {
         return count
     }
 
-    func snapshot() -> (values: [Int], mapCalls: Int, filterCalls: Int, collectorCalls: Int) {
+    func snapshot() -> (values: [Int], mapCalls: Int, filterCalls: Int, collectorCalls: Int, emitCalls: Int) {
         lock.lock()
-        let snapshot = (values: collectedValues, mapCalls: mapCallCount, filterCalls: filterCallCount, collectorCalls: collectorCallCount)
+        let snapshot = (values: collectedValues, mapCalls: mapCallCount, filterCalls: filterCallCount, collectorCalls: collectorCallCount, emitCalls: emitCallCount)
         lock.unlock()
         return snapshot
     }
@@ -118,11 +126,17 @@ func runtime_test_flow_collect_throw_on_first(_: Int, _ value: Int, _ outThrown:
 }
 
 /// Emits 10_000 values (1..10000) to simulate a very large / "infinite-ish" source.
+/// Records each emit attempt and respects the stop sentinel so the emitter terminates
+/// early when the pipeline signals completion (e.g. take(n) exhaustion).
 @_cdecl("runtime_test_flow_emitter_large_source")
 func runtime_test_flow_emitter_large_source(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     for value in 1 ... 10_000 {
-        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+        runtimeFlowTestState.recordEmitCall()
+        let result = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+        if result == Int.min { // runtimeFlowStopSentinel
+            break
+        }
     }
     return 0
 }
@@ -209,6 +223,7 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         // Regression: .take(n) followed by a filter that drops everything must still
         // terminate promptly -- the take counter exhaustion must propagate even when
         // downstream ops drop the element via early return.
+        // Also validates that the *source emitter* stops early (important for infinite streams).
         let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_large_source as RuntimeFlowEmitterEntry, to: Int.self)
         let filterPtr = unsafeBitCast(runtime_test_flow_filter_reject_all as RuntimeFlowUnaryEntry, to: Int.self)
         let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
@@ -226,6 +241,10 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         // The filter runs on each of those 3 elements but rejects them all.
         XCTAssertEqual(snapshot.filterCalls, 3, "Filter should run exactly take(n) times, then pipeline terminates.")
         XCTAssertEqual(snapshot.collectorCalls, 0, "Collector should never be called when filter rejects all.")
+        // The emitter should stop after take(3) terminates the pipeline, NOT iterate
+        // all 10,000 elements. We allow take(n)+1 emits because the (n+1)th emit is
+        // where the emitter observes the stop sentinel.
+        XCTAssertLessThanOrEqual(snapshot.emitCalls, 4, "Emitter should stop around take(n) rather than iterating the whole 10,000-element source.")
     }
 
     func testFlowRetainReleaseKeepsHandleAliveUntilLastRelease() {
