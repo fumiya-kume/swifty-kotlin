@@ -394,22 +394,38 @@ public func kk_math_floor_float(_ value: Int) -> Int {
 
 @_cdecl("kk_float_roundToInt")
 public func kk_float_roundToInt(_ value: Int) -> Int {
-    Int(kk_bits_to_float(value).rounded(.toNearestOrAwayFromZero))
+    let f = kk_bits_to_float(value).rounded(.toNearestOrAwayFromZero)
+    if f.isNaN { return 0 }
+    if f >= Float(Int32.max) { return Int(Int32.max) }
+    if f <= Float(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(f))
 }
 
 @_cdecl("kk_double_roundToInt")
 public func kk_double_roundToInt(_ value: Int) -> Int {
-    Int(kk_bits_to_double(value).rounded(.toNearestOrAwayFromZero))
+    let d = kk_bits_to_double(value).rounded(.toNearestOrAwayFromZero)
+    if d.isNaN { return 0 }
+    if d >= Double(Int32.max) { return Int(Int32.max) }
+    if d <= Double(Int32.min) { return Int(Int32.min) }
+    return Int(Int32(d))
 }
 
 @_cdecl("kk_float_roundToLong")
 public func kk_float_roundToLong(_ value: Int) -> Int {
-    Int(kk_bits_to_float(value).rounded(.toNearestOrAwayFromZero))
+    let f = kk_bits_to_float(value).rounded(.toNearestOrAwayFromZero)
+    if f.isNaN { return 0 }
+    if f >= Float(Int64.max) { return Int(Int64.max) }
+    if f <= Float(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(f))
 }
 
 @_cdecl("kk_double_roundToLong")
 public func kk_double_roundToLong(_ value: Int) -> Int {
-    Int(kk_bits_to_double(value).rounded(.toNearestOrAwayFromZero))
+    let d = kk_bits_to_double(value).rounded(.toNearestOrAwayFromZero)
+    if d.isNaN { return 0 }
+    if d >= Double(Int64.max) { return Int(Int64.max) }
+    if d <= Double(Int64.min) { return Int(Int64.min) }
+    return Int(Int64(d))
 }
 
 // MARK: - STDLIB-512~513: ulp / nextUp / nextDown extensions

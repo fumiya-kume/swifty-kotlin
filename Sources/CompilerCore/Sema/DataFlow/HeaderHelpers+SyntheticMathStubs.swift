@@ -128,6 +128,110 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-510~511: roundToInt / roundToLong extension functions
+        registerSyntheticMathTopLevelFunction(
+            named: "roundToInt",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: floatType,
+            returnType: types.intType,
+            externalLinkName: "kk_float_roundToInt",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "roundToInt",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.intType,
+            externalLinkName: "kk_double_roundToInt",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "roundToLong",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: floatType,
+            returnType: types.longType,
+            externalLinkName: "kk_float_roundToLong",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "roundToLong",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.longType,
+            externalLinkName: "kk_double_roundToLong",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-512~513: ulp / nextUp / nextDown extension properties
+        registerSyntheticMathTopLevelFunction(
+            named: "ulp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_double_ulp",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "nextUp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_double_nextUp",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "nextDown",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: types.doubleType,
+            returnType: types.doubleType,
+            externalLinkName: "kk_double_nextDown",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "ulp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: floatType,
+            returnType: floatType,
+            externalLinkName: "kk_float_ulp",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "nextUp",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: floatType,
+            returnType: floatType,
+            externalLinkName: "kk_float_nextUp",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticMathTopLevelFunction(
+            named: "nextDown",
+            packageFQName: kotlinMathPkg,
+            parameterName: "x",
+            parameterType: floatType,
+            returnType: floatType,
+            externalLinkName: "kk_float_nextDown",
+            symbols: symbols,
+            interner: interner
+        )
+
         // Trigonometric functions (STDLIB-430) — Double variants
         registerSyntheticMathTopLevelFunction(
             named: "sin",
