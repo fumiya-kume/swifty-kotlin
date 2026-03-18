@@ -6,5 +6,7 @@ fun main() {
     println(x.takeUnless { it > 0 })
     val s = "hello"
     println(s.takeIf { it.length > 3 })
+    println(s.takeIf { it.length > 10 })
     println(s.takeUnless { it.isEmpty() })
+    println("".takeUnless { it.isEmpty() })
 }
