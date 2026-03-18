@@ -410,6 +410,19 @@ final class RuntimeNotNullBox {
     var currentValue: Int?
 }
 
+/// Runtime box for `KClass<T>` metadata references produced by `T::class`.
+/// Stores the type token and an optional name-hint pointer so that
+/// `.simpleName` / `.qualifiedName` can be resolved at runtime.
+final class RuntimeKClassBox {
+    let typeToken: Int
+    let nameHint: Int
+
+    init(typeToken: Int, nameHint: Int) {
+        self.typeToken = typeToken
+        self.nameHint = nameHint
+    }
+}
+
 // MARK: - BufferedReader (STDLIB-567)
 
 /// Runtime box for `java.io.BufferedReader` returned by `File.bufferedReader()`.

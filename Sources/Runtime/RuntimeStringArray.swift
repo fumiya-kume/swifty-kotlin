@@ -365,6 +365,67 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
     kk_type_token_simple_name(typeToken, nameHint)
 }
 
+private func runtimeKClassBox(from raw: Int) -> RuntimeKClassBox? {
+    guard raw != 0, raw != runtimeNullSentinelInt,
+          let ptr = UnsafeMutableRawPointer(bitPattern: raw)
+    else {
+        return nil
+    }
+    return runtimeStorage.withLock { state in
+        guard state.objectPointers.contains(UInt(bitPattern: ptr)) else {
+            return nil
+        }
+        return tryCast(ptr, to: RuntimeKClassBox.self)
+    }
+}
+
+/// Creates a `KClass<T>` metadata object from a type token and name hint.
+/// Returns an opaque pointer to a `RuntimeKClassBox`.
+///
+/// KClass boxes are interned: repeated calls with the same `typeToken`
+/// return the same pointer without allocating a new box. This avoids
+/// unbounded memory growth when `T::class` is evaluated in a loop. The boxes
+/// are tracked in `runtimeStorage.kClassBoxCache` and are cleared on
+/// `resetRuntimeLocked` (e.g. between test runs).
+@_cdecl("kk_kclass_create")
+public func kk_kclass_create(_ typeToken: Int, _ nameHint: Int) -> Int {
+    let cacheKey = KClassCacheKey(typeToken: typeToken)
+    return runtimeStorage.withLock { state in
+        if let cached = state.kClassBoxCache[cacheKey] {
+            return cached
+        }
+        let box = RuntimeKClassBox(typeToken: typeToken, nameHint: nameHint)
+        let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+        state.objectPointers.insert(UInt(bitPattern: opaque))
+        let result = Int(bitPattern: opaque)
+        state.kClassBoxCache[cacheKey] = result
+        return result
+    }
+}
+
+/// Returns the `simpleName` of a `KClass<T>` metadata object.
+/// Delegates to `kk_type_token_simple_name` using the stored token and hint.
+@_cdecl("kk_kclass_simple_name")
+public func kk_kclass_simple_name(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
+        return runtimeNullSentinelInt
+    }
+    return kk_type_token_simple_name(box.typeToken, box.nameHint)
+}
+
+/// Returns the `qualifiedName` of a `KClass<T>` metadata object.
+/// Delegates to `kk_type_token_qualified_name` using the stored token and hint.
+/// NOTE: Currently returns the same value as `simpleName` because
+/// `kk_type_token_qualified_name` falls back to `kk_type_token_simple_name`.
+/// A future implementation may return package-qualified names for nominal types.
+@_cdecl("kk_kclass_qualified_name")
+public func kk_kclass_qualified_name(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
+        return runtimeNullSentinelInt
+    }
+    return kk_type_token_qualified_name(box.typeToken, box.nameHint)
+}
+
 @_cdecl("kk_type_register_super")
 public func kk_type_register_super(_ childTypeId: Int, _ superTypeId: Int) -> Int {
     runtimeRegisterTypeEdge(childTypeID: Int64(childTypeId), parentTypeID: Int64(superTypeId))

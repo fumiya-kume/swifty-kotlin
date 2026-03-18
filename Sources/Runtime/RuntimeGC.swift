@@ -15,6 +15,13 @@ struct FrameMapDescriptorC {
     let rootOffsets: UnsafePointer<Int32>?
 }
 
+/// Cache key for `kk_kclass_create`.
+/// `typeToken` uniquely identifies a `KClass<T>` at runtime, so caching by it
+/// alone ensures stable hits across repeated evaluations.
+struct KClassCacheKey: Hashable {
+    let typeToken: Int
+}
+
 struct RuntimeStorageState {
     var heapObjects: [UInt: HeapObjectRecord] = [:]
     var objectPointers: Set<UInt> = []
@@ -24,6 +31,7 @@ struct RuntimeStorageState {
     var callableRefMetadataByValue: [Int: RuntimeCallableRefMetadata] = [:]
     var objectTypeByPointer: [UInt: Int64] = [:]
     var objectItableMethods: [UInt: [UInt64: Int]] = [:]
+    var kClassBoxCache: [KClassCacheKey: Int] = [:]
     var typeParents: [Int64: Set<Int64>] = [:]
     var globalRootSlots: Set<UInt> = []
     var frameMaps: [UInt32: [Int32]] = [:]
@@ -268,6 +276,11 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     for (_, object) in state.heapObjects {
         object.pointer.deallocate()
     }
+    for (_, kclassRaw) in state.kClassBoxCache {
+        if let ptr = UnsafeMutableRawPointer(bitPattern: kclassRaw) {
+            Unmanaged<RuntimeKClassBox>.fromOpaque(ptr).release()
+        }
+    }
     state.heapObjects.removeAll(keepingCapacity: false)
     state.objectPointers.removeAll(keepingCapacity: false)
     state.flowHandles.removeAll(keepingCapacity: false)
@@ -279,4 +292,5 @@ func resetRuntimeLocked(state: inout RuntimeStorageState) {
     state.frameMaps.removeAll(keepingCapacity: false)
     state.activeFrames.removeAll(keepingCapacity: false)
     state.coroutineRoots.removeAll(keepingCapacity: false)
+    state.kClassBoxCache.removeAll(keepingCapacity: false)
 }

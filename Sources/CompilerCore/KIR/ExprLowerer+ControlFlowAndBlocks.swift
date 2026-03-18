@@ -1252,17 +1252,58 @@ extension ExprLowerer {
             )
 
         case let .callableRef(receiverExpr, memberName, _):
-            // T::class  — emit the type token for the reified type parameter
+            // T::class  — emit a KClass metadata object via kk_kclass_create.
+            // When used as `T::class.simpleName`, the memberCall lowerer
+            // intercepts and emits a direct kk_type_token_simple_name call
+            // instead.  For standalone `T::class` (assigned to a variable,
+            // passed as an argument, etc.) the KClass box is needed.
             if memberName == KnownCompilerNames(interner: interner).className,
-               sema.bindings.classRefTargetType(for: exprID) != nil
+               let classRefTargetType = sema.bindings.classRefTargetType(for: exprID)
             {
-                // The actual lowering (to kk_type_token_simple_name) happens
-                // at the enclosing memberCall site (T::class.simpleName).
-                // Here we just emit a placeholder unit value; the memberCall
-                // lowerer will bypass this and emit the runtime call directly.
-                let unit = arena.appendExpr(.unit, type: boundType ?? sema.types.anyType)
-                instructions.append(.constValue(result: unit, value: .unit))
-                return unit
+                let intType = sema.types.make(.primitive(.int, .nonNull))
+
+                // 1. Emit the type token.
+                let tokenExpr: KIRExprID
+                if case let .typeParam(typeParam) = sema.types.kind(of: classRefTargetType) {
+                    let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParam.symbol)
+                    tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+                    instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+                } else {
+                    let encoded = RuntimeTypeCheckToken.encode(type: classRefTargetType, sema: sema, interner: interner)
+                    tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
+                    instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
+                }
+
+                // 2. Emit the name-hint.
+                // kk_kclass_create ABI expects (Int, Int) — both parameters are
+                // intptr_t.  The name hint is either a runtime string pointer
+                // (passed as an int-typed string literal that codegen materialises
+                // into a pointer bit-pattern) or 0 when no name is available.
+                // We always use intType here to stay consistent with the ABI.
+                let nameHintExpr: KIRExprID
+                if let name = RuntimeTypeCheckToken.simpleName(of: classRefTargetType, sema: sema, interner: interner) {
+                    let internedName = interner.intern(name)
+                    nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: intType)
+                    instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
+                } else {
+                    nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: nameHintExpr, value: .intLiteral(0)))
+                }
+
+                // 3. Call kk_kclass_create to produce a KClass metadata object.
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType ?? sema.types.anyType
+                )
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_kclass_create"),
+                    arguments: [tokenExpr, nameHintExpr],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
             }
             return driver.lambdaLowerer.lowerCallableRefExpr(
                 exprID,
