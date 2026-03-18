@@ -155,6 +155,9 @@ struct CollectionLiteralLookupTables {
     let kkSequenceBuilderBuildName: InternedString
     let kkSequenceBuilderYieldName: InternedString
     let kkIteratorBuilderBuildName: InternedString
+    let kkIteratorBuilderYieldName: InternedString
+    let kkIteratorBuilderHasNextName: InternedString
+    let kkIteratorBuilderNextName: InternedString
 
     // Sequence ABI names (STDLIB-095/096/097)
     let kkSequenceOfName: InternedString
@@ -564,6 +567,9 @@ struct CollectionLiteralLookupTables {
         kkSequenceBuilderBuildName = interner.intern("kk_sequence_builder_build")
         kkSequenceBuilderYieldName = interner.intern("kk_sequence_builder_yield")
         kkIteratorBuilderBuildName = interner.intern("kk_iterator_builder_build")
+        kkIteratorBuilderYieldName = interner.intern("kk_iterator_builder_yield")
+        kkIteratorBuilderHasNextName = interner.intern("kk_iterator_builder_hasNext")
+        kkIteratorBuilderNextName = interner.intern("kk_iterator_builder_next")
 
         kkSequenceOfName = interner.intern("kk_sequence_of")
         kkSequenceGenerateName = interner.intern("kk_sequence_generate")

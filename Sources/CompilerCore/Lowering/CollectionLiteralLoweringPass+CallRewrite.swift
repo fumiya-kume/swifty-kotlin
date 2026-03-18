@@ -27,6 +27,9 @@ extension CollectionLiteralLoweringPass {
             collectInitialCollectionExprIDs(
                 function: function,
                 lookup: lookup,
+                arena: module.arena,
+                sema: ctx.sema,
+                interner: ctx.interner,
                 listExprIDs: &listExprIDs,
                 setExprIDs: &setExprIDs,
                 mapExprIDs: &mapExprIDs,
@@ -41,6 +44,7 @@ extension CollectionLiteralLoweringPass {
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
             var stringIteratorExprIDs: Set<Int32> = []
+            var iteratorBuilderExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -614,6 +618,14 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: iterator {} result is already an iterator; pass through
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            if let result {
+                                iteratorBuilderExprIDs.insert(result.rawValue)
+                                loweredBody.append(.copy(from: argID, to: result))
+                            }
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
@@ -653,6 +665,18 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: Rewrite kk_range_hasNext on iterator builder → kk_iterator_builder_hasNext
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
@@ -685,6 +709,18 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        // STDLIB-331/564: Rewrite kk_range_next on iterator builder → kk_iterator_builder_next
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderNextName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -994,11 +1030,10 @@ extension CollectionLiteralLoweringPass {
                     // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
                     // Guard with arrayExprIDs / listExprIDs so we only rewrite
                     // receivers whose concrete collection kind is known.
-                    // KNOWN LIMITATION: Non-tracked receivers (e.g., a List<Int>
-                    // parameter or a function return value) are not rewritten here.
-                    // They fall through to virtual-call rewrite or original symbol
-                    // linkage.  A future improvement could use the receiver's static
-                    // type (from KIR type info) to dispatch regardless of tracking.
+                    // Since LOWERING-001, non-tracked receivers (e.g., a List<Int>
+                    // parameter or a function return value) are now seeded into
+                    // the tracking sets via static type information from KIR.
+                    // They are rewritten correctly by the checks below.
 
                     // When the callee is already the runtime name (e.g., resolved
                     // via the synthetic stub's externalLinkName), track the result as
@@ -1659,6 +1694,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result { iteratorBuilderExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -2621,6 +2657,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if stringIteratorExprIDs.contains(from.rawValue) {
                         stringIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if iteratorBuilderExprIDs.contains(from.rawValue) {
+                        iteratorBuilderExprIDs.insert(to.rawValue)
                     }
                     loweredBody.append(instruction)
 
