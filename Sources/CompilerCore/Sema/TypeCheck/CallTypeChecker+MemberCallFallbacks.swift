@@ -965,9 +965,6 @@ extension CallTypeChecker {
             interner.intern("associateBy"),
             interner.intern("associateWith"),
             interner.intern("associate"),
-            interner.intern("associateByTo"),
-            interner.intern("associateWithTo"),
-            interner.intern("groupByTo"),
             interner.intern("sumOf"),
             interner.intern("sortedByDescending"),
             interner.intern("partition"),
@@ -1005,6 +1002,17 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // *To functions: destination + lambda (2 args), lambda is at index 1
+        if (memberName == interner.intern("associateByTo") || memberName == interner.intern("associateWithTo") || memberName == interner.intern("groupByTo")), argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         if memberName == interner.intern("forEachIndexed") || memberName == interner.intern("mapIndexed") || memberName == interner.intern("onEachIndexed"), argCount == 1 {

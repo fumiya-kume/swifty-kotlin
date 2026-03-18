@@ -808,11 +808,12 @@ public func kk_list_associateWithTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int
         var thrown = 0
         let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let unboxedKey = maybeUnbox(elem)
         let unboxedValue = maybeUnbox(value)
-        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, elem) }) {
+        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
             dest.values[index] = unboxedValue
         } else {
-            dest.keys.append(elem)
+            dest.keys.append(unboxedKey)
             dest.values.append(unboxedValue)
         }
     }
@@ -834,11 +835,10 @@ public func kk_list_groupByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ cl
         let unboxedKey = maybeUnbox(key)
         if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
             // Append to existing list
-            if let existingList = runtimeListBox(from: dest.values[index]) {
-                existingList.elements.append(elem)
-            } else {
-                dest.values[index] = registerRuntimeObject(RuntimeListBox(elements: [elem]))
+            guard let existingList = runtimeListBox(from: dest.values[index]) else {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: groupByTo destination value is not a MutableList")
             }
+            existingList.elements.append(elem)
         } else {
             dest.keys.append(unboxedKey)
             dest.values.append(registerRuntimeObject(RuntimeListBox(elements: [elem])))
