@@ -228,7 +228,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
 /// so it survives suspend/resume across different GCD threads. A lightweight
 /// per-task accessor (`RuntimeCoroutineScope.current`)
 /// bridges the gap for the few call-sites that don't have a continuation handle.
-final class RuntimeCoroutineScope {
+final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
@@ -1341,6 +1341,24 @@ private enum RuntimeDispatcherTag {
     static let mainDispatcher: Int = 0x4B4B_4403 // "KKD\x03"
 }
 
+/// Maps a dispatcher tag to the corresponding GCD dispatch queue.
+/// - `Dispatchers.Default` -> global queue (concurrent, default QoS)
+/// - `Dispatchers.IO`      -> global queue (concurrent, utility QoS — I/O-appropriate)
+/// - `Dispatchers.Main`    -> main queue (serial)
+/// Unknown tags fall back to `Dispatchers.Default`.
+private func dispatchQueue(for dispatcherTag: Int) -> DispatchQueue {
+    switch dispatcherTag {
+    case RuntimeDispatcherTag.ioDispatcher:
+        return DispatchQueue.global(qos: .utility)
+    case RuntimeDispatcherTag.mainDispatcher:
+        return DispatchQueue.main
+    case RuntimeDispatcherTag.defaultDispatcher:
+        return DispatchQueue.global()
+    default:
+        return DispatchQueue.global()
+    }
+}
+
 @_cdecl("kk_dispatcher_default")
 public func kk_dispatcher_default() -> Int {
     RuntimeDispatcherTag.defaultDispatcher
@@ -1356,11 +1374,20 @@ public func kk_dispatcher_main() -> Int {
     RuntimeDispatcherTag.mainDispatcher
 }
 
+/// A simple heap-allocated, `@unchecked Sendable` box used to pass an integer
+/// result from a `DispatchQueue.async` closure back to the waiting thread.
+/// Synchronization is provided externally by a `DispatchSemaphore`.
+private final class WithContextResultBox: @unchecked Sendable {
+    var value: Int = 0
+}
+
+/// Kotlin `withContext(dispatcher) { block }` — switches coroutine execution
+/// to the dispatch queue that corresponds to `dispatcherRaw`, runs the
+/// suspend-aware block through the full entry loop (supporting intermediate
+/// suspension points such as `delay`), and blocks the caller until the block
+/// completes, returning its result.
 @_cdecl("kk_with_context")
 public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
-    // The runtime still executes synchronously today, but we preserve
-    // dispatcher selection here so the requested context is observed
-    // instead of being silently discarded by the stub.
     let resolvedDispatcher = switch dispatcherRaw {
     case RuntimeDispatcherTag.defaultDispatcher,
          RuntimeDispatcherTag.ioDispatcher,
@@ -1369,16 +1396,69 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     default:
         RuntimeDispatcherTag.defaultDispatcher
     }
-    _ = resolvedDispatcher
-    guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
+
+    guard suspendEntryPoint(from: blockFnPtr) != nil else {
+        // Clean up the continuation to avoid leaking coroutine state.
+        _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
-    var outThrown = 0
-    let result = entryPoint(continuation, &outThrown)
-    if outThrown != 0 {
-        return 0
+
+    let queue = dispatchQueue(for: resolvedDispatcher)
+
+    // Capture the current coroutine scope so child launches inside the block
+    // are registered with the correct scope on the target queue's thread.
+    let parentScope = RuntimeCoroutineScope.current
+
+    // Propagate caller's scope to continuation context so that
+    // runSuspendEntryLoopWithContinuation installs it under the fresh task key.
+    // Without this, contState.scope would be nil for a freshly created
+    // continuation and child coroutines launched inside the withContext block
+    // would lose the parent scope — breaking structured concurrency.
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = parentScope
     }
-    return result
+
+    // NOTE: When the target queue is DispatchQueue.main and we are already on
+    // the main thread, dispatching async + semaphore.wait() would deadlock
+    // because the main thread cannot process the enqueued block while blocked.
+    // CLI programs produced by this compiler do not run a main run loop, so
+    // even calls from a background thread targeting the main queue would hang.
+    // We therefore execute inline whenever we are already on the target queue
+    // (main-thread case) to avoid the deadlock.
+    if queue === DispatchQueue.main && Thread.isMainThread {
+        let savedScope = RuntimeCoroutineScope.current
+        defer { RuntimeCoroutineScope.current = savedScope }
+        RuntimeCoroutineScope.current = parentScope
+        return runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+    }
+
+    let semaphore = DispatchSemaphore(value: 0)
+    // Use a Sendable box as a thread-safe container for the result.
+    // The DispatchSemaphore provides a happens-before relationship: the write
+    // inside `queue.async` is guaranteed to complete before `semaphore.signal()`,
+    // and `semaphore.wait()` ensures the read on the calling thread observes the
+    // written value. The box is @unchecked Sendable so the concurrency checker
+    // accepts the capture without complaint.
+    let resultBox = WithContextResultBox()
+
+    queue.async {
+        // Propagate the coroutine scope to the target thread.
+        let savedScope = RuntimeCoroutineScope.current
+        RuntimeCoroutineScope.current = parentScope
+        defer { RuntimeCoroutineScope.current = savedScope }
+
+        resultBox.value = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+        semaphore.signal()
+    }
+
+    semaphore.wait()
+    return resultBox.value
 }
 
 // MARK: - Channel Runtime (CORO-001)

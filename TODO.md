@@ -284,8 +284,8 @@
  
 - [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
   - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
-- [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
-  - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
+- [x] STDLIB-250: `kk_with_context` を非同期実行に対応させる
+  - ディスパッチャタグを GCD キューにマッピングし、ブロックを対象キュー上で実行するように変更済み
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
