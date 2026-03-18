@@ -27,6 +27,9 @@ extension CollectionLiteralLoweringPass {
             collectInitialCollectionExprIDs(
                 function: function,
                 lookup: lookup,
+                arena: module.arena,
+                sema: ctx.sema,
+                interner: ctx.interner,
                 listExprIDs: &listExprIDs,
                 setExprIDs: &setExprIDs,
                 mapExprIDs: &mapExprIDs,
@@ -994,11 +997,10 @@ extension CollectionLiteralLoweringPass {
                     // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
                     // Guard with arrayExprIDs / listExprIDs so we only rewrite
                     // receivers whose concrete collection kind is known.
-                    // KNOWN LIMITATION: Non-tracked receivers (e.g., a List<Int>
-                    // parameter or a function return value) are not rewritten here.
-                    // They fall through to virtual-call rewrite or original symbol
-                    // linkage.  A future improvement could use the receiver's static
-                    // type (from KIR type info) to dispatch regardless of tracking.
+                    // Since LOWERING-001, non-tracked receivers (e.g., a List<Int>
+                    // parameter or a function return value) are now seeded into
+                    // the tracking sets via static type information from KIR.
+                    // They are rewritten correctly by the checks below.
 
                     // When the callee is already the runtime name (e.g., resolved
                     // via the synthetic stub's externalLinkName), track the result as
