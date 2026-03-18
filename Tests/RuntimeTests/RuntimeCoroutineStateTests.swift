@@ -513,13 +513,14 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
 
     func testWithContextInvalidEntryPointReturnsZero() {
         let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
-        defer { _ = kk_coroutine_state_exit(continuation, 0) }
+        // kk_with_context now cleans up the continuation internally on
+        // invalid entry, so no manual defer cleanup is needed.
         let dispatcher = kk_dispatcher_default()
         let result = kk_with_context(dispatcher, 0, continuation)
         XCTAssertEqual(result, 0, "Invalid entry point should return 0")
     }
 
-    func testWithContextIODispatcherRunsOffMainThread() {
+    func testWithContextIODispatcherCompletesWithoutDeadlock() {
         let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
         let entryRaw = unsafeBitCast(
             runtime_test_with_context_simple as RuntimeTestSuspendEntry,
@@ -530,6 +531,38 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         let dispatcher = kk_dispatcher_io()
         let result = kk_with_context(dispatcher, entryRaw, continuation)
         XCTAssertEqual(result, 99, "IO dispatcher should execute without deadlock")
+    }
+
+    func testWithContextMainDispatcherFromMainThread() {
+        // Dispatchers.Main should execute inline when already on the main
+        // thread, avoiding the deadlock that would occur with async+semaphore.
+        let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+        let entryRaw = unsafeBitCast(
+            runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+            to: Int.self
+        )
+        let dispatcher = kk_dispatcher_main()
+        let result = kk_with_context(dispatcher, entryRaw, continuation)
+        XCTAssertEqual(result, 99, "Main dispatcher should execute inline on main thread")
+    }
+
+    func testWithContextMainDispatcherFromBackgroundThread() {
+        // When called from a background thread, the main-queue path executes
+        // inline (since CLI programs have no run loop) and must still succeed.
+        let expectation = XCTestExpectation(description: "withContext(Main) from background")
+        var result = 0
+        DispatchQueue.global().async {
+            let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
+            let entryRaw = unsafeBitCast(
+                runtime_test_with_context_simple as RuntimeTestSuspendEntry,
+                to: Int.self
+            )
+            let dispatcher = kk_dispatcher_main()
+            result = kk_with_context(dispatcher, entryRaw, continuation)
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 5.0)
+        XCTAssertEqual(result, 99, "Main dispatcher from background thread should return block result")
     }
 
     func testWithContextWithDelayOnIODispatcher() {

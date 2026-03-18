@@ -897,6 +897,8 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     guard suspendEntryPoint(from: blockFnPtr) != nil else {
+        // Clean up the continuation to avoid leaking coroutine state.
+        _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
 
@@ -905,6 +907,23 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // Capture the current coroutine scope so child launches inside the block
     // are registered with the correct scope on the target queue's thread.
     let parentScope = RuntimeCoroutineScope.current
+
+    // NOTE: When the target queue is DispatchQueue.main and we are already on
+    // the main thread, dispatching async + semaphore.wait() would deadlock
+    // because the main thread cannot process the enqueued block while blocked.
+    // CLI programs produced by this compiler do not run a main run loop, so
+    // even calls from a background thread targeting the main queue would hang.
+    // We therefore execute inline whenever we are already on the target queue
+    // (main-thread case) to avoid the deadlock.
+    if queue === DispatchQueue.main && Thread.isMainThread {
+        let savedScope = RuntimeCoroutineScope.current
+        defer { RuntimeCoroutineScope.current = savedScope }
+        RuntimeCoroutineScope.current = parentScope
+        return runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+    }
 
     let semaphore = DispatchSemaphore(value: 0)
     var result = 0
