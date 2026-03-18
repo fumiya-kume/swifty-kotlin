@@ -152,6 +152,10 @@ final class InlineLoweringPass: LoweringPass {
                 loweredBody.append(.label(exitLabel))
             } else {
                 // No non-local returns -- use the original simple expansion path.
+                // Still track labels introduced by this expansion to prevent
+                // collisions with exit labels allocated by later expansions.
+                let expansionMax = nextAvailableLabel(in: expansion.instructions)
+                nextExitLabel = max(nextExitLabel, expansionMax)
                 loweredBody.append(contentsOf: expansion.instructions)
             }
 
