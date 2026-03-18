@@ -754,8 +754,8 @@ extension DataFlowSemaPhase {
     ///
     /// Kotlin defines `asSequence()` on `Iterable<T>`, so any receiver typed as
     /// `Iterable` (not just `List` or `Array`) should resolve this member.  At
-    /// runtime we delegate to `kk_list_asSequence` because every concrete
-    /// `Iterable` handle in our runtime is backed by a list box.
+    /// runtime we delegate to `kk_iterable_asSequence` which handles any
+    /// collection handle (List, Set, Array) via `runtimeCollectionElements`.
     private func registerIterableAsSequenceMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -824,6 +824,49 @@ extension DataFlowSemaPhase {
             )
             types.setNominalTypeParameterSymbols([seqTypeParamSymbol], for: sequenceSymbol)
             types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+
+            // Register `operator fun iterator(): Iterator<T>` on Sequence so that
+            // `for` loops and other iteration patterns resolve correctly (STDLIB-555).
+            let seqTypeParamType = types.make(.typeParam(TypeParamType(
+                symbol: seqTypeParamSymbol, nullability: .nonNull
+            )))
+            let iteratorName = interner.intern("Iterator")
+            let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+            if let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) {
+                let iteratorReturnType = types.make(.classType(ClassType(
+                    classSymbol: iteratorSymbol,
+                    args: [.out(seqTypeParamType)],
+                    nullability: .nonNull
+                )))
+                let iterFnName = interner.intern("iterator")
+                let iterFnFQName = sequenceFQName + [iterFnName]
+                if symbols.lookup(fqName: iterFnFQName) == nil {
+                    let iterFnSymbol = symbols.define(
+                        kind: .function,
+                        name: iterFnName,
+                        fqName: iterFnFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic, .operatorFunction]
+                    )
+                    symbols.setParentSymbol(sequenceSymbol, for: iterFnSymbol)
+                    let seqReceiverType = types.make(.classType(ClassType(
+                        classSymbol: sequenceSymbol,
+                        args: [.out(seqTypeParamType)],
+                        nullability: .nonNull
+                    )))
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: seqReceiverType,
+                            parameterTypes: [],
+                            returnType: iteratorReturnType,
+                            typeParameterSymbols: [seqTypeParamSymbol],
+                            classTypeParameterCount: 1
+                        ),
+                        for: iterFnSymbol
+                    )
+                }
+            }
         }
         let returnType = types.make(.classType(ClassType(
             classSymbol: sequenceSymbol,
@@ -839,8 +882,8 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(iterableInterfaceSymbol, for: memberSymbol)
-        // At runtime, Iterable handles are list boxes, so reuse kk_list_asSequence.
-        symbols.setExternalLinkName("kk_list_asSequence", for: memberSymbol)
+        // At runtime, use kk_iterable_asSequence which handles List, Set, and Array handles.
+        symbols.setExternalLinkName("kk_iterable_asSequence", for: memberSymbol)
         symbols.setFunctionSignature(
             FunctionSignature(
                 receiverType: receiverType,

@@ -1541,3 +1541,18 @@ public func kk_map_orEmpty(_ mapRaw: Int) -> Int {
     }
     return mapRaw
 }
+
+/// Generic `Iterable.asSequence()` that accepts any collection handle (List, Set, etc.).
+/// Falls back to fatalError only when the handle is truly unrecognized.
+@_cdecl("kk_iterable_asSequence")
+public func kk_iterable_asSequence(_ iterableRaw: Int) -> Int {
+    if let elements = runtimeCollectionElements(from: iterableRaw) {
+        let seq = RuntimeSequenceBox(steps: [.source(elements: elements)])
+        return registerRuntimeObject(seq)
+    }
+    if let array = runtimeArrayBox(from: iterableRaw) {
+        let seq = RuntimeSequenceBox(steps: [.source(elements: array.elements)])
+        return registerRuntimeObject(seq)
+    }
+    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid iterable handle in kk_iterable_asSequence")
+}

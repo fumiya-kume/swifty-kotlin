@@ -5,4 +5,10 @@ fun main() {
         .map { it * 10 }
         .toList()
     println(result)
+    // STDLIB-555: Exercise Iterable<Int> receiver path
+    val it: Iterable<Int> = list
+    val result2 = it.asSequence()
+        .filter { it % 2 == 0 }
+        .toList()
+    println(result2)
 }
