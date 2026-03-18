@@ -496,10 +496,10 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(result, 6) // 1 + 2 + 3
     }
 
-    func testReduceOrNullReturnsZeroForEmptyList() {
+    func testReduceOrNullReturnsNullSentinelForEmptyList() {
         let source = makeList([])
         let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(result, 0) // null sentinel
+        XCTAssertEqual(result, runtimeNullSentinelInt) // Kotlin null sentinel
     }
 
     func testReduceOrNullSingleElementReturnsThatElement() {

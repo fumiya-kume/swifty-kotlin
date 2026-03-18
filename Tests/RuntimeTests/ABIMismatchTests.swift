@@ -316,9 +316,13 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_list_reduceOrNull")
         XCTAssertEqual(spec.parameters.count, 4)
         XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 
@@ -326,9 +330,13 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_list_scanReduce")
         XCTAssertEqual(spec.parameters.count, 4)
         XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 
@@ -336,10 +344,15 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_list_scan")
         XCTAssertEqual(spec.parameters.count, 5)
         XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].name, "initial")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
         XCTAssertEqual(spec.parameters[4].name, "outThrown")
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 
@@ -347,10 +360,15 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_list_runningFold")
         XCTAssertEqual(spec.parameters.count, 5)
         XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].name, "initial")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[3].type, .intptr)
         XCTAssertEqual(spec.parameters[4].name, "outThrown")
+        XCTAssertEqual(spec.parameters[4].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 
@@ -358,9 +376,13 @@ final class ABIMismatchTests: XCTestCase {
         let spec = try requireSpec("kk_list_runningReduce")
         XCTAssertEqual(spec.parameters.count, 4)
         XCTAssertEqual(spec.parameters[0].name, "listRaw")
+        XCTAssertEqual(spec.parameters[0].type, .intptr)
         XCTAssertEqual(spec.parameters[1].name, "fnPtr")
+        XCTAssertEqual(spec.parameters[1].type, .intptr)
         XCTAssertEqual(spec.parameters[2].name, "closureRaw")
+        XCTAssertEqual(spec.parameters[2].type, .intptr)
         XCTAssertEqual(spec.parameters[3].name, "outThrown")
+        XCTAssertEqual(spec.parameters[3].type, .nullableIntptrPointer)
         XCTAssertEqual(spec.returnType, .intptr)
     }
 
