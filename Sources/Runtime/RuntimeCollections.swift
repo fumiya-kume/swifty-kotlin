@@ -183,9 +183,9 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
 @_cdecl("kk_list_iterator_hasPrevious")
 public func kk_list_iterator_hasPrevious(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
-        return 0
+        return kk_box_bool(0)
     }
-    return (iter.index > 0 && iter.index <= iter.elements.count) ? 1 : 0
+    return kk_box_bool((iter.index > 0 && iter.index <= iter.elements.count) ? 1 : 0)
 }
 
 @_cdecl("kk_list_iterator_previous")
