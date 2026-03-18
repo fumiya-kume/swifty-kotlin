@@ -2462,7 +2462,7 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // scan / runningFold on sequence → kk_sequence_scan / kk_sequence_runningFold (STDLIB-558, 560)
-                    if (callee == lookup.scanName || callee == lookup.runningFoldName), arguments.count == 3 || arguments.count == 4 {
+                    if (callee == lookup.scanName || callee == lookup.runningFoldName), (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
@@ -2491,13 +2491,13 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            sequenceExprIDs.insert(hofResult.rawValue)
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }
                     // runningReduce on sequence → kk_sequence_runningReduce (STDLIB-559)
-                    if callee == lookup.runningReduceName, arguments.count == 2 || arguments.count == 3 {
+                    if callee == lookup.runningReduceName, (2 ... 3).contains(arguments.count) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if sequenceExprIDs.contains(receiverID.rawValue) {
@@ -2523,8 +2523,8 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 loweredBody.append(.copy(from: hofResult, to: result))
                             }
-                            listExprIDs.insert(hofResult.rawValue)
-                            if let result { listExprIDs.insert(result.rawValue) }
+                            sequenceExprIDs.insert(hofResult.rawValue)
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
                             continue
                         }
                     }

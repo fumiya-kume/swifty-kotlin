@@ -1203,8 +1203,11 @@ public func kk_sequence_scan(
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var acc = maybeUnbox(initial)
     var results: [Int] = [acc]
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown) { elem in
             var thrown = 0
             let nextAcc = lambda(closureRaw, acc, elem, &thrown)
             if thrown != 0 {
@@ -1228,6 +1231,10 @@ public func kk_sequence_scan(
         }
     }
     if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
@@ -1271,8 +1278,11 @@ public func kk_sequence_runningReduce(
         return true
     }
 
+    var traversalState: SequenceTraversalState?
     if let seq = runtimeSequenceBox(from: seqRaw) {
-        runtimeTraverseSequence(seq, outThrown: outThrown, yield: visit)
+        let st = SequenceTraversalState()
+        traversalState = st
+        runtimeTraverseSequenceWithState(seq, state: st, outThrown: outThrown, yield: visit)
     } else {
         for elem in runtimeSequenceSourceElementsOrPanic(from: seqRaw, caller: #function) {
             if !visit(elem) { break }
@@ -1280,6 +1290,10 @@ public func kk_sequence_runningReduce(
     }
 
     if let outThrown, outThrown.pointee != 0 { return 0 }
+    if let traversalState, traversalState.limitReached {
+        outThrown?.pointee = runtimeAllocateThrowable(message: kSequenceGeneratorLimitReached)
+        return 0
+    }
     if !hasAccumulator {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
