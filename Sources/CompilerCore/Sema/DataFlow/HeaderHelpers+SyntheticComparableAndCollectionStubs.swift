@@ -750,6 +750,116 @@ extension DataFlowSemaPhase {
         return iterableInterfaceSymbol
     }
 
+    /// Ensure the synthetic `kotlin.sequences.Sequence<T>` interface stub exists,
+    /// including its `operator fun iterator(): Iterator<T>` member.
+    ///
+    /// This helper is idempotent: it creates the package, interface, type parameter,
+    /// and `iterator()` member only if they are not already present.  Callers that
+    /// need a `Sequence` return type (e.g., `asSequence()` on various collection
+    /// types) should call this first and use the returned `SymbolID`.
+    private func ensureSyntheticSequenceStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        // Step 1: Ensure the kotlin.sequences package exists.
+        let kotlinSequencesPkg: [InternedString] = [
+            interner.intern("kotlin"), interner.intern("sequences")
+        ]
+        if symbols.lookup(fqName: kotlinSequencesPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("sequences"),
+                fqName: kotlinSequencesPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Step 2: Ensure the Sequence interface exists.
+        let sequenceName = interner.intern("Sequence")
+        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
+        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .interface,
+                name: sequenceName,
+                fqName: sequenceFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+
+        // Step 3: Ensure the type parameter T on Sequence exists.
+        let seqTypeParamName = interner.intern("T")
+        let seqTypeParamFQName = sequenceFQName + [seqTypeParamName]
+        if symbols.lookup(fqName: seqTypeParamFQName) == nil {
+            let seqTypeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: seqTypeParamName,
+                fqName: seqTypeParamFQName,
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            types.setNominalTypeParameterSymbols([seqTypeParamSymbol], for: sequenceSymbol)
+            types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
+        }
+
+        // Step 4: Ensure `operator fun iterator(): Iterator<T>` exists on Sequence,
+        // independently of whether the type parameter was newly created above.
+        // This prevents the case where Sequence<T> already exists (e.g., created
+        // elsewhere) but iterator() is missing.
+        let iterFnName = interner.intern("iterator")
+        let iterFnFQName = sequenceFQName + [iterFnName]
+        if symbols.lookup(fqName: iterFnFQName) == nil {
+            if let seqTypeParamSymbol = symbols.lookup(fqName: seqTypeParamFQName) {
+                let seqTypeParamType = types.make(.typeParam(TypeParamType(
+                    symbol: seqTypeParamSymbol, nullability: .nonNull
+                )))
+                let iteratorName = interner.intern("Iterator")
+                let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+                if let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) {
+                    let iteratorReturnType = types.make(.classType(ClassType(
+                        classSymbol: iteratorSymbol,
+                        args: [.out(seqTypeParamType)],
+                        nullability: .nonNull
+                    )))
+                    let iterFnSymbol = symbols.define(
+                        kind: .function,
+                        name: iterFnName,
+                        fqName: iterFnFQName,
+                        declSite: nil,
+                        visibility: .public,
+                        flags: [.synthetic, .operatorFunction]
+                    )
+                    symbols.setParentSymbol(sequenceSymbol, for: iterFnSymbol)
+                    let seqReceiverType = types.make(.classType(ClassType(
+                        classSymbol: sequenceSymbol,
+                        args: [.out(seqTypeParamType)],
+                        nullability: .nonNull
+                    )))
+                    symbols.setFunctionSignature(
+                        FunctionSignature(
+                            receiverType: seqReceiverType,
+                            parameterTypes: [],
+                            returnType: iteratorReturnType,
+                            typeParameterSymbols: [seqTypeParamSymbol],
+                            classTypeParameterCount: 1
+                        ),
+                        for: iterFnSymbol
+                    )
+                }
+            }
+        }
+
+        return sequenceSymbol
+    }
+
     /// Register `Iterable<E>.asSequence(): Sequence<E>` member stub (STDLIB-555).
     ///
     /// Kotlin defines `asSequence()` on `Iterable<T>`, so any receiver typed as
@@ -783,91 +893,12 @@ extension DataFlowSemaPhase {
         )))
 
         // Return type is Sequence<E> — ensure the Sequence interface stub exists.
-        let kotlinSequencesPkg: [InternedString] = [
-            interner.intern("kotlin"), interner.intern("sequences")
-        ]
-        if symbols.lookup(fqName: kotlinSequencesPkg) == nil {
-            _ = symbols.define(
-                kind: .package,
-                name: interner.intern("sequences"),
-                fqName: kotlinSequencesPkg,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        let sequenceName = interner.intern("Sequence")
-        let sequenceFQName = kotlinSequencesPkg + [sequenceName]
-        let sequenceSymbol: SymbolID = if let existing = symbols.lookup(fqName: sequenceFQName) {
-            existing
-        } else {
-            symbols.define(
-                kind: .interface,
-                name: sequenceName,
-                fqName: sequenceFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        // Register a type parameter T on Sequence so generic substitution works.
-        let seqTypeParamName = interner.intern("T")
-        let seqTypeParamFQName = sequenceFQName + [seqTypeParamName]
-        if symbols.lookup(fqName: seqTypeParamFQName) == nil {
-            let seqTypeParamSymbol = symbols.define(
-                kind: .typeParameter,
-                name: seqTypeParamName,
-                fqName: seqTypeParamFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-            types.setNominalTypeParameterSymbols([seqTypeParamSymbol], for: sequenceSymbol)
-            types.setNominalTypeParameterVariances([.out], for: sequenceSymbol)
-
-            // Register `operator fun iterator(): Iterator<T>` on Sequence so that
-            // `for` loops and other iteration patterns resolve correctly (STDLIB-555).
-            let seqTypeParamType = types.make(.typeParam(TypeParamType(
-                symbol: seqTypeParamSymbol, nullability: .nonNull
-            )))
-            let iteratorName = interner.intern("Iterator")
-            let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
-            if let iteratorSymbol = symbols.lookup(fqName: iteratorFQName) {
-                let iteratorReturnType = types.make(.classType(ClassType(
-                    classSymbol: iteratorSymbol,
-                    args: [.out(seqTypeParamType)],
-                    nullability: .nonNull
-                )))
-                let iterFnName = interner.intern("iterator")
-                let iterFnFQName = sequenceFQName + [iterFnName]
-                if symbols.lookup(fqName: iterFnFQName) == nil {
-                    let iterFnSymbol = symbols.define(
-                        kind: .function,
-                        name: iterFnName,
-                        fqName: iterFnFQName,
-                        declSite: nil,
-                        visibility: .public,
-                        flags: [.synthetic, .operatorFunction]
-                    )
-                    symbols.setParentSymbol(sequenceSymbol, for: iterFnSymbol)
-                    let seqReceiverType = types.make(.classType(ClassType(
-                        classSymbol: sequenceSymbol,
-                        args: [.out(seqTypeParamType)],
-                        nullability: .nonNull
-                    )))
-                    symbols.setFunctionSignature(
-                        FunctionSignature(
-                            receiverType: seqReceiverType,
-                            parameterTypes: [],
-                            returnType: iteratorReturnType,
-                            typeParameterSymbols: [seqTypeParamSymbol],
-                            classTypeParameterCount: 1
-                        ),
-                        for: iterFnSymbol
-                    )
-                }
-            }
-        }
+        let sequenceSymbol = ensureSyntheticSequenceStub(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
         let returnType = types.make(.classType(ClassType(
             classSymbol: sequenceSymbol,
             args: [.out(typeParamType)],
