@@ -322,8 +322,8 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // chunked(size, transform) HOF overload — 2 args, uses kk_list_chunked_transform
-        if callee == lookup.chunkedName, arguments.count == 2, listExprIDs.contains(receiver.rawValue) {
+        // chunked(size, transform) HOF overload — 3 args after closure expansion [size, fnPtr, closureRaw]
+        if callee == lookup.chunkedName, arguments.count == 3, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
             )
