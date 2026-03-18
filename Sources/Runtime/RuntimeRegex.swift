@@ -18,6 +18,15 @@ final class RuntimeRegexBox {
 
     /// Returns the input string NFC-normalized if `canonEq` is enabled,
     /// otherwise returns it unchanged.
+    ///
+    /// **Limitation**: When `canonEq` is true, operations that return substrings
+    /// of the input (replace, split, find, findAll, matchEntire) will operate on
+    /// the NFC-normalized form. This means the returned strings may differ from
+    /// the original input's Unicode representation (e.g., a decomposed sequence
+    /// like U+0065 U+0301 becomes the precomposed U+00E9). Kotlin/JVM's
+    /// `CANON_EQ` uses the ICU regex engine which matches canonically equivalent
+    /// sequences without altering the input. A fully faithful implementation
+    /// would require mapping match ranges back to the original string.
     func normalizeIfNeeded(_ str: String) -> String {
         canonEq ? str.precomposedStringWithCanonicalMapping : str
     }
@@ -257,6 +266,12 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
 
 // MARK: - STDLIB-480: Regex(pattern, option) / Regex.containsMatchIn
 
+// Named constants for Kotlin `RegexOption` enum ordinals.
+// These must stay in sync with the enum entry registration order in
+// `HeaderHelpers+SyntheticRegexStubs.swift` (`ensureRegexOptionEnumClass`).
+private let kRegexOptionOrdinalLiteral  = 3
+private let kRegexOptionOrdinalCanonEq  = 6
+
 /// Maps a Kotlin `RegexOption` enum ordinal to `NSRegularExpression.Options`.
 ///
 /// **Coupling note**: The ordinal values here must stay in sync with the
@@ -272,10 +287,10 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
     case 0: return .caseInsensitive          // IGNORE_CASE
     case 1: return .anchorsMatchLines        // MULTILINE
     case 2: return .dotMatchesLineSeparators  // DOT_MATCHES_ALL
-    case 3: return []                        // LITERAL (handled via escapedPattern)
-    case 4: return .useUnixLineSeparators     // UNIX_LINES
-    case 5: return .allowCommentsAndWhitespace // COMMENTS
-    case 6: return []                        // CANON_EQ (handled via NFC normalization)
+    case kRegexOptionOrdinalLiteral: return []  // LITERAL (handled via escapedPattern)
+    case 4: return .useUnixLineSeparators        // UNIX_LINES
+    case 5: return .allowCommentsAndWhitespace   // COMMENTS
+    case kRegexOptionOrdinalCanonEq: return []   // CANON_EQ (handled via NFC normalization)
     default:
         assertionFailure("KSwiftK: unknown RegexOption ordinal \(ordinal) – compiler/runtime enum mismatch?")
         return []
@@ -291,8 +306,8 @@ private func nsRegexOption(fromOrdinal ordinal: Int) -> NSRegularExpression.Opti
 public func kk_regex_create_with_option(_ patternRaw: Int, _ optionRaw: Int) -> Int {
     let pattern = regexStringFromRaw(patternRaw) ?? ""
     let ordinal = kk_unbox_int(optionRaw)
-    let isLiteral = ordinal == 3
-    let isCanonEq = ordinal == 6
+    let isLiteral = Int(ordinal) == kRegexOptionOrdinalLiteral
+    let isCanonEq = Int(ordinal) == kRegexOptionOrdinalCanonEq
     let normalizedPattern = isCanonEq ? pattern.precomposedStringWithCanonicalMapping : pattern
     let effectivePattern = isLiteral ? NSRegularExpression.escapedPattern(for: normalizedPattern) : normalizedPattern
     let options = nsRegexOption(fromOrdinal: Int(ordinal))
@@ -319,8 +334,8 @@ public func kk_regex_create_with_options(_ patternRaw: Int, _ optionsSetRaw: Int
     if let setBox = runtimeSetBox(from: optionsSetRaw) {
         for element in setBox.elements {
             let ordinal = Int(kk_unbox_int(element))
-            if ordinal == 3 { isLiteral = true }
-            if ordinal == 6 { isCanonEq = true }
+            if ordinal == kRegexOptionOrdinalLiteral { isLiteral = true }
+            if ordinal == kRegexOptionOrdinalCanonEq { isCanonEq = true }
             combined.insert(nsRegexOption(fromOrdinal: ordinal))
         }
     }
