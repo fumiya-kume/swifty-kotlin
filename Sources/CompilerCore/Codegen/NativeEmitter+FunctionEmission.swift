@@ -752,20 +752,19 @@ extension NativeEmitter {
                     "kk_println_newline",
                 ]
                 if knownVoidNoArgCallees.contains(calleeName) {
-                    guard let runtimeFunction = declareExternalFunction(
+                    if let runtimeFunction = declareExternalFunction(
                         named: calleeName,
                         argumentCount: 0,
                         appendThrownChannel: false
-                    ) else {
-                        preconditionFailure("Failed to declare external function '\(calleeName)'")
+                    ) {
+                        _ = bindings.buildCall(
+                            builder,
+                            functionType: runtimeFunction.type,
+                            callee: runtimeFunction.value,
+                            arguments: [],
+                            name: "\(calleeName)_\(instructionIndex)"
+                        )
                     }
-                    _ = bindings.buildCall(
-                        builder,
-                        functionType: runtimeFunction.type,
-                        callee: runtimeFunction.value,
-                        arguments: [],
-                        name: "\(calleeName)_\(instructionIndex)"
-                    )
                     if usesThrownChannel, let thrownResult {
                         if let alloca = copyTargetAllocas[thrownResult.rawValue] {
                             _ = bindings.buildStore(builder, value: zeroValue, pointer: alloca)
