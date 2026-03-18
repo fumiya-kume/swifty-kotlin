@@ -1,5 +1,5 @@
 fun main() {
-    // sequenceOf: each call demonstrates an independent chain of operations
+    // sequenceOf: chained lazy operations (filter, map, take, drop)
     println(sequenceOf(1, 2, 3, 4, 5).filter { it > 2 }.map { it * 10 }.toList())
     println(sequenceOf(1, 2, 3, 4, 5).take(3).toList())
     println(sequenceOf(1, 2, 3, 4, 5).drop(2).toList())
