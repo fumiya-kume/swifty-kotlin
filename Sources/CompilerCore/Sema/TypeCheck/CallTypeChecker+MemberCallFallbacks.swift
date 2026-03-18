@@ -1460,18 +1460,6 @@ extension CallTypeChecker {
         if isArrayLikeType(receiverType, sema: sema, interner: interner) {
             return true
         }
-        // Also check if it's marked as collection and has an array-like class
-        // type (now that arrayOf() preserves the actual Array<T> type).
-        if sema.bindings.isCollectionExpr(receiverID) {
-            let knownNames = KnownCompilerNames(interner: interner)
-            if case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-               let symbol = sema.symbols.symbol(classType.classSymbol)
-            {
-                if knownNames.isArrayLikeName(symbol.name) {
-                    return true
-                }
-            }
-        }
         return false
     }
 

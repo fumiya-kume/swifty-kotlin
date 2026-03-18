@@ -455,11 +455,13 @@ final class CallTypeChecker {
             ]
             let kotlinArraySymbol = sema.symbols.lookup(fqName: arrayFQName)
             let isKotlinArray = calleeNameStr == "Array"
+            let inferLambdaOnce: Bool
             let elementReturnType: TypeID
             if isKotlinArray,
                let explicitTypeArg = explicitTypeArgs.first
             {
                 elementReturnType = explicitTypeArg
+                inferLambdaOnce = true
             } else if isKotlinArray,
                let kotlinArraySymbol,
                let expectedType, expectedType != sema.types.errorType,
@@ -473,13 +475,14 @@ final class CallTypeChecker {
                 case .star:
                     elementReturnType = sema.types.anyType
                 }
+                inferLambdaOnce = true
             } else if isKotlinArray {
                 // No expected type and no explicit type argument for Array(size) { init }.
                 // Infer the lambda with `it` constrained to Int, then extract the
                 // actual body return type from bindings to avoid erasing to Any.
                 let lambdaExpected = sema.types.make(.functionType(FunctionType(
                     params: [intType],
-                    returnType: sema.types.anyType
+                    returnType: sema.types.makeNullable(sema.types.anyType)
                 )))
                 _ = driver.inferExpr(
                     args[1].expr,
@@ -495,6 +498,7 @@ final class CallTypeChecker {
                 }
                 let inferred = bodyType ?? sema.types.anyType
                 elementReturnType = (inferred != sema.types.errorType) ? inferred : sema.types.anyType
+                inferLambdaOnce = false
             } else {
                 // For primitive array constructors, the element type is fixed.
                 elementReturnType = switch calleeNameStr {
@@ -506,17 +510,20 @@ final class CallTypeChecker {
                 case "CharArray": sema.types.make(.primitive(.char, .nonNull))
                 default: sema.types.anyType
                 }
+                inferLambdaOnce = false
             }
             let initExpectedType = sema.types.make(.functionType(FunctionType(
                 params: [intType],
                 returnType: elementReturnType
             )))
-            _ = driver.inferExpr(
-                args[1].expr,
-                ctx: ctx,
-                locals: &locals,
-                expectedType: initExpectedType
-            )
+            if !inferLambdaOnce {
+                _ = driver.inferExpr(
+                    args[1].expr,
+                    ctx: ctx,
+                    locals: &locals,
+                    expectedType: initExpectedType
+                )
+            }
             sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
             sema.bindings.markCollectionExpr(id)
             let resultType: TypeID
