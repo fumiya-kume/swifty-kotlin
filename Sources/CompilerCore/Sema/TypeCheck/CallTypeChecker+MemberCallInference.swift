@@ -1140,38 +1140,41 @@ extension CallTypeChecker {
                 } else {
                     sema.types.anyType
                 }
-                do {
-                    let primitiveComparableTypes: Set<TypeID> = [
-                        sema.types.intType,
-                        sema.types.longType,
-                        sema.types.floatType,
-                        sema.types.doubleType,
-                        sema.types.charType,
-                        sema.types.stringType,
-                        sema.types.make(.primitive(.uint, .nonNull)),
-                        sema.types.make(.primitive(.ulong, .nonNull)),
-                    ]
-                    let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
-                    let isNominalComparable: Bool
-                    if let comparableSymbol = sema.types.comparableInterfaceSymbol {
-                        let comparableSelectorType = sema.types.make(.classType(ClassType(
-                            classSymbol: comparableSymbol,
-                            args: [.invariant(selectorType)],
-                            nullability: .nonNull
-                        )))
-                        isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
-                    } else {
-                        isNominalComparable = false
-                    }
-                    if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
-                        ctx.semaCtx.diagnostics.error(
-                            "KSWIFTK-SEMA-BOUND",
-                            "Type argument does not satisfy upper bound constraint.",
-                            range: ast.arena.exprRange(id)
-                        )
-                        let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
-                        sema.bindings.bindExprType(id, type: failedType)
-                        return failedType
+                let selectorKind = sema.types.kind(of: selectorType)
+                if case .typeParam = selectorKind {} else {
+                    do {
+                        let primitiveComparableTypes: Set<TypeID> = [
+                            sema.types.intType,
+                            sema.types.longType,
+                            sema.types.floatType,
+                            sema.types.doubleType,
+                            sema.types.charType,
+                            sema.types.stringType,
+                            sema.types.make(.primitive(.uint, .nonNull)),
+                            sema.types.make(.primitive(.ulong, .nonNull)),
+                        ]
+                        let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
+                        let isNominalComparable: Bool
+                        if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                            let comparableSelectorType = sema.types.make(.classType(ClassType(
+                                classSymbol: comparableSymbol,
+                                args: [.invariant(selectorType)],
+                                nullability: .nonNull
+                            )))
+                            isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
+                        } else {
+                            isNominalComparable = false
+                        }
+                        if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-BOUND",
+                                "Type argument does not satisfy upper bound constraint.",
+                                range: ast.arena.exprRange(id)
+                            )
+                            let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                            sema.bindings.bindExprType(id, type: failedType)
+                            return failedType
+                        }
                     }
                 }
                 resultType = sema.types.makeNullable(collectionElementType)

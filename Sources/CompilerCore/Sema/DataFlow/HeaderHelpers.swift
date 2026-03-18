@@ -689,8 +689,8 @@ extension DataFlowSemaPhase {
             kotlinPkg: kotlinPkg, kotlinPropertiesPkg: kotlinPropertiesPkg
         )
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
+        registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparisonStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparatorStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)

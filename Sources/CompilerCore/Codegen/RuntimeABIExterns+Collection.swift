@@ -24,6 +24,7 @@ public extension RuntimeABIExterns {
         kk_list_toHashSet,
         kk_list_toMap,
         kk_list_subList,
+        kk_list_binarySearch,
         kk_set_of,
         kk_set_size,
         kk_set_contains,
