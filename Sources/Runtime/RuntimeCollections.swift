@@ -182,10 +182,11 @@ public func kk_list_iterator_next(_ iterRaw: Int) -> Int {
 
 /// Whether the iterator has a valid previous element.
 /// The invariant maintained by `kk_list_iterator_next` guarantees
-/// `index` is always in `0...elements.count`, so `index > 0` is
-/// the only check needed.
+/// `index` is always in `0...elements.count`, but we defensively
+/// also check the upper bound so that a corrupted/invalid index
+/// cannot lead to an out-of-bounds access in `previous()`.
 private func listIteratorCanGoBack(_ iter: RuntimeListIteratorBox) -> Bool {
-    iter.index > 0
+    iter.index > 0 && iter.index <= iter.elements.count
 }
 
 @_cdecl("kk_list_iterator_hasPrevious")
