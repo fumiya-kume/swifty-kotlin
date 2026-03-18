@@ -747,11 +747,7 @@ extension NativeEmitter {
                 let argumentValues = arguments.map(resolveValue)
 
                 // Consolidated path for known void, zero-argument runtime calls.
-                let knownVoidNoArgCallees: Set<String> = [
-                    "kk_print_noarg",
-                    "kk_println_newline",
-                ]
-                if knownVoidNoArgCallees.contains(calleeName) {
+                if Self.knownVoidNoArgCallees.contains(calleeName) {
                     if let runtimeFunction = declareExternalFunction(
                         named: calleeName,
                         argumentCount: 0,

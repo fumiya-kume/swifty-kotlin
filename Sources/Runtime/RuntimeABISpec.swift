@@ -1147,7 +1147,7 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let printFunctions: [RuntimeABIFunctionSpec] = [
+    public static let consolePrintFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_print_any",
             parameters: [
@@ -2759,7 +2759,7 @@ public enum RuntimeABISpec {
         memoryFunctions
             + exceptionFunctions
             + stringFunctions
-            + printFunctions
+            + consolePrintFunctions
             + ioFunctions
             + systemFunctions
             + gcFunctions

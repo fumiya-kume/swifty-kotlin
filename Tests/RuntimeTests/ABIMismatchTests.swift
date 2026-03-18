@@ -101,7 +101,7 @@ final class ABIMismatchTests: XCTestCase {
 
     func testPrintAndPrintlnFunctionCount() {
         // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.printFunctions.count, 5)
+        XCTAssertEqual(RuntimeABISpec.consolePrintFunctions.count, 5)
     }
 
     func testIOFunctionCount() {
@@ -160,7 +160,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.memoryFunctions,
             RuntimeABISpec.exceptionFunctions,
             RuntimeABISpec.stringFunctions,
-            RuntimeABISpec.printFunctions,
+            RuntimeABISpec.consolePrintFunctions,
             RuntimeABISpec.ioFunctions,
             RuntimeABISpec.systemFunctions,
             RuntimeABISpec.gcFunctions,
@@ -383,7 +383,7 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertTrue(header.contains("Memory"))
         XCTAssertTrue(header.contains("Exception"))
         XCTAssertTrue(header.contains("String"))
-        XCTAssertTrue(header.contains("Println"))
+        XCTAssertTrue(header.contains("Print"))
         XCTAssertTrue(header.contains("GC"))
         XCTAssertTrue(header.contains("Coroutine"))
         XCTAssertTrue(header.contains("Boxing"))
