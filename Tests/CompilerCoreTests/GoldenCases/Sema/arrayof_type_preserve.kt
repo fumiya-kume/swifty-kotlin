@@ -22,3 +22,8 @@ fun arrayConstructorWithInit() {
     val e = Array(5) { it * 2 }
     println(e.size)
 }
+
+fun arrayOfWithExpectedType() {
+    val strings: Array<String> = arrayOf()
+    println(strings.size)
+}

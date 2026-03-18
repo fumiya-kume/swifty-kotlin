@@ -454,8 +454,14 @@ final class CallTypeChecker {
                 interner.intern("Array"),
             ]
             let kotlinArraySymbol = sema.symbols.lookup(fqName: arrayFQName)
+            let isKotlinArray = calleeNameStr == "Array"
             let elementReturnType: TypeID
-            if calleeNameStr == "Array",
+            if isKotlinArray,
+               let explicitTypeArg = explicitTypeArgs.first
+            {
+                elementReturnType = explicitTypeArg
+            } else if isKotlinArray,
+               let kotlinArraySymbol,
                let expectedType, expectedType != sema.types.errorType,
                case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                expectedClassType.classSymbol == kotlinArraySymbol,
@@ -467,9 +473,7 @@ final class CallTypeChecker {
                 case .star:
                     elementReturnType = sema.types.anyType
                 }
-            } else if let explicitTypeArg = explicitTypeArgs.first, calleeNameStr == "Array" {
-                elementReturnType = explicitTypeArg
-            } else if calleeNameStr == "Array" {
+            } else if isKotlinArray {
                 // No expected type and no explicit type argument for Array(size) { init }.
                 // Infer the lambda with `it` constrained to Int, then extract the
                 // actual body return type from bindings to avoid erasing to Any.
@@ -491,17 +495,6 @@ final class CallTypeChecker {
                 }
                 let inferred = bodyType ?? sema.types.anyType
                 elementReturnType = (inferred != sema.types.errorType) ? inferred : sema.types.anyType
-                // Lambda already inferred; build result and return early.
-                sema.bindings.markStdlibSpecialCallExpr(id, kind: .arrayConstructor)
-                sema.bindings.markCollectionExpr(id)
-                let resultType = makeSyntheticArrayType(
-                    symbols: sema.symbols,
-                    types: sema.types,
-                    interner: interner,
-                    elementType: elementReturnType
-                )
-                sema.bindings.bindExprType(id, type: resultType)
-                return resultType
             } else {
                 // For primitive array constructors, the element type is fixed.
                 elementReturnType = switch calleeNameStr {
@@ -1423,11 +1416,37 @@ final class CallTypeChecker {
                         )
                     } else if !argTypes.isEmpty {
                         let elementType = sema.types.lub(argTypes)
+                        let inferredElementType = if elementType == sema.types.errorType {
+                            sema.types.anyType
+                        } else {
+                            elementType
+                        }
                         collectionType = makeSyntheticArrayType(
                             symbols: sema.symbols,
                             types: sema.types,
                             interner: interner,
-                            elementType: elementType
+                            elementType: inferredElementType
+                        )
+                    } else if let expectedType,
+                              expectedType != sema.types.errorType,
+                              case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+                              let arraySymbol = sema.symbols.lookup(
+                                fqName: [interner.intern("kotlin"), interner.intern("Array")]
+                              ),
+                              expectedClassType.classSymbol == arraySymbol,
+                              let firstArg = expectedClassType.args.first
+                    {
+                        let inferred = switch firstArg {
+                        case let .invariant(type), let .in(type), let .out(type):
+                            type
+                        case .star:
+                            sema.types.anyType
+                        }
+                        collectionType = makeSyntheticArrayType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: inferred
                         )
                     } else {
                         // arrayOf() with no args and no explicit type
