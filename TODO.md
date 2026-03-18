@@ -258,10 +258,10 @@
 - [ ] STDLIB-604: `countOneBits` のエッジケーステスト
 - [ ] STDLIB-605: `countLeadingZeroBits` のエッジケーステスト
 - [ ] STDLIB-606: `countTrailingZeroBits` のエッジケーステスト
-- [ ] STDLIB-607: diff_cases 全 198 ファイルの stdlib サポート状況棚卸し
-- [ ] STDLIB-608: `list_of.kt` の diff 通過確認
-- [ ] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
-- [ ] STDLIB-610: `string_stdlib.kt` の diff 通過確認
+- [x] STDLIB-607: diff_cases 全 197 .kt ファイルの stdlib サポート状況棚卸し (195 PASS, 2 SKIP, 0 FAIL)
+- [x] STDLIB-608: `list_of.kt` の diff 通過確認
+- [x] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
+- [x] STDLIB-610: `string_stdlib.kt` の diff 通過確認
 
 #### L. 既存・補足
 
