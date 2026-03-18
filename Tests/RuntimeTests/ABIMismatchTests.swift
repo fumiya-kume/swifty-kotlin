@@ -99,9 +99,9 @@ final class ABIMismatchTests: XCTestCase {
         XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 21)
     }
 
-    func testPrintlnFunctionCount() {
+    func testPrintAndPrintlnFunctionCount() {
         // kk_print_any, kk_print_noarg, kk_println_any, kk_println_bool, kk_println_newline
-        XCTAssertEqual(RuntimeABISpec.printlnFunctions.count, 5)
+        XCTAssertEqual(RuntimeABISpec.printFunctions.count, 5)
     }
 
     func testIOFunctionCount() {
@@ -160,7 +160,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.memoryFunctions,
             RuntimeABISpec.exceptionFunctions,
             RuntimeABISpec.stringFunctions,
-            RuntimeABISpec.printlnFunctions,
+            RuntimeABISpec.printFunctions,
             RuntimeABISpec.ioFunctions,
             RuntimeABISpec.systemFunctions,
             RuntimeABISpec.gcFunctions,

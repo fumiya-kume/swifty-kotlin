@@ -1147,14 +1147,14 @@ public enum RuntimeABISpec {
         ),
     ]
 
-    public static let printlnFunctions: [RuntimeABIFunctionSpec] = [
+    public static let printFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_print_any",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_any",
@@ -1162,7 +1162,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_bool",
@@ -1170,19 +1170,19 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_print_noarg",
             parameters: [],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_newline",
             parameters: [],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
     ]
 
@@ -2759,7 +2759,7 @@ public enum RuntimeABISpec {
         memoryFunctions
             + exceptionFunctions
             + stringFunctions
-            + printlnFunctions
+            + printFunctions
             + ioFunctions
             + systemFunctions
             + gcFunctions
