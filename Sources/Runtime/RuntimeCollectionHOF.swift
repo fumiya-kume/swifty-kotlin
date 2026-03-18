@@ -582,6 +582,8 @@ public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int
     return acc
 }
 
+// Deprecated: kk_list_scanReduce is a deprecated alias for kk_list_runningReduce.
+// Kotlin renamed scanReduce to runningReduce; this entrypoint is kept for ABI compatibility.
 @_cdecl("kk_list_scanReduce")
 public func kk_list_scanReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     return kk_list_runningReduce(listRaw, fnPtr, closureRaw, outThrown)

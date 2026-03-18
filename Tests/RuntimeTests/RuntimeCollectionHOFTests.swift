@@ -538,6 +538,13 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(listElements(result), [1, 3, 6])
     }
 
+    func testScanReduceEmptyListThrowsViaOutThrown() {
+        let source = makeList([])
+        var thrown = 0
+        _ = kk_list_scanReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, &thrown)
+        XCTAssertNotEqual(thrown, 0, "scanReduce on empty list should signal an error via outThrown")
+    }
+
     func testScanReduceWithOrderOperation() {
         let source = makeList([1, 2, 3])
         let result = kk_list_scanReduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil)

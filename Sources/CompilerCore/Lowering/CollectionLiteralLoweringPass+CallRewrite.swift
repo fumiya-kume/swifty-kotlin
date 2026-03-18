@@ -2386,7 +2386,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduceOrNull: args = [receiver, lambda, closureRaw?]
-                    if callee == lookup.reduceOrNullName, arguments.count == 2 || arguments.count == 3 {
+                    if callee == lookup.reduceOrNullName, (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
@@ -2457,7 +2457,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // runningReduce / scanReduce: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), arguments.count == 2 || arguments.count == 3 {
+                    if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
