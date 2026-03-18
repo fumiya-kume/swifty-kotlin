@@ -1508,6 +1508,8 @@ extension DataFlowSemaPhase {
         )))
         let listReturnType = receiverType
 
+        /// Register a synthetic member on List. Short-circuits when a symbol
+        /// with the same fully-qualified name already exists (first-wins).
         func registerMember(
             name: String,
             parameterTypes: [TypeID],
@@ -1517,6 +1519,27 @@ extension DataFlowSemaPhase {
             let memberName = interner.intern(name)
             let memberFQName = listFQName + [memberName]
             guard symbols.lookup(fqName: memberFQName) == nil else { return }
+            registerMemberOverload(
+                memberName: memberName,
+                memberFQName: memberFQName,
+                parameterTypes: parameterTypes,
+                externalLinkName: externalLinkName
+            )
+        }
+
+        /// Register a synthetic member overload on List, checking for
+        /// duplicate registrations by comparing parameter signatures.
+        func registerMemberOverload(
+            memberName: InternedString,
+            memberFQName: [InternedString],
+            parameterTypes: [TypeID],
+            externalLinkName: String
+        ) {
+            let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
+                guard let sig = symbols.functionSignature(for: symbolID) else { return false }
+                return sig.parameterTypes == parameterTypes
+            }
+            guard !alreadyRegistered else { return }
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: memberName,
@@ -1548,12 +1571,9 @@ extension DataFlowSemaPhase {
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
 
         // shuffled(random: Random) overload (STDLIB-531)
-        // Registered explicitly because registerMember short-circuits when
-        // the no-arg overload already occupies the name.
         do {
             let shuffledRandomName = interner.intern("shuffled")
             let shuffledRandomFQName = listFQName + [shuffledRandomName]
-            // Look up the Random class type from kotlin.random.Random.
             let kotlinRandomPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("random")]
             let randomClassName = interner.intern("Random")
             let randomFQName = kotlinRandomPkg + [randomClassName]
@@ -1563,33 +1583,12 @@ extension DataFlowSemaPhase {
                     args: [],
                     nullability: .nonNull
                 )))
-                // Only register if there isn't already an overload with this exact signature.
-                let alreadyRegistered = symbols.lookupAll(fqName: shuffledRandomFQName).contains { symbolID in
-                    guard let sig = symbols.functionSignature(for: symbolID) else { return false }
-                    return sig.parameterTypes == [randomParamType]
-                }
-                if !alreadyRegistered {
-                    let memberSymbol = symbols.define(
-                        kind: .function,
-                        name: shuffledRandomName,
-                        fqName: shuffledRandomFQName,
-                        declSite: nil,
-                        visibility: .public,
-                        flags: [.synthetic]
-                    )
-                    symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
-                    symbols.setExternalLinkName("kk_list_shuffled_random", for: memberSymbol)
-                    symbols.setFunctionSignature(
-                        FunctionSignature(
-                            receiverType: receiverType,
-                            parameterTypes: [randomParamType],
-                            returnType: listReturnType,
-                            typeParameterSymbols: [listTypeParamSymbol],
-                            classTypeParameterCount: 1
-                        ),
-                        for: memberSymbol
-                    )
-                }
+                registerMemberOverload(
+                    memberName: shuffledRandomName,
+                    memberFQName: shuffledRandomFQName,
+                    parameterTypes: [randomParamType],
+                    externalLinkName: "kk_list_shuffled_random"
+                )
             }
         }
 

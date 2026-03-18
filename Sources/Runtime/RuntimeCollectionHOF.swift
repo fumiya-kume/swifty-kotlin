@@ -1057,12 +1057,14 @@ public func kk_list_shuffled(_ listRaw: Int) -> Int {
 // MARK: - shuffled(random: Random) overload (STDLIB-531)
 
 @_cdecl("kk_list_shuffled_random")
-public func kk_list_shuffled_random(_ listRaw: Int, _ randomRaw: Int) -> Int {
+public func kk_list_shuffled_random(_ listRaw: Int, _ _randomRaw: Int) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let elements = _listBox.elements
-    // The randomRaw parameter is the Kotlin Random receiver object.
-    // In the runtime we use Swift's SystemRandomNumberGenerator since the
-    // Random companion object delegates to the platform default generator.
+    // NOTE: The _randomRaw parameter (Kotlin Random instance) is intentionally
+    // unused. The runtime delegates to Swift's SystemRandomNumberGenerator
+    // which matches Kotlin's Random.Default behavior. Seeded Random instances
+    // (e.g. Random(42)) will NOT produce deterministic results here -- this is
+    // a known limitation tracked for future work.
     let shuffled = elements.shuffled()
     return registerRuntimeObject(RuntimeListBox(elements: shuffled))
 }
