@@ -276,7 +276,8 @@ extension BuildKIRRegressionTests {
             XCTAssertEqual(opIsCalls.count, 1, "Expected exactly one kk_op_is call for runtime type check fallback on UNKNOWN token.")
 
             // Verify the kk_op_is call receives the exception slot and the type token
-            if case let .call(_, _, arguments, _, _, _, _) = opIsCalls.first {
+            let firstOpIsCall = try XCTUnwrap(opIsCalls.first)
+            if case let .call(_, _, arguments, _, _, _, _) = firstOpIsCall {
                 XCTAssertEqual(arguments.count, 2, "kk_op_is should receive exception value and type token.")
             }
         }

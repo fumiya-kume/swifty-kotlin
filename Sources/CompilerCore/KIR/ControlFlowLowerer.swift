@@ -612,6 +612,10 @@ final class ControlFlowLowerer {
         arena: KIRArena,
         instructions: inout [KIRInstruction]
     ) {
+        // NOTE: Each invocation emits fresh constValue instructions for the catch type
+        // token, zero sentinel, true, and false. This is acceptable for correctness since
+        // each KIR expr ID must be unique, but if IR size or compile time becomes a concern,
+        // consider hoisting shared boolean/int constants from the caller and passing them in.
         let encodedToken = RuntimeTypeCheckToken.encode(type: catchType, sema: sema, interner: interner)
         let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
         let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
@@ -640,7 +644,7 @@ final class ControlFlowLowerer {
         // When token is UNKNOWN, call kk_op_is for precise runtime type checking
         // instead of blindly matching all catch clauses.
         let runtimeCheckLabel = driver.ctx.makeLoopLabel()
-        let tokenMatchedLabel = driver.ctx.makeLoopLabel()
+        let knownMismatchLabel = driver.ctx.makeLoopLabel()
         let checkDoneLabel = driver.ctx.makeLoopLabel()
 
         let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
@@ -656,7 +660,7 @@ final class ControlFlowLowerer {
         // Runtime check path: only reached when token did not match exactly
         instructions.append(.label(runtimeCheckLabel))
         // If the token is NOT unknown (i.e., known but different), it's a definite miss
-        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseForCheck, target: tokenMatchedLabel))
+        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseForCheck, target: knownMismatchLabel))
 
         // Token is 0 (UNKNOWN) -- use kk_op_is for runtime type checking
         let runtimeIsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
@@ -672,7 +676,7 @@ final class ControlFlowLowerer {
         instructions.append(.jump(checkDoneLabel))
 
         // Token was known but didn't match -- definite miss
-        instructions.append(.label(tokenMatchedLabel))
+        instructions.append(.label(knownMismatchLabel))
         instructions.append(.copy(from: falseForCheck, to: matchResult))
 
         instructions.append(.label(checkDoneLabel))
