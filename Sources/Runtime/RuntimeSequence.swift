@@ -1834,14 +1834,13 @@ public func kk_sequence_flatten(_ seqRaw: Int) -> Int {
 
 // MARK: - Sequence plus/minus Operations (STDLIB-561, STDLIB-562)
 //
-// NOTE: Both plus and minus eagerly materialize the input sequence via
-// evaluateSequence.  This is an intentional simplification -- Kotlin's
-// stdlib returns a lazy sequence, but our runtime does not yet have a
-// concat/remove step kind in the sequence pipeline.  Eager evaluation
-// is correct for finite sequences and keeps the implementation simple.
-// A future optimisation (adding .concat / .minus step kinds to
-// RuntimeSequenceBox) can make these lazy without changing the public
-// ABI.
+// IMPORTANT: Both plus and minus eagerly materialize the entire input
+// sequence via evaluateSequence.  Unlike Kotlin's stdlib (which returns
+// a lazy sequence), our implementation is eager.  This is an intentional
+// simplification -- eager evaluation is correct for finite sequences and
+// keeps the implementation simple.  A future optimisation can add
+// .concat / .minus step kinds to RuntimeSequenceBox for lazy evaluation
+// without changing the public ABI.
 //
 // NOTE: The compiler resolves the correct Kotlin overload (element vs
 // collection) at compile time via sema.bindings.isCollectionExpr, so
@@ -1875,7 +1874,10 @@ public func kk_sequence_plus(_ seqRaw: Int, _ otherRaw: Int) -> Int {
         // normally wrap single elements before reaching here.
         rhsElements = [otherRaw]
     }
-    let newSeq = RuntimeSequenceBox(steps: [.source(elements: lhsElements + rhsElements)])
+    var combined = lhsElements
+    combined.reserveCapacity(lhsElements.count + rhsElements.count)
+    combined.append(contentsOf: rhsElements)
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: combined)])
     return registerRuntimeObject(newSeq)
 }
 

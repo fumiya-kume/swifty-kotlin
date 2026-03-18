@@ -167,20 +167,36 @@ extension CallLowerer {
             return result
         }
         // STDLIB-561/562: Sequence plus/minus operators
-        if (op == .add || op == .subtract),
-           isSequenceLikeType(sema.bindings.exprTypes[lhs] ?? sema.types.anyType, sema: sema, interner: interner) {
-            let calleeName = op == .subtract ? "kk_sequence_minus" : "kk_sequence_plus"
-            instructions.append(
-                .call(
-                    symbol: nil,
-                    callee: interner.intern(calleeName),
-                    arguments: [lhsID, rhsID],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
+        // For minus, only handle the single-element case (non-collection RHS).
+        // Collection-removal (Sequence.minus(Iterable)) is not yet supported
+        // at the ABI level and falls through to the generic operator path.
+        if isSequenceLikeType(sema.bindings.exprTypes[lhs] ?? sema.types.anyType, sema: sema, interner: interner) {
+            if op == .add {
+                instructions.append(
+                    .call(
+                        symbol: nil,
+                        callee: interner.intern("kk_sequence_plus"),
+                        arguments: [lhsID, rhsID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    )
                 )
-            )
-            return result
+                return result
+            }
+            if op == .subtract, !sema.bindings.isCollectionExpr(rhs) {
+                instructions.append(
+                    .call(
+                        symbol: nil,
+                        callee: interner.intern("kk_sequence_minus"),
+                        arguments: [lhsID, rhsID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    )
+                )
+                return result
+            }
         }
         // STDLIB-345: List plus/minus operators
         if (op == .add || op == .subtract), sema.bindings.isCollectionExpr(exprID),
@@ -729,5 +745,24 @@ extension CallLowerer {
         let unit = arena.appendExpr(.unit, type: sema.types.unitType)
         instructions.append(.constValue(result: unit, value: .unit))
         return unit
+    }
+
+    // MARK: - Private Helpers
+
+    /// Check whether a type is Sequence-like for operator lowering decisions.
+    /// Kept private to this extension; the same logic exists in
+    /// CallLowerer+MemberCalls as a file-private helper.
+    private func isSequenceLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isSequenceSymbol(symbol)
     }
 }

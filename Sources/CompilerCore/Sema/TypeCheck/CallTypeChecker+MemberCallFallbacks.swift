@@ -343,11 +343,13 @@ extension CallTypeChecker {
             sema.bindings.bindCallableTarget(id, target: .symbol(fallbackCallee))
         }
 
+        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         var resultType = collectionFallbackResultType(
             memberName: calleeName,
             receiverElementType: receiverElementType,
             isMapReceiver: isMapReceiver,
             isSetReceiver: isSetReceiver,
+            isSequenceReceiver: isSequenceReceiver,
             args: args,
             sema: sema,
             interner: interner
@@ -355,8 +357,8 @@ extension CallTypeChecker {
         // When the receiver is Sequence, sequence-returning operations (map,
         // filter, etc.) should return Sequence<E> so the KIR builder's
         // sequence HOF handler recognises chained calls (STDLIB-471).
-        let isSequenceReceiver = isSequenceLikeReceiver(receiverID: receiverID, sema: sema, interner: interner)
         if isSequenceReceiver,
+           resultType == sema.types.anyType,
            isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner)
         {
             resultType = makeSyntheticSequenceType(
@@ -663,6 +665,7 @@ extension CallTypeChecker {
         receiverElementType: TypeID,
         isMapReceiver: Bool,
         isSetReceiver: Bool,
+        isSequenceReceiver: Bool,
         args: [CallArgument],
         sema: SemaModule,
         interner: StringInterner
@@ -769,6 +772,11 @@ extension CallTypeChecker {
                     args: [.invariant(receiverElementType)],
                     nullability: .nonNull
                 )))
+            }
+            // For Sequence receivers, return anyType so the Sequence override
+            // at the call site can retype the result as Sequence<E> (STDLIB-561).
+            if isSequenceReceiver {
+                return sema.types.anyType
             }
             // For List (and other non-Map, non-Set) receivers, return List<E>.
             if !isMapReceiver, !isSetReceiver,
