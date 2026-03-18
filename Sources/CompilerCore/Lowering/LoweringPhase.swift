@@ -23,7 +23,7 @@ public final class LoweringPhase: CompilerPhase {
         CollectionLiteralLoweringPass(),
         FlowLoweringPass(),
 
-        ValueClassUnboxingPass(), // Must run before PropertyLowering (rewrites value class ctor/getter at KIR level)
+        ValueClassUnboxingPass(), // Currently disabled (shouldRun returns false); when re-enabled, must run before PropertyLowering
         PropertyLoweringPass(),
         StdlibDelegateLoweringPass(),
         JvmStaticLoweringPass(),

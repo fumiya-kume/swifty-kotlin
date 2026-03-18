@@ -1,5 +1,3 @@
-import Foundation
-
 /// VAL-001: Value class unboxing lowering pass.
 ///
 /// **Status: DISABLED** (`shouldRun` always returns `false`).
@@ -40,10 +38,20 @@ final class ValueClassUnboxingPass: LoweringPass {
         let symbols = sema.symbols
 
         // Collect constructor symbols and wrapped-property symbols for
-        // value classes. Note: valueClassWrappedProperties stores
-        // property/field symbol IDs (not getter function IDs).
+        // value classes.
+        //
+        // IMPORTANT: valueClassWrappedPropertySymbols stores the
+        // *property/field* symbol IDs from the symbol table, NOT the
+        // getter function symbol IDs. In the current KIR emission,
+        // property accesses on value classes are emitted as
+        // `.call`/`.virtualCall` instructions whose `symbol` field
+        // carries the property symbol ID (not a separate getter
+        // function symbol). If KIR emission changes to use dedicated
+        // getter function symbols, this collection must be updated to
+        // map property symbols -> getter symbols (e.g. via
+        // `symbols.children(ofFQName:)` or a dedicated getter lookup).
         var valueClassCtors: Set<SymbolID> = []
-        var valueClassWrappedProperties: Set<SymbolID> = []
+        var valueClassWrappedPropertySymbols: Set<SymbolID> = []
 
         for decl in module.arena.declarations {
             guard case let .nominalType(nominal) = decl else {
@@ -73,13 +81,13 @@ final class ValueClassUnboxingPass: LoweringPass {
                     if let propType = symbols.propertyType(for: childID),
                        propType == underlyingType
                     {
-                        valueClassWrappedProperties.insert(childID)
+                        valueClassWrappedPropertySymbols.insert(childID)
                     }
                 }
             }
         }
 
-        guard !valueClassCtors.isEmpty || !valueClassWrappedProperties.isEmpty else {
+        guard !valueClassCtors.isEmpty || !valueClassWrappedPropertySymbols.isEmpty else {
             module.recordLowering(Self.name)
             return
         }
@@ -89,7 +97,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             let newBody = self.rewriteBody(
                 function.body,
                 valueClassCtors: valueClassCtors,
-                valueClassWrappedProperties: valueClassWrappedProperties
+                valueClassWrappedPropertySymbols: valueClassWrappedPropertySymbols
             )
             updated.replaceBody(newBody)
             return updated
@@ -101,7 +109,7 @@ final class ValueClassUnboxingPass: LoweringPass {
     private func rewriteBody(
         _ body: [KIRInstruction],
         valueClassCtors: Set<SymbolID>,
-        valueClassWrappedProperties: Set<SymbolID>
+        valueClassWrappedPropertySymbols: Set<SymbolID>
     ) -> [KIRInstruction] {
         body.map { instruction in
             switch instruction {
@@ -128,7 +136,7 @@ final class ValueClassUnboxingPass: LoweringPass {
                 }
                 // Property getter via .call (non-virtual dispatch):
                 // call getter(receiver) result -> copy(receiver, result)
-                if let symbol, valueClassWrappedProperties.contains(symbol),
+                if let symbol, valueClassWrappedPropertySymbols.contains(symbol),
                    let result, arguments.count == 1
                 {
                     return .copy(from: arguments[0], to: result)
@@ -138,7 +146,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             // Rewrite property getter calls on value class:
             // virtualCall getter(receiver) result -> copy(receiver, result)
             case let .virtualCall(symbol, callee: _, receiver, arguments: _, result, canThrow: _, thrownResult: _, dispatch: _):
-                if let symbol, valueClassWrappedProperties.contains(symbol),
+                if let symbol, valueClassWrappedPropertySymbols.contains(symbol),
                    let result
                 {
                     return .copy(from: receiver, to: result)
