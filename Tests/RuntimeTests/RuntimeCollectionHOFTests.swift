@@ -435,6 +435,29 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         XCTAssertEqual(kk_unbox_bool(kk_map_is_empty(kk_map_of(0, 0, 0))), 1)
     }
 
+    func testReduceOrNullReturnsZeroForEmptyList() {
+        let emptyList = makeList([])
+        var thrown = 0
+        let result = kk_list_reduceOrNull(emptyList, unsafeBitCast(foldSum, to: Int.self), 0, &thrown)
+        XCTAssertEqual(result, 0, "reduceOrNull should return 0 (null) for empty list")
+        XCTAssertEqual(thrown, 0, "reduceOrNull should not set outThrown for empty list")
+    }
+
+    func testReduceOrNullReturnsSingleElementForSingletonList() {
+        let singleton = makeList([42])
+        var thrown = 0
+        let result = kk_list_reduceOrNull(singleton, unsafeBitCast(foldSum, to: Int.self), 0, &thrown)
+        XCTAssertEqual(result, 42, "reduceOrNull should return the single element without invoking lambda")
+        XCTAssertEqual(thrown, 0)
+    }
+
+    func testReduceOrNullMatchesReduceForNonEmptyList() {
+        let source = makeList([1, 2, 3])
+        let reduceResult = kk_list_reduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil)
+        let reduceOrNullResult = kk_list_reduceOrNull(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil)
+        XCTAssertEqual(reduceOrNullResult, reduceResult, "reduceOrNull should produce same result as reduce for non-empty lists")
+    }
+
     private func makeArray(_ elements: [Int]) -> Int {
         let arrayRaw = kk_array_new(elements.count)
         var thrown = 0
