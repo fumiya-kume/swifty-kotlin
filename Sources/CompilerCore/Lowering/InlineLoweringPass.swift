@@ -427,14 +427,13 @@ final class InlineLoweringPass: LoweringPass {
                        argExpr: argExpr,
                        arena: module.arena,
                        allFunctionsBySymbol: allFunctionsBySymbol
+                   ),
+                   let lambdaExpansion = expandLambdaBody(
+                       lambdaFunction: lambdaFunction,
+                       arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
+                       module: module
                    )
                 {
-                    let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
-                    let lambdaExpansion = expandLambdaBody(
-                        lambdaFunction: lambdaFunction,
-                        arguments: resolvedArgs,
-                        module: module
-                    )
                     lowered.append(contentsOf: lambdaExpansion.instructions)
                     if let result {
                         let cloned = cloneExpr(result, in: module.arena)
@@ -579,11 +578,14 @@ final class InlineLoweringPass: LoweringPass {
     /// provided call arguments. This is analogous to `expandInlineCall` but
     /// operates on non-inline lambda functions that are passed as arguments to
     /// inline functions.
+    ///
+    /// Returns `nil` when the expansion cannot proceed (e.g. argument/parameter
+    /// count mismatch), signalling the caller to fall back to a regular call.
     private func expandLambdaBody(
         lambdaFunction: KIRFunction,
         arguments: [KIRExprID],
         module: KIRModule
-    ) -> InlineExpansion {
+    ) -> InlineExpansion? {
         // Map lambda parameters to arguments. If the argument count does not
         // match the parameter count, skip capture parameters at the front and
         // map only the trailing value parameters.
@@ -601,8 +603,9 @@ final class InlineLoweringPass: LoweringPass {
                 lambdaParamValues[lambdaFunction.params[offset + i].symbol] = arguments[i]
             }
         } else {
-            // More arguments than parameters -- fall back to non-inlined call.
-            return InlineExpansion(instructions: [], returnedExpr: nil)
+            // More arguments than parameters -- cannot inline; caller will
+            // fall back to emitting the original call instruction.
+            return nil
         }
 
         var localExprMap: [KIRExprID: KIRExprID] = [:]
@@ -610,7 +613,10 @@ final class InlineLoweringPass: LoweringPass {
         lowered.reserveCapacity(lambdaFunction.body.count)
         var returnedExpr: KIRExprID?
 
-        for instruction in lambdaFunction.body {
+        // Use a labeled loop so that return instructions can stop cloning.
+        // Without this, instructions following a return in the lambda body
+        // would be incorrectly included in the inlined expansion.
+        cloneLoop: for instruction in lambdaFunction.body {
             switch instruction {
             case .beginBlock, .endBlock:
                 continue
@@ -635,9 +641,11 @@ final class InlineLoweringPass: LoweringPass {
 
             case .returnUnit:
                 returnedExpr = nil
+                break cloneLoop
 
             case let .returnValue(value):
                 returnedExpr = resolveAlias(of: value, aliases: localExprMap)
+                break cloneLoop
 
             case let .constValue(result, value):
                 if case let .symbolRef(symbol) = value,

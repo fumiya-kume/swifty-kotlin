@@ -2,185 +2,127 @@
 import Foundation
 import XCTest
 
-extension LoweringPassRegressionTests {
+// MARK: - Test Helpers
 
-    // MARK: - INLINE-002: Lambda argument inlining
+/// Bundles the common infrastructure every inline-lambda test needs so that
+/// individual tests only specify what differs per case (function bodies,
+/// declarations, assertions).
+private struct InlineLambdaTestContext {
+    let interner = StringInterner()
+    let arena = KIRArena()
+    let symbols = SymbolTable()
+    let types = TypeSystem()
+    let bindings = BindingTable()
+    let diagnostics = DiagnosticEngine()
 
-    /// Verify that a lambda passed to an inline function is expanded in place,
-    /// eliminating the indirect call to the lambda function.
-    func testInlineLoweringInlinesLambdaArgumentBody() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let symbols = SymbolTable()
-        let types = TypeSystem()
-        let bindings = BindingTable()
-        let diagnostics = DiagnosticEngine()
+    let intType: TypeID
+    let funcType: TypeID
 
-        let intType = types.make(.primitive(.int, .nonNull))
-        let funcType = types.make(.functionType(FunctionType(
+    init() {
+        intType = types.make(.primitive(.int, .nonNull))
+        funcType = types.make(.functionType(FunctionType(
             params: [intType],
             returnType: intType
         )))
+    }
 
-        // Define symbols
-        let mainSymbol = symbols.define(
+    /// Register an inline function with a single value parameter and a
+    /// block parameter of `(Int) -> Int` type, returning `Int`.
+    func defineInlineFunction(
+        name: String
+    ) -> (symbol: SymbolID, valueParam: SymbolID, blockParam: SymbolID) {
+        let symbol = symbols.define(
             kind: .function,
-            name: interner.intern("main"),
-            fqName: [interner.intern("test"), interner.intern("main")],
-            declSite: nil,
-            visibility: .public
-        )
-        let inlineSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("applyBlock"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock")],
+            name: interner.intern(name),
+            fqName: [interner.intern("test"), interner.intern(name)],
             declSite: nil,
             visibility: .public,
             flags: [.inlineFunction]
         )
-        let inlineValueParam = symbols.define(
+        let valueParam = symbols.define(
             kind: .valueParameter,
             name: interner.intern("x"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock"), interner.intern("x")],
+            fqName: [interner.intern("test"), interner.intern(name), interner.intern("x")],
             declSite: nil,
             visibility: .private
         )
-        let inlineBlockParam = symbols.define(
+        let blockParam = symbols.define(
             kind: .valueParameter,
             name: interner.intern("block"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock"), interner.intern("block")],
+            fqName: [interner.intern("test"), interner.intern(name), interner.intern("block")],
             declSite: nil,
             visibility: .private
         )
-        let lambdaSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("$lambda_0"),
-            fqName: [interner.intern("test"), interner.intern("$lambda_0")],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        let lambdaParamSymbol = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("it"),
-            fqName: [interner.intern("test"), interner.intern("$lambda_0"), interner.intern("it")],
-            declSite: nil,
-            visibility: .private
-        )
-
         symbols.setFunctionSignature(
             FunctionSignature(
                 parameterTypes: [intType, funcType],
                 returnType: intType,
-                valueParameterSymbols: [inlineValueParam, inlineBlockParam]
+                valueParameterSymbols: [valueParam, blockParam]
             ),
-            for: inlineSymbol
+            for: symbol
         )
+        return (symbol, valueParam, blockParam)
+    }
 
+    /// Register a lambda function with a single `Int` parameter.
+    func defineLambda(
+        name: String,
+        paramName: String
+    ) -> (symbol: SymbolID, paramSymbol: SymbolID) {
+        let symbol = symbols.define(
+            kind: .function,
+            name: interner.intern(name),
+            fqName: [interner.intern("test"), interner.intern(name)],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let paramSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern(paramName),
+            fqName: [interner.intern("test"), interner.intern(name), interner.intern(paramName)],
+            declSite: nil,
+            visibility: .private
+        )
+        return (symbol, paramSymbol)
+    }
+
+    /// Register a plain function symbol (e.g. main, or an external function).
+    func defineFunction(name: String, flags: SymbolFlags = []) -> SymbolID {
+        symbols.define(
+            kind: .function,
+            name: interner.intern(name),
+            fqName: [interner.intern("test"), interner.intern(name)],
+            declSite: nil,
+            visibility: .public,
+            flags: flags
+        )
+    }
+
+    /// Build a KIR module, run the lowering phase, and return the callees
+    /// found in the lowered main function.
+    func lowerAndExtractCallees(
+        mainFunction: KIRFunction,
+        otherDecls: [KIRFunction],
+        moduleName: String
+    ) throws -> (callees: [String], loweredMain: KIRFunction) {
+        let mainDeclID = arena.appendDecl(.function(mainFunction))
+        for decl in otherDecls {
+            _ = arena.appendDecl(.function(decl))
+        }
+        let module = KIRModule(
+            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainDeclID])],
+            arena: arena
+        )
         let sema = SemaModule(
             symbols: symbols,
             types: types,
             bindings: bindings,
             diagnostics: diagnostics
         )
-
-        // Lambda function: { it -> it + 10 }
-        let lambdaArgExpr = arena.appendExpr(.symbolRef(lambdaParamSymbol), type: intType)
-        let lambdaTenExpr = arena.appendExpr(.intLiteral(10), type: intType)
-        let lambdaSumExpr = arena.appendExpr(.temporary(100), type: intType)
-
-        let lambdaFunction = KIRFunction(
-            symbol: lambdaSymbol,
-            name: interner.intern("$lambda_0"),
-            params: [KIRParameter(symbol: lambdaParamSymbol, type: intType)],
-            returnType: intType,
-            body: [
-                .beginBlock,
-                .constValue(result: lambdaArgExpr, value: .symbolRef(lambdaParamSymbol)),
-                .constValue(result: lambdaTenExpr, value: .intLiteral(10)),
-                .call(
-                    symbol: nil,
-                    callee: interner.intern("kk_op_add"),
-                    arguments: [lambdaArgExpr, lambdaTenExpr],
-                    result: lambdaSumExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnValue(lambdaSumExpr),
-                .endBlock,
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-
-        // Inline function: inline fun applyBlock(x: Int, block: (Int) -> Int): Int = block(x)
-        let inlineXExpr = arena.appendExpr(.symbolRef(inlineValueParam), type: intType)
-        let inlineBlockExpr = arena.appendExpr(.symbolRef(inlineBlockParam), type: funcType)
-        let inlineCallResult = arena.appendExpr(.temporary(200), type: intType)
-
-        let inlineFunction = KIRFunction(
-            symbol: inlineSymbol,
-            name: interner.intern("applyBlock"),
-            params: [
-                KIRParameter(symbol: inlineValueParam, type: intType),
-                KIRParameter(symbol: inlineBlockParam, type: funcType),
-            ],
-            returnType: intType,
-            body: [
-                .constValue(result: inlineXExpr, value: .symbolRef(inlineValueParam)),
-                .constValue(result: inlineBlockExpr, value: .symbolRef(inlineBlockParam)),
-                .call(
-                    symbol: inlineBlockParam,
-                    callee: interner.intern("$lambda_0"),
-                    arguments: [inlineXExpr],
-                    result: inlineCallResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnValue(inlineCallResult),
-            ],
-            isSuspend: false,
-            isInline: true
-        )
-
-        // Caller: fun main(): Int = applyBlock(5) { it + 10 }
-        let callerFiveExpr = arena.appendExpr(.intLiteral(5), type: intType)
-        let callerLambdaRef = arena.appendExpr(.symbolRef(lambdaSymbol), type: funcType)
-        let callerResult = arena.appendExpr(.temporary(300), type: intType)
-
-        let mainFunction = KIRFunction(
-            symbol: mainSymbol,
-            name: interner.intern("main"),
-            params: [],
-            returnType: intType,
-            body: [
-                .constValue(result: callerFiveExpr, value: .intLiteral(5)),
-                .constValue(result: callerLambdaRef, value: .symbolRef(lambdaSymbol)),
-                .call(
-                    symbol: inlineSymbol,
-                    callee: interner.intern("applyBlock"),
-                    arguments: [callerFiveExpr, callerLambdaRef],
-                    result: callerResult,
-                    canThrow: false,
-                    thrownResult: nil
-                ),
-                .returnValue(callerResult),
-            ],
-            isSuspend: false,
-            isInline: false
-        )
-
-        let mainDeclID = arena.appendDecl(.function(mainFunction))
-        _ = arena.appendDecl(.function(inlineFunction))
-        _ = arena.appendDecl(.function(lambdaFunction))
-        let module = KIRModule(
-            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainDeclID])],
-            arena: arena
-        )
-
         let ctx = CompilationContext(
             options: CompilerOptions(
-                moduleName: "InlineLambda",
+                moduleName: moduleName,
                 inputs: [],
                 outputPath: FileManager.default.temporaryDirectory
                     .appendingPathComponent(UUID().uuidString).path,
@@ -197,11 +139,123 @@ extension LoweringPassRegressionTests {
         try LoweringPhase().run(ctx)
 
         guard case let .function(loweredMain)? = module.arena.decl(mainDeclID) else {
-            XCTFail("Expected lowered main function")
-            return
+            throw NSError(domain: "Test", code: 1, userInfo: [
+                NSLocalizedDescriptionKey: "Expected lowered main function",
+            ])
         }
-
         let callees = extractCallees(from: loweredMain.body, interner: interner)
+        return (callees, loweredMain)
+    }
+}
+
+// MARK: - Tests
+
+extension LoweringPassRegressionTests {
+
+    // MARK: - INLINE-002: Lambda argument inlining
+
+    /// Verify that a lambda passed to an inline function is expanded in place,
+    /// eliminating the indirect call to the lambda function.
+    func testInlineLoweringInlinesLambdaArgumentBody() throws {
+        let tc = InlineLambdaTestContext()
+
+        let mainSymbol = tc.defineFunction(name: "main")
+        let (inlineSymbol, inlineValueParam, inlineBlockParam) =
+            tc.defineInlineFunction(name: "applyBlock")
+        let (lambdaSymbol, lambdaParamSymbol) =
+            tc.defineLambda(name: "$lambda_0", paramName: "it")
+
+        // Lambda function: { it -> it + 10 }
+        let lambdaArgExpr = tc.arena.appendExpr(.symbolRef(lambdaParamSymbol), type: tc.intType)
+        let lambdaTenExpr = tc.arena.appendExpr(.intLiteral(10), type: tc.intType)
+        let lambdaSumExpr = tc.arena.appendExpr(.temporary(100), type: tc.intType)
+
+        let lambdaFunction = KIRFunction(
+            symbol: lambdaSymbol,
+            name: tc.interner.intern("$lambda_0"),
+            params: [KIRParameter(symbol: lambdaParamSymbol, type: tc.intType)],
+            returnType: tc.intType,
+            body: [
+                .beginBlock,
+                .constValue(result: lambdaArgExpr, value: .symbolRef(lambdaParamSymbol)),
+                .constValue(result: lambdaTenExpr, value: .intLiteral(10)),
+                .call(
+                    symbol: nil,
+                    callee: tc.interner.intern("kk_op_add"),
+                    arguments: [lambdaArgExpr, lambdaTenExpr],
+                    result: lambdaSumExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(lambdaSumExpr),
+                .endBlock,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        // Inline function: inline fun applyBlock(x: Int, block: (Int) -> Int): Int = block(x)
+        let inlineXExpr = tc.arena.appendExpr(.symbolRef(inlineValueParam), type: tc.intType)
+        let inlineBlockExpr = tc.arena.appendExpr(.symbolRef(inlineBlockParam), type: tc.funcType)
+        let inlineCallResult = tc.arena.appendExpr(.temporary(200), type: tc.intType)
+
+        let inlineFunction = KIRFunction(
+            symbol: inlineSymbol,
+            name: tc.interner.intern("applyBlock"),
+            params: [
+                KIRParameter(symbol: inlineValueParam, type: tc.intType),
+                KIRParameter(symbol: inlineBlockParam, type: tc.funcType),
+            ],
+            returnType: tc.intType,
+            body: [
+                .constValue(result: inlineXExpr, value: .symbolRef(inlineValueParam)),
+                .constValue(result: inlineBlockExpr, value: .symbolRef(inlineBlockParam)),
+                .call(
+                    symbol: inlineBlockParam,
+                    callee: tc.interner.intern("$lambda_0"),
+                    arguments: [inlineXExpr],
+                    result: inlineCallResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(inlineCallResult),
+            ],
+            isSuspend: false,
+            isInline: true
+        )
+
+        // Caller: fun main(): Int = applyBlock(5) { it + 10 }
+        let callerFiveExpr = tc.arena.appendExpr(.intLiteral(5), type: tc.intType)
+        let callerLambdaRef = tc.arena.appendExpr(.symbolRef(lambdaSymbol), type: tc.funcType)
+        let callerResult = tc.arena.appendExpr(.temporary(300), type: tc.intType)
+
+        let mainFunction = KIRFunction(
+            symbol: mainSymbol,
+            name: tc.interner.intern("main"),
+            params: [],
+            returnType: tc.intType,
+            body: [
+                .constValue(result: callerFiveExpr, value: .intLiteral(5)),
+                .constValue(result: callerLambdaRef, value: .symbolRef(lambdaSymbol)),
+                .call(
+                    symbol: inlineSymbol,
+                    callee: tc.interner.intern("applyBlock"),
+                    arguments: [callerFiveExpr, callerLambdaRef],
+                    result: callerResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ),
+                .returnValue(callerResult),
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+
+        let (callees, _) = try tc.lowerAndExtractCallees(
+            mainFunction: mainFunction,
+            otherDecls: [inlineFunction, lambdaFunction],
+            moduleName: "InlineLambda"
+        )
 
         // The inline function call should be eliminated.
         XCTAssertFalse(
@@ -228,92 +282,33 @@ extension LoweringPassRegressionTests {
     /// Verify that non-lambda arguments (e.g. function references that are not
     /// resolved to a KIR function) still produce a regular call instruction.
     func testInlineLoweringFallsBackWhenLambdaNotResolvable() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let symbols = SymbolTable()
-        let types = TypeSystem()
-        let bindings = BindingTable()
-        let diagnostics = DiagnosticEngine()
+        let tc = InlineLambdaTestContext()
 
-        let intType = types.make(.primitive(.int, .nonNull))
-        let funcType = types.make(.functionType(FunctionType(
-            params: [intType],
-            returnType: intType
-        )))
-
-        let mainSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("main"),
-            fqName: [interner.intern("test"), interner.intern("main")],
-            declSite: nil,
-            visibility: .public
-        )
-        let inlineSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("applyBlock"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock")],
-            declSite: nil,
-            visibility: .public,
-            flags: [.inlineFunction]
-        )
-        let inlineValueParam = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("x"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock"), interner.intern("x")],
-            declSite: nil,
-            visibility: .private
-        )
-        let inlineBlockParam = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("block"),
-            fqName: [interner.intern("test"), interner.intern("applyBlock"), interner.intern("block")],
-            declSite: nil,
-            visibility: .private
-        )
+        let mainSymbol = tc.defineFunction(name: "main")
+        let (inlineSymbol, inlineValueParam, inlineBlockParam) =
+            tc.defineInlineFunction(name: "applyBlock")
         // Use a symbol that does NOT exist as a KIR function declaration.
-        let unknownFuncSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("externalFunc"),
-            fqName: [interner.intern("test"), interner.intern("externalFunc")],
-            declSite: nil,
-            visibility: .public
-        )
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                parameterTypes: [intType, funcType],
-                returnType: intType,
-                valueParameterSymbols: [inlineValueParam, inlineBlockParam]
-            ),
-            for: inlineSymbol
-        )
-
-        let sema = SemaModule(
-            symbols: symbols,
-            types: types,
-            bindings: bindings,
-            diagnostics: diagnostics
-        )
+        let unknownFuncSymbol = tc.defineFunction(name: "externalFunc")
 
         // Inline function body: block(x)
-        let inlineXExpr = arena.appendExpr(.symbolRef(inlineValueParam), type: intType)
-        let inlineBlockExpr = arena.appendExpr(.symbolRef(inlineBlockParam), type: funcType)
-        let inlineCallResult = arena.appendExpr(.temporary(0), type: intType)
+        let inlineXExpr = tc.arena.appendExpr(.symbolRef(inlineValueParam), type: tc.intType)
+        let inlineBlockExpr = tc.arena.appendExpr(.symbolRef(inlineBlockParam), type: tc.funcType)
+        let inlineCallResult = tc.arena.appendExpr(.temporary(0), type: tc.intType)
 
         let inlineFunction = KIRFunction(
             symbol: inlineSymbol,
-            name: interner.intern("applyBlock"),
+            name: tc.interner.intern("applyBlock"),
             params: [
-                KIRParameter(symbol: inlineValueParam, type: intType),
-                KIRParameter(symbol: inlineBlockParam, type: funcType),
+                KIRParameter(symbol: inlineValueParam, type: tc.intType),
+                KIRParameter(symbol: inlineBlockParam, type: tc.funcType),
             ],
-            returnType: intType,
+            returnType: tc.intType,
             body: [
                 .constValue(result: inlineXExpr, value: .symbolRef(inlineValueParam)),
                 .constValue(result: inlineBlockExpr, value: .symbolRef(inlineBlockParam)),
                 .call(
                     symbol: inlineBlockParam,
-                    callee: interner.intern("externalFunc"),
+                    callee: tc.interner.intern("externalFunc"),
                     arguments: [inlineXExpr],
                     result: inlineCallResult,
                     canThrow: false,
@@ -326,21 +321,21 @@ extension LoweringPassRegressionTests {
         )
 
         // Caller passes a non-lambda symbolRef (not in module declarations).
-        let callerArg = arena.appendExpr(.intLiteral(42), type: intType)
-        let callerFuncRef = arena.appendExpr(.symbolRef(unknownFuncSymbol), type: funcType)
-        let callerResult = arena.appendExpr(.temporary(1), type: intType)
+        let callerArg = tc.arena.appendExpr(.intLiteral(42), type: tc.intType)
+        let callerFuncRef = tc.arena.appendExpr(.symbolRef(unknownFuncSymbol), type: tc.funcType)
+        let callerResult = tc.arena.appendExpr(.temporary(1), type: tc.intType)
 
         let mainFunction = KIRFunction(
             symbol: mainSymbol,
-            name: interner.intern("main"),
+            name: tc.interner.intern("main"),
             params: [],
-            returnType: intType,
+            returnType: tc.intType,
             body: [
                 .constValue(result: callerArg, value: .intLiteral(42)),
                 .constValue(result: callerFuncRef, value: .symbolRef(unknownFuncSymbol)),
                 .call(
                     symbol: inlineSymbol,
-                    callee: interner.intern("applyBlock"),
+                    callee: tc.interner.intern("applyBlock"),
                     arguments: [callerArg, callerFuncRef],
                     result: callerResult,
                     canThrow: false,
@@ -352,37 +347,11 @@ extension LoweringPassRegressionTests {
             isInline: false
         )
 
-        let mainDeclID = arena.appendDecl(.function(mainFunction))
-        _ = arena.appendDecl(.function(inlineFunction))
-        let module = KIRModule(
-            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainDeclID])],
-            arena: arena
+        let (callees, _) = try tc.lowerAndExtractCallees(
+            mainFunction: mainFunction,
+            otherDecls: [inlineFunction],
+            moduleName: "InlineLambdaFallback"
         )
-
-        let ctx = CompilationContext(
-            options: CompilerOptions(
-                moduleName: "InlineLambdaFallback",
-                inputs: [],
-                outputPath: FileManager.default.temporaryDirectory
-                    .appendingPathComponent(UUID().uuidString).path,
-                emit: .kirDump,
-                target: defaultTargetTriple()
-            ),
-            sourceManager: SourceManager(),
-            diagnostics: diagnostics,
-            interner: interner
-        )
-        ctx.kir = module
-        ctx.sema = sema
-
-        try LoweringPhase().run(ctx)
-
-        guard case let .function(loweredMain)? = module.arena.decl(mainDeclID) else {
-            XCTFail("Expected lowered main function")
-            return
-        }
-
-        let callees = extractCallees(from: loweredMain.body, interner: interner)
 
         // applyBlock should still be inlined (function body expansion).
         XCTAssertFalse(
@@ -401,99 +370,33 @@ extension LoweringPassRegressionTests {
     /// Verify that a multi-instruction lambda body is fully inlined (not just
     /// single-expression lambdas).
     func testInlineLoweringInlinesMultiStatementLambdaBody() throws {
-        let interner = StringInterner()
-        let arena = KIRArena()
-        let symbols = SymbolTable()
-        let types = TypeSystem()
-        let bindings = BindingTable()
-        let diagnostics = DiagnosticEngine()
+        let tc = InlineLambdaTestContext()
 
-        let intType = types.make(.primitive(.int, .nonNull))
-        let funcType = types.make(.functionType(FunctionType(
-            params: [intType],
-            returnType: intType
-        )))
-
-        let mainSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("main"),
-            fqName: [interner.intern("test"), interner.intern("main")],
-            declSite: nil,
-            visibility: .public
-        )
-        let inlineSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("transform"),
-            fqName: [interner.intern("test"), interner.intern("transform")],
-            declSite: nil,
-            visibility: .public,
-            flags: [.inlineFunction]
-        )
-        let inlineValueParam = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("x"),
-            fqName: [interner.intern("test"), interner.intern("transform"), interner.intern("x")],
-            declSite: nil,
-            visibility: .private
-        )
-        let inlineBlockParam = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("block"),
-            fqName: [interner.intern("test"), interner.intern("transform"), interner.intern("block")],
-            declSite: nil,
-            visibility: .private
-        )
-        let lambdaSymbol = symbols.define(
-            kind: .function,
-            name: interner.intern("$lambda_1"),
-            fqName: [interner.intern("test"), interner.intern("$lambda_1")],
-            declSite: nil,
-            visibility: .private,
-            flags: [.synthetic]
-        )
-        let lambdaParamSymbol = symbols.define(
-            kind: .valueParameter,
-            name: interner.intern("n"),
-            fqName: [interner.intern("test"), interner.intern("$lambda_1"), interner.intern("n")],
-            declSite: nil,
-            visibility: .private
-        )
-
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                parameterTypes: [intType, funcType],
-                returnType: intType,
-                valueParameterSymbols: [inlineValueParam, inlineBlockParam]
-            ),
-            for: inlineSymbol
-        )
-
-        let sema = SemaModule(
-            symbols: symbols,
-            types: types,
-            bindings: bindings,
-            diagnostics: diagnostics
-        )
+        let mainSymbol = tc.defineFunction(name: "main")
+        let (inlineSymbol, inlineValueParam, inlineBlockParam) =
+            tc.defineInlineFunction(name: "transform")
+        let (lambdaSymbol, lambdaParamSymbol) =
+            tc.defineLambda(name: "$lambda_1", paramName: "n")
 
         // Lambda: { n -> val doubled = n * 2; doubled + 1 }
-        let lambdaArgExpr = arena.appendExpr(.symbolRef(lambdaParamSymbol), type: intType)
-        let lambdaTwoExpr = arena.appendExpr(.intLiteral(2), type: intType)
-        let lambdaDoubledExpr = arena.appendExpr(.temporary(50), type: intType)
-        let lambdaOneExpr = arena.appendExpr(.intLiteral(1), type: intType)
-        let lambdaResultExpr = arena.appendExpr(.temporary(51), type: intType)
+        let lambdaArgExpr = tc.arena.appendExpr(.symbolRef(lambdaParamSymbol), type: tc.intType)
+        let lambdaTwoExpr = tc.arena.appendExpr(.intLiteral(2), type: tc.intType)
+        let lambdaDoubledExpr = tc.arena.appendExpr(.temporary(50), type: tc.intType)
+        let lambdaOneExpr = tc.arena.appendExpr(.intLiteral(1), type: tc.intType)
+        let lambdaResultExpr = tc.arena.appendExpr(.temporary(51), type: tc.intType)
 
         let lambdaFunction = KIRFunction(
             symbol: lambdaSymbol,
-            name: interner.intern("$lambda_1"),
-            params: [KIRParameter(symbol: lambdaParamSymbol, type: intType)],
-            returnType: intType,
+            name: tc.interner.intern("$lambda_1"),
+            params: [KIRParameter(symbol: lambdaParamSymbol, type: tc.intType)],
+            returnType: tc.intType,
             body: [
                 .beginBlock,
                 .constValue(result: lambdaArgExpr, value: .symbolRef(lambdaParamSymbol)),
                 .constValue(result: lambdaTwoExpr, value: .intLiteral(2)),
                 .call(
                     symbol: nil,
-                    callee: interner.intern("kk_op_mul"),
+                    callee: tc.interner.intern("kk_op_mul"),
                     arguments: [lambdaArgExpr, lambdaTwoExpr],
                     result: lambdaDoubledExpr,
                     canThrow: false,
@@ -502,7 +405,7 @@ extension LoweringPassRegressionTests {
                 .constValue(result: lambdaOneExpr, value: .intLiteral(1)),
                 .call(
                     symbol: nil,
-                    callee: interner.intern("kk_op_add"),
+                    callee: tc.interner.intern("kk_op_add"),
                     arguments: [lambdaDoubledExpr, lambdaOneExpr],
                     result: lambdaResultExpr,
                     canThrow: false,
@@ -516,24 +419,24 @@ extension LoweringPassRegressionTests {
         )
 
         // Inline: inline fun transform(x: Int, block: (Int) -> Int): Int = block(x)
-        let inlineXExpr = arena.appendExpr(.symbolRef(inlineValueParam), type: intType)
-        let inlineBlockExpr = arena.appendExpr(.symbolRef(inlineBlockParam), type: funcType)
-        let inlineCallResult = arena.appendExpr(.temporary(60), type: intType)
+        let inlineXExpr = tc.arena.appendExpr(.symbolRef(inlineValueParam), type: tc.intType)
+        let inlineBlockExpr = tc.arena.appendExpr(.symbolRef(inlineBlockParam), type: tc.funcType)
+        let inlineCallResult = tc.arena.appendExpr(.temporary(60), type: tc.intType)
 
         let inlineFunction = KIRFunction(
             symbol: inlineSymbol,
-            name: interner.intern("transform"),
+            name: tc.interner.intern("transform"),
             params: [
-                KIRParameter(symbol: inlineValueParam, type: intType),
-                KIRParameter(symbol: inlineBlockParam, type: funcType),
+                KIRParameter(symbol: inlineValueParam, type: tc.intType),
+                KIRParameter(symbol: inlineBlockParam, type: tc.funcType),
             ],
-            returnType: intType,
+            returnType: tc.intType,
             body: [
                 .constValue(result: inlineXExpr, value: .symbolRef(inlineValueParam)),
                 .constValue(result: inlineBlockExpr, value: .symbolRef(inlineBlockParam)),
                 .call(
                     symbol: inlineBlockParam,
-                    callee: interner.intern("$lambda_1"),
+                    callee: tc.interner.intern("$lambda_1"),
                     arguments: [inlineXExpr],
                     result: inlineCallResult,
                     canThrow: false,
@@ -546,21 +449,21 @@ extension LoweringPassRegressionTests {
         )
 
         // Caller
-        let callerArgExpr = arena.appendExpr(.intLiteral(7), type: intType)
-        let callerLambdaRef = arena.appendExpr(.symbolRef(lambdaSymbol), type: funcType)
-        let callerResult = arena.appendExpr(.temporary(70), type: intType)
+        let callerArgExpr = tc.arena.appendExpr(.intLiteral(7), type: tc.intType)
+        let callerLambdaRef = tc.arena.appendExpr(.symbolRef(lambdaSymbol), type: tc.funcType)
+        let callerResult = tc.arena.appendExpr(.temporary(70), type: tc.intType)
 
         let mainFunction = KIRFunction(
             symbol: mainSymbol,
-            name: interner.intern("main"),
+            name: tc.interner.intern("main"),
             params: [],
-            returnType: intType,
+            returnType: tc.intType,
             body: [
                 .constValue(result: callerArgExpr, value: .intLiteral(7)),
                 .constValue(result: callerLambdaRef, value: .symbolRef(lambdaSymbol)),
                 .call(
                     symbol: inlineSymbol,
-                    callee: interner.intern("transform"),
+                    callee: tc.interner.intern("transform"),
                     arguments: [callerArgExpr, callerLambdaRef],
                     result: callerResult,
                     canThrow: false,
@@ -572,38 +475,11 @@ extension LoweringPassRegressionTests {
             isInline: false
         )
 
-        let mainDeclID = arena.appendDecl(.function(mainFunction))
-        _ = arena.appendDecl(.function(inlineFunction))
-        _ = arena.appendDecl(.function(lambdaFunction))
-        let module = KIRModule(
-            files: [KIRFile(fileID: FileID(rawValue: 0), decls: [mainDeclID])],
-            arena: arena
+        let (callees, _) = try tc.lowerAndExtractCallees(
+            mainFunction: mainFunction,
+            otherDecls: [inlineFunction, lambdaFunction],
+            moduleName: "InlineMultiLambda"
         )
-
-        let ctx = CompilationContext(
-            options: CompilerOptions(
-                moduleName: "InlineMultiLambda",
-                inputs: [],
-                outputPath: FileManager.default.temporaryDirectory
-                    .appendingPathComponent(UUID().uuidString).path,
-                emit: .kirDump,
-                target: defaultTargetTriple()
-            ),
-            sourceManager: SourceManager(),
-            diagnostics: diagnostics,
-            interner: interner
-        )
-        ctx.kir = module
-        ctx.sema = sema
-
-        try LoweringPhase().run(ctx)
-
-        guard case let .function(loweredMain)? = module.arena.decl(mainDeclID) else {
-            XCTFail("Expected lowered main function")
-            return
-        }
-
-        let callees = extractCallees(from: loweredMain.body, interner: interner)
 
         // Both the inline function and the lambda should be inlined.
         XCTAssertFalse(callees.contains("transform"))
