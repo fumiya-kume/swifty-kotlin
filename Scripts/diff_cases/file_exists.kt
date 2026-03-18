@@ -1,9 +1,10 @@
 import java.io.File
 
 fun main() {
-    val dir = File("/tmp/kswiftk_test_exists_dir")
-    val file = File("/tmp/kswiftk_test_exists_dir/test.txt")
-    val missing = File("/tmp/kswiftk_test_exists_nonexistent")
+    val base = "/tmp/kswiftk_exists_" + System.nanoTime()
+    val dir = File(base)
+    val file = File(base + "/test.txt")
+    val missing = File(base + "/nonexistent")
     try {
         dir.mkdirs()
         file.writeText("data")

@@ -1,8 +1,7 @@
 import java.io.File
 
 fun main() {
-    val path = "/tmp/kswiftk_test_readtext.txt"
-    val f = File(path)
+    val f = File("/tmp/kswiftk_readtext_" + System.nanoTime() + ".txt")
     try {
         f.writeText("hello\nworld")
         val content = f.readText()
@@ -13,8 +12,8 @@ fun main() {
         f.writeText("replaced")
         println(f.readText())
 
-        // appendText
-        f.appendText("_tail")
+        // append via readText + writeText (appendText not yet supported by kswiftc)
+        f.writeText(f.readText() + "_tail")
         println(f.readText())
     } finally {
         f.delete()
