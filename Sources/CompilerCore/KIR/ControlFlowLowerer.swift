@@ -360,14 +360,12 @@ final class ControlFlowLowerer {
             let noMatchLabel = driver.ctx.makeLoopLabel()
             if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
                 let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
-                let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
-                let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
                 instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
-                instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
-                instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
 
                 let matchResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                 if isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner) {
+                    // Cancellation check only needs falseValue for the jump;
+                    // trueValue/sharedUnknownToken are not used.
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_throwable_is_cancellation"),
@@ -377,6 +375,13 @@ final class ControlFlowLowerer {
                         thrownResult: nil
                     ))
                 } else {
+                    // Only emit trueValue/sharedUnknownToken when actually needed
+                    // by emitExceptionTypeCheck (avoids dead constValue instructions).
+                    let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
+                    let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
+                    instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
+
                     emitExceptionTypeCheck(
                         catchType: binding.parameterType,
                         exceptionSlot: exceptionSlot,
@@ -446,23 +451,32 @@ final class ControlFlowLowerer {
             instructions.append(.label(noMatchLabel))
             instructions.append(.jump(finallyLabel))
         } else {
-            // Only emit shared boolean/int constants when at least one typed
-            // (non-catch-all) clause needs them, avoiding dead constValue
-            // instructions when all clauses are catch-all.
+            // Emit shared falseValue for any non-catch-all clause (used by
+            // both cancellation checks and runtime type checks for the jump).
             let hasTypedCatch = catchBindings.contains { binding in
                 !isCatchAllType(binding.parameterType, sema: sema, interner: interner)
+            }
+            // Only emit trueValue/sharedUnknownToken when at least one clause
+            // actually needs emitExceptionTypeCheck (i.e., non-catch-all AND
+            // non-cancellation-exception). This avoids dead constValue
+            // instructions when all typed clauses are cancellation checks.
+            let needsRuntimeTypeCheck = catchBindings.contains { binding in
+                !isCatchAllType(binding.parameterType, sema: sema, interner: interner)
+                    && !isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner)
             }
             var falseValue: KIRExprID?
             var trueValue: KIRExprID?
             var sharedUnknownToken: KIRExprID?
             if hasTypedCatch {
                 let fv = arena.appendExpr(.boolLiteral(false), type: boolType)
+                instructions.append(.constValue(result: fv, value: .boolLiteral(false)))
+                falseValue = fv
+            }
+            if needsRuntimeTypeCheck {
                 let tv = arena.appendExpr(.boolLiteral(true), type: boolType)
                 let ut = arena.appendExpr(.intLiteral(0), type: intType)
-                instructions.append(.constValue(result: fv, value: .boolLiteral(false)))
                 instructions.append(.constValue(result: tv, value: .boolLiteral(true)))
                 instructions.append(.constValue(result: ut, value: .intLiteral(0)))
-                falseValue = fv
                 trueValue = tv
                 sharedUnknownToken = ut
             }
@@ -474,12 +488,12 @@ final class ControlFlowLowerer {
                 instructions.append(.label(catchCheckLabels[index]))
 
                 if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
-                    // Safe to force-unwrap: hasTypedCatch guarantees these are set
+                    // Safe to force-unwrap: hasTypedCatch guarantees falseValue is set
                     let fv = falseValue!
-                    let tv = trueValue!
-                    let ut = sharedUnknownToken!
                     let matchResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
                     if isCancellationExceptionType(binding.parameterType, sema: sema, interner: interner) {
+                        // Cancellation check only needs falseValue for the jump;
+                        // trueValue/sharedUnknownToken are not used.
                         instructions.append(.call(
                             symbol: nil,
                             callee: interner.intern("kk_throwable_is_cancellation"),
@@ -489,6 +503,9 @@ final class ControlFlowLowerer {
                             thrownResult: nil
                         ))
                     } else {
+                        // Safe to force-unwrap: needsRuntimeTypeCheck guarantees these are set
+                        let tv = trueValue!
+                        let ut = sharedUnknownToken!
                         emitExceptionTypeCheck(
                             catchType: binding.parameterType,
                             exceptionSlot: exceptionSlot,
@@ -660,7 +677,6 @@ final class ControlFlowLowerer {
 
         let exactMatchLabel = driver.ctx.makeLoopLabel()
         let knownMismatchLabel = driver.ctx.makeLoopLabel()
-        let runtimeFallbackLabel = driver.ctx.makeLoopLabel()
         let doneLabel = driver.ctx.makeLoopLabel()
 
         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
@@ -684,8 +700,8 @@ final class ControlFlowLowerer {
         // If not unknown (known type but different) -> definite miss
         instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseValue, target: knownMismatchLabel))
 
-        // Runtime fallback: token is UNKNOWN (0), use kk_op_is for precise type check
-        instructions.append(.label(runtimeFallbackLabel))
+        // Runtime fallback: token is UNKNOWN (0), use kk_op_is for precise type check.
+        // Control falls through here when typeUnknown != false (i.e., token is 0).
         let runtimeResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         instructions.append(.call(
             symbol: nil,

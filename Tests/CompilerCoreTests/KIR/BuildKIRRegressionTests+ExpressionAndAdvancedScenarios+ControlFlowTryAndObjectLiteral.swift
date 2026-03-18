@@ -284,19 +284,25 @@ extension BuildKIRRegressionTests {
             }
 
             // Verify that the UNKNOWN-token (0) comparison gates the kk_op_is call:
-            // There should be a constValue of 0 and a binary(op: .equal) comparing
-            // exceptionTypeSlot against that zero sentinel.
-            let zeroConstants = body.filter { instruction in
-                guard case let .constValue(_, value) = instruction else { return false }
-                return value == .intLiteral(0)
+            // Find the constValue(0) that serves as the UNKNOWN-token sentinel and
+            // correlate it with a binary(.equal) that uses it as the rhs operand.
+            // This ensures the test is tied to the specific CODE-002 pattern rather
+            // than matching unrelated comparisons/constants.
+            let zeroSentinelIDs: [KIRExprID] = body.compactMap { instruction in
+                guard case let .constValue(result, value) = instruction,
+                      value == .intLiteral(0) else { return nil }
+                return result
             }
-            XCTAssertGreaterThanOrEqual(zeroConstants.count, 1, "Expected at least one constValue(0) for the UNKNOWN-token sentinel.")
+            XCTAssertGreaterThanOrEqual(zeroSentinelIDs.count, 1, "Expected at least one constValue(0) for the UNKNOWN-token sentinel.")
 
-            let equalityChecks = body.filter { instruction in
-                guard case .binary(op: .equal, _, _, _) = instruction else { return false }
-                return true
+            // Verify a binary(.equal) uses one of the zero sentinel IDs as its rhs,
+            // confirming the exceptionTypeSlot == 0 check exists.
+            let zeroCompareExists = body.contains { instruction in
+                guard case let .binary(op, _, rhs, _) = instruction,
+                      op == .equal else { return false }
+                return zeroSentinelIDs.contains(rhs)
             }
-            XCTAssertGreaterThanOrEqual(equalityChecks.count, 2, "Expected at least two equality checks: one for exact token match and one for UNKNOWN-token (0) comparison.")
+            XCTAssertTrue(zeroCompareExists, "Expected a binary(.equal) comparing exceptionTypeSlot against the zero sentinel constValue(0).")
         }
     }
 
