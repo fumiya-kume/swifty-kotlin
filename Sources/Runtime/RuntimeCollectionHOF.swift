@@ -791,13 +791,12 @@ public func kk_list_associateByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, 
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
-        let unboxedValue = maybeUnbox(elem)
         if let index = keyIndex[unboxedKey] {
-            dest.values[index] = unboxedValue
+            dest.values[index] = elem
         } else {
             let newIndex = dest.keys.count
             dest.keys.append(unboxedKey)
-            dest.values.append(unboxedValue)
+            dest.values.append(elem)
             keyIndex[unboxedKey] = newIndex
         }
     }
@@ -821,15 +820,14 @@ public func kk_list_associateWithTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int
         var thrown = 0
         let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        let unboxedKey = maybeUnbox(elem)
         let unboxedValue = maybeUnbox(value)
-        if let index = keyIndex[unboxedKey] {
+        if let index = keyIndex[elem] {
             dest.values[index] = unboxedValue
         } else {
             let newIndex = dest.keys.count
-            dest.keys.append(unboxedKey)
+            dest.keys.append(elem)
             dest.values.append(unboxedValue)
-            keyIndex[unboxedKey] = newIndex
+            keyIndex[elem] = newIndex
         }
     }
     return destRaw
