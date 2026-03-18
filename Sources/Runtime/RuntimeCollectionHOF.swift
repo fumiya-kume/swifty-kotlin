@@ -1129,7 +1129,9 @@ public func kk_list_chunked_transform(_ listRaw: Int, _ size: Int, _ fnPtr: Int,
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     let elements = _listBox.elements
     let clampedSize = max(1, size)
+    let estimatedChunks = elements.isEmpty ? 0 : (elements.count + clampedSize - 1) / clampedSize
     var result: [Int] = []
+    result.reserveCapacity(estimatedChunks)
     var i = 0
     while i < elements.count {
         let end = min(i + clampedSize, elements.count)

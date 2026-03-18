@@ -322,6 +322,30 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // chunked(size, transform) HOF overload — 2 args, uses kk_list_chunked_transform
+        if callee == lookup.chunkedName, arguments.count == 2, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            let thrownExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListChunkedTransformName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: true,
+                thrownResult: thrownExpr
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
         if callee == lookup.windowedName, arguments.count == 2, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil

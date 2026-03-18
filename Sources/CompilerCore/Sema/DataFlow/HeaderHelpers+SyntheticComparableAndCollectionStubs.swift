@@ -1862,8 +1862,15 @@ extension DataFlowSemaPhase {
         // to match the simplified runtime ABI (kk_list_chunked_transform).
         let chunkedTransformName = interner.intern("chunked")
         let chunkedTransformFQName = listFQName + [chunkedTransformName]
-        // Only register if there isn't already a 2-param overload for "chunked"
-        do {
+        // Only register if there isn't already a 2-param overload for "chunked".
+        // The 1-arg overload registered above shares the same fqName; check
+        // existing overloads by parameter count to avoid duplicate 2-param symbols.
+        let existingChunkedOverloads = symbols.lookupAll(fqName: chunkedTransformFQName)
+        let hasTwoParamChunked = existingChunkedOverloads.contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else { return false }
+            return sig.parameterTypes.count == 2
+        }
+        if !hasTwoParamChunked {
             let transformType = types.make(.functionType(FunctionType(
                 params: [listReturnType],
                 returnType: types.anyType,

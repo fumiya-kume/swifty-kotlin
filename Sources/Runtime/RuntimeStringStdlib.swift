@@ -1017,8 +1017,13 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
 
 @_cdecl("kk_string_windowed")
 public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
+    // Return an empty list for non-positive size/step to preserve the
+    // original 2-arg overload semantics (Kotlin throws IllegalArgumentException,
+    // but this runtime returns empty for resilience).
+    guard size > 0, step > 0 else {
+        return runtimeMakeStringListRaw([])
+    }
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    // Clamp non-positive size/step to 1, matching list windowed behaviour (kk_list_windowed).
     let clampedSize = max(1, size)
     let clampedStep = max(1, step)
     let scalars = Array(source.unicodeScalars)
