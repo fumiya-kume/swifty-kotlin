@@ -411,6 +411,8 @@ private func roundFloatJava7(_ raw: Float) -> Int64 {
         return Int64((r >> shift) &+ 1) >> 1
     } else {
         // Exponent too small (magnitude < 0.5 → 0) or too large (already integral)
+        if raw >= Float(Int64.max) { return Int64.max }
+        if raw <= Float(Int64.min) { return Int64.min }
         return Int64(raw)
     }
 }
