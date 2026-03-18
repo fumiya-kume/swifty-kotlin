@@ -49,10 +49,11 @@ final class ValueClassUnboxingTests: XCTestCase {
 
     // MARK: - Value class unboxing lowering
 
-    func testValueClassConstructorRewrittenToCopy() throws {
-        // The ValueClassUnboxingPass is currently disabled because KIR
-        // emission already lowers property access to kk_array_get_inbounds.
-        // Verify that the pass is skipped and the constructor call remains.
+    func testValueClassConstructorNotRewrittenWhenPassDisabled() throws {
+        // The ValueClassUnboxingPass is currently disabled (shouldRun
+        // returns false). Verify that the pass is skipped and that the
+        // constructor call is preserved in the KIR — i.e. no .copy
+        // rewrite has occurred.
         let source = """
         value class Meter(val amount: Int)
 
@@ -66,10 +67,43 @@ final class ValueClassUnboxingTests: XCTestCase {
 
         let module = try XCTUnwrap(ctx.kir)
 
-        // The pass should be recorded (it ran but shouldRun returned false).
+        // The pass name should be recorded even though shouldRun returned
+        // false — the lowering framework records skipped passes too.
         XCTAssertTrue(
             module.executedLowerings.contains("ValueClassUnboxing"),
             "ValueClassUnboxing pass should have been recorded"
+        )
+
+        // Inspect the lowered KIR to confirm that constructor calls are
+        // still present (not rewritten to .copy instructions).
+        var hasConstructorCall = false
+        var hasCopyRewrite = false
+        for decl in module.arena.declarations {
+            guard case let .function(function) = decl else { continue }
+            for instruction in function.body {
+                switch instruction {
+                case let .call(symbol, _, _, _, _, _, _):
+                    if let symbol,
+                       let sym = ctx.sema?.symbols.symbol(symbol),
+                       sym.kind == .constructor
+                    {
+                        hasConstructorCall = true
+                    }
+                case .copy:
+                    hasCopyRewrite = true
+                default:
+                    break
+                }
+            }
+        }
+
+        // Since the pass is disabled, the constructor call should remain
+        // and no .copy rewrite should have been introduced by this pass.
+        // Note: other lowering passes may legitimately introduce .copy
+        // instructions, so we only assert the constructor call survives.
+        XCTAssertTrue(
+            hasConstructorCall,
+            "Constructor call should be preserved when ValueClassUnboxingPass is disabled"
         )
     }
 

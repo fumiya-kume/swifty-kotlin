@@ -2,8 +2,11 @@ import Foundation
 
 /// VAL-001: Value class unboxing lowering pass.
 ///
-/// Rewrites KIR instructions that reference value class types so that at
-/// the ABI level they operate on the underlying primitive type directly:
+/// **Status: DISABLED** (`shouldRun` always returns `false`).
+///
+/// When enabled, this pass would rewrite KIR instructions that reference
+/// value class types so that at the ABI level they operate on the
+/// underlying primitive type directly:
 ///
 /// - **Constructor calls** for a value class become a simple copy of the
 ///   single argument to the result.  `Meter(42)` -> `copy(42, result)`.
@@ -11,17 +14,20 @@ import Foundation
 /// - **Property getter calls** for the single wrapped property become a
 ///   copy of the receiver to the result.  `m.amount` -> `copy(m, result)`.
 ///
-/// This pass must run **before** ABILoweringPass, which handles boxing
-/// when the unboxed primitive crosses an ABI boundary (e.g. `Meter -> Any`).
+/// This pass is currently disabled because KIR emission already lowers
+/// property access to `kk_array_get_inbounds`, which expects a heap
+/// object. Rewriting the constructor (which populates that heap object)
+/// without also rewriting the property access causes a crash. A future
+/// version should intercept both patterns atomically, at which point
+/// `shouldRun` should be updated and `ABILoweringPass+BoxingRules`
+/// should also re-enable value class unboxing.
+///
+/// When re-enabled, this pass must run **before** ABILoweringPass.
 final class ValueClassUnboxingPass: LoweringPass {
     static let name = "ValueClassUnboxing"
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
-        // The pass is disabled because KIR emission already lowers property
-        // access to kk_array_get_inbounds, which expects a heap object.
-        // Rewriting the constructor (which populates that heap object) without
-        // also rewriting the property access causes a crash.  A future version
-        // should intercept both patterns atomically.
+        // Disabled -- see class-level doc comment for rationale.
         return false
     }
 
@@ -33,11 +39,11 @@ final class ValueClassUnboxingPass: LoweringPass {
 
         let symbols = sema.symbols
 
-        // Collect the set of value class symbols, their constructor symbols
-        // and their single-property getter symbols.
-        var valueClassSymbols: Set<SymbolID> = []
+        // Collect constructor symbols and wrapped-property symbols for
+        // value classes. Note: valueClassWrappedProperties stores
+        // property/field symbol IDs (not getter function IDs).
         var valueClassCtors: Set<SymbolID> = []
-        var valueClassPropertyGetters: Set<SymbolID> = []
+        var valueClassWrappedProperties: Set<SymbolID> = []
 
         for decl in module.arena.declarations {
             guard case let .nominalType(nominal) = decl else {
@@ -49,8 +55,6 @@ final class ValueClassUnboxingPass: LoweringPass {
             else {
                 continue
             }
-            valueClassSymbols.insert(nominal.symbol)
-
             // Find child symbols (constructors, properties) by fqName.
             let children = symbols.children(ofFQName: sym.fqName)
             for childID in children {
@@ -69,13 +73,13 @@ final class ValueClassUnboxingPass: LoweringPass {
                     if let propType = symbols.propertyType(for: childID),
                        propType == underlyingType
                     {
-                        valueClassPropertyGetters.insert(childID)
+                        valueClassWrappedProperties.insert(childID)
                     }
                 }
             }
         }
 
-        guard !valueClassCtors.isEmpty || !valueClassPropertyGetters.isEmpty else {
+        guard !valueClassCtors.isEmpty || !valueClassWrappedProperties.isEmpty else {
             module.recordLowering(Self.name)
             return
         }
@@ -85,7 +89,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             let newBody = self.rewriteBody(
                 function.body,
                 valueClassCtors: valueClassCtors,
-                valueClassPropertyGetters: valueClassPropertyGetters
+                valueClassWrappedProperties: valueClassWrappedProperties
             )
             updated.replaceBody(newBody)
             return updated
@@ -97,7 +101,7 @@ final class ValueClassUnboxingPass: LoweringPass {
     private func rewriteBody(
         _ body: [KIRInstruction],
         valueClassCtors: Set<SymbolID>,
-        valueClassPropertyGetters: Set<SymbolID>
+        valueClassWrappedProperties: Set<SymbolID>
     ) -> [KIRInstruction] {
         body.map { instruction in
             switch instruction {
@@ -124,7 +128,7 @@ final class ValueClassUnboxingPass: LoweringPass {
                 }
                 // Property getter via .call (non-virtual dispatch):
                 // call getter(receiver) result -> copy(receiver, result)
-                if let symbol, valueClassPropertyGetters.contains(symbol),
+                if let symbol, valueClassWrappedProperties.contains(symbol),
                    let result, arguments.count == 1
                 {
                     return .copy(from: arguments[0], to: result)
@@ -134,7 +138,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             // Rewrite property getter calls on value class:
             // virtualCall getter(receiver) result -> copy(receiver, result)
             case let .virtualCall(symbol, callee: _, receiver, arguments: _, result, canThrow: _, thrownResult: _, dispatch: _):
-                if let symbol, valueClassPropertyGetters.contains(symbol),
+                if let symbol, valueClassWrappedProperties.contains(symbol),
                    let result
                 {
                     return .copy(from: receiver, to: result)

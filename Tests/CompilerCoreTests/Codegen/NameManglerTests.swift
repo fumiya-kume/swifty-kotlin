@@ -341,7 +341,7 @@ final class NameManglerTests: XCTestCase {
 
     // MARK: - Value Class Mangling
 
-    func testEncodeTypeUnboxesValueClassToUnderlyingType() throws {
+    func testEncodeTypePreservesValueClassAsClassName() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -361,8 +361,9 @@ final class NameManglerTests: XCTestCase {
 
         let meterType = types.make(.classType(ClassType(classSymbol: meterSym, args: [], nullability: .nonNull)))
         let encoded = mangler.encodeType(meterType, symbols: symbols, types: types, nameResolver: { interner.resolve($0) })
-        // Non-null value class should encode as the underlying Int type ("I")
-        XCTAssertEqual(encoded, "I")
+        // Since ABILoweringPass disables value class unboxing, the mangler
+        // must encode the wrapper class name to match the actual ABI.
+        XCTAssertTrue(encoded.contains("Meter"), "Non-null value class should encode as class name, not underlying type")
     }
 
     func testEncodeTypeNullableValueClassNotUnboxed() throws {
@@ -424,9 +425,12 @@ final class NameManglerTests: XCTestCase {
             types: types,
             nameResolver: { interner.resolve($0) }
         )
-        // The signature should encode the Meter param as Int ("I"), not as a class reference
-        XCTAssertTrue(sig.contains("I"))
-        XCTAssertFalse(sig.contains("Meter"))
+        // Since ABILoweringPass disables value class unboxing (value
+        // classes remain heap-allocated at runtime), the mangler must
+        // encode the wrapper class name — not the underlying primitive.
+        // This prevents signature collisions between e.g. `fun f(Meter)`
+        // and `fun f(Int)`.
+        XCTAssertTrue(sig.contains("Meter"), "Mangled signature should contain the value class name")
     }
 
     func testMangledSignatureForFunctionWithoutSignatureReturnsUnderscore() throws {

@@ -197,26 +197,19 @@ public final class NameMangler {
             return applyNullability(encoded, nullability: nullability)
 
         case let .classType(classType):
-            // Value class mangling: encode the underlying type instead of the
-            // wrapper class so that mangled names reflect the unboxed ABI.
-            // Nullable value class types are boxed at the ABI level, so we
-            // only substitute for non-null value classes.
+            // Value class mangling: we intentionally do NOT substitute the
+            // underlying type here. ABILoweringPass+BoxingRules disables
+            // value class unboxing at the ABI level (resolveValueClassKind
+            // is a no-op), so value classes remain heap-allocated class
+            // objects at runtime. The mangled name must reflect the actual
+            // ABI — encoding the wrapper class name, not the underlying
+            // primitive — to avoid signature collisions between overloads
+            // like `fun f(Meter)` and `fun f(Int)`.
             //
-            // NOTE: This can produce identical mangled signatures for
-            // overloads that differ only by value-class wrapper but share
-            // the same underlying type (e.g. `fun f(Meter)` vs
-            // `fun f(Seconds)` both become `f(I)`).  Kotlin/JVM handles
-            // this by forbidding such overloads at the language level.
-            // A Sema diagnostic should reject these; if we ever need to
-            // allow them, the mangling must include a disambiguator
-            // (e.g. the wrapper type name as a suffix).
-            if classType.nullability == .nonNull,
-               let sym = symbols.symbol(classType.classSymbol),
-               sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: classType.classSymbol)
-            {
-                return encodeType(underlyingType, symbols: symbols, types: types, nameResolver: nameResolver)
-            }
+            // When end-to-end value class unboxing is re-enabled in the
+            // future (both ABILoweringPass and ValueClassUnboxingPass),
+            // this block should be updated to encode the underlying type
+            // for non-null value classes.
 
             let className: String = if let classSymbol = symbols.symbol(classType.classSymbol) {
                 classSymbol.fqName
