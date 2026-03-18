@@ -2228,6 +2228,7 @@ public enum RuntimeABIExterns {
             kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
+        all += callableRefExterns
         all += [
             // Delegate
             kk_lazy_create,
