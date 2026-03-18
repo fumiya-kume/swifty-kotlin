@@ -515,8 +515,8 @@ extension CollectionLiteralLoweringPass {
                 loweredBody: &loweredBody
             )
             if let result {
-                sequenceExprIDs.insert(result.rawValue)
-                sequenceExprIDs.insert(hofResult.rawValue)
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
             }
             return true
         }
@@ -535,8 +535,8 @@ extension CollectionLiteralLoweringPass {
                 loweredBody: &loweredBody
             )
             if let result {
-                sequenceExprIDs.insert(result.rawValue)
-                sequenceExprIDs.insert(hofResult.rawValue)
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
             }
             return true
         }
