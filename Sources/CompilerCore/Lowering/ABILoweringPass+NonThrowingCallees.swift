@@ -57,6 +57,7 @@ extension ABILoweringPass {
             interner.intern("kk_string_trimStart"),
             interner.intern("kk_string_trimEnd"),
             interner.intern("kk_string_toByteArray"),
+            interner.intern("kk_string_toByteArray_charset"),
             interner.intern("kk_string_removePrefix"),
             interner.intern("kk_string_removeSuffix"),
             interner.intern("kk_string_removeSurrounding"),

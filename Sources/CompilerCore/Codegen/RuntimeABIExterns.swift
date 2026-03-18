@@ -762,6 +762,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-581: String.toByteArray(charset)
+    public static let kk_string_toByteArray_charset = ExternDecl(
+        name: "kk_string_toByteArray_charset",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-316: String.chunked / String.windowed
     public static let kk_string_chunked = ExternDecl(
         name: "kk_string_chunked",
@@ -2101,6 +2108,7 @@ public enum RuntimeABIExterns {
             kk_string_trimStart,
             kk_string_trimEnd,
             kk_string_toByteArray,
+            kk_string_toByteArray_charset,
             kk_char_isDigit,
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
