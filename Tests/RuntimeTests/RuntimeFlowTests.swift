@@ -13,6 +13,8 @@ private enum RuntimeFlowTag: Int {
     case map = 1
     case filter = 2
     case take = 3
+    case onEach = 4
+    case distinctUntilChanged = 5
 }
 
 private final class RuntimeFlowTestState: @unchecked Sendable {
@@ -166,8 +168,10 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 
         let snapshot = runtimeFlowTestState.snapshot()
         XCTAssertEqual(snapshot.values, [4], "filter/map/take pipeline should keep order and stop after one element.")
-        XCTAssertEqual(snapshot.filterCalls, 4, "Filter should run for each source element before take truncates output.")
-        XCTAssertEqual(snapshot.mapCalls, 2, "Map should run for each filtered element.")
+        // Lazy per-element semantics: only values 1 and 2 are processed (1 is
+        // filtered out, 2 passes filter+map and take(1) stops further processing).
+        XCTAssertEqual(snapshot.filterCalls, 2, "Filter runs lazily per element; stops after take(1) is satisfied.")
+        XCTAssertEqual(snapshot.mapCalls, 1, "Map runs only for the single element that passed filter before take exhausted.")
         XCTAssertEqual(snapshot.collectorCalls, 1)
     }
 
@@ -203,4 +207,253 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
         _ = kk_flow_collect(retained, collectorPtr, 0)
         XCTAssertEqual(runtimeFlowTestState.snapshot().values, [])
     }
+
+    // MARK: - Cold stream semantics tests (STDLIB-088)
+
+    func testColdStreamReExecutesEmitterOnEachCollect() {
+        // Verify emitter runs fresh for every collect call by using a
+        // counting emitter that increments a global counter on each invocation.
+        runtimeFlowEmitterCallCounter.reset()
+        let emitterPtr = unsafeBitCast(runtime_test_flow_counting_emitter as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 0, "Emitter should not run before collect.")
+
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        let firstCollect = runtimeFlowTestState.snapshot().values
+        XCTAssertEqual(firstCollect, [1, 2, 3, 4])
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 1, "Emitter should run exactly once after first collect.")
+
+        runtimeFlowTestState.reset()
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        let secondCollect = runtimeFlowTestState.snapshot().values
+        XCTAssertEqual(secondCollect, [1, 2, 3, 4], "Cold stream should re-emit on each collect.")
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 2, "Emitter should run again on second collect (cold stream).")
+    }
+
+    func testLazyMapOnlyProcessesNeededElements() {
+        // With take(2), map should only run for the first 2 source elements.
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let mapPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
+        let taken = kk_flow_emit(mapped, 2, RuntimeFlowTag.take.rawValue)
+
+        _ = kk_flow_collect(taken, collectorPtr, 0)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [2, 4], "take(2) after map should yield first 2 mapped values.")
+        XCTAssertEqual(snapshot.mapCalls, 2, "Lazy: map should only run for the 2 elements before take exhausted.")
+    }
+
+    func testOnEachDoesNotTransformValues() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let onEachPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let withOnEach = kk_flow_emit(flowHandle, onEachPtr, RuntimeFlowTag.onEach.rawValue)
+
+        _ = kk_flow_collect(withOnEach, collectorPtr, 0)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        // onEach runs the action but does not change the value.
+        XCTAssertEqual(snapshot.values, [1, 2, 3, 4], "onEach should not transform values.")
+        XCTAssertEqual(snapshot.mapCalls, 4, "onEach action should run for all elements.")
+    }
+
+    func testDistinctUntilChangedFiltersConsecutiveDuplicates() {
+        // Emit: 1, 1, 2, 2, 3, 1
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_with_dupes as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let distinct = kk_flow_emit(flowHandle, 0, RuntimeFlowTag.distinctUntilChanged.rawValue)
+
+        _ = kk_flow_collect(distinct, collectorPtr, 0)
+
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [1, 2, 3, 1], "distinctUntilChanged should remove consecutive duplicates.")
+    }
+
+    func testFlowOfCreatesFlowFromFixedValues() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        // Create an array with values [10, 20, 30]
+        let arrayHandle = kk_array_new(3)
+        kk_array_set(arrayHandle, 0, 10, nil)
+        kk_array_set(arrayHandle, 1, 20, nil)
+        kk_array_set(arrayHandle, 2, 30, nil)
+
+        let flowHandle = kk_flow_of(arrayHandle, 3)
+
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [10, 20, 30], "flowOf should emit the provided values.")
+
+        // Cold stream: collect again should yield same values.
+        runtimeFlowTestState.reset()
+        _ = kk_flow_collect(flowHandle, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [10, 20, 30], "flowOf cold stream: re-collect yields same values.")
+    }
+
+    func testFlowOfWithOperators() {
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+        let mapPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
+
+        let arrayHandle = kk_array_new(3)
+        kk_array_set(arrayHandle, 0, 5, nil)
+        kk_array_set(arrayHandle, 1, 10, nil)
+        kk_array_set(arrayHandle, 2, 15, nil)
+
+        let flowHandle = kk_flow_of(arrayHandle, 3)
+        let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
+        let taken = kk_flow_emit(mapped, 2, RuntimeFlowTag.take.rawValue)
+
+        _ = kk_flow_collect(taken, collectorPtr, 0)
+        let snapshot = runtimeFlowTestState.snapshot()
+        XCTAssertEqual(snapshot.values, [10, 20], "flowOf with map+take should work correctly.")
+        XCTAssertEqual(snapshot.mapCalls, 2, "Lazy: map should only run for elements before take exhausted.")
+    }
+
+    func testFlowFirst() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let result = kk_flow_first(flowHandle, 0)
+        XCTAssertEqual(result, 1, "first() should return the first emitted value.")
+    }
+
+    func testFlowFirstWithFilter() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let filterPtr = unsafeBitCast(runtime_test_flow_filter_even as RuntimeFlowUnaryEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let filtered = kk_flow_emit(flowHandle, filterPtr, RuntimeFlowTag.filter.rawValue)
+        let result = kk_flow_first(filtered, 0)
+        XCTAssertEqual(result, 2, "first() after filter(even) should return 2.")
+    }
+
+    func testFlowCount() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let result = kk_flow_count(flowHandle, 0)
+        XCTAssertEqual(result, 4, "count() should return number of emitted elements.")
+    }
+
+    func testFlowCountWithFilter() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let filterPtr = unsafeBitCast(runtime_test_flow_filter_even as RuntimeFlowUnaryEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let filtered = kk_flow_emit(flowHandle, filterPtr, RuntimeFlowTag.filter.rawValue)
+        let result = kk_flow_count(filtered, 0)
+        XCTAssertEqual(result, 2, "count() after filter(even) on [1,2,3,4] should return 2.")
+    }
+
+    func testFlowToList() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let mapPtr = unsafeBitCast(runtime_test_flow_map_double as RuntimeFlowUnaryEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let mapped = kk_flow_emit(flowHandle, mapPtr, RuntimeFlowTag.map.rawValue)
+        let listHandle = kk_flow_to_list(mapped, 0)
+
+        let size = kk_list_size(listHandle)
+        XCTAssertEqual(size, 4)
+        XCTAssertEqual(kk_list_get(listHandle, 0), 2)
+        XCTAssertEqual(kk_list_get(listHandle, 1), 4)
+        XCTAssertEqual(kk_list_get(listHandle, 2), 6)
+        XCTAssertEqual(kk_list_get(listHandle, 3), 8)
+    }
+
+    func testFlowFold() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let foldOpPtr = unsafeBitCast(runtime_test_flow_fold_add as RuntimeFlowFoldEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let result = kk_flow_fold(flowHandle, 0, foldOpPtr, 0)
+        XCTAssertEqual(result, 10, "fold with + and initial 0 on [1,2,3,4] should yield 10.")
+    }
+
+    func testFlowReduce() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let reduceOpPtr = unsafeBitCast(runtime_test_flow_fold_add as RuntimeFlowFoldEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let result = kk_flow_reduce(flowHandle, reduceOpPtr, 0)
+        XCTAssertEqual(result, 10, "reduce with + on [1,2,3,4] should yield 10.")
+    }
+
+    func testTakeZeroEmitsNothing() {
+        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
+
+        let flowHandle = kk_flow_create(emitterPtr, 0)
+        let taken = kk_flow_emit(flowHandle, 0, RuntimeFlowTag.take.rawValue)
+
+        _ = kk_flow_collect(taken, collectorPtr, 0)
+        XCTAssertEqual(runtimeFlowTestState.snapshot().values, [], "take(0) should emit nothing.")
+    }
+}
+
+// MARK: - Additional test helpers
+
+/// Thread-safe counter to track how many times an emitter function is invoked.
+private final class RuntimeFlowEmitterCallCount: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _count = 0
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _count
+    }
+
+    func increment() {
+        lock.lock()
+        _count += 1
+        lock.unlock()
+    }
+
+    func reset() {
+        lock.lock()
+        _count = 0
+        lock.unlock()
+    }
+}
+
+private let runtimeFlowEmitterCallCounter = RuntimeFlowEmitterCallCount()
+
+/// Emitter that emits [1, 2, 3, 4] and increments a call counter each time
+/// it is invoked, allowing tests to verify cold-stream re-execution.
+@_cdecl("runtime_test_flow_counting_emitter")
+func runtime_test_flow_counting_emitter(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeFlowEmitterCallCounter.increment()
+    outThrown?.pointee = 0
+    for value in 1 ... 4 {
+        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+    }
+    return 0
+}
+
+@_cdecl("runtime_test_flow_emitter_with_dupes")
+func runtime_test_flow_emitter_with_dupes(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    for value in [1, 1, 2, 2, 3, 1] {
+        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+    }
+    return 0
+}
+
+/// Fold/reduce operation: (closureRaw, acc, value, outThrown) -> acc + value
+private typealias RuntimeFlowFoldEntry = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+
+@_cdecl("runtime_test_flow_fold_add")
+func runtime_test_flow_fold_add(_: Int, _ acc: Int, _ value: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    return acc + value
 }

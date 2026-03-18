@@ -658,6 +658,94 @@ final class LambdaLowerer {
             callee: callableName,
             captureArguments: captureArguments
         )
+
+        // REFL-003: Emit KFunction / KProperty type identity tag.
+        // The tagging call wraps the callable value with reflection
+        // metadata (name, arity, KFunction vs KProperty).  We register
+        // the tagged expression with the same callable-value metadata so
+        // that downstream callable-value-call lowering resolves the
+        // correct target symbol and capture arguments.
+        if let refKind = sema.bindings.callableRefKind(for: exprID) {
+            let taggedExpr = emitCallableRefTypeTag(
+                callableExpr: callableExpr,
+                callableType: callableType,
+                refKind: refKind,
+                memberName: memberName,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                instructions: &instructions
+            )
+            driver.ctx.registerCallableValue(
+                taggedExpr,
+                symbol: callableSymbol,
+                callee: callableName,
+                captureArguments: captureArguments
+            )
+            return taggedExpr
+        }
+
         return callableExpr
+    }
+
+    // MARK: - REFL-003: Callable reference type identity
+
+    /// Emits a runtime tagging call that annotates a callable reference value
+    /// with KFunction or KProperty type identity. Returns a new KIR expression
+    /// representing the tagged value.  The caller must use the returned
+    /// expression (and register it for callable-value resolution) so that the
+    /// tagged value propagates through the program.
+    func emitCallableRefTypeTag(
+        callableExpr: KIRExprID,
+        callableType: TypeID,
+        refKind: CallableRefKind,
+        memberName: InternedString,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        // Compute arity from the function type (number of value parameters).
+        let arity: Int64
+        if case let .functionType(functionType) = sema.types.kind(of: callableType) {
+            arity = Int64(functionType.params.count)
+        } else {
+            // Property references have arity 0 (no value params, just a getter).
+            arity = 0
+        }
+
+        // Emit the name string literal.
+        let nameExpr = arena.appendExpr(
+            .stringLiteral(memberName),
+            type: sema.types.make(.primitive(.string, .nonNull))
+        )
+        instructions.append(.constValue(result: nameExpr, value: .stringLiteral(memberName)))
+
+        // Emit the arity literal.
+        let arityExpr = arena.appendExpr(.intLiteral(arity), type: sema.types.intType)
+        instructions.append(.constValue(result: arityExpr, value: .intLiteral(arity)))
+
+        // Choose the tagging callee based on callable reference kind.
+        let tagCallee: String = switch refKind {
+        case .functionRef:
+            "kk_callable_ref_tag_kfunction"
+        case .propertyRef:
+            "kk_callable_ref_tag_kproperty"
+        }
+
+        // Emit the tagging call.
+        let taggedExpr = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: callableType
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern(tagCallee),
+            arguments: [callableExpr, nameExpr, arityExpr],
+            result: taggedExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return taggedExpr
     }
 }

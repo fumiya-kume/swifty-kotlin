@@ -79,6 +79,16 @@ public enum StdlibSpecialCallKind: Equatable {
     case enumValueOf
 }
 
+/// Identifies whether a callable reference (`::foo`) refers to a function
+/// or a property, so that KIR lowering can emit the correct KFunction /
+/// KProperty type identity metadata (REFL-003).
+public enum CallableRefKind: Equatable {
+    /// `::functionName` — produces a KFunction reference.
+    case functionRef
+    /// `::propertyName` — produces a KProperty reference.
+    case propertyRef
+}
+
 public struct CatchClauseBinding: Equatable {
     public let parameterSymbol: SymbolID
     public let parameterType: TypeID

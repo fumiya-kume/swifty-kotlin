@@ -3,7 +3,7 @@ import Foundation
 /// Hashable wrapper around an opaque runtime value (`Int`) that uses
 /// `kk_any_hashCode` / `runtimeValuesEqual` so it can be stored in a
 /// Swift `Set` for O(1) amortised lookups.
-private struct RuntimeElementKey: Hashable {
+internal struct RuntimeElementKey: Hashable {
     let value: Int
 
     func hash(into hasher: inout Hasher) {

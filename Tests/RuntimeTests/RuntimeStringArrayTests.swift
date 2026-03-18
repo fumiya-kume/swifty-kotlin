@@ -170,7 +170,7 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         let charArrayRaw = kk_string_toCharArray(rawFromRuntimeString("abc"))
 
         let list = runtimeListBox(from: listRaw)
-        let charArray = runtimeListBox(from: charArrayRaw)
+        let charArray = runtimeArrayBox(from: charArrayRaw)
         XCTAssertNotNil(list)
         XCTAssertNotNil(charArray)
         let expected = [97, 98, 99]
