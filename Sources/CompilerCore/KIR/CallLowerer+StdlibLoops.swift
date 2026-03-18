@@ -356,28 +356,61 @@ extension CallLowerer {
 
             return durationExpr
         } else {
-            // Non-inline: the argument is a callable reference. Emit a call
-            // to the kk_measureTime runtime which handles closure dispatch.
+            // Non-inline: the argument is a callable reference. Call the lambda
+            // directly between nanoTime calls to produce a Duration, matching
+            // the inline pattern. (kk_measureTime expects fnPtr/closureRaw which
+            // are not available through callableValueInfo.)
+            let nanoTimeCallee = interner.intern("kk_system_nanoTime")
+            let longType = sema.types.longType
+
+            let startTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+            instructions.append(.call(
+                symbol: nil, callee: nanoTimeCallee, arguments: [],
+                result: startTimeExpr, canThrow: false, thrownResult: nil
+            ))
+
             let actionExpr = driver.lowerExpr(
                 args[0].expr, ast: ast, sema: sema, arena: arena, interner: interner,
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
             if let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) {
+                let unitType = sema.types.unitType
+                let actionResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: unitType)
                 let thrownResult = arena.appendExpr(
                     .temporary(Int32(arena.expressions.count)),
                     type: sema.types.nullableAnyType
                 )
-                let resultExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
                 instructions.append(.call(
-                    symbol: nil, callee: measureTimeCallee,
+                    symbol: callableInfo.symbol, callee: callableInfo.callee,
                     arguments: callableInfo.captureArguments,
-                    result: resultExpr, canThrow: true, thrownResult: thrownResult
+                    result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
-                return resultExpr
             } else {
                 assertionFailure("lowerMeasureTimeCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
             }
+
+            let endTimeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+            instructions.append(.call(
+                symbol: nil, callee: nanoTimeCallee, arguments: [],
+                result: endTimeExpr, canThrow: false, thrownResult: nil
+            ))
+
+            let subCallee = interner.intern("kk_op_sub")
+            let elapsedExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: longType)
+            instructions.append(.call(
+                symbol: nil, callee: subCallee, arguments: [endTimeExpr, startTimeExpr],
+                result: elapsedExpr, canThrow: false, thrownResult: nil
+            ))
+
+            let fromNanosCallee = interner.intern("kk_duration_from_nanoseconds")
+            let durationExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+            instructions.append(.call(
+                symbol: nil, callee: fromNanosCallee, arguments: [elapsedExpr],
+                result: durationExpr, canThrow: false, thrownResult: nil
+            ))
+
+            return durationExpr
         }
 
         let fallbackExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
