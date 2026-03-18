@@ -1,6 +1,10 @@
 // swiftlint:disable file_length
 import Foundation
 
+/// Centralized FQ-name suffix used to discriminate the comparison-based
+/// `binarySearch` overload from the element-based one.
+private let binarySearchCompareFQSuffix = "binarySearch$compare"
+
 extension DataFlowSemaPhase {
     /// Register `kotlin.Comparable<T>` interface stub with `operator fun compareTo(other: T): Int`.
     func registerSyntheticComparableStub(
@@ -1858,7 +1862,7 @@ extension DataFlowSemaPhase {
         // STDLIB-547: binarySearch(comparison: (T) -> Int) — HOF, comparison lambda
         let binarySearchCompareName = interner.intern("binarySearch")
         // Use a distinct FQ name to differentiate from the element-based overload
-        let binarySearchCompareFQName = listFQName + [interner.intern("binarySearch$compare")]
+        let binarySearchCompareFQName = listFQName + [interner.intern(binarySearchCompareFQSuffix)]
         if symbols.lookup(fqName: binarySearchCompareFQName) == nil {
             let comparisonType = types.make(.functionType(FunctionType(
                 params: [listTypeParamType],

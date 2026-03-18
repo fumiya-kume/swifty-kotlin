@@ -1156,7 +1156,7 @@ public func kk_list_binarySearch_compare(_ listRaw: Int, _ fnPtr: Int, _ closure
     var low = 0
     var high = list.elements.count - 1
     while low <= high {
-        let mid = (low + high) / 2
+        let mid = low + (high - low) / 2
         var thrown = 0
         let cmp = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[mid], outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
