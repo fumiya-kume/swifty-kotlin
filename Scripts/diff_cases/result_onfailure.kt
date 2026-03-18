@@ -1,10 +1,8 @@
 fun main() {
     val success = Result.success(42)
     val failure = Result.failure<Int>(RuntimeException("error"))
-    success.onFailure { println("should not print") }
-    success.onSuccess { println("success: $it") }
-    failure.onFailure { println("failure: ${it.message}") }
-    failure.onSuccess { println("should not print") }
+    success.onFailure { println("should not print") }.onSuccess { println("success: $it") }
+    failure.onSuccess { println("should not print") }.onFailure { println("failure: ${it.message}") }
     println(success.getOrNull())
     println(failure.getOrNull())
     println(success.getOrDefault(0))
