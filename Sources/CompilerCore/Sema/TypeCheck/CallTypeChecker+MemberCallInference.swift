@@ -1023,11 +1023,31 @@ extension CallTypeChecker {
 
             case "binarySearch":
                 // STDLIB-547: binarySearch(comparison: (T) -> Int) — comparison lambda overload
-                guard args.count == 1,
-                      let lambdaExpr = ast.arena.expr(args[0].expr),
-                      case .lambdaLiteral = lambdaExpr
-                else {
-                    // Element-based overload or wrong arity — fall through with Int result
+                guard args.count == 1 else {
+                    // Wrong arity — fall through with Int result
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                // Check if the argument is a function-typed expression (lambda literal,
+                // callable reference, or identifier with function type) to distinguish
+                // the comparison overload from the element-based overload.
+                let argExpr = ast.arena.expr(args[0].expr)
+                let isFunctionArg: Bool
+                if let expr = argExpr, case .lambdaLiteral = expr {
+                    isFunctionArg = true
+                } else if let expr = argExpr, case .callableRef = expr {
+                    isFunctionArg = true
+                } else {
+                    // Check inferred type: infer first, then see if it's a function type
+                    let inferredType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+                    if case .functionType = sema.types.kind(of: inferredType) {
+                        isFunctionArg = true
+                    } else {
+                        isFunctionArg = false
+                    }
+                }
+                guard isFunctionArg else {
+                    // Element-based overload
                     sema.bindings.bindExprType(id, type: sema.types.intType)
                     return sema.types.intType
                 }
@@ -1035,7 +1055,11 @@ extension CallTypeChecker {
                     params: [collectionElementType],
                     returnType: sema.types.intType
                 )))
-                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                if let expr = argExpr, case .lambdaLiteral = expr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                } else if let expr = argExpr, case .callableRef = expr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: bsLambdaExpectedType)
                 resultType = sema.types.intType
 

@@ -2144,7 +2144,8 @@ extension CallLowerer {
             arena: arena,
             interner: interner,
             instructions: &instructions,
-            arguments: finalArguments
+            arguments: finalArguments,
+            sourceArgExprs: args.map(\.expr)
         )
         return result
     }
@@ -2665,7 +2666,8 @@ extension CallLowerer {
         arena: KIRArena,
         interner: StringInterner,
         instructions: inout [KIRInstruction],
-        arguments: [KIRExprID]
+        arguments: [KIRExprID],
+        sourceArgExprs: [ExprID] = []
     ) {
         var finalArguments = arguments
         if normalized.defaultMask != 0,
@@ -2725,11 +2727,13 @@ extension CallLowerer {
             arguments: &finalArguments
         )
 
+        let hasHOFLambdaArg = sourceArgExprs.contains { sema.bindings.isCollectionHOFLambdaExpr($0) }
         let loweredCallee = loweredMemberCalleeName(
             chosenCallee: chosenCallee,
             fallback: calleeName,
             receiverExpr: receiver.expr,
             argumentCount: finalArguments.count,
+            hasHOFLambdaArg: hasHOFLambdaArg,
             sema: sema,
             interner: interner
         )
@@ -2792,6 +2796,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_last"),
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
+            interner.intern("kk_list_binarySearch_compare"),
         ])
     }
 
@@ -2860,6 +2865,7 @@ extension CallLowerer {
         fallback: InternedString,
         receiverExpr: ExprID,
         argumentCount: Int,
+        hasHOFLambdaArg: Bool = false,
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString {
@@ -2877,6 +2883,7 @@ extension CallLowerer {
                 receiverExpr: receiverExpr,
                 receiverType: receiverType,
                 argumentCount: argumentCount,
+                hasHOFLambdaArg: hasHOFLambdaArg,
                 sema: sema,
                 interner: interner
             ) {
@@ -2941,6 +2948,7 @@ extension CallLowerer {
             receiverExpr: receiverExpr,
             receiverType: receiverType,
             argumentCount: argumentCount,
+            hasHOFLambdaArg: hasHOFLambdaArg,
             sema: sema,
             interner: interner
         ) {
@@ -2955,6 +2963,7 @@ extension CallLowerer {
         receiverExpr: ExprID,
         receiverType: TypeID,
         argumentCount: Int,
+        hasHOFLambdaArg: Bool = false,
         sema: SemaModule,
         interner: StringInterner
     ) -> InternedString? {
@@ -3003,11 +3012,9 @@ extension CallLowerer {
             case "containsAll":
                 return interner.intern("kk_list_containsAll")
             case "binarySearch":
-                // Comparison overload has HOF-expanded args (fnPtr + closureRaw = 2),
-                // while the element-based overload has 1 element arg.
-                // With receiver prepended: element-based has 2 args (receiver + element),
-                // comparison-based has 3+ args (receiver + fnPtr + closureRaw).
-                return interner.intern(argumentCount >= 3
+                // Use sema-resolved HOF marking to distinguish comparison overload
+                // from element-based overload, rather than relying on argument count.
+                return interner.intern(hasHOFLambdaArg
                     ? "kk_list_binarySearch_compare"
                     : "kk_list_binarySearch")
             default:
@@ -3098,7 +3105,7 @@ extension CallLowerer {
         case "containsAll":
             return interner.intern("kk_list_containsAll")
         case "binarySearch":
-            return interner.intern(argumentCount >= 3
+            return interner.intern(hasHOFLambdaArg
                 ? "kk_list_binarySearch_compare"
                 : "kk_list_binarySearch")
         case "groupingBy" where isConcreteListLikeType(nonNullReceiverType, sema: sema, interner: interner)
