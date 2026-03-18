@@ -7,10 +7,11 @@ fun main() {
         for (i in 1..1000) sum += i
         println(sum)
     }
-    println(millis >= 0)
+    println(millis is Long)
     val nanos = measureNanoTime {
         var sum = 0
         for (i in 1..1000) sum += i
+        println(sum)
     }
-    println(nanos >= 0)
+    println(nanos is Long)
 }
