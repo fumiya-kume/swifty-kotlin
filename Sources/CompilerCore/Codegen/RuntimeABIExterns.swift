@@ -581,6 +581,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-534: String?.orEmpty()
+    public static let kk_string_orEmpty = ExternDecl(
+        name: "kk_string_orEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_split = ExternDecl(
         name: "kk_string_split",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -774,6 +781,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-581: String.toByteArray(charset)
+    public static let kk_string_toByteArray_charset = ExternDecl(
+        name: "kk_string_toByteArray_charset",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-316: String.chunked / String.windowed
     public static let kk_string_chunked = ExternDecl(
         name: "kk_string_chunked",
@@ -797,6 +811,19 @@ public enum RuntimeABIExterns {
     public static let kk_string_commonSuffixWith = ExternDecl(
         name: "kk_string_commonSuffixWith",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+    public static let kk_string_commonPrefixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonPrefixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_commonSuffixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonSuffixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -878,6 +905,12 @@ public enum RuntimeABIExterns {
     public static let kk_println_bool = ExternDecl(
         name: "kk_println_bool",
         parameterTypes: ["intptr_t"],
+        returnType: "void"
+    )
+
+    public static let kk_print_noarg = ExternDecl(
+        name: "kk_print_noarg",
+        parameterTypes: [],
         returnType: "void"
     )
 
@@ -1207,7 +1240,7 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Channel (P5-134)
+    // Channel (CORO-001)
 
     public static let kk_channel_create = ExternDecl(
         name: "kk_channel_create",
@@ -1229,6 +1262,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_channel_close = ExternDecl(
         name: "kk_channel_close",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_is_closed_token = ExternDecl(
+        name: "kk_channel_is_closed_token",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1990,6 +2029,12 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_useLines = ExternDecl(
+        name: "kk_file_useLines",
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -2009,6 +2054,7 @@ public enum RuntimeABIExterns {
         kk_buffered_reader_readLine,
         kk_buffered_reader_readLines,
         kk_buffered_reader_close,
+        kk_file_useLines,
     ]
 
     public static let regexExterns: [ExternDecl] = [
@@ -2106,6 +2152,7 @@ public enum RuntimeABIExterns {
             kk_string_trimStart,
             kk_string_trimEnd,
             kk_string_toByteArray,
+            kk_string_toByteArray_charset,
             kk_char_isDigit,
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
@@ -2164,9 +2211,13 @@ public enum RuntimeABIExterns {
             kk_string_windowed,
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
+            kk_string_commonPrefixWith_ignoreCase,
+            kk_string_commonSuffixWith_ignoreCase,
             kk_string_zipWithNext,
+            kk_string_orEmpty,
             // Print / Println
             kk_print_any,
+            kk_print_noarg,
             kk_println_any,
             kk_println_bool,
             kk_println_newline,
@@ -2228,11 +2279,12 @@ public enum RuntimeABIExterns {
             kk_dispatcher_io,
             kk_dispatcher_main,
             kk_with_context,
-            // Channel
+            // Channel (CORO-001)
             kk_channel_create,
             kk_channel_send,
             kk_channel_receive,
             kk_channel_close,
+            kk_channel_is_closed_token,
             // Deferred / awaitAll
             kk_await_all,
             // Structured Concurrency (P5-89)

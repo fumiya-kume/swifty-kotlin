@@ -920,6 +920,59 @@ public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     return runtimeMakeListRaw(source.utf8.map(Int.init))
 }
 
+// STDLIB-581: String.toByteArray(charset) overload
+@_cdecl("kk_string_toByteArray_charset")
+public func kk_string_toByteArray_charset(_ strRaw: Int, _ charsetRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let charsetName = runtimeStringFromRawOrPanic(charsetRaw, caller: #function)
+        .uppercased()
+        .replacingOccurrences(of: "-", with: "")
+        .replacingOccurrences(of: "_", with: "")
+    switch charsetName {
+    case "UTF8":
+        return runtimeMakeListRaw(source.utf8.map(Int.init))
+    case "ISO88591", "LATIN1":
+        return runtimeMakeListRaw(source.unicodeScalars.map { scalar in
+            Int(scalar.value <= 0xFF ? scalar.value : 0x3F /* '?' */)
+        })
+    case "USASCII", "ASCII":
+        return runtimeMakeListRaw(source.unicodeScalars.map { scalar in
+            Int(scalar.value <= 0x7F ? scalar.value : 0x3F /* '?' */)
+        })
+    case "UTF16":
+        let utf16Count = source.utf16.count
+        var bytes: [Int] = []
+        bytes.reserveCapacity(2 + 2 * utf16Count) // BOM + data
+        bytes.append(0xFE) // BOM high byte
+        bytes.append(0xFF) // BOM low byte
+        for unit in source.utf16 {
+            bytes.append(Int((unit >> 8) & 0xFF))
+            bytes.append(Int(unit & 0xFF))
+        }
+        return runtimeMakeListRaw(bytes)
+    case "UTF16BE":
+        let utf16Count = source.utf16.count
+        var bytes: [Int] = []
+        bytes.reserveCapacity(2 * utf16Count)
+        for unit in source.utf16 {
+            bytes.append(Int((unit >> 8) & 0xFF))
+            bytes.append(Int(unit & 0xFF))
+        }
+        return runtimeMakeListRaw(bytes)
+    case "UTF16LE":
+        let utf16Count = source.utf16.count
+        var bytes: [Int] = []
+        bytes.reserveCapacity(2 * utf16Count)
+        for unit in source.utf16 {
+            bytes.append(Int(unit & 0xFF))
+            bytes.append(Int((unit >> 8) & 0xFF))
+        }
+        return runtimeMakeListRaw(bytes)
+    default:
+        fatalError("Unsupported charset: \(charsetName)")
+    }
+}
+
 @_cdecl("kk_string_format")
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let template = runtimeStringFromRawOrPanic(formatRaw, caller: #function)
@@ -1031,6 +1084,46 @@ public func kk_string_commonSuffixWith(_ strRaw: Int, _ otherRaw: Int) -> Int {
         if a == b { suffix.insert(a, at: suffix.startIndex) } else { break }
     }
     return runtimeMakeStringRaw(suffix)
+}
+
+// MARK: - STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+
+@_cdecl("kk_string_commonPrefixWith_ignoreCase")
+public func kk_string_commonPrefixWith_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    let ignoreCase = ignoreCaseRaw != 0
+    var prefix = ""
+    for (a, b) in zip(s, other) {
+        if ignoreCase
+            ? String(a).caseInsensitiveCompare(String(b)) == .orderedSame
+            : a == b
+        {
+            prefix.append(a)
+        } else {
+            break
+        }
+    }
+    return runtimeMakeStringRaw(prefix)
+}
+
+@_cdecl("kk_string_commonSuffixWith_ignoreCase")
+public func kk_string_commonSuffixWith_ignoreCase(_ strRaw: Int, _ otherRaw: Int, _ ignoreCaseRaw: Int) -> Int {
+    let s = runtimeStringFromRaw(strRaw) ?? ""
+    let other = runtimeStringFromRaw(otherRaw) ?? ""
+    let ignoreCase = ignoreCaseRaw != 0
+    var reversed: [Character] = []
+    for (a, b) in zip(s.reversed(), other.reversed()) {
+        if ignoreCase
+            ? String(a).caseInsensitiveCompare(String(b)) == .orderedSame
+            : a == b
+        {
+            reversed.append(a)
+        } else {
+            break
+        }
+    }
+    return runtimeMakeStringRaw(String(reversed.reversed()))
 }
 
 // MARK: - STDLIB-316: String.zipWithNext()

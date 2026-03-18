@@ -163,6 +163,17 @@ final class RuntimeCharBox {
     }
 }
 
+enum RuntimeCallableRefKind {
+    case function
+    case property
+}
+
+struct RuntimeCallableRefMetadata {
+    let nameRaw: Int
+    let arity: Int
+    let kind: RuntimeCallableRefKind
+}
+
 // MARK: - Collection Types (STDLIB-001)
 
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.

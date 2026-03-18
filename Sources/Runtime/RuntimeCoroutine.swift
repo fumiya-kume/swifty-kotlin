@@ -228,7 +228,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
 /// so it survives suspend/resume across different GCD threads. A lightweight
 /// per-task accessor (`RuntimeCoroutineScope.current`)
 /// bridges the gap for the few call-sites that don't have a continuation handle.
-final class RuntimeCoroutineScope {
+final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
@@ -1341,6 +1341,24 @@ private enum RuntimeDispatcherTag {
     static let mainDispatcher: Int = 0x4B4B_4403 // "KKD\x03"
 }
 
+/// Maps a dispatcher tag to the corresponding GCD dispatch queue.
+/// - `Dispatchers.Default` -> global queue (concurrent, default QoS)
+/// - `Dispatchers.IO`      -> global queue (concurrent, utility QoS — I/O-appropriate)
+/// - `Dispatchers.Main`    -> main queue (serial)
+/// Unknown tags fall back to `Dispatchers.Default`.
+private func dispatchQueue(for dispatcherTag: Int) -> DispatchQueue {
+    switch dispatcherTag {
+    case RuntimeDispatcherTag.ioDispatcher:
+        return DispatchQueue.global(qos: .utility)
+    case RuntimeDispatcherTag.mainDispatcher:
+        return DispatchQueue.main
+    case RuntimeDispatcherTag.defaultDispatcher:
+        return DispatchQueue.global()
+    default:
+        return DispatchQueue.global()
+    }
+}
+
 @_cdecl("kk_dispatcher_default")
 public func kk_dispatcher_default() -> Int {
     RuntimeDispatcherTag.defaultDispatcher
@@ -1356,11 +1374,20 @@ public func kk_dispatcher_main() -> Int {
     RuntimeDispatcherTag.mainDispatcher
 }
 
+/// A simple heap-allocated, `@unchecked Sendable` box used to pass an integer
+/// result from a `DispatchQueue.async` closure back to the waiting thread.
+/// Synchronization is provided externally by a `DispatchSemaphore`.
+private final class WithContextResultBox: @unchecked Sendable {
+    var value: Int = 0
+}
+
+/// Kotlin `withContext(dispatcher) { block }` — switches coroutine execution
+/// to the dispatch queue that corresponds to `dispatcherRaw`, runs the
+/// suspend-aware block through the full entry loop (supporting intermediate
+/// suspension points such as `delay`), and blocks the caller until the block
+/// completes, returning its result.
 @_cdecl("kk_with_context")
 public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuation: Int) -> Int {
-    // The runtime still executes synchronously today, but we preserve
-    // dispatcher selection here so the requested context is observed
-    // instead of being silently discarded by the stub.
     let resolvedDispatcher = switch dispatcherRaw {
     case RuntimeDispatcherTag.defaultDispatcher,
          RuntimeDispatcherTag.ioDispatcher,
@@ -1369,102 +1396,272 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     default:
         RuntimeDispatcherTag.defaultDispatcher
     }
-    _ = resolvedDispatcher
-    guard let entryPoint = suspendEntryPoint(from: blockFnPtr) else {
+
+    guard suspendEntryPoint(from: blockFnPtr) != nil else {
+        // Clean up the continuation to avoid leaking coroutine state.
+        _ = kk_coroutine_state_exit(continuation, 0)
         return 0
     }
-    var outThrown = 0
-    let result = entryPoint(continuation, &outThrown)
-    if outThrown != 0 {
-        return 0
+
+    let queue = dispatchQueue(for: resolvedDispatcher)
+
+    // Capture the current coroutine scope so child launches inside the block
+    // are registered with the correct scope on the target queue's thread.
+    let parentScope = RuntimeCoroutineScope.current
+
+    // Propagate caller's scope to continuation context so that
+    // runSuspendEntryLoopWithContinuation installs it under the fresh task key.
+    // Without this, contState.scope would be nil for a freshly created
+    // continuation and child coroutines launched inside the withContext block
+    // would lose the parent scope — breaking structured concurrency.
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = parentScope
     }
-    return result
+
+    // NOTE: When the target queue is DispatchQueue.main and we are already on
+    // the main thread, dispatching async + semaphore.wait() would deadlock
+    // because the main thread cannot process the enqueued block while blocked.
+    // CLI programs produced by this compiler do not run a main run loop, so
+    // even calls from a background thread targeting the main queue would hang.
+    // We therefore execute inline whenever we are already on the target queue
+    // (main-thread case) to avoid the deadlock.
+    if queue === DispatchQueue.main && Thread.isMainThread {
+        let savedScope = RuntimeCoroutineScope.current
+        defer { RuntimeCoroutineScope.current = savedScope }
+        RuntimeCoroutineScope.current = parentScope
+        return runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+    }
+
+    let semaphore = DispatchSemaphore(value: 0)
+    // Use a Sendable box as a thread-safe container for the result.
+    // The DispatchSemaphore provides a happens-before relationship: the write
+    // inside `queue.async` is guaranteed to complete before `semaphore.signal()`,
+    // and `semaphore.wait()` ensures the read on the calling thread observes the
+    // written value. The box is @unchecked Sendable so the concurrency checker
+    // accepts the capture without complaint.
+    let resultBox = WithContextResultBox()
+
+    queue.async {
+        // Propagate the coroutine scope to the target thread.
+        let savedScope = RuntimeCoroutineScope.current
+        RuntimeCoroutineScope.current = parentScope
+        defer { RuntimeCoroutineScope.current = savedScope }
+
+        resultBox.value = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: blockFnPtr,
+            continuation: continuation
+        )
+        semaphore.signal()
+    }
+
+    semaphore.wait()
+    return resultBox.value
 }
 
-// MARK: - Channel Runtime Stubs (P5-134)
+// MARK: - Channel Runtime (CORO-001)
 
-/// Channel with rendezvous (capacity 0) and buffered (capacity > 0) semantics.
+/// Sentinel returned by `receive()` when the channel is closed and the buffer
+/// is drained.  Callers can compare against this to detect the end-of-channel
+/// condition without confusing it with a legitimate `0` value.
+///
+/// **ABI restriction**: `Int.min` is reserved as the closed-channel sentinel.
+/// Sending `Int.min` (`Long.MIN_VALUE` in Kotlin) through a channel will cause
+/// receivers / codegen to misidentify it as the closed token.  This is an
+/// intentional trade-off for the current in-band signaling design.
+///
+/// TODO(CORO-001): Migrate to an out-of-band signaling mechanism (e.g., a
+/// status+value return pair via pointer parameter, matching the pattern used by
+/// `kk_coroutine_check_cancellation`) so that every `Int` value is sendable.
+let kChannelClosedSentinel: Int = Int.min
+
+/// Mutable box for a suspended sender so receivers can mark delivery before
+/// signaling the semaphore.  Using a class (reference type) ensures the
+/// `delivered` flag set under the channel lock is visible to the sender
+/// after it re-acquires the lock post-wakeup.
+final class SuspendedSender {
+    let semaphore: DispatchSemaphore
+    let value: Int
+    /// Set to `true` (under the channel lock) by a receiver that accepts this
+    /// sender's value.  The sender checks this after waking to distinguish a
+    /// successful delivery from a close-induced wakeup.
+    var delivered: Bool = false
+
+    init(semaphore: DispatchSemaphore, value: Int) {
+        self.semaphore = semaphore
+        self.value = value
+    }
+}
+
+/// Channel with proper Kotlin suspend semantics:
+///   - **Rendezvous** (`capacity == 0`): every `send` suspends until a matching
+///     `receive` and vice-versa.
+///   - **Buffered** (`capacity > 0`): `send` suspends (backpressure) when the
+///     buffer is full; `receive` suspends when the buffer is empty.
+///   - **`close()`**: marks the channel as closed.  Pending senders are woken
+///     and return the closed-send sentinel.  Pending receivers drain the
+///     remaining buffer, then return the closed sentinel.
 final class RuntimeChannelHandle {
     private let lock = NSLock()
+    // NOTE: `buffer`, `senderQueue`, and `receiverQueue` use `Array` with
+    // `removeFirst()` which is O(n) due to element shifting.  For the current
+    // use (moderate queue depths), this is acceptable.  If channels become a
+    // hot-path bottleneck, replace these with a circular buffer / Deque for
+    // O(1) dequeue.  (See also: Swift Collections `Deque` type.)
     private var buffer: [Int] = []
-    private let capacity: Int
-    private var closed = false
-    private var waitingReceivers = 0
-    private var waitingSenders = 0
-    private let sendSemaphore = DispatchSemaphore(value: 0)
-    private let receiveSemaphore = DispatchSemaphore(value: 0)
+    let capacity: Int
+    private(set) var closed = false
+
+    // Waiting-sender queue: each suspended sender is a `SuspendedSender`
+    // reference.  Receivers set `delivered = true` before signaling the
+    // semaphore so that senders can distinguish successful delivery from a
+    // close-induced wakeup.
+    private var senderQueue: [SuspendedSender] = []
+
+    // Waiting-receiver queue: each suspended receiver is represented by a
+    // semaphore.  The waker deposits the value into `receiverResults` keyed by
+    // the semaphore's ObjectIdentifier so the receiver can pick it up after
+    // waking.
+    private var receiverQueue: [DispatchSemaphore] = []
+    private var receiverResults: [ObjectIdentifier: Int] = [:]
 
     init(capacity: Int) {
         self.capacity = max(0, capacity)
     }
 
+    /// Send a value into the channel, suspending (blocking) the caller when
+    /// backpressure is needed.
+    ///
+    /// Returns the sent `value` on success, or `kChannelClosedSentinel` if the
+    /// channel was closed before or during the send.
     func send(_ value: Int) -> Int {
         lock.lock()
+
+        // 1. Closed channel -- fail immediately.
         if closed {
             lock.unlock()
-            return 0
+            return kChannelClosedSentinel
         }
-        // For buffered channels, drop when full; for rendezvous, allow exactly one item
-        if capacity > 0, buffer.count >= capacity {
+
+        // 2. If there is a waiting receiver, hand the value off directly
+        //    (both rendezvous and buffered benefit from this fast path).
+        if let receiverSem = receiverQueue.first {
+            receiverQueue.removeFirst()
+            receiverResults[ObjectIdentifier(receiverSem)] = value
             lock.unlock()
-            return 0
+            receiverSem.signal()
+            return value
         }
-        if capacity == 0, !buffer.isEmpty {
+
+        // 3. Buffered channel with space -- enqueue and return immediately.
+        if capacity > 0, buffer.count < capacity {
+            buffer.append(value)
             lock.unlock()
-            return 0
+            return value
         }
-        buffer.append(value)
-        if capacity == 0 {
-            waitingSenders += 1
-        }
+
+        // 4. No room (buffer full or rendezvous) -- suspend the sender.
+        let senderSem = DispatchSemaphore(value: 0)
+        let entry = SuspendedSender(semaphore: senderSem, value: value)
+        senderQueue.append(entry)
         lock.unlock()
-        receiveSemaphore.signal()
-        if capacity == 0 {
-            sendSemaphore.wait()
-            lock.lock()
-            waitingSenders -= 1
-            lock.unlock()
-        }
-        return value
+
+        // Block until a receiver wakes us or the channel is closed.
+        senderSem.wait()
+
+        // After waking, check whether a receiver accepted our value.  The
+        // `delivered` flag is set under the lock by the receiver before it
+        // signals the semaphore, so checking it here (under the lock) is safe
+        // even if close() races concurrently.
+        lock.lock()
+        let wasDelivered = entry.delivered
+        lock.unlock()
+        return wasDelivered ? value : kChannelClosedSentinel
     }
 
+    /// Receive a value from the channel, suspending (blocking) the caller when
+    /// the buffer is empty and no sender is ready.
+    ///
+    /// Returns the received value, or `kChannelClosedSentinel` when the channel
+    /// is closed and fully drained.
     func receive() -> Int {
         lock.lock()
-        if closed, buffer.isEmpty {
-            lock.unlock()
-            return 0
+
+        // 1. Try to take from the buffer.
+        if !buffer.isEmpty {
+            let value = buffer.removeFirst()
+            // If a sender is suspended (backpressure), wake the oldest one and
+            // move its value into the buffer to maintain ordering.
+            if let sender = senderQueue.first {
+                senderQueue.removeFirst()
+                buffer.append(sender.value)
+                sender.delivered = true
+                lock.unlock()
+                sender.semaphore.signal()
+            } else {
+                lock.unlock()
+            }
+            return value
         }
-        waitingReceivers += 1
+
+        // 2. Buffer is empty -- try to pair directly with a waiting sender
+        //    (rendezvous fast-path, also applies to buffered when a sender
+        //    arrived while the buffer was full and then got drained completely).
+        if let sender = senderQueue.first {
+            senderQueue.removeFirst()
+            let value = sender.value
+            sender.delivered = true
+            lock.unlock()
+            sender.semaphore.signal()
+            return value
+        }
+
+        // 3. Nothing available -- if closed, return the sentinel.
+        if closed {
+            lock.unlock()
+            return kChannelClosedSentinel
+        }
+
+        // 4. Suspend the receiver.
+        let receiverSem = DispatchSemaphore(value: 0)
+        receiverQueue.append(receiverSem)
         lock.unlock()
-        receiveSemaphore.wait()
+
+        receiverSem.wait()
+
+        // After waking, pick up the value deposited by the sender / close.
         lock.lock()
-        waitingReceivers -= 1
-        // After waking, check if closed with empty buffer (close() woke us)
-        if buffer.isEmpty {
+        let key = ObjectIdentifier(receiverSem)
+        if let value = receiverResults.removeValue(forKey: key) {
             lock.unlock()
-            return 0
+            return value
         }
-        let value = buffer.removeFirst()
-        let shouldSignalSender = capacity == 0 && waitingSenders > 0
+        // Woken by close() with no value -- channel is done.
         lock.unlock()
-        if shouldSignalSender {
-            sendSemaphore.signal()
-        }
-        return value
+        return kChannelClosedSentinel
     }
 
+    /// Close the channel.  Remaining buffered values are still receivable.
     func close() {
         lock.lock()
         closed = true
-        let receiversToWake = waitingReceivers
-        let sendersToWake = waitingSenders
+        let pendingSenders = senderQueue
+        senderQueue.removeAll()
+        let pendingReceivers = receiverQueue
+        receiverQueue.removeAll()
         lock.unlock()
-        // Wake all blocked receivers and senders
-        for _ in 0 ..< receiversToWake {
-            receiveSemaphore.signal()
+
+        // Wake all suspended senders -- they will see `closed == true` and
+        // return the closed sentinel.
+        for sender in pendingSenders {
+            sender.semaphore.signal()
         }
-        for _ in 0 ..< sendersToWake {
-            sendSemaphore.signal()
+        // Wake all suspended receivers -- they will find no result deposited
+        // and return the closed sentinel.
+        for receiver in pendingReceivers {
+            receiver.signal()
         }
     }
 }
@@ -1505,6 +1702,19 @@ public func kk_channel_close(_ handle: Int) -> Int {
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
     channel.close()
     return 0
+}
+
+/// Returns 1 if `value` equals the closed-channel sentinel, 0 otherwise.
+/// Codegen calls this after `kk_channel_receive` / `kk_channel_send` to detect
+/// end-of-channel.
+///
+/// **ABI note**: Because the sentinel is currently the in-band value `Int.min`,
+/// this function will also return 1 for a legitimately-sent `Int.min`.  See the
+/// `kChannelClosedSentinel` documentation for the planned migration to
+/// out-of-band signaling.
+@_cdecl("kk_channel_is_closed_token")
+public func kk_channel_is_closed_token(_ value: Int) -> Int {
+    return value == kChannelClosedSentinel ? 1 : 0
 }
 
 // MARK: - Deferred / awaitAll Runtime Stub (P5-135)

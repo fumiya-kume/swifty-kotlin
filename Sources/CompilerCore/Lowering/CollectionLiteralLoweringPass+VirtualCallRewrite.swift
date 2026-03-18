@@ -22,6 +22,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -65,6 +66,15 @@ extension CollectionLiteralLoweringPass {
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             rangeExprIDs: &rangeExprIDs, charRangeExprIDs: &charRangeExprIDs,
             listExprIDs: &listExprIDs,
+            loweredBody: &loweredBody
+        ) { return true }
+
+        // STDLIB-565: File member call rewrites
+        if rewriteFileVirtualCall(
+            callee: callee, receiver: receiver, arguments: arguments,
+            result: result, origCanThrow: origCanThrow,
+            origThrownResult: origThrownResult, module: module, lookup: lookup,
+            fileExprIDs: fileExprIDs, listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -1262,6 +1272,18 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.reduceOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListReduceOrNullName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
         if (callee == lookup.scanName || callee == lookup.runningFoldName), arguments.count == 2 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -1279,11 +1301,12 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.runningReduceName, arguments.count == 1 {
+        if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let kkName = callee == lookup.scanReduceName ? lookup.kkListScanReduceName : lookup.kkListRunningReduceName
             let hofResult = emitHOFCall(
-                kkName: lookup.kkListRunningReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
+                kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody
@@ -1444,6 +1467,212 @@ extension CollectionLiteralLoweringPass {
                 rangeExprIDs.insert(result.rawValue)
                 // Propagate char range through reversed() (STDLIB-290)
                 if isCharRange { charRangeExprIDs.insert(result.rawValue) }
+            }
+            return true
+        }
+
+        return false
+    }
+
+    // MARK: - File member call rewrites (STDLIB-565)
+
+    private func rewriteFileVirtualCall(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        module: KIRModule,
+        lookup: CollectionLiteralLookupTables,
+        fileExprIDs: Set<Int32>,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        guard fileExprIDs.contains(receiver.rawValue) else { return false }
+
+        // readText() → kk_file_readText (throws)
+        if callee == lookup.readTextName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileReadTextName,
+                arguments: [receiver],
+                result: result,
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
+            ))
+            return true
+        }
+
+        // writeText(text) → kk_file_writeText (throws)
+        if callee == lookup.writeTextName, arguments.count == 1 {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileWriteTextName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
+            ))
+            return true
+        }
+
+        // readLines() → kk_file_readLines (throws, result is List<String>)
+        if callee == lookup.readLinesName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileReadLinesName,
+                arguments: [receiver],
+                result: result,
+                canThrow: origCanThrow,
+                thrownResult: origThrownResult
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
+
+        // exists() → kk_file_exists
+        if callee == lookup.existsName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileExistsName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // isFile() → kk_file_isFile
+        if callee == lookup.isFileName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileIsFileName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // isDirectory() → kk_file_isDirectory
+        if callee == lookup.isDirectoryName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileIsDirectoryName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // name property → kk_file_name
+        if callee == lookup.namePropertyName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileNameName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // path property → kk_file_path
+        if callee == lookup.pathPropertyName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFilePathName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // forEachLine(action) → kk_file_forEachLine (throws)
+        if callee == lookup.forEachLineName, arguments.count == 1 {
+            let closureRaw = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: closureRaw, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkFileForEachLineName,
+                receiver: receiver,
+                arguments: arguments + [closureRaw],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        // delete() → kk_file_delete
+        if callee == lookup.deleteName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileDeleteName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // mkdirs() → kk_file_mkdirs
+        if callee == lookup.mkdirsName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileMkdirsName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return true
+        }
+
+        // listFiles() → kk_file_listFiles (returns List<File>?)
+        // Track result in listExprIDs so downstream list HOF rewrites fire
+        // after null-check / safe-call unwrapping propagates via .copy.
+        if callee == lookup.listFilesName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileListFilesName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+            }
+            return true
+        }
+
+        // walk() → kk_file_walk (returns Sequence<File> represented as list)
+        // Track result in listExprIDs so chained operations like
+        // file.walk().forEach { ... } are correctly rewritten.
+        if callee == lookup.walkName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkFileWalkName,
+                arguments: [receiver],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
             }
             return true
         }

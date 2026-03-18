@@ -68,7 +68,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         // Seed tracking sets from static type information (LOWERING-001).
         // This covers function parameters, return values, and any expression
@@ -118,7 +119,8 @@ extension CollectionLiteralLoweringPass {
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
                     charValuedExprIDs: charValuedExprIDs,
-                    stringExprIDs: &stringExprIDs
+                    stringExprIDs: &stringExprIDs,
+                    fileExprIDs: &fileExprIDs
                 )
             case let .virtualCall(_, callee, receiver, _, result, _, _, _):
                 handleVirtualCallInstruction(
@@ -138,7 +140,8 @@ extension CollectionLiteralLoweringPass {
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
-                    stringExprIDs: &stringExprIDs
+                    stringExprIDs: &stringExprIDs,
+                    fileExprIDs: &fileExprIDs
                 )
             case let .constValue(result, .stringLiteral):
                 stringExprIDs.insert(result.rawValue)
@@ -161,7 +164,8 @@ extension CollectionLiteralLoweringPass {
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
         charValuedExprIDs: Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         classifyFactoryCall(
             callee: callee, result: result, lookup: lookup,
@@ -201,6 +205,19 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs: &sequenceExprIDs,
             stringExprIDs: &stringExprIDs
         )
+        // STDLIB-565: Classify File constructor calls.
+        // KNOWN LIMITATION: Only direct File("...") / kk_file_new constructor
+        // calls are seeded here.  File receivers originating from function
+        // parameters, return values, or field loads are not tracked, so their
+        // member calls will fall through to the default virtualCall path.  A
+        // future improvement could use the receiver's static type for dispatch
+        // instead of *ExprIDs membership (same pattern as the sequence rewrite
+        // limitation noted above).
+        if let result,
+           callee == lookup.fileConstructorName || callee == lookup.kkFileNewName
+        {
+            fileExprIDs.insert(result.rawValue)
+        }
     }
 
     private func classifyFactoryCall(
@@ -402,7 +419,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
-        stringExprIDs: inout Set<Int32>
+        stringExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>
     ) {
         if listExprIDs.contains(from.rawValue) {
             listExprIDs.insert(to.rawValue)
@@ -427,6 +445,9 @@ extension CollectionLiteralLoweringPass {
         }
         if stringExprIDs.contains(from.rawValue) {
             stringExprIDs.insert(to.rawValue)
+        }
+        if fileExprIDs.contains(from.rawValue) {
+            fileExprIDs.insert(to.rawValue)
         }
     }
 
