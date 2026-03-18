@@ -364,6 +364,7 @@ extension DataFlowSemaPhase {
             args: [],
             nullability: .nonNull
         )))
+        symbols.setPropertyType(durationClassType, for: durationSymbol)
 
         // Register Duration.inWholeMilliseconds property (returns Long)
         registerSyntheticDurationMember(
@@ -374,7 +375,8 @@ extension DataFlowSemaPhase {
             receiverType: durationClassType,
             returnType: types.longType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isProperty: true
         )
 
         // Register Duration.inWholeSeconds property (returns Long)
@@ -386,7 +388,8 @@ extension DataFlowSemaPhase {
             receiverType: durationClassType,
             returnType: types.longType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isProperty: true
         )
 
         // Register Duration.inWholeNanoseconds property (returns Long)
@@ -398,7 +401,8 @@ extension DataFlowSemaPhase {
             receiverType: durationClassType,
             returnType: types.longType,
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            isProperty: true
         )
 
         // Register Duration.toString() (returns String)
@@ -1490,36 +1494,51 @@ extension DataFlowSemaPhase {
         receiverType: TypeID,
         returnType: TypeID,
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        isProperty: Bool = false
     ) {
         let memberName = interner.intern(name)
         let memberFQName = durationFQName + [memberName]
         guard symbols.lookup(fqName: memberFQName) == nil else { return }
 
-        let memberSymbol = symbols.define(
-            kind: .function,
-            name: memberName,
-            fqName: memberFQName,
-            declSite: nil,
-            visibility: .public,
-            flags: [.synthetic, .operatorFunction]
-        )
-        symbols.setParentSymbol(durationSymbol, for: memberSymbol)
-        symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+        if isProperty {
+            let memberSymbol = symbols.define(
+                kind: .property,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(durationSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+            symbols.setPropertyType(returnType, for: memberSymbol)
+        } else {
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: memberName,
+                fqName: memberFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .operatorFunction]
+            )
+            symbols.setParentSymbol(durationSymbol, for: memberSymbol)
+            symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
 
-        symbols.setFunctionSignature(
-            FunctionSignature(
-                receiverType: receiverType,
-                parameterTypes: [],
-                returnType: returnType,
-                valueParameterSymbols: [],
-                valueParameterHasDefaultValues: [],
-                valueParameterIsVararg: [],
-                typeParameterSymbols: [],
-                classTypeParameterCount: 0
-            ),
-            for: memberSymbol
-        )
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    valueParameterSymbols: [],
+                    valueParameterHasDefaultValues: [],
+                    valueParameterIsVararg: [],
+                    typeParameterSymbols: [],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerSequenceMemberStub(
