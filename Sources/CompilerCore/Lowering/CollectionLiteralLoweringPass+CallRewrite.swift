@@ -745,6 +745,25 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-538: Rewrite hasPrevious()/previous() on list iterator ---
+                    let isListIteratorReceiverCall = arguments.count == 1
+                        && listIteratorExprIDs.contains(arguments[0].rawValue)
+                    if isListIteratorReceiverCall,
+                       callee == lookup.hasPreviousName || callee == lookup.previousName {
+                        let runtimeCallee = callee == lookup.hasPreviousName
+                            ? lookup.kkListIteratorHasPreviousName
+                            : lookup.kkListIteratorPreviousName
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: runtimeCallee,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite collection member calls ---
                     // Member calls are lowered as call(callee=memberName, args=[receiver, ...])
                     // any()/none()/first()/last() with no predicate: args=[receiver], pass fnPtr=0, closure=0

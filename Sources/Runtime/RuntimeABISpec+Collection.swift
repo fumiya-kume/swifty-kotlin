@@ -99,6 +99,22 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_list_iterator_hasPrevious",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_list_iterator_previous",
+            parameters: [
+                RuntimeABIParameter(name: "iterRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_list_to_string",
             parameters: [
                 RuntimeABIParameter(name: "listRaw", type: .intptr),

@@ -276,6 +276,8 @@ extension ABILoweringPass {
             interner.intern("kk_list_iterator"),
             interner.intern("kk_list_iterator_hasNext"),
             interner.intern("kk_list_iterator_next"),
+            interner.intern("kk_list_iterator_hasPrevious"),
+            interner.intern("kk_list_iterator_previous"),
             interner.intern("kk_list_to_string"),
             interner.intern("kk_list_to_mutable_list"),
             interner.intern("kk_list_joinToString"),
