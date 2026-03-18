@@ -607,7 +607,7 @@ extension CallTypeChecker {
                             let lambdaBodyType = inferredLambdaReturnType(
                                 argExpr: args[0].expr, ast: ast, sema: sema
                             )
-                            let innerElementType = extractListElementType(
+                            let innerElementType = extractCollectionElementType(
                                 lambdaBodyType, sema: sema, interner: interner
                             )
                             resultType = sema.types.make(.classType(ClassType(
@@ -3439,11 +3439,12 @@ extension CallTypeChecker {
         }
     }
 
-    /// Extract the element type from a List type.
-    /// If the type is List<R> (or similar single-type-arg list), returns R.
-    /// Returns `anyType` for non-list types to avoid mis-inferring element types
-    /// from unrelated generic types (e.g., Pair<K,V>).
-    private func extractListElementType(
+    /// Extract the element type from a collection-like type.
+    /// If the type is List<R>, Collection<R>, Set<R>, Iterable<R>, Sequence<R>,
+    /// or similar single-type-arg collection, returns R.
+    /// Returns `anyType` for non-collection types to avoid mis-inferring element
+    /// types from unrelated generic types (e.g., Pair<K,V>).
+    private func extractCollectionElementType(
         _ type: TypeID,
         sema: SemaModule,
         interner: StringInterner
@@ -3452,10 +3453,16 @@ extension CallTypeChecker {
         let nonNullType = sema.types.makeNonNullable(type)
         guard case let .classType(classType) = sema.types.kind(of: nonNullType),
               let symbol = sema.symbols.symbol(classType.classSymbol),
-              knownNames.isConcreteListLikeSymbol(symbol),
               classType.args.count == 1,
               let firstArg = classType.args.first
         else {
+            return sema.types.anyType
+        }
+        // Accept any single-type-arg collection-like symbol (List, MutableList,
+        // Collection, Set, MutableSet, Sequence, etc.) but reject unrelated
+        // generics like Pair<K,V>. The standard Map<K,V> shape is naturally
+        // excluded because it does not satisfy the single-type-argument check.
+        guard knownNames.isCollectionLikeSymbol(symbol) else {
             return sema.types.anyType
         }
         return switch firstArg {
