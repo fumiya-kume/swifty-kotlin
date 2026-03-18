@@ -94,7 +94,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
         appendSyntheticEnumValuesIfNeeded(
             name: ctx.interner.intern("values"), owner: nominalSymbol,
-            enumSymbol: nominalSymbol, entries: entries,
+            entries: entries,
             module: module, sema: sema, existingFunctionSymbols: existingFunctionSymbols,
             interner: ctx.interner
         )
@@ -469,7 +469,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     private func appendSyntheticEnumValuesIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
-        enumSymbol: SemanticSymbol,
         entries: [SemanticSymbol],
         module: KIRModule,
         sema: SemaModule,
@@ -478,13 +477,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
 
-        // Compute the enum entry type from the enum symbol
+        // Compute the enum entry type from the owner symbol
         let entryType = sema.types.make(.classType(ClassType(
-            classSymbol: enumSymbol.id,
+            classSymbol: owner.id,
             args: [],
             nullability: .nonNull
         )))
-        let returnType = entryType
+        // values() returns Array<T>, represented as anyType at the erased level
+        let returnType = sema.types.anyType
 
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
@@ -579,7 +579,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             args: [],
             nullability: .nonNull
         )))
-        let returnType = entryType
+        // entries getter returns Array<T>, represented as anyType at the erased level
+        let returnType = sema.types.anyType
 
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
 
