@@ -875,57 +875,26 @@ public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     return runtimeMakeListRaw(source.utf8.map(Int.init))
 }
 
-// STDLIB-581: String.toByteArray(charset) overload
-@_cdecl("kk_string_toByteArray_charset")
-public func kk_string_toByteArray_charset(_ strRaw: Int, _ charsetRaw: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    let charsetName = runtimeStringFromRawOrPanic(charsetRaw, caller: #function)
-        .uppercased()
-        .replacingOccurrences(of: "-", with: "")
-        .replacingOccurrences(of: "_", with: "")
-    switch charsetName {
-    case "UTF8":
-        return runtimeMakeListRaw(source.utf8.map(Int.init))
-    case "ISO88591", "LATIN1":
-        return runtimeMakeListRaw(source.unicodeScalars.map { scalar in
-            Int(scalar.value <= 0xFF ? scalar.value : 0x3F /* '?' */)
-        })
-    case "USASCII", "ASCII":
-        return runtimeMakeListRaw(source.unicodeScalars.map { scalar in
-            Int(scalar.value <= 0x7F ? scalar.value : 0x3F /* '?' */)
-        })
-    case "UTF16":
-        let utf16Count = source.utf16.count
-        var bytes: [Int] = []
-        bytes.reserveCapacity(2 + 2 * utf16Count) // BOM + data
-        bytes.append(0xFE) // BOM high byte
-        bytes.append(0xFF) // BOM low byte
-        for unit in source.utf16 {
-            bytes.append(Int((unit >> 8) & 0xFF))
-            bytes.append(Int(unit & 0xFF))
-        }
-        return runtimeMakeListRaw(bytes)
-    case "UTF16BE":
-        let utf16Count = source.utf16.count
-        var bytes: [Int] = []
-        bytes.reserveCapacity(2 * utf16Count)
-        for unit in source.utf16 {
-            bytes.append(Int((unit >> 8) & 0xFF))
-            bytes.append(Int(unit & 0xFF))
-        }
-        return runtimeMakeListRaw(bytes)
-    case "UTF16LE":
-        let utf16Count = source.utf16.count
-        var bytes: [Int] = []
-        bytes.reserveCapacity(2 * utf16Count)
-        for unit in source.utf16 {
-            bytes.append(Int(unit & 0xFF))
-            bytes.append(Int((unit >> 8) & 0xFF))
-        }
-        return runtimeMakeListRaw(bytes)
-    default:
-        fatalError("Unsupported charset: \(charsetName)")
+// STDLIB-573: String.encodeToByteArray()
+// Delegates to kk_string_toByteArray to avoid behavioral drift (single source of truth).
+@_cdecl("kk_string_encodeToByteArray")
+public func kk_string_encodeToByteArray(_ strRaw: Int) -> Int {
+    kk_string_toByteArray(strRaw)
+}
+
+// STDLIB-574: ByteArray.decodeToString()
+@_cdecl("kk_bytearray_decodeToString")
+public func kk_bytearray_decodeToString(_ arrRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: arrRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString received invalid list handle \(arrRaw)")
     }
+    // Use truncating conversion to match Kotlin's signed-byte semantics:
+    // negative values (e.g. -1) become their unsigned equivalent (255).
+    let bytes = list.elements.map { UInt8(truncatingIfNeeded: $0) }
+    // Use String(decoding:as:) for UTF-8 replacement decoding: malformed
+    // sequences produce U+FFFD instead of returning nil/empty.
+    let decoded = String(decoding: bytes, as: UTF8.self)
+    return runtimeMakeStringRaw(decoded)
 }
 
 @_cdecl("kk_string_format")
