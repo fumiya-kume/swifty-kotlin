@@ -466,7 +466,7 @@ extension CallTypeChecker {
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
-            "indexOfFirst", "indexOfLast",
+            "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
         ]
@@ -1038,6 +1038,46 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
+
+            case "binarySearch":
+                // STDLIB-547: binarySearch(comparison: (T) -> Int) — comparison lambda overload
+                guard args.count == 1 else {
+                    // Wrong arity — fall through with Int result
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                // Check if the argument is a function-typed expression (lambda literal,
+                // callable reference, or identifier with function type) to distinguish
+                // the comparison overload from the element-based overload.
+                let argExpr = ast.arena.expr(args[0].expr)
+                let isFunctionArg: Bool
+                if let expr = argExpr, case .lambdaLiteral = expr {
+                    isFunctionArg = true
+                } else if let expr = argExpr, case .callableRef = expr {
+                    isFunctionArg = true
+                } else {
+                    // Check inferred type: infer first, then see if it's a function type
+                    let inferredType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: nil)
+                    if case .functionType = sema.types.kind(of: inferredType) {
+                        isFunctionArg = true
+                    } else {
+                        isFunctionArg = false
+                    }
+                }
+                guard isFunctionArg else {
+                    // Element-based overload
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                let bsLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.intType
+                )))
+                // Mark all function-typed arguments (lambda literals, callable references,
+                // and function-typed variables) as HOF lambdas for correct closure expansion.
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: bsLambdaExpectedType)
                 resultType = sema.types.intType
 
             case "forEachIndexed", "mapIndexed", "onEachIndexed":

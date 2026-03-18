@@ -1,6 +1,10 @@
 // swiftlint:disable file_length
 import Foundation
 
+/// Centralized FQ-name suffix used to discriminate the comparison-based
+/// `binarySearch` overload from the element-based one.
+private let binarySearchCompareFQSuffix = "binarySearch$compare"
+
 extension DataFlowSemaPhase {
     /// Register `kotlin.Comparable<T>` interface stub with `operator fun compareTo(other: T): Int`.
     func registerSyntheticComparableStub(
@@ -1929,6 +1933,39 @@ extension DataFlowSemaPhase {
                     returnType: types.intType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     typeParameterUpperBoundsList: [comparableElementBounds],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // STDLIB-547: binarySearch(comparison: (T) -> Int) — HOF, comparison lambda
+        let binarySearchCompareName = interner.intern("binarySearch")
+        // Use a distinct FQ name to differentiate from the element-based overload
+        let binarySearchCompareFQName = listFQName + [interner.intern(binarySearchCompareFQSuffix)]
+        if symbols.lookup(fqName: binarySearchCompareFQName) == nil {
+            let comparisonType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: binarySearchCompareName,
+                fqName: binarySearchCompareFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_binarySearch_compare", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [comparisonType],
+                    returnType: types.intType,
+                    typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),
                 for: memberSymbol

@@ -1437,6 +1437,7 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                hofSpec("kk_list_binarySearch_compare"),
                 hofSpec("kk_list_indexOfFirst"),
                 hofSpec("kk_list_indexOfLast"),
                 RuntimeABIFunctionSpec(
