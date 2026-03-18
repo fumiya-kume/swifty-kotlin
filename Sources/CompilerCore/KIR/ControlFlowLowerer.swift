@@ -657,40 +657,16 @@ final class ControlFlowLowerer {
             result: typeUnknown
         ))
 
-        // When token is UNKNOWN, call kk_op_is for precise runtime type checking
-        // instead of blindly matching all catch clauses.
-        let runtimeCheckLabel = driver.ctx.makeLoopLabel()
-        let knownMismatchLabel = driver.ctx.makeLoopLabel()
-        let checkDoneLabel = driver.ctx.makeLoopLabel()
-
-        // If typeMatches (exact token match), jump to matched
-        instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: falseValue, target: runtimeCheckLabel))
-        instructions.append(.copy(from: trueValue, to: matchResult))
-        instructions.append(.jump(checkDoneLabel))
-
-        // Runtime check path: only reached when token did not match exactly
-        instructions.append(.label(runtimeCheckLabel))
-        // If the token is NOT unknown (i.e., known but different), it's a definite miss
-        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseValue, target: knownMismatchLabel))
-
-        // Token is 0 (UNKNOWN) -- use kk_op_is for runtime type checking
-        let runtimeIsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
-        instructions.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_op_is"),
-            arguments: [exceptionSlot, tokenExpr],
-            result: runtimeIsResult,
-            canThrow: false,
-            thrownResult: nil
+        // matchResult = typeMatches || typeUnknown
+        // When token is UNKNOWN (0), conservatively match any catch clause.
+        // The runtime does not yet support kk_op_is for precise exception type
+        // discrimination, so matching all clauses is the safe behavior.
+        instructions.append(.binary(
+            op: .logicalOr,
+            lhs: typeMatches,
+            rhs: typeUnknown,
+            result: matchResult
         ))
-        instructions.append(.copy(from: runtimeIsResult, to: matchResult))
-        instructions.append(.jump(checkDoneLabel))
-
-        // Token was known but didn't match -- definite miss
-        instructions.append(.label(knownMismatchLabel))
-        instructions.append(.copy(from: falseValue, to: matchResult))
-
-        instructions.append(.label(checkDoneLabel))
     }
 
     func appendThrowAwareInstructions(
