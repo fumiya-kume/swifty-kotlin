@@ -407,6 +407,35 @@ struct CollectionLiteralLookupTables {
     let kkStringBuilderDeleteName: InternedString
     let kkStringBuilderLengthName: InternedString
 
+    // File I/O names (STDLIB-565)
+    let fileConstructorName: InternedString
+    let kkFileNewName: InternedString
+    let readTextName: InternedString
+    let kkFileReadTextName: InternedString
+    let writeTextName: InternedString
+    let kkFileWriteTextName: InternedString
+    let readLinesName: InternedString
+    let kkFileReadLinesName: InternedString
+    let existsName: InternedString
+    let kkFileExistsName: InternedString
+    let isFileName: InternedString
+    let kkFileIsFileName: InternedString
+    let isDirectoryName: InternedString
+    let kkFileIsDirectoryName: InternedString
+    let namePropertyName: InternedString
+    let kkFileNameName: InternedString
+    let pathPropertyName: InternedString
+    let kkFilePathName: InternedString
+    let forEachLineName: InternedString
+    let kkFileForEachLineName: InternedString
+    let kkFileDeleteName: InternedString
+    let mkdirsName: InternedString
+    let kkFileMkdirsName: InternedString
+    let listFilesName: InternedString
+    let kkFileListFilesName: InternedString
+    let walkName: InternedString
+    let kkFileWalkName: InternedString
+
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
     let setFactoryNames: Set<InternedString>
@@ -799,6 +828,35 @@ struct CollectionLiteralLookupTables {
         kkStringBuilderInsertName = interner.intern("kk_string_builder_insert")
         kkStringBuilderDeleteName = interner.intern("kk_string_builder_delete")
         kkStringBuilderLengthName = interner.intern("kk_string_builder_length")
+
+        // File I/O names (STDLIB-565)
+        fileConstructorName = interner.intern("File")
+        kkFileNewName = interner.intern("kk_file_new")
+        readTextName = interner.intern("readText")
+        kkFileReadTextName = interner.intern("kk_file_readText")
+        writeTextName = interner.intern("writeText")
+        kkFileWriteTextName = interner.intern("kk_file_writeText")
+        readLinesName = interner.intern("readLines")
+        kkFileReadLinesName = interner.intern("kk_file_readLines")
+        existsName = interner.intern("exists")
+        kkFileExistsName = interner.intern("kk_file_exists")
+        isFileName = interner.intern("isFile")
+        kkFileIsFileName = interner.intern("kk_file_isFile")
+        isDirectoryName = interner.intern("isDirectory")
+        kkFileIsDirectoryName = interner.intern("kk_file_isDirectory")
+        namePropertyName = interner.intern("name")
+        kkFileNameName = interner.intern("kk_file_name")
+        pathPropertyName = interner.intern("path")
+        kkFilePathName = interner.intern("kk_file_path")
+        forEachLineName = interner.intern("forEachLine")
+        kkFileForEachLineName = interner.intern("kk_file_forEachLine")
+        kkFileDeleteName = interner.intern("kk_file_delete")
+        mkdirsName = interner.intern("mkdirs")
+        kkFileMkdirsName = interner.intern("kk_file_mkdirs")
+        listFilesName = interner.intern("listFiles")
+        kkFileListFilesName = interner.intern("kk_file_listFiles")
+        walkName = interner.intern("walk")
+        kkFileWalkName = interner.intern("kk_file_walk")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]

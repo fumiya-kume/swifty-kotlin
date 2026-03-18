@@ -23,6 +23,7 @@ extension CollectionLiteralLoweringPass {
             var rangeExprIDs: Set<Int32> = []
             var charRangeExprIDs: Set<Int32> = []
             var stringExprIDs: Set<Int32> = []
+            var fileExprIDs: Set<Int32> = []
 
             collectInitialCollectionExprIDs(
                 function: function,
@@ -37,7 +38,8 @@ extension CollectionLiteralLoweringPass {
                 sequenceExprIDs: &sequenceExprIDs,
                 rangeExprIDs: &rangeExprIDs,
                 charRangeExprIDs: &charRangeExprIDs,
-                stringExprIDs: &stringExprIDs
+                stringExprIDs: &stringExprIDs,
+                fileExprIDs: &fileExprIDs
             )
 
             // Phase 2: Rewrite instructions
@@ -533,6 +535,19 @@ extension CollectionLiteralLoweringPass {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkTripleNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    // --- Rewrite File(path) → kk_file_new(path) (STDLIB-565) ---
+                    if callee == lookup.fileConstructorName {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileNewName,
                             arguments: arguments,
                             result: result,
                             canThrow: false,
@@ -2586,6 +2601,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
+                        fileExprIDs: &fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
@@ -2626,6 +2642,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if stringIteratorExprIDs.contains(from.rawValue) {
                         stringIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if fileExprIDs.contains(from.rawValue) {
+                        fileExprIDs.insert(to.rawValue)
                     }
                     if iteratorBuilderExprIDs.contains(from.rawValue) {
                         iteratorBuilderExprIDs.insert(to.rawValue)
