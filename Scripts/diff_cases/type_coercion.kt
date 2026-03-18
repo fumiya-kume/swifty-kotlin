@@ -1,4 +1,4 @@
-// DIFF_LINE_PATTERN: [Ee]\+?\d+$
+// DIFF_LINE_PATTERN: [Ee]\+?[0-9]+$
 fun main() {
     val i: Int = 42
     val l: Long = i.toLong()
