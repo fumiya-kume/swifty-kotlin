@@ -1420,6 +1420,12 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     let semaphore = DispatchSemaphore(value: 0)
+    // Use a heap-allocated pointer as a thread-safe container for the result.
+    // The DispatchSemaphore provides a happens-before relationship: the write
+    // to `resultPtr.pointee` inside `queue.async` is guaranteed to complete
+    // before `semaphore.signal()`, and `semaphore.wait()` ensures the read
+    // on the calling thread observes the written value. This makes the
+    // cross-thread mutation safe and unambiguous to the concurrency checker.
     let resultPtr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
     resultPtr.initialize(to: 0)
     defer { resultPtr.deallocate() }

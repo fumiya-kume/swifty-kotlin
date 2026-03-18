@@ -520,7 +520,7 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(result, 0, "Invalid entry point should return 0")
     }
 
-    func testWithContextIODispatcherCompletesWithoutDeadlock() {
+    func testWithContextIODispatcherRunsOffMainThread() {
         let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
         let entryRaw = unsafeBitCast(
             runtime_test_with_context_simple as RuntimeTestSuspendEntry,
@@ -547,10 +547,15 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
     }
 
     func testWithContextMainDispatcherFromBackgroundThread() {
-        // When called from a background thread, the main-queue path executes
-        // inline (since CLI programs have no run loop) and must still succeed.
+        // When called from a background thread, kk_with_context dispatches
+        // async to DispatchQueue.main and waits on a semaphore. The test
+        // succeeds because XCTest's wait(for:timeout:) pumps the main run
+        // loop, allowing the main queue to service the enqueued block.
         let expectation = XCTestExpectation(description: "withContext(Main) from background")
-        var result = 0
+        // Use a heap-allocated pointer as a thread-safe container for the
+        // result, avoiding shared mutable state across threads.
+        let resultPtr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
+        resultPtr.initialize(to: 0)
         DispatchQueue.global().async {
             let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
             let entryRaw = unsafeBitCast(
@@ -558,10 +563,12 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
                 to: Int.self
             )
             let dispatcher = kk_dispatcher_main()
-            result = kk_with_context(dispatcher, entryRaw, continuation)
+            resultPtr.pointee = kk_with_context(dispatcher, entryRaw, continuation)
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 5.0)
+        let result = resultPtr.pointee
+        resultPtr.deallocate()
         XCTAssertEqual(result, 99, "Main dispatcher from background thread should return block result")
     }
 
