@@ -1272,6 +1272,18 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        if callee == lookup.reduceOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListReduceOrNullName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
         if (callee == lookup.scanName || callee == lookup.runningFoldName), arguments.count == 2 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -1289,11 +1301,12 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        if callee == lookup.runningReduceName, arguments.count == 1 {
+        if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let kkName = callee == lookup.scanReduceName ? lookup.kkListScanReduceName : lookup.kkListRunningReduceName
             let hofResult = emitHOFCall(
-                kkName: lookup.kkListRunningReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
+                kkName: kkName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody

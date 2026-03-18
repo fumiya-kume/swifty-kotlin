@@ -462,7 +462,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "reduceOrNull", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -794,6 +794,25 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = collectionElementType
 
+            case "reduceOrNull":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "reduceOrNull() expects 1 argument (a lambda), but \(args.count) were supplied.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let reduceOrNullLambdaType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceOrNullLambdaType)
+                resultType = sema.types.makeNullable(collectionElementType)
+
             case "scan", "runningFold":
                 guard args.count == 2 else {
                     ctx.semaCtx.diagnostics.error(
@@ -822,11 +841,11 @@ extension CallTypeChecker {
                     resultType = sema.types.anyType
                 }
 
-            case "runningReduce":
+            case "runningReduce", "scanReduce":
                 guard args.count == 1 else {
                     ctx.semaCtx.diagnostics.error(
                         "KSWIFTK-SEMA-0024",
-                        "runningReduce() expects 1 argument (a lambda), but \(args.count) were supplied.",
+                        "\(calleeStr)() expects 1 argument (a lambda), but \(args.count) were supplied.",
                         range: ast.arena.exprRange(id)
                     )
                     return driver.helpers.bindAndReturnErrorType(id, sema: sema)

@@ -2400,6 +2400,36 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
+                    // reduceOrNull: args = [receiver, lambda, closureRaw?]
+                    if callee == lookup.reduceOrNullName, (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListReduceOrNullName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
 
                     // scan / runningFold: args = [receiver, initial, lambda, closureRaw?]
                     // Runtime expects (listRaw, initial, fnPtr, closureRaw, outThrown)
@@ -2441,8 +2471,8 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
-                    // runningReduce: args = [receiver, lambda, closureRaw?]
-                    if callee == lookup.runningReduceName, arguments.count == 2 || arguments.count == 3 {
+                    // runningReduce / scanReduce: args = [receiver, lambda, closureRaw?]
+                    if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
@@ -2454,12 +2484,13 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
+                            let kkName = callee == lookup.scanReduceName ? lookup.kkListScanReduceName : lookup.kkListRunningReduceName
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListRunningReduceName,
+                                callee: kkName,
                                 arguments: [receiverID, lambdaID, closureRawID],
                                 result: hofResult,
                                 canThrow: canThrow,
