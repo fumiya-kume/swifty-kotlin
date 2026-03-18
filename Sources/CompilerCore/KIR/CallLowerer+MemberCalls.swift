@@ -936,9 +936,12 @@ extension CallLowerer {
 
         // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
         // Decompose the range into first/last and delegate to kk_{int,long}_coerceIn.
+        // Only Int and Long are supported; Double/Float receivers must not enter
+        // this path because kk_range_first/kk_range_last return Int values.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
-            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
+               prefix == "kk_int" || prefix == "kk_long" {
                 let argExprID = args[0].expr
                 if sema.bindings.isRangeExpr(argExprID) {
                     emitCoerceInRange(
