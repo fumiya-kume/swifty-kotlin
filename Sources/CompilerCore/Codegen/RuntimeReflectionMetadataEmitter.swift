@@ -166,8 +166,8 @@ public struct RuntimeReflectionMetadataEmitter {
         int64Type: LLVMCAPIBindings.LLVMTypeRef,
         symbolPrefix: String? = nil
     ) {
-        let data = records.isEmpty ? nil : serialize(records)
-        let byteCount = data?.count ?? 0
+        let data = serialize(records)
+        let byteCount = data.count
         let wordCount = (byteCount + 7) / 8
         let namePrefix = metadataSymbolPrefix(symbolPrefix)
 
@@ -192,10 +192,6 @@ public struct RuntimeReflectionMetadataEmitter {
             if let countValue = bindings.constInt(int64Type, value: UInt64(wordCount)) {
                 bindings.setInitializer(countGlobal, value: countValue)
             }
-        }
-
-        guard let data else {
-            return
         }
 
         // Emit the metadata blob as a global byte array.
@@ -400,7 +396,8 @@ struct RuntimeReflectionMetadataDecoder {
             let endIdx = offset + Int(length)
             guard endIdx <= data.count else { return nil }
             let stringData = data[offset ..< endIdx]
-            guard let str = String(data: Data(stringData), encoding: .utf8) else { return nil }
+            let str = String(decoding: stringData, as: UTF8.self)
+            guard stringData.elementsEqual(str.utf8) else { return nil }
             strings.append(str)
             offset = endIdx
         }

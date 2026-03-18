@@ -76,7 +76,14 @@ public final class CodegenPhase: CompilerPhase {
                 ctx.storeGeneratedObjectPath(path)
 
             case .library:
-                try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx, reflectionMetadataRecords: reflectionRecords)
+                try emitLibrary(
+                    module: kir,
+                    backend: backend,
+                    runtime: runtime,
+                    ctx: ctx,
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
+                )
 
             case .kirDump:
                 break
@@ -113,7 +120,8 @@ public final class CodegenPhase: CompilerPhase {
         backend: LLVMBackend,
         runtime: RuntimeLinkInfo,
         ctx: CompilationContext,
-        reflectionMetadataRecords: [MetadataRecord] = []
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         let fm = FileManager.default
         let outputDir = libraryOutputPath(base: ctx.options.outputPath)
@@ -135,7 +143,8 @@ public final class CodegenPhase: CompilerPhase {
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,
             fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast),
-            reflectionMetadataRecords: reflectionMetadataRecords
+            reflectionMetadataRecords: reflectionMetadataRecords,
+            reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
         )
         ctx.storeGeneratedObjectPath(objectPath)
 
@@ -391,7 +400,7 @@ public final class CodegenPhase: CompilerPhase {
             moduleName: ctx.options.moduleName,
             interner: ctx.interner,
             functionLinkNames: functionLinkNamesBySymbol,
-            includeNonPublic: true
+            includeNonPublic: ctx.options.includeNonPublicReflectionMetadata
         )
     }
 }
