@@ -1402,10 +1402,14 @@ extension CallTypeChecker {
         // via the `isRangeExpr` marker. Precomputed range values
         // (e.g. `val r = 1..10; x.coerceIn(r)`) are not yet supported because
         // the type system does not distinguish range types (IntRange/LongRange)
-        // from their element types (Int/Long). Supporting variable ranges would
-        // require introducing dedicated range type IDs. The element-type equality
-        // check ensures mismatched ranges (e.g. Int.coerceIn(1L..10L)) are
-        // rejected.
+        // from their element types (Int/Long). The element-type equality check
+        // (argType == receiverForCheck) rejects mismatched combinations such as
+        // Int.coerceIn(1L..10L).
+        //
+        // TODO: When a distinct ClosedRange<T> type is introduced in the type
+        // system, switch to a type-conformance check so that arbitrary
+        // ClosedRange-typed expressions (e.g. val r: IntRange = 1..10;
+        // x.coerceIn(r)) are also accepted without needing the isRangeExpr flag.
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
