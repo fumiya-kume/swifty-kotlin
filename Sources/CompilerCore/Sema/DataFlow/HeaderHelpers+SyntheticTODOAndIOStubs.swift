@@ -1520,7 +1520,7 @@ extension DataFlowSemaPhase {
                 fqName: memberFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic, .operatorFunction]
+                flags: [.synthetic]
             )
             symbols.setParentSymbol(durationSymbol, for: memberSymbol)
             symbols.setExternalLinkName(externalLinkName, for: memberSymbol)

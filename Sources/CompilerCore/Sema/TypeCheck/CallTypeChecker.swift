@@ -386,11 +386,19 @@ final class CallTypeChecker {
            args.count == 1,
            !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
         {
+            // Infer the block argument with an expected function type () -> Unit
+            // so non-callable arguments are caught during type checking.
+            let blockType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.unitType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
             _ = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
                 locals: &locals,
-                expectedType: nil
+                expectedType: blockType
             )
             // Look up the synthetic Duration class to build the return type.
             let durationFQName = [interner.intern("kotlin"), interner.intern("time"), interner.intern("Duration")]

@@ -307,10 +307,6 @@ extension CallLowerer {
             resultType = sema.types.anyType
         }
 
-        let measureTimeCallee = interner.intern("kk_measureTime")
-
-        // Build the closure/callable argument pair for the kk_measureTime runtime call.
-        // kk_measureTime(fnPtr, closureRaw, outThrown) -> Duration handle
         if let actionExprNode = ast.arena.expr(args[0].expr),
            case let .lambdaLiteral(_, bodyExpr, _, _) = actionExprNode
         {
@@ -386,6 +382,16 @@ extension CallLowerer {
                     arguments: callableInfo.captureArguments,
                     result: actionResult, canThrow: true, thrownResult: thrownResult
                 ))
+                // Propagate exceptions thrown by the callable so they are not
+                // silently swallowed.  If thrownResult is non-null the callable
+                // threw, so rethrow immediately.
+                let rethrowLabel = driver.ctx.makeLoopLabel()
+                let continueLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+                instructions.append(.jump(continueLabel))
+                instructions.append(.label(rethrowLabel))
+                instructions.append(.rethrow(value: thrownResult))
+                instructions.append(.label(continueLabel))
             } else {
                 assertionFailure("lowerMeasureTimeCallExpr: callableValueInfo is nil for block argument — sema/KIR invariant violated")
             }
@@ -412,8 +418,5 @@ extension CallLowerer {
 
             return durationExpr
         }
-
-        let fallbackExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-        return fallbackExpr
     }
 }
