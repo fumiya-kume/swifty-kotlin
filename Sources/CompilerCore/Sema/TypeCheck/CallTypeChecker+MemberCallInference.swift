@@ -2144,7 +2144,10 @@ extension CallTypeChecker {
                     }
                 }
                 // STDLIB-574: ByteArray/List<Int>.decodeToString() -> String
-                if interner.resolve(calleeName) == "decodeToString", args.isEmpty {
+                // Guard: only match zero-argument form on list/collection receivers (not String)
+                if interner.resolve(calleeName) == "decodeToString",
+                   args.isEmpty,
+                   !sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
                     let finalType = safeCall
                         ? sema.types.makeNullable(sema.types.stringType)
                         : sema.types.stringType

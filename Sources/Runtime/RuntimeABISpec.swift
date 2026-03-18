@@ -690,7 +690,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "arrRaw", type: .intptr),
             ],
             returnType: .intptr,
-            section: "Array"
+            section: "ByteArray"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_char_isDigit",
