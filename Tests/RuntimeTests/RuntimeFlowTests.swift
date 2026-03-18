@@ -211,21 +211,26 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
     // MARK: - Cold stream semantics tests (STDLIB-088)
 
     func testColdStreamReExecutesEmitterOnEachCollect() {
-        // Verify emitter runs fresh for every collect call.
-        var emitCount = 0
-        let emitterPtr = unsafeBitCast(runtime_test_flow_emitter_values_1_2_3_4 as RuntimeFlowEmitterEntry, to: Int.self)
+        // Verify emitter runs fresh for every collect call by using a
+        // counting emitter that increments a global counter on each invocation.
+        runtimeFlowEmitterCallCounter.reset()
+        let emitterPtr = unsafeBitCast(runtime_test_flow_counting_emitter as RuntimeFlowEmitterEntry, to: Int.self)
         let collectorPtr = unsafeBitCast(runtime_test_flow_collect_store as RuntimeFlowCollectorEntry, to: Int.self)
 
         let flowHandle = kk_flow_create(emitterPtr, 0)
 
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 0, "Emitter should not run before collect.")
+
         _ = kk_flow_collect(flowHandle, collectorPtr, 0)
         let firstCollect = runtimeFlowTestState.snapshot().values
         XCTAssertEqual(firstCollect, [1, 2, 3, 4])
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 1, "Emitter should run exactly once after first collect.")
 
         runtimeFlowTestState.reset()
         _ = kk_flow_collect(flowHandle, collectorPtr, 0)
         let secondCollect = runtimeFlowTestState.snapshot().values
         XCTAssertEqual(secondCollect, [1, 2, 3, 4], "Cold stream should re-emit on each collect.")
+        XCTAssertEqual(runtimeFlowEmitterCallCounter.count, 2, "Emitter should run again on second collect (cold stream).")
     }
 
     func testLazyMapOnlyProcessesNeededElements() {
@@ -396,6 +401,44 @@ final class RuntimeFlowTests: IsolatedRuntimeXCTestCase {
 }
 
 // MARK: - Additional test helpers
+
+/// Thread-safe counter to track how many times an emitter function is invoked.
+private final class RuntimeFlowEmitterCallCount: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _count = 0
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return _count
+    }
+
+    func increment() {
+        lock.lock()
+        _count += 1
+        lock.unlock()
+    }
+
+    func reset() {
+        lock.lock()
+        _count = 0
+        lock.unlock()
+    }
+}
+
+private let runtimeFlowEmitterCallCounter = RuntimeFlowEmitterCallCount()
+
+/// Emitter that emits [1, 2, 3, 4] and increments a call counter each time
+/// it is invoked, allowing tests to verify cold-stream re-execution.
+@_cdecl("runtime_test_flow_counting_emitter")
+func runtime_test_flow_counting_emitter(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    runtimeFlowEmitterCallCounter.increment()
+    outThrown?.pointee = 0
+    for value in 1 ... 4 {
+        _ = kk_flow_emit(0, value, RuntimeFlowTag.emit.rawValue)
+    }
+    return 0
+}
 
 @_cdecl("runtime_test_flow_emitter_with_dupes")
 func runtime_test_flow_emitter_with_dupes(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {

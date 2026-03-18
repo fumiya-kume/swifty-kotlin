@@ -554,7 +554,10 @@ private struct RuntimeFlowOp {
 
 /// Collect context tracks the lazy pipeline state for a single collect call.
 /// Each emitted value passes through the operator chain one at a time (lazy).
-/// `cancelled` is set by short-circuiting ops (e.g. take) to stop the emitter.
+/// `cancelled` is reserved for future use by cancellation-aware operators
+/// (e.g. coroutine-based emitters that check for cooperative cancellation).
+/// Currently, short-circuiting is handled by `runtimeFlowTakeExhausted` after
+/// each element delivery rather than through this flag.
 private final class RuntimeFlowCollectContext {
     var emittedValues: [Int] = []
     var cancelled = false
@@ -755,6 +758,14 @@ private func runtimeFlowTakeExhausted(
 
 /// Cold-stream collect: re-execute the source emitter and push each emitted
 /// value through the operator chain lazily, one at a time.
+///
+/// TODO: `runtimeFlowSourceValues` materializes the entire emitter output into
+/// an array before operators are applied. This means the source is eagerly
+/// collected even though downstream processing is lazy (per-element). A truly
+/// lazy implementation would interleave emitter execution with operator
+/// application, e.g. via coroutine-style yielding. This is acceptable for now
+/// because emitters are synchronous and finite, but should be revisited when
+/// suspend-emitter support lands.
 private func runtimeFlowCollectLazy(
     _ flow: RuntimeFlowHandle,
     collectorFnPtr: Int,
@@ -977,7 +988,7 @@ private func runtimeFlowInitTakeCounters(_ ops: [RuntimeFlowOp]) -> [Int: Int] {
 
 /// Collect all emitted values into a list and return the list handle.
 @_cdecl("kk_flow_to_list")
-public func kk_flow_to_list(_ flowHandle: Int, _ continuation: Int) -> Int {
+public func kk_flow_to_list(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle),
           let sourceValues = runtimeFlowSourceValues(flow)
     else {
@@ -1016,7 +1027,7 @@ public func kk_flow_to_list(_ flowHandle: Int, _ continuation: Int) -> Int {
 
 /// Return the first emitted value after applying the operator chain, or 0 if empty.
 @_cdecl("kk_flow_first")
-public func kk_flow_first(_ flowHandle: Int, _ continuation: Int) -> Int {
+public func kk_flow_first(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle),
           let sourceValues = runtimeFlowSourceValues(flow)
     else {
@@ -1047,7 +1058,7 @@ public func kk_flow_first(_ flowHandle: Int, _ continuation: Int) -> Int {
 
 /// Count the number of elements emitted after applying the operator chain.
 @_cdecl("kk_flow_count")
-public func kk_flow_count(_ flowHandle: Int, _ continuation: Int) -> Int {
+public func kk_flow_count(_ flowHandle: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle),
           let sourceValues = runtimeFlowSourceValues(flow)
     else {
@@ -1083,7 +1094,7 @@ public func kk_flow_count(_ flowHandle: Int, _ continuation: Int) -> Int {
 /// Fold: accumulate values with an initial value and an operation.
 /// operation ABI: (closureRaw, accumulator, value, outThrown) -> newAccumulator
 @_cdecl("kk_flow_fold")
-public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: Int, _ continuation: Int) -> Int {
+public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle),
           let sourceValues = runtimeFlowSourceValues(flow)
     else {
@@ -1131,7 +1142,7 @@ public func kk_flow_fold(_ flowHandle: Int, _ initial: Int, _ operationFnPtr: In
 /// Reduce: like fold but uses the first element as the initial accumulator.
 /// operation ABI: (closureRaw, accumulator, value, outThrown) -> newAccumulator
 @_cdecl("kk_flow_reduce")
-public func kk_flow_reduce(_ flowHandle: Int, _ operationFnPtr: Int, _ continuation: Int) -> Int {
+public func kk_flow_reduce(_ flowHandle: Int, _ operationFnPtr: Int, _: Int) -> Int {
     guard let flow = runtimeFlowHandle(from: flowHandle),
           let sourceValues = runtimeFlowSourceValues(flow)
     else {
