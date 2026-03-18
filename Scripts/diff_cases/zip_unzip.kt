@@ -1,7 +1,7 @@
 fun main() {
-    val a = listOf(1, 2, 3)
-    val b = listOf("a", "b", "c")
-    val zipped = a.zip(b)
+    val numbers = listOf(1, 2, 3)
+    val letters = listOf("a", "b", "c")
+    val zipped = numbers.zip(letters)
     println(zipped)
     val (nums, strs) = zipped.unzip()
     println(nums)
