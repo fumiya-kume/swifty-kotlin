@@ -466,7 +466,7 @@ extension CallTypeChecker {
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
-            "indexOfFirst", "indexOfLast",
+            "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
         ]
@@ -1019,6 +1019,24 @@ extension CallTypeChecker {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
+
+            case "binarySearch":
+                // STDLIB-547: binarySearch(comparison: (T) -> Int) — comparison lambda overload
+                guard args.count == 1,
+                      let lambdaExpr = ast.arena.expr(args[0].expr),
+                      case .lambdaLiteral = lambdaExpr
+                else {
+                    // Element-based overload or wrong arity — fall through with Int result
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                let bsLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.intType
+                )))
+                sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: bsLambdaExpectedType)
                 resultType = sema.types.intType
 
             case "forEachIndexed", "mapIndexed", "onEachIndexed":
