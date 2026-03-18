@@ -119,9 +119,9 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         // asSequence() → kk_list_asSequence only when receiver is a tracked list.
         // Array receivers are handled by rewriteArrayVirtualCall (guarded by arrayExprIDs).
-        // KNOWN LIMITATION: Non-tracked receivers (e.g., List parameter, function return)
-        // fall through so the original symbol linkage is preserved.  A future improvement
-        // could use the receiver's static type for dispatch instead of *ExprIDs membership.
+        // Since LOWERING-001, non-tracked receivers (e.g., List parameters, function
+        // return values) are seeded into *ExprIDs via static type information, so
+        // the rewrite now fires for those cases as well.
         if callee == lookup.asSequenceName, arguments.isEmpty,
            listExprIDs.contains(receiver.rawValue)
         {
@@ -1026,10 +1026,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        // KNOWN LIMITATION: Only tracked array receivers are rewritten.
-        // Array.asSequence() for non-tracked receivers (e.g., function parameters)
-        // is not rewritten here.  A dedicated Sema stub or type-based dispatch
-        // would be needed to handle those cases.
+        // Since LOWERING-001, array-typed function parameters and return
+        // values are seeded into arrayExprIDs via static type information.
         guard arrayExprIDs.contains(receiver.rawValue) else { return false }
 
         // toList on array → kk_array_toList (result is List)
