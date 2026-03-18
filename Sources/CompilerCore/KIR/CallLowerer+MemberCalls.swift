@@ -3005,7 +3005,9 @@ extension CallLowerer {
             case "binarySearch":
                 // Comparison overload has HOF-expanded args (fnPtr + closureRaw = 2),
                 // while the element-based overload has 1 element arg.
-                return interner.intern(argumentCount >= 2
+                // With receiver prepended: element-based has 2 args (receiver + element),
+            // comparison-based has 3+ args (receiver + fnPtr + closureRaw).
+            return interner.intern(argumentCount >= 3
                     ? "kk_list_binarySearch_compare"
                     : "kk_list_binarySearch")
             default:
