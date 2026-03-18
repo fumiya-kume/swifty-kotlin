@@ -95,6 +95,10 @@ final class StandaloneClassReferenceTests: XCTestCase {
                 callees.contains("kk_type_token_simple_name"),
                 "Chained T::class.simpleName should use kk_type_token_simple_name, got: \(callees)"
             )
+            XCTAssertFalse(
+                callees.contains("kk_kclass_create"),
+                "Chained T::class.simpleName should NOT emit kk_kclass_create, got: \(callees)"
+            )
         }
     }
 

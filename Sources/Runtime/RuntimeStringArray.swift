@@ -371,13 +371,11 @@ public func kk_type_token_qualified_name(_ typeToken: Int, _ nameHint: Int) -> I
 /// KClass boxes are interned: repeated calls with the same `(typeToken, nameHint)`
 /// pair return the same pointer without allocating a new box. This avoids
 /// unbounded memory growth when `T::class` is evaluated in a loop. The boxes
-/// are tracked in `runtimeStorage.kClassBoxCache` and live for the duration of the
-/// process (same lifetime as other runtime metadata such as type-hierarchy edges).
+/// are tracked in `runtimeStorage.kClassBoxCache` and are cleared on
+/// `resetRuntimeLocked` (e.g. between test runs).
 @_cdecl("kk_kclass_create")
 public func kk_kclass_create(_ typeToken: Int, _ nameHint: Int) -> Int {
-    // Build a stable cache key from the two Int-sized values.
-    // Use a mixing hash to avoid truncating 64-bit values to 32-bit.
-    let cacheKey = (UInt64(bitPattern: Int64(typeToken)) &* 0x9E37_79B9_7F4A_7C15) ^ UInt64(bitPattern: Int64(nameHint))
+    let cacheKey = KClassCacheKey(typeToken: typeToken, nameHint: nameHint)
     return runtimeStorage.withLock { state in
         if let cached = state.kClassBoxCache[cacheKey] {
             return cached

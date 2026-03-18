@@ -676,7 +676,7 @@ extension ExprTypeChecker {
         }
         // REFL-002: Handle builtin/primitive type names (Int, String, Boolean, etc.)
         // These are not class symbols in the symbol table but still support ::class.
-        let builtinNames = BuiltinTypeNames(interner: interner)
+        let builtinNames = driver.builtinTypeNamesCache
         if let builtinType = builtinNames.resolveBuiltinType(receiverName, types: sema.types) {
             sema.bindings.bindClassRefTargetType(id, type: builtinType)
             sema.bindings.bindExprType(id, type: sema.types.anyType)

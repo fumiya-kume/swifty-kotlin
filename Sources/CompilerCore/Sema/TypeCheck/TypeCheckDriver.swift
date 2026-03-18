@@ -27,6 +27,9 @@ final class TypeCheckDriver {
     private(set) lazy var localDeclChecker = LocalDeclTypeChecker(driver: self)
     private(set) lazy var declChecker = DeclTypeChecker(driver: self)
 
+    /// Cached `BuiltinTypeNames` instance to avoid repeated allocations on hot paths.
+    private(set) lazy var builtinTypeNamesCache = BuiltinTypeNames(interner: interner)
+
     // Stateless utilities (no back-reference needed)
     let helpers = TypeCheckHelpers()
     let scopeBuilder = TypeCheckScopeBuilder()

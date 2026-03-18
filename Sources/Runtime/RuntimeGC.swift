@@ -15,6 +15,14 @@ struct FrameMapDescriptorC {
     let rootOffsets: UnsafePointer<Int32>?
 }
 
+/// Collision-safe cache key for `kk_kclass_create`.
+/// Stores both `typeToken` and `nameHint` so that dictionary equality
+/// checks never return a wrong cached box after a hash collision.
+struct KClassCacheKey: Hashable {
+    let typeToken: Int
+    let nameHint: Int
+}
+
 struct RuntimeStorageState {
     var heapObjects: [UInt: HeapObjectRecord] = [:]
     var objectPointers: Set<UInt> = []
@@ -23,7 +31,7 @@ struct RuntimeStorageState {
     var customDelegateBoxes: [UInt: RuntimeCustomDelegateBox] = [:]
     var objectTypeByPointer: [UInt: Int64] = [:]
     var objectItableMethods: [UInt: [UInt64: Int]] = [:]
-    var kClassBoxCache: [UInt64: Int] = [:]
+    var kClassBoxCache: [KClassCacheKey: Int] = [:]
     var typeParents: [Int64: Set<Int64>] = [:]
     var globalRootSlots: Set<UInt> = []
     var frameMaps: [UInt32: [Int32]] = [:]
