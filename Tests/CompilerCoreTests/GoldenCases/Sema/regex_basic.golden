@@ -65,7 +65,7 @@ symbol s63 kind=function fq=kotlin.collections.List.chunked vis=public flags=syn
 symbol s64 kind=function fq=kotlin.collections.List.windowed vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int,Int] ret=Class#45<out Class#45<out T#46>> suspend=0 defaults=[] vararg=[]
 symbol s65 kind=function fq=kotlin.collections.List.sortedDescending vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s66 kind=function fq=kotlin.collections.List.subList vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[Int,Int] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
-symbol s67 kind=function fq=kotlin.collections.List.distinctBy vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
+symbol s67 kind=function fq=kotlin.collections.List.distinctBy vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any?] ret=Class#45<out T#46> suspend=0 defaults=[] vararg=[]
 symbol s68 kind=function fq=kotlin.collections.List.maxOrNull vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=T#46? suspend=0 defaults=[] vararg=[]
 symbol s69 kind=function fq=kotlin.collections.List.minOrNull vis=public flags=synthetic sig=recv=Class#45<out T#46> params=[] ret=T#46? suspend=0 defaults=[] vararg=[]
 symbol s70 kind=function fq=kotlin.collections.List.maxByOrNull vis=public flags=inlineFunction|synthetic sig=recv=Class#45<out T#46> params=[(T#46) -> Any] ret=T#46? suspend=0 defaults=[] vararg=[]

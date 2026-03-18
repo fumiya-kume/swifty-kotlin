@@ -1162,11 +1162,12 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                // Match the synthetic stub: selector is (T) -> Any (non-null, non-suspend).
-                // KNOWN LIMITATION: nullable keys are not supported; see stub comment.
+                // Match the synthetic stub: selector is (T) -> Any? (nullable, non-suspend).
+                // Nullable return type allows selectors that produce nullable keys.
+                // Keep in sync with the stub in HeaderHelpers+SyntheticComparableAndCollectionStubs.swift.
                 let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.anyType,
+                    returnType: sema.types.nullableAnyType,
                     isSuspend: false,
                     nullability: .nonNull
                 )))
