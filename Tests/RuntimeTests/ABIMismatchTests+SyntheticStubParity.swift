@@ -24,6 +24,7 @@ extension ABIMismatchTests {
             "kk_print_any",
             "kk_readline",
             "kk_readln",
+            "kk_readlnOrNull",
             "kk_sequence_of",
             "kk_sequence_generate",
             "kk_system_exitProcess",

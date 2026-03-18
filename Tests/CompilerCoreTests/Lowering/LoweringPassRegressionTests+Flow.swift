@@ -198,10 +198,11 @@ extension LoweringPassRegressionTests {
         irFlags: [String] = []
     ) throws {
         try withTemporaryFile(contents: source) { path in
-            let outputPath = FileManager.default.temporaryDirectory
-                .appendingPathComponent(UUID().uuidString)
-                .path
-            defer { try? FileManager.default.removeItem(atPath: outputPath) }
+            let fileManager = FileManager.default
+            let workDir = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try fileManager.createDirectory(at: workDir, withIntermediateDirectories: true)
+            defer { try? fileManager.removeItem(at: workDir) }
+            let outputPath = workDir.appendingPathComponent("flow-executable").path
 
             let ctx = makeCompilationContext(
                 inputs: [path],

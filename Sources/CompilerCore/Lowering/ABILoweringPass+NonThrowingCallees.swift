@@ -127,6 +127,7 @@ extension ABILoweringPass {
             interner.intern("kk_println_any"),
             interner.intern("kk_println_newline"),
             interner.intern("kk_readline"),
+            interner.intern("kk_readlnOrNull"),
             interner.intern("kk_coroutine_suspended"),
             interner.intern("kk_coroutine_continuation_new"),
             interner.intern("kk_coroutine_state_enter"),
@@ -370,6 +371,9 @@ extension ABILoweringPass {
             interner.intern("kk_sequence_builder_yield"),
             interner.intern("kk_sequence_builder_build"),
             interner.intern("kk_iterator_builder_build"),
+            interner.intern("kk_iterator_builder_yield"),
+            interner.intern("kk_iterator_builder_hasNext"),
+            interner.intern("kk_iterator_builder_next"),
             // Sequence (STDLIB-095/096/097)
             interner.intern("kk_sequence_of"),
             interner.intern("kk_sequence_generate"),
@@ -465,6 +469,10 @@ extension ABILoweringPass {
             interner.intern("kk_arraydeque_toString"),
             // File I/O (STDLIB-320) — constructor is non-throwing
             interner.intern("kk_file_new"),
+            // BufferedReader (STDLIB-567) — readLine/readLines/close are non-throwing
+            interner.intern("kk_buffered_reader_readLine"),
+            interner.intern("kk_buffered_reader_readLines"),
+            interner.intern("kk_buffered_reader_close"),
             // StringBuilder (STDLIB-255/256/257)
             interner.intern("kk_string_builder_new"),
             interner.intern("kk_string_builder_new_from_string"),
@@ -479,6 +487,10 @@ extension ABILoweringPass {
             interner.intern("kk_string_builder_reverse"),
             interner.intern("kk_string_builder_deleteCharAt"),
             interner.intern("kk_string_builder_get"),
+            // Callable reference type identity (REFL-003)
+            interner.intern("kk_callable_ref_tag_kfunction"),
+            interner.intern("kk_callable_ref_tag_kproperty"),
+            interner.intern("kk_callable_ref_name"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

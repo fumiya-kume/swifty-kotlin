@@ -516,7 +516,8 @@ final class CallLowerer {
                     argumentCount: finalArgIDs.count,
                     argumentTypes: finalArgIDs.map { arena.exprType($0) ?? sema.types.anyType },
                     interner: interner,
-                    types: sema.types
+                    types: sema.types,
+                    knownNames: knownNames
                 ) ?? sourceCalleeName
             } else {
                 sourceCalleeName

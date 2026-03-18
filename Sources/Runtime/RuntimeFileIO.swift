@@ -202,3 +202,54 @@ public func kk_file_walk(_ fileRaw: Int) -> Int {
     let listBox = RuntimeListBox(elements: files)
     return registerRuntimeObject(listBox)
 }
+
+// MARK: - STDLIB-567: File.bufferedReader()
+
+private func runtimeBufferedReaderBox(from raw: Int) -> RuntimeBufferedReaderBox? {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(ptr, to: RuntimeBufferedReaderBox.self)
+}
+
+@_cdecl("kk_file_bufferedReader")
+public func kk_file_bufferedReader(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_bufferedReader received invalid File handle")
+    }
+    do {
+        let fileHandle = try FileHandle(forReadingFrom: URL(fileURLWithPath: file.path))
+        return registerRuntimeObject(RuntimeBufferedReaderBox(fileHandle: fileHandle))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return 0
+    }
+}
+
+@_cdecl("kk_buffered_reader_readLine")
+public func kk_buffered_reader_readLine(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_readLine received invalid BufferedReader handle")
+    }
+    guard let line = reader.readLine() else {
+        return runtimeNullSentinelInt
+    }
+    return fileMakeStringRaw(line)
+}
+
+@_cdecl("kk_buffered_reader_readLines")
+public func kk_buffered_reader_readLines(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_readLines received invalid BufferedReader handle")
+    }
+    let lines = reader.readLines()
+    return registerRuntimeObject(RuntimeListBox(elements: lines.map { fileMakeStringRaw($0) }))
+}
+
+@_cdecl("kk_buffered_reader_close")
+public func kk_buffered_reader_close(_ readerRaw: Int) -> Int {
+    guard let reader = runtimeBufferedReaderBox(from: readerRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_buffered_reader_close received invalid BufferedReader handle")
+    }
+    reader.close()
+    return 0
+}
