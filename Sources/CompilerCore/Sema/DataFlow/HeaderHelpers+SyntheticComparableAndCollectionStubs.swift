@@ -1858,8 +1858,9 @@ extension DataFlowSemaPhase {
 
         // chunked(size, transform) — HOF overload (STDLIB-548)
         // Kotlin signature: fun <T, R> Iterable<T>.chunked(size: Int, transform: (List<T>) -> R): List<R>
-        // The transform receives a List<T> chunk and returns R. We use List<Any> -> Any
-        // to match the simplified runtime ABI (kk_list_chunked_transform).
+        // The transform receives a List<T> chunk and returns R. Since R is erased at the
+        // runtime ABI level, we model the return type as List<Any> (not List<T>) to avoid
+        // mis-typing calls where the transform changes element types.
         let chunkedTransformName = interner.intern("chunked")
         let chunkedTransformFQName = listFQName + [chunkedTransformName]
         // Only register if there isn't already a 2-param overload for "chunked".
@@ -1877,6 +1878,12 @@ extension DataFlowSemaPhase {
                 isSuspend: false,
                 nullability: .nonNull
             )))
+            // Return type is List<Any> since the transform can change element types (R != T).
+            let listOfAnyReturnType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
             let memberSymbol = symbols.define(
                 kind: .function,
                 name: chunkedTransformName,
@@ -1891,7 +1898,7 @@ extension DataFlowSemaPhase {
                 FunctionSignature(
                     receiverType: receiverType,
                     parameterTypes: [types.intType, transformType],
-                    returnType: listReturnType,
+                    returnType: listOfAnyReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
                 ),

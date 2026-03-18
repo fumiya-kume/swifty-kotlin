@@ -1023,7 +1023,23 @@ extension CallTypeChecker {
 
         // chunked(size, transform): transform receives List<T> and returns R
         if memberName == interner.intern("chunked"), argCount == 2 {
-            let listType = sema.types.anyType // List<T> simplified to Any in fallback
+            // Build List<Any> for the lambda parameter type; the transform receives
+            // a List<T> chunk, which we approximate as List<Any> in the fallback path
+            // (consistent with the synthetic stub's transform parameter type).
+            let listType: TypeID
+            if let listSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ]) {
+                listType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(sema.types.anyType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                listType = sema.types.anyType
+            }
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [listType],
                 returnType: sema.types.anyType,

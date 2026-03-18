@@ -1017,21 +1017,21 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
 
 @_cdecl("kk_string_windowed")
 public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
+    // Validate handle before any early return so invalid handles always trap
+    // consistently with other string runtime entry points.
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     // Return an empty list for non-positive size/step to preserve the
     // original 2-arg overload semantics (Kotlin throws IllegalArgumentException,
     // but this runtime returns empty for resilience).
     guard size > 0, step > 0 else {
         return runtimeMakeStringListRaw([])
     }
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    let clampedSize = max(1, size)
-    let clampedStep = max(1, step)
     let scalars = Array(source.unicodeScalars)
     var windows: [String] = []
     var i = 0
-    while i + clampedSize <= scalars.count {
-        windows.append(runtimeStringFromScalars(scalars[i ..< i + clampedSize]))
-        i += clampedStep
+    while i + size <= scalars.count {
+        windows.append(runtimeStringFromScalars(scalars[i ..< i + size]))
+        i += step
     }
     return runtimeMakeStringListRaw(windows)
 }
