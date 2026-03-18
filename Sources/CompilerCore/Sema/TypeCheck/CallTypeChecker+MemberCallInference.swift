@@ -946,9 +946,24 @@ extension CallTypeChecker {
                 }
                 // Infer the destination map argument first
                 let destType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                // Extract K/V from destination MutableMap<K, V> for stronger lambda return type inference
+                let lambdaReturnType: TypeID
+                if case let .classType(destClassType) = sema.types.kind(of: sema.types.makeNonNullable(destType)),
+                   destClassType.args.count >= 2
+                {
+                    // For associateWithTo: lambda returns V (value type, args[1])
+                    // For associateByTo/groupByTo: lambda returns K (key type, args[0])
+                    let targetArgIndex = (calleeStr == "associateWithTo") ? 1 : 0
+                    lambdaReturnType = switch destClassType.args[targetArgIndex] {
+                    case let .invariant(id), let .out(id), let .in(id): id
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    lambdaReturnType = sema.types.anyType
+                }
                 let lambdaExpectedType2 = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
-                    returnType: sema.types.anyType
+                    returnType: lambdaReturnType
                 )))
                 if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)

@@ -166,6 +166,12 @@ private let throwForGetOrPut: @convention(c) (Int, UnsafeMutablePointer<Int>?) -
     return 123
 }
 
+// Lambda that throws for collection HOF1 signature (closureRaw, value, outThrown) -> Int
+private let throwingHOFLambda: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, _, outThrown in
+    outThrown?.pointee = runtimeAllocateThrowable(message: "test HOF throw")
+    return 0
+}
+
 final class RuntimeCollectionHOFTests: XCTestCase {
     override func setUp() {
         super.setUp()
@@ -626,5 +632,46 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         // Existing key 0 gets 2 appended; new key 1 gets [1]
         XCTAssertEqual(listElements(kk_map_get(result, 0)), [10, 2])
         XCTAssertEqual(listElements(kk_map_get(result, 1)), [1])
+    }
+
+    // MARK: - Throwing lambda tests for *To functions
+
+    func testAssociateByToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let source = makeList([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_list_associateByTo(
+            source, dest,
+            unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testAssociateWithToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let source = makeList([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_list_associateWithTo(
+            source, dest,
+            unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
+    }
+
+    func testGroupByToThrowingLambdaReturnsSentinelAndSetsOutThrown() {
+        let source = makeList([1, 2, 3])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        var thrown = 0
+
+        let result = kk_list_groupByTo(
+            source, dest,
+            unsafeBitCast(throwingHOFLambda, to: Int.self), 0, &thrown
+        )
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+        XCTAssertNotEqual(thrown, 0)
     }
 }
