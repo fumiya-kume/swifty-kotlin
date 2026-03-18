@@ -1489,20 +1489,26 @@ public func kk_array_asSequence(_ arrayRaw: Int) -> Int {
 
 // MARK: - STDLIB-533: List?.orEmpty()
 
+/// Cached singleton handle for the empty list, allocated once on first use.
+private let cachedEmptyListHandle: Int = registerRuntimeObject(RuntimeListBox(elements: []))
+
 @_cdecl("kk_list_orEmpty")
 public func kk_list_orEmpty(_ listRaw: Int) -> Int {
     if listRaw == runtimeNullSentinelInt || listRaw == 0 {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+        return cachedEmptyListHandle
     }
     return listRaw
 }
 
 // MARK: - STDLIB-532: Map?.orEmpty()
 
+/// Cached singleton handle for the empty map, allocated once on first use.
+private let cachedEmptyMapHandle: Int = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
 @_cdecl("kk_map_orEmpty")
 public func kk_map_orEmpty(_ mapRaw: Int) -> Int {
     if mapRaw == runtimeNullSentinelInt || mapRaw == 0 {
-        return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+        return cachedEmptyMapHandle
     }
     return mapRaw
 }

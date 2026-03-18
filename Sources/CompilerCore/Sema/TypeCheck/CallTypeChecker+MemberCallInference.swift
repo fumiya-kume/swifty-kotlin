@@ -2064,10 +2064,19 @@ extension CallTypeChecker {
                         return resultType
                     }
                     // List?.orEmpty() -> List<T>
-                    let resultType = sema.types.makeNonNullable(lookupReceiverType)
-                    sema.bindings.bindExprType(id, type: resultType)
-                    sema.bindings.markCollectionExpr(id)
-                    return resultType
+                    if isListLikeType(baseType, sema: sema, interner: interner) {
+                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
+                        sema.bindings.bindExprType(id, type: resultType)
+                        sema.bindings.markCollectionExpr(id)
+                        return resultType
+                    }
+                    // Map?.orEmpty() -> Map<K,V>
+                    if isMapLikeCollectionType(baseType, sema: sema, interner: interner) {
+                        let resultType = sema.types.makeNonNullable(lookupReceiverType)
+                        sema.bindings.bindExprType(id, type: resultType)
+                        sema.bindings.markCollectionExpr(id)
+                        return resultType
+                    }
                 }
             }
             // String stdlib: 0-arg methods (STDLIB-006)

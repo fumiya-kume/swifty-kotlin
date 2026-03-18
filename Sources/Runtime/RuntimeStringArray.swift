@@ -748,11 +748,10 @@ public func kk_string_isNullOrBlank(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_orEmpty")
 public func kk_string_orEmpty(_ strRaw: Int) -> Int {
     if strRaw == runtimeNullSentinelInt || strRaw == 0 {
-        return Int(bitPattern: "".withCString { cstr in
-            cstr.withMemoryRebound(to: UInt8.self, capacity: 0) { pointer in
-                kk_string_from_utf8(pointer, 0)
-            }
-        })
+        var emptyByte: UInt8 = 0
+        return withUnsafePointer(to: &emptyByte) { ptr in
+            Int(bitPattern: kk_string_from_utf8(ptr, 0))
+        }
     }
     return strRaw
 }
