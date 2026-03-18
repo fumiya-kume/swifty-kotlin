@@ -226,7 +226,7 @@ final class RuntimeJobHandle: @unchecked Sendable {
 /// CORO-003: Scope is no longer stored in Thread Local Storage. Instead it is
 /// carried inside `RuntimeContinuationState.scope` (the coroutine context),
 /// so it survives suspend/resume across different GCD threads. A lightweight
-/// per-task accessor (`RuntimeCoroutineScope.activeScopeForCurrentTask`)
+/// per-task accessor (`RuntimeCoroutineScope.current`)
 /// bridges the gap for the few call-sites that don't have a continuation handle.
 final class RuntimeCoroutineScope {
     private let lock = NSLock()
@@ -280,19 +280,11 @@ final class RuntimeCoroutineScope {
     static var current: RuntimeCoroutineScope? {
         get {
             let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
-            taskScopeLock.lock()
-            defer { taskScopeLock.unlock() }
-            return taskScopeMap[key]
+            return scopeForTask(key)
         }
         set {
             let key = RuntimeCoroutineScopeTaskKey.currentTaskKey
-            taskScopeLock.lock()
-            if let newValue {
-                taskScopeMap[key] = newValue
-            } else {
-                taskScopeMap.removeValue(forKey: key)
-            }
-            taskScopeLock.unlock()
+            installScope(newValue, forTask: key)
         }
     }
 
@@ -545,8 +537,18 @@ public func kk_kxmini_async(_ entryPointRaw: Int, _ functionID: Int) -> Int {
         callerScope.registerChild(Int(bitPattern: taskPtr))
     }
 
+    // CORO-003: Create continuation externally and propagate caller's scope
+    // so the child's entry loop discovers its parent scope (same pattern as
+    // kk_kxmini_launch).
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = callerScope
+    }
+
     KxMiniRuntime.launch {
-        let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+        let result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw, continuation: continuation
+        )
         task.complete(with: result)
     }
     return Int(bitPattern: taskPtr)
@@ -1272,7 +1274,18 @@ public func kk_job_join(_ jobHandle: Int) -> Int {
 @_cdecl("kk_coroutine_scope_run")
 public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     let scopeHandle = kk_coroutine_scope_new()
-    let result = runSuspendEntryLoop(entryPointRaw: entryPointRaw, functionID: functionID)
+    // CORO-003: Create continuation externally and propagate the new scope into it
+    // so that runSuspendEntryLoopWithContinuation installs it under the fresh task key.
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+    let result = runSuspendEntryLoopWithContinuation(
+        entryPointRaw: entryPointRaw, continuation: continuation
+    )
     _ = kk_coroutine_scope_wait(scopeHandle)
     return result
 }
@@ -1281,6 +1294,14 @@ public func kk_coroutine_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> I
 @_cdecl("kk_coroutine_scope_run_with_cont")
 public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
     let scopeHandle = kk_coroutine_scope_new()
+    // CORO-003: Propagate the new scope into the continuation so it is visible
+    // inside the entry loop (avoids task key overwrite orphaning the scope).
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
     let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
     _ = kk_coroutine_scope_wait(scopeHandle)
     return result
@@ -1410,15 +1431,18 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {
             RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScopeTaskKey.removeKey()
             _ = kk_coroutine_state_exit(continuation, 0)
             return 0
         }
         if result != suspendedToken {
             RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScopeTaskKey.removeKey()
             return result
         }
         guard let state = runtimeContinuationState(from: continuation) else {
             RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScopeTaskKey.removeKey()
             return 0
         }
         state.waitForResumeSignal()
