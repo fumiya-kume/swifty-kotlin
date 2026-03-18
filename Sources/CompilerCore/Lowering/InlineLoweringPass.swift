@@ -346,6 +346,19 @@ final class InlineLoweringPass: LoweringPass {
         var hasNonLocalReturn = false
         var hasNormalReturn = false
 
+        // Build a label remapping so that each inline expansion gets unique
+        // label IDs. This prevents collisions when the same function is
+        // inlined multiple times or when the inlined labels conflict with
+        // labels already present in the caller.
+        var labelRemap: [Int32: Int32] = [:]
+        for instruction in inlineTarget.body {
+            if case let .label(id) = instruction {
+                let freshLabel = inlineLabelCounter
+                inlineLabelCounter += 1
+                labelRemap[id] = freshLabel
+            }
+        }
+
         for instruction in inlineTarget.body {
             switch instruction {
             case .beginBlock, .endBlock:
@@ -355,17 +368,17 @@ final class InlineLoweringPass: LoweringPass {
                 lowered.append(.nop)
 
             case let .label(id):
-                lowered.append(.label(id))
+                lowered.append(.label(labelRemap[id] ?? id))
 
             case let .jump(target):
-                lowered.append(.jump(target))
+                lowered.append(.jump(labelRemap[target] ?? target))
 
             case let .jumpIfEqual(lhs, rhs, target):
                 lowered.append(
                     .jumpIfEqual(
                         lhs: resolveAlias(of: lhs, aliases: localExprMap),
                         rhs: resolveAlias(of: rhs, aliases: localExprMap),
-                        target: target
+                        target: labelRemap[target] ?? target
                     )
                 )
 
@@ -511,7 +524,7 @@ final class InlineLoweringPass: LoweringPass {
                 lowered.append(
                     .jumpIfNotNull(
                         value: resolveAlias(of: value, aliases: localExprMap),
-                        target: target
+                        target: labelRemap[target] ?? target
                     )
                 )
 
@@ -644,9 +657,11 @@ final class InlineLoweringPass: LoweringPass {
                 return false
             }
             if hasValueReturn {
-                let mergeId = Int32(module.arena.expressions.count)
+                // Allocate a fresh merge temporary via appendExpr. The
+                // temporary name matches the allocated ID, following the
+                // standard codebase pattern for temporary allocation.
                 mergeResult = module.arena.appendExpr(
-                    .temporary(mergeId),
+                    .temporary(Int32(module.arena.expressions.count)),
                     type: lambdaFunction.returnType
                 )
             }
