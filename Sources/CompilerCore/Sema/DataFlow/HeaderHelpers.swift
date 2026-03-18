@@ -357,6 +357,128 @@ extension DataFlowSemaPhase {
         scope.insert(funcSymbol)
     }
 
+    /// Registers synthetic `toString(): String` for data class so member resolution finds it.
+    func collectSyntheticDataClassToString(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+            return
+        }
+        let toStringName = interner.intern("toString")
+        let toStringFQName = ownerFQName + [toStringName]
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let hasUserDeclaredToString = symbols.lookupAll(fqName: toStringFQName).contains { id in
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes.isEmpty
+                && signature.returnType == stringType
+        }
+        guard !hasUserDeclaredToString else {
+            return
+        }
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: toStringName,
+            fqName: toStringFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [],
+                returnType: stringType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
+    /// Registers synthetic `equals(other: Any?): Boolean` for data class (structural comparison).
+    func collectSyntheticDataClassEquals(
+        ownerSymbol: SymbolID,
+        ownerFQName: [InternedString],
+        ownerType: TypeID,
+        symbols: SymbolTable,
+        types: TypeSystem,
+        scope: Scope,
+        interner: StringInterner
+    ) {
+        guard symbols.symbol(ownerSymbol)?.flags.contains(.dataType) == true else {
+            return
+        }
+        let equalsName = interner.intern("equals")
+        let equalsFQName = ownerFQName + [equalsName]
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = types.nullableAnyType
+        let hasUserDeclaredEquals = symbols.lookupAll(fqName: equalsFQName).contains { id in
+            guard let symbol = symbols.symbol(id),
+                  symbol.kind == .function,
+                  !symbol.flags.contains(.synthetic),
+                  let signature = symbols.functionSignature(for: id)
+            else {
+                return false
+            }
+            return signature.receiverType == ownerType
+                && signature.parameterTypes == [nullableAnyType]
+                && signature.returnType == boolType
+        }
+        guard !hasUserDeclaredEquals else {
+            return
+        }
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: equalsName,
+            fqName: equalsFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: funcSymbol)
+        let otherParamName = interner.intern("other")
+        let otherParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: otherParamName,
+            fqName: equalsFQName + [otherParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: ownerType,
+                parameterTypes: [nullableAnyType],
+                returnType: boolType,
+                isSuspend: false,
+                valueParameterSymbols: [otherParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: []
+            ),
+            for: funcSymbol
+        )
+        scope.insert(funcSymbol)
+    }
+
     func collectSyntheticDataClassCopy(
         classDecl: ClassDecl,
         ast: ASTModule,

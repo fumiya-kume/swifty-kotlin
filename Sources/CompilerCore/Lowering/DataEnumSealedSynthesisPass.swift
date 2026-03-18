@@ -176,25 +176,87 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             owner: nominalSymbol, module: module, sema: sema,
             existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
         )
-        guard nominalSymbol.kind == .object else { return }
+
         let toStringName = ctx.interner.intern("toString")
         let existingToStringSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [toStringName]).first {
             sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
         }
-        appendSyntheticDataObjectToStringIfNeeded(
-            name: toStringName, owner: nominalSymbol, objectName: nominalSymbol.name,
-            existingSymbol: existingToStringSymbol, module: module, sema: sema,
-            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
-        )
         let equalsName = ctx.interner.intern("equals")
         let existingEqualsSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [equalsName]).first {
             sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
         }
-        appendSyntheticDataObjectEqualsIfNeeded(
-            owner: nominalSymbol, existingSymbol: existingEqualsSymbol,
-            module: module, sema: sema,
-            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+
+        if nominalSymbol.kind == .object {
+            appendSyntheticDataObjectToStringIfNeeded(
+                name: toStringName, owner: nominalSymbol, objectName: nominalSymbol.name,
+                existingSymbol: existingToStringSymbol, module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            )
+            appendSyntheticDataObjectEqualsIfNeeded(
+                owner: nominalSymbol, existingSymbol: existingEqualsSymbol,
+                module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            )
+        } else if nominalSymbol.kind == .class {
+            let properties = dataClassPropertySymbols(owner: nominalSymbol, symbols: sema.symbols)
+            appendSyntheticDataClassToStringIfNeeded(
+                name: toStringName, owner: nominalSymbol, properties: properties,
+                existingSymbol: existingToStringSymbol, module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            )
+            appendSyntheticDataClassEqualsIfNeeded(
+                owner: nominalSymbol, properties: properties,
+                existingSymbol: existingEqualsSymbol, module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            )
+        }
+    }
+
+    /// Returns the primary-constructor data properties of a data class, sorted by constructor order.
+    private func dataClassPropertySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
+        let primaryConstructorParamNames: [InternedString] = primaryConstructorSymbol(owner: owner, symbols: symbols)
+            .flatMap { constructor in
+                symbols.functionSignature(for: constructor.id)?.valueParameterSymbols.compactMap { paramSymbol in
+                    symbols.symbol(paramSymbol)?.name
+                }
+            } ?? []
+        guard !primaryConstructorParamNames.isEmpty else {
+            return []
+        }
+
+        let propertiesByName = Dictionary(
+            symbols.children(ofFQName: owner.fqName)
+                .compactMap { symbols.symbol($0) }
+                .filter { $0.kind == .property && !$0.flags.contains(.synthetic) }
+                .map { ($0.name, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
+        return primaryConstructorParamNames.compactMap { propertiesByName[$0] }
+    }
+
+    private func primaryConstructorSymbol(owner: SemanticSymbol, symbols: SymbolTable) -> SemanticSymbol? {
+        symbols.children(ofFQName: owner.fqName)
+            .compactMap { symbols.symbol($0) }
+            .filter { $0.kind == .constructor }
+            .min { lhs, rhs in
+                let lhsOffset = lhs.declSite?.start.offset ?? Int.max
+                let rhsOffset = rhs.declSite?.start.offset ?? Int.max
+                if lhsOffset != rhsOffset {
+                    return lhsOffset < rhsOffset
+                }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
+    }
+
+    private func anyToStringTag(for type: TypeID, sema: SemaModule) -> Int64 {
+        switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
+        case .primitive(.boolean, _):
+            2
+        case .primitive(.string, _):
+            3
+        default:
+            1
+        }
     }
 
     private func enumEntrySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
@@ -530,6 +592,401 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             ),
             .returnValue(resultExpr),
         ]
+        let signature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [nullableAnyType],
+            returnType: boolType,
+            isSuspend: false,
+            valueParameterSymbols: [paramSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false],
+            typeParameterSymbols: []
+        )
+        appendSyntheticFunctionWithSymbol(
+            functionSymbol: functionSymbol,
+            name: equalsName,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [receiverParam, otherParam],
+            body: body
+        )
+    }
+
+    /// Synthesizes `toString(): String` for data class with properties.
+    /// Output format: "ClassName(prop1=val1, prop2=val2)"
+    /// Each property value is converted to string via `kk_any_to_string` and concatenated.
+    private func appendSyntheticDataClassToStringIfNeeded(
+        name: InternedString,
+        owner: SemanticSymbol,
+        properties: [SemanticSymbol],
+        existingSymbol: SymbolID?,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard owner.kind == .class, let functionSymbol = existingSymbol else {
+            return
+        }
+        if existingFunctionSymbols.contains(functionSymbol) {
+            return
+        }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let stringType = sema.types.make(.primitive(.string, .nonNull))
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let fqName = owner.fqName + [name]
+        let parameterName = interner.intern("$self")
+        let parameterSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: parameterName,
+            fqName: fqName + [parameterName],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let parameter = KIRParameter(symbol: parameterSymbol, type: receiverType)
+
+        var body: [KIRInstruction] = []
+
+        // Start with "ClassName("
+        let className = interner.resolve(owner.name)
+        let prefixStr = interner.intern("\(className)(")
+        let prefixExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: stringType
+        )
+        body.append(.constValue(result: prefixExpr, value: .stringLiteral(prefixStr)))
+        let builderType = sema.types.anyType
+        let builderExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: builderType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_builder_new_from_string"),
+            arguments: [prefixExpr],
+            result: builderExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, property) in properties.enumerated() {
+            let propName = interner.resolve(property.name)
+            // Append "propName=" (or ", propName=" for subsequent properties)
+            let labelStr: String = index == 0 ? "\(propName)=" : ", \(propName)="
+            let labelInterned = interner.intern(labelStr)
+            let labelExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            body.append(.constValue(result: labelExpr, value: .stringLiteral(labelInterned)))
+
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_builder_append_obj"),
+                arguments: [builderExpr, labelExpr],
+                result: builderExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            // Load property value via getter call: <ClassName>.<propName>$get(self)
+            let receiverRef = module.arena.appendExpr(.symbolRef(parameterSymbol), type: receiverType)
+            body.append(.constValue(result: receiverRef, value: .symbolRef(parameterSymbol)))
+
+            let propType = sema.symbols.propertyType(for: property.id) ?? sema.types.anyType
+            let propValue = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: propType
+            )
+            let getterName = interner.intern("\(propName)$get")
+            body.append(.call(
+                symbol: nil,
+                callee: getterName,
+                arguments: [receiverRef],
+                result: propValue,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            // Convert to string via kk_any_to_string using the same tag convention
+            // as Any.toString lowering.
+            let anyTag = anyToStringTag(for: propType, sema: sema)
+            let tagExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: intType
+            )
+            body.append(.constValue(result: tagExpr, value: .intLiteral(anyTag)))
+
+            let propStr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: stringType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_any_to_string"),
+                arguments: [propValue, tagExpr],
+                result: propStr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_string_builder_append_obj"),
+                arguments: [builderExpr, propStr],
+                result: builderExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        // Append closing ")"
+        let suffixStr = interner.intern(")")
+        let suffixExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: stringType
+        )
+        body.append(.constValue(result: suffixExpr, value: .stringLiteral(suffixStr)))
+
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_builder_append_obj"),
+            arguments: [builderExpr, suffixExpr],
+            result: builderExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let resultExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: stringType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_builder_toString"),
+            arguments: [builderExpr],
+            result: resultExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        body.append(.returnValue(resultExpr))
+
+        let signature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: stringType,
+            isSuspend: false,
+            valueParameterSymbols: [],
+            valueParameterHasDefaultValues: [],
+            valueParameterIsVararg: [],
+            typeParameterSymbols: []
+        )
+        appendSyntheticFunctionWithSymbol(
+            functionSymbol: functionSymbol,
+            name: name,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [parameter],
+            body: body
+        )
+    }
+
+    /// Synthesizes `equals(other: Any?): Boolean` for data class with properties.
+    /// Compares each property of `this` and `other` via `kk_op_eq`, returning false
+    /// if any differ.
+    private func appendSyntheticDataClassEqualsIfNeeded(
+        owner: SemanticSymbol,
+        properties: [SemanticSymbol],
+        existingSymbol: SymbolID?,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard owner.kind == .class, let functionSymbol = existingSymbol else {
+            return
+        }
+        if existingFunctionSymbols.contains(functionSymbol) {
+            return
+        }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = sema.types.nullableAnyType
+        let equalsName = interner.intern("equals")
+        let paramName = interner.intern("other")
+        let fqName = owner.fqName + [equalsName]
+        let paramSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: paramName,
+            fqName: fqName + [paramName],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let receiverParam = KIRParameter(
+            symbol: sema.symbols.define(
+                kind: .valueParameter,
+                name: interner.intern("$self"),
+                fqName: fqName + [interner.intern("$self")],
+                declSite: owner.declSite,
+                visibility: .private,
+                flags: [.synthetic]
+            ),
+            type: receiverType
+        )
+        let otherParam = KIRParameter(symbol: paramSymbol, type: nullableAnyType)
+
+        var body: [KIRInstruction] = []
+        var nextLabel: Int32 = 0
+        func allocateLabel() -> Int32 {
+            defer { nextLabel += 1 }
+            return nextLabel
+        }
+
+        // If there are no properties, fall back to identity comparison (kk_op_eq)
+        if properties.isEmpty {
+            let receiverRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
+            let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+            let resultExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: boolType
+            )
+            body.append(.constValue(result: receiverRef, value: .symbolRef(receiverParam.symbol)))
+            body.append(.constValue(result: otherRef, value: .symbolRef(paramSymbol)))
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_eq"),
+                arguments: [receiverRef, otherRef],
+                result: resultExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            body.append(.returnValue(resultExpr))
+        } else {
+            let intType = sema.types.intType
+            let falseExpr = module.arena.appendExpr(.boolLiteral(false), type: boolType)
+            body.append(.constValue(result: falseExpr, value: .boolLiteral(false)))
+
+            let typeTokenValue = RuntimeTypeCheckToken.encode(type: receiverType, sema: sema, interner: interner)
+            let typeTokenExpr = module.arena.appendExpr(.intLiteral(typeTokenValue), type: intType)
+            body.append(.constValue(result: typeTokenExpr, value: .intLiteral(typeTokenValue)))
+
+            let otherAnyRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
+            body.append(.constValue(result: otherAnyRef, value: .symbolRef(paramSymbol)))
+
+            let isSameTypeExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: boolType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_is"),
+                arguments: [otherAnyRef, typeTokenExpr],
+                result: isSameTypeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            let returnFalseLabel = allocateLabel()
+            body.append(.jumpIfEqual(lhs: isSameTypeExpr, rhs: falseExpr, target: returnFalseLabel))
+
+            let otherTypedRef = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: receiverType
+            )
+            body.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_op_safe_cast"),
+                arguments: [otherAnyRef, typeTokenExpr],
+                result: otherTypedRef,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            // For each property, compare this.prop == other.prop
+            // If any differ, return false
+            for property in properties {
+                let propName = interner.resolve(property.name)
+                let getterName = interner.intern("\(propName)$get")
+                let propType = sema.symbols.propertyType(for: property.id) ?? sema.types.anyType
+
+                // Load this.prop
+                let selfRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
+                body.append(.constValue(result: selfRef, value: .symbolRef(receiverParam.symbol)))
+                let selfProp = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: propType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: getterName,
+                    arguments: [selfRef],
+                    result: selfProp,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                // Load other.prop
+                let otherProp = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: propType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: getterName,
+                    arguments: [otherTypedRef],
+                    result: otherProp,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                // Compare via kk_op_eq
+                let cmpResult = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: boolType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_op_eq"),
+                    arguments: [selfProp, otherProp],
+                    result: cmpResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                body.append(.jumpIfEqual(lhs: cmpResult, rhs: falseExpr, target: returnFalseLabel))
+            }
+
+            // All properties matched — return true
+            let trueResult = module.arena.appendExpr(
+                .boolLiteral(true),
+                type: boolType
+            )
+            body.append(.constValue(result: trueResult, value: .boolLiteral(true)))
+            body.append(.returnValue(trueResult))
+
+            body.append(.label(returnFalseLabel))
+            let falseResult = module.arena.appendExpr(
+                .boolLiteral(false),
+                type: boolType
+            )
+            body.append(.constValue(result: falseResult, value: .boolLiteral(false)))
+            body.append(.returnValue(falseResult))
+        }
+
         let signature = FunctionSignature(
             receiverType: receiverType,
             parameterTypes: [nullableAnyType],
