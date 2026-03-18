@@ -179,6 +179,7 @@ public struct RuntimeReflectionMetadataEmitter {
             type: int64Type,
             name: "kk_reflection_metadata_size"
         ) {
+            bindings.setInternalLinkage(sizeGlobal)
             if let sizeValue = bindings.constInt(int64Type, value: UInt64(byteCount)) {
                 bindings.setInitializer(sizeGlobal, value: sizeValue)
             }
@@ -212,6 +213,7 @@ public struct RuntimeReflectionMetadataEmitter {
             type: int64Type,
             name: "kk_reflection_metadata_words"
         ) {
+            bindings.setInternalLinkage(countGlobal)
             if let countValue = bindings.constInt(int64Type, value: UInt64(wordCount)) {
                 bindings.setInitializer(countGlobal, value: countValue)
             }
@@ -220,6 +222,7 @@ public struct RuntimeReflectionMetadataEmitter {
         for (i, word) in words.enumerated() {
             let name = "kk_reflection_metadata_w\(i)"
             if let wordGlobal = bindings.addGlobal(module: module, type: int64Type, name: name) {
+                bindings.setInternalLinkage(wordGlobal)
                 if let wordValue = bindings.constInt(int64Type, value: word) {
                     bindings.setInitializer(wordGlobal, value: wordValue)
                 }
