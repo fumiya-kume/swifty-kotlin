@@ -195,7 +195,7 @@ extension ExprTypeChecker {
             return effectiveType
         }
         let type: TypeID
-        let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+        let ulongType = sema.types.ulongType
         let uintType = sema.types.uintType
         let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
         let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
@@ -205,7 +205,14 @@ extension ExprTypeChecker {
         let lhsIsUnsigned = sema.types.isUnsigned(lhs)
         let rhsIsSigned = sema.types.isSigned(rhs)
 
-        if (lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned) {
+        let allowsMixedSignedness = switch op {
+        case .step:
+            true
+        default:
+            false
+        }
+
+        if !allowsMixedSignedness, ((lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned)) {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0043",
                 "Operator '\(interner.resolve(operatorName))' cannot be applied to '(signed, unsigned)' or '(unsigned, signed)' types.",

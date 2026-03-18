@@ -78,9 +78,8 @@ struct TypeCheckHelpers {
         if isRangeExpr, iterableType == sema.types.uintType {
             return sema.types.uintType
         }
-        let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
-        if isRangeExpr, iterableType == ulongType {
-            return ulongType
+        if isRangeExpr, iterableType == sema.types.ulongType {
+            return sema.types.ulongType
         }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)
     }

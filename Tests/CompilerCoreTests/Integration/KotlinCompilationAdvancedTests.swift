@@ -261,6 +261,26 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
+    func testCompile_uintRange_step() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            for (i in 1u..10u step 2) {
+                val x = i
+            }
+        }
+        """)
+    }
+
+    func testCompile_ulongRange_downTo_step() throws {
+        try assertKotlinCompilesToKIR("""
+        fun main() {
+            for (i in 10UL downTo 1UL step 3) {
+                val x = i
+            }
+        }
+        """)
+    }
+
     func testCompile_infix_function() throws {
         try assertKotlinCompilesToKIR("""
         infix fun Int.power(exp: Int): Int {
