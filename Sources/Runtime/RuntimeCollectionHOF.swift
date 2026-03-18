@@ -563,6 +563,32 @@ public func kk_list_runningReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: In
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
+// MARK: - List reduceOrNull / scanReduce (STDLIB-526..530)
+
+@_cdecl("kk_list_reduceOrNull")
+public func kk_list_reduceOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var acc = maybeUnbox(list.elements[0])
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+// Deprecated: kk_list_scanReduce is a deprecated alias for kk_list_runningReduce.
+// Kotlin renamed scanReduce to runningReduce; this entrypoint is kept for ABI compatibility.
+@_cdecl("kk_list_scanReduce")
+public func kk_list_scanReduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_list_runningReduce(listRaw, fnPtr, closureRaw, outThrown)
+}
+
 @_cdecl("kk_list_groupBy")
 public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
