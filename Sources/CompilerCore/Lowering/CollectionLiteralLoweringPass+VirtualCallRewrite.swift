@@ -507,7 +507,7 @@ extension CollectionLiteralLoweringPass {
         {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            let hofResult = emitHOFCall(
+            emitHOFCall(
                 kkName: lookup.kkSequenceFoldIndexedName,
                 receiver: receiver,
                 arguments: [arguments[0]] + [arguments[1]] + [zeroExpr],
@@ -517,7 +517,6 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            _ = hofResult
             return true
         }
 
@@ -528,7 +527,7 @@ extension CollectionLiteralLoweringPass {
         {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            let hofResult = emitHOFCall(
+            emitHOFCall(
                 kkName: lookup.kkSequenceReduceIndexedName,
                 receiver: receiver,
                 arguments: arguments + [zeroExpr],
@@ -538,7 +537,6 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
-            _ = hofResult
             return true
         }
 
@@ -679,6 +677,7 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
+    @discardableResult
     private func emitHOFCall(
         kkName: InternedString,
         receiver: KIRExprID,

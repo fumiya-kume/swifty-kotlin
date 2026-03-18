@@ -2549,20 +2549,17 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
-                            let hofResult = module.arena.appendExpr(
+                            let callResult = result ?? module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceFoldIndexedName,
                                 arguments: [receiverID, initialID, lambdaID, closureRawID],
-                                result: hofResult,
+                                result: callResult,
                                 canThrow: canThrow,
                                 thrownResult: thrownResult
                             ))
-                            if let result {
-                                loweredBody.append(.copy(from: hofResult, to: result))
-                            }
                             continue
                         }
                     }
@@ -2580,20 +2577,17 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
-                            let hofResult = module.arena.appendExpr(
+                            let callResult = result ?? module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceReduceIndexedName,
                                 arguments: [receiverID, lambdaID, closureRawID],
-                                result: hofResult,
+                                result: callResult,
                                 canThrow: canThrow,
                                 thrownResult: thrownResult
                             ))
-                            if let result {
-                                loweredBody.append(.copy(from: hofResult, to: result))
-                            }
                             continue
                         }
                     }
