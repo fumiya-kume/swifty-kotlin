@@ -539,6 +539,19 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite File(path) → kk_file_new(path) (STDLIB-565) ---
+                    if callee == lookup.fileConstructorName {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite arrayOf → kk_array_of ---
                     if lookup.arrayOfFactoryNames.contains(callee) {
                         let count = arguments.count
