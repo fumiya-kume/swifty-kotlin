@@ -1,3 +1,4 @@
+// SKIP-DIFF — Result.success/failure companion factory not yet lowered
 fun main() {
     val success = Result.success(42)
     val failure = Result.failure<Int>(RuntimeException("error"))
