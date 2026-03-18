@@ -76,12 +76,13 @@ public func kk_precondition_assert_lazy(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
-    preconditionWithLazyMessage(
+    return preconditionWithLazyMessage(
         condition,
         fnPtr,
         closureRaw,
         outThrown,
-        defaultMessage: "AssertionError: Assertion failed."
+        defaultMessage: "AssertionError: Assertion failed.",
+        messagePrefix: "AssertionError: "
     )
 }
 
@@ -113,8 +114,9 @@ private func preconditionWithLazyMessage(
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?,
-    exceptionPrefix: String,
-    defaultMessage: String
+    exceptionPrefix: String? = nil,
+    defaultMessage: String,
+    messagePrefix: String? = nil
 ) -> Int {
     outThrown?.pointee = 0
     guard condition == 0 else {
@@ -147,7 +149,15 @@ private func preconditionWithLazyMessage(
     // Prepend the exception type prefix for consistency with non-lazy paths
     // (e.g. "IllegalArgumentException: custom message").
     let message = runtimePreconditionMessage(from: rawMessage)
-    outThrown?.pointee = runtimeAllocateThrowable(message: "\(exceptionPrefix): \(message)")
+    let formatted: String
+    if let prefix = messagePrefix {
+        formatted = "\(prefix)\(message)"
+    } else if let prefix = exceptionPrefix {
+        formatted = "\(prefix): \(message)"
+    } else {
+        formatted = message
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: formatted)
     return 0
 }
 
