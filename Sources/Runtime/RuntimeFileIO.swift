@@ -12,6 +12,16 @@ private func runtimeFileBox(from raw: Int) -> RuntimeFileBox? {
     return tryCast(ptr, to: RuntimeFileBox.self)
 }
 
+/// Split file content into lines, matching Kotlin behaviour:
+/// - Empty string returns an empty array (not `[""]`).
+/// - A trailing newline does NOT produce a final empty element.
+private func fileSplitLines(_ content: String) -> [String] {
+    if content.isEmpty { return [] }
+    var lines = content.components(separatedBy: "\n")
+    if lines.last == "" { lines.removeLast() }
+    return lines
+}
+
 private func fileMakeStringRaw(_ value: String) -> Int {
     Int(bitPattern: value.withCString { cstr in
         cstr.withMemoryRebound(to: UInt8.self, capacity: value.utf8.count) { pointer in
@@ -74,7 +84,7 @@ public func kk_file_readLines(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
     do {
         let content = try String(contentsOfFile: file.path, encoding: .utf8)
-        let lines = content.components(separatedBy: "\n")
+        let lines = fileSplitLines(content)
         return registerRuntimeObject(RuntimeListBox(elements: lines.map { fileMakeStringRaw($0) }))
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
@@ -140,7 +150,7 @@ public func kk_file_forEachLine(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Cannot read file \(file.path)")
         return 0
     }
-    let lines = content.components(separatedBy: "\n")
+    let lines = fileSplitLines(content)
     for line in lines {
         let lineRaw = fileMakeStringRaw(line)
         var thrown = 0
@@ -151,6 +161,30 @@ public func kk_file_forEachLine(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         }
     }
     return 0
+}
+
+// MARK: - STDLIB-566: File.useLines {}
+
+@_cdecl("kk_file_useLines")
+public func kk_file_useLines(_ fileRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_useLines received invalid File handle")
+    }
+    guard let content = try? String(contentsOfFile: file.path, encoding: .utf8) else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: Cannot read file \(file.path)")
+        return 0
+    }
+    let lines = fileSplitLines(content)
+    let linesList = RuntimeListBox(elements: lines.map { fileMakeStringRaw($0) })
+    let linesListRaw = registerRuntimeObject(linesList)
+    var thrown = 0
+    let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: linesListRaw, outThrown: &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return 0
+    }
+    return result
 }
 
 // MARK: - STDLIB-323: File filesystem operations

@@ -674,6 +674,16 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-581: String.toByteArray(charset)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toByteArray_charset",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_char_isDigit",
             parameters: [
@@ -1145,16 +1155,25 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-534: String?.orEmpty()
+        RuntimeABIFunctionSpec(
+            name: "kk_string_orEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
     ]
 
-    public static let printlnFunctions: [RuntimeABIFunctionSpec] = [
+    public static let consolePrintFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
             name: "kk_print_any",
             parameters: [
                 RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_any",
@@ -1162,7 +1181,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "obj", type: .nullableOpaquePointer),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_bool",
@@ -1170,13 +1189,19 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .void,
-            section: "Println"
+            section: "Print"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_print_noarg",
+            parameters: [],
+            returnType: .void,
+            section: "Print"
         ),
         RuntimeABIFunctionSpec(
             name: "kk_println_newline",
             parameters: [],
             returnType: .void,
-            section: "Println"
+            section: "Print"
         ),
     ]
 
@@ -1618,7 +1643,7 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Channel (P5-134)
+        // Channel (CORO-001)
         RuntimeABIFunctionSpec(
             name: "kk_channel_create",
             parameters: [
@@ -1650,6 +1675,14 @@ public enum RuntimeABISpec {
             name: "kk_channel_close",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_is_closed_token",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
@@ -2583,6 +2616,27 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonPrefixWith_ignoreCase",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_commonSuffixWith_ignoreCase",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "other", type: .intptr),
+                RuntimeABIParameter(name: "ignoreCaseRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-316: String.zipWithNext()
         RuntimeABIFunctionSpec(
             name: "kk_string_zipWithNext",
@@ -2750,6 +2804,17 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "FileIO"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_file_useLines",
+            parameters: [
+                RuntimeABIParameter(name: "fileRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "FileIO"
+        ),
     ]
 
     // MARK: - Duration / measureTime (STDLIB-230/231)
@@ -2851,7 +2916,7 @@ public enum RuntimeABISpec {
         memoryFunctions
             + exceptionFunctions
             + stringFunctions
-            + printlnFunctions
+            + consolePrintFunctions
             + ioFunctions
             + systemFunctions
             + gcFunctions

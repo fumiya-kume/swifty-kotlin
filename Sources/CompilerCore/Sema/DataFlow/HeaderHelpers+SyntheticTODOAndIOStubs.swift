@@ -58,6 +58,15 @@ extension DataFlowSemaPhase {
         registerSyntheticTopLevelFunction(
             named: "print",
             packageFQName: kotlinIOPkg,
+            parameters: [],
+            returnType: types.unitType,
+            externalLinkName: "kk_print_noarg",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticTopLevelFunction(
+            named: "print",
+            packageFQName: kotlinIOPkg,
             parameters: [(name: "message", type: types.makeNullable(types.anyType))],
             returnType: types.unitType,
             externalLinkName: "kk_print_any",
@@ -856,6 +865,22 @@ extension DataFlowSemaPhase {
             parameters: [(name: "value", type: scopeTypeParamType)],
             returnType: types.unitType,
             externalLinkName: "kk_sequence_builder_yield",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-553: yieldAll(iterable) — yields all elements from a collection/sequence
+        // Note: Uses `anyType` because Kotlin's Iterable<T> interface is not yet
+        // fully modeled in the type system. The runtime validates the actual collection
+        // kind (List, Array, Set, Sequence) and rejects unsupported types at runtime.
+        registerSequenceScopeMember(
+            named: "yieldAll",
+            sequenceScopeSymbol: scopeSymbol,
+            sequenceScopeFQName: scopeFQName,
+            receiverType: scopeReceiverType,
+            parameters: [(name: "elements", type: types.anyType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_sequence_builder_yieldAll",
             symbols: symbols,
             interner: interner
         )

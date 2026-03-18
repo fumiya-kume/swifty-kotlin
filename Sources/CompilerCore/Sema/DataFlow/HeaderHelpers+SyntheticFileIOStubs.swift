@@ -182,6 +182,27 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.useLines {} (STDLIB-566)
+
+        // (List<String>) -> T  (represented as Any for generic return)
+        let listOfStringToAnyType = types.make(.functionType(FunctionType(
+            params: [listOfStringType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        registerFileMemberFunction(
+            named: "useLines",
+            externalLinkName: "kk_file_useLines",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("block", listOfStringToAnyType)],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File filesystem operations (STDLIB-323)
 
         registerFileMemberFunction(

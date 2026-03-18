@@ -9,6 +9,7 @@ public extension RuntimeABIExterns {
         kk_sequence_to_list,
         kk_sequence_builder_create,
         kk_sequence_builder_yield,
+        kk_sequence_builder_yieldAll,
         kk_sequence_builder_build,
         kk_iterator_builder_build,
         kk_iterator_builder_yield,
@@ -92,6 +93,13 @@ public extension RuntimeABIExterns {
 
     static let kk_sequence_builder_yield = ExternDecl(
         name: "kk_sequence_builder_yield",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-553: yieldAll(iterable)
+    static let kk_sequence_builder_yieldAll = ExternDecl(
+        name: "kk_sequence_builder_yieldAll",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )

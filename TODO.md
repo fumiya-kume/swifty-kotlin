@@ -18,11 +18,11 @@
 ## 未完了バックログ
 
 
-- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
+- [x] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
   - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
-  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
-  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
-  - [ ] lazy message throw の回帰ケースを追加する
+  - [x] [Sources/Runtime/RuntimePreconditions.swift](Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
+  - [x] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
+  - [x] lazy message throw の回帰ケースを追加する
   - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
 
 - [ ] STDLIB-258: `assert()` 関数を `kotlin.Preconditions` に追加する
@@ -186,7 +186,7 @@
 
 #### E. kotlin.sequences — 単一 API 単位
 
-- [ ] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
+- [x] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
 - [ ] STDLIB-554: `List.asSequence()` の stub と Lowering
 - [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
 - [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張
@@ -214,13 +214,13 @@
 
 - [ ] STDLIB-573: `String.encodeToByteArray(charset)` の実装
 - [ ] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
-- [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
-- [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
+- [x] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
+- [x] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
 - [ ] STDLIB-579: `buildString.appendLine` の完全性確認
 - [ ] STDLIB-580: `buildString.appendRange` の完全性確認
-- [ ] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
+- [x] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
 
 #### H. kotlin.time / kotlin.system
 
@@ -284,8 +284,8 @@
  
 - [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
   - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
-- [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
-  - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
+- [x] STDLIB-250: `kk_with_context` を非同期実行に対応させる
+  - ディスパッチャタグを GCD キューにマッピングし、ブロックを対象キュー上で実行するように変更済み
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
