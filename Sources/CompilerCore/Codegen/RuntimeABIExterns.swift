@@ -889,6 +889,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_readlnOrNull = ExternDecl(
+        name: "kk_readlnOrNull",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
     // MARK: - System
 
     public static let kk_system_exitProcess = ExternDecl(
@@ -1122,6 +1128,44 @@ public enum RuntimeABIExterns {
     public static let kk_flow_release = ExternDecl(
         name: "kk_flow_release",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // Flow terminal operators & flowOf (STDLIB-088)
+
+    public static let kk_flow_of = ExternDecl(
+        name: "kk_flow_of",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_to_list = ExternDecl(
+        name: "kk_flow_to_list",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_first = ExternDecl(
+        name: "kk_flow_first",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_count = ExternDecl(
+        name: "kk_flow_count",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_fold = ExternDecl(
+        name: "kk_flow_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_reduce = ExternDecl(
+        name: "kk_flow_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -1909,6 +1953,37 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-567: File.bufferedReader()
+    public static let kk_file_bufferedReader = ExternDecl(
+        name: "kk_file_bufferedReader",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLine = ExternDecl(
+        name: "kk_buffered_reader_readLine",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLines = ExternDecl(
+        name: "kk_buffered_reader_readLines",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_close = ExternDecl(
+        name: "kk_buffered_reader_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_useLines = ExternDecl(
+        name: "kk_file_useLines",
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -1924,6 +1999,11 @@ public enum RuntimeABIExterns {
         kk_file_mkdirs,
         kk_file_listFiles,
         kk_file_walk,
+        kk_file_bufferedReader,
+        kk_buffered_reader_readLine,
+        kk_buffered_reader_readLines,
+        kk_buffered_reader_close,
+        kk_file_useLines,
     ]
 
     public static let regexExterns: [ExternDecl] = [
@@ -2086,6 +2166,7 @@ public enum RuntimeABIExterns {
             // IO
             kk_readline,
             kk_readln,
+            kk_readlnOrNull,
             // System
             kk_system_exitProcess,
             kk_system_currentTimeMillis,
@@ -2128,6 +2209,13 @@ public enum RuntimeABIExterns {
             kk_flow_collect,
             kk_flow_retain,
             kk_flow_release,
+            // Flow terminal operators & flowOf (STDLIB-088)
+            kk_flow_of,
+            kk_flow_to_list,
+            kk_flow_first,
+            kk_flow_count,
+            kk_flow_fold,
+            kk_flow_reduce,
             // Dispatchers / withContext
             kk_dispatcher_default,
             kk_dispatcher_io,
@@ -2207,6 +2295,7 @@ public enum RuntimeABIExterns {
             kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
+        all += callableRefExterns
         all += [
             // Delegate
             kk_lazy_create,
