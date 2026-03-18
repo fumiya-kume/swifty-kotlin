@@ -65,7 +65,9 @@ final class ABILoweringPass: LoweringPass {
             while idx < function.body.count {
                 let instruction = function.body[idx]
                 if case let .virtualCall(vcSymbol, vcCallee, vcReceiver, vcArguments, vcResult, _, vcThrownResult, vcDispatch) = instruction {
-                    let vcCanThrow = !nonThrowingCallees.contains(vcCallee)
+                    let vcIsClosureRelated = module.nonThrowingClosureCallees.contains(vcCallee)
+                    let vcCanThrow = !vcIsClosureRelated
+                        && !nonThrowingCallees.contains(vcCallee)
                     var vcSignature: FunctionSignature?
                     if let symbols, let vcSymbol {
                         vcSignature = symbols.functionSignature(for: vcSymbol)
@@ -196,7 +198,14 @@ final class ABILoweringPass: LoweringPass {
                     guard let s = callSymbol else { return false }
                     return SyntheticSymbolScheme.isLikelySyntheticPropertyAccessor(s)
                 }()
-                let canThrow = !isSyntheticAccessor && !nonThrowingCallees.contains(callee)
+                // Closure-related callees (kk_closure_invoke_* wrappers and their
+                // internal kk_lambda_* targets) are registered as non-throwing by
+                // LambdaClosureConversionPass via module.nonThrowingClosureCallees.
+                // This avoids brittle string-prefix coupling between passes.
+                let isClosureRelatedCallee = module.nonThrowingClosureCallees.contains(callee)
+                let canThrow = !isSyntheticAccessor
+                    && !isClosureRelatedCallee
+                    && !nonThrowingCallees.contains(callee)
 
                 var signature: FunctionSignature?
                 if let symbols, let callSymbol {

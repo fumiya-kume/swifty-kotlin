@@ -243,10 +243,19 @@ public final class KIRModule {
     public let arena: KIRArena
     public private(set) var executedLowerings: [String]
 
+    /// Callee names that are known non-throwing, registered by earlier passes
+    /// (e.g. LambdaClosureConversionPass).  ABILoweringPass consults this set
+    /// instead of relying solely on string-prefix conventions.
+    public private(set) var nonThrowingClosureCallees: Set<InternedString> = []
+
     public init(files: [KIRFile], arena: KIRArena, executedLowerings: [String] = []) {
         self.files = files
         self.arena = arena
         self.executedLowerings = executedLowerings
+    }
+
+    public func registerNonThrowingClosureCallee(_ name: InternedString) {
+        nonThrowingClosureCallees.insert(name)
     }
 
     public var functionCount: Int {
