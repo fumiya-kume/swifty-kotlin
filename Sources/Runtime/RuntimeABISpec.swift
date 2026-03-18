@@ -1637,7 +1637,7 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
-        // Channel (P5-134)
+        // Channel (CORO-001)
         RuntimeABIFunctionSpec(
             name: "kk_channel_create",
             parameters: [
@@ -1669,6 +1669,14 @@ public enum RuntimeABISpec {
             name: "kk_channel_close",
             parameters: [
                 RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_channel_is_closed_token",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
