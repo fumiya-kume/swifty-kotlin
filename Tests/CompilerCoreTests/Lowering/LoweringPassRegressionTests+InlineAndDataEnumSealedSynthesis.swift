@@ -506,10 +506,12 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(functionNames.contains("toString"), "Missing toString, got: \(functionNames)")
         XCTAssertTrue(functionNames.contains("equals"), "Missing equals, got: \(functionNames)")
 
-        // Verify toString body uses kk_string_concat and kk_any_to_string
+        // Verify toString body uses StringBuilder + kk_any_to_string
         let toStringFn = try findKIRFunction(named: "toString", in: module, interner: interner)
         let toStringCallees = extractCallees(from: toStringFn.body, interner: interner)
-        XCTAssertTrue(toStringCallees.contains("kk_string_concat"), "toString should use kk_string_concat")
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_new_from_string"), "toString should create a StringBuilder from the class prefix")
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_append_obj"), "toString should append labels and values via StringBuilder")
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_toString"), "toString should convert the StringBuilder back to String")
         XCTAssertTrue(toStringCallees.contains("kk_any_to_string"), "toString should use kk_any_to_string")
         // Should call property getters for x and y
         XCTAssertTrue(toStringCallees.contains("x$get"), "toString should call x$get")

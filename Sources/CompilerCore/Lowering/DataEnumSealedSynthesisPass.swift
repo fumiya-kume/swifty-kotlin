@@ -214,11 +214,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
     /// Returns the primary-constructor data properties of a data class, sorted by constructor order.
     private func dataClassPropertySymbols(owner: SemanticSymbol, symbols: SymbolTable) -> [SemanticSymbol] {
-        let primaryConstructorParamNames: [InternedString] = symbols.children(ofFQName: owner.fqName)
-            .compactMap { symbols.symbol($0) }
-            .filter { $0.kind == .constructor }
-            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
-            .first
+        let primaryConstructorParamNames: [InternedString] = primaryConstructorSymbol(owner: owner, symbols: symbols)
             .flatMap { constructor in
                 symbols.functionSignature(for: constructor.id)?.valueParameterSymbols.compactMap { paramSymbol in
                     symbols.symbol(paramSymbol)?.name
@@ -235,6 +231,20 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 .map { ($0.name, $0) }
         )
         return primaryConstructorParamNames.compactMap { propertiesByName[$0] }
+    }
+
+    private func primaryConstructorSymbol(owner: SemanticSymbol, symbols: SymbolTable) -> SemanticSymbol? {
+        symbols.children(ofFQName: owner.fqName)
+            .compactMap { symbols.symbol($0) }
+            .filter { $0.kind == .constructor }
+            .min { lhs, rhs in
+                let lhsOffset = lhs.declSite?.start.offset ?? Int.max
+                let rhsOffset = rhs.declSite?.start.offset ?? Int.max
+                if lhsOffset != rhsOffset {
+                    return lhsOffset < rhsOffset
+                }
+                return lhs.id.rawValue < rhs.id.rawValue
+            }
     }
 
     private func anyToStringTag(for type: TypeID, sema: SemaModule) -> Int64 {
@@ -651,8 +661,19 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             type: stringType
         )
         body.append(.constValue(result: prefixExpr, value: .stringLiteral(prefixStr)))
-
-        var accumulatorExpr = prefixExpr
+        let builderType = sema.types.anyType
+        let builderExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: builderType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_builder_new_from_string"),
+            arguments: [prefixExpr],
+            result: builderExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
 
         for (index, property) in properties.enumerated() {
             let propName = interner.resolve(property.name)
@@ -665,15 +686,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             )
             body.append(.constValue(result: labelExpr, value: .stringLiteral(labelInterned)))
 
-            let concatLabel = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)),
-                type: stringType
-            )
             body.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_string_concat"),
-                arguments: [accumulatorExpr, labelExpr],
-                result: concatLabel,
+                callee: interner.intern("kk_string_builder_append_obj"),
+                arguments: [builderExpr, labelExpr],
+                result: builderExpr,
                 canThrow: false,
                 thrownResult: nil
             ))
@@ -719,21 +736,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 thrownResult: nil
             ))
 
-            // Concatenate
-            let concatValue = module.arena.appendExpr(
-                .temporary(Int32(module.arena.expressions.count)),
-                type: stringType
-            )
             body.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_string_concat"),
-                arguments: [concatLabel, propStr],
-                result: concatValue,
+                callee: interner.intern("kk_string_builder_append_obj"),
+                arguments: [builderExpr, propStr],
+                result: builderExpr,
                 canThrow: false,
                 thrownResult: nil
             ))
-
-            accumulatorExpr = concatValue
         }
 
         // Append closing ")"
@@ -744,14 +754,23 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
         body.append(.constValue(result: suffixExpr, value: .stringLiteral(suffixStr)))
 
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_builder_append_obj"),
+            arguments: [builderExpr, suffixExpr],
+            result: builderExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
         let resultExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
             type: stringType
         )
         body.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_string_concat"),
-            arguments: [accumulatorExpr, suffixExpr],
+            callee: interner.intern("kk_string_builder_toString"),
+            arguments: [builderExpr],
             result: resultExpr,
             canThrow: false,
             thrownResult: nil
