@@ -1191,6 +1191,36 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads) ---
+
+        registerSyntheticStringExtensionFunction(
+            named: "commonPrefixWith",
+            externalLinkName: "kk_string_commonPrefixWith_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "commonSuffixWith",
+            externalLinkName: "kk_string_commonSuffixWith_ignoreCase",
+            receiverType: stringType,
+            parameters: [
+                ("other", stringType, false, false),
+                ("ignoreCase", boolType, false, false),
+            ],
+            returnType: stringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-316: String.zipWithNext ---
 
         let pairFQName: [InternedString] = [

@@ -795,6 +795,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+    public static let kk_string_commonPrefixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonPrefixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_commonSuffixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonSuffixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-316: String.zipWithNext()
     public static let kk_string_zipWithNext = ExternDecl(
         name: "kk_string_zipWithNext",
@@ -2176,6 +2189,8 @@ public enum RuntimeABIExterns {
             kk_string_windowed,
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
+            kk_string_commonPrefixWith_ignoreCase,
+            kk_string_commonSuffixWith_ignoreCase,
             kk_string_zipWithNext,
             kk_string_orEmpty,
             // Print / Println
