@@ -18,11 +18,11 @@
 ## 未完了バックログ
 
 
-- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
+- [x] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
   - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
-  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
-  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
-  - [ ] lazy message throw の回帰ケースを追加する
+  - [x] [Sources/Runtime/RuntimePreconditions.swift](Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
+  - [x] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
+  - [x] lazy message throw の回帰ケースを追加する
   - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
 
 - [ ] STDLIB-258: `assert()` 関数を `kotlin.Preconditions` に追加する
