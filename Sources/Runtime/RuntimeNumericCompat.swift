@@ -240,7 +240,7 @@ public func kk_math_floor(_ value: Int) -> Int {
 
 @_cdecl("kk_math_round")
 public func kk_math_round(_ value: Int) -> Int {
-    kk_double_to_bits(rint(kk_bits_to_double(value)))
+    kk_double_to_bits(kk_bits_to_double(value).rounded(.toNearestOrEven))
 }
 
 // Trigonometric functions (STDLIB-430)
@@ -399,9 +399,29 @@ public func kk_math_asin_float(_ v: Int) -> Int {
 public func kk_math_acos_float(_ v: Int) -> Int {
     let f = kk_bits_to_float(v)
     return kk_float_to_bits(acosf(f))
+/// Helper: decode bit-encoded Float, apply a unary operation, re-encode.
+/// Reduces boilerplate across the Float math entry points below.
+private func applyFloatUnaryOp(_ v: Int, _ op: (Float) -> Float) -> Int {
+    kk_float_to_bits(op(kk_bits_to_float(v)))
+}
+@_cdecl("kk_math_sin_float")
+    applyFloatUnaryOp(v, sinf)
+}
+@_cdecl("kk_math_cos_float")
+    applyFloatUnaryOp(v, cosf)
+}
+@_cdecl("kk_math_tan_float")
+    applyFloatUnaryOp(v, tanf)
+}
+@_cdecl("kk_math_asin_float")
+    applyFloatUnaryOp(v, asinf)
+}
+@_cdecl("kk_math_acos_float")
+    applyFloatUnaryOp(v, acosf)
+}
+@_cdecl("kk_math_atan_float")
 public func kk_math_atan_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(atanf(f))
+    applyFloatUnaryOp(v, atanf)
 }
 
 @_cdecl("kk_math_atan2_float")
@@ -412,19 +432,22 @@ public func kk_math_atan2_float(_ y: Int, _ x: Int) -> Int {
 @_cdecl("kk_math_sqrt_float")
 public func kk_math_sqrt_float(_ value: Int) -> Int {
     kk_float_to_bits(sqrt(kk_bits_to_float(value)))
+public func kk_math_sqrt_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, sqrtf)
 }
 
 @_cdecl("kk_math_round_float")
 public func kk_math_round_float(_ value: Int) -> Int {
     kk_float_to_bits(round(kk_bits_to_float(value)))
 public func kk_math_round_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(rintf(f))
+    applyFloatUnaryOp(v) { $0.rounded(.toNearestOrEven) }
 }
 
 @_cdecl("kk_math_ceil_float")
 public func kk_math_ceil_float(_ value: Int) -> Int {
     kk_float_to_bits(ceil(kk_bits_to_float(value)))
+public func kk_math_ceil_float(_ v: Int) -> Int {
+    applyFloatUnaryOp(v, ceilf)
 }
 
 @_cdecl("kk_math_floor_float")
@@ -443,8 +466,7 @@ public func kk_math_ceil_float(_ v: Int) -> Int {
     let f = kk_bits_to_float(v)
     return kk_float_to_bits(ceilf(f))
 public func kk_math_floor_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(floorf(f))
+    applyFloatUnaryOp(v, floorf)
 }
 
 // MARK: - STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
