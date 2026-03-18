@@ -369,16 +369,31 @@ final class TailrecLoweringTests: XCTestCase {
         }
         XCTAssertFalse(hasDefaultStubCall, "$default stub call should have been eliminated by tailrec lowering")
 
-        // Only the first parameter (n) should be reassigned; the second
-        // parameter (acc, mask bit 1 set) should NOT have a copy target.
-        // Count copy instructions — we expect 1 copy-to-temp + 1 copy-to-param = 2
-        // (only for the non-defaulted param).
-        let copyCount = lowered.body.filter { instruction in
-            if case .copy = instruction { return true }
-            return false
-        }.count
-        // 1 argument temp + 1 param assignment = 2 copies for the single non-defaulted param
-        XCTAssertEqual(copyCount, 2, "Expected exactly 2 copy instructions (only for the non-defaulted parameter)")
+        // The first parameter (n) should be reassigned — there must be a
+        // copy whose destination is the canonical paramN expr.
+        let hasParamNCopy = lowered.body.contains { instruction in
+            guard case let .copy(_, to) = instruction else { return false }
+            if let exprKind = arena.expr(to),
+               case .symbolRef(paramN) = exprKind
+            {
+                return true
+            }
+            return to == nExpr
+        }
+        XCTAssertTrue(hasParamNCopy, "Expected a copy targeting paramN (the non-defaulted parameter)")
+
+        // The second parameter (acc, mask bit 1 set) must NOT be
+        // reassigned — no copy should target its canonical expr.
+        let hasParamAccCopy = lowered.body.contains { instruction in
+            guard case let .copy(_, to) = instruction else { return false }
+            if let exprKind = arena.expr(to),
+               case .symbolRef(paramAcc) = exprKind
+            {
+                return true
+            }
+            return to == accExpr
+        }
+        XCTAssertFalse(hasParamAccCopy, "Defaulted parameter (acc) should NOT be reassigned by tailrec lowering")
     }
 
     // MARK: - Sema warning test

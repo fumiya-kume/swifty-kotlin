@@ -108,13 +108,14 @@ final class TailrecLoweringPass: LoweringPass {
                isReturnOfResult(body[instructionIndex + 1], callResult: callResult)
             {
                 let defaultMask = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
-                    ? extractDefaultMask(arguments: arguments, body: body, arena: arena)
+                    ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
                 emitParameterReassignment(
                     arguments: arguments,
                     params: params,
                     canonicalParamExprs: canonicalParamExprs,
                     defaultMask: defaultMask,
+                    functionSymbol: functionIdentity.symbol,
                     arena: arena,
                     result: &result
                 )
@@ -131,13 +132,14 @@ final class TailrecLoweringPass: LoweringPass {
                isReturnUnitInstruction(body[instructionIndex + 1])
             {
                 let defaultMask = isDefaultStubCall(symbol: symbol, functionIdentity: functionIdentity)
-                    ? extractDefaultMask(arguments: arguments, body: body, arena: arena)
+                    ? extractDefaultMask(arguments: arguments, body: body, callIndex: instructionIndex, arena: arena)
                     : nil
                 emitParameterReassignment(
                     arguments: arguments,
                     params: params,
                     canonicalParamExprs: canonicalParamExprs,
                     defaultMask: defaultMask,
+                    functionSymbol: functionIdentity.symbol,
                     arena: arena,
                     result: &result
                 )
@@ -191,9 +193,14 @@ final class TailrecLoweringPass: LoweringPass {
     /// arguments.  The mask is always the last argument and is expected to
     /// be a constant integer literal.  Returns `nil` if the mask cannot be
     /// determined statically.
+    ///
+    /// The `callIndex` parameter limits the slow-path scan to instructions
+    /// that precede the call site, so we only pick up definitions that
+    /// dominate the use.
     private func extractDefaultMask(
         arguments: [KIRExprID],
         body: [KIRInstruction],
+        callIndex: Int,
         arena: KIRArena
     ) -> Int64? {
         guard let maskExprID = arguments.last else { return nil }
@@ -203,9 +210,12 @@ final class TailrecLoweringPass: LoweringPass {
         {
             return mask
         }
-        // Slow path: scan for a preceding constValue that defines the mask.
-        for instruction in body {
-            if case let .constValue(result, .intLiteral(value)) = instruction,
+        // Slow path: scan backwards from the call site for the closest
+        // preceding constValue that defines the mask.  Scanning only
+        // instructions before `callIndex` ensures the definition dominates
+        // the use.
+        for i in stride(from: callIndex - 1, through: 0, by: -1) {
+            if case let .constValue(result, .intLiteral(value)) = body[i],
                result == maskExprID
             {
                 return value
@@ -242,11 +252,20 @@ final class TailrecLoweringPass: LoweringPass {
     /// unchanged — they retain their value from the previous loop
     /// iteration.  Only explicitly provided arguments (mask bit 0) are
     /// reassigned.
+    ///
+    /// The default mask bits are 0-indexed on *value parameter* positions
+    /// (excluding the receiver).  When the function has a receiver
+    /// parameter (detected via `SyntheticSymbolScheme`), the receiver
+    /// occupies index 0 in both `params` and `arguments` but is not
+    /// counted in the mask.  We compute a `receiverOffset` (0 or 1) and
+    /// subtract it when testing mask bits so that bit 0 maps to the first
+    /// value parameter, bit 1 to the second, etc.
     private func emitParameterReassignment(
         arguments: [KIRExprID],
         params: [KIRParameter],
         canonicalParamExprs: [SymbolID: KIRExprID],
         defaultMask: Int64? = nil,
+        functionSymbol: SymbolID,
         arena: KIRArena,
         result: inout [KIRInstruction]
     ) {
@@ -255,15 +274,30 @@ final class TailrecLoweringPass: LoweringPass {
         // participate in parameter reassignment.
         let effectiveCount = min(arguments.count, params.count)
 
+        // Determine whether the first param is a synthetic receiver.
+        // The default mask bits do not include the receiver, so we must
+        // offset the bit index accordingly.
+        let receiverSymbol = SyntheticSymbolScheme.receiverParameterSymbol(for: functionSymbol)
+        let receiverOffset = (!params.isEmpty && params[0].symbol == receiverSymbol) ? 1 : 0
+
         // First, copy arguments into fresh temporaries to avoid
         // overwriting a parameter that is used in a later argument expression.
         var temporaries: [KIRExprID] = []
         temporaries.reserveCapacity(effectiveCount)
         for i in 0 ..< effectiveCount {
             // Skip sentinel arguments whose default mask bit is set.
-            if let mask = defaultMask, (mask >> i) & 1 != 0 {
-                temporaries.append(.invalid)
-                continue
+            // The mask is indexed on value-parameter positions (excluding
+            // the receiver), so subtract `receiverOffset`.  Also guard
+            // against shifting Int64 by >= 64 which traps in Swift.
+            if let mask = defaultMask {
+                let maskBitIndex = i - receiverOffset
+                if maskBitIndex >= 0,
+                   maskBitIndex < Int64.bitWidth,
+                   (mask >> maskBitIndex) & 1 != 0
+                {
+                    temporaries.append(.invalid)
+                    continue
+                }
             }
             let arg = arguments[i]
             let argType = arena.exprType(arg)
