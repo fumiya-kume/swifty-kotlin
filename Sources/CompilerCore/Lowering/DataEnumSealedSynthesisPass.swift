@@ -225,10 +225,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
 
         let propertiesByName = Dictionary(
-            uniqueKeysWithValues: symbols.children(ofFQName: owner.fqName)
+            symbols.children(ofFQName: owner.fqName)
                 .compactMap { symbols.symbol($0) }
                 .filter { $0.kind == .property && !$0.flags.contains(.synthetic) }
-                .map { ($0.name, $0) }
+                .map { ($0.name, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
         return primaryConstructorParamNames.compactMap { propertiesByName[$0] }
     }
