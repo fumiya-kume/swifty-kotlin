@@ -1642,13 +1642,13 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
     guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid builder handle")
     }
-    // Accept List, Array, or Sequence as the iterable source.
+    // Accept List, Array, Set, or Sequence as the iterable source.
     if let elements = runtimeSequenceSourceElements(from: collectionRaw) {
         builder.elements.append(contentsOf: elements)
     } else if let set = runtimeSetBox(from: collectionRaw) {
         builder.elements.append(contentsOf: set.elements)
     } else {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle")
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
     }
     return 0
 }
