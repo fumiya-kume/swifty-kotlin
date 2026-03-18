@@ -5,11 +5,8 @@ fun main() {
     println(runLength)
     val withLength = with("kotlin") { length }
     println(withLength)
-    val sb = StringBuilder().apply {
-        append("a")
-        append("b")
-    }
-    println(sb.toString())
+    val applyResult = "applied".apply { println(this.length) }
+    println(applyResult)
     val alsoEchoResult = "test".also { println(it) }
     println(alsoEchoResult)
 }
