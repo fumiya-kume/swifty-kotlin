@@ -150,7 +150,10 @@ extension CoroutineLoweringPass {
         _ function: KIRFunction,
         using rewrite: SuspendRewriteContext
     ) -> [KIRInstruction] {
-        let symbolByExprRaw = propagatedSymbolReferences(for: function)
+        let symbolByExprRaw = propagatedSymbolReferences(
+            for: function,
+            callableRefTagFunctionCallee: rewrite.ctx.interner.intern("kk_callable_ref_tag_kfunction")
+        )
         var loweredBody: [KIRInstruction] = []
         loweredBody.reserveCapacity(function.body.count)
 
@@ -210,7 +213,10 @@ extension CoroutineLoweringPass {
         return loweredBody
     }
 
-    func propagatedSymbolReferences(for function: KIRFunction) -> [Int32: SymbolID] {
+    func propagatedSymbolReferences(
+        for function: KIRFunction,
+        callableRefTagFunctionCallee: InternedString
+    ) -> [Int32: SymbolID] {
         var symbolByExprRaw: [Int32: SymbolID] = [:]
         var propagated = true
 
@@ -230,6 +236,17 @@ extension CoroutineLoweringPass {
                         symbolByExprRaw[to.rawValue] = symbol
                         propagated = true
                     }
+                case let .call(_, callee, arguments, result, _, _, _):
+                    guard callee == callableRefTagFunctionCallee,
+                          let result,
+                          let callableExpr = arguments.first,
+                          let symbol = symbolByExprRaw[callableExpr.rawValue],
+                          symbolByExprRaw[result.rawValue] != symbol
+                    else {
+                        continue
+                    }
+                    symbolByExprRaw[result.rawValue] = symbol
+                    propagated = true
                 default:
                     continue
                 }
