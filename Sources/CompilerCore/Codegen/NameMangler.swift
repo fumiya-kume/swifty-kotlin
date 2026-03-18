@@ -197,6 +197,20 @@ public final class NameMangler {
             return applyNullability(encoded, nullability: nullability)
 
         case let .classType(classType):
+            // Value class mangling: we intentionally do NOT substitute the
+            // underlying type here. ABILoweringPass+BoxingRules disables
+            // value class unboxing at the ABI level (resolveValueClassKind
+            // is a no-op), so value classes remain heap-allocated class
+            // objects at runtime. The mangled name must reflect the actual
+            // ABI — encoding the wrapper class name, not the underlying
+            // primitive — to avoid signature collisions between overloads
+            // like `fun f(Meter)` and `fun f(Int)`.
+            //
+            // When end-to-end value class unboxing is re-enabled in the
+            // future (both ABILoweringPass and ValueClassUnboxingPass),
+            // this block should be updated to encode the underlying type
+            // for non-null value classes.
+
             let className: String = if let classSymbol = symbols.symbol(classType.classSymbol) {
                 classSymbol.fqName
                     .map { render(name: $0, nameResolver: nameResolver) }

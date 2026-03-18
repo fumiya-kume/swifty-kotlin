@@ -6,17 +6,10 @@ extension ABILoweringPass {
         types: TypeSystem,
         symbols: SymbolTable?
     ) -> TypeKind {
-        guard let symbols else { return kind }
-        if case let .classType(ct) = kind {
-            // Do not resolve nullable value class types — they are boxed at the ABI level.
-            guard ct.nullability == .nonNull else { return kind }
-            let sym = symbols.symbol(ct.classSymbol)
-            if let sym, sym.flags.contains(.valueType),
-               let underlyingType = symbols.valueClassUnderlyingType(for: ct.classSymbol)
-            {
-                return types.kind(of: underlyingType)
-            }
-        }
+        // Value class unboxing at the ABI level is disabled because the KIR
+        // emission already uses kk_array_get_inbounds for property access,
+        // which requires the value to remain a heap object. Unboxing here
+        // without also rewriting all property accesses causes crashes.
         return kind
     }
 
@@ -31,22 +24,12 @@ extension ABILoweringPass {
         let argKind = resolveValueClassKind(rawArgKind, types: types, symbols: symbols)
         let paramKind = types.kind(of: paramType)
 
-        // Treat Any/Any? and non-value-class reference types as boxing boundaries.
+        // Treat Any/Any? and reference types as boxing boundaries.
         let isReferenceBoxingBoundary: Bool = {
             if isAnyOrNullableAny(paramKind) {
                 return true
             }
-            if case let .classType(ct) = paramKind {
-                // If we know this is a non-null value class, do not treat it as a boxing boundary.
-                // Nullable value class types (e.g. Meter?) are boxed at ABI level and ARE boundaries.
-                if let symbols,
-                   let sym = symbols.symbol(ct.classSymbol),
-                   sym.flags.contains(.valueType),
-                   ct.nullability == .nonNull
-                {
-                    return false
-                }
-                // Otherwise, any non-value-class reference type is a boxing boundary.
+            if case .classType = paramKind {
                 return true
             }
             return false
@@ -181,14 +164,9 @@ extension ABILoweringPass {
     }
 
     func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
-        if case let .classType(ct) = kind {
-            if let symbols,
-               let sym = symbols.symbol(ct.classSymbol),
-               sym.flags.contains(.valueType),
-               ct.nullability == .nonNull
-            {
-                return false
-            }
+        // All class types are treated as reference types at the ABI level,
+        // including value classes (see resolveValueClassKind comment).
+        if case .classType = kind {
             return true
         }
         return false

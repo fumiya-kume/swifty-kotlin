@@ -156,6 +156,13 @@ extension DataFlowSemaPhase {
         if modifiers.contains(.inner) { value.insert(.innerClass) }
         if modifiers.contains(.abstract) { value.insert(.abstractType) }
         if modifiers.contains(.open) { value.insert(.openType) }
+        // Note: .valueType is intentionally NOT set here. The `.value`
+        // modifier should only produce the `.valueType` flag for class
+        // declarations, which is handled explicitly in
+        // HeaderCollection.collectHeader (classDecl branch). Setting it
+        // here would incorrectly flag non-class declarations (functions,
+        // interfaces, etc.) if the parser ever attaches a `.value`
+        // modifier to them.
     }
 
     private func insertMemberFlags(
