@@ -185,7 +185,14 @@ extension CollectionLiteralLoweringPass {
             sequenceExprIDs: &sequenceExprIDs,
             stringExprIDs: &stringExprIDs
         )
-        // STDLIB-565: Classify File constructor calls
+        // STDLIB-565: Classify File constructor calls.
+        // KNOWN LIMITATION: Only direct File("...") / kk_file_new constructor
+        // calls are seeded here.  File receivers originating from function
+        // parameters, return values, or field loads are not tracked, so their
+        // member calls will fall through to the default virtualCall path.  A
+        // future improvement could use the receiver's static type for dispatch
+        // instead of *ExprIDs membership (same pattern as the sequence rewrite
+        // limitation noted above).
         if let result,
            callee == lookup.fileConstructorName || callee == lookup.kkFileNewName
         {

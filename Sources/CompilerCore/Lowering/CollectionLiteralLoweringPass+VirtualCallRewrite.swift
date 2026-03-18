@@ -1632,28 +1632,48 @@ extension CollectionLiteralLoweringPass {
         }
 
         // listFiles() → kk_file_listFiles (returns List<File>?)
+        // Track result in listExprIDs so downstream list HOF rewrites fire
+        // after null-check / safe-call unwrapping propagates via .copy.
         if callee == lookup.listFilesName, arguments.isEmpty {
+            let listResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkFileListFilesName,
                 arguments: [receiver],
-                result: result,
+                result: listResult,
                 canThrow: false,
                 thrownResult: nil
             ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(listResult.rawValue)
+                loweredBody.append(.copy(from: listResult, to: result))
+            }
             return true
         }
 
         // walk() → kk_file_walk (returns Sequence<File> represented as list)
+        // Track result in listExprIDs so chained operations like
+        // file.walk().forEach { ... } are correctly rewritten.
         if callee == lookup.walkName, arguments.isEmpty {
+            let walkResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
             loweredBody.append(.call(
                 symbol: nil,
                 callee: lookup.kkFileWalkName,
                 arguments: [receiver],
-                result: result,
+                result: walkResult,
                 canThrow: false,
                 thrownResult: nil
             ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(walkResult.rawValue)
+                loweredBody.append(.copy(from: walkResult, to: result))
+            }
             return true
         }
 
