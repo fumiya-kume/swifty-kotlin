@@ -280,6 +280,21 @@ extension BuildKIRRegressionTests {
             if case let .call(_, _, arguments, _, _, _, _) = firstOpIsCall {
                 XCTAssertEqual(arguments.count, 2, "kk_op_is should receive exception value and type token.")
             }
+
+            // Verify that the UNKNOWN-token (0) comparison gates the kk_op_is call:
+            // There should be a constValue of 0 and a binary(op: .equal) comparing
+            // exceptionTypeSlot against that zero sentinel.
+            let zeroConstants = body.filter { instruction in
+                guard case let .constValue(_, value) = instruction else { return false }
+                return value == .intLiteral(0)
+            }
+            XCTAssertGreaterThanOrEqual(zeroConstants.count, 1, "Expected at least one constValue(0) for the UNKNOWN-token sentinel.")
+
+            let equalityChecks = body.filter { instruction in
+                guard case .binary(op: .equal, _, _, _) = instruction else { return false }
+                return true
+            }
+            XCTAssertGreaterThanOrEqual(equalityChecks.count, 2, "Expected at least two equality checks: one for exact token match and one for UNKNOWN-token (0) comparison.")
         }
     }
 

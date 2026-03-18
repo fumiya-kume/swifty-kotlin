@@ -357,7 +357,11 @@ final class ControlFlowLowerer {
             let clause = catchClauses[0]
             let binding = catchBindings[0]
             let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+            let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
+            let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
             instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+            instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
+            instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
 
             let noMatchLabel = driver.ctx.makeLoopLabel()
             if !isCatchAllType(binding.parameterType, sema: sema, interner: interner) {
@@ -377,6 +381,9 @@ final class ControlFlowLowerer {
                         exceptionSlot: exceptionSlot,
                         exceptionTypeSlot: exceptionTypeSlot,
                         matchResult: matchResult,
+                        unknownTypeToken: sharedUnknownToken,
+                        trueValue: trueValue,
+                        falseValue: falseValue,
                         boolType: boolType,
                         intType: intType,
                         sema: sema,
@@ -439,7 +446,11 @@ final class ControlFlowLowerer {
             instructions.append(.jump(finallyLabel))
         } else {
             let falseValue = arena.appendExpr(.boolLiteral(false), type: boolType)
+            let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
+            let sharedUnknownToken = arena.appendExpr(.intLiteral(0), type: intType)
             instructions.append(.constValue(result: falseValue, value: .boolLiteral(false)))
+            instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
+            instructions.append(.constValue(result: sharedUnknownToken, value: .intLiteral(0)))
             instructions.append(.jump(catchCheckLabels[0]))
 
             for index in catchClauses.indices {
@@ -464,6 +475,9 @@ final class ControlFlowLowerer {
                             exceptionSlot: exceptionSlot,
                             exceptionTypeSlot: exceptionTypeSlot,
                             matchResult: matchResult,
+                            unknownTypeToken: sharedUnknownToken,
+                            trueValue: trueValue,
+                            falseValue: falseValue,
                             boolType: boolType,
                             intType: intType,
                             sema: sema,
@@ -600,11 +614,18 @@ final class ControlFlowLowerer {
     ///   if !typeUnknown -> matchResult = false
     ///   matchResult = kk_op_is(exceptionSlot, catchTypeToken)  // runtime fallback
     /// ```
-    func emitExceptionTypeCheck(
+    ///
+    /// Shared boolean/int constants (`unknownTypeToken`, `trueValue`, `falseValue`) are
+    /// created once per try/catch block by the caller and passed in to avoid emitting
+    /// duplicate `constValue` instructions for each catch clause.
+    private func emitExceptionTypeCheck(
         catchType: TypeID,
         exceptionSlot: KIRExprID,
         exceptionTypeSlot: KIRExprID,
         matchResult: KIRExprID,
+        unknownTypeToken: KIRExprID,
+        trueValue: KIRExprID,
+        falseValue: KIRExprID,
         boolType: TypeID,
         intType: TypeID,
         sema: SemaModule,
@@ -612,18 +633,13 @@ final class ControlFlowLowerer {
         arena: KIRArena,
         instructions: inout [KIRInstruction]
     ) {
-        // NOTE: Each invocation emits fresh constValue instructions for the catch type
-        // token, zero sentinel, true, and false. This is acceptable for correctness since
-        // each KIR expr ID must be unique, but if IR size or compile time becomes a concern,
-        // consider hoisting shared boolean/int constants from the caller and passing them in.
+        // Per-catch: only the encoded type token is unique to each clause.
         let encodedToken = RuntimeTypeCheckToken.encode(type: catchType, sema: sema, interner: interner)
         let tokenExpr = arena.appendExpr(.intLiteral(encodedToken), type: intType)
-        let unknownTypeToken = arena.appendExpr(.intLiteral(0), type: intType)
         let typeMatches = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
         let typeUnknown = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
 
         instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encodedToken)))
-        instructions.append(.constValue(result: unknownTypeToken, value: .intLiteral(0)))
 
         // Fast path: exact token match (exception type is known)
         instructions.append(.binary(
@@ -647,20 +663,15 @@ final class ControlFlowLowerer {
         let knownMismatchLabel = driver.ctx.makeLoopLabel()
         let checkDoneLabel = driver.ctx.makeLoopLabel()
 
-        let trueValue = arena.appendExpr(.boolLiteral(true), type: boolType)
-        let falseForCheck = arena.appendExpr(.boolLiteral(false), type: boolType)
-        instructions.append(.constValue(result: trueValue, value: .boolLiteral(true)))
-        instructions.append(.constValue(result: falseForCheck, value: .boolLiteral(false)))
-
         // If typeMatches (exact token match), jump to matched
-        instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: falseForCheck, target: runtimeCheckLabel))
+        instructions.append(.jumpIfEqual(lhs: typeMatches, rhs: falseValue, target: runtimeCheckLabel))
         instructions.append(.copy(from: trueValue, to: matchResult))
         instructions.append(.jump(checkDoneLabel))
 
         // Runtime check path: only reached when token did not match exactly
         instructions.append(.label(runtimeCheckLabel))
         // If the token is NOT unknown (i.e., known but different), it's a definite miss
-        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseForCheck, target: knownMismatchLabel))
+        instructions.append(.jumpIfEqual(lhs: typeUnknown, rhs: falseValue, target: knownMismatchLabel))
 
         // Token is 0 (UNKNOWN) -- use kk_op_is for runtime type checking
         let runtimeIsResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boolType)
@@ -677,7 +688,7 @@ final class ControlFlowLowerer {
 
         // Token was known but didn't match -- definite miss
         instructions.append(.label(knownMismatchLabel))
-        instructions.append(.copy(from: falseForCheck, to: matchResult))
+        instructions.append(.copy(from: falseValue, to: matchResult))
 
         instructions.append(.label(checkDoneLabel))
     }
