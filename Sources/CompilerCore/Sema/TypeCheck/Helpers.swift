@@ -56,7 +56,8 @@ struct TypeCheckHelpers {
     }
 
     /// Returns the element type for iterating over the given type in a for-loop.
-    /// Handles both array types and range/progression types (Int representing IntRange).
+    /// Handles both array types and range/progression types (Int representing IntRange,
+    /// UInt representing UIntRange (STDLIB-523), etc.).
     /// - Parameter isRangeExpr: true when the iterable expression is a range operator
     ///   (rangeTo, rangeUntil, downTo, step), allowing Int to be treated as iterable.
     func iterableElementType(
@@ -65,13 +66,20 @@ struct TypeCheckHelpers {
         sema: SemaModule,
         interner: StringInterner
     ) -> TypeID? {
-        // Range/progression types (Int/Long) are iterable over their element type,
+        // Range/progression types (Int/Long/UInt/ULong) are iterable over their element type,
         // but only when the expression is actually a range operator.
         if isRangeExpr, iterableType == sema.types.intType {
             return sema.types.intType
         }
         if isRangeExpr, iterableType == sema.types.longType {
             return sema.types.longType
+        }
+        // STDLIB-523: UIntRange / ULongRange support
+        if isRangeExpr, iterableType == sema.types.uintType {
+            return sema.types.uintType
+        }
+        if isRangeExpr, iterableType == sema.types.ulongType {
+            return sema.types.ulongType
         }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)
     }

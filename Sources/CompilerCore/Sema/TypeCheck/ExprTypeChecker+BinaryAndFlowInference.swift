@@ -195,7 +195,7 @@ extension ExprTypeChecker {
             return effectiveType
         }
         let type: TypeID
-        let ulongType = sema.types.make(.primitive(.ulong, .nonNull))
+        let ulongType = sema.types.ulongType
         let uintType = sema.types.uintType
         let ubyteType = sema.types.make(.primitive(.ubyte, .nonNull))
         let ushortType = sema.types.make(.primitive(.ushort, .nonNull))
@@ -205,7 +205,36 @@ extension ExprTypeChecker {
         let lhsIsUnsigned = sema.types.isUnsigned(lhs)
         let rhsIsSigned = sema.types.isSigned(rhs)
 
-        if (lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned) {
+        // Kotlin's UIntProgression.step(Int) and ULongProgression.step(Long)
+        // take a signed parameter, so mixed signedness is valid only when the
+        // receiver is unsigned and the step operand matches the expected signed
+        // type: Int for UIntProgression, Int or Long for ULongProgression
+        // (Int is implicitly widened to Long in Kotlin).
+        // The reverse (signed..signed step unsigned) is rejected because
+        // IntProgression.step takes Int, not UInt.
+        let allowsMixedSignedness: Bool = {
+            if case .step = op, lhsIsUnsigned, rhsIsSigned {
+                // UIntProgression.step expects Int
+                if lhs == uintType { return rhs == intType }
+                // ULongProgression.step expects Long. Kotlin does not perform
+                // implicit numeric widening for non-literals; only integer
+                // literal constants adapt to the expected parameter type.
+                // Accept Int only when the rhs is a literal constant.
+                if lhs == ulongType {
+                    if rhs == longType { return true }
+                    if rhs == intType {
+                        if let rhsExpr = ast.arena.expr(rhsID),
+                           case .intLiteral = rhsExpr {
+                            return true
+                        }
+                        return false
+                    }
+                }
+            }
+            return false
+        }()
+
+        if !allowsMixedSignedness, ((lhsIsSigned && rhsIsUnsigned) || (lhsIsUnsigned && rhsIsSigned)) {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-0043",
                 "Operator '\(interner.resolve(operatorName))' cannot be applied to '(signed, unsigned)' or '(unsigned, signed)' types.",
@@ -314,9 +343,14 @@ extension ExprTypeChecker {
                 }
             }
         case .rangeTo, .rangeUntil, .downTo:
-            // LongRange when either operand is Long; IntRange otherwise.
+            // LongRange when either operand is Long; UIntRange when UInt (STDLIB-523);
+            // ULongRange when ULong; IntRange otherwise.
             if lhs == longType || rhs == longType {
                 type = longType
+            } else if lhs == ulongType || rhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType || rhs == uintType {
+                type = uintType
             } else {
                 type = intType
             }
@@ -326,9 +360,14 @@ extension ExprTypeChecker {
                 sema.bindings.markCharRangeExpr(id)
             }
         case .step:
-            // LongRange when the receiver (lhs) is Long; IntRange otherwise.
+            // LongRange when the receiver (lhs) is Long; UIntRange when UInt (STDLIB-523);
+            // ULongRange when ULong; IntRange otherwise.
             if lhs == longType {
                 type = longType
+            } else if lhs == ulongType {
+                type = ulongType
+            } else if lhs == uintType {
+                type = uintType
             } else {
                 type = intType
             }

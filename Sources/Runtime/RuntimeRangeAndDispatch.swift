@@ -59,8 +59,29 @@ public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int) -> Int {
     guard stepValue > 0, let range = runtimeRangeBox(from: rangeRaw) else {
         return rangeRaw
     }
-    let nextStep = range.step < 0 ? -stepValue : stepValue
-    return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: range.last, step: nextStep))
+    let nextStep = range.step < 0 ? (0 &- stepValue) : stepValue
+    // Align 'last' to the step like Kotlin's getProgressionLastElement:
+    // last is the final value in the progression that stays within the range.
+    // Guard empty ranges first — Kotlin returns 'last' unchanged for empty
+    // progressions (positive step: first > last; negative step: first < last).
+    // Use wrapping arithmetic (&-/&+) to avoid trapping on extreme Int ranges.
+    let alignedLast: Int
+    if nextStep > 0 {
+        guard range.first <= range.last else {
+            return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: range.last, step: nextStep))
+        }
+        let diff = range.last &- range.first
+        let remainder = diff % nextStep
+        alignedLast = range.last &- remainder
+    } else {
+        guard range.first >= range.last else {
+            return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: range.last, step: nextStep))
+        }
+        let diff = range.first &- range.last
+        let remainder = diff % (0 &- nextStep)
+        alignedLast = range.last &+ remainder
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: range.first, last: alignedLast, step: nextStep))
 }
 
 @_cdecl("kk_range_iterator")
@@ -122,10 +143,12 @@ public func kk_range_count(_ rangeRaw: Int) -> Int {
     }
     if range.step > 0 {
         guard range.first <= range.last else { return 0 }
-        return (range.last - range.first) / range.step + 1
+        // Use wrapping arithmetic to avoid trapping on extreme ranges
+        // (e.g., first == Int.min, last == Int.max).
+        return (range.last &- range.first) / range.step &+ 1
     } else if range.step < 0 {
         guard range.first >= range.last else { return 0 }
-        return (range.first - range.last) / (-range.step) + 1
+        return (range.first &- range.last) / (0 &- range.step) &+ 1
     }
     return 0
 }
@@ -272,7 +295,7 @@ public func kk_range_reversed(_ rangeRaw: Int) -> Int {
     guard let range = runtimeRangeBox(from: rangeRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_reversed")
     }
-    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: -range.step))
+    return registerRuntimeObject(RuntimeRangeBox(first: range.last, last: range.first, step: 0 &- range.step))
 }
 
 @_cdecl("kk_vtable_lookup")
