@@ -314,32 +314,16 @@ extension DataFlowSemaPhase {
         )
 
         // --- STDLIB-589: Result.recover ---
-        // recover(transform: (Throwable) -> R): Result<R>  where T : R
-        let recoverRFQName = resultFQName + [interner.intern("recover"), rName]
-        let recoverRSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: recoverRFQName) {
-            recoverRSymbol = existing
-        } else {
-            recoverRSymbol = symbols.define(
-                kind: .typeParameter,
-                name: rName,
-                fqName: recoverRFQName,
-                declSite: nil,
-                visibility: .private,
-                flags: []
-            )
-        }
-        let recoverRType = types.make(.typeParam(TypeParamType(symbol: recoverRSymbol, nullability: .nonNull)))
-
+        // recover(transform: (Throwable) -> T): Result<T>
+        // Note: Kotlin stdlib signature is `<R, T : R> Result<T>.recover((Throwable) -> R): Result<R>`
+        // but we simplify to single type parameter T because T : R bounds are not yet
+        // expressible in this type system. This keeps the success-path pass-through sound.
         let recoverTransformType = types.make(.functionType(FunctionType(
             receiver: nil,
             params: [throwableType],
-            returnType: recoverRType,
+            returnType: tType,
             isSuspend: false,
             nullability: .nonNull
-        )))
-        let resultRecoverRType = types.make(.classType(ClassType(
-            classSymbol: resultSymbol, args: [.out(recoverRType)], nullability: .nonNull
         )))
         registerResultMemberFunction(
             named: "recover",
@@ -347,8 +331,8 @@ extension DataFlowSemaPhase {
             ownerSymbol: resultSymbol,
             ownerType: resultType,
             parameters: [("transform", recoverTransformType, false, false)],
-            returnType: resultRecoverRType,
-            typeParameterSymbols: [tSymbol, recoverRSymbol],
+            returnType: resultType,
+            typeParameterSymbols: [tSymbol],
             classTypeParameterCount: 1,
             symbols: symbols,
             interner: interner
