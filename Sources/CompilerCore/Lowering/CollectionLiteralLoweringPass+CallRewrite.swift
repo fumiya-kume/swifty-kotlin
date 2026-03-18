@@ -23,10 +23,14 @@ extension CollectionLiteralLoweringPass {
             var rangeExprIDs: Set<Int32> = []
             var charRangeExprIDs: Set<Int32> = []
             var stringExprIDs: Set<Int32> = []
+            var fileExprIDs: Set<Int32> = []
 
             collectInitialCollectionExprIDs(
                 function: function,
                 lookup: lookup,
+                arena: module.arena,
+                sema: ctx.sema,
+                interner: ctx.interner,
                 listExprIDs: &listExprIDs,
                 setExprIDs: &setExprIDs,
                 mapExprIDs: &mapExprIDs,
@@ -34,13 +38,15 @@ extension CollectionLiteralLoweringPass {
                 sequenceExprIDs: &sequenceExprIDs,
                 rangeExprIDs: &rangeExprIDs,
                 charRangeExprIDs: &charRangeExprIDs,
-                stringExprIDs: &stringExprIDs
+                stringExprIDs: &stringExprIDs,
+                fileExprIDs: &fileExprIDs
             )
 
             // Phase 2: Rewrite instructions
             var listIteratorExprIDs: Set<Int32> = []
             var mapIteratorExprIDs: Set<Int32> = []
             var stringIteratorExprIDs: Set<Int32> = []
+            var iteratorBuilderExprIDs: Set<Int32> = []
             var loweredBody: [KIRInstruction] = []
             loweredBody.reserveCapacity(function.body.count + 32)
 
@@ -537,6 +543,19 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite File(path) → kk_file_new(path) (STDLIB-565) ---
+                    if callee == lookup.fileConstructorName {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileNewName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite arrayOf → kk_array_of ---
                     if lookup.arrayOfFactoryNames.contains(callee) {
                         let count = arguments.count
@@ -614,6 +633,14 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: iterator {} result is already an iterator; pass through
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            if let result {
+                                iteratorBuilderExprIDs.insert(result.rawValue)
+                                loweredBody.append(.copy(from: argID, to: result))
+                            }
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_hasNext on list iterator → kk_list_iterator_hasNext ---
@@ -653,6 +680,18 @@ extension CollectionLiteralLoweringPass {
                             ))
                             continue
                         }
+                        // STDLIB-331/564: Rewrite kk_range_hasNext on iterator builder → kk_iterator_builder_hasNext
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderHasNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
                     }
 
                     // --- Rewrite kk_range_next on list iterator → kk_list_iterator_next ---
@@ -685,6 +724,18 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkStringIteratorNextName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                        // STDLIB-331/564: Rewrite kk_range_next on iterator builder → kk_iterator_builder_next
+                        if iteratorBuilderExprIDs.contains(argID.rawValue) {
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkIteratorBuilderNextName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -994,11 +1045,10 @@ extension CollectionLiteralLoweringPass {
                     // asSequence() on collection → kk_list_asSequence or kk_array_asSequence
                     // Guard with arrayExprIDs / listExprIDs so we only rewrite
                     // receivers whose concrete collection kind is known.
-                    // KNOWN LIMITATION: Non-tracked receivers (e.g., a List<Int>
-                    // parameter or a function return value) are not rewritten here.
-                    // They fall through to virtual-call rewrite or original symbol
-                    // linkage.  A future improvement could use the receiver's static
-                    // type (from KIR type info) to dispatch regardless of tracking.
+                    // Since LOWERING-001, non-tracked receivers (e.g., a List<Int>
+                    // parameter or a function return value) are now seeded into
+                    // the tracking sets via static type information from KIR.
+                    // They are rewritten correctly by the checks below.
 
                     // When the callee is already the runtime name (e.g., resolved
                     // via the synthetic stub's externalLinkName), track the result as
@@ -1659,6 +1709,7 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result { iteratorBuilderExprIDs.insert(result.rawValue) }
                         continue
                     }
 
@@ -1667,6 +1718,19 @@ extension CollectionLiteralLoweringPass {
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: lookup.kkSequenceBuilderYieldName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: false,
+                            thrownResult: nil
+                        ))
+                        continue
+                    }
+
+                    // yieldAll(iterable) inside sequence builder → kk_sequence_builder_yieldAll (STDLIB-553)
+                    if callee == lookup.yieldAllName, arguments.count == 2 {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkSequenceBuilderYieldAllName,
                             arguments: arguments,
                             result: result,
                             canThrow: false,
@@ -2349,6 +2413,36 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
+                    // reduceOrNull: args = [receiver, lambda, closureRaw?]
+                    if callee == lookup.reduceOrNullName, (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListReduceOrNullName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
 
                     // scan / runningFold: args = [receiver, initial, lambda, closureRaw?]
                     // Runtime expects (listRaw, initial, fnPtr, closureRaw, outThrown)
@@ -2390,8 +2484,8 @@ extension CollectionLiteralLoweringPass {
                             continue
                         }
                     }
-                    // runningReduce: args = [receiver, lambda, closureRaw?]
-                    if callee == lookup.runningReduceName, arguments.count == 2 || arguments.count == 3 {
+                    // runningReduce / scanReduce: args = [receiver, lambda, closureRaw?]
+                    if (callee == lookup.runningReduceName || callee == lookup.scanReduceName), (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
@@ -2403,12 +2497,13 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                                 closureRawID = zeroExpr
                             }
+                            let kkName = callee == lookup.scanReduceName ? lookup.kkListScanReduceName : lookup.kkListRunningReduceName
                             let hofResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListRunningReduceName,
+                                callee: kkName,
                                 arguments: [receiverID, lambdaID, closureRawID],
                                 result: hofResult,
                                 canThrow: canThrow,
@@ -2550,6 +2645,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
+                        fileExprIDs: &fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
@@ -2590,6 +2686,12 @@ extension CollectionLiteralLoweringPass {
                     }
                     if stringIteratorExprIDs.contains(from.rawValue) {
                         stringIteratorExprIDs.insert(to.rawValue)
+                    }
+                    if fileExprIDs.contains(from.rawValue) {
+                        fileExprIDs.insert(to.rawValue)
+                    }
+                    if iteratorBuilderExprIDs.contains(from.rawValue) {
+                        iteratorBuilderExprIDs.insert(to.rawValue)
                     }
                     loweredBody.append(instruction)
 

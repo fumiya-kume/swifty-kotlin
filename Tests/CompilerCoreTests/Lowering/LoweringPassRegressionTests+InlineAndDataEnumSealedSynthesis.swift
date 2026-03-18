@@ -309,4 +309,245 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(valueOfCallees.contains("kk_string_equals"), "valueOf should call kk_string_equals")
         XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
     }
+
+    // MARK: - DATA-004: Data class toString/equals for multi-property classes
+
+    func testDataClassToStringAndEqualsAreSynthesized() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        // Define data class Point with primary-constructor properties x and y.
+        let pointName = interner.intern("Point")
+        let pointFQName = packagePath + [pointName]
+        let pointSymbol = symbols.define(
+            kind: .class,
+            name: pointName,
+            fqName: pointFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let constructorSymbol = symbols.define(
+            kind: .constructor,
+            name: pointName,
+            fqName: pointFQName + [pointName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setParentSymbol(pointSymbol, for: constructorSymbol)
+        let ctorXParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("x"),
+            fqName: pointFQName + [pointName, interner.intern("x")],
+            declSite: nil,
+            visibility: .private
+        )
+        let ctorYParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("y"),
+            fqName: pointFQName + [pointName, interner.intern("y")],
+            declSite: nil,
+            visibility: .private
+        )
+
+        // Register properties x: Int and y: Int
+        let intType = types.make(.primitive(.int, .nonNull))
+        let xName = interner.intern("x")
+        let xSymbol = symbols.define(
+            kind: .property,
+            name: xName,
+            fqName: pointFQName + [xName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setPropertyType(intType, for: xSymbol)
+        symbols.setParentSymbol(pointSymbol, for: xSymbol)
+
+        let yName = interner.intern("y")
+        let ySymbol = symbols.define(
+            kind: .property,
+            name: yName,
+            fqName: pointFQName + [yName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setPropertyType(intType, for: ySymbol)
+        symbols.setParentSymbol(pointSymbol, for: ySymbol)
+
+        // Non-constructor member properties should not participate in synthesized data methods.
+        let zName = interner.intern("z")
+        let zSymbol = symbols.define(
+            kind: .property,
+            name: zName,
+            fqName: pointFQName + [zName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setPropertyType(intType, for: zSymbol)
+        symbols.setParentSymbol(pointSymbol, for: zSymbol)
+
+        // Register synthetic toString and equals stubs (as Sema would)
+        let pointType = types.make(.classType(ClassType(
+            classSymbol: pointSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let boolType = types.make(.primitive(.boolean, .nonNull))
+        let nullableAnyType = types.nullableAnyType
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: pointType,
+                parameterTypes: [intType, intType],
+                returnType: pointType,
+                isSuspend: false,
+                valueParameterSymbols: [ctorXParamSymbol, ctorYParamSymbol],
+                valueParameterHasDefaultValues: [false, false],
+                valueParameterIsVararg: [false, false],
+                typeParameterSymbols: []
+            ),
+            for: constructorSymbol
+        )
+
+        let toStringName = interner.intern("toString")
+        let toStringSymbol = symbols.define(
+            kind: .function,
+            name: toStringName,
+            fqName: pointFQName + [toStringName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(pointSymbol, for: toStringSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: pointType,
+                parameterTypes: [],
+                returnType: stringType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: toStringSymbol
+        )
+
+        let equalsName = interner.intern("equals")
+        let equalsSymbol = symbols.define(
+            kind: .function,
+            name: equalsName,
+            fqName: pointFQName + [equalsName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(pointSymbol, for: equalsSymbol)
+        let otherParamName = interner.intern("other")
+        let otherParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: otherParamName,
+            fqName: pointFQName + [equalsName, otherParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: pointType,
+                parameterTypes: [nullableAnyType],
+                returnType: boolType,
+                isSuspend: false,
+                valueParameterSymbols: [otherParamSymbol],
+                valueParameterHasDefaultValues: [false],
+                valueParameterIsVararg: [false],
+                typeParameterSymbols: []
+            ),
+            for: equalsSymbol
+        )
+
+        let arena = KIRArena()
+        let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [pointDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataClassSynthesis",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case let .function(function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+
+        // Verify toString and equals are synthesized
+        XCTAssertTrue(functionNames.contains("toString"), "Missing toString, got: \(functionNames)")
+        XCTAssertTrue(functionNames.contains("equals"), "Missing equals, got: \(functionNames)")
+
+        // Verify toString body uses StringBuilder + kk_any_to_string
+        let toStringFn = try findKIRFunction(named: "toString", in: module, interner: interner)
+        let toStringCallees = extractCallees(from: toStringFn.body, interner: interner)
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_new_from_string"), "toString should create a StringBuilder from the class prefix")
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_append_obj"), "toString should append labels and values via StringBuilder")
+        XCTAssertTrue(toStringCallees.contains("kk_string_builder_toString"), "toString should convert the StringBuilder back to String")
+        XCTAssertTrue(toStringCallees.contains("kk_any_to_string"), "toString should use kk_any_to_string")
+        // Should call property getters for x and y
+        XCTAssertTrue(toStringCallees.contains("x$get"), "toString should call x$get")
+        XCTAssertTrue(toStringCallees.contains("y$get"), "toString should call y$get")
+        XCTAssertFalse(toStringCallees.contains("z$get"), "toString should ignore non-constructor properties")
+
+        // Verify toString body contains the class name prefix "Point("
+        let toStringStringLiterals = toStringFn.body.compactMap { inst -> String? in
+            guard case let .constValue(_, value) = inst, case let .stringLiteral(s) = value else { return nil }
+            return interner.resolve(s)
+        }
+        XCTAssertTrue(toStringStringLiterals.contains("Point("), "toString should contain 'Point(' prefix")
+        XCTAssertTrue(toStringStringLiterals.contains("x="), "toString should contain 'x=' label")
+        XCTAssertTrue(toStringStringLiterals.contains(", y="), "toString should contain ', y=' label")
+        XCTAssertTrue(toStringStringLiterals.contains(")"), "toString should contain ')' suffix")
+
+        // Verify equals body uses kk_op_eq for property comparison
+        let equalsFn = try findKIRFunction(named: "equals", in: module, interner: interner)
+        let equalsCallees = extractCallees(from: equalsFn.body, interner: interner)
+        XCTAssertTrue(equalsCallees.contains("kk_op_is"), "equals should type-check other before reading properties")
+        XCTAssertTrue(equalsCallees.contains("kk_op_safe_cast"), "equals should materialize a narrowed other receiver before getter calls")
+        XCTAssertTrue(equalsCallees.contains("kk_op_eq"), "equals should use kk_op_eq for comparison")
+        XCTAssertTrue(equalsCallees.contains("x$get"), "equals should call x$get")
+        XCTAssertTrue(equalsCallees.contains("y$get"), "equals should call y$get")
+        XCTAssertFalse(equalsCallees.contains("z$get"), "equals should ignore non-constructor properties")
+        // Should have receiver + other parameter
+        XCTAssertEqual(equalsFn.params.count, 2, "equals should have receiver + other parameter")
+
+        let xGetterCalls = equalsFn.body.compactMap { instruction -> KIRInstruction? in
+            guard case let .call(_, callee, _, _, _, _, _) = instruction,
+                  interner.resolve(callee) == "x$get"
+            else {
+                return nil
+            }
+            return instruction
+        }
+        XCTAssertEqual(xGetterCalls.count, 2, "equals should compare both receiver and narrowed other")
+    }
 }

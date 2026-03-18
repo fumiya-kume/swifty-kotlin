@@ -562,6 +562,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-534: String?.orEmpty()
+    public static let kk_string_orEmpty = ExternDecl(
+        name: "kk_string_orEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_split = ExternDecl(
         name: "kk_string_split",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -795,6 +802,19 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+    public static let kk_string_commonPrefixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonPrefixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_commonSuffixWith_ignoreCase = ExternDecl(
+        name: "kk_string_commonSuffixWith_ignoreCase",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-316: String.zipWithNext()
     public static let kk_string_zipWithNext = ExternDecl(
         name: "kk_string_zipWithNext",
@@ -876,6 +896,12 @@ public enum RuntimeABIExterns {
         returnType: "void"
     )
 
+    public static let kk_print_noarg = ExternDecl(
+        name: "kk_print_noarg",
+        parameterTypes: [],
+        returnType: "void"
+    )
+
     public static let kk_println_newline = ExternDecl(
         name: "kk_println_newline",
         parameterTypes: [],
@@ -893,6 +919,12 @@ public enum RuntimeABIExterns {
     public static let kk_readln = ExternDecl(
         name: "kk_readln",
         parameterTypes: ["intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_readlnOrNull = ExternDecl(
+        name: "kk_readlnOrNull",
+        parameterTypes: [],
         returnType: "intptr_t"
     )
 
@@ -1132,6 +1164,44 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // Flow terminal operators & flowOf (STDLIB-088)
+
+    public static let kk_flow_of = ExternDecl(
+        name: "kk_flow_of",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_to_list = ExternDecl(
+        name: "kk_flow_to_list",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_first = ExternDecl(
+        name: "kk_flow_first",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_count = ExternDecl(
+        name: "kk_flow_count",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_fold = ExternDecl(
+        name: "kk_flow_fold",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_flow_reduce = ExternDecl(
+        name: "kk_flow_reduce",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // Dispatchers / withContext (P5-133)
 
     public static let kk_dispatcher_default = ExternDecl(
@@ -1158,7 +1228,7 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // Channel (P5-134)
+    // Channel (CORO-001)
 
     public static let kk_channel_create = ExternDecl(
         name: "kk_channel_create",
@@ -1180,6 +1250,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_channel_close = ExternDecl(
         name: "kk_channel_close",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_channel_is_closed_token = ExternDecl(
+        name: "kk_channel_is_closed_token",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1916,6 +1992,37 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    // STDLIB-567: File.bufferedReader()
+    public static let kk_file_bufferedReader = ExternDecl(
+        name: "kk_file_bufferedReader",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLine = ExternDecl(
+        name: "kk_buffered_reader_readLine",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_readLines = ExternDecl(
+        name: "kk_buffered_reader_readLines",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_buffered_reader_close = ExternDecl(
+        name: "kk_buffered_reader_close",
+        parameterTypes: [intptr],
+        returnType: intptr
+    )
+
+    public static let kk_file_useLines = ExternDecl(
+        name: "kk_file_useLines",
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -1931,6 +2038,11 @@ public enum RuntimeABIExterns {
         kk_file_mkdirs,
         kk_file_listFiles,
         kk_file_walk,
+        kk_file_bufferedReader,
+        kk_buffered_reader_readLine,
+        kk_buffered_reader_readLines,
+        kk_buffered_reader_close,
+        kk_file_useLines,
     ]
 
     public static let regexExterns: [ExternDecl] = [
@@ -2085,15 +2197,20 @@ public enum RuntimeABIExterns {
             kk_string_windowed,
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
+            kk_string_commonPrefixWith_ignoreCase,
+            kk_string_commonSuffixWith_ignoreCase,
             kk_string_zipWithNext,
+            kk_string_orEmpty,
             // Print / Println
             kk_print_any,
+            kk_print_noarg,
             kk_println_any,
             kk_println_bool,
             kk_println_newline,
             // IO
             kk_readline,
             kk_readln,
+            kk_readlnOrNull,
             // System
             kk_system_exitProcess,
             kk_system_currentTimeMillis,
@@ -2136,16 +2253,24 @@ public enum RuntimeABIExterns {
             kk_flow_collect,
             kk_flow_retain,
             kk_flow_release,
+            // Flow terminal operators & flowOf (STDLIB-088)
+            kk_flow_of,
+            kk_flow_to_list,
+            kk_flow_first,
+            kk_flow_count,
+            kk_flow_fold,
+            kk_flow_reduce,
             // Dispatchers / withContext
             kk_dispatcher_default,
             kk_dispatcher_io,
             kk_dispatcher_main,
             kk_with_context,
-            // Channel
+            // Channel (CORO-001)
             kk_channel_create,
             kk_channel_send,
             kk_channel_receive,
             kk_channel_close,
+            kk_channel_is_closed_token,
             // Deferred / awaitAll
             kk_await_all,
             // Structured Concurrency (P5-89)
@@ -2215,6 +2340,7 @@ public enum RuntimeABIExterns {
             kk_char_range_forEach,
         ]
         all += kPropertyStubExterns
+        all += callableRefExterns
         all += [
             // Delegate
             kk_lazy_create,

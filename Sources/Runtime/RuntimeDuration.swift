@@ -14,9 +14,6 @@ private func runtimeDurationBox(from raw: Int) -> RuntimeDurationBox? {
     return tryCast(ptr, to: RuntimeDurationBox.self)
 }
 
-// TODO: Add RuntimeTests covering duration factories (kk_duration_from_seconds etc.),
-// inWhole* accessor unit conversions, toString() formatting across units (ns/us/ms/s),
-// and measureTime returning non-negative duration with correct outThrown propagation.
 
 /// Clamp-safe multiplication: returns `Int64.max` / `Int64.min` on overflow
 /// instead of trapping, matching Kotlin's Duration saturation semantics.
