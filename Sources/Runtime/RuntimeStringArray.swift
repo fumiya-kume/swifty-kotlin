@@ -657,7 +657,7 @@ public func kk_readlnOrNull() -> Int {
     }
 }
 
-private func runtimeRenderAnyForPrint(_ value: Int) -> String {
+func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if value == runtimeNullSentinelInt {
         return "null"
     }
