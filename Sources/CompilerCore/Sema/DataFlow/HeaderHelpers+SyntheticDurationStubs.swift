@@ -1,5 +1,3 @@
-import Foundation
-
 /// Synthetic stubs for kotlin.time.Duration class, Companion extension properties,
 /// and inWhole* accessor properties (STDLIB-582/583/584).
 extension DataFlowSemaPhase {
@@ -209,6 +207,19 @@ extension DataFlowSemaPhase {
                 && symbols.extensionPropertyReceiverType(for: symbolID) == receiverType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            symbols.setPropertyType(returnType, for: existing)
+            // Also refresh the getter accessor's signature and external link name.
+            if let getterSymbol = symbols.extensionPropertyGetterAccessor(for: existing) {
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [],
+                        returnType: returnType
+                    ),
+                    for: getterSymbol
+                )
+                symbols.setExternalLinkName(externalLinkName, for: getterSymbol)
+            }
             return
         }
 

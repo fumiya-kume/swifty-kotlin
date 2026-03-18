@@ -85,7 +85,7 @@ public func kk_duration_inWholeMinutes(_ durationRaw: Int) -> Int {
     guard let box = runtimeDurationBox(from: durationRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeMinutes received invalid Duration handle")
     }
-    return Int(box.nanoseconds / 60_000_000_000)
+    return Int(box.nanoseconds / Int64(60_000_000_000))
 }
 
 @_cdecl("kk_duration_inWholeNanoseconds")
