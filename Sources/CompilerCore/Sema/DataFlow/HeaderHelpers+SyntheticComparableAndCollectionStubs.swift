@@ -1571,25 +1571,29 @@ extension DataFlowSemaPhase {
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
 
         // shuffled(random: Random) overload (STDLIB-531)
+        // Requires kotlin.random.Random to be registered first (via
+        // registerSyntheticRandomStubs which runs before collection stubs).
         do {
             let shuffledRandomName = interner.intern("shuffled")
             let shuffledRandomFQName = listFQName + [shuffledRandomName]
             let kotlinRandomPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("random")]
             let randomClassName = interner.intern("Random")
             let randomFQName = kotlinRandomPkg + [randomClassName]
-            if let randomSymbol = symbols.lookup(fqName: randomFQName) {
-                let randomParamType = types.make(.classType(ClassType(
-                    classSymbol: randomSymbol,
-                    args: [],
-                    nullability: .nonNull
-                )))
-                registerMemberOverload(
-                    memberName: shuffledRandomName,
-                    memberFQName: shuffledRandomFQName,
-                    parameterTypes: [randomParamType],
-                    externalLinkName: "kk_list_shuffled_random"
-                )
+            guard let randomSymbol = symbols.lookup(fqName: randomFQName) else {
+                assertionFailure("kotlin.random.Random must be registered before collection stubs")
+                return
             }
+            let randomParamType = types.make(.classType(ClassType(
+                classSymbol: randomSymbol,
+                args: [],
+                nullability: .nonNull
+            )))
+            registerMemberOverload(
+                memberName: shuffledRandomName,
+                memberFQName: shuffledRandomFQName,
+                parameterTypes: [randomParamType],
+                externalLinkName: "kk_list_shuffled_random"
+            )
         }
 
         registerMember(name: "flatten", parameterTypes: [], externalLinkName: "kk_list_flatten")
