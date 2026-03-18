@@ -473,7 +473,7 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
-        // STDLIB-556: foldIndexed
+        // STDLIB-557: foldIndexed
         RuntimeABIFunctionSpec(
             name: "kk_sequence_foldIndexed",
             parameters: [
@@ -486,7 +486,7 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Sequence"
         ),
-        // STDLIB-557: reduceIndexed
+        // STDLIB-556: reduceIndexed
         RuntimeABIFunctionSpec(
             name: "kk_sequence_reduceIndexed",
             parameters: [

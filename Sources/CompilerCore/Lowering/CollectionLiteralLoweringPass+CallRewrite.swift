@@ -2536,7 +2536,7 @@ extension CollectionLiteralLoweringPass {
 
                     // foldIndexed: args = [receiver, initial, lambda, closureRaw?]
                     // Runtime expects (seqRaw, initial, fnPtr, closureRaw, outThrown)
-                    if callee == lookup.foldIndexedName, arguments.count == 3 || arguments.count == 4 {
+                    if callee == lookup.foldIndexedName, (arguments.count == 3 || arguments.count == 4) {
                         let receiverID = arguments[0]
                         let initialID = arguments[1]
                         let lambdaID = arguments[2]
@@ -2568,7 +2568,7 @@ extension CollectionLiteralLoweringPass {
                     }
                     // reduceIndexed: args = [receiver, lambda, closureRaw?]
                     // Runtime expects (seqRaw, fnPtr, closureRaw, outThrown)
-                    if callee == lookup.reduceIndexedName, arguments.count == 2 || arguments.count == 3 {
+                    if callee == lookup.reduceIndexedName, (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if sequenceExprIDs.contains(receiverID.rawValue) {
