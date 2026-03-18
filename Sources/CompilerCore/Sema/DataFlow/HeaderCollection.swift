@@ -373,24 +373,6 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics,
                     localTypeParameters: classLocalTypeParameters
                 )
-                collectSyntheticDataClassToString(
-                    ownerSymbol: symbol,
-                    ownerFQName: fqName,
-                    ownerType: classType,
-                    symbols: symbols,
-                    types: types,
-                    scope: classScope,
-                    interner: interner
-                )
-                collectSyntheticDataClassEquals(
-                    ownerSymbol: symbol,
-                    ownerFQName: fqName,
-                    ownerType: classType,
-                    symbols: symbols,
-                    types: types,
-                    scope: classScope,
-                    interner: interner
-                )
             }
             collectMemberHeaders(
                 members: MemberDeclarations(
@@ -410,6 +392,26 @@ extension DataFlowSemaPhase {
                 classTypeParameterSymbols: classTypeParamSymbols,
                 classLocalTypeParameters: classLocalTypeParameters
             )
+            if declaration.flags.contains(.dataType) {
+                collectSyntheticDataClassToString(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    ownerType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner
+                )
+                collectSyntheticDataClassEquals(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    ownerType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner
+                )
+            }
             // Process companion object: register as nested object and link to owner class
             if let companionDeclID = classDecl.companionObject {
                 collectCompanionObjectHeader(
