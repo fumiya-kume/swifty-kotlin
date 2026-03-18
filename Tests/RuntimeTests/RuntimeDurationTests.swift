@@ -6,6 +6,7 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
     // MARK: - Helper
 
     /// Extract the Swift String from a duration toString handle.
+    /// Note: Uses UnsafeMutableRawPointer because extractString(from:) requires it.
     private func stringFromHandle(_ raw: Int) -> String? {
         guard let ptr = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
         return extractString(from: ptr)
@@ -122,18 +123,19 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
     // MARK: - Saturation on overflow
 
     func testFromSecondsLargeValueSaturates() {
-        // A very large value should saturate instead of trapping.
-        let handle = kk_duration_from_seconds(Int(Int32.max))
+        // Int64.max / 1_000_000_000 = 9_223_372_036, so 9_223_372_037 will overflow.
+        let handle = kk_duration_from_seconds(9_223_372_037)
         let ns = kk_duration_inWholeNanoseconds(handle)
-        // The result must be positive (saturated to Int64.max).
-        XCTAssertGreaterThan(ns, 0)
+        // The result must be saturated to Int64.max.
+        XCTAssertEqual(ns, Int(Int64.max))
     }
 
     func testFromMillisecondsLargeNegativeValueSaturates() {
-        let handle = kk_duration_from_milliseconds(Int(Int32.min))
+        // Int64.min / 1_000_000 = -9_223_372_036_854, so -9_223_372_036_855 will overflow.
+        let handle = kk_duration_from_milliseconds(-9_223_372_036_855)
         let ns = kk_duration_inWholeNanoseconds(handle)
-        // The result must be negative (saturated to Int64.min).
-        XCTAssertLessThan(ns, 0)
+        // The result must be saturated to Int64.min.
+        XCTAssertEqual(ns, Int(Int64.min))
     }
 
     // MARK: - inWholeMilliseconds truncation
@@ -223,11 +225,10 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_duration_inWholeMilliseconds(h2), 500)
     }
 
-    // MARK: - measureTime basic behavior
+    // MARK: - RuntimeDurationBox accessor chain
 
-    func testMeasureTimeReturnsNonNegativeDuration() {
-        // We cannot easily construct a real closure thunk in unit tests, but we
-        // can verify the direct RuntimeDurationBox path by constructing one
+    func testDurationBoxAccessorChainEndToEnd() {
+        // Verify the direct RuntimeDurationBox path by constructing one
         // manually and confirming the accessor chain works end-to-end.
         let box = RuntimeDurationBox(nanoseconds: 42_000_000)
         let handle = registerRuntimeObject(box)
@@ -236,7 +237,7 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_duration_inWholeNanoseconds(handle), 42_000_000)
     }
 
-    func testMeasureTimeDurationBoxSaturationBehavior() {
+    func testDurationBoxLargeValueDoesNotCrash() {
         // Verify that a box with Int64.max nanoseconds does not crash accessors.
         let box = RuntimeDurationBox(nanoseconds: Int64.max)
         let handle = registerRuntimeObject(box)
