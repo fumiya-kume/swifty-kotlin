@@ -1,5 +1,5 @@
 fun main() {
-    // sequenceOf: build fresh sequence per operation to avoid single-shot issues
+    // sequenceOf: each call demonstrates an independent chain of operations
     println(sequenceOf(1, 2, 3, 4, 5).filter { it > 2 }.map { it * 10 }.toList())
     println(sequenceOf(1, 2, 3, 4, 5).take(3).toList())
     println(sequenceOf(1, 2, 3, 4, 5).drop(2).toList())
