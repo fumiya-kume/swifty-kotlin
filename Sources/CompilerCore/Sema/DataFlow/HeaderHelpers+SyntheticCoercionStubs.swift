@@ -1,7 +1,7 @@
 import Foundation
 
 // Coercion extension stubs (STDLIB-150) for kotlin.ranges.
-// Long/Double/Float coercion tests: CoercionSyntheticStubTests (TEST-002)
+// Int/Long/Double/Float coercion tests: CoercionSyntheticStubTests (TEST-002)
 
 extension DataFlowSemaPhase {
     func registerSyntheticCoercionStubs(
