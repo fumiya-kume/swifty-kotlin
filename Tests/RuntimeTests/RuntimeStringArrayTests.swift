@@ -178,6 +178,91 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(charArray?.elements.map(kk_unbox_char), expected)
     }
 
+    // MARK: - STDLIB-317: String.asIterable() tests
+
+    func testStringAsIterableReturnsLazyBox() {
+        let strRaw = rawFromRuntimeString("abc")
+        let iterableRaw = kk_string_asIterable(strRaw)
+
+        // The iterable should be a RuntimeStringIterableBox, not a list.
+        let iterableBox = runtimeStringIterableBox(from: iterableRaw)
+        XCTAssertNotNil(iterableBox, "asIterable should return a RuntimeStringIterableBox")
+        XCTAssertEqual(iterableBox?.strRaw, strRaw, "Box should store the original string handle")
+
+        // It should NOT be a list (lazy, not materialised).
+        let listBox = runtimeListBox(from: iterableRaw)
+        XCTAssertNil(listBox, "asIterable should NOT materialise a list eagerly")
+    }
+
+    func testStringAsIterableToListMaterialises() {
+        let strRaw = rawFromRuntimeString("abc")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let listRaw = kk_string_iterable_toList(iterableRaw)
+
+        let list = runtimeListBox(from: listRaw)
+        XCTAssertNotNil(list)
+        let expected = [97, 98, 99] // 'a', 'b', 'c'
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expected)
+    }
+
+    func testStringAsIterableIteratorYieldsCharacters() {
+        let strRaw = rawFromRuntimeString("hi")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let iterRaw = kk_string_iterable_iterator(iterableRaw)
+
+        XCTAssertEqual(kk_string_iterator_hasNext(iterRaw), 1)
+        let first = kk_unbox_char(kk_string_iterator_next(iterRaw))
+        XCTAssertEqual(first, 104) // 'h'
+
+        XCTAssertEqual(kk_string_iterator_hasNext(iterRaw), 1)
+        let second = kk_unbox_char(kk_string_iterator_next(iterRaw))
+        XCTAssertEqual(second, 105) // 'i'
+
+        XCTAssertEqual(kk_string_iterator_hasNext(iterRaw), 0)
+    }
+
+    func testStringAsIterableWithNonASCII() {
+        let strRaw = rawFromRuntimeString("aé🐻")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let listRaw = kk_string_iterable_toList(iterableRaw)
+
+        let list = runtimeListBox(from: listRaw)
+        let expectedScalars: [Int] = [97, 233, 128_059] // 'a', 'é', '🐻'
+        XCTAssertEqual(list?.elements.map(kk_unbox_char), expectedScalars)
+    }
+
+    func testStringAsIterableEmptyString() {
+        let strRaw = rawFromRuntimeString("")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let listRaw = kk_string_iterable_toList(iterableRaw)
+
+        let list = runtimeListBox(from: listRaw)
+        XCTAssertNotNil(list)
+        XCTAssertEqual(list?.elements.count, 0)
+    }
+
+    func testStringAsIterablePrintDoesNotMaterialiseList() {
+        let strRaw = rawFromRuntimeString("aé🐻")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let baselineObjectCount = kk_runtime_heap_object_count()
+
+        let output = capturePrintln {
+            kk_println_any(UnsafeMutableRawPointer(bitPattern: iterableRaw))
+        }
+
+        XCTAssertEqual(output, "[a, é, 🐻]")
+        XCTAssertEqual(kk_runtime_heap_object_count(), baselineObjectCount)
+    }
+
+    func testStringAsIterableRenderDoesNotMaterialiseList() {
+        let strRaw = rawFromRuntimeString("abc")
+        let iterableRaw = kk_string_asIterable(strRaw)
+        let baselineObjectCount = kk_runtime_heap_object_count()
+
+        XCTAssertEqual(runtimeRenderAnyForPrint(iterableRaw), "[a, b, c]")
+        XCTAssertEqual(kk_runtime_heap_object_count(), baselineObjectCount)
+    }
+
     func testStringFunctionsWithNonASCII() {
         let text = "aé🐻"
         XCTAssertEqual(runtimeStringValue(kk_string_reversed(rawFromRuntimeString(text))), "🐻éa")

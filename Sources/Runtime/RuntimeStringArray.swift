@@ -633,6 +633,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("kotlin.collections.IndexingIterable@\(hex)")
         return
     }
+    if let iterableBox = tryCast(raw, to: RuntimeStringIterableBox.self) {
+        Swift.print(runtimeRenderStringIterableForPrint(iterableBox.strRaw))
+        return
+    }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
         Swift.print("[\(rendered)]")
@@ -721,7 +725,7 @@ public func kk_readlnOrNull() -> Int {
     }
 }
 
-private func runtimeRenderAnyForPrint(_ value: Int) -> String {
+func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if value == runtimeNullSentinelInt {
         return "null"
     }
@@ -788,10 +792,23 @@ private func runtimeRenderAnyForPrint(_ value: Int) -> String {
         let hex = String(format: "%x", UInt(bitPattern: raw) % 0x1_0000_0000)
         return "kotlin.collections.IndexingIterable@\(hex)"
     }
+    if let iterableBox = tryCast(raw, to: RuntimeStringIterableBox.self) {
+        return runtimeRenderStringIterableForPrint(iterableBox.strRaw)
+    }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
     return "<object \(raw)>"
+}
+
+private func runtimeRenderStringIterableForPrint(_ strRaw: Int) -> String {
+    guard let raw = UnsafeMutableRawPointer(bitPattern: strRaw),
+          let string = extractString(from: raw)
+    else {
+        return "<invalid String iterable>"
+    }
+    let rendered = string.unicodeScalars.map { String(Character($0)) }.joined(separator: ", ")
+    return "[\(rendered)]"
 }
 
 func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {

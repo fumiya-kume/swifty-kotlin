@@ -2070,7 +2070,7 @@ extension CallTypeChecker {
                             )
                         }
                         switch calleeStr {
-                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray":
+                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray", "asIterable":
                             sema.bindings.markCollectionExpr(id)
                         default:
                             break
@@ -2149,6 +2149,12 @@ extension CallTypeChecker {
                 interner: interner,
                 elementType: sema.types.make(.primitive(.char, .nonNull))
             )
+            let iterableCharType = makeSyntheticIterableType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: sema.types.make(.primitive(.char, .nonNull))
+            )
             let charArrayType = makeSyntheticNominalType(
                 symbols: sema.symbols,
                 types: sema.types,
@@ -2182,6 +2188,8 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "toList":
                         listCharType
+                    case "asIterable":
+                        iterableCharType
                     case "toCharArray":
                         charArrayType
                     case "toBoolean", "toBooleanStrict":
@@ -2223,6 +2231,12 @@ extension CallTypeChecker {
                             safeCall: safeCall
                         ) {
                             return boundType
+                        }
+                        switch calleeStr {
+                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray", "asIterable":
+                            sema.bindings.markCollectionExpr(id)
+                        default:
+                            break
                         }
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)

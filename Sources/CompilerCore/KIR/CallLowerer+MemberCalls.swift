@@ -88,7 +88,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "replaceFirstChar",
@@ -613,6 +613,38 @@ extension CallLowerer {
             return false
         }
         return knownNames.isArrayLikeName(symbol.name)
+    }
+
+    /// Returns `true` when the receiver type is `Iterable<Char>` (the type produced by `String.asIterable()`).
+    /// This allows routing `.toList()` and `.iterator()` to the specialised string-iterable runtime functions.
+    private func isStringIterableType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNull = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNull),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard symbol.fqName == iterableFQName else {
+            return false
+        }
+        // Verify the type argument is Char
+        guard let firstArg = classType.args.first else {
+            return false
+        }
+        let elementType: TypeID = switch firstArg {
+        case let .invariant(t), let .out(t), let .in(t): t
+        case .star: sema.types.anyType
+        }
+        return sema.types.makeNonNullable(elementType) == sema.types.make(.primitive(.char, .nonNull))
     }
 
     // swiftlint:disable cyclomatic_complexity function_body_length
@@ -1361,6 +1393,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "asIterable" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_asIterable"),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 if calleeStr == "toCharArray" {
                     instructions.append(.call(
                         symbol: nil,
@@ -1993,6 +2036,28 @@ extension CallLowerer {
                     "kk_array_toMutableList"
                 case "copyOf":
                     "kk_array_copyOf"
+                default:
+                    nil
+                }
+                if let runtimeCallee {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern(runtimeCallee),
+                        arguments: [loweredReceiverID],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+            }
+            // String Iterable<Char> — route toList/iterator to specialised runtime (STDLIB-317)
+            if isStringIterableType(nonNullReceiverType, sema: sema, interner: interner) {
+                let runtimeCallee: String? = switch interner.resolve(calleeName) {
+                case "toList":
+                    "kk_string_iterable_toList"
+                case "iterator":
+                    "kk_string_iterable_iterator"
                 default:
                     nil
                 }

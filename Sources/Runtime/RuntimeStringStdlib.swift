@@ -142,6 +142,51 @@ public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     return runtimeMakeArrayRaw(charRaws)
 }
 
+// MARK: - STDLIB-317: String.asIterable() — lazy Iterable<Char> view
+
+/// Returns a lazy `Iterable<Char>` wrapper around the given string.
+/// Character materialisation is deferred until the iterable is actually consumed
+/// (e.g. via `iterator()`, `toList()`, or `for-in`).  Creation is O(1).
+@_cdecl("kk_string_asIterable")
+public func kk_string_asIterable(_ strRaw: Int) -> Int {
+    let box = RuntimeStringIterableBox(strRaw: strRaw)
+    return registerRuntimeObject(box)
+}
+
+/// Materialise the lazy string-iterable into a `List<Char>`.
+/// Called when `toList()` is invoked on the iterable returned by `asIterable()`,
+/// or when the for-in lowering needs a concrete list.
+@_cdecl("kk_string_iterable_toList")
+public func kk_string_iterable_toList(_ iterableRaw: Int) -> Int {
+    guard let box = runtimeStringIterableBox(from: iterableRaw) else {
+        // Validate that the raw value is a valid string handle before falling
+        // back, to avoid reinterpreting an unrelated object pointer as a string.
+        if extractString(from: UnsafeMutableRawPointer(bitPattern: iterableRaw)) != nil {
+            return kk_string_toList(iterableRaw)
+        }
+        // Unrecognised input — return an empty list.
+        return kk_string_toList(runtimeMakeStringRaw(""))
+    }
+    return kk_string_toList(box.strRaw)
+}
+
+/// Create an iterator from a lazy string iterable (for `for (c in str.asIterable())`).
+@_cdecl("kk_string_iterable_iterator")
+public func kk_string_iterable_iterator(_ iterableRaw: Int) -> Int {
+    if let box = runtimeStringIterableBox(from: iterableRaw) {
+        return kk_string_iterator(box.strRaw)
+    }
+    // Validate that the raw value is a valid string handle before falling
+    // back, to avoid reinterpreting an unrelated object pointer as a string.
+    if extractString(from: UnsafeMutableRawPointer(bitPattern: iterableRaw)) != nil {
+        return kk_string_iterator(iterableRaw)
+    }
+    // Return an empty iterator for unrecognised inputs (including null
+    // sentinel) rather than misinterpreting them as string handles.
+    let box = RuntimeStringIteratorBox(charRaws: [])
+    return registerRuntimeObject(box)
+}
+
 // MARK: - STDLIB-189: String iterator and HOF (filter, map, count, any, all, none)
 
 @_cdecl("kk_string_iterator")

@@ -250,6 +250,19 @@ final class RuntimeStringIteratorBox {
     }
 }
 
+/// Lazy iterable view for `String.asIterable()` (STDLIB-317).
+/// Stores only the string raw handle; characters are yielded on demand when
+/// the iterable is consumed (e.g. via `iterator()`, `toList()`, or `for-in`).
+/// In the current runtime the iterable delegates to the existing `kk_string_toList`
+/// materialisation at consumption time, keeping the creation itself O(1).
+final class RuntimeStringIterableBox {
+    let strRaw: Int
+
+    init(strRaw: Int) {
+        self.strRaw = strRaw
+    }
+}
+
 /// Iterator box for `Map` iteration via `for (entry in map)`.
 final class RuntimeMapIteratorBox {
     let keys: [Int]

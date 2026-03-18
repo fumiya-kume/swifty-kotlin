@@ -282,10 +282,10 @@
  
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
  
-- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
-  - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
-- [x] STDLIB-250: `kk_with_context` を非同期実行に対応させる
-  - ディスパッチャタグを GCD キューにマッピングし、ブロックを対象キュー上で実行するように変更済み
+- [x] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+  - `RuntimeStringIterableBox` で文字列ハンドルのみ保持、消費時に遅延展開
+- [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
+  - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
@@ -366,9 +366,9 @@
   - 完了: キャプチャ変数を `kk_closure_obj_*` オブジェクトに格納し、`kk_closure_invoke_*` ラッパー経由で呼び出す closure conversion を実装
 - [ ] ENUM-002: `enumValues()` が正しい Array オブジェクトを返すようにする
   - 現状: 現在は `count` (Int) のみを返しており、Kotlin の Array<T> セマンティクスを満たしていない（`DataEnumSealedSynthesisPass.swift:494`）
-- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+- [x] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
 
- 
+
 ---
  
 ## 🧪 テストケース一括管理

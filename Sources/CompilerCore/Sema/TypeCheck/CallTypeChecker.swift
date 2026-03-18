@@ -1408,6 +1408,12 @@ final class CallTypeChecker {
                     interner: interner,
                     elementType: sema.types.make(.primitive(.char, .nonNull))
                 )
+                let iterableCharType = makeSyntheticIterableType(
+                    symbols: sema.symbols,
+                    types: sema.types,
+                    interner: interner,
+                    elementType: sema.types.make(.primitive(.char, .nonNull))
+                )
                 let charArrayType = makeSyntheticNominalType(
                     symbols: sema.symbols,
                     types: sema.types,
@@ -1428,6 +1434,7 @@ final class CallTypeChecker {
                     case "reversed": sema.types.stringType
                     case "toList": listCharType
                     case "toCharArray": charArrayType
+                    case "asIterable": iterableCharType
                     default: nil
                     }
                 } else if args.count == 1 {
@@ -1529,6 +1536,31 @@ final class CallTypeChecker {
         }
         return types.make(.classType(ClassType(
             classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
+    }
+
+    /// Shared helper for synthesizing `Iterable<T>` types.
+    /// Falls back to `Any` if `kotlin.collections.Iterable` is not registered.
+    func makeSyntheticIterableType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        elementType: TypeID
+    ) -> TypeID {
+        let iterableFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("Iterable"),
+        ]
+        guard let iterableSymbol = symbols.lookup(fqName: iterableFQName) else {
+            // Fall back to Any rather than List<Char> to avoid granting
+            // list-only members (e.g. get()) to the iterable result type.
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: iterableSymbol,
             args: [.out(elementType)],
             nullability: .nonNull
         )))
