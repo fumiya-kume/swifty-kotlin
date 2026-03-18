@@ -209,6 +209,8 @@ final class InlineLoweringPass: LoweringPass {
                 for expandedInstruction in remappedInstructions {
                     switch expandedInstruction {
                     case let .nonLocalReturn(value):
+                        // Skip if we're already after a terminator (unreachable code).
+                        guard !afterTerminator else { break }
                         if let value {
                             loweredBody.append(.returnValue(resolveAlias(of: value, aliases: aliases)))
                         } else {
@@ -222,7 +224,8 @@ final class InlineLoweringPass: LoweringPass {
                     case .returnValue, .returnUnit:
                         // The inline body's own return: jump to exit label instead,
                         // so normal control flow continues in the caller.
-                        if let exitLabel {
+                        // Skip if we're already after a terminator (unreachable code).
+                        if !afterTerminator, let exitLabel {
                             loweredBody.append(.jump(exitLabel))
                         }
                         afterTerminator = true
