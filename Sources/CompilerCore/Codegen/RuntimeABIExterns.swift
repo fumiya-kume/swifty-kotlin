@@ -1971,6 +1971,12 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_useLines = ExternDecl(
+        name: "kk_file_useLines",
+        parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let fileIOExterns: [ExternDecl] = [
         kk_file_new,
         kk_file_readText,
@@ -1990,6 +1996,7 @@ public enum RuntimeABIExterns {
         kk_buffered_reader_readLine,
         kk_buffered_reader_readLines,
         kk_buffered_reader_close,
+        kk_file_useLines,
     ]
 
     public static let regexExterns: [ExternDecl] = [
