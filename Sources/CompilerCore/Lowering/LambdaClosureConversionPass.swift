@@ -447,8 +447,10 @@ final class LambdaClosureConversionPass: LoweringPass {
                         ))
                     }
 
+                    // Use nil symbol so codegen resolves the invoke wrapper by
+                    // name instead of dispatching to the original lambda via its SymbolID.
                     loweredBody.append(.call(
-                        symbol: symbol,
+                        symbol: nil,
                         callee: invokeWrapper,
                         arguments: [closureObjExpr] + valueArgs,
                         result: result,
