@@ -185,7 +185,7 @@ public func kk_list_iterator_hasPrevious(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
         return kk_box_bool(0)
     }
-    return kk_box_bool((iter.index > 0 && iter.index <= iter.elements.count) ? 1 : 0)
+    return kk_box_bool(iter.index > 0 ? 1 : 0)
 }
 
 @_cdecl("kk_list_iterator_previous")
@@ -193,7 +193,7 @@ public func kk_list_iterator_previous(_ iterRaw: Int) -> Int {
     guard let iter = runtimeListIteratorBox(from: iterRaw) else {
         return 0
     }
-    guard iter.index > 0, iter.index <= iter.elements.count else {
+    guard iter.index > 0 else {
         return 0
     }
     iter.index -= 1

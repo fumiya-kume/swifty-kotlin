@@ -695,13 +695,12 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     // --- STDLIB-538: Rewrite hasPrevious()/previous() on list iterator ---
-                    let listIteratorMemberRewrites: [(InternedString, InternedString)] = [
-                        (lookup.hasPreviousName, lookup.kkListIteratorHasPreviousName),
-                        (lookup.previousName, lookup.kkListIteratorPreviousName),
-                    ]
                     if arguments.count == 1,
-                       let runtimeCallee = listIteratorMemberRewrites.first(where: { $0.0 == callee })?.1,
+                       (callee == lookup.hasPreviousName || callee == lookup.previousName),
                        listIteratorExprIDs.contains(arguments[0].rawValue) {
+                        let runtimeCallee = callee == lookup.hasPreviousName
+                            ? lookup.kkListIteratorHasPreviousName
+                            : lookup.kkListIteratorPreviousName
                         loweredBody.append(.call(
                             symbol: nil,
                             callee: runtimeCallee,
