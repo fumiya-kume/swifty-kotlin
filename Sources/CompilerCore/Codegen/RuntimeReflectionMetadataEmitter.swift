@@ -14,9 +14,9 @@ import Foundation
 /// current LLVM bindings do not expose `LLVMConstArray` for i8 arrays.
 ///
 /// Globals emitted:
-/// - `kk_reflection_metadata_size` (i64): total byte count of the serialized blob
-/// - `kk_reflection_metadata_words` (i64): number of i64 words
-/// - `kk_reflection_metadata_w{N}` (i64): each word of the blob (little-endian packed)
+/// - `<symbolPrefix>_?kk_reflection_metadata_size` (i64): total byte count of the serialized blob
+/// - `<symbolPrefix>_?kk_reflection_metadata_words` (i64): number of i64 words
+/// - `<symbolPrefix>_?kk_reflection_metadata_w{N}` (i64): each word of the blob (little-endian packed)
 ///
 /// Layout:
 /// ```
@@ -154,10 +154,10 @@ public struct RuntimeReflectionMetadataEmitter {
     /// Emits the serialized metadata as LLVM global constants using the
     /// provided bindings.
     ///
-    /// Creates the following globals:
-    /// - `kk_reflection_metadata_size`: i64 holding the byte count
-    /// - `kk_reflection_metadata_words`: i64 holding the number of i64 words
-    /// - `kk_reflection_metadata_w{N}`: one i64 per word of the blob
+/// Creates the following globals:
+/// - `<symbolPrefix>_?kk_reflection_metadata_size`: i64 holding the byte count
+/// - `<symbolPrefix>_?kk_reflection_metadata_words`: i64 holding the number of i64 words
+/// - `<symbolPrefix>_?kk_reflection_metadata_w{N}`: one i64 per word of the blob
     static func emitGlobals(
         records: [MetadataRecord],
         bindings: LLVMCAPIBindings,
