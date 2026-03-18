@@ -245,7 +245,7 @@ public func kk_result_recover(
 ) -> Int {
     outThrown?.pointee = 0
     guard let box = resultBoxFromRaw(resultRaw) else {
-        return registerRuntimeObject(RuntimeResultBox(isSuccess: false, value: 0, exception: runtimeAllocateThrowable(message: "Result is null")))
+        return resultRaw
     }
     if box.isSuccess {
         // Success — return as-is
