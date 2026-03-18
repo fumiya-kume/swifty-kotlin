@@ -1374,6 +1374,13 @@ public func kk_dispatcher_main() -> Int {
     RuntimeDispatcherTag.mainDispatcher
 }
 
+/// A simple heap-allocated, `@unchecked Sendable` box used to pass an integer
+/// result from a `DispatchQueue.async` closure back to the waiting thread.
+/// Synchronization is provided externally by a `DispatchSemaphore`.
+private final class WithContextResultBox: @unchecked Sendable {
+    var value: Int = 0
+}
+
 /// Kotlin `withContext(dispatcher) { block }` — switches coroutine execution
 /// to the dispatch queue that corresponds to `dispatcherRaw`, runs the
 /// suspend-aware block through the full entry loop (supporting intermediate
@@ -1402,6 +1409,15 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     // are registered with the correct scope on the target queue's thread.
     let parentScope = RuntimeCoroutineScope.current
 
+    // Propagate caller's scope to continuation context so that
+    // runSuspendEntryLoopWithContinuation installs it under the fresh task key.
+    // Without this, contState.scope would be nil for a freshly created
+    // continuation and child coroutines launched inside the withContext block
+    // would lose the parent scope — breaking structured concurrency.
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = parentScope
+    }
+
     // NOTE: When the target queue is DispatchQueue.main and we are already on
     // the main thread, dispatching async + semaphore.wait() would deadlock
     // because the main thread cannot process the enqueued block while blocked.
@@ -1420,15 +1436,13 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     let semaphore = DispatchSemaphore(value: 0)
-    // Use a heap-allocated pointer as a thread-safe container for the result.
+    // Use a Sendable box as a thread-safe container for the result.
     // The DispatchSemaphore provides a happens-before relationship: the write
-    // to `resultPtr.pointee` inside `queue.async` is guaranteed to complete
-    // before `semaphore.signal()`, and `semaphore.wait()` ensures the read
-    // on the calling thread observes the written value. This makes the
-    // cross-thread mutation safe and unambiguous to the concurrency checker.
-    let resultPtr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-    resultPtr.initialize(to: 0)
-    defer { resultPtr.deallocate() }
+    // inside `queue.async` is guaranteed to complete before `semaphore.signal()`,
+    // and `semaphore.wait()` ensures the read on the calling thread observes the
+    // written value. The box is @unchecked Sendable so the concurrency checker
+    // accepts the capture without complaint.
+    let resultBox = WithContextResultBox()
 
     queue.async {
         // Propagate the coroutine scope to the target thread.
@@ -1436,7 +1450,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         RuntimeCoroutineScope.current = parentScope
         defer { RuntimeCoroutineScope.current = savedScope }
 
-        resultPtr.pointee = runSuspendEntryLoopWithContinuation(
+        resultBox.value = runSuspendEntryLoopWithContinuation(
             entryPointRaw: blockFnPtr,
             continuation: continuation
         )
@@ -1444,7 +1458,7 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
     }
 
     semaphore.wait()
-    return resultPtr.pointee
+    return resultBox.value
 }
 
 // MARK: - Channel Runtime Stubs (P5-134)

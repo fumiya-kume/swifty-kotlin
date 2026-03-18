@@ -552,10 +552,9 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
         // succeeds because XCTest's wait(for:timeout:) pumps the main run
         // loop, allowing the main queue to service the enqueued block.
         let expectation = XCTestExpectation(description: "withContext(Main) from background")
-        // Use a heap-allocated pointer as a thread-safe container for the
-        // result, avoiding shared mutable state across threads.
-        let resultPtr = UnsafeMutablePointer<Int>.allocate(capacity: 1)
-        resultPtr.initialize(to: 0)
+        // Perform the assertion inside the async block so there is no shared
+        // mutable state across threads — only the expectation is used to
+        // synchronize completion with the test thread.
         DispatchQueue.global().async {
             let continuation = kk_coroutine_continuation_new(runtimeWithContextFunctionID)
             let entryRaw = unsafeBitCast(
@@ -563,13 +562,11 @@ final class RuntimeCoroutineStateTests: IsolatedRuntimeXCTestCase {
                 to: Int.self
             )
             let dispatcher = kk_dispatcher_main()
-            resultPtr.pointee = kk_with_context(dispatcher, entryRaw, continuation)
+            let result = kk_with_context(dispatcher, entryRaw, continuation)
+            XCTAssertEqual(result, 99, "Main dispatcher from background thread should return block result")
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 5.0)
-        let result = resultPtr.pointee
-        resultPtr.deallocate()
-        XCTAssertEqual(result, 99, "Main dispatcher from background thread should return block result")
     }
 
     func testWithContextWithDelayOnIODispatcher() {
