@@ -121,6 +121,11 @@ private let groupByParity: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?)
     value % 2
 }
 
+// Lambda that returns value * 10 (for associateWithTo tests)
+private let valueTimesTen: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+    value * 10
+}
+
 private let sortedByTens: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     value / 10
 }
@@ -488,66 +493,138 @@ final class RuntimeCollectionHOFTests: XCTestCase {
         extractString(from: UnsafeMutableRawPointer(bitPattern: raw)) ?? ""
     }
 
-    // MARK: - reduceOrNull / scanReduce / scan / runningFold / runningReduce (STDLIB-526..530)
+    // MARK: - associateByTo / associateWithTo / groupByTo tests
 
-    func testReduceOrNullReturnsResultForNonEmptyList() {
+    func testAssociateByToBasic() {
         let source = makeList([1, 2, 3])
-        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(result, 6) // 1 + 2 + 3
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_list_associateByTo(
+            source, dest,
+            unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil
+        )
+        // Returns same destination handle
+        XCTAssertEqual(result, dest)
+        // Keys are lambda results (value*2), values are elements
+        XCTAssertEqual(mapKeys(result), [2, 4, 6])
     }
 
-    func testReduceOrNullReturnsNullSentinelForEmptyList() {
-        let source = makeList([])
-        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(result, runtimeNullSentinelInt) // Kotlin null sentinel
-    }
-
-    func testReduceOrNullSingleElementReturnsThatElement() {
-        let source = makeList([42])
-        let result = kk_list_reduceOrNull(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(result, 42)
-    }
-
-    func testScanReturnsIntermediateResults() {
+    func testAssociateByToDuplicateKeysLastWriteWins() {
+        // Elements 1 and 3 both have key = parity 1; 2 has key = parity 0
         let source = makeList([1, 2, 3])
-        let result = kk_list_scan(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [0, 1, 3, 6]) // [0, 0+1, 0+1+2, 0+1+2+3]
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_list_associateByTo(
+            source, dest,
+            unsafeBitCast(groupByParity, to: Int.self), 0, nil
+        )
+        // Last-write-wins: key 1 -> last elem with odd parity is 3, key 0 -> 2
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(kk_map_get(result, 1), 3)
+        XCTAssertEqual(kk_map_get(result, 0), 2)
     }
 
-    func testScanEmptyListReturnsInitialOnly() {
-        let source = makeList([])
-        let result = kk_list_scan(source, 10, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [10])
+    func testAssociateByToPrePopulatedDestination() {
+        // Pre-populate destination with key=100 -> value=999
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [100], values: [999]))
+        let source = makeList([5, 10])
+
+        let result = kk_list_associateByTo(
+            source, dest,
+            unsafeBitCast(mapTimesTwo, to: Int.self), 0, nil
+        )
+        // Existing entry preserved, new entries added
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(kk_map_get(result, 100), 999)
+        XCTAssertTrue(mapKeys(result).contains(10))  // key for elem 5
+        XCTAssertTrue(mapKeys(result).contains(20))  // key for elem 10
     }
 
-    func testRunningFoldDelegatesToScan() {
+    func testAssociateWithToBasic() {
         let source = makeList([1, 2, 3])
-        let result = kk_list_runningFold(source, 0, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [0, 1, 3, 6])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_list_associateWithTo(
+            source, dest,
+            unsafeBitCast(valueTimesTen, to: Int.self), 0, nil
+        )
+        // Keys are elements, values are lambda results (elem*10)
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(kk_map_get(result, 1), 10)
+        XCTAssertEqual(kk_map_get(result, 2), 20)
+        XCTAssertEqual(kk_map_get(result, 3), 30)
     }
 
-    func testRunningReduceReturnsIntermediateResults() {
-        let source = makeList([1, 2, 3])
-        let result = kk_list_runningReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [1, 3, 6]) // [1, 1+2, 1+2+3]
+    func testAssociateWithToDuplicateKeysLastWriteWins() {
+        let source = makeList([1, 1, 2])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_list_associateWithTo(
+            source, dest,
+            unsafeBitCast(valueTimesTen, to: Int.self), 0, nil
+        )
+        // Duplicate key 1: last write wins (both map to 10, so same value)
+        XCTAssertEqual(mapKeys(result), [1, 2])
+        XCTAssertEqual(kk_map_get(result, 1), 10)
+        XCTAssertEqual(kk_map_get(result, 2), 20)
     }
 
-    func testScanReduceDelegatesToRunningReduce() {
-        let source = makeList([1, 2, 3])
-        let result = kk_list_scanReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [1, 3, 6])
+    func testAssociateWithToPrePopulatedDestination() {
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [100], values: [999]))
+        let source = makeList([5])
+
+        let result = kk_list_associateWithTo(
+            source, dest,
+            unsafeBitCast(valueTimesTen, to: Int.self), 0, nil
+        )
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(kk_map_get(result, 100), 999)
+        XCTAssertEqual(kk_map_get(result, 5), 50)
     }
 
-    func testScanReduceEmptyListThrowsViaOutThrown() {
-        let source = makeList([])
-        var thrown = 0
-        _ = kk_list_scanReduce(source, unsafeBitCast(foldSum, to: Int.self), 0, &thrown)
-        XCTAssertNotEqual(thrown, 0, "scanReduce on empty list should signal an error via outThrown")
+    func testGroupByToBasic() {
+        let source = makeList([3, 1, 4, 2, 5])
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
+
+        let result = kk_list_groupByTo(
+            source, dest,
+            unsafeBitCast(groupByParity, to: Int.self), 0, nil
+        )
+        // Same destination handle returned
+        XCTAssertEqual(result, dest)
+        // Odd elements (parity 1) grouped, even elements (parity 0) grouped
+        XCTAssertEqual(mapKeys(result), [1, 0])
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [3, 1, 5])
+        XCTAssertEqual(listElements(kk_map_get(result, 0)), [4, 2])
     }
 
-    func testScanReduceWithOrderOperation() {
-        let source = makeList([1, 2, 3])
-        let result = kk_list_scanReduce(source, unsafeBitCast(foldOrder, to: Int.self), 0, nil)
-        XCTAssertEqual(listElements(result), [1, 12, 123]) // [1, 1*10+2, (1*10+2)*10+3]
+    func testGroupByToPrePopulatedDestinationAppends() {
+        // Pre-populate with key=1 already containing [100]
+        let existingList = registerRuntimeObject(RuntimeListBox(elements: [100]))
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [1], values: [existingList]))
+        let source = makeList([3, 5])  // both have parity 1
+
+        let result = kk_list_groupByTo(
+            source, dest,
+            unsafeBitCast(groupByParity, to: Int.self), 0, nil
+        )
+        // Existing list should have new elements appended
+        XCTAssertEqual(result, dest)
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [100, 3, 5])
+    }
+
+    func testGroupByToNewAndExistingKeys() {
+        // Pre-populate with key=0 containing [10]
+        let existingList = registerRuntimeObject(RuntimeListBox(elements: [10]))
+        let dest = registerRuntimeObject(RuntimeMapBox(keys: [0], values: [existingList]))
+        let source = makeList([1, 2])  // 1->parity 1 (new key), 2->parity 0 (existing)
+
+        let result = kk_list_groupByTo(
+            source, dest,
+            unsafeBitCast(groupByParity, to: Int.self), 0, nil
+        )
+        // Existing key 0 gets 2 appended; new key 1 gets [1]
+        XCTAssertEqual(listElements(kk_map_get(result, 0)), [10, 2])
+        XCTAssertEqual(listElements(kk_map_get(result, 1)), [1])
     }
 }

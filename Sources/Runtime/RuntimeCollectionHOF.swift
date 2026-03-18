@@ -781,16 +781,24 @@ public func kk_list_associateByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, 
     guard let dest = runtimeMapBox(from: destRaw) else {
         invalidContainerPanic(#function, "map")
     }
+    // Build key index for O(1) lookups instead of O(n) linear scan per element
+    var keyIndex: [Int: Int] = [:]  // unboxedKey -> array index
+    for (i, k) in dest.keys.enumerated() {
+        keyIndex[k] = i
+    }
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
-        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
-            dest.values[index] = elem
+        let unboxedValue = maybeUnbox(elem)
+        if let index = keyIndex[unboxedKey] {
+            dest.values[index] = unboxedValue
         } else {
+            let newIndex = dest.keys.count
             dest.keys.append(unboxedKey)
-            dest.values.append(elem)
+            dest.values.append(unboxedValue)
+            keyIndex[unboxedKey] = newIndex
         }
     }
     return destRaw
@@ -804,17 +812,24 @@ public func kk_list_associateWithTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int
     guard let dest = runtimeMapBox(from: destRaw) else {
         invalidContainerPanic(#function, "map")
     }
+    // Build key index for O(1) lookups instead of O(n) linear scan per element
+    var keyIndex: [Int: Int] = [:]  // unboxedKey -> array index
+    for (i, k) in dest.keys.enumerated() {
+        keyIndex[k] = i
+    }
     for elem in list.elements {
         var thrown = 0
         let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(elem)
         let unboxedValue = maybeUnbox(value)
-        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
+        if let index = keyIndex[unboxedKey] {
             dest.values[index] = unboxedValue
         } else {
+            let newIndex = dest.keys.count
             dest.keys.append(unboxedKey)
             dest.values.append(unboxedValue)
+            keyIndex[unboxedKey] = newIndex
         }
     }
     return destRaw
@@ -828,20 +843,38 @@ public func kk_list_groupByTo(_ listRaw: Int, _ destRaw: Int, _ fnPtr: Int, _ cl
     guard let dest = runtimeMapBox(from: destRaw) else {
         invalidContainerPanic(#function, "map")
     }
+    // Build key index and cache resolved list handles for O(1) lookups
+    var keyIndex: [Int: Int] = [:]  // unboxedKey -> array index
+    var cachedLists: [Int: RuntimeListBox] = [:]  // array index -> resolved list
+    for (i, k) in dest.keys.enumerated() {
+        keyIndex[k] = i
+        if let existingList = runtimeListBox(from: dest.values[i]) {
+            cachedLists[i] = existingList
+        }
+    }
     for elem in list.elements {
         var thrown = 0
         let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         let unboxedKey = maybeUnbox(key)
-        if let index = dest.keys.firstIndex(where: { runtimeValuesEqual($0, unboxedKey) }) {
-            // Append to existing list
-            guard let existingList = runtimeListBox(from: dest.values[index]) else {
-                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: groupByTo destination value is not a MutableList")
+        if let index = keyIndex[unboxedKey] {
+            // Append to existing list using cached handle
+            if let existingList = cachedLists[index] {
+                existingList.elements.append(elem)
+            } else {
+                guard let existingList = runtimeListBox(from: dest.values[index]) else {
+                    fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: groupByTo destination value is not a MutableList")
+                }
+                cachedLists[index] = existingList
+                existingList.elements.append(elem)
             }
-            existingList.elements.append(elem)
         } else {
+            let newIndex = dest.keys.count
+            let newList = RuntimeListBox(elements: [elem])
             dest.keys.append(unboxedKey)
-            dest.values.append(registerRuntimeObject(RuntimeListBox(elements: [elem])))
+            dest.values.append(registerRuntimeObject(newList))
+            keyIndex[unboxedKey] = newIndex
+            cachedLists[newIndex] = newList
         }
     }
     return destRaw

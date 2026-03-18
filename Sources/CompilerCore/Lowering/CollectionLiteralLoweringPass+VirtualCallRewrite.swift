@@ -982,16 +982,22 @@ extension CollectionLiteralLoweringPass {
         else {
             return false
         }
-        // arguments: [destination, lambda] (receiver already split off)
-        guard arguments.count == 2,
+        // arguments: [destination, lambda] or [destination, lambda, closureRaw]
+        guard (arguments.count == 2 || arguments.count == 3),
               listExprIDs.contains(receiver.rawValue)
         else { return false }
 
         let destID = arguments[0]
         let lambdaID = arguments[1]
 
-        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
-        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let closureRawExpr: KIRExprID
+        if arguments.count == 3 {
+            closureRawExpr = arguments[2]
+        } else {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            closureRawExpr = zeroExpr
+        }
 
         let kkName: InternedString = switch callee {
         case lookup.associateByToName: lookup.kkListAssociateByToName
@@ -1002,7 +1008,7 @@ extension CollectionLiteralLoweringPass {
 
         let hofResult = emitHOFCall(
             kkName: kkName, receiver: receiver,
-            arguments: [destID, lambdaID, zeroExpr],
+            arguments: [destID, lambdaID, closureRawExpr],
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module,
             loweredBody: &loweredBody
