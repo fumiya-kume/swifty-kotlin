@@ -94,20 +94,22 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_floor_float(floatToBits(-2.3))), -3.0)
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
     func testFloatRoundToInt() {
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.5)), 2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.5)), 3)
         XCTAssertEqual(kk_float_roundToInt(floatToBits(3.5)), 4)
-        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -1)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.5)), -2)
         XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.nan)), 0)
     func testDoubleRoundToInt() {
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(2.5)), 2)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(2.5)), 3)
         XCTAssertEqual(kk_double_roundToInt(doubleToBits(3.5)), 4)
-        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -2)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -1)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-2.5)), -2)
         XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.nan)), 0)
     func testFloatRoundToLong() {
-        XCTAssertEqual(kk_float_roundToLong(floatToBits(2.5)), 2)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(2.5)), 3)
         XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.nan)), 0)
     func testDoubleRoundToLong() {
-        XCTAssertEqual(kk_double_roundToLong(doubleToBits(2.5)), 2)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(2.5)), 3)
         XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.nan)), 0)
     // MARK: - ulp / nextUp / nextDown (STDLIB-512..513)
     func testDoubleUlp() {
