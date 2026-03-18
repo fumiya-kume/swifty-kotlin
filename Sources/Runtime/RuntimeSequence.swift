@@ -570,6 +570,16 @@ public func kk_sequence_of(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(seq)
 }
 
+/// Wrap a single element value in a one-element sequence.
+/// Used by the compiler to ensure `Sequence + element` always passes a
+/// collection handle to `kk_sequence_plus`, avoiding the ambiguity where
+/// a raw element value could collide with a live runtime object handle.
+@_cdecl("kk_sequence_of_single")
+public func kk_sequence_of_single(_ element: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.source(elements: [element])])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_sequence_generate")
 public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr, closureRaw: closureRaw)])
@@ -1842,12 +1852,15 @@ public func kk_sequence_flatten(_ seqRaw: Int) -> Int {
 // .concat / .minus step kinds to RuntimeSequenceBox for lazy evaluation
 // without changing the public ABI.
 //
-// NOTE: The compiler resolves the correct Kotlin overload (element vs
-// collection) at compile time via sema.bindings.isCollectionExpr, so
-// at the runtime level otherRaw in kk_sequence_plus is always a
-// collection handle (sequence/list/array).  The single-element overload
-// is handled by the compiler emitting the element wrapped in a
-// single-element sequence before calling this function.
+// ABI CONTRACT:
+// - kk_sequence_plus(seqRaw, otherRaw): `otherRaw` MUST be a collection
+//   handle (sequence, list, or array).  The compiler wraps single-element
+//   operands via kk_sequence_of_single before calling this function, so
+//   the runtime never needs to guess whether otherRaw is an element or a
+//   collection.
+// - kk_sequence_minus(seqRaw, element): `element` is always a single
+//   value (not a collection handle).  The compiler only emits this call
+//   when the RHS is known to be a non-collection expression.
 
 @_cdecl("kk_sequence_plus")
 public func kk_sequence_plus(_ seqRaw: Int, _ otherRaw: Int) -> Int {
@@ -1869,13 +1882,13 @@ public func kk_sequence_plus(_ seqRaw: Int, _ otherRaw: Int) -> Int {
     } else if let array = runtimeArrayBox(from: otherRaw) {
         rhsElements = array.elements
     } else {
-        // Single element case: otherRaw is a plain value, not a collection.
-        // This path is kept as a defensive fallback; the compiler should
-        // normally wrap single elements before reaching here.
-        rhsElements = [otherRaw]
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_plus received invalid RHS collection handle (the compiler must wrap single elements via kk_sequence_of_single)")
     }
-    var combined = lhsElements
+    // Build a fresh array with the exact final capacity to avoid
+    // copy-on-write reallocation when lhsElements shares storage.
+    var combined: [Int] = []
     combined.reserveCapacity(lhsElements.count + rhsElements.count)
+    combined.append(contentsOf: lhsElements)
     combined.append(contentsOf: rhsElements)
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: combined)])
     return registerRuntimeObject(newSeq)

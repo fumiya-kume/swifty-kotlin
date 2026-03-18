@@ -430,6 +430,7 @@ extension ABILoweringPass {
             interner.intern("kk_iterator_builder_next"),
             // Sequence (STDLIB-095/096/097)
             interner.intern("kk_sequence_of"),
+            interner.intern("kk_sequence_of_single"),
             interner.intern("kk_sequence_generate"),
             interner.intern("kk_sequence_forEach"),
             interner.intern("kk_sequence_flatMap"),

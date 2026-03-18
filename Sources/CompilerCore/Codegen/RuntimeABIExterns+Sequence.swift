@@ -57,6 +57,7 @@ public extension RuntimeABIExterns {
         kk_sequence_reduceIndexed,
         kk_sequence_plus,
         kk_sequence_minus,
+        kk_sequence_of_single,
     ]
 
     static let kk_sequence_from_list = ExternDecl(
@@ -404,6 +405,12 @@ public extension RuntimeABIExterns {
     static let kk_sequence_minus = ExternDecl(
         name: "kk_sequence_minus",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_sequence_of_single = ExternDecl(
+        name: "kk_sequence_of_single",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 }

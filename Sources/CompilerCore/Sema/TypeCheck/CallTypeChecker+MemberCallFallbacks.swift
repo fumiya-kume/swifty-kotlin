@@ -357,9 +357,19 @@ extension CallTypeChecker {
         // When the receiver is Sequence, sequence-returning operations (map,
         // filter, etc.) should return Sequence<E> so the KIR builder's
         // sequence HOF handler recognises chained calls (STDLIB-471).
+        // Exclude map/grouping-returning members (groupBy, associate*, etc.)
+        // which produce Map<K,V> or Grouping<T,K>, not Sequence<E>.
+        let mapReturningMembers: Set = [
+            interner.intern("groupBy"),
+            interner.intern("groupingBy"),
+            interner.intern("associateBy"),
+            interner.intern("associateWith"),
+            interner.intern("associate"),
+        ]
         if isSequenceReceiver,
            resultType == sema.types.anyType,
-           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner)
+           isCollectionReturningMember(calleeName, isMapReceiver: false, isSetReceiver: false, interner: interner),
+           !mapReturningMembers.contains(calleeName)
         {
             resultType = makeSyntheticSequenceType(
                 symbols: sema.symbols,

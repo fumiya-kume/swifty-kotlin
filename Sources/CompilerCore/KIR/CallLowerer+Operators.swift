@@ -167,16 +167,45 @@ extension CallLowerer {
             return result
         }
         // STDLIB-561/562: Sequence plus/minus operators
-        // For minus, only handle the single-element case (non-collection RHS).
-        // Collection-removal (Sequence.minus(Iterable)) is not yet supported
-        // at the ABI level and falls through to the generic operator path.
+        // For plus:
+        //   - If RHS is a collection, pass directly (kk_sequence_plus handles
+        //     sequence/list/array handles).
+        //   - If RHS is a single element, wrap it in a single-element sequence
+        //     first so the runtime ABI always receives a collection handle,
+        //     eliminating the ambiguity where an element value could collide
+        //     with a live runtime handle.
+        // For minus: only handle the single-element case (non-collection RHS).
+        //   Collection-removal (Sequence.minus(Iterable)) is not yet supported
+        //   at the ABI level and falls through to the generic operator path.
         if isSequenceLikeType(sema.bindings.exprTypes[lhs] ?? sema.types.anyType, sema: sema, interner: interner) {
             if op == .add {
+                let effectiveRHS: KIRExprID
+                if sema.bindings.isCollectionExpr(rhs) {
+                    // RHS is already a collection handle; pass directly.
+                    effectiveRHS = rhsID
+                } else {
+                    // Wrap single element in a one-element sequence so the
+                    // runtime always receives a collection handle.
+                    let wrappedExpr = arena.appendExpr(
+                        .temporary(Int32(arena.expressions.count)), type: nil
+                    )
+                    instructions.append(
+                        .call(
+                            symbol: nil,
+                            callee: interner.intern("kk_sequence_of_single"),
+                            arguments: [rhsID],
+                            result: wrappedExpr,
+                            canThrow: false,
+                            thrownResult: nil
+                        )
+                    )
+                    effectiveRHS = wrappedExpr
+                }
                 instructions.append(
                     .call(
                         symbol: nil,
                         callee: interner.intern("kk_sequence_plus"),
-                        arguments: [lhsID, rhsID],
+                        arguments: [lhsID, effectiveRHS],
                         result: result,
                         canThrow: false,
                         thrownResult: nil
@@ -747,22 +776,6 @@ extension CallLowerer {
         return unit
     }
 
-    // MARK: - Private Helpers
-
-    /// Check whether a type is Sequence-like for operator lowering decisions.
-    /// Kept private to this extension; the same logic exists in
-    /// CallLowerer+MemberCalls as a file-private helper.
-    private func isSequenceLikeType(
-        _ receiverType: TypeID,
-        sema: SemaModule,
-        interner: StringInterner
-    ) -> Bool {
-        let knownNames = KnownCompilerNames(interner: interner)
-        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
-              let symbol = sema.symbols.symbol(classType.classSymbol)
-        else {
-            return false
-        }
-        return knownNames.isSequenceSymbol(symbol)
-    }
+    // NOTE: isSequenceLikeType is defined once in CallLowerer+MemberCalls.swift
+    // and shared across all CallLowerer extensions.
 }
