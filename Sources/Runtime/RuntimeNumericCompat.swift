@@ -122,7 +122,7 @@ public func kk_any_equals(_ lhs: Int, _ lhsTag: Int32, _ rhs: Int, _ rhsTag: Int
 
 @_cdecl("kk_float_to_bits")
 public func kk_float_to_bits(_ value: Float) -> Int {
-    Int(value.bitPattern)
+    Int(bitPattern: UInt(value.bitPattern))
 }
 
 @_cdecl("kk_bits_to_float")
@@ -236,7 +236,7 @@ public func kk_math_floor(_ value: Int) -> Int {
 
 @_cdecl("kk_math_round")
 public func kk_math_round(_ value: Int) -> Int {
-    kk_double_to_bits(round(kk_bits_to_double(value)))
+    kk_double_to_bits(rint(kk_bits_to_double(value)))
 }
 
 // Trigonometric functions (STDLIB-430)
@@ -413,6 +413,9 @@ public func kk_math_sqrt_float(_ value: Int) -> Int {
 @_cdecl("kk_math_round_float")
 public func kk_math_round_float(_ value: Int) -> Int {
     kk_float_to_bits(round(kk_bits_to_float(value)))
+public func kk_math_round_float(_ v: Int) -> Int {
+    let f = kk_bits_to_float(v)
+    return kk_float_to_bits(rintf(f))
 }
 
 @_cdecl("kk_math_ceil_float")
@@ -518,6 +521,38 @@ private func roundFloatJava7(_ raw: Float) -> Int64 {
     }
 }
 // towards positive infinity, i.e. floor(x + 0.5).
+//
+// Note: A naive `floor(x + 0.5)` has a known IEEE 754 precision issue where
+// nextDown(0.5) (== 0.49999999999999994) incorrectly rounds to 1 because
+// adding 0.5 rounds to exactly 1.0 in double precision. We use Swift's
+// `rounded(.toNearestOrAwayFromZero)` (== C `round()`) which rounds ties
+// away from zero, then correct only the negative-tie case to match Kotlin's
+// "ties towards +inf" behavior.
+
+/// Helper: Kotlin Math.round for Float (ties toward +infinity).
+private func kotlinMathRoundFloat(_ f: Float) -> Float {
+    if f.isNaN || f.isInfinite { return f }
+    let r = f.rounded(.toNearestOrAwayFromZero)
+    // round() rounds -0.5 to -1.0 (away from zero), but Kotlin rounds to 0 (toward +inf).
+    // Correct negative half-integer ties: if f is negative and exactly halfway, round toward +inf.
+    if r != 0, f != r {
+        let diff = f - r
+        // diff == 0.5 means f was exactly halfway and rounded down (negative side)
+        if diff == 0.5 { return r + 1 }
+    }
+    return r
+}
+
+/// Helper: Kotlin Math.round for Double (ties toward +infinity).
+private func kotlinMathRoundDouble(_ d: Double) -> Double {
+    if d.isNaN || d.isInfinite { return d }
+    let r = d.rounded(.toNearestOrAwayFromZero)
+    if r != 0, d != r {
+        let diff = d - r
+        if diff == 0.5 { return r + 1 }
+    }
+    return r
+}
 
 @_cdecl("kk_float_roundToInt")
 public func kk_float_roundToInt(_ value: Int) -> Int {
@@ -560,28 +595,28 @@ public func kk_double_roundToLong(_ value: Int) -> Int {
 public func kk_float_roundToInt(_ v: Int) -> Int {
     let f = kk_bits_to_float(v)
     if f.isNaN { return 0 }
-    let rounded = floorf(f + 0.5)
+    let rounded = kotlinMathRoundFloat(f)
     if rounded >= Float(Int32.max) { return Int(Int32.max) }
     if rounded <= Float(Int32.min) { return Int(Int32.min) }
     return Int(Int32(rounded))
 public func kk_double_roundToInt(_ v: Int) -> Int {
     let d = kk_bits_to_double(v)
     if d.isNaN { return 0 }
-    let rounded = floor(d + 0.5)
+    let rounded = kotlinMathRoundDouble(d)
     if rounded >= Double(Int32.max) { return Int(Int32.max) }
     if rounded <= Double(Int32.min) { return Int(Int32.min) }
     return Int(Int32(rounded))
 public func kk_float_roundToLong(_ v: Int) -> Int {
     let f = kk_bits_to_float(v)
     if f.isNaN { return 0 }
-    let rounded = floorf(f + 0.5)
+    let rounded = kotlinMathRoundFloat(f)
     if rounded >= Float(Int64.max) { return Int(Int64.max) }
     if rounded <= Float(Int64.min) { return Int(Int64.min) }
     return Int(Int64(rounded))
 public func kk_double_roundToLong(_ v: Int) -> Int {
     let d = kk_bits_to_double(v)
     if d.isNaN { return 0 }
-    let rounded = floor(d + 0.5)
+    let rounded = kotlinMathRoundDouble(d)
     if rounded >= Double(Int64.max) { return Int(Int64.max) }
     if rounded <= Double(Int64.min) { return Int(Int64.min) }
     return Int(Int64(rounded))

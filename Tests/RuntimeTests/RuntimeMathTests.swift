@@ -36,8 +36,82 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
     }
 
     func testRoundDouble() {
+        // kotlin.math.round uses half-to-even (banker's rounding)
         XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(2.3))), 2.0)
-        XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(2.5))), 3.0)
+        XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(2.5))), 2.0)  // half-to-even: rounds to 2
+        XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(3.5))), 4.0)  // half-to-even: rounds to 4
+        XCTAssertEqual(doubleFromBits(kk_math_round(doubleToBits(-0.5))), 0.0) // half-to-even: rounds to 0 (not -1)
+        XCTAssertTrue(doubleFromBits(kk_math_round(doubleToBits(Double.nan))).isNaN)
+    }
+
+    func testRoundFloat() {
+        // kotlin.math.round(Float) also uses half-to-even
+        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(2.3))), Float(2.0))
+        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(2.5))), Float(2.0))
+        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(3.5))), Float(4.0))
+        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(-0.5))), Float(0.0))
+        XCTAssertTrue(floatFromBits(kk_math_round_float(floatToBits(Float.nan))).isNaN)
+    }
+
+    // MARK: - roundToInt / roundToLong edge cases
+
+    func testFloatRoundToIntEdgeCases() {
+        // NaN -> 0
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.nan)), 0)
+        // +Infinity saturates to Int32.max
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(Float.infinity)), Int(Int32.max))
+        // -Infinity saturates to Int32.min
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-Float.infinity)), Int(Int32.min))
+        // Negative tie: -1.5 rounds to -1 (toward +inf), not -2
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-1.5)), -1)
+        // Negative tie: -0.5 rounds to 0 (toward +inf), not -1
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-0.5)), 0)
+        // Positive tie: 0.5 rounds to 1
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(0.5)), 1)
+        // Positive tie: 1.5 rounds to 2
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(1.5)), 2)
+        // Normal values
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(2.3)), 2)
+        XCTAssertEqual(kk_float_roundToInt(floatToBits(-2.3)), -2)
+    }
+
+    func testDoubleRoundToIntEdgeCases() {
+        // NaN -> 0
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.nan)), 0)
+        // +Infinity saturates to Int32.max
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(Double.infinity)), Int(Int32.max))
+        // -Infinity saturates to Int32.min
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-Double.infinity)), Int(Int32.min))
+        // Negative tie: -1.5 rounds to -1
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-1.5)), -1)
+        // Negative tie: -0.5 rounds to 0
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-0.5)), 0)
+        // Positive tie: 0.5 rounds to 1
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.5)), 1)
+        // nextDown(0.5) should round to 0 (not 1)
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(0.49999999999999994)), 0)
+        // Saturation beyond Int32 bounds
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(3e9)), Int(Int32.max))
+        XCTAssertEqual(kk_double_roundToInt(doubleToBits(-3e9)), Int(Int32.min))
+    }
+
+    func testFloatRoundToLongEdgeCases() {
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.nan)), 0)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(Float.infinity)), Int(Int64.max))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-Float.infinity)), Int(Int64.min))
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-1.5)), -1)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(-0.5)), 0)
+        XCTAssertEqual(kk_float_roundToLong(floatToBits(0.5)), 1)
+    }
+
+    func testDoubleRoundToLongEdgeCases() {
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.nan)), 0)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(Double.infinity)), Int(Int64.max))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-Double.infinity)), Int(Int64.min))
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-1.5)), -1)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(-0.5)), 0)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.5)), 1)
+        XCTAssertEqual(kk_double_roundToLong(doubleToBits(0.49999999999999994)), 0)
     }
 
     // MARK: - Float trig / rounding (STDLIB-500..509)
