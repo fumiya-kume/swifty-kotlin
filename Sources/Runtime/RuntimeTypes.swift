@@ -509,5 +509,3 @@ final class RuntimeBufferedReaderBox {
         return nil
     }
 }
-    }
-}
