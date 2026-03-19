@@ -442,8 +442,10 @@ extension CallTypeChecker {
             interner.intern("none"),
             interner.intern("all"),
             interner.intern("fold"),
+            interner.intern("foldIndexed"),
             interner.intern("reduce"),
             interner.intern("reduceOrNull"),
+            interner.intern("reduceIndexed"),
             interner.intern("scan"),
             interner.intern("runningFold"),
             interner.intern("runningReduce"),
@@ -641,8 +643,10 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("windowed"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("windowed"), interner.intern("subList"):
             return argCount == 2
+        case interner.intern("reduceIndexed"):
+            return argCount == 1
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
             return argCount == 0 || argCount == 1
         default:
@@ -1016,9 +1020,29 @@ extension CallTypeChecker {
             return (argumentIndex: 1, expectedType: expectedType)
         }
 
+        if memberName == interner.intern("foldIndexed"), argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
         if (memberName == interner.intern("reduce") || memberName == interner.intern("reduceOrNull")), argCount == 1 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.anyType, sema.types.anyType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("reduceIndexed"), argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [sema.types.intType, sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
                 isSuspend: false,
                 nullability: .nonNull
