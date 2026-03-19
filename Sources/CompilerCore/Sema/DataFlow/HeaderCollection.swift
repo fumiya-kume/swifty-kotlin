@@ -373,6 +373,15 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics,
                     localTypeParameters: classLocalTypeParameters
                 )
+                collectSyntheticDataClassHashCode(
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    ownerType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner
+                )
             }
             collectMemberHeaders(
                 members: MemberDeclarations(

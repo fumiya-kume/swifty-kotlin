@@ -310,6 +310,325 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
     }
 
+    // MARK: - DATA-003: hashCode() synthesis for data classes
+
+    func testDataClassHashCodeSynthesisGeneratesHashCodeFunction() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        // Define a data class Point with two properties: x and y
+        let pointName = interner.intern("Point")
+        let pointFQName = packagePath + [pointName]
+        let pointSymbol = symbols.define(
+            kind: .class,
+            name: pointName,
+            fqName: pointFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let pointType = types.make(.classType(ClassType(
+            classSymbol: pointSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        // Register constructor properties x and y
+        let xName = interner.intern("x")
+        let xSymbol = symbols.define(
+            kind: .property,
+            name: xName,
+            fqName: pointFQName + [xName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setParentSymbol(pointSymbol, for: xSymbol)
+        symbols.setPropertyType(intType, for: xSymbol)
+
+        let yName = interner.intern("y")
+        let ySymbol = symbols.define(
+            kind: .property,
+            name: yName,
+            fqName: pointFQName + [yName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setParentSymbol(pointSymbol, for: ySymbol)
+        symbols.setPropertyType(intType, for: ySymbol)
+
+        // Register synthetic hashCode symbol (as Sema would)
+        let hashCodeName = interner.intern("hashCode")
+        let hashCodeFQName = pointFQName + [hashCodeName]
+        let hashCodeSymbol = symbols.define(
+            kind: .function,
+            name: hashCodeName,
+            fqName: hashCodeFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(pointSymbol, for: hashCodeSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: pointType,
+                parameterTypes: [],
+                returnType: intType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: hashCodeSymbol
+        )
+
+        let arena = KIRArena()
+        let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [pointDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataHashCode",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let functionNames = module.arena.declarations.compactMap { decl -> String? in
+            guard case let .function(function) = decl else {
+                return nil
+            }
+            return interner.resolve(function.name)
+        }
+        XCTAssertTrue(functionNames.contains("hashCode"), "Missing hashCode, got: \(functionNames)")
+
+        // Verify hashCode function has receiver parameter
+        let hashCodeFn = try findKIRFunction(named: "hashCode", in: module, interner: interner)
+        XCTAssertEqual(hashCodeFn.params.count, 1, "hashCode should have 1 receiver parameter")
+
+        // Verify body calls kk_any_hashCode for each property
+        let callees = extractCallees(from: hashCodeFn.body, interner: interner)
+        XCTAssertTrue(callees.contains("kk_any_hashCode"), "hashCode should call kk_any_hashCode")
+
+        // With 2 properties, should use 31 * result + hash pattern
+        XCTAssertTrue(callees.contains("kk_op_mul"), "hashCode with 2+ properties should call kk_op_mul")
+        XCTAssertTrue(callees.contains("kk_op_add"), "hashCode with 2+ properties should call kk_op_add")
+
+        // Verify the constant 31 is used in the body
+        let intConsts = hashCodeFn.body.compactMap { inst -> Int64? in
+            guard case let .constValue(_, value) = inst, case let .intLiteral(v) = value else { return nil }
+            return v
+        }
+        XCTAssertTrue(intConsts.contains(31), "hashCode should use constant 31 for hash combining")
+    }
+
+    func testDataClassHashCodeWithNoPropertiesReturnsZero() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        // Define a data class Empty with no properties
+        let emptyName = interner.intern("Empty")
+        let emptyFQName = packagePath + [emptyName]
+        let emptySymbol = symbols.define(
+            kind: .class,
+            name: emptyName,
+            fqName: emptyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let emptyType = types.make(.classType(ClassType(
+            classSymbol: emptySymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        // Register synthetic hashCode symbol
+        let hashCodeName = interner.intern("hashCode")
+        let hashCodeFQName = emptyFQName + [hashCodeName]
+        let hashCodeSymbol = symbols.define(
+            kind: .function,
+            name: hashCodeName,
+            fqName: hashCodeFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(emptySymbol, for: hashCodeSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: emptyType,
+                parameterTypes: [],
+                returnType: intType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: hashCodeSymbol
+        )
+
+        let arena = KIRArena()
+        let emptyDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: emptySymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [emptyDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataHashCodeEmpty",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let hashCodeFn = try findKIRFunction(named: "hashCode", in: module, interner: interner)
+
+        // With no properties, should return 0 directly
+        let intConsts = hashCodeFn.body.compactMap { inst -> Int64? in
+            guard case let .constValue(_, value) = inst, case let .intLiteral(v) = value else { return nil }
+            return v
+        }
+        XCTAssertTrue(intConsts.contains(0), "hashCode with no properties should return 0")
+
+        // Should NOT use mul/add since there's nothing to combine
+        let callees = extractCallees(from: hashCodeFn.body, interner: interner)
+        XCTAssertFalse(callees.contains("kk_op_mul"), "hashCode with no properties should not call kk_op_mul")
+        XCTAssertFalse(callees.contains("kk_op_add"), "hashCode with no properties should not call kk_op_add")
+    }
+
+    func testDataClassHashCodeSinglePropertyNoMulAdd() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("demo")
+        let packagePath = [packageName]
+
+        let wrapperName = interner.intern("Wrapper")
+        let wrapperFQName = packagePath + [wrapperName]
+        let wrapperSymbol = symbols.define(
+            kind: .class,
+            name: wrapperName,
+            fqName: wrapperFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let wrapperType = types.make(.classType(ClassType(
+            classSymbol: wrapperSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+
+        // Register a single constructor property
+        let valueName = interner.intern("value")
+        let valueSymbol = symbols.define(
+            kind: .property,
+            name: valueName,
+            fqName: wrapperFQName + [valueName],
+            declSite: nil,
+            visibility: .public
+        )
+        symbols.setParentSymbol(wrapperSymbol, for: valueSymbol)
+        symbols.setPropertyType(intType, for: valueSymbol)
+
+        // Register synthetic hashCode symbol
+        let hashCodeName = interner.intern("hashCode")
+        let hashCodeFQName = wrapperFQName + [hashCodeName]
+        let hashCodeSymbol = symbols.define(
+            kind: .function,
+            name: hashCodeName,
+            fqName: hashCodeFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(wrapperSymbol, for: hashCodeSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: wrapperType,
+                parameterTypes: [],
+                returnType: intType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: []
+            ),
+            for: hashCodeSymbol
+        )
+
+        let arena = KIRArena()
+        let wrapperDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: wrapperSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [wrapperDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataHashCodeSingle",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        let hashCodeFn = try findKIRFunction(named: "hashCode", in: module, interner: interner)
+        let callees = extractCallees(from: hashCodeFn.body, interner: interner)
+
+        // Single property: result = kk_any_hashCode(receiver, offset), no mul/add needed
+        XCTAssertTrue(callees.contains("kk_any_hashCode"), "hashCode should call kk_any_hashCode")
+        XCTAssertFalse(callees.contains("kk_op_mul"), "hashCode with single property should not call kk_op_mul")
+        XCTAssertFalse(callees.contains("kk_op_add"), "hashCode with single property should not call kk_op_add")
+    }
+
     // MARK: - DATA-004: Data class toString/equals for multi-property classes
 
     func testDataClassToStringAndEqualsAreSynthesized() throws {
@@ -513,12 +832,10 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(toStringCallees.contains("kk_string_builder_append_obj"), "toString should append labels and values via StringBuilder")
         XCTAssertTrue(toStringCallees.contains("kk_string_builder_toString"), "toString should convert the StringBuilder back to String")
         XCTAssertTrue(toStringCallees.contains("kk_any_to_string"), "toString should use kk_any_to_string")
-        // Should call property getters for x and y
         XCTAssertTrue(toStringCallees.contains("x$get"), "toString should call x$get")
         XCTAssertTrue(toStringCallees.contains("y$get"), "toString should call y$get")
         XCTAssertFalse(toStringCallees.contains("z$get"), "toString should ignore non-constructor properties")
 
-        // Verify toString body contains the class name prefix "Point("
         let toStringStringLiterals = toStringFn.body.compactMap { inst -> String? in
             guard case let .constValue(_, value) = inst, case let .stringLiteral(s) = value else { return nil }
             return interner.resolve(s)
@@ -528,7 +845,6 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(toStringStringLiterals.contains(", y="), "toString should contain ', y=' label")
         XCTAssertTrue(toStringStringLiterals.contains(")"), "toString should contain ')' suffix")
 
-        // Verify equals body uses kk_op_eq for property comparison
         let equalsFn = try findKIRFunction(named: "equals", in: module, interner: interner)
         let equalsCallees = extractCallees(from: equalsFn.body, interner: interner)
         XCTAssertTrue(equalsCallees.contains("kk_op_is"), "equals should type-check other before reading properties")
@@ -537,7 +853,6 @@ extension LoweringPassRegressionTests {
         XCTAssertTrue(equalsCallees.contains("x$get"), "equals should call x$get")
         XCTAssertTrue(equalsCallees.contains("y$get"), "equals should call y$get")
         XCTAssertFalse(equalsCallees.contains("z$get"), "equals should ignore non-constructor properties")
-        // Should have receiver + other parameter
         XCTAssertEqual(equalsFn.params.count, 2, "equals should have receiver + other parameter")
 
         let xGetterCalls = equalsFn.body.compactMap { instruction -> KIRInstruction? in

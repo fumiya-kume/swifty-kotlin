@@ -176,7 +176,17 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             owner: nominalSymbol, module: module, sema: sema,
             existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
         )
-
+        if nominalSymbol.kind == .class {
+            let hashCodeName = ctx.interner.intern("hashCode")
+            let existingHashCodeSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [hashCodeName]).first {
+                sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
+            }
+            appendSyntheticDataClassHashCodeIfNeeded(
+                owner: nominalSymbol, existingSymbol: existingHashCodeSymbol,
+                module: module, sema: sema,
+                existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            )
+        }
         let toStringName = ctx.interner.intern("toString")
         let existingToStringSymbol = sema.symbols.lookupAll(fqName: nominalSymbol.fqName + [toStringName]).first {
             sema.symbols.symbol($0).map { $0.flags.contains(.synthetic) } ?? false
@@ -613,6 +623,161 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         )
     }
 
+    /// Synthesizes `hashCode(): Int` for data class.
+    /// Computes hash from all constructor properties using the standard Kotlin algorithm:
+    ///   var result = property1.hashCode()
+    ///   result = 31 * result + property2.hashCode()
+    ///   ...
+    ///   return result
+    /// Each property hash is obtained via `kk_any_hashCode`, and the accumulation
+    /// uses `kk_op_mul` (31 * result) and `kk_op_add` (+ propertyHash).
+    private func appendSyntheticDataClassHashCodeIfNeeded(
+        owner: SemanticSymbol,
+        existingSymbol: SymbolID?,
+        module: KIRModule,
+        sema: SemaModule,
+        existingFunctionSymbols: Set<SymbolID>,
+        interner: StringInterner
+    ) {
+        guard owner.kind == .class, let functionSymbol = existingSymbol else {
+            return
+        }
+        if existingFunctionSymbols.contains(functionSymbol) {
+            return
+        }
+
+        let receiverType = sema.types.make(.classType(ClassType(
+            classSymbol: owner.id,
+            args: [],
+            nullability: .nonNull
+        )))
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+        let hashCodeName = interner.intern("hashCode")
+        let fqName = owner.fqName + [hashCodeName]
+
+        let receiverParamSymbol = sema.symbols.define(
+            kind: .valueParameter,
+            name: interner.intern("$self"),
+            fqName: fqName + [interner.intern("$self")],
+            declSite: owner.declSite,
+            visibility: .private,
+            flags: [.synthetic]
+        )
+        let receiverParam = KIRParameter(symbol: receiverParamSymbol, type: receiverType)
+
+        let propertySymbols = sema.symbols.children(ofFQName: owner.fqName)
+            .compactMap { sema.symbols.symbol($0) }
+            .filter { $0.kind == .property }
+            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+
+        var body: [KIRInstruction] = []
+
+        let receiverRef = module.arena.appendExpr(.symbolRef(receiverParamSymbol), type: receiverType)
+        body.append(.constValue(result: receiverRef, value: .symbolRef(receiverParamSymbol)))
+
+        let hashCodeCallee = interner.intern("kk_any_hashCode")
+        let mulCallee = interner.intern("kk_op_mul")
+        let addCallee = interner.intern("kk_op_add")
+
+        if propertySymbols.isEmpty {
+            let zeroExpr = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)),
+                type: intType
+            )
+            body.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            body.append(.returnValue(zeroExpr))
+        } else {
+            var resultExpr: KIRExprID!
+            for (index, propSym) in propertySymbols.enumerated() {
+                let fieldOffsetValue: Int64
+                if let layout = sema.symbols.nominalLayout(for: owner.id),
+                   let offset = layout.fieldOffsets[propSym.id] {
+                    fieldOffsetValue = Int64(offset)
+                } else {
+                    fieldOffsetValue = Int64(index)
+                }
+
+                let fieldOffsetExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                body.append(.constValue(result: fieldOffsetExpr, value: .intLiteral(fieldOffsetValue)))
+
+                let propHashExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)),
+                    type: intType
+                )
+                body.append(.call(
+                    symbol: nil,
+                    callee: hashCodeCallee,
+                    arguments: [receiverRef, fieldOffsetExpr],
+                    result: propHashExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                if index == 0 {
+                    resultExpr = propHashExpr
+                } else {
+                    let thirtyOneExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    body.append(.constValue(result: thirtyOneExpr, value: .intLiteral(31)))
+
+                    let mulExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    body.append(.call(
+                        symbol: nil,
+                        callee: mulCallee,
+                        arguments: [thirtyOneExpr, resultExpr],
+                        result: mulExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+
+                    let addExpr = module.arena.appendExpr(
+                        .temporary(Int32(module.arena.expressions.count)),
+                        type: intType
+                    )
+                    body.append(.call(
+                        symbol: nil,
+                        callee: addCallee,
+                        arguments: [mulExpr, propHashExpr],
+                        result: addExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+
+                    resultExpr = addExpr
+                }
+            }
+            body.append(.returnValue(resultExpr))
+        }
+
+        let signature = FunctionSignature(
+            receiverType: receiverType,
+            parameterTypes: [],
+            returnType: intType,
+            isSuspend: false,
+            valueParameterSymbols: [],
+            valueParameterHasDefaultValues: [],
+            valueParameterIsVararg: [],
+            typeParameterSymbols: []
+        )
+        appendSyntheticFunctionWithSymbol(
+            functionSymbol: functionSymbol,
+            name: hashCodeName,
+            module: module,
+            sema: sema,
+            signature: signature,
+            params: [receiverParam],
+            body: body
+        )
+    }
+
     /// Synthesizes `toString(): String` for data class with properties.
     /// Output format: "ClassName(prop1=val1, prop2=val2)"
     /// Each property value is converted to string via `kk_any_to_string` and concatenated.
@@ -856,7 +1021,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             return nextLabel
         }
 
-        // If there are no properties, fall back to identity comparison (kk_op_eq)
         if properties.isEmpty {
             let receiverRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
             let otherRef = module.arena.appendExpr(.symbolRef(paramSymbol), type: nullableAnyType)
@@ -916,14 +1080,11 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 thrownResult: nil
             ))
 
-            // For each property, compare this.prop == other.prop
-            // If any differ, return false
             for property in properties {
                 let propName = interner.resolve(property.name)
                 let getterName = interner.intern("\(propName)$get")
                 let propType = sema.symbols.propertyType(for: property.id) ?? sema.types.anyType
 
-                // Load this.prop
                 let selfRef = module.arena.appendExpr(.symbolRef(receiverParam.symbol), type: receiverType)
                 body.append(.constValue(result: selfRef, value: .symbolRef(receiverParam.symbol)))
                 let selfProp = module.arena.appendExpr(
@@ -939,7 +1100,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     thrownResult: nil
                 ))
 
-                // Load other.prop
                 let otherProp = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: propType
@@ -953,7 +1113,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     thrownResult: nil
                 ))
 
-                // Compare via kk_op_eq
                 let cmpResult = module.arena.appendExpr(
                     .temporary(Int32(module.arena.expressions.count)),
                     type: boolType
@@ -970,7 +1129,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                 body.append(.jumpIfEqual(lhs: cmpResult, rhs: falseExpr, target: returnFalseLabel))
             }
 
-            // All properties matched — return true
             let trueResult = module.arena.appendExpr(
                 .boolLiteral(true),
                 type: boolType

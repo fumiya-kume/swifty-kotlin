@@ -487,6 +487,15 @@ extension DataFlowSemaPhase {
                     diagnostics: diagnostics,
                     localTypeParameters: nestedLocalTypeParameters
                 )
+                collectSyntheticDataClassHashCode(
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner
+                )
             }
             collectNestedTypeAliases(
                 nestedClass.nestedTypeAliases,
