@@ -360,6 +360,19 @@ extension DataFlowSemaPhase {
                 )
             }
             if declaration.flags.contains(.dataType) {
+                collectSyntheticDataClassComponentN(
+                    classDecl: classDecl,
+                    ast: ast,
+                    ownerSymbol: symbol,
+                    ownerFQName: fqName,
+                    ownerType: classType,
+                    symbols: symbols,
+                    types: types,
+                    scope: classScope,
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: classLocalTypeParameters
+                )
                 collectSyntheticDataClassCopy(
                     classDecl: classDecl,
                     ast: ast,
