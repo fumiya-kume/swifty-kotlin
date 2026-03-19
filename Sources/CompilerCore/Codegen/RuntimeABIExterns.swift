@@ -828,6 +828,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_windowed_partial = ExternDecl(
+        name: "kk_string_windowed_partial",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-318: String.commonPrefixWith / commonSuffixWith
     public static let kk_string_commonPrefixWith = ExternDecl(
         name: "kk_string_commonPrefixWith",
@@ -2257,6 +2263,7 @@ public enum RuntimeABIExterns {
             kk_string_substringAfterLast,
             kk_string_chunked,
             kk_string_windowed,
+            kk_string_windowed_partial,
             kk_string_commonPrefixWith,
             kk_string_commonSuffixWith,
             kk_string_commonPrefixWith_ignoreCase,

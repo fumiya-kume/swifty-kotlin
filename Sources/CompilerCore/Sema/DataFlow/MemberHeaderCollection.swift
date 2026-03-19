@@ -474,6 +474,19 @@ extension DataFlowSemaPhase {
                 }
             }
             if nestedClass.modifiers.contains(.data) {
+                collectSyntheticDataClassComponentN(
+                    classDecl: nestedClass,
+                    ast: ast,
+                    ownerSymbol: nestedSymbol,
+                    ownerFQName: nestedFQName,
+                    ownerType: nestedType,
+                    symbols: symbols,
+                    types: types,
+                    scope: nestedScope,
+                    interner: interner,
+                    diagnostics: diagnostics,
+                    localTypeParameters: nestedLocalTypeParameters
+                )
                 collectSyntheticDataClassCopy(
                     classDecl: nestedClass,
                     ast: ast,
