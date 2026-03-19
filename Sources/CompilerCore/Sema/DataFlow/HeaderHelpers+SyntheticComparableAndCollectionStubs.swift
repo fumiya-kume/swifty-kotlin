@@ -2518,6 +2518,144 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        // zip(other: Iterable<R>): List<Pair<E, R>>
+        let zipName = interner.intern("zip")
+        let zipFQName = listFQName + [zipName]
+        if symbols.lookup(fqName: zipFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let otherListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            let pairType: TypeID
+            if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? symbols.lookupByShortName(interner.intern("Pair")).first
+            {
+                pairType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(listTypeParamType), .out(rType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                pairType = types.anyType
+            }
+            let zippedListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(pairType)],
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: zipName,
+                fqName: zipFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_zip", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [otherListType],
+                    returnType: zippedListType,
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // unzip(): Pair<List<A>, List<B>> for List<Pair<A, B>>
+        let unzipName = interner.intern("unzip")
+        let unzipFQName = listFQName + [unzipName]
+        if symbols.lookup(fqName: unzipFQName) == nil {
+            let aName = interner.intern("A")
+            let aSymbol = symbols.define(
+                kind: .typeParameter,
+                name: aName,
+                fqName: unzipFQName + [aName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let bName = interner.intern("B")
+            let bSymbol = symbols.define(
+                kind: .typeParameter,
+                name: bName,
+                fqName: unzipFQName + [bName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let aType = types.make(.typeParam(TypeParamType(symbol: aSymbol, nullability: .nonNull)))
+            let bType = types.make(.typeParam(TypeParamType(symbol: bSymbol, nullability: .nonNull)))
+            let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? symbols.lookupByShortName(interner.intern("Pair")).first
+            let specializedReceiverType: TypeID
+            let returnType: TypeID
+            if let pairSymbol {
+                let pairElementType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(aType), .out(bType)],
+                    nullability: .nonNull
+                )))
+                specializedReceiverType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(pairElementType)],
+                    nullability: .nonNull
+                )))
+                let firstListType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(aType)],
+                    nullability: .nonNull
+                )))
+                let secondListType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(bType)],
+                    nullability: .nonNull
+                )))
+                returnType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(firstListType), .out(secondListType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                specializedReceiverType = receiverType
+                returnType = types.anyType
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: unzipName,
+                fqName: unzipFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_unzip", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: specializedReceiverType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [aSymbol, bSymbol],
+                    classTypeParameterCount: 0
+                ),
+                for: memberSymbol
+            )
+        }
     }
 
     private func registerListConversionMembers(

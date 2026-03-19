@@ -885,21 +885,23 @@ symbol s883 kind=class fq=User vis=public flags=dataType
 symbol s884 kind=constructor fq=User.<init> vis=public flags=_ sig=recv=Class#883 params=[String,String?] ret=Class#883 suspend=0 defaults=[0,0] vararg=[0,0]
 symbol s885 kind=valueParameter fq=User.<init>.$884.name vis=private flags=_
 symbol s886 kind=valueParameter fq=User.<init>.$884.nickname vis=private flags=_
-symbol s887 kind=function fq=User.copy vis=public flags=synthetic sig=recv=Class#883 params=[String,String?] ret=Class#883 suspend=0 defaults=[1,1] vararg=[0,0]
-symbol s888 kind=valueParameter fq=User.copy.$887.name vis=private flags=_
-symbol s889 kind=valueParameter fq=User.copy.$887.nickname vis=private flags=_
-symbol s890 kind=function fq=User.hashCode vis=public flags=synthetic sig=recv=Class#883 params=[] ret=Int suspend=0 defaults=[] vararg=[]
-symbol s891 kind=property fq=User.name vis=public flags=_ type=String
-symbol s892 kind=property fq=User.nickname vis=public flags=_ type=String?
-symbol s893 kind=function fq=User.toString vis=public flags=synthetic sig=recv=Class#883 params=[] ret=String suspend=0 defaults=[] vararg=[]
-symbol s894 kind=function fq=User.equals vis=public flags=synthetic sig=recv=Class#883 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
-symbol s895 kind=valueParameter fq=User.equals.other vis=private flags=synthetic
-symbol s896 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
-symbol s897 kind=local fq=__local_14.users vis=private flags=_
-symbol s898 kind=local fq=__local_22.byNickname vis=private flags=_
+symbol s887 kind=function fq=User.component1 vis=public flags=synthetic|operatorFunction sig=recv=Class#883 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s888 kind=function fq=User.component2 vis=public flags=synthetic|operatorFunction sig=recv=Class#883 params=[] ret=String? suspend=0 defaults=[] vararg=[]
+symbol s889 kind=function fq=User.copy vis=public flags=synthetic sig=recv=Class#883 params=[String,String?] ret=Class#883 suspend=0 defaults=[1,1] vararg=[0,0]
+symbol s890 kind=valueParameter fq=User.copy.$889.name vis=private flags=_
+symbol s891 kind=valueParameter fq=User.copy.$889.nickname vis=private flags=_
+symbol s892 kind=function fq=User.hashCode vis=public flags=synthetic sig=recv=Class#883 params=[] ret=Int suspend=0 defaults=[] vararg=[]
+symbol s893 kind=property fq=User.name vis=public flags=_ type=String
+symbol s894 kind=property fq=User.nickname vis=public flags=_ type=String?
+symbol s895 kind=function fq=User.toString vis=public flags=synthetic sig=recv=Class#883 params=[] ret=String suspend=0 defaults=[] vararg=[]
+symbol s896 kind=function fq=User.equals vis=public flags=synthetic sig=recv=Class#883 params=[Any?] ret=Boolean suspend=0 defaults=[0] vararg=[0]
+symbol s897 kind=valueParameter fq=User.equals.other vis=private flags=synthetic
+symbol s898 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s899 kind=local fq=__local_14.users vis=private flags=_
+symbol s900 kind=local fq=__local_22.byNickname vis=private flags=_
 file f0 package=_
   decl d2 class User sym=s883
-  decl d3 fun main suspend=0 inline=0 sym=s896
+  decl d3 fun main suspend=0 inline=0 sym=s898
 expr e0 name(listOf) type=_
 expr e1 name(User) type=_
 expr e2 string(Alice) type=String
@@ -914,15 +916,15 @@ expr e10 string(Carol) type=String
 expr e11 string(A) type=String
 expr e12 call callee=e9 args=[_:e10,_:e11] type=Class#883 call=s884 map=[0->0,1->1] targs=[]
 expr e13 call callee=e0 args=[_:e4,_:e8,_:e12] type=Class#59<out Class#883>
-expr e14 localDecl users mutable=0 type=_ init=e13 type=Unit ref=s897
-expr e15 name(users) type=Class#59<out Class#883> ref=s897
+expr e14 localDecl users mutable=0 type=_ init=e13 type=Unit ref=s899
+expr e15 name(users) type=Class#59<out Class#883> ref=s899
 expr e16 name(it) type=_
 expr e17 memberCall recv=e16 callee=nickname args=[] type=_
 expr e18 name(it) type=Class#883 ref=s-1005120
-expr e19 memberCall recv=e18 callee=nickname args=[] type=String? ref=s892
+expr e19 memberCall recv=e18 callee=nickname args=[] type=String? ref=s894
 expr e20 lambda params=[] body=e19 type=(Class#883) -> Any?
 expr e21 memberCall recv=e15 callee=distinctBy args=[_:e20] type=Class#59<out Class#883>
-expr e22 localDecl byNickname mutable=0 type=_ init=e21 type=Unit ref=s898
+expr e22 localDecl byNickname mutable=0 type=_ init=e21 type=Unit ref=s900
 expr e23 name(println) type=_
-expr e24 name(byNickname) type=Class#59<out Class#883> ref=s898
+expr e24 name(byNickname) type=Class#59<out Class#883> ref=s900
 expr e25 call callee=e23 args=[_:e24] type=Unit call=s740 map=[0->0] targs=[]
