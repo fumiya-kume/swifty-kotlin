@@ -618,7 +618,7 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              ["kk_require_lazy", "kk_check_lazy", "kk_sequence_generate"].contains(externalLinkName),
+              ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"].contains(externalLinkName),
               loweredArguments.count == originalArgs.count,
               loweredArguments.count == 2
         else {
