@@ -28,6 +28,8 @@ public final class CodegenPhase: CompilerPhase {
             extraObjects: []
         )
         let backend = try makeBackend(ctx: ctx)
+        // REFL-004: Build runtime reflection metadata records from sema state.
+        let reflectionRecords = buildReflectionMetadataRecords(ctx: ctx, fileFacadeNamesByFileID: fileFacadeNamesByFileID)
 
         do {
             switch ctx.options.emit {
@@ -39,7 +41,9 @@ public final class CodegenPhase: CompilerPhase {
                     outputIRPath: path,
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedLLVMIRPath(path)
 
@@ -51,7 +55,9 @@ public final class CodegenPhase: CompilerPhase {
                     outputObjectPath: path,
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedObjectPath(path)
 
@@ -63,12 +69,21 @@ public final class CodegenPhase: CompilerPhase {
                     outputObjectPath: path,
                     interner: ctx.interner,
                     sourceManager: ctx.sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
                 )
                 ctx.storeGeneratedObjectPath(path)
 
             case .library:
-                try emitLibrary(module: kir, backend: backend, runtime: runtime, ctx: ctx)
+                try emitLibrary(
+                    module: kir,
+                    backend: backend,
+                    runtime: runtime,
+                    ctx: ctx,
+                    reflectionMetadataRecords: reflectionRecords,
+                    reflectionMetadataSymbolPrefix: ctx.options.moduleName
+                )
 
             case .kirDump:
                 break
@@ -104,7 +119,9 @@ public final class CodegenPhase: CompilerPhase {
         module: KIRModule,
         backend: LLVMBackend,
         runtime: RuntimeLinkInfo,
-        ctx: CompilationContext
+        ctx: CompilationContext,
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         let fm = FileManager.default
         let outputDir = libraryOutputPath(base: ctx.options.outputPath)
@@ -125,7 +142,9 @@ public final class CodegenPhase: CompilerPhase {
             outputObjectPath: objectPath,
             interner: ctx.interner,
             sourceManager: ctx.sourceManager,
-            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast)
+            fileFacadeNamesByFileID: CodegenSymbolSupport.fileFacadeNames(from: ctx.ast),
+            reflectionMetadataRecords: reflectionMetadataRecords,
+            reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
         )
         ctx.storeGeneratedObjectPath(objectPath)
 
@@ -346,5 +365,42 @@ public final class CodegenPhase: CompilerPhase {
             functionLinkNames: functionLinkNamesBySymbol
         )
         return encoder.serialize(records)
+    }
+
+    // MARK: - REFL-004: Runtime Reflection Metadata
+
+    /// Builds MetadataRecords for all declared symbols (classes, interfaces,
+    /// objects, enum classes, annotation classes, and functions) from the
+    /// semantic analysis state. These records are embedded as
+    /// runtime-accessible binary metadata in the compiled output.
+    private func buildReflectionMetadataRecords(
+        ctx: CompilationContext,
+        fileFacadeNamesByFileID: [Int32: String]
+    ) -> [MetadataRecord] {
+        guard let sema = ctx.sema else {
+            return []
+        }
+        let functionLinkNamesBySymbol: [SymbolID: String] = {
+            guard let kir = ctx.kir else { return [:] }
+            return kir.arena.declarations.reduce(into: [:]) { partial, decl in
+                guard case let .function(function) = decl else {
+                    return
+                }
+                partial[function.symbol] = CodegenSymbolSupport.cFunctionSymbol(
+                    for: function,
+                    interner: ctx.interner,
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                )
+            }
+        }()
+        let encoder = MetadataEncoder()
+        return encoder.buildRecords(
+            symbols: sema.symbols,
+            types: sema.types,
+            moduleName: ctx.options.moduleName,
+            interner: ctx.interner,
+            functionLinkNames: functionLinkNamesBySymbol,
+            includeNonPublic: ctx.options.includeNonPublicReflectionMetadata
+        )
     }
 }

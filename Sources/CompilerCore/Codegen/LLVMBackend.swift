@@ -35,7 +35,9 @@ public final class LLVMBackend {
         outputObjectPath: String,
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
-        fileFacadeNamesByFileID: [Int32: String] = [:]
+        fileFacadeNamesByFileID: [Int32: String] = [:],
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -49,7 +51,9 @@ public final class LLVMBackend {
                     module: module,
                     interner: interner,
                     sourceManager: sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                    reflectionMetadataRecords: reflectionMetadataRecords,
+                    reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
                 )
                 try emitter.emitObject(outputPath: outputObjectPath)
             }
@@ -62,7 +66,9 @@ public final class LLVMBackend {
         outputIRPath: String,
         interner: StringInterner,
         sourceManager: SourceManager? = nil,
-        fileFacadeNamesByFileID: [Int32: String] = [:]
+        fileFacadeNamesByFileID: [Int32: String] = [:],
+        reflectionMetadataRecords: [MetadataRecord] = [],
+        reflectionMetadataSymbolPrefix: String? = nil
     ) throws {
         _ = runtime
         try emitNative(
@@ -76,7 +82,9 @@ public final class LLVMBackend {
                     module: module,
                     interner: interner,
                     sourceManager: sourceManager,
-                    fileFacadeNamesByFileID: fileFacadeNamesByFileID
+                    fileFacadeNamesByFileID: fileFacadeNamesByFileID,
+                    reflectionMetadataRecords: reflectionMetadataRecords,
+                    reflectionMetadataSymbolPrefix: reflectionMetadataSymbolPrefix
                 )
                 try emitter.emitLLVMIR(outputPath: outputIRPath)
             }

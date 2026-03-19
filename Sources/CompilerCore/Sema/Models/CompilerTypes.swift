@@ -168,4 +168,11 @@ public struct CompilerOptions: Equatable {
         }
         return .synchronized
     }
+
+    /// Controls whether runtime reflection metadata includes non-public symbols.
+    /// Set with `-Xruntime reflection-metadata=all`.
+    /// Defaults to `false` for public-only metadata.
+    public var includeNonPublicReflectionMetadata: Bool {
+        runtimeFlags.contains("reflection-metadata=all")
+    }
 }

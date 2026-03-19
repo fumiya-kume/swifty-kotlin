@@ -45,6 +45,18 @@ final class CLIParserTests: XCTestCase {
         XCTAssertEqual(options.target.os, "macos")
     }
 
+    func testParsesReflectionMetadataRuntimeFlag() throws {
+        let options = try CLIParser.parse(args: [
+            "-Xruntime",
+            "reflection-metadata=all",
+            "main.kt",
+        ])
+
+        XCTAssertEqual(options.runtimeFlags, ["reflection-metadata=all"])
+        XCTAssertTrue(options.runtimeFlags.contains("reflection-metadata=all"))
+        XCTAssertTrue(options.includeNonPublicReflectionMetadata)
+    }
+
     func testThrowsMissingValue() {
         XCTAssertThrowsError(try CLIParser.parse(args: ["-o"])) { error in
             XCTAssertEqual(error as? CLIParseError, .missingValue("-o"))

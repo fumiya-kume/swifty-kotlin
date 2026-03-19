@@ -130,12 +130,13 @@ public final class MetadataEncoder {
         types: TypeSystem,
         moduleName: String,
         interner: StringInterner,
-        functionLinkNames: [SymbolID: String]
+        functionLinkNames: [SymbolID: String],
+        includeNonPublic: Bool = false
     ) -> [MetadataRecord] {
         let mangler = NameMangler()
         let exported = symbols.allSymbols()
             .filter { symbol in
-                guard symbol.visibility == .public else {
+                if !includeNonPublic && symbol.visibility != .public {
                     return false
                 }
                 if symbol.kind == .package {

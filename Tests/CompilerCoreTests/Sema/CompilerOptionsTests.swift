@@ -109,6 +109,20 @@ final class CompilerOptionsTests: XCTestCase {
         XCTAssertEqual(opts.irFlags, ["opt-passes"])
         XCTAssertEqual(opts.runtimeFlags, ["gc=conservative"])
         XCTAssertEqual(opts.incrementalCachePath, "/cache")
+        XCTAssertFalse(opts.includeNonPublicReflectionMetadata)
+    }
+
+    func testCompilerOptionsRuntimeMetadataVisibilityFlag() {
+        let opts = CompilerOptions(
+            moduleName: "MyMod",
+            inputs: ["/a.kt"],
+            outputPath: "/out/bin",
+            emit: .object,
+            target: defaultTargetTriple(),
+            runtimeFlags: ["reflection-metadata=all"]
+        )
+
+        XCTAssertTrue(opts.includeNonPublicReflectionMetadata)
     }
 
     func testCompilerOptionsEquatable() {
