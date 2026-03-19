@@ -1,4 +1,6 @@
 import kotlin.time.*
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 fun main() {
     val d = 90.seconds
