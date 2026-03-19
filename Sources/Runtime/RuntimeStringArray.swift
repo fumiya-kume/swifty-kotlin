@@ -244,10 +244,20 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         return 0
 
     case RuntimeTypeTokenEncoding.nominalBase:
-        guard let sourceTypeID = runtimeObjectTypeID(rawValue: value) else {
+        if let sourceTypeID = runtimeObjectTypeID(rawValue: value) {
+            return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
+        }
+        // RuntimeThrowableBox objects from external/runtime calls don't have
+        // registered type IDs. They should match any exception catch clause
+        // since the runtime cannot distinguish exact exception subtypes for
+        // throwables created by runtimeAllocateThrowable.
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return 0
         }
-        return runtimeIsAssignable(sourceTypeID: sourceTypeID, targetTypeID: payload) ? 1 : 0
+        let isThrowable = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        } && tryCast(ptr, to: RuntimeThrowableBox.self) != nil
+        return isThrowable ? 1 : 0
 
     default:
         return 0
