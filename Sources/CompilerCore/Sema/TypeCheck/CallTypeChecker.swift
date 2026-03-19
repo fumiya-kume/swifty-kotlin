@@ -1069,7 +1069,7 @@ final class CallTypeChecker {
                 {
                     collectionType = expectedType
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "emptyList"
+                          calleeName == knownNames.emptyListFn
                 {
                     collectionType = makeSyntheticListType(
                         symbols: sema.symbols,
@@ -1085,6 +1085,13 @@ final class CallTypeChecker {
                         types: sema.types,
                         interner: interner,
                         elementType: explicitTypeArg
+                    )
+                } else if calleeName == knownNames.emptyListFn {
+                    collectionType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: sema.types.nothingType
                     )
                 } else if !argTypes.isEmpty,
                           name == "sequenceOf"
@@ -1106,7 +1113,7 @@ final class CallTypeChecker {
                         elementType: explicitTypeArg
                     )
                 } else if !argTypes.isEmpty,
-                          name == "listOf" || name == "listOfNotNull" || name == "emptyList" || name == "mutableListOf"
+                          name == "listOf" || name == "listOfNotNull" || calleeName == knownNames.emptyListFn || name == "mutableListOf"
                 {
                     // Infer element type from arguments via LUB so that
                     // `listOf("a", null)` produces List<String?>.
@@ -1127,7 +1134,7 @@ final class CallTypeChecker {
                         )
                     }
                 } else if let explicitTypeArg = explicitTypeArgs.first,
-                          name == "emptySet" || name == "setOf"
+                          calleeName == knownNames.emptySetFn || name == "setOf"
                 {
                     collectionType = makeSyntheticSetType(
                         symbols: sema.symbols,
@@ -1144,8 +1151,15 @@ final class CallTypeChecker {
                         interner: interner,
                         elementType: explicitTypeArg
                     )
+                } else if calleeName == knownNames.emptySetFn {
+                    collectionType = makeSyntheticSetType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: sema.types.nothingType
+                    )
                 } else if !argTypes.isEmpty,
-                          name == "setOf" || name == "emptySet" || name == "mutableSetOf"
+                          name == "setOf" || calleeName == knownNames.emptySetFn || name == "mutableSetOf"
                 {
                     let elementType = sema.types.lub(argTypes)
                     collectionType = if name == "mutableSetOf" {
@@ -1166,11 +1180,11 @@ final class CallTypeChecker {
                 } else if let expectedType, expectedType != sema.types.errorType,
                           case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
                           expectedClassType.args.count == 2,
-                          name == "mapOf" || name == "mutableMapOf" || name == "emptyMap"
+                          name == "mapOf" || name == "mutableMapOf" || calleeName == knownNames.emptyMapFn
                 {
                     collectionType = expectedType
                 } else if explicitTypeArgs.count == 2,
-                          name == "mapOf" || name == "emptyMap"
+                          name == "mapOf" || calleeName == knownNames.emptyMapFn
                 {
                     collectionType = makeSyntheticMapType(
                         symbols: sema.symbols,
@@ -1213,7 +1227,15 @@ final class CallTypeChecker {
                             valueType: inferredMapTypes.valueType
                         )
                     }
-                } else if name == "mapOf" || name == "emptyMap" || name == "mutableMapOf" {
+                } else if calleeName == knownNames.emptyMapFn {
+                    collectionType = makeSyntheticMapType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        keyType: sema.types.nothingType,
+                        valueType: sema.types.nothingType
+                    )
+                } else if name == "mapOf" || calleeName == knownNames.emptyMapFn || name == "mutableMapOf" {
                     collectionType = if name == "mutableMapOf" {
                         makeSyntheticMutableMapType(
                             symbols: sema.symbols,

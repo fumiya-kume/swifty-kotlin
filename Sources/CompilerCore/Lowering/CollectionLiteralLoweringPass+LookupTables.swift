@@ -30,6 +30,9 @@ struct CollectionLiteralLookupTables {
 
     // Runtime ABI names
     let kkListOfName: InternedString
+    let kkEmptyListName: InternedString
+    let kkEmptySetName: InternedString
+    let kkEmptyMapName: InternedString
     let kkListSizeName: InternedString
     let kkListGetName: InternedString
     let kkListContainsName: InternedString
@@ -371,6 +374,17 @@ struct CollectionLiteralLookupTables {
     let sequenceName: InternedString
     let iteratorBuilderName: InternedString
     let iteratorBuilderFQName: [InternedString]
+    // FQN arrays for stdlib collection factory functions (STDLIB-410)
+    let emptyListFQName: [InternedString]
+    let emptySetFQName: [InternedString]
+    let emptyMapFQName: [InternedString]
+    let listOfFQName: [InternedString]
+    let setOfFQName: [InternedString]
+    let mapOfFQName: [InternedString]
+    let mutableListOfFQName: [InternedString]
+    let mutableSetOfFQName: [InternedString]
+    let mutableMapOfFQName: [InternedString]
+    let listOfNotNullFQName: [InternedString]
     let yieldName: InternedString
     let yieldAllName: InternedString
 
@@ -492,6 +506,9 @@ struct CollectionLiteralLookupTables {
         linkedHashSetName = interner.intern("LinkedHashSet")
 
         kkListOfName = interner.intern("kk_list_of")
+        kkEmptyListName = interner.intern("kk_emptyList")
+        kkEmptySetName = interner.intern("kk_emptySet")
+        kkEmptyMapName = interner.intern("kk_emptyMap")
         kkListSizeName = interner.intern("kk_list_size")
         kkListGetName = interner.intern("kk_list_get")
         kkListContainsName = interner.intern("kk_list_contains")
@@ -817,6 +834,17 @@ struct CollectionLiteralLookupTables {
         sequenceName = interner.intern("sequence")
         iteratorBuilderName = interner.intern("iterator")
         iteratorBuilderFQName = [interner.intern("kotlin"), interner.intern("sequences"), interner.intern("iterator")]
+        let kotlinCollectionsPkg = [interner.intern("kotlin"), interner.intern("collections")]
+        emptyListFQName = kotlinCollectionsPkg + [interner.intern("emptyList")]
+        emptySetFQName = kotlinCollectionsPkg + [interner.intern("emptySet")]
+        emptyMapFQName = kotlinCollectionsPkg + [interner.intern("emptyMap")]
+        listOfFQName = kotlinCollectionsPkg + [interner.intern("listOf")]
+        setOfFQName = kotlinCollectionsPkg + [interner.intern("setOf")]
+        mapOfFQName = kotlinCollectionsPkg + [interner.intern("mapOf")]
+        mutableListOfFQName = kotlinCollectionsPkg + [interner.intern("mutableListOf")]
+        mutableSetOfFQName = kotlinCollectionsPkg + [interner.intern("mutableSetOf")]
+        mutableMapOfFQName = kotlinCollectionsPkg + [interner.intern("mutableMapOf")]
+        listOfNotNullFQName = kotlinCollectionsPkg + [interner.intern("listOfNotNull")]
         yieldName = interner.intern("yield")
         yieldAllName = interner.intern("yieldAll")
 

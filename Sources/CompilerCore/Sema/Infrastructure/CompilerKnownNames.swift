@@ -124,6 +124,9 @@ struct KnownCompilerNames {
     let observable: InternedString
     let vetoable: InternedString
     let notNull: InternedString
+    let emptyListFn: InternedString
+    let emptySetFn: InternedString
+    let emptyMapFn: InternedString
     let buildList: InternedString
     let buildSet: InternedString
     let buildMap: InternedString
@@ -247,6 +250,9 @@ struct KnownCompilerNames {
         observable = interner.intern("observable")
         vetoable = interner.intern("vetoable")
         notNull = interner.intern("notNull")
+        emptyListFn = interner.intern("emptyList")
+        emptySetFn = interner.intern("emptySet")
+        emptyMapFn = interner.intern("emptyMap")
         buildList = interner.intern("buildList")
         buildSet = interner.intern("buildSet")
         buildMap = interner.intern("buildMap")

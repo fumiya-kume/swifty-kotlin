@@ -1569,8 +1569,8 @@ public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
     var keys: [Int] = []
     var values: [Int] = []
     // Dictionary mapping key index in `keys` for O(1) duplicate-key lookup.
-    // Keyed by unboxed value; for primitives this is the value itself.
-    var keyIndexByUnboxed: [Int: Int] = [:]
+    // Uses RuntimeElementKey to respect runtimeValuesEqual semantics (e.g. String content equality).
+    var keyIndexByRuntimeKey: [RuntimeElementKey: Int] = [:]
     for element in collected {
         guard let pointer = UnsafeMutableRawPointer(bitPattern: element) else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_toMap element is not a valid Pair handle")
@@ -1581,12 +1581,12 @@ public func kk_sequence_toMap(_ seqRaw: Int) -> Int {
         guard isObjectPointer, let pair = tryCast(pointer, to: RuntimePairBox.self) else {
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_toMap element is not a valid Pair handle")
         }
-        let unboxedKey = maybeUnbox(pair.first)
-        if let idx = keyIndexByUnboxed[unboxedKey] {
+        let runtimeKey = RuntimeElementKey(value: pair.first)
+        if let idx = keyIndexByRuntimeKey[runtimeKey] {
             values[idx] = pair.second
         } else {
             let newIndex = keys.count
-            keyIndexByUnboxed[unboxedKey] = newIndex
+            keyIndexByRuntimeKey[runtimeKey] = newIndex
             keys.append(pair.first)
             values.append(pair.second)
         }
@@ -1604,7 +1604,8 @@ public func kk_sequence_groupBy(
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var groupKeys: [Int] = []
     var groupElements: [[Int]] = []
-    var keyToIndex: [Int: Int] = [:]
+    // Uses RuntimeElementKey to respect runtimeValuesEqual semantics (e.g. String content equality).
+    var keyToIndex: [RuntimeElementKey: Int] = [:]
     if let seq = runtimeSequenceBox(from: seqRaw) {
         runtimeTraverseSequence(seq, outThrown: outThrown) { elem in
             var thrown = 0
@@ -1613,13 +1614,13 @@ public func kk_sequence_groupBy(
                 outThrown?.pointee = thrown
                 return false
             }
-            let unboxedKey = maybeUnbox(key)
-            if let grpIdx = keyToIndex[unboxedKey] {
+            let runtimeKey = RuntimeElementKey(value: key)
+            if let grpIdx = keyToIndex[runtimeKey] {
                 groupElements[grpIdx].append(elem)
             } else {
                 let newIndex = groupKeys.count
-                keyToIndex[unboxedKey] = newIndex
-                groupKeys.append(unboxedKey)
+                keyToIndex[runtimeKey] = newIndex
+                groupKeys.append(key)
                 groupElements.append([elem])
             }
             return true
@@ -1632,13 +1633,13 @@ public func kk_sequence_groupBy(
                 outThrown?.pointee = thrown
                 return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
             }
-            let unboxedKey = maybeUnbox(key)
-            if let grpIdx = keyToIndex[unboxedKey] {
+            let runtimeKey = RuntimeElementKey(value: key)
+            if let grpIdx = keyToIndex[runtimeKey] {
                 groupElements[grpIdx].append(elem)
             } else {
                 let newIndex = groupKeys.count
-                keyToIndex[unboxedKey] = newIndex
-                groupKeys.append(unboxedKey)
+                keyToIndex[runtimeKey] = newIndex
+                groupKeys.append(key)
                 groupElements.append([elem])
             }
         }

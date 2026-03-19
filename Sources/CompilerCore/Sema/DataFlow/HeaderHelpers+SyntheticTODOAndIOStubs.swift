@@ -430,6 +430,94 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-410: emptyList/emptySet/emptyMap ---
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        //
+        // These synthetic registrations return List<Nothing>/Set<Nothing>/Map<Nothing, Nothing>
+        // matching Kotlin's actual emptyList<T>() signature where T defaults to Nothing.
+        // Because Nothing is the bottom type and List/Set/Map are covariant (out T),
+        // List<Nothing> is a subtype of List<T> for all T, so the result is
+        // assignable to any typed collection variable via normal covariance.
+        //
+        // We register phantom type parameters (T for list/set, K/V for map) that do NOT
+        // appear in the return type. This lets the OverloadResolver accept explicit type
+        // arguments (e.g. emptyList<Int>()) without triggering "Cannot infer type argument"
+        // for bare emptyList() calls -- the uninferred-variable check in
+        // Resolution+Inference only fires when T is used in the return type or parameters.
+        // The CallTypeChecker handles explicit type args to produce the correct collection type.
+
+        let listFQName = kotlinCollectionsPkg + [interner.intern("List")]
+        let emptyListReturnType: TypeID
+        if let listSymbol = symbols.lookup(fqName: listFQName) {
+            emptyListReturnType = types.make(.classType(ClassType(
+                classSymbol: listSymbol,
+                args: [.out(types.nothingType)],
+                nullability: .nonNull
+            )))
+        } else {
+            assertionFailure("List interface not found in symbol table; collection stubs must be registered before emptyList")
+            emptyListReturnType = types.anyType
+        }
+
+        let setFQName = kotlinCollectionsPkg + [interner.intern("Set")]
+        let emptySetReturnType: TypeID
+        if let setSymbol = symbols.lookup(fqName: setFQName) {
+            emptySetReturnType = types.make(.classType(ClassType(
+                classSymbol: setSymbol,
+                args: [.out(types.nothingType)],
+                nullability: .nonNull
+            )))
+        } else {
+            assertionFailure("Set interface not found in symbol table; collection stubs must be registered before emptySet")
+            emptySetReturnType = types.anyType
+        }
+
+        let mapFQName = kotlinCollectionsPkg + [interner.intern("Map")]
+        let emptyMapReturnType: TypeID
+        if let mapSymbol = symbols.lookup(fqName: mapFQName) {
+            emptyMapReturnType = types.make(.classType(ClassType(
+                classSymbol: mapSymbol,
+                args: [.out(types.nothingType), .out(types.nothingType)],
+                nullability: .nonNull
+            )))
+        } else {
+            assertionFailure("Map interface not found in symbol table; collection stubs must be registered before emptyMap")
+            emptyMapReturnType = types.anyType
+        }
+
+        // emptyList<T>() -- 1 phantom type parameter
+        registerSyntheticEmptyCollectionFunction(
+            named: "emptyList",
+            packageFQName: kotlinCollectionsPkg,
+            returnType: emptyListReturnType,
+            typeParamNames: ["T"],
+            externalLinkName: "kk_emptyList",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // emptySet<T>() -- 1 phantom type parameter
+        registerSyntheticEmptyCollectionFunction(
+            named: "emptySet",
+            packageFQName: kotlinCollectionsPkg,
+            returnType: emptySetReturnType,
+            typeParamNames: ["T"],
+            externalLinkName: "kk_emptySet",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // emptyMap<K, V>() -- 2 phantom type parameters
+        registerSyntheticEmptyCollectionFunction(
+            named: "emptyMap",
+            packageFQName: kotlinCollectionsPkg,
+            returnType: emptyMapReturnType,
+            typeParamNames: ["K", "V"],
+            externalLinkName: "kk_emptyMap",
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     private func ensureSyntheticObjectSymbol(
@@ -828,6 +916,77 @@ extension DataFlowSemaPhase {
                 valueParameterSymbols: valueParameterSymbols,
                 valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
                 valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: functionSymbol
+        )
+    }
+
+    /// Register a synthetic empty-collection factory function (emptyList, emptySet, emptyMap)
+    /// with phantom type parameter symbols. The type parameters do NOT appear in the return type
+    /// (which is always the Nothing-parameterized collection), so the uninferred-variable check
+    /// in Resolution+Inference won't fire. But the OverloadResolver's type-arg-count guard
+    /// will accept explicit type arguments (e.g. `emptyList<Int>()`).
+    private func registerSyntheticEmptyCollectionFunction(
+        named name: String,
+        packageFQName: [InternedString],
+        returnType: TypeID,
+        typeParamNames: [String],
+        externalLinkName: String,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        let functionName = interner.intern(name)
+        let functionFQName = packageFQName + [functionName]
+        if let existing = symbols.lookupAll(fqName: functionFQName).first(where: { symbolID in
+            guard let existingSignature = symbols.functionSignature(for: symbolID) else {
+                return false
+            }
+            return existingSignature.parameterTypes.isEmpty
+                && existingSignature.returnType == returnType
+        }) {
+            symbols.setExternalLinkName(externalLinkName, for: existing)
+            return
+        }
+
+        let functionSymbol = symbols.define(
+            kind: .function,
+            name: functionName,
+            fqName: functionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        if let packageSymbol = symbols.lookup(fqName: packageFQName) {
+            symbols.setParentSymbol(packageSymbol, for: functionSymbol)
+        }
+        symbols.setExternalLinkName(externalLinkName, for: functionSymbol)
+
+        // Create phantom type parameter symbols so the OverloadResolver accepts
+        // explicit type arguments at call sites.
+        var typeParameterSymbols: [SymbolID] = []
+        for paramName in typeParamNames {
+            let paramNameID = interner.intern(paramName)
+            let typeParamSymbol = symbols.define(
+                kind: .typeParameter,
+                name: paramNameID,
+                fqName: functionFQName + [paramNameID],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(functionSymbol, for: typeParamSymbol)
+            typeParameterSymbols.append(typeParamSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: returnType,
+                isSuspend: false,
+                valueParameterSymbols: [],
+                valueParameterHasDefaultValues: [],
+                valueParameterIsVararg: [],
+                typeParameterSymbols: typeParameterSymbols
             ),
             for: functionSymbol
         )

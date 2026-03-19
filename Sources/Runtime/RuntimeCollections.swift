@@ -1,8 +1,10 @@
 import Foundation
 
 /// Hashable wrapper around an opaque runtime value (`Int`) that uses
-/// `kk_any_hashCode` / `runtimeValuesEqual` so it can be stored in a
-/// Swift `Set` for O(1) amortised lookups.
+/// `kk_any_hashCode` / `runtimeValuesEqual` so value-equal objects (e.g.
+/// two distinct String handles with the same content) are treated as
+/// equal keys.  Used by Set deduplication, Map key lookup, and Sequence
+/// terminal operations (toMap, groupBy).
 internal struct RuntimeElementKey: Hashable {
     let value: Int
 
@@ -83,6 +85,13 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+// STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
+// aliasing with mutable collection operations (e.g., kk_mutable_list_add).
+@_cdecl("kk_emptyList")
+public func kk_emptyList() -> Int {
+    return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
 @_cdecl("kk_list_size")
 public func kk_list_size(_ listRaw: Int) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
@@ -151,12 +160,7 @@ public func kk_list_iterator(_ listRaw: Int) -> Int {
     } else {
         []
     }
-    let box = RuntimeListIteratorBox(elements: elements)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
+    return registerRuntimeObject(RuntimeListIteratorBox(elements: elements))
 }
 
 @_cdecl("kk_list_iterator_hasNext")
@@ -674,6 +678,13 @@ public func kk_set_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(elements)))
 }
 
+// STDLIB-410: emptySet<T>() - allocates a fresh empty set each call to avoid
+// aliasing with mutable collection operations.
+@_cdecl("kk_emptySet")
+public func kk_emptySet() -> Int {
+    return registerRuntimeObject(RuntimeSetBox(elements: []))
+}
+
 @_cdecl("kk_set_size")
 public func kk_set_size(_ setRaw: Int) -> Int {
     guard let set = runtimeSetBox(from: setRaw) else {
@@ -869,12 +880,14 @@ public func kk_map_of(_ keysArrayRaw: Int, _ valuesArrayRaw: Int, _ count: Int) 
         }
     }
     (keys, values) = runtimeNormalizeMapEntries(keys: keys, values: values)
-    let box = RuntimeMapBox(keys: keys, values: values)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
+    return registerRuntimeObject(RuntimeMapBox(keys: keys, values: values))
+}
+
+// STDLIB-410: emptyMap<K,V>() - allocates a fresh empty map each call to avoid
+// aliasing with mutable collection operations (e.g., kk_mutable_map_put).
+@_cdecl("kk_emptyMap")
+public func kk_emptyMap() -> Int {
+    return registerRuntimeObject(RuntimeMapBox(keys: [], values: []))
 }
 
 @_cdecl("kk_mutable_map_put")
@@ -1051,12 +1064,7 @@ public func kk_map_iterator(_ mapRaw: Int) -> Int {
     } else {
         ([], [])
     }
-    let box = RuntimeMapIteratorBox(keys: keys, values: values)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
+    return registerRuntimeObject(RuntimeMapIteratorBox(keys: keys, values: values))
 }
 
 @_cdecl("kk_map_iterator_hasNext")
@@ -1189,12 +1197,7 @@ public func kk_array_is_empty(_ arrayRaw: Int) -> Int {
 
 @_cdecl("kk_pair_new")
 public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
-    let box = RuntimePairBox(first: first, second: second)
-    let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
-    runtimeStorage.withLock { state in
-        state.objectPointers.insert(UInt(bitPattern: opaque))
-    }
-    return Int(bitPattern: opaque)
+    registerRuntimeObject(RuntimePairBox(first: first, second: second))
 }
 
 @_cdecl("kk_pair_first")

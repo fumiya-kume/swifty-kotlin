@@ -10,6 +10,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // STDLIB-410: emptyList
+        RuntimeABIFunctionSpec(
+            name: "kk_emptyList",
+            parameters: [],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_list_size",
             parameters: [
@@ -193,6 +200,13 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        // STDLIB-410: emptySet
+        RuntimeABIFunctionSpec(
+            name: "kk_emptySet",
+            parameters: [],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_set_size",
             parameters: [
@@ -313,6 +327,13 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "valuesArrayRaw", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
             ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        // STDLIB-410: emptyMap
+        RuntimeABIFunctionSpec(
+            name: "kk_emptyMap",
+            parameters: [],
             returnType: .intptr,
             section: "Collection"
         ),

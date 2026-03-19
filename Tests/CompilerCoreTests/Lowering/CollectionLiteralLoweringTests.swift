@@ -41,6 +41,25 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         return (module, declID)
     }
 
+    private func makeModuleWithZeroArgCall(callee: InternedString, interner: StringInterner, arena: KIRArena) -> (KIRModule, KIRDeclID) {
+        let result = arena.appendExpr(.temporary(0))
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("main"),
+            params: [],
+            returnType: TypeSystem().unitType,
+            body: [
+                .call(symbol: nil, callee: callee, arguments: [], result: result, canThrow: false, thrownResult: nil),
+                .returnUnit,
+            ],
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+        return (module, declID)
+    }
+
     private func runPass(module: KIRModule, kirCtx: KIRContext) throws {
         try CollectionLiteralLoweringPass().run(module: module, ctx: kirCtx)
     }
@@ -84,14 +103,14 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("emptyList")
-        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
         let ctx = makeKIRContext(interner: interner)
 
         try runPass(module: module, kirCtx: ctx)
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("emptyList"), "emptyList should be rewritten")
-        XCTAssertTrue(callees.contains("kk_list_of"), "emptyList should become kk_list_of")
+        XCTAssertTrue(callees.contains("kk_emptyList"), "emptyList should become kk_emptyList")
     }
 
     func testListOfNotNullRewrittenToKkListOf() throws {
@@ -145,14 +164,14 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         let interner = StringInterner()
         let arena = KIRArena()
         let callee = interner.intern("emptyMap")
-        let (module, declID) = makeModuleWithCall(callee: callee, interner: interner, arena: arena)
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
         let ctx = makeKIRContext(interner: interner)
 
         try runPass(module: module, kirCtx: ctx)
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("emptyMap"), "emptyMap should be rewritten")
-        XCTAssertTrue(callees.contains("kk_map_of"), "emptyMap should become kk_map_of")
+        XCTAssertTrue(callees.contains("kk_emptyMap"), "emptyMap should become kk_emptyMap")
     }
 
     func testMapCountRewriteToKkMapCount() throws {
@@ -354,6 +373,110 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         XCTAssertFalse(callees.contains("none"), "map.none should be rewritten")
         XCTAssertTrue(callees.contains("kk_map_of"), "mapOf should become kk_map_of")
         XCTAssertTrue(callees.contains("kk_map_none"), "none on map should become kk_map_none")
+    }
+
+    // MARK: - emptySet rewriting
+
+    func testEmptySetRewrittenToKkSetOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("emptySet")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("emptySet"), "emptySet should be rewritten")
+        XCTAssertTrue(callees.contains("kk_emptySet"), "emptySet should become kk_emptySet")
+    }
+
+    // MARK: - Zero-arg factory rewriting
+
+    func testZeroArgListOfRewrittenToKkEmptyList() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("listOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("listOf"), "listOf() with zero args should be rewritten")
+        XCTAssertTrue(callees.contains("kk_emptyList"), "listOf() should become kk_emptyList")
+    }
+
+    func testZeroArgSetOfRewrittenToKkEmptySet() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("setOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("setOf"), "setOf() with zero args should be rewritten")
+        XCTAssertTrue(callees.contains("kk_emptySet"), "setOf() should become kk_emptySet")
+    }
+
+    func testZeroArgMapOfRewrittenToKkEmptyMap() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("mapOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mapOf"), "mapOf() with zero args should be rewritten")
+        XCTAssertTrue(callees.contains("kk_emptyMap"), "mapOf() should become kk_emptyMap")
+    }
+
+    // MARK: - Zero-arg mutable factory rewriting
+
+    func testZeroArgMutableListOfRewrittenToKkListOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("mutableListOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mutableListOf"), "mutableListOf() should be rewritten")
+        XCTAssertTrue(callees.contains("kk_list_of"), "mutableListOf() should become kk_list_of (fresh mutable)")
+    }
+
+    func testZeroArgMutableSetOfRewrittenToKkSetOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("mutableSetOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mutableSetOf"), "mutableSetOf() should be rewritten")
+        XCTAssertTrue(callees.contains("kk_set_of"), "mutableSetOf() should become kk_set_of (fresh mutable)")
+    }
+
+    func testZeroArgMutableMapOfRewrittenToKkMapOf() throws {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let callee = interner.intern("mutableMapOf")
+        let (module, declID) = makeModuleWithZeroArgCall(callee: callee, interner: interner, arena: arena)
+        let ctx = makeKIRContext(interner: interner)
+
+        try runPass(module: module, kirCtx: ctx)
+
+        let callees = calleesInDecl(declID, module: module, interner: interner)
+        XCTAssertFalse(callees.contains("mutableMapOf"), "mutableMapOf() should be rewritten")
+        XCTAssertTrue(callees.contains("kk_map_of"), "mutableMapOf() should become kk_map_of (fresh mutable)")
     }
 
     // MARK: - setOf rewriting
