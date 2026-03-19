@@ -9,5 +9,4 @@ fun main() {
     println(list)
     list.add(0, 10)
     println(list)
-    println(list is MutableList<*>)
 }
