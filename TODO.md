@@ -237,8 +237,8 @@
 - [ ] STDLIB-589: `Result.recover` の stub と Runtime
 - [ ] STDLIB-590: `Result.onFailure` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-591: `contract { returns() }` の意味ある実装検討
-- [ ] STDLIB-592: `contract { callsInPlace }` の意味ある実装検討
-- [ ] STDLIB-593: `contract { returnsNotNull }` の意味ある実装検討
+- [x] STDLIB-592: `contract { callsInPlace }` の意味ある実装検討
+- [x] STDLIB-593: `contract { returnsNotNull }` の意味ある実装検討
 
 #### J. kotlin.io.Closeable / その他
 

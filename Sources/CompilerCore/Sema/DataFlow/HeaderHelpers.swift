@@ -905,26 +905,78 @@ extension DataFlowSemaPhase {
             params: [],
             returnType: effectType
         )
-        // STDLIB-592 stub: `ContractBuilder.callsInPlace(lambda, kind)` -- forward
-        // declaration so that user code containing `contract { callsInPlace(...) }` resolves.
-        // Returns ContractEffect (not Unit) to match Kotlin's real API shape for
-        // forward-compatibility with effect-typed expressions.
-        ensureMember(
-            owner: builderSymbol,
-            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
-            name: "callsInPlace",
-            receiverType: builderType,
-            params: [types.anyType],
-            returnType: effectType
+
+        // STDLIB-592: InvocationKind enum class stub
+        let invocationKindSymbol = ensureClassSymbol(
+            named: "InvocationKind",
+            in: contractsFQName,
+            symbols: symbols,
+            interner: interner
         )
-        ensureMember(
-            owner: builderSymbol,
-            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
-            name: "callsInPlace",
-            receiverType: builderType,
-            params: [types.anyType, types.anyType],
-            returnType: effectType
-        )
+        if contractsPkg != .invalid {
+            symbols.setParentSymbol(contractsPkg, for: invocationKindSymbol)
+        }
+        let invocationKindType = types.make(.classType(ClassType(
+            classSymbol: invocationKindSymbol, args: [], nullability: .nonNull
+        )))
+        // Register enum entries: AT_MOST_ONCE, AT_LEAST_ONCE, EXACTLY_ONCE, UNKNOWN
+        let invocationKindFQName = contractsFQName + [interner.intern("InvocationKind")]
+        for entry in ["AT_MOST_ONCE", "AT_LEAST_ONCE", "EXACTLY_ONCE", "UNKNOWN"] {
+            let entryName = interner.intern(entry)
+            let entryFQName = invocationKindFQName + [entryName]
+            if symbols.lookup(fqName: entryFQName) == nil {
+                let entrySymbol = symbols.define(
+                    kind: .property,
+                    name: entryName,
+                    fqName: entryFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .constValue]
+                )
+                symbols.setParentSymbol(invocationKindSymbol, for: entrySymbol)
+            }
+        }
+
+        // STDLIB-592: callsInPlace overloads on ContractBuilder.
+        // We use the lambda parameter type `() -> Any` as a stand-in for `Function<*>`.
+        let anyFunctionType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.anyType
+        )))
+        let callsInPlaceName = interner.intern("callsInPlace")
+        let callsInPlaceFQBase = contractsFQName + [interner.intern("ContractBuilder"), callsInPlaceName]
+        // Single-arg: callsInPlace(lambda)
+        do {
+            let symbol = symbols.define(
+                kind: .function,
+                name: callsInPlaceName,
+                fqName: callsInPlaceFQBase,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setFunctionSignature(
+                FunctionSignature(receiverType: builderType, parameterTypes: [anyFunctionType], returnType: effectType),
+                for: symbol
+            )
+            symbols.setParentSymbol(builderSymbol, for: symbol)
+        }
+        // Two-arg: callsInPlace(lambda, kind)
+        do {
+            let symbol = symbols.define(
+                kind: .function,
+                name: callsInPlaceName,
+                fqName: callsInPlaceFQBase,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setFunctionSignature(
+                FunctionSignature(receiverType: builderType, parameterTypes: [anyFunctionType, invocationKindType], returnType: effectType),
+                for: symbol
+            )
+            symbols.setParentSymbol(builderSymbol, for: symbol)
+        }
     }
 
     /// Look up or define a synthetic interface symbol in the given package.
