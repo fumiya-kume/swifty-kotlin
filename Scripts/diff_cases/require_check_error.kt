@@ -9,16 +9,24 @@ fun main() {
     check(true) { counter++; "should not fail" }
     println("lazy counter: $counter") // expect 0: lambdas were not called
 
-    // Helper to run a block and print the caught exception message
-    fun runAndPrintMessage(block: () -> Unit) {
-        try {
-            block()
-        } catch (e: Exception) {
-            println(e.message)
-        }
+    // Test require(false) throws IllegalArgumentException
+    try {
+        require(false) { "require failed" }
+    } catch (e: IllegalArgumentException) {
+        println(e.message)
     }
 
-    runAndPrintMessage { require(false) { "require failed" } }
-    runAndPrintMessage { check(false) { "check failed" } }
-    runAndPrintMessage { error("test error") }
+    // Test check(false) throws IllegalStateException
+    try {
+        check(false) { "check failed" }
+    } catch (e: IllegalStateException) {
+        println(e.message)
+    }
+
+    // Test error() throws IllegalStateException
+    try {
+        error("test error")
+    } catch (e: IllegalStateException) {
+        println(e.message)
+    }
 }
