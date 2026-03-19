@@ -280,7 +280,8 @@ extension OverloadResolver {
                        subClass,
                        to: superClass.classSymbol,
                        typeSystem: typeSystem
-                   )
+                   ),
+                   liftedSubtype != subtype
                 {
                     return decomposeSubtypeConstraint(
                         subtype: liftedSubtype,
@@ -318,7 +319,8 @@ extension OverloadResolver {
                    subClass,
                    to: superClass.classSymbol,
                    typeSystem: typeSystem
-               )
+               ),
+               liftedSubtype != subtype
             {
                 return decomposeSubtypeConstraint(
                     subtype: liftedSubtype,
@@ -428,22 +430,11 @@ extension OverloadResolver {
             return nil
         }
 
-        let mappedArgs = typeSystem.nominalSupertypeTypeArgs(for: subtype.classSymbol, supertype: superSymbol)
-        guard !mappedArgs.isEmpty else {
-            return typeSystem.make(.classType(ClassType(
-                classSymbol: superSymbol,
-                args: [],
-                nullability: subtype.nullability
-            )))
-        }
-        let substitutedArgs = mappedArgs.map {
-            substituteChildTypeArg(
-                $0,
-                childSymbol: subtype.classSymbol,
-                childArgs: subtype.args,
-                typeSystem: typeSystem
-            )
-        }
+        let substitutedArgs = typeSystem.liftedNominalSupertypeArgs(
+            from: subtype.classSymbol,
+            childArgs: subtype.args,
+            to: superSymbol
+        ) ?? []
         return typeSystem.make(.classType(ClassType(
             classSymbol: superSymbol,
             args: substitutedArgs,
@@ -462,52 +453,6 @@ extension OverloadResolver {
             targetNullability: subtype.nullability,
             typeSystem: typeSystem
         )
-    }
-
-    private func substituteChildTypeArg(
-        _ arg: TypeArg,
-        childSymbol: SymbolID,
-        childArgs: [TypeArg],
-        typeSystem: TypeSystem
-    ) -> TypeArg {
-        switch arg {
-        case let .invariant(type):
-            .invariant(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
-        case let .out(type):
-            .out(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
-        case let .in(type):
-            .in(substituteChildType(type, childSymbol: childSymbol, childArgs: childArgs, typeSystem: typeSystem))
-        case .star:
-            .star
-        }
-    }
-
-    private func substituteChildType(
-        _ type: TypeID,
-        childSymbol: SymbolID,
-        childArgs: [TypeArg],
-        typeSystem: TypeSystem
-    ) -> TypeID {
-        guard case let .typeParam(typeParam) = typeSystem.kind(of: type) else {
-            return type
-        }
-        let childTypeParams = typeSystem.nominalTypeParameterSymbols(for: childSymbol)
-        guard let index = childTypeParams.firstIndex(of: typeParam.symbol),
-              index < childArgs.count
-        else {
-            return type
-        }
-        let substituted: TypeID
-        switch childArgs[index] {
-        case let .invariant(inner), let .out(inner), let .in(inner):
-            substituted = inner
-        case .star:
-            substituted = typeSystem.nullableAnyType
-        }
-        if typeParam.nullability == .nullable {
-            return typeSystem.makeNullable(substituted)
-        }
-        return substituted
     }
 
     /// Decomposes a pair of type arguments into constraints respecting variance.

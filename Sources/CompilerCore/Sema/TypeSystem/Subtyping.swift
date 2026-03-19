@@ -108,14 +108,15 @@ extension TypeSystem {
                 guard isNominalSubtypeSymbol(leftClass.classSymbol, of: rightClass.classSymbol) else {
                     return false
                 }
-                let mappedArgs = nominalSupertypeTypeArgs(for: leftClass.classSymbol, supertype: rightClass.classSymbol)
+                let mappedArgs = liftedNominalSupertypeArgs(
+                    from: leftClass.classSymbol,
+                    childArgs: leftClass.args,
+                    to: rightClass.classSymbol
+                ) ?? []
                 if mappedArgs.count == rightClass.args.count, !mappedArgs.isEmpty {
-                    let substitutedMappedArgs = mappedArgs.map {
-                        substituteTypeArg($0, childSymbol: leftClass.classSymbol, childArgs: leftClass.args)
-                    }
                     let liftedSupertype = make(.classType(ClassType(
                         classSymbol: rightClass.classSymbol,
-                        args: substitutedMappedArgs,
+                        args: mappedArgs,
                         nullability: leftClass.nullability
                     )))
                     return isSubtype(liftedSupertype, supertype)
@@ -408,34 +409,4 @@ extension TypeSystem {
         }
     }
 
-    private func substituteTypeArg(_ arg: TypeArg, childSymbol: SymbolID, childArgs: [TypeArg]) -> TypeArg {
-        switch arg {
-        case let .invariant(type):
-            .invariant(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs))
-        case let .out(type):
-            .out(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs))
-        case let .in(type):
-            .in(substituteChildTypeParam(type, childSymbol: childSymbol, childArgs: childArgs))
-        case .star:
-            .star
-        }
-    }
-
-    private func substituteChildTypeParam(_ type: TypeID, childSymbol: SymbolID, childArgs: [TypeArg]) -> TypeID {
-        guard case let .typeParam(typeParam) = kind(of: type) else {
-            return type
-        }
-        let childTypeParams = nominalTypeParameterSymbols(for: childSymbol)
-        guard let index = childTypeParams.firstIndex(of: typeParam.symbol),
-              index < childArgs.count
-        else {
-            return type
-        }
-        switch childArgs[index] {
-        case let .invariant(inner), let .out(inner), let .in(inner):
-            return inner
-        case .star:
-            return nullableAnyType
-        }
-    }
 }

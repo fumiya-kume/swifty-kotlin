@@ -323,4 +323,107 @@ public final class TypeSystem {
     public func makeKClassType(argument: TypeID, nullability: Nullability = .nonNull) -> TypeID {
         make(.kClassType(KClassType(argument: argument, nullability: nullability)))
     }
+
+    public func liftedNominalSupertypeArgs(
+        from child: SymbolID,
+        childArgs: [TypeArg],
+        to parent: SymbolID
+    ) -> [TypeArg]? {
+        var visited: Set<SymbolID> = []
+        return liftedNominalSupertypeArgs(
+            from: child,
+            currentArgs: childArgs,
+            to: parent,
+            visited: &visited
+        )
+    }
+
+    private func liftedNominalSupertypeArgs(
+        from current: SymbolID,
+        currentArgs: [TypeArg],
+        to target: SymbolID,
+        visited: inout Set<SymbolID>
+    ) -> [TypeArg]? {
+        if current == target {
+            return currentArgs
+        }
+        guard visited.insert(current).inserted else {
+            return nil
+        }
+
+        for directSupertype in directNominalSupertypes(for: current) {
+            let directArgsTemplate = nominalSupertypeTypeArgs(for: current, supertype: directSupertype)
+            let substitutedDirectArgs = directArgsTemplate.map {
+                substituteNominalTypeArg($0, owner: current, ownerArgs: currentArgs)
+            }
+
+            if directSupertype == target {
+                return substitutedDirectArgs
+            }
+
+            if let transitiveArgs = liftedNominalSupertypeArgs(
+                from: directSupertype,
+                currentArgs: substitutedDirectArgs,
+                to: target,
+                visited: &visited
+            ) {
+                return transitiveArgs
+            }
+        }
+
+        return nil
+    }
+
+    private func substituteNominalTypeArg(
+        _ arg: TypeArg,
+        owner: SymbolID,
+        ownerArgs: [TypeArg]
+    ) -> TypeArg {
+        switch arg {
+        case let .invariant(type):
+            .invariant(substituteNominalType(type, owner: owner, ownerArgs: ownerArgs))
+        case let .out(type):
+            .out(substituteNominalType(type, owner: owner, ownerArgs: ownerArgs))
+        case let .in(type):
+            .in(substituteNominalType(type, owner: owner, ownerArgs: ownerArgs))
+        case .star:
+            .star
+        }
+    }
+
+    private func substituteNominalType(
+        _ type: TypeID,
+        owner: SymbolID,
+        ownerArgs: [TypeArg]
+    ) -> TypeID {
+        let typeParamSymbols = nominalTypeParameterSymbols(for: owner)
+        guard !typeParamSymbols.isEmpty, !ownerArgs.isEmpty else {
+            return type
+        }
+
+        let typeVarBySymbol = makeTypeVarBySymbol(typeParamSymbols)
+        var substitution: [TypeVarID: TypeID] = [:]
+        for (index, symbol) in typeParamSymbols.enumerated() {
+            guard index < ownerArgs.count,
+                  let variable = typeVarBySymbol[symbol]
+            else {
+                continue
+            }
+            switch ownerArgs[index] {
+            case let .invariant(inner), let .out(inner), let .in(inner):
+                substitution[variable] = inner
+            case .star:
+                substitution[variable] = nullableAnyType
+            }
+        }
+
+        guard !substitution.isEmpty else {
+            return type
+        }
+        return substituteTypeParameters(
+            in: type,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+    }
 }
