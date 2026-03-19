@@ -27,9 +27,4 @@ fun main() {
     println(1.0f.coerceAtLeast(3.0f))
     println(5.0f.coerceAtMost(3.0f))
     println(1.0f.coerceAtMost(3.0f))
-    try {
-        5.coerceIn(10, 1)
-    } catch (e: IllegalArgumentException) {
-        println(e.message)
-    }
 }
