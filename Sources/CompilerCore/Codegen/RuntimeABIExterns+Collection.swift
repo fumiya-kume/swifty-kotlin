@@ -80,6 +80,7 @@ public extension RuntimeABIExterns {
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
+        kk_list_as_reversed,
         kk_list_sorted,
         kk_list_distinct,
         kk_list_distinctBy,
@@ -1031,6 +1032,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_reversed = ExternDecl(
         name: "kk_list_reversed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_as_reversed = ExternDecl(
+        name: "kk_list_as_reversed",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

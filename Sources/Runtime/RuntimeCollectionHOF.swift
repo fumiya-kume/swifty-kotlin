@@ -991,9 +991,15 @@ public func kk_list_drop(_ listRaw: Int, _ count: Int) -> Int {
 
 @_cdecl("kk_list_reversed")
 public func kk_list_reversed(_ listRaw: Int) -> Int {
-    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
-    let elements = _listBox.elements
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = listBox.elements
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.reversed())))
+}
+
+@_cdecl("kk_list_as_reversed")
+public func kk_list_as_reversed(_ listRaw: Int) -> Int {
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    return registerRuntimeObject(RuntimeListBox(reversedViewOf: listBox))
 }
 
 @_cdecl("kk_list_sorted")
