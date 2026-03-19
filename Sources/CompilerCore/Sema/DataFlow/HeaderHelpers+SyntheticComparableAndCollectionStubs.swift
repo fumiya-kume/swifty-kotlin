@@ -1512,7 +1512,7 @@ extension DataFlowSemaPhase {
         }
     }
 
-    /// STDLIB-510: Register `List<T>.toHashSet()` returning `Set<T>`.
+    /// STDLIB-510: Register `List<T>.toHashSet()` returning `MutableSet<T>`.
     private func registerListToHashSetMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1520,7 +1520,7 @@ extension DataFlowSemaPhase {
         listInterfaceSymbol: SymbolID,
         listTypeParamSymbol: SymbolID,
         listTypeParamType: TypeID,
-        setInterfaceSymbol: SymbolID
+        mutableSetInterfaceSymbol: SymbolID
     ) {
         guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
         let memberName = interner.intern("toHashSet")
@@ -1531,14 +1531,11 @@ extension DataFlowSemaPhase {
             args: [.out(listTypeParamType)],
             nullability: .nonNull
         )))
-        let setType = types.make(.classType(ClassType(
-            classSymbol: setInterfaceSymbol,
-            args: [.out(listTypeParamType)],
+        let mutableSetType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.invariant(listTypeParamType)],
             nullability: .nonNull
         )))
-        // NOTE: Kotlin's toHashSet() returns MutableSet<T> (HashSet<T>), but we
-        // model it as Set<T> because mutable collection types are not yet
-        // supported in the type system.  This is a known limitation.
         let memberSymbol = symbols.define(
             kind: .function,
             name: memberName,
@@ -1553,7 +1550,7 @@ extension DataFlowSemaPhase {
             FunctionSignature(
                 receiverType: receiverType,
                 parameterTypes: [],
-                returnType: setType,
+                returnType: mutableSetType,
                 typeParameterSymbols: [listTypeParamSymbol],
                 classTypeParameterCount: 1
             ),
@@ -2540,6 +2537,9 @@ extension DataFlowSemaPhase {
             ),
             let setInterfaceSymbol = symbols.lookup(
                 fqName: kotlinCollectionsPkg + [interner.intern("Set")]
+            ),
+            let mutableSetInterfaceSymbol = symbols.lookup(
+                fqName: kotlinCollectionsPkg + [interner.intern("MutableSet")]
             )
         else {
             return
@@ -2582,7 +2582,7 @@ extension DataFlowSemaPhase {
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType,
-            setInterfaceSymbol: setInterfaceSymbol
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
         )
         registerListAsSequenceMember(
             symbols: symbols, types: types, interner: interner,
