@@ -126,6 +126,15 @@ final class KotlinCompilationAdvancedTests: XCTestCase {
         """)
     }
 
+    func testCompile_destructuring_genericDataClass() throws {
+        try assertKotlinCompilesToKIR("""
+        data class Box<T>(val value: T)
+        fun main() {
+            val (value) = Box("hello")
+        }
+        """)
+    }
+
     func testCompile_tryCatch_basic() throws {
         try assertKotlinCompilesToKIR("""
         fun safeDivide(a: Int, b: Int): Int {

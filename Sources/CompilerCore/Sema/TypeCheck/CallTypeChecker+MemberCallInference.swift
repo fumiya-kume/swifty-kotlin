@@ -1505,6 +1505,21 @@ extension CallTypeChecker {
             }
         }
 
+        // Int/Long.coerceIn(range) (STDLIB-525)
+        if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if receiverForCheck == intType || receiverForCheck == longType {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
+                let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)
