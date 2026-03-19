@@ -108,6 +108,33 @@ final class RuntimeCollectionHOFThrowTests: XCTestCase {
         XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
     }
     
+    func testListReduceOrNullEmptyDoesNotThrow() {
+        let list = kk_list_of(kk_array_new(0), 0)
+        var outThrown = 0
+        let result = kk_list_reduceOrNull(list, 0, 0, &outThrown)
+
+        XCTAssertEqual(outThrown, 0, "reduceOrNull should not throw for empty list")
+        XCTAssertEqual(result, 0, "reduceOrNull should return 0 (null) for empty list")
+    }
+
+    func testListScanReduceEmptyThrows() {
+        let list = kk_list_of(kk_array_new(0), 0)
+        var outThrown = 0
+        let result = kk_list_scanReduce(list, 0, 0, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
+    func testListRunningReduceEmptyThrows() {
+        let list = kk_list_of(kk_array_new(0), 0)
+        var outThrown = 0
+        let result = kk_list_runningReduce(list, 0, 0, &outThrown)
+
+        XCTAssertNotEqual(outThrown, 0)
+        XCTAssertEqual(result, runtimeExceptionCaughtSentinel)
+    }
+
     func testListFoldThrows() {
         let array = kk_array_new(1)
         var thrown = 0
