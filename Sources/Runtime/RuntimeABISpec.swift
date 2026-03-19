@@ -68,7 +68,7 @@ public struct RuntimeABIFunctionSpec: Equatable, Sendable {
 
 // swiftlint:disable:next type_body_length
 public enum RuntimeABISpec {
-    public static let specVersion = "J24"
+    public static let specVersion = "J25"
 
     public static let memoryFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
@@ -172,6 +172,26 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_check_lazy",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_precondition_assert",
+            parameters: [
+                RuntimeABIParameter(name: "condition", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_precondition_assert_lazy",
             parameters: [
                 RuntimeABIParameter(name: "condition", type: .intptr),
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),

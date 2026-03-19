@@ -465,8 +465,7 @@ extension CallTypeChecker {
             "fold", "reduce", "reduceOrNull", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull",
-            "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "sumOf", "maxOrNull", "minOrNull", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
@@ -1219,6 +1218,73 @@ extension CallTypeChecker {
                     }
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
+
+            case "maxOfOrNull", "minOfOrNull":
+                guard args.count == 1 else {
+                    let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    sema.bindings.bindExprType(id, type: failedType)
+                    return failedType
+                }
+                let ofLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: ofLambdaExpectedType)
+                let ofSelectorType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                    sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                } else if let lambdaExprType = sema.bindings.exprType(for: args[0].expr),
+                          case let .functionType(fnType) = sema.types.kind(of: lambdaExprType)
+                {
+                    sema.types.makeNonNullable(fnType.returnType)
+                } else {
+                    sema.types.anyType
+                }
+                let ofSelectorKind = sema.types.kind(of: ofSelectorType)
+                if case .typeParam = ofSelectorKind {} else {
+                    do {
+                        let primitiveComparableTypes: Set<TypeID> = [
+                            sema.types.intType,
+                            sema.types.longType,
+                            sema.types.floatType,
+                            sema.types.doubleType,
+                            sema.types.charType,
+                            sema.types.stringType,
+                            sema.types.make(.primitive(.uint, .nonNull)),
+                            sema.types.make(.primitive(.ulong, .nonNull)),
+                        ]
+                        let isPrimitiveComparable = primitiveComparableTypes.contains(ofSelectorType)
+                        let isNominalComparable: Bool
+                        if let comparableSymbol = sema.types.comparableInterfaceSymbol {
+                            let comparableSelectorType = sema.types.make(.classType(ClassType(
+                                classSymbol: comparableSymbol,
+                                args: [.invariant(ofSelectorType)],
+                                nullability: .nonNull
+                            )))
+                            isNominalComparable = sema.types.isSubtype(ofSelectorType, comparableSelectorType)
+                        } else {
+                            isNominalComparable = false
+                        }
+                        if ofSelectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
+                            ctx.semaCtx.diagnostics.error(
+                                "KSWIFTK-SEMA-BOUND",
+                                "Type argument does not satisfy upper bound constraint.",
+                                range: ast.arena.exprRange(id)
+                            )
+                            let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                            sema.bindings.bindExprType(id, type: failedType)
+                            return failedType
+                        }
+                    }
+                }
+                resultType = sema.types.makeNullable(ofSelectorType)
 
             case "distinctBy":
                 guard args.count == 1 else {

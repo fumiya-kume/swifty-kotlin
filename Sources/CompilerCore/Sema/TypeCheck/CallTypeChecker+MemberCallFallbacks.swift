@@ -463,6 +463,10 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("maxOrNull"),
             interner.intern("minOrNull"),
+            interner.intern("maxByOrNull"),
+            interner.intern("minByOrNull"),
+            interner.intern("maxOfOrNull"),
+            interner.intern("minOfOrNull"),
             interner.intern("onEach"),
             interner.intern("onEachIndexed"),
             interner.intern("asSequence"),
@@ -618,7 +622,8 @@ extension CallTypeChecker {
             return argCount == 1
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
-        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
+        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
+             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"):
             return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
