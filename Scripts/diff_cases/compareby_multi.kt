@@ -1,6 +1,9 @@
 fun main() {
-    data class Person(val name: String, val age: Int)
-    val people = listOf(Person("Charlie", 30), Person("Alice", 25), Person("Bob", 25))
-    val sorted = people.sortedWith(compareBy({ it.name.length }, { it.name }))
-    sorted.forEach { println("${it.name} ${it.age}") }
+    // Multi-key sort using sortedWith with a two-level comparator lambda
+    val names = listOf("Charlie", "Alice", "Bob")
+    val sorted = names.sortedWith { a, b ->
+        val cmp = a.length - b.length
+        if (cmp != 0) cmp else a.compareTo(b)
+    }
+    sorted.forEach { println(it) }
 }
