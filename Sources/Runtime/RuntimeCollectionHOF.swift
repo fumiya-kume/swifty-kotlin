@@ -991,9 +991,15 @@ public func kk_list_drop(_ listRaw: Int, _ count: Int) -> Int {
 
 @_cdecl("kk_list_reversed")
 public func kk_list_reversed(_ listRaw: Int) -> Int {
-    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
-    let elements = _listBox.elements
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = listBox.elements
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.reversed())))
+}
+
+@_cdecl("kk_list_as_reversed")
+public func kk_list_as_reversed(_ listRaw: Int) -> Int {
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    return registerRuntimeObject(RuntimeListBox(reversedViewOf: listBox))
 }
 
 @_cdecl("kk_list_sorted")
@@ -1124,6 +1130,28 @@ public func kk_list_chunked(_ listRaw: Int, _ size: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: chunks))
 }
 
+@_cdecl("kk_list_chunked_transform")
+public func kk_list_chunked_transform(_ listRaw: Int, _ size: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
+    let clampedSize = max(1, size)
+    let estimatedChunks = elements.isEmpty ? 0 : (elements.count + clampedSize - 1) / clampedSize
+    var result: [Int] = []
+    result.reserveCapacity(estimatedChunks)
+    var i = 0
+    while i < elements.count {
+        let end = min(i + clampedSize, elements.count)
+        let chunk = Array(elements[i ..< end])
+        let chunkList = registerRuntimeObject(RuntimeListBox(elements: chunk))
+        var thrown = 0
+        let transformed = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: chunkList, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        result.append(maybeUnbox(transformed))
+        i = end
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
 @_cdecl("kk_list_windowed")
 public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
@@ -1134,6 +1162,25 @@ public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
     var i = 0
     while i + clampedSize <= elements.count {
         let window = Array(elements[i ..< (i + clampedSize)])
+        windows.append(registerRuntimeObject(RuntimeListBox(elements: window)))
+        i += clampedStep
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: windows))
+}
+
+@_cdecl("kk_list_windowed_partial")
+public func kk_list_windowed_partial(_ listRaw: Int, _ size: Int, _ step: Int, _ partialWindows: Int) -> Int {
+    guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elements = _listBox.elements
+    let clampedSize = max(1, size)
+    let clampedStep = max(1, step)
+    let partial = partialWindows != 0
+    var windows: [Int] = []
+    var i = 0
+    while i < elements.count {
+        let end = min(i + clampedSize, elements.count)
+        if !partial && end - i < clampedSize { break }
+        let window = Array(elements[i ..< end])
         windows.append(registerRuntimeObject(RuntimeListBox(elements: window)))
         i += clampedStep
     }

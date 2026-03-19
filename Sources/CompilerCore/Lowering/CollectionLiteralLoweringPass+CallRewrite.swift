@@ -1492,7 +1492,7 @@ extension CollectionLiteralLoweringPass {
                             )
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListReversedName,
+                                callee: callee == lookup.asReversedName ? lookup.kkListAsReversedName : lookup.kkListReversedName,
                                 arguments: [receiverID],
                                 result: transformResult,
                                 canThrow: false,
