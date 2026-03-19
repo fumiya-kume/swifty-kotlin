@@ -3846,6 +3846,8 @@ extension DataFlowSemaPhase {
 
         let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
         let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: mapSymbol)
+        types.setNominalTypeParameterVariances([.out, .out], for: mapSymbol)
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mapSymbol,
             args: [.invariant(keyType), .out(valueType)],
