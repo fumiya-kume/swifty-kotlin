@@ -465,13 +465,13 @@ extension CallTypeChecker {
             "fold", "reduce", "reduceOrNull", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull",
+            "sumOf", "maxOrNull", "minOrNull", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
         let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
@@ -1218,6 +1218,36 @@ extension CallTypeChecker {
                     }
                 }
                 resultType = sema.types.makeNullable(collectionElementType)
+
+            case "maxOfOrNull", "minOfOrNull":
+                guard args.count == 1 else {
+                    let failedType = safeCall ? sema.types.makeNullable(sema.types.errorType) : sema.types.errorType
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    sema.bindings.bindExprType(id, type: failedType)
+                    return failedType
+                }
+                let lambdaExpectedTypeOfOrNull = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.anyType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedTypeOfOrNull)
+                let selectorResultType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                    sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
+                } else if let lambdaExprType = sema.bindings.exprType(for: args[0].expr),
+                          case let .functionType(fnType) = sema.types.kind(of: lambdaExprType)
+                {
+                    sema.types.makeNonNullable(fnType.returnType)
+                } else {
+                    sema.types.anyType
+                }
+                resultType = sema.types.makeNullable(selectorResultType)
 
             case "distinctBy":
                 guard args.count == 1 else {

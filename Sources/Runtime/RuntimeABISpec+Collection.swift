@@ -1496,6 +1496,7 @@ public extension RuntimeABISpec {
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),
                         RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
@@ -1506,6 +1507,7 @@ public extension RuntimeABISpec {
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),
                         RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
@@ -1516,6 +1518,7 @@ public extension RuntimeABISpec {
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),
                         RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
@@ -1526,6 +1529,7 @@ public extension RuntimeABISpec {
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),
                         RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "closureRaw", type: .intptr),
                         RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
                     ],
                     returnType: .intptr,
