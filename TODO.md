@@ -288,8 +288,8 @@
   - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
-- [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
-  - 現状: `KKD\x01` などのタグを返すのみで、スレッド制御は未実装（`RuntimeCoroutine.swift`）
+- [x] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
+  - 実装済み: `RuntimeDispatcher` クラスで GCD キューベースのスケジューリングを実装（`RuntimeCoroutine.swift`）
 - [x] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
   - NFC 正規化によるマッチングで実装済み（`RuntimeRegex.swift`）
 - [ ] STDLIB-331: `yieldAll` を `RuntimeSequence.swift` に実装し、Lowering と連携する

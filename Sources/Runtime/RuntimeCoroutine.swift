@@ -1368,13 +1368,111 @@ public func kk_flow_of(_ arrayHandle: Int, _ count: Int) -> Int {
     return runtimeRegisterFlowHandle(handle)
 }
 
-// MARK: - Dispatcher Runtime Stubs (P5-133)
+// MARK: - Coroutine Dispatcher Scheduler (STDLIB-133)
+
+/// A coroutine dispatcher that schedules work on a specific GCD queue.
+/// Each dispatcher wraps a DispatchQueue and provides `dispatch(_:)` to execute
+/// a closure on that queue. The three well-known dispatchers (Default, IO, Main)
+/// are singletons returned by `kk_dispatcher_default/io/main`.
+final class RuntimeDispatcher: @unchecked Sendable {
+    let queue: DispatchQueue
+    let tag: Int
+
+    /// Thread-local key for the currently active dispatcher.
+    private static let currentDispatcherKey = "kk_dispatcher_current"
+
+    /// The dispatcher active on the current thread, if any.
+    static var current: RuntimeDispatcher? {
+        get { Thread.current.threadDictionary[currentDispatcherKey] as? RuntimeDispatcher }
+        set { Thread.current.threadDictionary[currentDispatcherKey] = newValue }
+    }
+
+    init(queue: DispatchQueue, tag: Int) {
+        self.queue = queue
+        self.tag = tag
+    }
+
+    /// Dispatch a closure onto this dispatcher's queue synchronously, setting
+    /// `RuntimeDispatcher.current` for the duration.
+    func dispatchSync<T>(execute work: @Sendable () -> T) -> T {
+        if isCurrent {
+            // Already on the correct dispatcher; execute inline to avoid deadlock.
+            // Still set RuntimeDispatcher.current so callee code can observe
+            // which dispatcher is active (it may be nil if we arrived here via
+            // the Thread.isMainThread fallback).
+            let saved = RuntimeDispatcher.current
+            RuntimeDispatcher.current = self
+            defer { RuntimeDispatcher.current = saved }
+            return work()
+        }
+        return queue.sync {
+            let saved = RuntimeDispatcher.current
+            RuntimeDispatcher.current = self
+            defer { RuntimeDispatcher.current = saved }
+            return work()
+        }
+    }
+
+    /// Dispatch a closure onto this dispatcher's queue asynchronously, setting
+    /// `RuntimeDispatcher.current` for the duration.
+    func dispatchAsync(execute work: @escaping @Sendable () -> Void) {
+        queue.async { [self] in
+            let saved = RuntimeDispatcher.current
+            RuntimeDispatcher.current = self
+            work()
+            RuntimeDispatcher.current = saved
+        }
+    }
+
+    /// Returns true if we are already executing on this dispatcher.
+    ///
+    /// NOTE: Re-entrancy detection relies on the `RuntimeDispatcher.current`
+    /// thread-local, which is only set inside `dispatchSync`/`dispatchAsync`
+    /// blocks. For the main dispatcher we additionally check
+    /// `Thread.isMainThread` to avoid a guaranteed deadlock when
+    /// `DispatchQueue.main.sync` is called from the main thread before any
+    /// dispatcher context has been established.
+    var isCurrent: Bool {
+        if RuntimeDispatcher.current?.tag == tag { return true }
+        // DispatchQueue.main.sync from the main thread deadlocks; detect it
+        // even when RuntimeDispatcher.current has not been set yet.
+        if tag == RuntimeDispatcherTag.mainDispatcher, Thread.isMainThread { return true }
+        return false
+    }
+}
 
 /// Dispatcher tag constants used as opaque handles.
 private enum RuntimeDispatcherTag {
     static let defaultDispatcher: Int = 0x4B4B_4401 // "KKD\x01"
     static let ioDispatcher: Int = 0x4B4B_4402 // "KKD\x02"
     static let mainDispatcher: Int = 0x4B4B_4403 // "KKD\x03"
+}
+
+/// Singleton dispatchers. Initialized lazily on first access.
+private let runtimeDefaultDispatcher = RuntimeDispatcher(
+    queue: DispatchQueue.global(qos: .default),
+    tag: RuntimeDispatcherTag.defaultDispatcher
+)
+private let runtimeIODispatcher = RuntimeDispatcher(
+    queue: DispatchQueue(label: "kk.dispatcher.io", qos: .utility, attributes: .concurrent),
+    tag: RuntimeDispatcherTag.ioDispatcher
+)
+private let runtimeMainDispatcher = RuntimeDispatcher(
+    queue: DispatchQueue.main,
+    tag: RuntimeDispatcherTag.mainDispatcher
+)
+
+/// Resolve a raw dispatcher Int to a RuntimeDispatcher instance.
+/// Returns the Default dispatcher for unrecognized values.
+func runtimeResolveDispatcher(from raw: Int) -> RuntimeDispatcher {
+    switch raw {
+    case RuntimeDispatcherTag.ioDispatcher:
+        runtimeIODispatcher
+    case RuntimeDispatcherTag.mainDispatcher:
+        runtimeMainDispatcher
+    default:
+        runtimeDefaultDispatcher
+    }
 }
 
 /// Maps a dispatcher tag to the corresponding GCD dispatch queue.
