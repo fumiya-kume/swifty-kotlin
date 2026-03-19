@@ -128,11 +128,6 @@ extension DataFlowSemaPhase {
             ],
             returnType: floatType,
             externalLinkName: "kk_math_atan2_float",
-        // STDLIB-500~509: Float overloads for math functions
-            named: "sqrt",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_sqrt_float",
             symbols: symbols,
             interner: interner
         )
@@ -201,10 +196,6 @@ extension DataFlowSemaPhase {
             parameterType: types.doubleType,
             returnType: types.longType,
             externalLinkName: "kk_double_roundToLong",
-            named: "ceil",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_ceil_float",
             symbols: symbols,
             interner: interner
         )
@@ -267,26 +258,11 @@ extension DataFlowSemaPhase {
             parameterType: floatType,
             returnType: floatType,
             externalLinkName: "kk_float_nextDown",
-            named: "floor",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_floor_float",
             symbols: symbols,
             interner: interner
         )
 
         // Trigonometric functions (STDLIB-430) — Double variants
-        registerSyntheticMathTopLevelFunction(
-            named: "round",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_round_float",
-            symbols: symbols,
-            interner: interner
-        )
-        // Trigonometric functions (STDLIB-430) — Double overloads
         registerSyntheticMathTopLevelFunction(
             named: "sin",
             packageFQName: kotlinMathPkg,
@@ -362,86 +338,6 @@ extension DataFlowSemaPhase {
             ],
             returnType: types.doubleType,
             externalLinkName: "kk_math_atan2",
-            symbols: symbols,
-            interner: interner
-        )
-
-        // STDLIB-500~509: Float trig overloads
-        registerSyntheticMathTopLevelFunction(
-            named: "sin",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_sin_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "cos",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_cos_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "tan",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_tan_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "asin",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_asin_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "acos",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_acos_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "atan",
-            packageFQName: kotlinMathPkg,
-            parameterName: "x",
-            parameterType: types.floatType,
-            returnType: types.floatType,
-            externalLinkName: "kk_math_atan_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "atan2",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "y", type: types.floatType),
-                (name: "x", type: types.floatType),
-            ],
-            returnType: types.floatType,
-            externalLinkName: "kk_math_atan2_float",
             symbols: symbols,
             interner: interner
         )

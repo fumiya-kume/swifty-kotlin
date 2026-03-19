@@ -349,76 +349,43 @@ public func kk_math_E() -> Int {
     kk_double_to_bits(M_E)
 }
 
-// MARK: - STDLIB-500~509: Float overloads for trig/math functions
-
-@_cdecl("kk_math_sin_float")
-public func kk_math_sin_float(_ value: Int) -> Int {
-    kk_float_to_bits(sin(kk_bits_to_float(value)))
-}
-
-@_cdecl("kk_math_cos_float")
-public func kk_math_cos_float(_ value: Int) -> Int {
-    kk_float_to_bits(cos(kk_bits_to_float(value)))
-}
-
-@_cdecl("kk_math_tan_float")
-public func kk_math_tan_float(_ value: Int) -> Int {
-    kk_float_to_bits(tan(kk_bits_to_float(value)))
-}
-
-@_cdecl("kk_math_asin_float")
-public func kk_math_asin_float(_ value: Int) -> Int {
-    kk_float_to_bits(asin(kk_bits_to_float(value)))
-}
-
-@_cdecl("kk_math_acos_float")
-public func kk_math_acos_float(_ value: Int) -> Int {
-    kk_float_to_bits(acos(kk_bits_to_float(value)))
-}
-
-@_cdecl("kk_math_atan_float")
-public func kk_math_atan_float(_ value: Int) -> Int {
-    kk_float_to_bits(atan(kk_bits_to_float(value)))
 // MARK: - STDLIB-500~509: Float trig/math overloads
 //
 // Float values are transported as bit-encoded Int (intptr_t), just like Double.
 // The low 32 bits carry the IEEE 754 single-precision payload; upper bits are
 // ignored on decode and zero-extended on encode.
-public func kk_math_sin_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(sinf(f))
-public func kk_math_cos_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(cosf(f))
-public func kk_math_tan_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(tanf(f))
-public func kk_math_asin_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(asinf(f))
-public func kk_math_acos_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(acosf(f))
+
 /// Helper: decode bit-encoded Float, apply a unary operation, re-encode.
 /// Reduces boilerplate across the Float math entry points below.
 private func applyFloatUnaryOp(_ v: Int, _ op: (Float) -> Float) -> Int {
     kk_float_to_bits(op(kk_bits_to_float(v)))
 }
+
 @_cdecl("kk_math_sin_float")
+public func kk_math_sin_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, sinf)
 }
+
 @_cdecl("kk_math_cos_float")
+public func kk_math_cos_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, cosf)
 }
+
 @_cdecl("kk_math_tan_float")
+public func kk_math_tan_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, tanf)
 }
+
 @_cdecl("kk_math_asin_float")
+public func kk_math_asin_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, asinf)
 }
+
 @_cdecl("kk_math_acos_float")
+public func kk_math_acos_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, acosf)
 }
+
 @_cdecl("kk_math_atan_float")
 public func kk_math_atan_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, atanf)
@@ -426,45 +393,27 @@ public func kk_math_atan_float(_ v: Int) -> Int {
 
 @_cdecl("kk_math_atan2_float")
 public func kk_math_atan2_float(_ y: Int, _ x: Int) -> Int {
-    kk_float_to_bits(atan2(kk_bits_to_float(y), kk_bits_to_float(x)))
+    let fy = kk_bits_to_float(y)
+    let fx = kk_bits_to_float(x)
+    return kk_float_to_bits(atan2f(fy, fx))
 }
 
 @_cdecl("kk_math_sqrt_float")
-public func kk_math_sqrt_float(_ value: Int) -> Int {
-    kk_float_to_bits(sqrt(kk_bits_to_float(value)))
 public func kk_math_sqrt_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, sqrtf)
 }
 
 @_cdecl("kk_math_round_float")
-public func kk_math_round_float(_ value: Int) -> Int {
-    kk_float_to_bits(round(kk_bits_to_float(value)))
 public func kk_math_round_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v) { $0.rounded(.toNearestOrEven) }
 }
 
 @_cdecl("kk_math_ceil_float")
-public func kk_math_ceil_float(_ value: Int) -> Int {
-    kk_float_to_bits(ceil(kk_bits_to_float(value)))
 public func kk_math_ceil_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, ceilf)
 }
 
 @_cdecl("kk_math_floor_float")
-public func kk_math_floor_float(_ value: Int) -> Int {
-    kk_float_to_bits(floor(kk_bits_to_float(value)))
-    let fy = kk_bits_to_float(y)
-    let fx = kk_bits_to_float(x)
-    return kk_float_to_bits(atan2f(fy, fx))
-public func kk_math_sqrt_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(sqrtf(f))
-public func kk_math_round_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(roundf(f))
-public func kk_math_ceil_float(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    return kk_float_to_bits(ceilf(f))
 public func kk_math_floor_float(_ v: Int) -> Int {
     applyFloatUnaryOp(v, floorf)
 }
@@ -546,39 +495,6 @@ private func roundFloatJava7(_ raw: Float) -> Int64 {
         return Int64(raw)
     }
 }
-// towards positive infinity, i.e. floor(x + 0.5).
-//
-// Note: A naive `floor(x + 0.5)` has a known IEEE 754 precision issue where
-// nextDown(0.5) (== 0.49999999999999994) incorrectly rounds to 1 because
-// adding 0.5 rounds to exactly 1.0 in double precision. We use Swift's
-// `rounded(.toNearestOrAwayFromZero)` (== C `round()`) which rounds ties
-// away from zero, then correct only the negative-tie case to match Kotlin's
-// "ties towards +inf" behavior.
-
-/// Helper: Kotlin Math.round for Float (ties toward +infinity).
-private func kotlinMathRoundFloat(_ f: Float) -> Float {
-    if f.isNaN || f.isInfinite { return f }
-    let r = f.rounded(.toNearestOrAwayFromZero)
-    // round() rounds -0.5 to -1.0 (away from zero), but Kotlin rounds to 0 (toward +inf).
-    // Correct negative half-integer ties: if f is negative and exactly halfway, round toward +inf.
-    if r != 0, f != r {
-        let diff = f - r
-        // diff == 0.5 means f was exactly halfway and rounded down (negative side)
-        if diff == 0.5 { return r + 1 }
-    }
-    return r
-}
-
-/// Helper: Kotlin Math.round for Double (ties toward +infinity).
-private func kotlinMathRoundDouble(_ d: Double) -> Double {
-    if d.isNaN || d.isInfinite { return d }
-    let r = d.rounded(.toNearestOrAwayFromZero)
-    if r != 0, d != r {
-        let diff = d - r
-        if diff == 0.5 { return r + 1 }
-    }
-    return r
-}
 
 @_cdecl("kk_float_roundToInt")
 public func kk_float_roundToInt(_ value: Int) -> Int {
@@ -618,34 +534,6 @@ public func kk_double_roundToLong(_ value: Int) -> Int {
     if d >= Double(Int64.max) { return Int(Int64.max) }
     if d <= Double(Int64.min) { return Int(Int64.min) }
     return Int(Int64(d))
-public func kk_float_roundToInt(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    if f.isNaN { return 0 }
-    let rounded = kotlinMathRoundFloat(f)
-    if rounded >= Float(Int32.max) { return Int(Int32.max) }
-    if rounded <= Float(Int32.min) { return Int(Int32.min) }
-    return Int(Int32(rounded))
-public func kk_double_roundToInt(_ v: Int) -> Int {
-    let d = kk_bits_to_double(v)
-    if d.isNaN { return 0 }
-    let rounded = kotlinMathRoundDouble(d)
-    if rounded >= Double(Int32.max) { return Int(Int32.max) }
-    if rounded <= Double(Int32.min) { return Int(Int32.min) }
-    return Int(Int32(rounded))
-public func kk_float_roundToLong(_ v: Int) -> Int {
-    let f = kk_bits_to_float(v)
-    if f.isNaN { return 0 }
-    let rounded = kotlinMathRoundFloat(f)
-    if rounded >= Float(Int64.max) { return Int(Int64.max) }
-    if rounded <= Float(Int64.min) { return Int(Int64.min) }
-    return Int(Int64(rounded))
-public func kk_double_roundToLong(_ v: Int) -> Int {
-    let d = kk_bits_to_double(v)
-    if d.isNaN { return 0 }
-    let rounded = kotlinMathRoundDouble(d)
-    if rounded >= Double(Int64.max) { return Int(Int64.max) }
-    if rounded <= Double(Int64.min) { return Int(Int64.min) }
-    return Int(Int64(rounded))
 }
 
 // MARK: - STDLIB-512~513: ulp / nextUp / nextDown extensions
@@ -678,18 +566,6 @@ public func kk_float_nextUp(_ value: Int) -> Int {
 @_cdecl("kk_float_nextDown")
 public func kk_float_nextDown(_ value: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(value).nextDown)
-public func kk_double_ulp(_ v: Int) -> Int {
-    kk_double_to_bits(kk_bits_to_double(v).ulp)
-public func kk_double_nextUp(_ v: Int) -> Int {
-    kk_double_to_bits(kk_bits_to_double(v).nextUp)
-public func kk_double_nextDown(_ v: Int) -> Int {
-    kk_double_to_bits(kk_bits_to_double(v).nextDown)
-public func kk_float_ulp(_ v: Int) -> Int {
-    kk_float_to_bits(kk_bits_to_float(v).ulp)
-public func kk_float_nextUp(_ v: Int) -> Int {
-    kk_float_to_bits(kk_bits_to_float(v).nextUp)
-public func kk_float_nextDown(_ v: Int) -> Int {
-    kk_float_to_bits(kk_bits_to_float(v).nextDown)
 }
 
 @_cdecl("kk_println_char")
