@@ -35,8 +35,8 @@ public func kk_require_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        exceptionPrefix: "IllegalArgumentException",
-        defaultMessage: "IllegalArgumentException: Failed requirement."
+        defaultMessage: "IllegalArgumentException: Failed requirement.",
+        messagePrefix: "IllegalArgumentException: "
     )
 }
 
@@ -52,8 +52,37 @@ public func kk_check_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        exceptionPrefix: "IllegalStateException",
-        defaultMessage: "IllegalStateException: Check failed."
+        defaultMessage: "IllegalStateException: Check failed.",
+        messagePrefix: "IllegalStateException: "
+    )
+}
+
+// MARK: - assert (STDLIB-258)
+
+@_cdecl("kk_precondition_assert")
+public func kk_precondition_assert(_ condition: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    if condition == 0 {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "AssertionError: Assertion failed.")
+        return 0
+    }
+    return 0
+}
+
+@_cdecl("kk_precondition_assert_lazy")
+public func kk_precondition_assert_lazy(
+    _ condition: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    return preconditionWithLazyMessage(
+        condition,
+        fnPtr,
+        closureRaw,
+        outThrown,
+        defaultMessage: "AssertionError: Assertion failed.",
+        messagePrefix: "AssertionError: "
     )
 }
 
@@ -85,8 +114,9 @@ private func preconditionWithLazyMessage(
     _ fnPtr: Int,
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?,
-    exceptionPrefix: String,
-    defaultMessage: String
+    exceptionPrefix: String? = nil,
+    defaultMessage: String,
+    messagePrefix: String? = nil
 ) -> Int {
     outThrown?.pointee = 0
     guard condition == 0 else {
@@ -119,7 +149,15 @@ private func preconditionWithLazyMessage(
     // Prepend the exception type prefix for consistency with non-lazy paths
     // (e.g. "IllegalArgumentException: custom message").
     let message = runtimePreconditionMessage(from: rawMessage)
-    outThrown?.pointee = runtimeAllocateThrowable(message: "\(exceptionPrefix): \(message)")
+    let formatted: String
+    if let prefix = messagePrefix {
+        formatted = "\(prefix)\(message)"
+    } else if let prefix = exceptionPrefix {
+        formatted = "\(prefix): \(message)"
+    } else {
+        formatted = message
+    }
+    outThrown?.pointee = runtimeAllocateThrowable(message: formatted)
     return 0
 }
 
