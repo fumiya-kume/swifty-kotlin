@@ -1533,7 +1533,8 @@ extension DataFlowSemaPhase {
             memberName: InternedString,
             memberFQName: [InternedString],
             parameterTypes: [TypeID],
-            externalLinkName: String
+            externalLinkName: String,
+            returnTypeOverride: TypeID? = nil
         ) {
             let alreadyRegistered = symbols.lookupAll(fqName: memberFQName).contains { symbolID in
                 guard let sig = symbols.functionSignature(for: symbolID) else { return false }
