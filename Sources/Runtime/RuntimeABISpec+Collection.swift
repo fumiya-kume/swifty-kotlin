@@ -1364,6 +1364,14 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let asReversedSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_as_reversed",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let sortedSpec = RuntimeABIFunctionSpec(
             name: "kk_list_sorted",
             parameters: [
@@ -1447,7 +1455,7 @@ public extension RuntimeABISpec {
                 associateBySpec, associateWithSpec, associateSpec,
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
-                takeSpec, dropSpec, reversedSpec, sortedSpec, distinctSpec,
+                takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,
                 RuntimeABIFunctionSpec(
                     name: "kk_list_flatten",

@@ -116,6 +116,7 @@ struct CollectionLiteralLookupTables {
     let kkListTakeName: InternedString
     let kkListDropName: InternedString
     let kkListReversedName: InternedString
+    let kkListAsReversedName: InternedString
     let kkListSortedName: InternedString
     let kkListDistinctName: InternedString
     let kkListDistinctByName: InternedString
@@ -595,6 +596,7 @@ struct CollectionLiteralLookupTables {
         kkListTakeName = interner.intern("kk_list_take")
         kkListDropName = interner.intern("kk_list_drop")
         kkListReversedName = interner.intern("kk_list_reversed")
+        kkListAsReversedName = interner.intern("kk_list_as_reversed")
         kkListSortedName = interner.intern("kk_list_sorted")
         kkListDistinctName = interner.intern("kk_list_distinct")
         kkListDistinctByName = interner.intern("kk_list_distinctBy")

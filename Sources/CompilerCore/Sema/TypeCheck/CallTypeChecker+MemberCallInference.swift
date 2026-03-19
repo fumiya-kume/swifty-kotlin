@@ -465,7 +465,8 @@ extension CallTypeChecker {
             "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
-            "sumOf", "maxOrNull", "minOrNull", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
+            "sumOf", "maxOrNull", "minOrNull",
+            "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
@@ -1270,15 +1271,15 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: failedType)
                     return failedType
                 }
-                let ofLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                     params: [collectionElementType],
                     returnType: sema.types.anyType
                 )))
                 if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                 }
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: ofLambdaExpectedType)
-                let ofSelectorType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let selectorType: TypeID = if case let .lambdaLiteral(_, bodyExpr, _, _) = ast.arena.expr(args[0].expr) {
                     sema.types.makeNonNullable(sema.bindings.exprType(for: bodyExpr) ?? sema.types.anyType)
                 } else if let lambdaExprType = sema.bindings.exprType(for: args[0].expr),
                           case let .functionType(fnType) = sema.types.kind(of: lambdaExprType)
@@ -1287,8 +1288,8 @@ extension CallTypeChecker {
                 } else {
                     sema.types.anyType
                 }
-                let ofSelectorKind = sema.types.kind(of: ofSelectorType)
-                if case .typeParam = ofSelectorKind {} else {
+                let selectorKind = sema.types.kind(of: selectorType)
+                if case .typeParam = selectorKind {} else {
                     do {
                         let primitiveComparableTypes: Set<TypeID> = [
                             sema.types.intType,
@@ -1300,19 +1301,19 @@ extension CallTypeChecker {
                             sema.types.make(.primitive(.uint, .nonNull)),
                             sema.types.make(.primitive(.ulong, .nonNull)),
                         ]
-                        let isPrimitiveComparable = primitiveComparableTypes.contains(ofSelectorType)
+                        let isPrimitiveComparable = primitiveComparableTypes.contains(selectorType)
                         let isNominalComparable: Bool
                         if let comparableSymbol = sema.types.comparableInterfaceSymbol {
                             let comparableSelectorType = sema.types.make(.classType(ClassType(
                                 classSymbol: comparableSymbol,
-                                args: [.invariant(ofSelectorType)],
+                                args: [.invariant(selectorType)],
                                 nullability: .nonNull
                             )))
-                            isNominalComparable = sema.types.isSubtype(ofSelectorType, comparableSelectorType)
+                            isNominalComparable = sema.types.isSubtype(selectorType, comparableSelectorType)
                         } else {
                             isNominalComparable = false
                         }
-                        if ofSelectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
+                        if selectorType != sema.types.anyType && !isPrimitiveComparable && !isNominalComparable {
                             ctx.semaCtx.diagnostics.error(
                                 "KSWIFTK-SEMA-BOUND",
                                 "Type argument does not satisfy upper bound constraint.",
@@ -1324,7 +1325,7 @@ extension CallTypeChecker {
                         }
                     }
                 }
-                resultType = sema.types.makeNullable(ofSelectorType)
+                resultType = sema.types.makeNullable(selectorType)
 
             case "distinctBy":
                 guard args.count == 1 else {
@@ -1504,19 +1505,7 @@ extension CallTypeChecker {
             }
         }
 
-        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
-        // Currently only recognizes range expression literals (e.g. `1..10`)
-        // via the `isRangeExpr` marker. Precomputed range values
-        // (e.g. `val r = 1..10; x.coerceIn(r)`) are not yet supported because
-        // the type system does not distinguish range types (IntRange/LongRange)
-        // from their element types (Int/Long). The element-type equality check
-        // (argType == receiverForCheck) rejects mismatched combinations such as
-        // Int.coerceIn(1L..10L).
-        //
-        // TODO: When a distinct ClosedRange<T> type is introduced in the type
-        // system, switch to a type-conformance check so that arbitrary
-        // ClosedRange-typed expressions (e.g. val r: IntRange = 1..10;
-        // x.coerceIn(r)) are also accepted without needing the isRangeExpr flag.
+        // Int/Long.coerceIn(range) (STDLIB-525)
         if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
             let intType = sema.types.make(.primitive(.int, .nonNull))
             let longType = sema.types.make(.primitive(.long, .nonNull))
@@ -1524,14 +1513,10 @@ extension CallTypeChecker {
                 ? sema.types.makeNonNullable(lookupReceiverType)
                 : lookupReceiverType
             if receiverForCheck == intType || receiverForCheck == longType {
-                let argExpr = args[0].expr
-                let argType = driver.inferExpr(argExpr, ctx: ctx, locals: &locals, expectedType: nil)
-                if sema.bindings.isRangeExpr(argExpr),
-                   argType == receiverForCheck {
-                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
-                    sema.bindings.bindExprType(id, type: finalType)
-                    return finalType
-                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: receiverForCheck)
+                let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
             }
         }
 
