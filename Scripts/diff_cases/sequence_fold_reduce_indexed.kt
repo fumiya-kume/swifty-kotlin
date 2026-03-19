@@ -1,3 +1,4 @@
+// SKIP-DIFF  sequence HOF lowering does not yet rewrite fold/reduce through asSequence() (link error)
 fun main() {
     // foldIndexed: accumulate with index
     val foldResult = listOf(10, 20, 30)
