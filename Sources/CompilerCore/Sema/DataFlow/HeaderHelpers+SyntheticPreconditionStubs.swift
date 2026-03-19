@@ -68,6 +68,35 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // STDLIB-258: assert(condition) and assert(condition, lazyMessage)
+        registerSyntheticPreconditionTopLevelFunction(
+            named: "assert",
+            packageFQName: kotlinPkg,
+            packageSymbol: packageSymbol,
+            parameters: [(name: "value", type: types.booleanType)],
+            returnType: types.unitType,
+            externalLinkName: "kk_precondition_assert",
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticPreconditionTopLevelFunction(
+            named: "assert",
+            packageFQName: kotlinPkg,
+            packageSymbol: packageSymbol,
+            parameters: [
+                (name: "value", type: types.booleanType),
+                (name: "lazyMessage", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.unitType,
+            externalLinkName: "kk_precondition_assert_lazy",
+            symbols: symbols,
+            interner: interner
+        )
         registerSyntheticPreconditionTopLevelFunction(
             named: "error",
             packageFQName: kotlinPkg,
