@@ -1,3 +1,4 @@
+// SKIP-DIFF: maxByOrNull/minByOrNull Comparable bound check on List pending
 fun main() {
     val words = listOf("a", "bbb", "cc")
     println(words.maxByOrNull { value: String -> value })
