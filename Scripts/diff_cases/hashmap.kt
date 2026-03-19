@@ -9,5 +9,4 @@ fun main() {
     println(map.containsValue(3))
     map.remove("b")
     println(map.size)
-    println(map is MutableMap<*, *>)
 }

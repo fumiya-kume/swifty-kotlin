@@ -465,10 +465,6 @@ extension CallTypeChecker {
             interner.intern("sumOf"),
             interner.intern("maxOrNull"),
             interner.intern("minOrNull"),
-            interner.intern("maxByOrNull"),
-            interner.intern("minByOrNull"),
-            interner.intern("maxOfOrNull"),
-            interner.intern("minOfOrNull"),
             interner.intern("onEach"),
             interner.intern("onEachIndexed"),
             interner.intern("asSequence"),
@@ -624,8 +620,7 @@ extension CallTypeChecker {
             return argCount == 1
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
-        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
-             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"):
+        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"):
             return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
@@ -859,54 +854,6 @@ extension CallTypeChecker {
             return sema.types.make(.classType(ClassType(
                 classSymbol: iterableSymbol,
                 args: [.out(indexedValueType)],
-                nullability: .nonNull
-            )))
-        }
-
-        // unzip(): List<Pair<A,B>> -> Pair<List<A>, List<B>>
-        if memberName == interner.intern("unzip"),
-           let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first,
-           let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
-        {
-            // receiverElementType is Pair<A, B> — extract A and B
-            if case let .classType(pairClass) = sema.types.kind(of: receiverElementType),
-               pairClass.args.count == 2,
-               let pairSym = sema.symbols.symbol(pairClass.classSymbol),
-               pairSym.name == interner.intern("Pair")
-            {
-                let aType: TypeID = switch pairClass.args[0] {
-                case let .invariant(id), let .out(id), let .in(id): id
-                case .star: sema.types.anyType
-                }
-                let bType: TypeID = switch pairClass.args[1] {
-                case let .invariant(id), let .out(id), let .in(id): id
-                case .star: sema.types.anyType
-                }
-                let listA = sema.types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.invariant(aType)],
-                    nullability: .nonNull
-                )))
-                let listB = sema.types.make(.classType(ClassType(
-                    classSymbol: listSymbol,
-                    args: [.invariant(bType)],
-                    nullability: .nonNull
-                )))
-                return sema.types.make(.classType(ClassType(
-                    classSymbol: pairSymbol,
-                    args: [.invariant(listA), .invariant(listB)],
-                    nullability: .nonNull
-                )))
-            }
-            // Fallback: if element type is not Pair, return Pair<List<Any>, List<Any>>
-            let listAny = sema.types.make(.classType(ClassType(
-                classSymbol: listSymbol,
-                args: [.invariant(sema.types.anyType)],
-                nullability: .nonNull
-            )))
-            return sema.types.make(.classType(ClassType(
-                classSymbol: pairSymbol,
-                args: [.invariant(listAny), .invariant(listAny)],
                 nullability: .nonNull
             )))
         }
