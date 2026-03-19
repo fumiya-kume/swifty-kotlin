@@ -385,6 +385,101 @@ extension CallLowerer {
             }
         }
 
+        // Int/Long.coerceIn(range) safe-call: null guard + range decomposition (STDLIB-525)
+        // The generic lowerMemberLikeCallExpr path does not emit a null guard for
+        // safe-call receivers, so we must handle coerceIn(range) here.
+        if args.count == 1, interner.resolve(effectiveCalleeName) == "coerceIn" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
+               prefix == "kk_int" || prefix == "kk_long" {
+                let argExprID = args[0].expr
+                if sema.bindings.isRangeExpr(argExprID) {
+                    let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
+                    let result = arena.appendExpr(
+                        .temporary(Int32(arena.expressions.count)),
+                        type: boundType
+                    )
+                    let loweredReceiver = driver.lowerExpr(
+                        receiverExpr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    let loweredRangeArg = driver.lowerExpr(
+                        argExprID,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                    let callLabel = driver.ctx.makeLoopLabel()
+                    let endLabel = driver.ctx.makeLoopLabel()
+                    instructions.append(.jumpIfNotNull(value: loweredReceiver, target: callLabel))
+                    let nullExpr = arena.appendExpr(.null, type: boundType)
+                    instructions.append(.constValue(result: nullExpr, value: .null))
+                    instructions.append(.copy(from: nullExpr, to: result))
+                    instructions.append(.jump(endLabel))
+                    instructions.append(.label(callLabel))
+                    emitCoerceInRange(
+                        prefix: prefix,
+                        receiverType: receiverType,
+                        loweredReceiverID: loweredReceiver,
+                        loweredRangeArgID: loweredRangeArg,
+                        result: result,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
+                    instructions.append(.label(endLabel))
+                    return result
+                }
+            }
+        }
+
+        // Int/Long/Double/Float.coerceIn(min, max) safe-call: null guard (STDLIB-150, STDLIB-500)
+        if args.count == 2, interner.resolve(effectiveCalleeName) == "coerceIn" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema) {
+                let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
+                let result = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: boundType
+                )
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
+                    ast: ast, sema: sema, arena: arena, interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                let loweredArgIDs = args.map { argument in
+                    driver.lowerExpr(
+                        argument.expr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
+                let callLabel = driver.ctx.makeLoopLabel()
+                let endLabel = driver.ctx.makeLoopLabel()
+                instructions.append(.jumpIfNotNull(value: loweredReceiver, target: callLabel))
+                let nullExpr = arena.appendExpr(.null, type: boundType)
+                instructions.append(.constValue(result: nullExpr, value: .null))
+                instructions.append(.copy(from: nullExpr, to: result))
+                instructions.append(.jump(endLabel))
+                instructions.append(.label(callLabel))
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(prefix + "_coerceIn"),
+                    arguments: [loweredReceiver, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                instructions.append(.label(endLabel))
+                return result
+            }
+        }
+
         return lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
