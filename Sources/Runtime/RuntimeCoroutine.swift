@@ -517,10 +517,17 @@ public func kk_kxmini_launch(_ entryPointRaw: Int, _ functionID: Int) -> Int {
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        // Note: This scope propagation was simplified from the CORO-003 task-scope-map
+        // approach. TLS-based propagation is safe here because the blocking semaphore
+        // in runSuspendEntryLoopWithContinuation ensures the coroutine resumes on the
+        // same GCD thread. See RuntimeCoroutineScope.current doc comment for details.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(
             entryPointRaw: entryPointRaw,
             continuation: continuation
         )
+        RuntimeCoroutineScope.current = nil
         job.complete(with: result)
     }
     return Int(bitPattern: jobPtr)
@@ -601,7 +608,10 @@ public func kk_kxmini_launch_with_cont(_ entryPointRaw: Int, _ continuation: Int
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        RuntimeCoroutineScope.current = nil
         job.complete(with: result)
     }
     return Int(bitPattern: jobPtr)
@@ -623,7 +633,10 @@ public func kk_kxmini_async_with_cont(_ entryPointRaw: Int, _ continuation: Int)
     }
 
     KxMiniRuntime.launch {
+        // Propagate scope to GCD thread so nested launch/async discover the parent.
+        RuntimeCoroutineScope.current = callerScope
         let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+        RuntimeCoroutineScope.current = nil
         task.complete(with: result)
     }
     return Int(bitPattern: taskPtr)
@@ -679,6 +692,8 @@ private struct RuntimeFlowOp {
 /// Currently, short-circuiting is handled by `runtimeFlowTakeExhausted` after
 /// each element delivery rather than through this flag.
 private final class RuntimeFlowCollectContext {
+    /// Legacy field kept for backward compatibility with tests that inspect emitted values
+    /// without a collector. In lazy mode, values flow directly to the collector.
     var emittedValues: [Int] = []
     var cancelled = false
 }
@@ -992,6 +1007,27 @@ private func runtimeFlowDeliverValue(
 public func kk_flow_create(_ emitterFnPtr: Int, _: Int) -> Int {
     runtimeRegisterFlowHandle(RuntimeFlowHandle(emitterFnPtr: emitterFnPtr))
 }
+
+/// Return the flow-stop sentinel pointer. This is a unique object pointer that
+/// cannot collide with any legitimate `Int` value (unlike the previous `Int.min`
+/// approach). Emitters should compare the return value of `kk_flow_emit` against
+/// `kk_flow_stopped()` to detect pipeline termination.
+@_cdecl("kk_flow_stopped")
+public func kk_flow_stopped() -> Int {
+    let ptr = UnsafeMutableRawPointer(Unmanaged.passUnretained(runtimeStorage.flowStopSentinelBox).toOpaque())
+    runtimeStorage.withLock { state in
+        state.objectPointers.insert(UInt(bitPattern: ptr))
+    }
+    return Int(bitPattern: ptr)
+}
+
+/// Sentinel value returned by `kk_flow_emit` to signal that the pipeline has
+/// terminated (e.g. a `.take` counter was exhausted or the collector threw).
+/// This uses a unique heap-allocated object pointer so it cannot collide with
+/// any legitimate emitted `Int` value (including `Int.min`).
+/// Cached as a static let to avoid repeated lock acquisition and dictionary
+/// insertion on every access.
+private let runtimeFlowStopSentinel: Int = kk_flow_stopped()
 
 @_cdecl("kk_flow_emit")
 public func kk_flow_emit(_ flowHandle: Int, _ value: Int, _ tag: Int) -> Int {

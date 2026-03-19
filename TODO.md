@@ -340,8 +340,8 @@
   - 現状: トークンが 0 の場合に全 catch 節にマッチしてしまう可能性がある。`kk_throwable_is_instance` による実行時チェックを導入する
 - [ ] CORO-001: コルーチンのサスペンドを真に非ブロッキングにする
   - 現状: `waitForResumeSignal` で `DispatchSemaphore` を使用してスレッドをブロックしている。本来は継続（Continuation）を保存してスレッドを解放すべき
-- [ ] CORO-002: `Flow` の評価を遅延（Lazy）にする
-  - 現状: `runtimeFlowEvaluateSource` で全要素を即座に配列に収集している。無限ストリームに対応できない
+- [x] CORO-002: `Flow` の評価を遅延（Lazy）にする
+  - 完了: `runtimeFlowEvaluateSource` の一括収集を廃止し、各要素を emit 時に即座に op chain → collector へ渡す遅延評価に変更。`take` で打ち切れば無限ストリームも動作する
 - [ ] CORO-003: `currentScope` の管理に TLS (Thread Local Storage) を使用しないようにする
   - 現状: サスペンド・レジュームが別スレッドで行われた場合にスコープが消失する。コルーチンコンテキストに含めるべき
 - [ ] REFL-004: 実行時リフレクション用メタデータの生成 (MetadataSerializer の活用)

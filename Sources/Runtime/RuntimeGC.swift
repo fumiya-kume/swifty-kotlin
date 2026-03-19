@@ -43,6 +43,7 @@ final class RuntimeStorageBox: @unchecked Sendable {
     private let lock = NSLock()
     private var state = RuntimeStorageState()
     let coroutineSuspendedBox = RuntimeStringBox("COROUTINE_SUSPENDED")
+    let flowStopSentinelBox = RuntimeStringBox("FLOW_STOP_SENTINEL")
 
     @discardableResult
     @inline(__always)
