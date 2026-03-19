@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -872,51 +872,26 @@ symbol s870 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s871 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s872 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s873 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#870 params=[(T#870) -> T#871] ret=T#871 suspend=0 defaults=[0] vararg=[0]
-symbol s874 kind=function fq=golden.sema.bitwiseAnd vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s875 kind=valueParameter fq=golden.sema.bitwiseAnd.$874.a vis=private flags=_
-symbol s876 kind=valueParameter fq=golden.sema.bitwiseAnd.$874.b vis=private flags=_
-symbol s877 kind=function fq=golden.sema.bitwiseOr vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s878 kind=valueParameter fq=golden.sema.bitwiseOr.$877.a vis=private flags=_
-symbol s879 kind=valueParameter fq=golden.sema.bitwiseOr.$877.b vis=private flags=_
-symbol s880 kind=function fq=golden.sema.bitwiseXor vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s881 kind=valueParameter fq=golden.sema.bitwiseXor.$880.a vis=private flags=_
-symbol s882 kind=valueParameter fq=golden.sema.bitwiseXor.$880.b vis=private flags=_
-symbol s883 kind=function fq=golden.sema.bitwiseInv vis=public flags=_ sig=recv=_ params=[Int] ret=Int suspend=0 defaults=[0] vararg=[0]
-symbol s884 kind=valueParameter fq=golden.sema.bitwiseInv.$883.a vis=private flags=_
-symbol s885 kind=function fq=golden.sema.shiftLeft vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s886 kind=valueParameter fq=golden.sema.shiftLeft.$885.a vis=private flags=_
-symbol s887 kind=valueParameter fq=golden.sema.shiftLeft.$885.n vis=private flags=_
-symbol s888 kind=function fq=golden.sema.shiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s889 kind=valueParameter fq=golden.sema.shiftRight.$888.a vis=private flags=_
-symbol s890 kind=valueParameter fq=golden.sema.shiftRight.$888.n vis=private flags=_
-symbol s891 kind=function fq=golden.sema.unsignedShiftRight vis=public flags=_ sig=recv=_ params=[Int,Int] ret=Int suspend=0 defaults=[0,0] vararg=[0,0]
-symbol s892 kind=valueParameter fq=golden.sema.unsignedShiftRight.$891.a vis=private flags=_
-symbol s893 kind=valueParameter fq=golden.sema.unsignedShiftRight.$891.n vis=private flags=_
-file f0 package=golden.sema
-  decl d0 fun bitwiseAnd suspend=0 inline=0 sym=s874
-  decl d1 fun bitwiseOr suspend=0 inline=0 sym=s877
-  decl d2 fun bitwiseXor suspend=0 inline=0 sym=s880
-  decl d3 fun bitwiseInv suspend=0 inline=0 sym=s883
-  decl d4 fun shiftLeft suspend=0 inline=0 sym=s885
-  decl d5 fun shiftRight suspend=0 inline=0 sym=s888
-  decl d6 fun unsignedShiftRight suspend=0 inline=0 sym=s891
-expr e0 name(a) type=Int ref=s875
-expr e1 name(b) type=Int ref=s876
-expr e2 memberCall recv=e0 callee=and args=[_:e1] type=Int
-expr e3 name(a) type=Int ref=s878
-expr e4 name(b) type=Int ref=s879
-expr e5 memberCall recv=e3 callee=or args=[_:e4] type=Int
-expr e6 name(a) type=Int ref=s881
-expr e7 name(b) type=Int ref=s882
-expr e8 memberCall recv=e6 callee=xor args=[_:e7] type=Int
-expr e9 name(a) type=Int ref=s884
-expr e10 memberCall recv=e9 callee=inv args=[] type=Int
-expr e11 name(a) type=Int ref=s886
-expr e12 name(n) type=Int ref=s887
-expr e13 memberCall recv=e11 callee=shl args=[_:e12] type=Int
-expr e14 name(a) type=Int ref=s889
-expr e15 name(n) type=Int ref=s890
-expr e16 memberCall recv=e14 callee=shr args=[_:e15] type=Int
-expr e17 name(a) type=Int ref=s892
-expr e18 name(n) type=Int ref=s893
-expr e19 memberCall recv=e17 callee=ushr args=[_:e18] type=Int
+symbol s874 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s875 kind=local fq=__local_5.items vis=private flags=_
+symbol s876 kind=local fq=__local_8.hs vis=private flags=_
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s874
+expr e0 name(listOf) type=_
+expr e1 string(a) type=String
+expr e2 string(b) type=String
+expr e3 string(c) type=String
+expr e4 call callee=e0 args=[_:e1,_:e2,_:e3] type=Class#59<out String>
+expr e5 localDecl items mutable=0 type=_ init=e4 type=Unit ref=s875
+expr e6 name(items) type=Class#59<out String> ref=s875
+expr e7 memberCall recv=e6 callee=toHashSet args=[] type=Class#143<String> call=s163 map=[] targs=[String]
+expr e8 localDecl hs mutable=0 type=t1 init=e7 type=Unit ref=s876
+expr e9 name(hs) type=Class#143<String> ref=s876
+expr e10 string(d) type=String
+expr e11 memberCall recv=e9 callee=add args=[_:e10] type=Boolean call=s145 map=[0->0] targs=[String]
+expr e12 name(hs) type=Class#143<String> ref=s876
+expr e13 string(a) type=String
+expr e14 memberCall recv=e12 callee=remove args=[_:e13] type=Boolean call=s146 map=[0->0] targs=[String]
+expr e15 name(println) type=_
+expr e16 name(hs) type=Class#143<String> ref=s876
+expr e17 call callee=e15 args=[_:e16] type=Unit call=s731 map=[0->0] targs=[]
