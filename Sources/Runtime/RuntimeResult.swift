@@ -87,11 +87,7 @@ public func kk_result_getOrElse(
         return box.value
     }
     // Call the lambda with the exception as argument
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var thrown = 0
-    let result = lambda(closureRaw, box.exception, &thrown)
-    if thrown != 0 {
-        outThrown?.pointee = thrown
+    guard let result = invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.exception, outThrown: outThrown) else {
         return 0
     }
     return result
@@ -126,6 +122,27 @@ public func kk_result_exceptionOrNull(_ resultRaw: Int) -> Int {
     return box.exception
 }
 
+// MARK: - Internal Helper: Invoke a (closureRaw, argument, &thrown) -> Int lambda
+
+/// Shared helper for invoking a Result transform/action lambda with a single argument.
+/// Casts `fnPtr` to the expected `@convention(c)` signature, calls it, and propagates
+/// any thrown exception via `outThrown`. Returns `nil` if the lambda threw.
+private func invokeResultLambda(
+    fnPtr: Int,
+    closureRaw: Int,
+    argument: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int? {
+    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
+    var thrown = 0
+    let result = lambda(closureRaw, argument, &thrown)
+    if thrown != 0 {
+        outThrown?.pointee = thrown
+        return nil
+    }
+    return result
+}
+
 // MARK: - STDLIB-283: Result HOF functions
 
 @_cdecl("kk_result_map")
@@ -144,11 +161,7 @@ public func kk_result_map(
         return resultRaw
     }
     // Apply transform to success value
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var thrown = 0
-    let mapped = lambda(closureRaw, box.value, &thrown)
-    if thrown != 0 {
-        outThrown?.pointee = thrown
+    guard let mapped = invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.value, outThrown: outThrown) else {
         return 0
     }
     return registerRuntimeObject(RuntimeResultBox(isSuccess: true, value: mapped, exception: 0))
@@ -168,20 +181,12 @@ public func kk_result_fold(
         return runtimeNullSentinelInt
     }
     if box.isSuccess {
-        let lambda = unsafeBitCast(onSuccessFnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-        var thrown = 0
-        let result = lambda(onSuccessClosureRaw, box.value, &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
+        guard let result = invokeResultLambda(fnPtr: onSuccessFnPtr, closureRaw: onSuccessClosureRaw, argument: box.value, outThrown: outThrown) else {
             return 0
         }
         return result
     } else {
-        let lambda = unsafeBitCast(onFailureFnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-        var thrown = 0
-        let result = lambda(onFailureClosureRaw, box.exception, &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
+        guard let result = invokeResultLambda(fnPtr: onFailureFnPtr, closureRaw: onFailureClosureRaw, argument: box.exception, outThrown: outThrown) else {
             return 0
         }
         return result
@@ -200,11 +205,7 @@ public func kk_result_onSuccess(
         return resultRaw
     }
     if box.isSuccess {
-        let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-        var thrown = 0
-        _ = lambda(closureRaw, box.value, &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
+        guard invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.value, outThrown: outThrown) != nil else {
             return 0
         }
     }
@@ -223,13 +224,33 @@ public func kk_result_onFailure(
         return resultRaw
     }
     if !box.isSuccess {
-        let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-        var thrown = 0
-        _ = lambda(closureRaw, box.exception, &thrown)
-        if thrown != 0 {
-            outThrown?.pointee = thrown
+        guard invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.exception, outThrown: outThrown) != nil else {
             return 0
         }
     }
     return resultRaw
+}
+
+// MARK: - STDLIB-589: Result.recover
+
+@_cdecl("kk_result_recover")
+public func kk_result_recover(
+    _ resultRaw: Int,
+    _ fnPtr: Int,
+    _ closureRaw: Int,
+    _ outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    outThrown?.pointee = 0
+    guard let box = resultBoxFromRaw(resultRaw) else {
+        return resultRaw
+    }
+    if box.isSuccess {
+        // Success — return as-is
+        return resultRaw
+    }
+    // Failure — apply the transform to produce a new success value
+    guard let recovered = invokeResultLambda(fnPtr: fnPtr, closureRaw: closureRaw, argument: box.exception, outThrown: outThrown) else {
+        return 0
+    }
+    return registerRuntimeObject(RuntimeResultBox(isSuccess: true, value: recovered, exception: 0))
 }

@@ -12,6 +12,7 @@ public extension RuntimeABIExterns {
         kk_result_fold,
         kk_result_onSuccess,
         kk_result_onFailure,
+        kk_result_recover,
     ]
 
     // STDLIB-280: runCatching
@@ -86,6 +87,13 @@ public extension RuntimeABIExterns {
 
     static let kk_result_onFailure = ExternDecl(
         name: "kk_result_onFailure",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // STDLIB-589: Result.recover
+    static let kk_result_recover = ExternDecl(
+        name: "kk_result_recover",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
