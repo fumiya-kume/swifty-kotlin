@@ -131,6 +131,34 @@ public struct ContractNonNullEffect: Equatable, Sendable {
     }
 }
 
+/// Represents a `contract { returns() }` or `contract { returns(true/false) }` effect
+/// indicating the function guarantees normal return (optionally with a specific Boolean
+/// return value).
+///
+/// - Bare `returns()`: the function guarantees it will return normally (not throw).
+/// - `returns(true)` / `returns(false)`: the function guarantees its *return value*
+///   will be the given Boolean constant on normal completion.
+///
+/// Models the kind of `returns(...)` contract effect.
+///
+/// - `returnsNormally`: bare `returns()` -- the function guarantees normal return.
+/// - `returnsBooleanValue(Bool, conditionParameterIndex: Int?)`: `returns(true)` or
+///   `returns(false)` -- the function guarantees a specific Boolean return value on
+///   normal completion.  `conditionParameterIndex` is a heuristic to locate the first
+///   Boolean parameter for downstream smart-cast patterns like `require(condition)`.
+public enum ContractReturnsEffect: Equatable, Sendable {
+    /// Bare `returns()` -- the function guarantees normal return without specifying
+    /// a particular return value.
+    case returnsNormally
+    /// `returns(true)` or `returns(false)` -- the function guarantees a specific
+    /// Boolean return value on normal completion.
+    /// - `expectedValue`: the Boolean value the function returns (`true` or `false`).
+    /// - `conditionParameterIndex`: heuristic index of the first Boolean parameter,
+    ///   used by downstream smart-cast analysis (e.g. `require(condition)` patterns).
+    ///   May be nil if no Boolean parameter exists.
+    case returnsBooleanValue(expectedValue: Bool, conditionParameterIndex: Int?)
+}
+
 public struct NominalLayout: Equatable, Sendable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
@@ -296,6 +324,7 @@ public final class SymbolTable {
     private var delegateHasProvideDelegate: Set<SymbolID> = []
     private var expectActualLinks: [SymbolID: SymbolID] = [:]
     private var contractNonNullEffects: [SymbolID: ContractNonNullEffect] = [:]
+    private var contractReturnsEffects: [SymbolID: ContractReturnsEffect] = [:]
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
@@ -796,6 +825,14 @@ public final class SymbolTable {
 
     public func contractNonNullEffect(for function: SymbolID) -> ContractNonNullEffect? {
         contractNonNullEffects[function]
+    }
+
+    public func setContractReturnsEffect(_ effect: ContractReturnsEffect, for function: SymbolID) {
+        contractReturnsEffects[function] = effect
+    }
+
+    public func contractReturnsEffect(for function: SymbolID) -> ContractReturnsEffect? {
+        contractReturnsEffects[function]
     }
 
     // MARK: - Indexed queries

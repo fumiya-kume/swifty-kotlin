@@ -843,7 +843,19 @@ extension DataFlowSemaPhase {
         ) {
             let interned = interner.intern(name)
             let fqName = ownerFQName + [interned]
-            guard symbols.lookup(fqName: fqName) == nil else { return }
+            // Check existing overloads by full signature (receiver type + parameter
+            // types + return type) to allow functions with the same fqName but
+            // different signatures, while preventing true duplicates.  Comparing
+            // only parameter count would incorrectly treat overloads with the same
+            // arity but different parameter types as duplicates.
+            let existingIDs = symbols.lookupAll(fqName: fqName)
+            let alreadyRegistered = existingIDs.contains { id in
+                guard let sig = symbols.functionSignature(for: id) else { return false }
+                return sig.receiverType == receiverType
+                    && sig.parameterTypes == params
+                    && sig.returnType == returnType
+            }
+            guard !alreadyRegistered else { return }
             let symbol = symbols.define(
                 kind: .function,
                 name: interned,
@@ -882,6 +894,36 @@ extension DataFlowSemaPhase {
             receiverType: effectType,
             params: [types.booleanType],
             returnType: types.unitType
+        )
+        // STDLIB-593 stub: `ContractBuilder.returnsNotNull()` -- forward declaration
+        // so that user code containing `contract { returnsNotNull() }` resolves.
+        ensureMember(
+            owner: builderSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
+            name: "returnsNotNull",
+            receiverType: builderType,
+            params: [],
+            returnType: effectType
+        )
+        // STDLIB-592 stub: `ContractBuilder.callsInPlace(lambda, kind)` -- forward
+        // declaration so that user code containing `contract { callsInPlace(...) }` resolves.
+        // Returns ContractEffect (not Unit) to match Kotlin's real API shape for
+        // forward-compatibility with effect-typed expressions.
+        ensureMember(
+            owner: builderSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
+            name: "callsInPlace",
+            receiverType: builderType,
+            params: [types.anyType],
+            returnType: effectType
+        )
+        ensureMember(
+            owner: builderSymbol,
+            ownerFQName: contractsFQName + [interner.intern("ContractBuilder")],
+            name: "callsInPlace",
+            receiverType: builderType,
+            params: [types.anyType, types.anyType],
+            returnType: effectType
         )
     }
 

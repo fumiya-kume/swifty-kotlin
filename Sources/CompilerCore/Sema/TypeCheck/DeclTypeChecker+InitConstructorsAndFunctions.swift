@@ -360,24 +360,129 @@ extension DeclTypeChecker {
             return
         }
 
-        let contractExprID: ExprID? = switch lambdaBodyExpr {
+        // Collect all effect expression IDs from the contract lambda body.
+        let effectExprIDs: [ExprID] = switch lambdaBodyExpr {
         case let .blockExpr(statements, trailingExpr, _):
-            statements.first ?? trailingExpr
+            statements + (trailingExpr.map { [$0] } ?? [])
         default:
-            lambdaBodyExprID
+            [lambdaBodyExprID]
         }
-        guard let contractExprID,
-              let contractExpr = ast.arena.expr(contractExprID),
-              case let .memberCall(receiverExprID, impliesName, _, impliesArgs, _) = contractExpr,
-              interner.resolve(impliesName) == "implies",
-              impliesArgs.count == 1,
-              let receiverExpr = ast.arena.expr(receiverExprID),
-              case let .call(returnsCalleeExprID, _, returnsArgs, _) = receiverExpr,
-              let returnsCalleeExpr = ast.arena.expr(returnsCalleeExprID),
-              case let .nameRef(returnsName, _) = returnsCalleeExpr,
-              interner.resolve(returnsName) == "returns",
-              returnsArgs.isEmpty,
-              let conditionExpr = ast.arena.expr(impliesArgs[0].expr),
+
+        for effectExprID in effectExprIDs {
+            recordSingleContractEffect(
+                effectExprID: effectExprID,
+                function: function,
+                symbol: symbol,
+                signature: signature,
+                ast: ast,
+                interner: interner,
+                sema: sema
+            )
+        }
+    }
+
+    /// Analyzes a single expression inside a `contract { ... }` lambda and records
+    /// any recognized effect on the function symbol.
+    ///
+    /// Recognized patterns:
+    /// - `returns()` -- bare returns effect (STDLIB-591)
+    /// - `returns(true)` / `returns(false)` -- Boolean return value effect (STDLIB-591)
+    /// - `returns() implies (param != null)` -- non-null smart cast
+    private func recordSingleContractEffect(
+        effectExprID: ExprID,
+        function: FunDecl,
+        symbol: SymbolID,
+        signature: FunctionSignature,
+        ast: ASTModule,
+        interner: StringInterner,
+        sema: SemaModule
+    ) {
+        guard let effectExpr = ast.arena.expr(effectExprID) else { return }
+
+        // Pattern 1: `returns() implies (condition)` -- existing non-null effect
+        if case let .memberCall(receiverExprID, impliesName, _, impliesArgs, _) = effectExpr,
+           interner.resolve(impliesName) == "implies",
+           impliesArgs.count == 1,
+           let receiverExpr = ast.arena.expr(receiverExprID),
+           case let .call(returnsCalleeExprID, _, returnsArgs, _) = receiverExpr,
+           let returnsCalleeExpr = ast.arena.expr(returnsCalleeExprID),
+           case let .nameRef(returnsName, _) = returnsCalleeExpr,
+           interner.resolve(returnsName) == "returns",
+           returnsArgs.isEmpty
+        {
+            // Also record the bare returns() effect for the function.
+            if sema.symbols.contractReturnsEffect(for: symbol) == nil {
+                sema.symbols.setContractReturnsEffect(
+                    .returnsNormally,
+                    for: symbol
+                )
+            }
+            recordReturnsImpliesEffect(
+                impliesArgs: impliesArgs,
+                function: function,
+                symbol: symbol,
+                signature: signature,
+                ast: ast,
+                interner: interner,
+                sema: sema
+            )
+            return
+        }
+
+        // Pattern 2: bare `returns()` call (STDLIB-591)
+        if case let .call(returnsCalleeExprID, _, returnsArgs, _) = effectExpr,
+           let returnsCalleeExpr = ast.arena.expr(returnsCalleeExprID),
+           case let .nameRef(returnsName, _) = returnsCalleeExpr,
+           interner.resolve(returnsName) == "returns"
+        {
+            if returnsArgs.isEmpty {
+                // `returns()` -- the function guarantees normal return.
+                // Only set if no effect recorded yet; a more specific effect
+                // (e.g. `returns(true)`) should not be overwritten by a bare
+                // `returns()` when multiple effects appear in the same block.
+                if sema.symbols.contractReturnsEffect(for: symbol) == nil {
+                    sema.symbols.setContractReturnsEffect(
+                        .returnsNormally,
+                        for: symbol
+                    )
+                }
+            } else if returnsArgs.count == 1 {
+                // `returns(true)` or `returns(false)` -- the function guarantees
+                // a specific Boolean *return value* on normal completion.
+                // Only valid when the function's return type is Boolean; ignore
+                // the effect for non-Boolean-returning functions to prevent
+                // encoding an invalid contract.
+                guard signature.returnType == sema.types.booleanType else { return }
+                if let boolValue = extractBooleanLiteral(returnsArgs[0].expr, ast: ast, interner: interner) {
+                    // Heuristic: find the first Boolean parameter for smart-cast binding.
+                    let conditionIndex = signature.parameterTypes.firstIndex { typeID in
+                        typeID == sema.types.booleanType
+                    }
+                    sema.symbols.setContractReturnsEffect(
+                        .returnsBooleanValue(
+                            expectedValue: boolValue,
+                            conditionParameterIndex: conditionIndex
+                        ),
+                        for: symbol
+                    )
+                }
+            }
+            return
+        }
+    }
+
+    /// Records a `returns() implies (param != null)` contract effect as a
+    /// `ContractNonNullEffect` on the given function symbol.
+    private func recordReturnsImpliesEffect(
+        impliesArgs: [CallArgument],
+        function: FunDecl,
+        symbol: SymbolID,
+        signature: FunctionSignature,
+        ast: ASTModule,
+        interner: StringInterner,
+        sema: SemaModule
+    ) {
+        guard let conditionExpr = ast.arena.expr(impliesArgs[0].expr),
               case let .binary(.notEqual, lhsExprID, rhsExprID, _) = conditionExpr
         else {
             return
@@ -409,6 +514,24 @@ extension DeclTypeChecker {
             ),
             for: symbol
         )
+    }
+
+    /// Extracts a boolean literal value from an expression (`true` or `false`).
+    private func extractBooleanLiteral(
+        _ exprID: ExprID,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> Bool? {
+        guard let expr = ast.arena.expr(exprID) else { return nil }
+        if case let .nameRef(name, _) = expr {
+            let resolved = interner.resolve(name)
+            if resolved == "true" { return true }
+            if resolved == "false" { return false }
+        }
+        if case let .boolLiteral(value, _) = expr {
+            return value
+        }
+        return nil
     }
 
     private func isNullLiteralExpr(
