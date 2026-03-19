@@ -161,7 +161,7 @@ symbol s159 kind=function fq=kotlin.collections.List.toMap vis=public flags=synt
 symbol s160 kind=function fq=kotlin.collections.List.intersect vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[Class#41<out T#60>] ret=Class#135<out T#60> suspend=0 defaults=[] vararg=[]
 symbol s161 kind=function fq=kotlin.collections.List.union vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[Class#41<out T#60>] ret=Class#135<out T#60> suspend=0 defaults=[] vararg=[]
 symbol s162 kind=function fq=kotlin.collections.List.subtract vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[Class#41<out T#60>] ret=Class#135<out T#60> suspend=0 defaults=[] vararg=[]
-symbol s163 kind=function fq=kotlin.collections.List.toHashSet vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[] ret=Class#135<out T#60> suspend=0 defaults=[] vararg=[]
+symbol s163 kind=function fq=kotlin.collections.List.toHashSet vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[] ret=Class#143<T#60> suspend=0 defaults=[] vararg=[]
 symbol s164 kind=function fq=kotlin.collections.List.asSequence vis=public flags=synthetic sig=recv=Class#59<out T#60> params=[] ret=Class#50<out T#60> suspend=0 defaults=[] vararg=[]
 symbol s165 kind=function fq=kotlin.collections.Collection.toList vis=public flags=synthetic sig=recv=Class#54<out T#55> params=[] ret=Class#59<out T#55> suspend=0 defaults=[] vararg=[]
 symbol s166 kind=interface fq=kotlin.collections.MutableMap vis=public flags=synthetic
