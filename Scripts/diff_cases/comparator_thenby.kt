@@ -9,17 +9,29 @@ fun main() {
         Person("Charlie", 25)
     )
 
-    // thenBy: sort by name ascending, then by age ascending
-    println("-- thenBy --")
-    val sorted = people.sortedWith(compareBy<Person> { it.name }.thenBy { it.age })
-    sorted.forEach { println("${it.name} ${it.age}") }
+    // sortedBy name: stable sort by name ascending
+    println("-- sortedBy name --")
+    val byName = people.sortedBy { it.name }
+    for (p in byName) {
+        println("${p.name} ${p.age}")
+    }
 
-    // thenByDescending: sort by name ascending, then by age descending
-    println("-- thenByDescending --")
-    val sortedDesc = people.sortedWith(compareBy<Person> { it.name }.thenByDescending { it.age })
-    sortedDesc.forEach { println("${it.name} ${it.age}") }
+    // sortedBy age: stable sort by age ascending
+    println("-- sortedBy age --")
+    val byAge = people.sortedBy { it.age }
+    for (p in byAge) {
+        println("${p.name} ${p.age}")
+    }
 
-    // Descending sort using compareByDescending with compareTo
+    // sortedWith on integers: ascending
+    println("-- ascending --")
+    println(listOf(3, 1, 4, 1, 5).sortedWith { a, b -> a - b })
+
+    // sortedWith on integers: descending
     println("-- descending --")
-    println(listOf(3, 1, 4, 1, 5).sortedWith(compareByDescending { it }))
+    println(listOf(3, 1, 4, 1, 5).sortedWith { a, b -> b - a })
+
+    // sortedByDescending on integers
+    println("-- sortedByDescending --")
+    println(listOf(3, 1, 4, 1, 5).sortedByDescending { it })
 }
