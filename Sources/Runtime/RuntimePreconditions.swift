@@ -35,8 +35,8 @@ public func kk_require_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        exceptionPrefix: "IllegalArgumentException",
-        defaultMessage: "IllegalArgumentException: Failed requirement."
+        defaultMessage: "IllegalArgumentException: Failed requirement.",
+        messagePrefix: "IllegalArgumentException: "
     )
 }
 
@@ -52,8 +52,8 @@ public func kk_check_lazy(
         fnPtr,
         closureRaw,
         outThrown,
-        exceptionPrefix: "IllegalStateException",
-        defaultMessage: "IllegalStateException: Check failed."
+        defaultMessage: "IllegalStateException: Check failed.",
+        messagePrefix: "IllegalStateException: "
     )
 }
 
