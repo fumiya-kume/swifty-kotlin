@@ -179,6 +179,8 @@ extension CallTypeChecker {
             listStringType
         case ("windowed", 2):
             listStringType
+        case ("windowed", 3):
+            listStringType
         default:
             nil
         }
@@ -239,6 +241,9 @@ extension CallTypeChecker {
             }
             if args.indices.contains(1) {
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: sema.types.intType)
+            }
+            if args.indices.contains(2) {
+                _ = driver.inferExpr(args[2].expr, ctx: ctx, locals: &locals, expectedType: sema.types.booleanType)
             }
         }
 
@@ -330,6 +335,7 @@ extension CallTypeChecker {
         if let fallbackCallee = resolveCollectionFallbackCallee(
             memberName: calleeName,
             receiverID: receiverID,
+            argCount: args.count,
             sema: sema
         ) {
             sema.bindings.bindCall(
@@ -375,6 +381,7 @@ extension CallTypeChecker {
     private func resolveCollectionFallbackCallee(
         memberName: InternedString,
         receiverID: ExprID,
+        argCount: Int,
         sema: SemaModule
     ) -> SymbolID? {
         let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
@@ -391,7 +398,7 @@ extension CallTypeChecker {
                 continue
             }
             let memberFQName = ownerSymbol.fqName + [memberName]
-            if let candidate = sema.symbols.lookupAll(fqName: memberFQName).first(where: { candidate in
+            let allCandidates = sema.symbols.lookupAll(fqName: memberFQName).filter { candidate in
                 guard let symbol = sema.symbols.symbol(candidate),
                       symbol.kind == .function,
                       sema.symbols.parentSymbol(for: candidate) == owner,
@@ -400,8 +407,19 @@ extension CallTypeChecker {
                     return false
                 }
                 return true
+            }
+            // Prefer the overload whose parameter count matches the call-site
+            // argument count so that e.g. windowed(3, 2, true) resolves to the
+            // 3-param overload (kk_list_windowed_partial) instead of the 2-param
+            // one (kk_list_windowed).
+            if let exactMatch = allCandidates.first(where: { candidate in
+                guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                return sig.parameterTypes.count == argCount
             }) {
-                return candidate
+                return exactMatch
+            }
+            if let first = allCandidates.first {
+                return first
             }
             queue.append(contentsOf: sema.symbols.directSupertypes(for: owner))
         }
@@ -643,10 +661,14 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("windowed"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("subList"):
             return argCount == 2
         case interner.intern("reduceIndexed"):
             return argCount == 1
+        case interner.intern("windowed"):
+            return argCount == 2 || argCount == 3
+        case interner.intern("chunked"):
+            return argCount == 1 || argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):
             return argCount == 0 || argCount == 1
         default:
@@ -968,6 +990,34 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // chunked(size, transform): transform receives List<T> and returns R
+        if memberName == interner.intern("chunked"), argCount == 2 {
+            // Build List<Any> for the lambda parameter type; the transform receives
+            // a List<T> chunk, which we approximate as List<Any> in the fallback path
+            // (consistent with the synthetic stub's transform parameter type).
+            let listType: TypeID
+            if let listSymbol = sema.symbols.lookup(fqName: [
+                interner.intern("kotlin"),
+                interner.intern("collections"),
+                interner.intern("List"),
+            ]) {
+                listType = sema.types.make(.classType(ClassType(
+                    classSymbol: listSymbol,
+                    args: [.out(sema.types.anyType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                listType = sema.types.anyType
+            }
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [listType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         if memberName == interner.intern("fold"), argCount == 2 {

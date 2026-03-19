@@ -61,6 +61,7 @@ struct CollectionLiteralLookupTables {
     let kkStringSplitName: InternedString
     let kkStringChunkedName: InternedString
     let kkStringWindowedName: InternedString
+    let kkStringWindowedPartialName: InternedString
     let kkStringIteratorName: InternedString
     let kkStringIteratorHasNextName: InternedString
     let kkStringIteratorNextName: InternedString
@@ -134,7 +135,9 @@ struct CollectionLiteralLookupTables {
     let kkListIndexOfFirstName: InternedString
     let kkListIndexOfLastName: InternedString
     let kkListChunkedName: InternedString
+    let kkListChunkedTransformName: InternedString
     let kkListWindowedName: InternedString
+    let kkListWindowedPartialName: InternedString
     let kkListSortedDescendingName: InternedString
     let kkListSortedByDescendingName: InternedString
     let kkListSortedWithName: InternedString
@@ -543,6 +546,7 @@ struct CollectionLiteralLookupTables {
         kkStringSplitName = interner.intern("kk_string_split")
         kkStringChunkedName = interner.intern("kk_string_chunked")
         kkStringWindowedName = interner.intern("kk_string_windowed")
+        kkStringWindowedPartialName = interner.intern("kk_string_windowed_partial")
         kkStringIteratorName = interner.intern("kk_string_iterator")
         kkStringIteratorHasNextName = interner.intern("kk_string_iterator_hasNext")
         kkStringIteratorNextName = interner.intern("kk_string_iterator_next")
@@ -614,7 +618,9 @@ struct CollectionLiteralLookupTables {
         kkListIndexOfFirstName = interner.intern("kk_list_indexOfFirst")
         kkListIndexOfLastName = interner.intern("kk_list_indexOfLast")
         kkListChunkedName = interner.intern("kk_list_chunked")
+        kkListChunkedTransformName = interner.intern("kk_list_chunked_transform")
         kkListWindowedName = interner.intern("kk_list_windowed")
+        kkListWindowedPartialName = interner.intern("kk_list_windowed_partial")
         kkListSortedDescendingName = interner.intern("kk_list_sortedDescending")
         kkListSortedByDescendingName = interner.intern("kk_list_sortedByDescending")
         kkListSortedWithName = interner.intern("kk_list_sortedWith")

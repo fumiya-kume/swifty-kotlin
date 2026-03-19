@@ -1704,7 +1704,12 @@ extension CallLowerer {
             }
         }
 
-        // String stdlib: 2-arg substring overload (STDLIB-009)
+        // String stdlib: 2-arg overloads (STDLIB-009, STDLIB-549)
+        // KNOWN LIMITATION: The dispatch below matches purely on function name + receiver
+        // type (String). User-defined extension functions with the same name (e.g.
+        // `fun String.windowed(...)`) will be incorrectly intercepted. A future fix
+        // should check the resolved symbol's origin (synthetic vs user-defined) before
+        // rewriting to the runtime call.
         if args.count == 2 {
             let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
@@ -1768,6 +1773,27 @@ extension CallLowerer {
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], hasEndExpr],
                     result: result,
                     canThrow: true,
+                    thrownResult: nil
+                ))
+                return result
+            }
+        }
+
+        // String stdlib: windowed(size, step, partialWindows) — STDLIB-549
+        // NOTE: Same name-based matching limitation as the 2-arg case above.
+        if args.count == 3 {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            let calleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "windowed"
+            {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_windowed_partial"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1], loweredArgIDs[2]],
+                    result: result,
+                    canThrow: false,
                     thrownResult: nil
                 ))
                 return result
@@ -2411,6 +2437,7 @@ extension CallLowerer {
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
+            "chunked",
         ].contains(interner.resolve(calleeName))
     }
 

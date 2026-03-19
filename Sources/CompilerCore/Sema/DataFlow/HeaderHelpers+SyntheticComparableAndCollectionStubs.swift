@@ -1855,10 +1855,79 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked", returnTypeOverride: listOfListReturnType)
-        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed", returnTypeOverride: listOfListReturnType)
+        registerMemberOverload(
+            memberName: interner.intern("chunked"),
+            memberFQName: listFQName + [interner.intern("chunked")],
+            parameterTypes: [types.intType],
+            externalLinkName: "kk_list_chunked",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType],
+            externalLinkName: "kk_list_windowed",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType, types.booleanType],
+            externalLinkName: "kk_list_windowed_partial",
+            returnTypeOverride: listOfListReturnType
+        )
         registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
+
+        // chunked(size, transform) — HOF overload (STDLIB-548)
+        // Kotlin signature: fun <T, R> Iterable<T>.chunked(size: Int, transform: (List<T>) -> R): List<R>
+        // The transform receives a List<T> chunk and returns R. Since R is erased at the
+        // runtime ABI level, we model the return type as List<Any> (not List<T>) to avoid
+        // mis-typing calls where the transform changes element types.
+        let chunkedTransformName = interner.intern("chunked")
+        let chunkedTransformFQName = listFQName + [chunkedTransformName]
+        // Only register if there isn't already a 2-param overload for "chunked".
+        // The 1-arg overload registered above shares the same fqName; check
+        // existing overloads by parameter count to avoid duplicate 2-param symbols.
+        let existingChunkedOverloads = symbols.lookupAll(fqName: chunkedTransformFQName)
+        let hasTwoParamChunked = existingChunkedOverloads.contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else { return false }
+            return sig.parameterTypes.count == 2
+        }
+        if !hasTwoParamChunked {
+            let transformType = types.make(.functionType(FunctionType(
+                params: [listReturnType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            // Return type is List<Any> since the transform can change element types (R != T).
+            let listOfAnyReturnType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: chunkedTransformName,
+                fqName: chunkedTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_chunked_transform", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [types.intType, transformType],
+                    returnType: listOfAnyReturnType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
 
         // distinctBy (HOF, selector lambda)
         // Kotlin's `distinctBy` is declared as an extension on Iterable<T>:
