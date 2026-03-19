@@ -213,6 +213,33 @@ extension OverloadResolver {
         typeSystem: TypeSystem,
         blameRange: SourceRange?
     ) -> [VariableConstraint] {
+        decomposeSubtypeConstraintImpl(
+            subtype: subtype,
+            supertype: supertype,
+            typeVarBySymbol: typeVarBySymbol,
+            typeSystem: typeSystem,
+            blameRange: blameRange,
+            depth: 0
+        )
+    }
+
+    private func decomposeSubtypeConstraintImpl(
+        subtype: TypeID,
+        supertype: TypeID,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?,
+        depth: Int
+    ) -> [VariableConstraint] {
+        // Guard against infinite recursion in cyclic type hierarchies.
+        if depth > 20 {
+            return [VariableConstraint(
+                kind: .subtype,
+                left: .type(subtype),
+                right: .type(supertype),
+                blameRange: blameRange
+            )]
+        }
         let supertypeKind = typeSystem.kind(of: supertype)
 
         // Case 1: supertype is a direct type parameter → single variable constraint.
@@ -246,12 +273,13 @@ extension OverloadResolver {
         if case let .intersection(parts) = supertypeKind {
             var result: [VariableConstraint] = []
             for part in parts {
-                result.append(contentsOf: decomposeSubtypeConstraint(
+                result.append(contentsOf: decomposeSubtypeConstraintImpl(
                     subtype: subtype,
                     supertype: part,
                     typeVarBySymbol: typeVarBySymbol,
                     typeSystem: typeSystem,
-                    blameRange: blameRange
+                    blameRange: blameRange,
+                    depth: depth + 1
                 ))
             }
             if !result.isEmpty {
@@ -283,12 +311,13 @@ extension OverloadResolver {
                    ),
                    liftedSubtype != subtype
                 {
-                    return decomposeSubtypeConstraint(
+                    return decomposeSubtypeConstraintImpl(
                         subtype: liftedSubtype,
                         supertype: supertype,
                         typeVarBySymbol: typeVarBySymbol,
                         typeSystem: typeSystem,
-                        blameRange: blameRange
+                        blameRange: blameRange,
+                        depth: depth + 1
                     )
                 }
                 guard subClass.classSymbol == superClass.classSymbol,
@@ -303,12 +332,13 @@ extension OverloadResolver {
                 }
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(alignedClass.args, superClass.args) {
-                    let decomposed = decomposeTypeArgConstraint(
+                    let decomposed = decomposeTypeArgConstraintImpl(
                         subArg: subArg,
                         superArg: superArg,
                         typeVarBySymbol: typeVarBySymbol,
                         typeSystem: typeSystem,
-                        blameRange: blameRange
+                        blameRange: blameRange,
+                        depth: depth + 1
                     )
                     result.append(contentsOf: decomposed)
                 }
@@ -322,12 +352,13 @@ extension OverloadResolver {
                ),
                liftedSubtype != subtype
             {
-                return decomposeSubtypeConstraint(
+                return decomposeSubtypeConstraintImpl(
                     subtype: liftedSubtype,
                     supertype: supertype,
                     typeVarBySymbol: typeVarBySymbol,
                     typeSystem: typeSystem,
-                    blameRange: blameRange
+                    blameRange: blameRange,
+                    depth: depth + 1
                 )
             }
             // Different class symbols or mismatched arity – fall through to
@@ -348,21 +379,23 @@ extension OverloadResolver {
                 var result: [VariableConstraint] = []
                 // Function types are contravariant in parameter types.
                 for (subParam, superParam) in zip(subFunc.params, superFunc.params) {
-                    result.append(contentsOf: decomposeSubtypeConstraint(
+                    result.append(contentsOf: decomposeSubtypeConstraintImpl(
                         subtype: superParam,
                         supertype: subParam,
                         typeVarBySymbol: typeVarBySymbol,
                         typeSystem: typeSystem,
-                        blameRange: blameRange
+                        blameRange: blameRange,
+                        depth: depth + 1
                     ))
                 }
                 // Covariant in return type.
-                result.append(contentsOf: decomposeSubtypeConstraint(
+                result.append(contentsOf: decomposeSubtypeConstraintImpl(
                     subtype: subFunc.returnType,
                     supertype: superFunc.returnType,
                     typeVarBySymbol: typeVarBySymbol,
                     typeSystem: typeSystem,
-                    blameRange: blameRange
+                    blameRange: blameRange,
+                    depth: depth + 1
                 ))
                 return result
             }
@@ -392,12 +425,13 @@ extension OverloadResolver {
             {
                 var result: [VariableConstraint] = []
                 for (subArg, superArg) in zip(subClass.args, superClass.args) {
-                    let decomposed = decomposeTypeArgConstraint(
+                    let decomposed = decomposeTypeArgConstraintImpl(
                         subArg: subArg,
                         superArg: superArg,
                         typeVarBySymbol: typeVarBySymbol,
                         typeSystem: typeSystem,
-                        blameRange: blameRange
+                        blameRange: blameRange,
+                        depth: depth + 1
                     )
                     result.append(contentsOf: decomposed)
                 }
@@ -469,51 +503,69 @@ extension OverloadResolver {
         typeSystem: TypeSystem,
         blameRange: SourceRange?
     ) -> [VariableConstraint] {
+        decomposeTypeArgConstraintImpl(
+            subArg: subArg,
+            superArg: superArg,
+            typeVarBySymbol: typeVarBySymbol,
+            typeSystem: typeSystem,
+            blameRange: blameRange,
+            depth: 0
+        )
+    }
+
+    private func decomposeTypeArgConstraintImpl(
+        subArg: TypeArg,
+        superArg: TypeArg,
+        typeVarBySymbol: [SymbolID: TypeVarID],
+        typeSystem: TypeSystem,
+        blameRange: SourceRange?,
+        depth: Int
+    ) -> [VariableConstraint] {
         switch (subArg, superArg) {
         case let (.invariant(subInner), .invariant(superInner)):
             // Invariant: both directions (equality).
-            var result = decomposeSubtypeConstraint(
+            var result = decomposeSubtypeConstraintImpl(
                 subtype: subInner, supertype: superInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             )
-            result.append(contentsOf: decomposeSubtypeConstraint(
+            result.append(contentsOf: decomposeSubtypeConstraintImpl(
                 subtype: superInner, supertype: subInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             ))
             return result
 
         case let (.invariant(subInner), .out(superInner)),
              let (.out(subInner), .out(superInner)):
             // Covariant: sub <: super.
-            return decomposeSubtypeConstraint(
+            return decomposeSubtypeConstraintImpl(
                 subtype: subInner, supertype: superInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             )
 
         case let (.invariant(subInner), .in(superInner)),
              let (.in(subInner), .in(superInner)):
             // Contravariant: super <: sub.
-            return decomposeSubtypeConstraint(
+            return decomposeSubtypeConstraintImpl(
                 subtype: superInner, supertype: subInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             )
 
         case let (.star, .invariant(superInner)):
             // Subtype is star (e.g. receiver `Box<*>` against signature `Box<T>`).
             // Star projection is equivalent to `out Any?`, so constrain T = Any?
             // to ensure the solver can infer the type variable.
-            return decomposeSubtypeConstraint(
+            return decomposeSubtypeConstraintImpl(
                 subtype: typeSystem.nullableAnyType, supertype: superInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
-            ) + decomposeSubtypeConstraint(
+                blameRange: blameRange, depth: depth
+            ) + decomposeSubtypeConstraintImpl(
                 subtype: superInner, supertype: typeSystem.nullableAnyType,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             )
 
         default:
@@ -529,15 +581,15 @@ extension OverloadResolver {
             case let .invariant(t), let .out(t), let .in(t): superInner = t
             case .star: return []
             }
-            var fallback = decomposeSubtypeConstraint(
+            var fallback = decomposeSubtypeConstraintImpl(
                 subtype: subInner, supertype: superInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             )
-            fallback.append(contentsOf: decomposeSubtypeConstraint(
+            fallback.append(contentsOf: decomposeSubtypeConstraintImpl(
                 subtype: superInner, supertype: subInner,
                 typeVarBySymbol: typeVarBySymbol, typeSystem: typeSystem,
-                blameRange: blameRange
+                blameRange: blameRange, depth: depth
             ))
             return fallback
         }
