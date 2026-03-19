@@ -2612,6 +2612,14 @@ extension CallLowerer {
             return nil
         }
 
+        // Array-like types (Array, IntArray, LongArray, etc.) expose
+        // properties such as `size` via runtime helper functions rather than
+        // object field layout, so let the collection fallback lower them.
+        let knownNames = KnownCompilerNames(interner: interner)
+        if knownNames.isArrayLikeName(ownerInfo.name) {
+            return nil
+        }
+
         let resultType = sema.bindings.exprTypes[exprID]
             ?? sema.symbols.propertyType(for: propertySymbol)
             ?? sema.types.anyType

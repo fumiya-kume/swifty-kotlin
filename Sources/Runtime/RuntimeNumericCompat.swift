@@ -503,7 +503,8 @@ public func kk_float_nextDown(_ value: Int) -> Int {
 
 @_cdecl("kk_println_char")
 public func kk_println_char(_ value: Int) {
-    if let scalar = UnicodeScalar(value) {
+    let unboxed = kk_unbox_char(value)
+    if let scalar = UnicodeScalar(unboxed) {
         Swift.print(String(scalar))
     } else {
         Swift.print("\u{FFFD}")
