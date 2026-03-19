@@ -882,21 +882,20 @@ public func kk_list_minOrNull(_ listRaw: Int) -> Int {
 }
 
 @_cdecl("kk_list_maxByOrNull")
-public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var bestElem = list.elements[0]
     var thrown = 0
-    var bestKey = lambda(bestElem, &thrown)
+    var bestKey = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: bestElem, outThrown: &thrown)
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
-        let key = lambda(elem, &thrown)
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(key, bestKey) > 0 {
             bestElem = elem
@@ -907,21 +906,20 @@ public func kk_list_maxByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 }
 
 @_cdecl("kk_list_minByOrNull")
-public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var bestElem = list.elements[0]
     var thrown = 0
-    var bestKey = lambda(bestElem, &thrown)
+    var bestKey = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: bestElem, outThrown: &thrown)
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
-        let key = lambda(elem, &thrown)
+        let key = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(key, bestKey) < 0 {
             bestElem = elem
@@ -932,20 +930,19 @@ public func kk_list_minByOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 }
 
 @_cdecl("kk_list_maxOfOrNull")
-public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
-    var bestValue = lambda(list.elements[0], &thrown)
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[0], outThrown: &thrown)
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
-        let value = lambda(elem, &thrown)
+        let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(value, bestValue) > 0 {
             bestValue = value
@@ -955,20 +952,19 @@ public func kk_list_maxOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: Unsaf
 }
 
 @_cdecl("kk_list_minOfOrNull")
-public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
         invalidContainerPanic(#function, "list")
     }
     guard !list.elements.isEmpty else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
-    var bestValue = lambda(list.elements[0], &thrown)
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[0], outThrown: &thrown)
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for elem in list.elements.dropFirst() {
         thrown = 0
-        let value = lambda(elem, &thrown)
+        let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(value, bestValue) < 0 {
             bestValue = value
