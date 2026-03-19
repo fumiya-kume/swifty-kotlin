@@ -440,4 +440,165 @@ final class TypeSystemTests: XCTestCase {
         XCTAssertTrue(types.isSubtype(types.nullableNothingType, platformInt))
         XCTAssertTrue(types.isSubtype(types.nullableNothingType, platformAny))
     }
+
+    // MARK: - KClass<T> (REFL-001)
+
+    func testMakeKClassType() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        if case let .kClassType(kc) = ts.kind(of: kClassInt) {
+            XCTAssertEqual(kc.argument, intType)
+            XCTAssertEqual(kc.nullability, .nonNull)
+        } else {
+            XCTFail("Expected kClassType")
+        }
+    }
+
+    func testMakeKClassTypeDeduplicates() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let a = ts.makeKClassType(argument: intType)
+        let b = ts.makeKClassType(argument: intType)
+        XCTAssertEqual(a, b)
+    }
+
+    func testMakeKClassTypeDistinctArguments() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let stringType = ts.make(.primitive(.string, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        let kClassString = ts.makeKClassType(argument: stringType)
+        XCTAssertNotEqual(kClassInt, kClassString)
+    }
+
+    func testKClassTypeNullability() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nonNull = ts.makeKClassType(argument: intType, nullability: .nonNull)
+        let nullable = ts.makeKClassType(argument: intType, nullability: .nullable)
+        XCTAssertTrue(ts.isDefinitelyNonNull(nonNull))
+        XCTAssertFalse(ts.isDefinitelyNonNull(nullable))
+        XCTAssertEqual(ts.nullability(of: nonNull), .nonNull)
+        XCTAssertEqual(ts.nullability(of: nullable), .nullable)
+    }
+
+    func testKClassTypeWithNullability() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nonNull = ts.makeKClassType(argument: intType)
+        let nullable = ts.makeNullable(nonNull)
+        XCTAssertNotEqual(nonNull, nullable)
+        XCTAssertEqual(ts.nullability(of: nullable), .nullable)
+        // Round-trip back to non-null
+        let backToNonNull = ts.makeNonNullable(nullable)
+        XCTAssertEqual(backToNonNull, nonNull)
+    }
+
+    func testKClassSubtypingSameArgument() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassA = ts.makeKClassType(argument: intType)
+        let kClassB = ts.makeKClassType(argument: intType)
+        XCTAssertTrue(ts.isSubtype(kClassA, kClassB))
+    }
+
+    func testKClassSubtypingDifferentArguments() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let stringType = ts.make(.primitive(.string, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        let kClassString = ts.makeKClassType(argument: stringType)
+        // Even with covariance, unrelated arguments are not compatible.
+        XCTAssertFalse(ts.isSubtype(kClassInt, kClassString))
+    }
+
+    func testKClassSubtypingIsCovariant() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        let kClassAny = ts.makeKClassType(argument: ts.anyType)
+        XCTAssertTrue(ts.isSubtype(kClassInt, kClassAny))
+        XCTAssertFalse(ts.isSubtype(kClassAny, kClassInt))
+    }
+
+    func testKClassIsSubtypeOfAny() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        XCTAssertTrue(ts.isSubtype(kClassInt, ts.anyType))
+        XCTAssertTrue(ts.isSubtype(kClassInt, ts.nullableAnyType))
+    }
+
+    func testKClassNullableSubtyping() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nonNull = ts.makeKClassType(argument: intType, nullability: .nonNull)
+        let nullable = ts.makeKClassType(argument: intType, nullability: .nullable)
+        // KClass<Int> <: KClass<Int>?
+        XCTAssertTrue(ts.isSubtype(nonNull, nullable))
+        // KClass<Int>? is NOT <: KClass<Int>
+        XCTAssertFalse(ts.isSubtype(nullable, nonNull))
+    }
+
+    func testNothingNullableIsSubtypeOfNullableKClass() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nullableKClass = ts.makeKClassType(argument: intType, nullability: .nullable)
+        XCTAssertTrue(ts.isSubtype(ts.nullableNothingType, nullableKClass))
+    }
+
+    func testNothingNullableIsNotSubtypeOfNonNullKClass() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let nonNullKClass = ts.makeKClassType(argument: intType, nullability: .nonNull)
+        XCTAssertFalse(ts.isSubtype(ts.nullableNothingType, nonNullKClass))
+    }
+
+    func testKClassTypeContainsTypeParam() {
+        let ts = TypeSystem()
+        let tpSymbol = SymbolID(rawValue: 42)
+        let tpType = ts.make(.typeParam(TypeParamType(symbol: tpSymbol)))
+        let kClassT = ts.makeKClassType(argument: tpType)
+        XCTAssertTrue(ts.typeContainsTypeParam(kClassT, symbol: tpSymbol))
+        XCTAssertFalse(ts.typeContainsTypeParam(kClassT, symbol: SymbolID(rawValue: 99)))
+    }
+
+    func testRenderKClassType() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        XCTAssertEqual(ts.renderType(kClassInt), "KClass<Int>")
+    }
+
+    func testRenderNullableKClassType() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType, nullability: .nullable)
+        XCTAssertEqual(ts.renderType(kClassInt), "KClass<Int>?")
+    }
+
+    func testSubstituteKClassTypeArgument() {
+        let ts = TypeSystem()
+        let tpSymbol = SymbolID(rawValue: 10)
+        let tpType = ts.make(.typeParam(TypeParamType(symbol: tpSymbol)))
+        let kClassT = ts.makeKClassType(argument: tpType)
+        let intType = ts.make(.primitive(.int, .nonNull))
+
+        let typeVarBySymbol = ts.makeTypeVarBySymbol([tpSymbol])
+        let substitution: [TypeVarID: TypeID] = [TypeVarID(rawValue: 0): intType]
+
+        let result = ts.substituteTypeParameters(
+            in: kClassT,
+            substitution: substitution,
+            typeVarBySymbol: typeVarBySymbol
+        )
+        // After substitution, should be KClass<Int>
+        if case let .kClassType(kc) = ts.kind(of: result) {
+            XCTAssertEqual(kc.argument, intType)
+            XCTAssertEqual(kc.nullability, .nonNull)
+        } else {
+            XCTFail("Expected kClassType after substitution, got \(ts.kind(of: result))")
+        }
+    }
 }

@@ -3120,8 +3120,6 @@ extension CallLowerer {
                 return interner.intern("kk_list_indexOf")
             case "lastIndexOf":
                 return interner.intern("kk_list_lastIndexOf")
-            case "binarySearch":
-                return interner.intern("kk_list_binarySearch")
             case "partition":
                 return interner.intern("kk_list_partition")
             case "getOrNull":

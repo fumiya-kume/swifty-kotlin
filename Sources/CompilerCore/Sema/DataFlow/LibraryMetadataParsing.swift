@@ -367,6 +367,12 @@ extension DataFlowSemaPhase {
             if consume(prefix: "X<") {
                 return parseIntersectionType()
             }
+            if consume(prefix: "KC<") {
+                guard let argument = parseType(), consume(character: ">") else {
+                    return nil
+                }
+                return types.make(.kClassType(KClassType(argument: argument, nullability: .nonNull)))
+            }
             return nil
         }
 
@@ -528,6 +534,11 @@ extension DataFlowSemaPhase {
                     params: functionType.params,
                     returnType: functionType.returnType,
                     isSuspend: functionType.isSuspend,
+                    nullability: .nullable
+                )))
+            case let .kClassType(kClassType):
+                types.make(.kClassType(KClassType(
+                    argument: kClassType.argument,
                     nullability: .nullable
                 )))
             case .nothing:

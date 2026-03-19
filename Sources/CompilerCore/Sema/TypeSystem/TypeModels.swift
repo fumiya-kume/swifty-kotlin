@@ -115,6 +115,18 @@ public struct FunctionType: Hashable, Sendable {
     }
 }
 
+/// Represents `kotlin.reflect.KClass<T>`, the type of `T::class` expressions.
+public struct KClassType: Hashable, Sendable {
+    /// The type argument `T` — the class being referenced.
+    public let argument: TypeID
+    public let nullability: Nullability
+
+    public init(argument: TypeID, nullability: Nullability = .nonNull) {
+        self.argument = argument
+        self.nullability = nullability
+    }
+}
+
 public enum TypeKind: Hashable {
     case error
     case unit
@@ -126,4 +138,5 @@ public enum TypeKind: Hashable {
     case typeParam(TypeParamType)
     case functionType(FunctionType)
     case intersection([TypeID])
+    case kClassType(KClassType)
 }

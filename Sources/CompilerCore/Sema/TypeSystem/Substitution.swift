@@ -41,6 +41,8 @@ public extension TypeSystem {
             let retType = renderType(functionType.returnType)
             let suffix = nullabilitySuffix(functionType.nullability)
             return "\(suspendPrefix)\(receiverPrefix)(\(params)) -> \(retType)\(suffix)"
+        case let .kClassType(kClassType):
+            return "KClass<\(renderType(kClassType.argument))>\(nullabilitySuffix(kClassType.nullability))"
         case let .intersection(parts):
             return parts.map(renderType).joined(separator: " & ")
         }
@@ -196,6 +198,15 @@ public extension TypeSystem {
                 functionType, originalType: type,
                 substitution: substitution, typeVarBySymbol: typeVarBySymbol
             )
+
+        case let .kClassType(kClassType):
+            let newArg = substituteTypeParameters(
+                in: kClassType.argument,
+                substitution: substitution,
+                typeVarBySymbol: typeVarBySymbol
+            )
+            if newArg == kClassType.argument { return type }
+            return make(.kClassType(KClassType(argument: newArg, nullability: kClassType.nullability)))
 
         case let .intersection(parts):
             let newParts = parts.map { part in

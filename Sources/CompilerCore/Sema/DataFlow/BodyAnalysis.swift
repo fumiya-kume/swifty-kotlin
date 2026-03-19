@@ -258,6 +258,8 @@ extension DataFlowSemaPhase {
             return types.make(.typeParam(TypeParamType(symbol: tp.symbol, nullability: .nullable)))
         case let .functionType(ft):
             return types.make(.functionType(FunctionType(receiver: ft.receiver, params: ft.params, returnType: ft.returnType, isSuspend: ft.isSuspend, nullability: .nullable)))
+        case let .kClassType(kc):
+            return types.make(.kClassType(KClassType(argument: kc.argument, nullability: .nullable)))
         case .any, .unit, .nothing:
             let nullable = types.makeNullable(typeID)
             // If makeNullable is a no-op: either the type is already nullable (keep it)
@@ -412,6 +414,10 @@ extension DataFlowSemaPhase {
             let newParams = ft.params.map { applySubstitution($0, argSubstitution: argSubstitution, types: types, symbols: symbols) }
             let newReturn = applySubstitution(ft.returnType, argSubstitution: argSubstitution, types: types, symbols: symbols)
             return types.make(.functionType(FunctionType(receiver: newReceiver, params: newParams, returnType: newReturn, isSuspend: ft.isSuspend, nullability: ft.nullability)))
+        case let .kClassType(kc):
+            let newArg = applySubstitution(kc.argument, argSubstitution: argSubstitution, types: types, symbols: symbols)
+            if newArg == kc.argument { return typeID }
+            return types.make(.kClassType(KClassType(argument: newArg, nullability: kc.nullability)))
         case .primitive, .any, .unit, .nothing, .error:
             return typeID
         case let .intersection(parts):

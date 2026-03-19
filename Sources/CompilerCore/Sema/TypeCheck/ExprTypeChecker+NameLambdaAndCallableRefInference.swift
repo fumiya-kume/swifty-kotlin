@@ -659,11 +659,10 @@ extension ExprTypeChecker {
             }
             let resolved = sema.types.make(.typeParam(TypeParamType(symbol: sym.id)))
             sema.bindings.bindClassRefTargetType(id, type: resolved)
-            // REFL-002: KClass<T> is represented as Any at the type level;
-            // the runtime produces a RuntimeKClassBox via kk_kclass_create.
-            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            let kClassType = sema.types.makeKClassType(argument: resolved)
+            sema.bindings.bindExprType(id, type: kClassType)
             _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-            return sema.types.anyType
+            return kClassType
         }
         for candidateID in allCandidateIDs {
             guard let sym = ctx.cachedSymbol(candidateID),
@@ -672,20 +671,20 @@ extension ExprTypeChecker {
             else { continue }
             let classType = sema.types.make(.classType(ClassType(classSymbol: sym.id)))
             sema.bindings.bindClassRefTargetType(id, type: classType)
-            // REFL-002: KClass<T> is represented as Any at the type level;
-            // the runtime produces a RuntimeKClassBox via kk_kclass_create.
-            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            let kClassType = sema.types.makeKClassType(argument: classType)
+            sema.bindings.bindExprType(id, type: kClassType)
             _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-            return sema.types.anyType
+            return kClassType
         }
         // REFL-002: Handle builtin/primitive type names (Int, String, Boolean, etc.)
         // These are not class symbols in the symbol table but still support ::class.
         let builtinNames = driver.builtinTypeNamesCache
         if let builtinType = builtinNames.resolveBuiltinType(receiverName, types: sema.types) {
             sema.bindings.bindClassRefTargetType(id, type: builtinType)
-            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            let kClassType = sema.types.makeKClassType(argument: builtinType)
+            sema.bindings.bindExprType(id, type: kClassType)
             _ = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
-            return sema.types.anyType
+            return kClassType
         }
         return nil
     }

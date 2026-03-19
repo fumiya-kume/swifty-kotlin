@@ -371,7 +371,7 @@ extension KIRLoweringDriver {
             .doubleLiteral(0)
         case .primitive, .nothing:
             .intLiteral(0)
-        case .classType, .functionType, .typeParam, .any, .intersection:
+        case .classType, .functionType, .typeParam, .any, .intersection, .kClassType:
             .null
         case .error:
             .intLiteral(0)
