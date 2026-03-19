@@ -1850,9 +1850,27 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked", returnTypeOverride: listOfListReturnType)
-        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed", returnTypeOverride: listOfListReturnType)
-        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType, types.booleanType], externalLinkName: "kk_list_windowed_partial", returnTypeOverride: listOfListReturnType)
+        registerMemberOverload(
+            memberName: interner.intern("chunked"),
+            memberFQName: listFQName + [interner.intern("chunked")],
+            parameterTypes: [types.intType],
+            externalLinkName: "kk_list_chunked",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType],
+            externalLinkName: "kk_list_windowed",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType, types.booleanType],
+            externalLinkName: "kk_list_windowed_partial",
+            returnTypeOverride: listOfListReturnType
+        )
         registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
 
