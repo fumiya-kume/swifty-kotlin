@@ -152,7 +152,7 @@
 - [ ] STDLIB-522: `LongRange` の完全サポート（stub + Runtime）
 - [ ] STDLIB-523: `UIntRange` の完全サポート
 - [ ] STDLIB-524: `ULongRange` の完全サポート
-- [ ] STDLIB-525: `IntRange.coerceIn(ClosedRange)` の実装
+- [x] STDLIB-525: `Int/Long.coerceIn(range)` の実装（レシーバがInt/Longの場合のClosedRange引数オーバーロード）
 
 #### D. kotlin.collections — 単一 API 単位
 

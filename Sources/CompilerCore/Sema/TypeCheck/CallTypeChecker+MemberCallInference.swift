@@ -1464,6 +1464,37 @@ extension CallTypeChecker {
             }
         }
 
+        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
+        // Currently only recognizes range expression literals (e.g. `1..10`)
+        // via the `isRangeExpr` marker. Precomputed range values
+        // (e.g. `val r = 1..10; x.coerceIn(r)`) are not yet supported because
+        // the type system does not distinguish range types (IntRange/LongRange)
+        // from their element types (Int/Long). The element-type equality check
+        // (argType == receiverForCheck) rejects mismatched combinations such as
+        // Int.coerceIn(1L..10L).
+        //
+        // TODO: When a distinct ClosedRange<T> type is introduced in the type
+        // system, switch to a type-conformance check so that arbitrary
+        // ClosedRange-typed expressions (e.g. val r: IntRange = 1..10;
+        // x.coerceIn(r)) are also accepted without needing the isRangeExpr flag.
+        if interner.resolve(calleeName) == "coerceIn", args.count == 1 {
+            let intType = sema.types.make(.primitive(.int, .nonNull))
+            let longType = sema.types.make(.primitive(.long, .nonNull))
+            let receiverForCheck = safeCall
+                ? sema.types.makeNonNullable(lookupReceiverType)
+                : lookupReceiverType
+            if receiverForCheck == intType || receiverForCheck == longType {
+                let argExpr = args[0].expr
+                let argType = driver.inferExpr(argExpr, ctx: ctx, locals: &locals, expectedType: nil)
+                if sema.bindings.isRangeExpr(argExpr),
+                   argType == receiverForCheck {
+                    let finalType = safeCall ? sema.types.makeNullable(receiverForCheck) : receiverForCheck
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
         // Int/Long/Double/Float.coerceAtLeast(min) / coerceAtMost(max) (STDLIB-150, STDLIB-500)
         if args.count == 1 {
             let calleeStr = interner.resolve(calleeName)

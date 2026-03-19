@@ -28,6 +28,52 @@ final class CallLowerer {
         return nil
     }
 
+    /// Shared helper for coerceIn(range) lowering (STDLIB-525).
+    /// Decomposes a range argument into first/last bounds and emits a call to
+    /// kk_{int,long}_coerceIn. Used by both normal and safe-call member lowering
+    /// paths to avoid duplication.
+    func emitCoerceInRange(
+        prefix: String,
+        receiverType: TypeID,
+        loweredReceiverID: KIRExprID,
+        loweredRangeArgID: KIRExprID,
+        result: KIRExprID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) {
+        // Use non-nullable receiver type for temporaries so Long receivers get
+        // Long-typed bounds instead of always Int.
+        let boundType = sema.types.makeNonNullable(receiverType)
+        let firstExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        let lastExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_range_first"),
+            arguments: [loweredRangeArgID],
+            result: firstExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_range_last"),
+            arguments: [loweredRangeArgID],
+            result: lastExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern(prefix + "_coerceIn"),
+            arguments: [loweredReceiverID, firstExpr, lastExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+    }
+
     // swiftlint:disable:next cyclomatic_complexity
     func lowerCallExpr(
         _ exprID: ExprID,

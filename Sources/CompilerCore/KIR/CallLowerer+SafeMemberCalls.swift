@@ -371,6 +371,41 @@ extension CallLowerer {
                 return result
             }
         }
+
+        // Int/Long.coerceIn(range) — single ClosedRange argument (STDLIB-525)
+        // Only Int and Long are supported; Double/Float receivers must not enter
+        // this path because kk_range_first/kk_range_last return integer-typed
+        // bounds that would be incorrect for floating-point coercion.
+        if args.count == 1, interner.resolve(effectiveCalleeName) == "coerceIn" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            if let prefix = numericCoercionRuntimePrefix(receiverType: receiverType, sema: sema),
+               prefix == "kk_int" || prefix == "kk_long" {
+                let argExprID = args[0].expr
+                if sema.bindings.isRangeExpr(argExprID) {
+                    let callLabel = driver.ctx.makeLoopLabel()
+                    let endLabel = driver.ctx.makeLoopLabel()
+                    let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+                    instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+                    instructions.append(.constValue(result: nullExpr, value: .null))
+                    instructions.append(.copy(from: nullExpr, to: result))
+                    instructions.append(.jump(endLabel))
+                    instructions.append(.label(callLabel))
+                    emitCoerceInRange(
+                        prefix: prefix,
+                        receiverType: receiverType,
+                        loweredReceiverID: loweredReceiverID,
+                        loweredRangeArgID: loweredArgIDs[0],
+                        result: result,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions.instructions
+                    )
+                    instructions.append(.label(endLabel))
+                    return result
+                }
+            }
+        }
         if args.count == 1 {
             let calleeStr = interner.resolve(effectiveCalleeName)
             if calleeStr == "coerceAtLeast" || calleeStr == "coerceAtMost" {
