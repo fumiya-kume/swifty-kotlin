@@ -289,6 +289,7 @@ func runtimeElementToString(_ elem: Int) -> String {
 
 typealias RuntimeCollectionLambda1 = @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias RuntimeCollectionLambda2 = @convention(c) (Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
+typealias RuntimeCollectionLambda3 = @convention(c) (Int, Int, Int, Int, UnsafeMutablePointer<Int>?) -> Int
 typealias ComparatorLambda = RuntimeCollectionLambda2
 
 /// Retains an object and registers it as a runtime handle.
@@ -351,6 +352,19 @@ func runtimeInvokeCollectionLambda2(
 ) -> Int {
     let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda2.self)
     return fn(closureRaw, lhs, rhs, outThrown)
+}
+
+@inline(__always)
+func runtimeInvokeCollectionLambda3(
+    fnPtr: Int,
+    closureRaw: Int,
+    arg1: Int,
+    arg2: Int,
+    arg3: Int,
+    outThrown: UnsafeMutablePointer<Int>?
+) -> Int {
+    let fn = unsafeBitCast(fnPtr, to: RuntimeCollectionLambda3.self)
+    return fn(closureRaw, arg1, arg2, arg3, outThrown)
 }
 
 @inline(__always)

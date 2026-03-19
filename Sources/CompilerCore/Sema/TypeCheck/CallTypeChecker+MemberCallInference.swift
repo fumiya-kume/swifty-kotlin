@@ -462,7 +462,7 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "reduceOrNull", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull", "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
@@ -775,6 +775,26 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = initialType
 
+            case "foldIndexed":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, initialType, collectionElementType],
+                    returnType: initialType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = initialType
+
             case "reduce":
                 guard args.count == 1 else {
                     ctx.semaCtx.diagnostics.error(
@@ -812,6 +832,25 @@ extension CallTypeChecker {
                 }
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceOrNullLambdaType)
                 resultType = sema.types.makeNullable(collectionElementType)
+
+            case "reduceIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-0024",
+                        "No viable overload found for call.",
+                        range: ast.arena.exprRange(id)
+                    )
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let reduceIndexedLambdaType = sema.types.make(.functionType(FunctionType(
+                    params: [sema.types.intType, collectionElementType, collectionElementType],
+                    returnType: collectionElementType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceIndexedLambdaType)
+                resultType = collectionElementType
 
             case "scan", "runningFold":
                 guard args.count == 2 else {
