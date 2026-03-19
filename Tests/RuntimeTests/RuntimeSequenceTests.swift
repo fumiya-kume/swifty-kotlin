@@ -315,6 +315,121 @@ final class RuntimeSequenceTests: XCTestCase {
         kk_sequence_from_list(makeList(elements))
     }
 
+    // MARK: - Sequence.plus (STDLIB-561)
+
+    func testPlusConcatenatesTwoSequences() {
+        let seq1 = makeSequence([1, 2, 3])
+        let seq2 = makeSequence([4, 5])
+        let combined = kk_sequence_plus(seq1, seq2)
+        XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 4, 5])
+    }
+
+    func testPlusWithEmptySequence() {
+        let seq1 = makeSequence([1, 2])
+        let seq2 = makeSequence([])
+        XCTAssertEqual(sequenceElements(kk_sequence_plus(seq1, seq2)), [1, 2])
+        XCTAssertEqual(sequenceElements(kk_sequence_plus(seq2, seq1)), [1, 2])
+    }
+
+    func testPlusWithListAsOther() {
+        let seq = makeSequence([1, 2])
+        let list = makeList([3, 4])
+        let combined = kk_sequence_plus(seq, list)
+        XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 4])
+    }
+
+    // MARK: - Sequence.minus (STDLIB-562)
+
+    func testMinusRemovesFirstOccurrenceOfElement() {
+        let seq = makeSequence([1, 2, 3, 2, 4])
+        let result = kk_sequence_minus(seq, 2)
+        XCTAssertEqual(sequenceElements(result), [1, 3, 2, 4])
+    }
+
+    func testMinusElementNotPresent() {
+        let seq = makeSequence([1, 2, 3])
+        let result = kk_sequence_minus(seq, 99)
+        XCTAssertEqual(sequenceElements(result), [1, 2, 3])
+    }
+
+    func testMinusOnEmptySequence() {
+        let seq = makeSequence([])
+        let result = kk_sequence_minus(seq, 1)
+        XCTAssertEqual(sequenceElements(result), [])
+    }
+
+    func testPlusResultIsSequence() {
+        // Verify the result of plus can be chained with other sequence operations
+        let seq1 = makeSequence([1, 2])
+        let seq2 = makeSequence([3, 4])
+        let combined = kk_sequence_plus(seq1, seq2)
+        let asList = kk_sequence_to_list(combined)
+        XCTAssertEqual(listElements(asList), [1, 2, 3, 4])
+    }
+
+    func testMinusResultIsSequence() {
+        // Verify the result of minus can be chained with other sequence operations
+        let seq = makeSequence([1, 2, 3])
+        let reduced = kk_sequence_minus(seq, 2)
+        let asList = kk_sequence_to_list(reduced)
+        XCTAssertEqual(listElements(asList), [1, 3])
+    }
+
+    // MARK: - Eager Materialization (Intentional Simplification)
+
+    func testPlusEagerlyMaterializesResult() {
+        // NOTE: Kotlin's Sequence.plus returns a lazy sequence, but our
+        // runtime intentionally materializes eagerly via evaluateSequence.
+        // This test documents the current eager behavior; it should be
+        // updated if/when lazy concat steps are added to the pipeline.
+        let seq1 = makeSequence([10, 20])
+        let seq2 = makeSequence([30, 40])
+        let combined = kk_sequence_plus(seq1, seq2)
+        // The result is immediately available (eagerly materialized).
+        XCTAssertEqual(sequenceElements(combined), [10, 20, 30, 40])
+    }
+
+    func testMinusEagerlyMaterializesResult() {
+        // Same as above: documents intentional eager materialization.
+        let seq = makeSequence([5, 10, 15, 10])
+        let result = kk_sequence_minus(seq, 10)
+        XCTAssertEqual(sequenceElements(result), [5, 15, 10])
+    }
+
+    // MARK: - Plus with array as RHS
+
+    func testPlusWithArrayAsOther() {
+        let seq = makeSequence([1, 2])
+        let array = makeArray([3, 4])
+        let combined = kk_sequence_plus(seq, array)
+        XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 4])
+    }
+
+    // MARK: - Plus with kk_sequence_of_single as RHS
+
+    func testPlusWithSingleElementWrappedViaOfSingle() {
+        // Verifies the ABI pattern the compiler emits for `seq + element`:
+        // the element is wrapped via kk_sequence_of_single before being
+        // passed to kk_sequence_plus.
+        let seq = makeSequence([1, 2, 3])
+        let wrappedElement = kk_sequence_of_single(42)
+        let combined = kk_sequence_plus(seq, wrappedElement)
+        XCTAssertEqual(sequenceElements(combined), [1, 2, 3, 42])
+    }
+
+    func testPlusWithSingleElementWrappedViaOfSingleEmptyLHS() {
+        let seq = makeSequence([])
+        let wrappedElement = kk_sequence_of_single(99)
+        let combined = kk_sequence_plus(seq, wrappedElement)
+        XCTAssertEqual(sequenceElements(combined), [99])
+    }
+
+    // MARK: - Helpers
+
+    private func sequenceElements(_ seqRaw: Int) -> [Int] {
+        listElements(kk_sequence_to_list(seqRaw))
+    }
+
     private func listElements(_ listRaw: Int) -> [Int] {
         let size = kk_list_size(listRaw)
         if size <= 0 {

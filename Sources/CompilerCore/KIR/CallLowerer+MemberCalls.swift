@@ -597,7 +597,11 @@ extension CallLowerer {
         return knownNames.isStringBuilderSymbol(symbol)
     }
 
-    private func isSequenceLikeType(
+    /// Check whether a type is Sequence-like (for member-call and operator
+    /// lowering decisions).  Shared across `CallLowerer+MemberCalls` and
+    /// `CallLowerer+Operators`; kept `internal` to avoid exposing it beyond
+    /// the `CallLowerer` extensions.
+    func isSequenceLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
         interner: StringInterner

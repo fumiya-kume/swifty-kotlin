@@ -570,6 +570,16 @@ public func kk_sequence_of(_ arrayRaw: Int) -> Int {
     return registerRuntimeObject(seq)
 }
 
+/// Wrap a single element value in a one-element sequence.
+/// Used by the compiler to ensure `Sequence + element` always passes a
+/// collection handle to `kk_sequence_plus`, avoiding the ambiguity where
+/// a raw element value could collide with a live runtime object handle.
+@_cdecl("kk_sequence_of_single")
+public func kk_sequence_of_single(_ element: Int) -> Int {
+    let seq = RuntimeSequenceBox(steps: [.source(elements: [element])])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_sequence_generate")
 public func kk_sequence_generate(_ seed: Int, _ fnPtr: Int, _ closureRaw: Int) -> Int {
     let seq = RuntimeSequenceBox(steps: [.generator(seed: seed, fnPtr: fnPtr, closureRaw: closureRaw)])
@@ -1827,6 +1837,89 @@ public func kk_sequence_flatten(_ seqRaw: Int) -> Int {
         } else if let subSeq = runtimeSequenceBox(from: subRaw) {
             result.append(contentsOf: evaluateSequence(subSeq))
         }
+    }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
+    return registerRuntimeObject(newSeq)
+}
+
+// MARK: - Sequence plus/minus Operations (STDLIB-561, STDLIB-562)
+//
+// IMPORTANT: Both plus and minus eagerly materialize the entire input
+// sequence via evaluateSequence.  Unlike Kotlin's stdlib (which returns
+// a lazy sequence), our implementation is eager.  This is an intentional
+// simplification -- eager evaluation is correct for finite sequences and
+// keeps the implementation simple.  A future optimisation can add
+// .concat / .minus step kinds to RuntimeSequenceBox for lazy evaluation
+// without changing the public ABI.
+//
+// ABI CONTRACT:
+// - kk_sequence_plus(seqRaw, otherRaw): `otherRaw` MUST be a collection
+//   handle (sequence, list, or array).  The compiler wraps single-element
+//   operands via kk_sequence_of_single before calling this function, so
+//   the runtime never needs to guess whether otherRaw is an element or a
+//   collection.
+// - kk_sequence_minus(seqRaw, element): `element` is always a single
+//   value (not a collection handle).  The compiler only emits this call
+//   when the RHS is known to be a non-collection expression.
+
+@_cdecl("kk_sequence_plus")
+public func kk_sequence_plus(_ seqRaw: Int, _ otherRaw: Int) -> Int {
+    let lhsElements: [Int]
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        lhsElements = evaluateSequence(seq)
+    } else if let list = runtimeListBox(from: seqRaw) {
+        lhsElements = list.elements
+    } else if let array = runtimeArrayBox(from: seqRaw) {
+        lhsElements = array.elements
+    } else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_plus received invalid LHS collection handle")
+    }
+    let rhsElements: [Int]
+    if let seq = runtimeSequenceBox(from: otherRaw) {
+        rhsElements = evaluateSequence(seq)
+    } else if let list = runtimeListBox(from: otherRaw) {
+        rhsElements = list.elements
+    } else if let array = runtimeArrayBox(from: otherRaw) {
+        rhsElements = array.elements
+    } else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_plus received invalid RHS collection handle (the compiler must wrap single elements via kk_sequence_of_single)")
+    }
+    // Single-allocation concatenation: create an array with the exact
+    // final capacity up front so there are no intermediate reallocations
+    // or copy-on-write copies.
+    let totalCount = lhsElements.count + rhsElements.count
+    let combined = Array<Int>(unsafeUninitializedCapacity: totalCount) { buffer, initializedCount in
+        var idx = 0
+        for e in lhsElements { buffer[idx] = e; idx += 1 }
+        for e in rhsElements { buffer[idx] = e; idx += 1 }
+        initializedCount = idx
+    }
+    let newSeq = RuntimeSequenceBox(steps: [.source(elements: combined)])
+    return registerRuntimeObject(newSeq)
+}
+
+@_cdecl("kk_sequence_minus")
+public func kk_sequence_minus(_ seqRaw: Int, _ element: Int) -> Int {
+    let elements: [Int]
+    if let seq = runtimeSequenceBox(from: seqRaw) {
+        elements = evaluateSequence(seq)
+    } else if let list = runtimeListBox(from: seqRaw) {
+        elements = list.elements
+    } else if let array = runtimeArrayBox(from: seqRaw) {
+        elements = array.elements
+    } else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_minus received invalid LHS collection handle")
+    }
+    var result = elements
+    // NOTE: runtimeValuesEqual compares primitives (Int, String, Bool, etc.)
+    // by value but falls back to pointer identity for collection types
+    // (List, Set, Map).  This means `minus` cannot remove collection
+    // elements by structural equality (e.g., two distinct `listOf(1)`
+    // instances).  This is a known limitation; fixing it requires adding
+    // recursive structural comparison to runtimeValuesEqual, which is
+    // tracked separately.
+    if let index = result.firstIndex(where: { runtimeValuesEqual($0, element) }) {
+        result.remove(at: index)
     }
     let newSeq = RuntimeSequenceBox(steps: [.source(elements: result)])
     return registerRuntimeObject(newSeq)
