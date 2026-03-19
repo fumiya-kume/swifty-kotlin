@@ -41,6 +41,17 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_int_coerceIn",
+            receiverType: types.intType,
+            parameters: [(name: "range", type: types.intType)],
+            returnType: types.intType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
 
         // coerceAtLeast(minimumValue: Int): Int
         registerSyntheticCoercionFunction(
@@ -77,6 +88,17 @@ extension DataFlowSemaPhase {
                 (name: "minimumValue", type: types.longType),
                 (name: "maximumValue", type: types.longType),
             ],
+            returnType: types.longType,
+            packageFQName: kotlinRangesPkg,
+            packageSymbol: rangesPackageSymbol,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoercionFunction(
+            named: "coerceIn",
+            externalLinkName: "kk_long_coerceIn",
+            receiverType: types.longType,
+            parameters: [(name: "range", type: types.longType)],
             returnType: types.longType,
             packageFQName: kotlinRangesPkg,
             packageSymbol: rangesPackageSymbol,

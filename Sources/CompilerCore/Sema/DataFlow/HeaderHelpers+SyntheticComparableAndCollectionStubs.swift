@@ -239,6 +239,11 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
+        // Register Array<T> and primitive array types (TYPE-103)
+        registerSyntheticArrayStubs(
+            symbols: symbols, types: types, interner: interner
+        )
+
         // Register type aliases: ArrayList, HashMap, HashSet, LinkedHashMap, LinkedHashSet (STDLIB-560)
         // TODO: Add golden test cases that exercise these aliases in type positions
         //       (e.g. property types, parameter types, return types) to verify
@@ -1809,7 +1814,7 @@ extension DataFlowSemaPhase {
         registerMember(name: "take", parameterTypes: [types.intType], externalLinkName: "kk_list_take")
         registerMember(name: "drop", parameterTypes: [types.intType], externalLinkName: "kk_list_drop")
         registerMember(name: "reversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
-        registerMember(name: "asReversed", parameterTypes: [], externalLinkName: "kk_list_reversed")
+        registerMember(name: "asReversed", parameterTypes: [], externalLinkName: "kk_list_as_reversed")
         registerMember(name: "sorted", parameterTypes: [], externalLinkName: "kk_list_sorted")
         registerMember(name: "distinct", parameterTypes: [], externalLinkName: "kk_list_distinct")
         registerMember(name: "shuffled", parameterTypes: [], externalLinkName: "kk_list_shuffled")
@@ -1850,10 +1855,79 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
 
-        registerMember(name: "chunked", parameterTypes: [types.intType], externalLinkName: "kk_list_chunked", returnTypeOverride: listOfListReturnType)
-        registerMember(name: "windowed", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_windowed", returnTypeOverride: listOfListReturnType)
+        registerMemberOverload(
+            memberName: interner.intern("chunked"),
+            memberFQName: listFQName + [interner.intern("chunked")],
+            parameterTypes: [types.intType],
+            externalLinkName: "kk_list_chunked",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType],
+            externalLinkName: "kk_list_windowed",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType, types.intType, types.booleanType],
+            externalLinkName: "kk_list_windowed_partial",
+            returnTypeOverride: listOfListReturnType
+        )
         registerMember(name: "sortedDescending", parameterTypes: [], externalLinkName: "kk_list_sortedDescending")
         registerMember(name: "subList", parameterTypes: [types.intType, types.intType], externalLinkName: "kk_list_subList")
+
+        // chunked(size, transform) — HOF overload (STDLIB-548)
+        // Kotlin signature: fun <T, R> Iterable<T>.chunked(size: Int, transform: (List<T>) -> R): List<R>
+        // The transform receives a List<T> chunk and returns R. Since R is erased at the
+        // runtime ABI level, we model the return type as List<Any> (not List<T>) to avoid
+        // mis-typing calls where the transform changes element types.
+        let chunkedTransformName = interner.intern("chunked")
+        let chunkedTransformFQName = listFQName + [chunkedTransformName]
+        // Only register if there isn't already a 2-param overload for "chunked".
+        // The 1-arg overload registered above shares the same fqName; check
+        // existing overloads by parameter count to avoid duplicate 2-param symbols.
+        let existingChunkedOverloads = symbols.lookupAll(fqName: chunkedTransformFQName)
+        let hasTwoParamChunked = existingChunkedOverloads.contains { symID in
+            guard let sig = symbols.functionSignature(for: symID) else { return false }
+            return sig.parameterTypes.count == 2
+        }
+        if !hasTwoParamChunked {
+            let transformType = types.make(.functionType(FunctionType(
+                params: [listReturnType],
+                returnType: types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            // Return type is List<Any> since the transform can change element types (R != T).
+            let listOfAnyReturnType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(types.anyType)],
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: chunkedTransformName,
+                fqName: chunkedTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_chunked_transform", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [types.intType, transformType],
+                    returnType: listOfAnyReturnType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
 
         // distinctBy (HOF, selector lambda)
         // Kotlin's `distinctBy` is declared as an extension on Iterable<T>:
@@ -2514,6 +2588,144 @@ extension DataFlowSemaPhase {
                     returnType: partitionReturnType,
                     typeParameterSymbols: [listTypeParamSymbol],
                     classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // zip(other: Iterable<R>): List<Pair<E, R>>
+        let zipName = interner.intern("zip")
+        let zipFQName = listFQName + [zipName]
+        if symbols.lookup(fqName: zipFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let otherListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            let pairType: TypeID
+            if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? symbols.lookupByShortName(interner.intern("Pair")).first
+            {
+                pairType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(listTypeParamType), .out(rType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                pairType = types.anyType
+            }
+            let zippedListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(pairType)],
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: zipName,
+                fqName: zipFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_zip", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [otherListType],
+                    returnType: zippedListType,
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // unzip(): Pair<List<A>, List<B>> for List<Pair<A, B>>
+        let unzipName = interner.intern("unzip")
+        let unzipFQName = listFQName + [unzipName]
+        if symbols.lookup(fqName: unzipFQName) == nil {
+            let aName = interner.intern("A")
+            let aSymbol = symbols.define(
+                kind: .typeParameter,
+                name: aName,
+                fqName: unzipFQName + [aName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let bName = interner.intern("B")
+            let bSymbol = symbols.define(
+                kind: .typeParameter,
+                name: bName,
+                fqName: unzipFQName + [bName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let aType = types.make(.typeParam(TypeParamType(symbol: aSymbol, nullability: .nonNull)))
+            let bType = types.make(.typeParam(TypeParamType(symbol: bSymbol, nullability: .nonNull)))
+            let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? symbols.lookupByShortName(interner.intern("Pair")).first
+            let specializedReceiverType: TypeID
+            let returnType: TypeID
+            if let pairSymbol {
+                let pairElementType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(aType), .out(bType)],
+                    nullability: .nonNull
+                )))
+                specializedReceiverType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(pairElementType)],
+                    nullability: .nonNull
+                )))
+                let firstListType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(aType)],
+                    nullability: .nonNull
+                )))
+                let secondListType = types.make(.classType(ClassType(
+                    classSymbol: listInterfaceSymbol,
+                    args: [.out(bType)],
+                    nullability: .nonNull
+                )))
+                returnType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(firstListType), .out(secondListType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                specializedReceiverType = receiverType
+                returnType = types.anyType
+            }
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: unzipName,
+                fqName: unzipFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_unzip", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: specializedReceiverType,
+                    parameterTypes: [],
+                    returnType: returnType,
+                    typeParameterSymbols: [aSymbol, bSymbol],
+                    classTypeParameterCount: 0
                 ),
                 for: memberSymbol
             )
@@ -3846,6 +4058,8 @@ extension DataFlowSemaPhase {
 
         let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
         let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: mapSymbol)
+        types.setNominalTypeParameterVariances([.out, .out], for: mapSymbol)
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mapSymbol,
             args: [.invariant(keyType), .out(valueType)],
@@ -5231,5 +5445,103 @@ extension DataFlowSemaPhase {
             nullability: .nonNull
         )))
         symbols.setTypeAliasUnderlyingType(underlyingType, for: aliasSymbol)
+    }
+
+    // MARK: - Array<T> and primitive arrays (TYPE-103)
+
+    private func registerSyntheticArrayStubs(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) {
+        let kotlinPkg: [InternedString] = [interner.intern("kotlin")]
+
+        // --- kotlin.Array<T> ---
+        let arrayFQName = kotlinPkg + [interner.intern("Array")]
+        let arraySymbol: SymbolID = if let existing = symbols.lookup(fqName: arrayFQName) {
+            existing
+        } else {
+            symbols.define(
+                kind: .class,
+                name: interner.intern("Array"),
+                fqName: arrayFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let tParamName = interner.intern("T")
+        let tParamSymbol = symbols.lookup(fqName: arrayFQName + [tParamName]) ?? symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: arrayFQName + [tParamName],
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        types.setNominalTypeParameterSymbols([tParamSymbol], for: arraySymbol)
+        types.setNominalTypeParameterVariances([.invariant], for: arraySymbol)
+
+        // Register size property for Array<T>
+        let sizeReturnType = types.intType
+        let sizeName = interner.intern("size")
+        let sizeFQName = arrayFQName + [sizeName]
+        if symbols.lookup(fqName: sizeFQName) == nil {
+            let sizeSym = symbols.define(
+                kind: .property,
+                name: sizeName,
+                fqName: sizeFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(arraySymbol, for: sizeSym)
+            symbols.setPropertyType(sizeReturnType, for: sizeSym)
+        }
+
+        // --- Primitive array types: IntArray, LongArray, etc. ---
+        let primitiveArrayNames = [
+            "IntArray",
+            "LongArray",
+            "DoubleArray",
+            "FloatArray",
+            "BooleanArray",
+            "CharArray",
+            "ByteArray",
+            "ShortArray",
+        ]
+        for name in primitiveArrayNames {
+            let primName = interner.intern(name)
+            let fqName = kotlinPkg + [primName]
+            // Ensure the class symbol exists, whether previously defined or not.
+            let sym: SymbolID = if let existing = symbols.lookup(fqName: fqName) {
+                existing
+            } else {
+                symbols.define(
+                    kind: .class,
+                    name: primName,
+                    fqName: fqName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+            }
+            // Register size property independently of class existence,
+            // so that even if the class was defined elsewhere without size,
+            // we still add the property.
+            let primSizeFQName = fqName + [sizeName]
+            if symbols.lookup(fqName: primSizeFQName) == nil {
+                let primSizeSym = symbols.define(
+                    kind: .property,
+                    name: sizeName,
+                    fqName: primSizeFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic]
+                )
+                symbols.setParentSymbol(sym, for: primSizeSym)
+                symbols.setPropertyType(sizeReturnType, for: primSizeSym)
+            }
+        }
     }
 }
