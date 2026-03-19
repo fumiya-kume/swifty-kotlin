@@ -179,10 +179,33 @@ struct RuntimeCallableRefMetadata {
 /// Runtime box for `listOf(...)` / `mutableListOf(...)`.
 /// Stores elements as an array of `Int` (opaque intptr_t values).
 final class RuntimeListBox {
-    var elements: [Int]
+    private var storedElements: [Int]
+    private let reversedViewBase: RuntimeListBox?
 
     init(elements: [Int]) {
-        self.elements = elements
+        self.storedElements = elements
+        self.reversedViewBase = nil
+    }
+
+    init(reversedViewOf base: RuntimeListBox) {
+        self.storedElements = []
+        self.reversedViewBase = base
+    }
+
+    var elements: [Int] {
+        get {
+            if let base = reversedViewBase {
+                return Array(base.elements.reversed())
+            }
+            return storedElements
+        }
+        set {
+            if let base = reversedViewBase {
+                base.elements = Array(newValue.reversed())
+            } else {
+                storedElements = newValue
+            }
+        }
     }
 }
 
