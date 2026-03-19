@@ -695,6 +695,9 @@ extension DataFlowSemaPhase {
             symbols: symbols, types: types, interner: interner,
             kotlinPkg: kotlinPkg, kotlinPropertiesPkg: kotlinPropertiesPkg
         )
+        // Random stubs must be registered before collection stubs so that
+        // shuffled(random: Random) can look up the kotlin.random.Random symbol.
+        registerSyntheticRandomStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCollectionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticComparableStub(symbols: symbols, types: types, interner: interner)
         registerSyntheticBuilderDSLStubs(symbols: symbols, types: types, interner: interner)
@@ -703,7 +706,6 @@ extension DataFlowSemaPhase {
         registerSyntheticStringStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticCharStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticMathStubs(symbols: symbols, types: types, interner: interner)
-        registerSyntheticRandomStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticStdlibLoopStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticScopeFunctionStubs(symbols: symbols, types: types, interner: interner)
         registerSyntheticExceptionStubs(symbols: symbols, types: types, interner: interner, kotlinPkg: kotlinPkg)

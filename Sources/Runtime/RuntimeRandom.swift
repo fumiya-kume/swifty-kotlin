@@ -8,7 +8,13 @@ public func kk_random_nextInt(_: Int) -> Int {
 }
 
 @_cdecl("kk_random_nextInt_until")
-public func kk_random_nextInt_until(_: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+public func kk_random_nextInt_until(_ randomRaw: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    // TODO(STDLIB-531): Implement seeded RNG support by extracting the seed
+    // from the Kotlin Random instance (randomRaw) and using it to drive
+    // a deterministic generator. Currently delegates to Swift's
+    // SystemRandomNumberGenerator, which matches Random.Default behavior
+    // but breaks the contract for seeded instances like Random(42).
+    _ = randomRaw  // ABI parameter; will be used once seeded RNG is implemented
     outThrown?.pointee = 0
     guard until > 0 else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")

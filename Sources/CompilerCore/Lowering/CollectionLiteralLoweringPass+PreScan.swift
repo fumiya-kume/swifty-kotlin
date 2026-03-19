@@ -306,7 +306,8 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.shuffledName
             || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
             || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
-            || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName,
+            || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName
+            || callee == lookup.kkListShuffledRandomName,
             listExprIDs.contains(src)
         {
             listExprIDs.insert(result.rawValue)
@@ -380,6 +381,7 @@ extension CollectionLiteralLoweringPass {
                 || callee == lookup.kkListTakeName || callee == lookup.kkListDropName
                 || callee == lookup.kkListReversedName || callee == lookup.kkListSortedName
                 || callee == lookup.kkListDistinctName || callee == lookup.kkListShuffledName
+                || callee == lookup.kkListShuffledRandomName
             {
                 if let result { listExprIDs.insert(result.rawValue) }
             }
