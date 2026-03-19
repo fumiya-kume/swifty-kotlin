@@ -89,7 +89,6 @@ struct CollectionLiteralLookupTables {
     let kkListScanName: InternedString
     let kkListRunningFoldName: InternedString
     let kkListRunningReduceName: InternedString
-    let kkListReduceOrNullName: InternedString
     let kkListScanReduceName: InternedString
     let kkListGroupByName: InternedString
     let kkListSortedByName: InternedString
@@ -316,7 +315,6 @@ struct CollectionLiteralLookupTables {
     let scanName: InternedString
     let runningFoldName: InternedString
     let runningReduceName: InternedString
-    let reduceOrNullName: InternedString
     let scanReduceName: InternedString
     let groupByName: InternedString
     let sortedByName: InternedString
@@ -570,7 +568,6 @@ struct CollectionLiteralLookupTables {
         kkListScanName = interner.intern("kk_list_scan")
         kkListRunningFoldName = interner.intern("kk_list_runningFold")
         kkListRunningReduceName = interner.intern("kk_list_runningReduce")
-        kkListReduceOrNullName = interner.intern("kk_list_reduceOrNull")
         kkListScanReduceName = interner.intern("kk_list_scanReduce")
         kkListGroupByName = interner.intern("kk_list_groupBy")
         kkListSortedByName = interner.intern("kk_list_sortedBy")
@@ -787,7 +784,6 @@ struct CollectionLiteralLookupTables {
         scanName = interner.intern("scan")
         runningFoldName = interner.intern("runningFold")
         runningReduceName = interner.intern("runningReduce")
-        reduceOrNullName = interner.intern("reduceOrNull")
         scanReduceName = interner.intern("scanReduce")
         groupByName = interner.intern("groupBy")
         sortedByName = interner.intern("sortedBy")
