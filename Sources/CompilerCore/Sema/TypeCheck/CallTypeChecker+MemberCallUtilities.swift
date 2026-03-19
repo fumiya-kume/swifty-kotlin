@@ -49,7 +49,10 @@ extension CallTypeChecker {
              (knownNames.kotlinCollectionsCollectionFQName, knownNames.isEmpty),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("get")),
              (knownNames.kotlinCollectionsMapFQName, interner.intern("containsKey")),
-             (knownNames.kotlinCollectionsMapFQName, interner.intern("containsValue")):
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("containsValue")),
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("getOrDefault")),
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("getOrElse")),
+             (knownNames.kotlinCollectionsMapFQName, interner.intern("getValue")):
             return true
         default:
             return false
