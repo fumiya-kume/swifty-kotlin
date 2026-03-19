@@ -161,7 +161,6 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
 
     private func floatToBits(_ value: Float) -> Int {
         Int(truncatingIfNeeded: value.bitPattern)
-        Int(value.bitPattern)
     }
 
     private func floatFromBits(_ raw: Int) -> Float {
