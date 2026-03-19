@@ -1,26 +1,17 @@
-data class Person(val name: String, val age: Int)
-
 fun main() {
-    val people = listOf(
-        Person("Alice", 30),
-        Person("Bob", 25),
-        Person("Alice", 25),
-        Person("Bob", 30),
-        Person("Charlie", 25)
-    )
-
-    // sortedBy name: stable sort by name ascending
-    println("-- sortedBy name --")
-    val byName = people.sortedBy { it.name }
-    for (p in byName) {
-        println("${p.name} ${p.age}")
+    // sortedBy on strings: sort by length ascending
+    println("-- sortedBy length --")
+    val words = listOf("cherry", "fig", "apple", "date", "banana")
+    val byLen = words.sortedBy { it.length }
+    for (w in byLen) {
+        println(w)
     }
 
-    // sortedBy age: stable sort by age ascending
-    println("-- sortedBy age --")
-    val byAge = people.sortedBy { it.age }
-    for (p in byAge) {
-        println("${p.name} ${p.age}")
+    // sortedBy on strings: sort by natural order
+    println("-- sortedBy natural --")
+    val byAlpha = words.sortedBy { it }
+    for (w in byAlpha) {
+        println(w)
     }
 
     // sortedWith on integers: ascending
