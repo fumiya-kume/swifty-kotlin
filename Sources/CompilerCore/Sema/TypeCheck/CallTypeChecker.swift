@@ -1726,7 +1726,7 @@ final class CallTypeChecker {
         }
         return types.make(.classType(ClassType(
             classSymbol: mapSymbol,
-            args: [.out(keyType), .out(valueType)],
+            args: [.invariant(keyType), .out(valueType)],
             nullability: .nonNull
         )))
     }

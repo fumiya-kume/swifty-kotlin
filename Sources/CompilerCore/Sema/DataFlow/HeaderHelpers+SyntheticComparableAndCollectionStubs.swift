@@ -204,6 +204,13 @@ extension DataFlowSemaPhase {
             collectionInterfaceSymbol: collectionInterfaceSymbol
         )
 
+        registerCollectionToListMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            collectionInterfaceSymbol: collectionInterfaceSymbol,
+            listInterfaceSymbol: listInterfaceSymbol
+        )
+
         registerSyntheticMutableMapStub(
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg,
@@ -633,6 +640,59 @@ extension DataFlowSemaPhase {
         )
 
         return collectionInterfaceSymbol
+    }
+
+    /// Register `Collection<E>.toList(): List<E>` so that `keys.toList()` / `values.toList()` resolve.
+    /// Must be called after both Collection and List stubs are registered.
+    private func registerCollectionToListMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        collectionInterfaceSymbol: SymbolID,
+        listInterfaceSymbol: SymbolID
+    ) {
+        let collectionFQName = kotlinCollectionsPkg + [interner.intern("Collection")]
+        guard let typeParamSymbol = symbols.lookup(
+            fqName: collectionFQName + [interner.intern("E")]
+        ) else { return }
+        let typeParamType = types.make(.typeParam(TypeParamType(
+            symbol: typeParamSymbol, nullability: .nonNull
+        )))
+        let collectionReceiverType = types.make(.classType(ClassType(
+            classSymbol: collectionInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let listReturnType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberName = interner.intern("toList")
+        let memberFQName = collectionFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(collectionInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_collection_toList", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: collectionReceiverType,
+                parameterTypes: [],
+                returnType: listReturnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
     }
 
     private func registerSyntheticIterableStub(
@@ -3729,11 +3789,14 @@ extension DataFlowSemaPhase {
             visibility: .private,
             flags: []
         )
+        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: mapSymbol)
+        types.setNominalTypeParameterVariances([.invariant, .out], for: mapSymbol)
+
         let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
         let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mapSymbol,
-            args: [.out(keyType), .out(valueType)],
+            args: [.invariant(keyType), .out(valueType)],
             nullability: .nonNull
         )))
 
@@ -4402,6 +4465,7 @@ extension DataFlowSemaPhase {
             )
         }
         symbols.setDirectSupertypes([mapInterfaceSymbol], for: mutableMapSymbol)
+        types.setNominalDirectSupertypes([mapInterfaceSymbol], for: mutableMapSymbol)
 
         let keyName = interner.intern("K")
         let valueName = interner.intern("V")
@@ -4423,6 +4487,10 @@ extension DataFlowSemaPhase {
         )
         let keyType = types.make(.typeParam(TypeParamType(symbol: mutableKeyParamSymbol, nullability: .nonNull)))
         let valueType = types.make(.typeParam(TypeParamType(symbol: mutableValueParamSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([mutableKeyParamSymbol, mutableValueParamSymbol], for: mutableMapSymbol)
+        types.setNominalTypeParameterVariances([.invariant, .invariant], for: mutableMapSymbol)
+        symbols.setSupertypeTypeArgs([.out(keyType), .out(valueType)], for: mutableMapSymbol, supertype: mapInterfaceSymbol)
+        types.setNominalSupertypeTypeArgs([.out(keyType), .out(valueType)], for: mutableMapSymbol, supertype: mapInterfaceSymbol)
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mutableMapSymbol,
             args: [.invariant(keyType), .invariant(valueType)],
