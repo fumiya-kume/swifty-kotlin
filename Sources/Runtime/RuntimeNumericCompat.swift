@@ -172,6 +172,18 @@ public func kk_float_to_double_bits(_ value: Int) -> Int {
 
 @_cdecl("kk_println_long")
 public func kk_println_long(_ value: Int) {
+    // Range expressions (LongRange) are typed as Long in sema but produce
+    // opaque runtime object handles.  Detect that case and render via
+    // runtimeElementToString so that "println(1L..10L)" prints "1..10".
+    if let ptr = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObj = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if isObj, tryCast(ptr, to: RuntimeRangeBox.self) != nil {
+            Swift.print(runtimeElementToString(value))
+            return
+        }
+    }
     Swift.print(value)
 }
 

@@ -8,6 +8,7 @@ final class OperatorLoweringPass: LoweringPass {
         let intToFloatBits: InternedString
         let floatToDoubleBits: InternedString
         let intToDoubleBits: InternedString
+        let rangeCallees: Set<InternedString>
     }
 
     func shouldRun(module: KIRModule, ctx: KIRContext) -> Bool {
@@ -39,7 +40,14 @@ final class OperatorLoweringPass: LoweringPass {
             intToFloat: ctx.interner.intern("kk_int_to_float"),
             intToFloatBits: ctx.interner.intern("kk_int_to_float_bits"),
             floatToDoubleBits: ctx.interner.intern("kk_float_to_double_bits"),
-            intToDoubleBits: ctx.interner.intern("kk_int_to_double_bits")
+            intToDoubleBits: ctx.interner.intern("kk_int_to_double_bits"),
+            rangeCallees: [
+                ctx.interner.intern("kk_op_rangeTo"),
+                ctx.interner.intern("kk_op_rangeUntil"),
+                ctx.interner.intern("kk_op_downTo"),
+                ctx.interner.intern("kk_op_step"),
+                ctx.interner.intern("kk_range_reversed"),
+            ]
         )
 
         module.arena.transformFunctions { function in
@@ -173,6 +181,18 @@ final class OperatorLoweringPass: LoweringPass {
         }
         guard let argType else { return false }
 
+        // Range expressions (rangeTo, rangeUntil, downTo, step, reversed) produce
+        // opaque runtime object handles typed as Long/Int in sema.  Do NOT lower
+        // to kk_println_long — let them fall through to kk_println_any so the
+        // runtime can resolve the RuntimeRangeBox and print "first..last".
+        if isArgumentProducedByRangeCall(
+            exprID: arguments[0],
+            instructions: precedingInstructions,
+            rangeCallees: conversionCallees.rangeCallees
+        ) {
+            return false
+        }
+
         let primitiveCallee: String? = switch types.kind(of: argType) {
         case .primitive(.long, .nonNull): "kk_println_long"
         case .primitive(.float, .nonNull): "kk_println_float"
@@ -244,6 +264,35 @@ final class OperatorLoweringPass: LoweringPass {
             }
         }
         return nil
+    }
+
+    /// Returns true when the expression is the result of a range-producing call
+    /// (kk_op_rangeTo, kk_op_rangeUntil, kk_op_downTo, kk_op_step, kk_range_reversed).
+    /// Follows .copy chains so that intermediate variable assignments are transparent.
+    private func isArgumentProducedByRangeCall(
+        exprID: KIRExprID,
+        instructions: [KIRInstruction],
+        rangeCallees: Set<InternedString>
+    ) -> Bool {
+        for instruction in instructions.reversed() {
+            switch instruction {
+            case let .call(_, callee, _, result, _, _, _):
+                if result == exprID {
+                    return rangeCallees.contains(callee)
+                }
+            case let .copy(from, to):
+                if to == exprID {
+                    return isArgumentProducedByRangeCall(
+                        exprID: from,
+                        instructions: instructions,
+                        rangeCallees: rangeCallees
+                    )
+                }
+            default:
+                break
+            }
+        }
+        return false
     }
 
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {

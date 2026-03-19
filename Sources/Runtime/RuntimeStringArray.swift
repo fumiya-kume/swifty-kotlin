@@ -625,6 +625,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("{\(rendered)}")
         return
     }
+    if tryCast(raw, to: RuntimeRangeBox.self) != nil {
+        Swift.print(runtimeElementToString(intValue))
+        return
+    }
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
@@ -786,6 +790,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
             "\(runtimeRenderAnyForPrint(key))=\(runtimeRenderAnyForPrint(value))"
         }.joined(separator: ", ")
         return "{\(rendered)}"
+    }
+    if tryCast(raw, to: RuntimeRangeBox.self) != nil {
+        return runtimeElementToString(value)
     }
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)

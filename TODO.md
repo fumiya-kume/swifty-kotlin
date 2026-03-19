@@ -149,7 +149,7 @@
 - [ ] STDLIB-519: `Double.coerceIn(Double, Double)` の golden テスト
 - [ ] STDLIB-520: `Float.coerceIn(Float, Float)` の golden テスト
 - [ ] STDLIB-521: `coerceAtLeast` / `coerceAtMost` の Long 版 golden テスト
-- [ ] STDLIB-522: `LongRange` の完全サポート（stub + Runtime）
+- [x] STDLIB-522: `LongRange` の完全サポート（stub + Runtime）
 - [ ] STDLIB-523: `UIntRange` の完全サポート
 - [ ] STDLIB-524: `ULongRange` の完全サポート
 - [x] STDLIB-525: `Int/Long.coerceIn(range)` の実装（レシーバがInt/Longの場合のClosedRange引数オーバーロード）

@@ -3,11 +3,14 @@ import Foundation
 @_cdecl("kk_box_int")
 public func kk_box_int(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
+    // If the value is already a registered runtime object (e.g. RuntimeRangeBox
+    // produced by kk_op_rangeTo, or an already-boxed RuntimeIntBox), pass it
+    // through without double-boxing.
     if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
         let isObjectPointer = runtimeStorage.withLock { state in
             state.objectPointers.contains(UInt(bitPattern: objPointer))
         }
-        if isObjectPointer, tryCast(objPointer, to: RuntimeIntBox.self) != nil {
+        if isObjectPointer {
             return value
         }
     }
@@ -95,6 +98,18 @@ public func kk_unbox_bool(_ obj: Int) -> Int {
 @_cdecl("kk_box_long")
 public func kk_box_long(_ value: Int) -> Int {
     if value == runtimeNullSentinelInt { return value }
+    // If the value is already a registered runtime object (e.g. RuntimeRangeBox
+    // produced by kk_op_rangeTo for LongRange), pass it through without
+    // double-boxing so that kk_println_any / runtimeElementToString can
+    // recognise the original object type.
+    if let objPointer = UnsafeMutableRawPointer(bitPattern: value) {
+        let isObjectPointer = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: objPointer))
+        }
+        if isObjectPointer {
+            return value
+        }
+    }
     let box = RuntimeLongBox(value)
     let opaque = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
     runtimeStorage.withLock { state in

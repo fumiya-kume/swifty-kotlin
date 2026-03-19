@@ -278,6 +278,19 @@ func runtimeElementToString(_ elem: Int) -> String {
         let third = runtimeElementToString(tripleBox.third)
         return "(\(first), \(second), \(third))"
     }
+    if let rangeBox = tryCast(ptr, to: RuntimeRangeBox.self) {
+        let first = runtimeElementToString(rangeBox.first)
+        let last = runtimeElementToString(rangeBox.last)
+        if rangeBox.step == 1 {
+            return "\(first)..\(last)"
+        } else if rangeBox.step == -1 {
+            return "\(first) downTo \(last) step 1"
+        } else if rangeBox.step < 0 {
+            return "\(first) downTo \(last) step \(-rangeBox.step)"
+        } else {
+            return "\(first)..\(last) step \(rangeBox.step)"
+        }
+    }
     if let arrayBox = tryCast(ptr, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"
