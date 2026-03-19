@@ -76,14 +76,13 @@ final class ABIMismatchTests: XCTestCase {
     func testExceptionFunctionCount() {
         // kk_throwable_new, kk_throwable_is_cancellation, kk_panic, kk_abort_unreachable,
         // kk_require, kk_check, kk_require_lazy, kk_check_lazy,
-        // kk_precondition_assert, kk_precondition_assert_lazy,
         // kk_error, kk_todo, kk_todo_noarg, kk_dispatch_error
-        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 18)
+        XCTAssertEqual(RuntimeABISpec.exceptionFunctions.count, 15)
     }
 
     func testStringFunctionCount() {
         // Keep this in sync with RuntimeABISpec.stringFunctions entries.
-        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 106)
+        XCTAssertEqual(RuntimeABISpec.stringFunctions.count, 103)
     }
 
     func testRegexFunctionCount() {
@@ -97,7 +96,7 @@ final class ABIMismatchTests: XCTestCase {
         // kk_string_chunked, kk_string_windowed,
         // kk_string_commonPrefixWith, kk_string_commonSuffixWith,
         // kk_string_zipWithNext
-        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 23)
+        XCTAssertEqual(RuntimeABISpec.regexFunctions.count, 21)
     }
 
     func testPrintAndPrintlnFunctionCount() {
@@ -143,7 +142,8 @@ final class ABIMismatchTests: XCTestCase {
     }
 
     func testPrimitiveNumericConversionFunctionCount() {
-        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 25)
+        // 13 conversion functions + 3 coercion functions = 16 (STDLIB-151: kk_long_to_int)
+        XCTAssertEqual(RuntimeABISpec.primitiveNumericConversionFunctions.count, 16)
     }
 
     func testMathFunctionCount() {
