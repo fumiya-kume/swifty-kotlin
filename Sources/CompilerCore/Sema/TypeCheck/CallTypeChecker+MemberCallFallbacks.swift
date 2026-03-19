@@ -808,6 +808,8 @@ extension CallTypeChecker {
             || memberName == interner.intern("minOrNull")
             || memberName == interner.intern("maxByOrNull")
             || memberName == interner.intern("minByOrNull")
+            || memberName == interner.intern("maxOfOrNull")
+            || memberName == interner.intern("minOfOrNull")
             || memberName == interner.intern("firstOrNull")
             || memberName == interner.intern("lastOrNull")
             || memberName == interner.intern("singleOrNull")
