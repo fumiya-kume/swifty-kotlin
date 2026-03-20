@@ -994,6 +994,8 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_replace"),
             interner.intern("kk_string_replaceFirst"),
             interner.intern("kk_string_substring"),
+            interner.intern("kk_string_padStart_default"),
+            interner.intern("kk_string_padEnd_default"),
             interner.intern("kk_string_padStart"),
             interner.intern("kk_string_padEnd"),
             interner.intern("kk_string_repeat"),

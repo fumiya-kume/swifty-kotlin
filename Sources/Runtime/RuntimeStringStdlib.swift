@@ -78,6 +78,19 @@ public func kk_string_substring(
     return runtimeMakeStringRaw(result)
 }
 
+/// Unicode code point for space (U+0020), the default pad character in Kotlin.
+private let kDefaultPadCharRaw: Int = 0x20
+
+@_cdecl("kk_string_padStart_default")
+public func kk_string_padStart_default(_ strRaw: Int, _ lengthRaw: Int) -> Int {
+    return kk_string_padStart(strRaw, lengthRaw, kDefaultPadCharRaw)
+}
+
+@_cdecl("kk_string_padEnd_default")
+public func kk_string_padEnd_default(_ strRaw: Int, _ lengthRaw: Int) -> Int {
+    return kk_string_padEnd(strRaw, lengthRaw, kDefaultPadCharRaw)
+}
+
 @_cdecl("kk_string_padStart")
 public func kk_string_padStart(_ strRaw: Int, _ lengthRaw: Int, _ padCharRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)

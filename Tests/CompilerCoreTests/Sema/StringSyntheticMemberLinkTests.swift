@@ -114,16 +114,35 @@ final class StringSyntheticMemberLinkTests: XCTestCase {
     func testNewPaddingStubsHaveCorrectExternalLinks() throws {
         let (sema, interner) = try makeSema()
 
+        // padStart / padEnd each have two overloads:
+        //   1-arg (default padChar) -> kk_string_padStart_default / kk_string_padEnd_default
+        //   2-arg (explicit padChar) -> kk_string_padStart / kk_string_padEnd
+        // lookup(fqName:) returns .first, which is the 1-arg default overload.
         XCTAssertEqual(
             externalLink(for: "padStart", sema: sema, interner: interner),
-            "kk_string_padStart",
-            "String.padStart should link to kk_string_padStart"
+            "kk_string_padStart_default",
+            "String.padStart (1-arg default) should link to kk_string_padStart_default"
         )
         XCTAssertEqual(
             externalLink(for: "padEnd", sema: sema, interner: interner),
-            "kk_string_padEnd",
-            "String.padEnd should link to kk_string_padEnd"
+            "kk_string_padEnd_default",
+            "String.padEnd (1-arg default) should link to kk_string_padEnd_default"
         )
+
+        // Verify both overloads are registered via lookupAll and link to distinct ABI functions.
+        let padStartFQ = ["kotlin", "text", "padStart"].map { interner.intern($0) }
+        let padStartSymbols = sema.symbols.lookupAll(fqName: padStartFQ)
+        XCTAssertEqual(padStartSymbols.count, 2, "padStart should have 2 overloads (default + explicit padChar)")
+        let padStartLinks = Set(padStartSymbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+        XCTAssertTrue(padStartLinks.contains("kk_string_padStart_default"), "padStart should have a _default overload")
+        XCTAssertTrue(padStartLinks.contains("kk_string_padStart"), "padStart should have a non-default overload")
+
+        let padEndFQ = ["kotlin", "text", "padEnd"].map { interner.intern($0) }
+        let padEndSymbols = sema.symbols.lookupAll(fqName: padEndFQ)
+        XCTAssertEqual(padEndSymbols.count, 2, "padEnd should have 2 overloads (default + explicit padChar)")
+        let padEndLinks = Set(padEndSymbols.compactMap { sema.symbols.externalLinkName(for: $0) })
+        XCTAssertTrue(padEndLinks.contains("kk_string_padEnd_default"), "padEnd should have a _default overload")
+        XCTAssertTrue(padEndLinks.contains("kk_string_padEnd"), "padEnd should have a non-default overload")
     }
 
     func testNewSlicingStubsHaveCorrectExternalLinks() throws {

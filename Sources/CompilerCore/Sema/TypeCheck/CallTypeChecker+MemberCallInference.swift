@@ -2408,7 +2408,8 @@ extension CallTypeChecker {
                 {
                     let calleeStr = interner.resolve(calleeName)
                     let resultType: TypeID? = switch calleeStr {
-                    case "repeat", "drop", "take", "takeLast", "dropLast":
+                    case "repeat", "drop", "take", "takeLast", "dropLast",
+                         "padStart", "padEnd":
                         sema.types.stringType
                     case "toInt":
                         sema.types.intType

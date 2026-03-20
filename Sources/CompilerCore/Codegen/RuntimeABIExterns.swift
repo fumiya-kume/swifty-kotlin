@@ -313,6 +313,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_padStart_default = ExternDecl(
+        name: "kk_string_padStart_default",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_padEnd_default = ExternDecl(
+        name: "kk_string_padEnd_default",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_padStart = ExternDecl(
         name: "kk_string_padStart",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
@@ -2216,6 +2228,8 @@ public enum RuntimeABIExterns {
             kk_char_titlecase,
             kk_char_digitToInt,
             kk_char_digitToIntOrNull,
+            kk_string_padStart_default,
+            kk_string_padEnd_default,
             kk_string_padStart,
             kk_string_padEnd,
             kk_string_repeat,
