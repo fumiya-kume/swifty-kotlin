@@ -136,14 +136,17 @@ final class OperatorLoweringPass: LoweringPass {
         let useUnsignedRank0 = isUnsigned && rank == 0
         let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
         let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
+        // For == / != on non-primitive reference types, use structural equality
+        let needsStructuralEquality = (op == .equal || op == .notEqual) && rank == 0
+            && (isReferenceType(lhs, arena: arena, types: types) || isReferenceType(rhs, arena: arena, types: types))
         let callee: InternedString = switch op {
         case .add: interner.intern("kk_op_\(prefix)add")
         case .subtract: interner.intern("kk_op_\(prefix)sub")
         case .multiply: interner.intern("kk_op_\(prefix)mul")
         case .divide: interner.intern("kk_op_\(divModCmpPrefix)div")
         case .modulo: interner.intern("kk_op_\(divModCmpPrefix)\(divModOp)")
-        case .equal: interner.intern("kk_op_\(prefix)eq")
-        case .notEqual: interner.intern("kk_op_\(prefix)ne")
+        case .equal: interner.intern(needsStructuralEquality ? "kk_structural_eq" : "kk_op_\(prefix)eq")
+        case .notEqual: interner.intern(needsStructuralEquality ? "kk_structural_ne" : "kk_op_\(prefix)ne")
         case .lessThan: interner.intern("kk_op_\(divModCmpPrefix)lt")
         case .lessOrEqual: interner.intern("kk_op_\(divModCmpPrefix)le")
         case .greaterThan: interner.intern("kk_op_\(divModCmpPrefix)gt")
@@ -293,6 +296,24 @@ final class OperatorLoweringPass: LoweringPass {
             }
         }
         return false
+    }
+
+    /// Returns true when the expression is a reference type that requires structural
+    /// equality (e.g. List, Set, Map, String, Any, class instances).
+    /// String is classified as a primitive in the type system but is represented as a
+    /// heap-allocated RuntimeStringBox at runtime, so pointer comparison is insufficient.
+    private func isReferenceType(_ exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Bool {
+        guard let types, let typeID = arena.exprType(exprID) else { return false }
+        switch types.kind(of: typeID) {
+        case .primitive(.string, _):
+            return true
+        case .primitive:
+            return false
+        case .classType, .any:
+            return true
+        default:
+            return false
+        }
     }
 
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {

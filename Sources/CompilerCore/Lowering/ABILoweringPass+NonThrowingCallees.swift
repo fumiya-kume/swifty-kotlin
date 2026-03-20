@@ -27,6 +27,8 @@ extension ABILoweringPass {
             interner.intern("kk_int_to_byte"),
             interner.intern("kk_int_to_short"),
             interner.intern("kk_op_eq"),
+            interner.intern("kk_structural_eq"),
+            interner.intern("kk_structural_ne"),
             interner.intern("kk_string_concat"),
             interner.intern("kk_compare_any"),
             interner.intern("kk_string_length"),

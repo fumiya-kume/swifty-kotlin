@@ -216,7 +216,60 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
     {
         return lhsChar.value == rhsChar.value
     }
+    if let lhsList = tryCast(lhsPtr, to: RuntimeListBox.self),
+       let rhsList = tryCast(rhsPtr, to: RuntimeListBox.self)
+    {
+        let lhsElems = lhsList.elements
+        let rhsElems = rhsList.elements
+        guard lhsElems.count == rhsElems.count else { return false }
+        for i in lhsElems.indices {
+            if !runtimeValuesEqual(lhsElems[i], rhsElems[i]) {
+                return false
+            }
+        }
+        return true
+    }
+    if let lhsSet = tryCast(lhsPtr, to: RuntimeSetBox.self),
+       let rhsSet = tryCast(rhsPtr, to: RuntimeSetBox.self)
+    {
+        let lhsElems = lhsSet.elements
+        let rhsElems = rhsSet.elements
+        guard lhsElems.count == rhsElems.count else { return false }
+        for elem in lhsElems {
+            if !rhsElems.contains(where: { runtimeValuesEqual($0, elem) }) {
+                return false
+            }
+        }
+        return true
+    }
+    if let lhsMap = tryCast(lhsPtr, to: RuntimeMapBox.self),
+       let rhsMap = tryCast(rhsPtr, to: RuntimeMapBox.self)
+    {
+        guard lhsMap.keys.count == rhsMap.keys.count else { return false }
+        for (i, lhsKey) in lhsMap.keys.enumerated() {
+            guard let rhsIdx = rhsMap.keys.firstIndex(where: { runtimeValuesEqual($0, lhsKey) }) else {
+                return false
+            }
+            if !runtimeValuesEqual(lhsMap.values[i], rhsMap.values[rhsIdx]) {
+                return false
+            }
+        }
+        return true
+    }
     return lhs == rhs
+}
+
+/// Structural equality for `==` on reference types (lists, sets, maps, boxed values).
+/// Returns a boxed Bool (via kk_box_bool) so it matches the ABI of other kk_op_* functions.
+@_cdecl("kk_structural_eq")
+public func kk_structural_eq(_ lhs: Int, _ rhs: Int) -> Int {
+    runtimeValuesEqual(lhs, rhs) ? 1 : 0
+}
+
+/// Structural inequality for `!=` on reference types.
+@_cdecl("kk_structural_ne")
+public func kk_structural_ne(_ lhs: Int, _ rhs: Int) -> Int {
+    runtimeValuesEqual(lhs, rhs) ? 0 : 1
 }
 
 func runtimeElementToString(_ elem: Int) -> String {
