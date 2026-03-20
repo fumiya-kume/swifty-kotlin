@@ -435,9 +435,12 @@ extension CallLowerer {
             ))
             return result
         case .rangeUntil:
+            let rangeUntilCallee = sema.bindings.isULongRangeExpr(exprID)
+                ? interner.intern("kk_op_ulong_rangeUntil")
+                : interner.intern("kk_op_rangeUntil")
             instructions.append(.call(
                 symbol: nil,
-                callee: interner.intern("kk_op_rangeUntil"),
+                callee: rangeUntilCallee,
                 arguments: [lhsID, rhsID],
                 result: result,
                 canThrow: false,

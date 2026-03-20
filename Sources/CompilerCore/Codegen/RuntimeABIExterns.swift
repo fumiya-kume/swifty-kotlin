@@ -1803,6 +1803,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_op_ulong_rangeUntil = ExternDecl(
+        name: "kk_op_ulong_rangeUntil",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_downTo = ExternDecl(
         name: "kk_op_downTo",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2653,6 +2659,7 @@ public enum RuntimeABIExterns {
             // Range/Progression
             kk_op_rangeTo,
             kk_op_rangeUntil,
+            kk_op_ulong_rangeUntil,
             kk_op_downTo,
             kk_op_step,
             // IntRange members (STDLIB-090/091/092/093)

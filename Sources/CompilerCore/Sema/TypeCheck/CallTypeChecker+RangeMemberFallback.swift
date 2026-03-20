@@ -96,7 +96,6 @@ extension CallTypeChecker {
         return finalType
     }
 
-    /// Returns the element type for a range expression based on its range-kind markers.
     private func isSupportedRangeMember(_ memberName: String) -> Bool {
         let rangeMembers: Set = [
             "first", "last", "count", "contains",
@@ -121,6 +120,7 @@ extension CallTypeChecker {
         ["toList", "map"].contains(memberName)
     }
 
+    /// Returns the element type for a range expression based on its range-kind markers.
     private func rangeMemberElementType(
         sema: SemaModule,
         isCharRange: Bool,

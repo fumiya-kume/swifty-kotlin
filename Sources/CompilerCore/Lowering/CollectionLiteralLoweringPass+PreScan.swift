@@ -90,12 +90,7 @@ extension CollectionLiteralLoweringPass {
         )
 
         // First pass: collect char-valued and ulong-valued expression IDs to detect
-        // char range and ULong range arguments (STDLIB-290, STDLIB-524)
-        // NOTE: ULong detection is currently limited to literal expressions and copy
-        // propagation. Ranges whose endpoints come from variables, parameters, or
-        // computed ULong expressions will fall back to the signed kk_range_toList path.
-        // This is acceptable for the MVP; a future pass can use sema type markers to
-        // cover all ULong-producing expressions.
+        // char range and ULong range arguments (STDLIB-290, STDLIB-524).
         var charValuedExprIDs: Set<Int32> = []
         var ulongValuedExprIDs: Set<Int32> = []
         for instruction in function.body {
@@ -118,6 +113,15 @@ extension CollectionLiteralLoweringPass {
             default:
                 break
             }
+        }
+
+        if let sema {
+            seedULongValuedExprIDsFromStaticTypes(
+                function: function,
+                arena: arena,
+                sema: sema,
+                ulongValuedExprIDs: &ulongValuedExprIDs
+            )
         }
 
         for instruction in function.body {
@@ -574,6 +578,45 @@ extension CollectionLiteralLoweringPass {
                 sequenceExprIDs: &sequenceExprIDs,
                 stringExprIDs: &stringExprIDs
             )
+        }
+    }
+
+    private func seedULongValuedExprIDsFromStaticTypes(
+        function: KIRFunction,
+        arena: KIRArena,
+        sema: SemaModule,
+        ulongValuedExprIDs: inout Set<Int32>
+    ) {
+        var referencedExprIDs: Set<Int32> = []
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, _, arguments, result, _, _, _):
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .virtualCall(_, _, receiver, arguments, result, _, _, _):
+                referencedExprIDs.insert(receiver.rawValue)
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .copy(from, to):
+                referencedExprIDs.insert(from.rawValue)
+                referencedExprIDs.insert(to.rawValue)
+            case let .constValue(result, _):
+                referencedExprIDs.insert(result.rawValue)
+            case let .returnValue(expr):
+                referencedExprIDs.insert(expr.rawValue)
+            default:
+                break
+            }
+        }
+
+        for rawID in referencedExprIDs {
+            let exprID = KIRExprID(rawValue: rawID)
+            guard let typeID = arena.exprType(exprID),
+                  sema.types.makeNonNullable(typeID) == sema.types.ulongType
+            else {
+                continue
+            }
+            ulongValuedExprIDs.insert(rawID)
         }
     }
 
