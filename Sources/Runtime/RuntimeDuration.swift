@@ -88,12 +88,28 @@ public func kk_duration_inWholeMinutes(_ durationRaw: Int) -> Int {
     return Int(box.nanoseconds / Int64(60_000_000_000))
 }
 
+@_cdecl("kk_duration_inWholeMicroseconds")
+public func kk_duration_inWholeMicroseconds(_ durationRaw: Int) -> Int {
+    guard let box = runtimeDurationBox(from: durationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeMicroseconds received invalid Duration handle")
+    }
+    return Int(box.nanoseconds / 1_000)
+}
+
 @_cdecl("kk_duration_inWholeNanoseconds")
 public func kk_duration_inWholeNanoseconds(_ durationRaw: Int) -> Int {
     guard let box = runtimeDurationBox(from: durationRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeNanoseconds received invalid Duration handle")
     }
     return Int(box.nanoseconds)
+}
+
+@_cdecl("kk_duration_inWholeHours")
+public func kk_duration_inWholeHours(_ durationRaw: Int) -> Int {
+    guard let box = runtimeDurationBox(from: durationRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_duration_inWholeHours received invalid Duration handle")
+    }
+    return Int(box.nanoseconds / Int64(3_600_000_000_000))
 }
 
 @_cdecl("kk_duration_toString")

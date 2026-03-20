@@ -120,6 +120,73 @@ final class RuntimeDurationTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_duration_inWholeNanoseconds(handle), 0)
     }
 
+    // MARK: - inWholeHours
+
+    func testInWholeHoursFromHoursRoundTrip() {
+        let handle = kk_duration_from_hours(3)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 3)
+    }
+
+    func testInWholeHoursFromMinutes() {
+        let handle = kk_duration_from_minutes(150)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 2)
+    }
+
+    func testInWholeHoursFromSeconds() {
+        let handle = kk_duration_from_seconds(7200)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 2)
+    }
+
+    func testInWholeHoursTruncatesSubHour() {
+        // 90 minutes = 1.5 hours -> inWholeHours should return 1
+        let handle = kk_duration_from_minutes(90)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 1)
+    }
+
+    func testInWholeHoursSubHourReturnsZero() {
+        let handle = kk_duration_from_minutes(59)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 0)
+    }
+
+    func testInWholeHoursZero() {
+        let handle = kk_duration_from_hours(0)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), 0)
+    }
+
+    func testInWholeHoursNegative() {
+        let handle = kk_duration_from_hours(-5)
+        XCTAssertEqual(kk_duration_inWholeHours(handle), -5)
+    }
+
+    // MARK: - inWholeMicroseconds
+
+    func testInWholeMicrosecondsFromSeconds() {
+        let handle = kk_duration_from_seconds(3)
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(handle), 3_000_000)
+    }
+
+    func testInWholeMicrosecondsFromMilliseconds() {
+        let handle = kk_duration_from_milliseconds(2500)
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(handle), 2_500_000)
+    }
+
+    func testInWholeMicrosecondsRoundTrip() {
+        let handle = kk_duration_from_microseconds(42)
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(handle), 42)
+    }
+
+    func testInWholeMicrosecondsTruncatesSubMicrosecond() {
+        // 1500 ns = 1.5 us -> inWholeMicroseconds should return 1
+        let handle = kk_duration_from_nanoseconds(1500)
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(handle), 1)
+    }
+
+    func testInWholeMicrosecondsSubMicrosecondReturnsZero() {
+        // 999 ns < 1 us -> inWholeMicroseconds should return 0
+        let handle = kk_duration_from_nanoseconds(999)
+        XCTAssertEqual(kk_duration_inWholeMicroseconds(handle), 0)
+    }
+
     // MARK: - Saturation on overflow
 
     func testFromSecondsLargeValueSaturates() {

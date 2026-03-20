@@ -2979,7 +2979,23 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeMicroseconds",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_inWholeNanoseconds",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeHours",
             parameters: [
                 RuntimeABIParameter(name: "durationRaw", type: .intptr),
             ],

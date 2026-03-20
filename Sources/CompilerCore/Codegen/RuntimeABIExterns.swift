@@ -221,8 +221,20 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_duration_inWholeMicroseconds = ExternDecl(
+        name: "kk_duration_inWholeMicroseconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_duration_inWholeNanoseconds = ExternDecl(
         name: "kk_duration_inWholeNanoseconds",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_inWholeHours = ExternDecl(
+        name: "kk_duration_inWholeHours",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -2484,7 +2496,9 @@ public enum RuntimeABIExterns {
             kk_duration_inWholeMilliseconds,
             kk_duration_inWholeSeconds,
             kk_duration_inWholeMinutes,
+            kk_duration_inWholeMicroseconds,
             kk_duration_inWholeNanoseconds,
+            kk_duration_inWholeHours,
             kk_duration_toString,
             kk_duration_from_seconds,
             kk_duration_from_milliseconds,

@@ -56,8 +56,26 @@ extension DataFlowSemaPhase {
         )
 
         registerDurationMemberProperty(
+            named: "inWholeMicroseconds",
+            externalLinkName: "kk_duration_inWholeMicroseconds",
+            ownerSymbol: durationSymbol,
+            returnType: longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
             named: "inWholeNanoseconds",
             externalLinkName: "kk_duration_inWholeNanoseconds",
+            ownerSymbol: durationSymbol,
+            returnType: longType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationMemberProperty(
+            named: "inWholeHours",
+            externalLinkName: "kk_duration_inWholeHours",
             ownerSymbol: durationSymbol,
             returnType: longType,
             symbols: symbols,

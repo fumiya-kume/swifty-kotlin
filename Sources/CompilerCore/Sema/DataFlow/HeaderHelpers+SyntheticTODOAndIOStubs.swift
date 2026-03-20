@@ -391,6 +391,19 @@ extension DataFlowSemaPhase {
             isProperty: true
         )
 
+        // Register Duration.inWholeMicroseconds property (returns Long)
+        registerSyntheticDurationMember(
+            named: "inWholeMicroseconds",
+            externalLinkName: "kk_duration_inWholeMicroseconds",
+            durationSymbol: durationSymbol,
+            durationFQName: durationFQName,
+            receiverType: durationClassType,
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            isProperty: true
+        )
+
         // Register Duration.inWholeNanoseconds property (returns Long)
         registerSyntheticDurationMember(
             named: "inWholeNanoseconds",
