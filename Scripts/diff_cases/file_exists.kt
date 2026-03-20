@@ -20,6 +20,17 @@ fun main() {
         println(missing.exists())     // false
         println(missing.isFile)       // false
         println(missing.isDirectory)  // false
+
+        // STDLIB-321: name and path properties
+        println(dir.name)             // "kswiftk_exists_<timestamp>"
+        println(dir.path)             // "/tmp/kswiftk_exists_<timestamp>"
+        println(file.name)            // "test.txt"
+        println(file.path)            // "/tmp/kswiftk_exists_<timestamp>/test.txt"
+        
+        // Verify name and path work correctly
+        println(file.name == "test.txt")     // true
+        println(dir.name.startsWith("kswiftk_exists_"))  // true
+        println(file.path.endsWith("/test.txt"))  // true
     } finally {
         file.delete()
         dir.delete()

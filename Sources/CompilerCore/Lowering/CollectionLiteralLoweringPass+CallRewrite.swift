@@ -629,6 +629,63 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- Rewrite File member calls (STDLIB-321) ---
+                    // Only rewrite calls on File expressions (tracked in fileExprIDs)
+                    if arguments.count >= 1, fileExprIDs.contains(arguments[0].rawValue) {
+                        let receiverID = arguments[0]
+                        let kkCallee: InternedString?
+                        
+                        switch callee {
+                        case lookup.readTextName:
+                            kkCallee = lookup.kkFileReadTextName
+                        case lookup.writeTextName:
+                            kkCallee = lookup.kkFileWriteTextName
+                        case lookup.readLinesName:
+                            kkCallee = lookup.kkFileReadLinesName
+                        case lookup.existsName:
+                            kkCallee = lookup.kkFileExistsName
+                        case lookup.isFileName:
+                            kkCallee = lookup.kkFileIsFileName
+                        case lookup.isDirectoryName:
+                            kkCallee = lookup.kkFileIsDirectoryName
+                        case lookup.namePropertyName:
+                            kkCallee = lookup.kkFileNameName
+                        case lookup.pathPropertyName:
+                            kkCallee = lookup.kkFilePathName
+                        case lookup.forEachLineName:
+                            kkCallee = lookup.kkFileForEachLineName
+                        case lookup.useLinesName:
+                            kkCallee = lookup.kkFileUseLinesName
+                        case lookup.bufferedReaderName:
+                            kkCallee = lookup.kkFileBufferedReaderName
+                        case lookup.walkName:
+                            kkCallee = lookup.kkFileWalkName
+                        case lookup.listFilesName:
+                            kkCallee = lookup.kkFileListFilesName
+                        case lookup.deleteName:
+                            kkCallee = lookup.kkFileDeleteName
+                        case lookup.mkdirsName:
+                            kkCallee = lookup.kkFileMkdirsName
+                        default:
+                            kkCallee = nil
+                        }
+                        
+                        if let target = kkCallee {
+                            let memberArgs = (callee == lookup.forEachLineName || callee == lookup.useLinesName) ? 
+                                [receiverID] + arguments.dropFirst() : 
+                                [receiverID]
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: target,
+                                arguments: memberArgs,
+                                result: result,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            continue
+                        }
+                    }
+
                     // --- Rewrite arrayOf → kk_array_of ---
                     if lookup.arrayOfFactoryNames.contains(callee) {
                         let count = arguments.count
