@@ -1778,6 +1778,23 @@ extension CallLowerer {
                 ))
                 return result
             }
+            // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "commonPrefixWith" || calleeStr == "commonSuffixWith"
+            {
+                let runtimeName = calleeStr == "commonPrefixWith"
+                    ? "kk_string_commonPrefixWith_ignoreCase"
+                    : "kk_string_commonSuffixWith_ignoreCase"
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(runtimeName),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
             if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
                calleeStr == "substring" || calleeStr == "padStart" || calleeStr == "padEnd"
             {

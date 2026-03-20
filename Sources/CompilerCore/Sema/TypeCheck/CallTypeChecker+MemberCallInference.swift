@@ -2343,6 +2343,8 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
                         sema.types.stringType
+                    case "commonPrefixWith", "commonSuffixWith":
+                        sema.types.stringType
                     default:
                         nil
                     }
@@ -2533,6 +2535,34 @@ extension CallTypeChecker {
                         : sema.types.intType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                }
+            }
+            // String stdlib: 2-arg commonPrefixWith/commonSuffixWith(other, ignoreCase) (STDLIB-575/576)
+            if args.count == 2 {
+                let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "commonPrefixWith" || calleeStr == "commonSuffixWith" {
+                    let receiverTypeForCheck = safeCall
+                        ? sema.types.makeNonNullable(lookupReceiverType)
+                        : lookupReceiverType
+                    if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                 }
             }
             // String stdlib: replaceFirst(oldValue, newValue) (STDLIB-188)
