@@ -102,7 +102,7 @@ public func kk_file_readBytes(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
     do {
         let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
-        let elements = data.map { kk_box_int(Int($0)) }
+        let elements = data.map { Int(Int8(bitPattern: $0)) }
         return registerRuntimeObject(RuntimeListBox(elements: elements))
     } catch {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
