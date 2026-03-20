@@ -106,9 +106,6 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         }
         guard !syntheticEntryOrdinal.isEmpty else { return }
 
-        let intType = sema.types.make(.primitive(.int, .nonNull))
-
-        let boxIntName = interner.intern("kk_box_int")
         module.arena.transformFunctions { function in
             var newBody: [KIRInstruction] = []
             var changed = false
@@ -120,21 +117,9 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     continue
                 }
                 changed = true
-                // Emit the ordinal as an int literal.
-                let ordinalExpr = module.arena.appendExpr(
-                    .intLiteral(Int64(ordinal)),
-                    type: intType
-                )
-                newBody.append(.constValue(result: ordinalExpr, value: .intLiteral(Int64(ordinal))))
-                // Box the ordinal via kk_box_int.
-                newBody.append(.call(
-                    symbol: nil,
-                    callee: boxIntName,
-                    arguments: [ordinalExpr],
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                // Replace the symbolRef with a raw ordinal int literal,
+                // matching how all other enum synthesis paths represent entries.
+                newBody.append(.constValue(result: result, value: .intLiteral(Int64(ordinal))))
             }
             if changed {
                 var updated = function
