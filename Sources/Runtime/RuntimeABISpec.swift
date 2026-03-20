@@ -2221,6 +2221,22 @@ public enum RuntimeABISpec {
             section: "Range"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_range_isEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_range_sum",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_range_toList",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),

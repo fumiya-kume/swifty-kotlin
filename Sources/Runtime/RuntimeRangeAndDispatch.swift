@@ -153,6 +153,40 @@ public func kk_range_count(_ rangeRaw: Int) -> Int {
     return 0
 }
 
+@_cdecl("kk_range_isEmpty")
+public func kk_range_isEmpty(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_isEmpty")
+    }
+    if range.step > 0 {
+        return range.first > range.last ? 1 : 0
+    } else if range.step < 0 {
+        return range.first < range.last ? 1 : 0
+    }
+    return 1
+}
+
+@_cdecl("kk_range_sum")
+public func kk_range_sum(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_sum")
+    }
+    var sum = 0
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            sum &+= current
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            sum &+= current
+            current &+= range.step
+        }
+    }
+    return sum
+}
+
 // MARK: - IntRange HOFs (STDLIB-091)
 
 @_cdecl("kk_range_toList")

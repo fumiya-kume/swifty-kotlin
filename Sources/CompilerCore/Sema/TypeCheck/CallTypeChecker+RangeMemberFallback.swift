@@ -96,14 +96,14 @@ extension CallTypeChecker {
         let rangeMembers: Set = [
             "first", "last", "count", "contains",
             "toList", "forEach", "map",
-            "reversed",
+            "reversed", "isEmpty", "sum",
         ]
         return rangeMembers.contains(memberName)
     }
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "first", "last", "count", "toList", "reversed":
+        case "first", "last", "count", "toList", "reversed", "isEmpty", "sum":
             argCount == 0
         case "contains", "forEach", "map":
             argCount == 1
@@ -151,7 +151,9 @@ extension CallTypeChecker {
             return elementType
         case "count":
             return sema.types.intType
-        case "contains":
+        case "sum":
+            return elementType
+        case "contains", "isEmpty":
             return sema.types.booleanType
         case "forEach":
             return sema.types.unitType

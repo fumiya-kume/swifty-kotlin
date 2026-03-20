@@ -288,7 +288,12 @@ struct CollectionLiteralLookupTables {
     let kkRangeForEachName: InternedString
     let kkRangeMapName: InternedString
     let kkRangeReversedName: InternedString
+    let kkRangeIsEmptyName: InternedString
+    let kkRangeSumName: InternedString
     let kkOpContainsName: InternedString
+
+    // Member names (STDLIB-637)
+    let sumName: InternedString
 
     // CharRange (STDLIB-290)
     let kkBoxCharName: InternedString
@@ -786,7 +791,11 @@ struct CollectionLiteralLookupTables {
         kkRangeForEachName = interner.intern("kk_range_forEach")
         kkRangeMapName = interner.intern("kk_range_map")
         kkRangeReversedName = interner.intern("kk_range_reversed")
+        kkRangeIsEmptyName = interner.intern("kk_range_isEmpty")
+        kkRangeSumName = interner.intern("kk_range_sum")
         kkOpContainsName = interner.intern("kk_op_contains")
+
+        sumName = interner.intern("sum")
 
         // CharRange (STDLIB-290)
         kkBoxCharName = interner.intern("kk_box_char")
