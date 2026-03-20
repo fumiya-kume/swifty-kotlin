@@ -1,3 +1,5 @@
+import kotlin.random.Random
+
 fun main() {
     val list = listOf(3, 1, 4, 1, 5, 9, 2, 6)
 
@@ -35,4 +37,9 @@ fun main() {
     val shuffledWords = words.shuffled()
     println(shuffledWords.size)
     println(shuffledWords.sorted())
+
+    val rng = Random(42)
+    val result = list.shuffled(rng)
+    println(result)
+    println(result.size)
 }
