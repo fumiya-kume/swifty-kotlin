@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -953,16 +953,21 @@ symbol s951 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s952 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s953 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s954 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#951 params=[(T#951) -> T#952] ret=T#952 suspend=0 defaults=[0] vararg=[0]
-symbol s955 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s956 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#955 params=[] ret=Class#955 suspend=0 defaults=[] vararg=[]
-symbol s957 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s958 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s959 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s955
-expr e0 string(hello) type=String
-expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-40958
-expr e3 localAssign field value=e2 type=Unit ref=s959
-expr e4 name(field) type=Int ref=s959
-expr e5 int(0) type=Int
+symbol s955 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s955
+expr e0 name(print) type=_
+expr e1 string(before) type=String
+expr e2 call callee=e0 args=[_:e1] type=Unit call=s807 map=[0->0] targs=[]
+expr e3 name(println) type=_
+expr e4 call callee=e3 args=[] type=Unit call=s803 map=[] targs=[]
+expr e5 name(print) type=_
+expr e6 string(after) type=String
+expr e7 call callee=e5 args=[_:e6] type=Unit call=s807 map=[0->0] targs=[]
+expr e8 name(println) type=_
+expr e9 call callee=e8 args=[] type=Unit call=s803 map=[] targs=[]
+expr e10 name(println) type=_
+expr e11 call callee=e10 args=[] type=Unit call=s803 map=[] targs=[]
+expr e12 name(println) type=_
+expr e13 string(end) type=String
+expr e14 call callee=e12 args=[_:e13] type=Unit call=s804 map=[0->0] targs=[]
