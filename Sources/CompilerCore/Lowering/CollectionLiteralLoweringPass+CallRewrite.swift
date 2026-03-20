@@ -3065,7 +3065,7 @@ extension CollectionLiteralLoweringPass {
                         result: result,
                         origCanThrow: origCanThrow,
                         origThrownResult: origThrownResult,
-                        context: .init(module: module, lookup: lookup, functionBody: function.body),
+                        context: .init(module: module, lookup: lookup, functionBody: function.body, sema: ctx.sema, interner: ctx.interner),
                         listExprIDs: &listExprIDs,
                         setExprIDs: &setExprIDs,
                         mapExprIDs: &mapExprIDs,

@@ -5,6 +5,8 @@ extension CollectionLiteralLoweringPass {
         let module: KIRModule
         let lookup: CollectionLiteralLookupTables
         let functionBody: [KIRInstruction]
+        let sema: SemaModule?
+        let interner: StringInterner
     }
 
     func rewriteVirtualCallInstruction(
@@ -26,6 +28,21 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         let module = context.module
         let lookup = context.lookup
+
+        // LOWERING-001: If the receiver is not in any tracking set yet,
+        // attempt to classify it from its static type in the KIR arena.
+        // This handles non-tracked receivers such as function parameters,
+        // function return values, and field loads whose concrete collection
+        // kind was not determined by the factory-call pre-scan.
+        classifyReceiverByStaticType(
+            receiver: receiver,
+            context: context,
+            listExprIDs: &listExprIDs,
+            setExprIDs: &setExprIDs,
+            mapExprIDs: &mapExprIDs,
+            arrayExprIDs: &arrayExprIDs,
+            sequenceExprIDs: &sequenceExprIDs
+        )
 
         if rewriteArrayVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
@@ -114,9 +131,8 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         // asSequence() → kk_list_asSequence only when receiver is a tracked list.
         // Array receivers are handled by rewriteArrayVirtualCall (guarded by arrayExprIDs).
-        // KNOWN LIMITATION: Non-tracked receivers (e.g., List parameter, function return)
-        // fall through so the original symbol linkage is preserved.  A future improvement
-        // could use the receiver's static type for dispatch instead of *ExprIDs membership.
+        // Non-tracked receivers are now classified by static type via
+        // classifyReceiverByStaticType (LOWERING-001) before reaching here.
         if callee == lookup.asSequenceName, arguments.isEmpty,
            listExprIDs.contains(receiver.rawValue)
         {
@@ -1252,10 +1268,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        // KNOWN LIMITATION: Only tracked array receivers are rewritten.
-        // Array.asSequence() for non-tracked receivers (e.g., function parameters)
-        // is not rewritten here.  A dedicated Sema stub or type-based dispatch
-        // would be needed to handle those cases.
+        // Non-tracked array receivers are now classified by static type via
+        // classifyReceiverByStaticType (LOWERING-001) before reaching here.
         guard arrayExprIDs.contains(receiver.rawValue) else { return false }
 
         // toList on array → kk_array_toList (result is List)
@@ -1717,5 +1731,64 @@ extension CollectionLiteralLoweringPass {
         }
 
         return false
+    }
+
+    // MARK: - Static type fallback classification (LOWERING-001)
+
+    /// Classify a receiver expression by its static type in the KIR arena.
+    /// If the receiver is already in one of the tracking sets, this is a no-op.
+    /// Otherwise, look up the expression's TypeID, resolve its class symbol,
+    /// and insert it into the appropriate tracking set so that downstream
+    /// rewrite logic can match on it.
+    private func classifyReceiverByStaticType(
+        receiver: KIRExprID,
+        context: VirtualCallRewriteContext,
+        listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        let raw = receiver.rawValue
+        // Already classified -- skip.
+        if listExprIDs.contains(raw) || setExprIDs.contains(raw)
+            || mapExprIDs.contains(raw) || arrayExprIDs.contains(raw)
+            || sequenceExprIDs.contains(raw)
+        {
+            return
+        }
+        guard let sema = context.sema else { return }
+        guard let typeID = context.module.arena.exprType(receiver) else { return }
+
+        let types = sema.types
+        let symbols = sema.symbols
+        let interner = context.interner
+
+        let kind = types.kind(of: typeID)
+        guard case let .classType(classType) = kind else { return }
+        let classSymbol = classType.classSymbol
+        guard let symInfo = symbols.symbol(classSymbol) else { return }
+        guard let simpleName = symInfo.fqName.last else { return }
+
+        let resolved = interner.resolve(simpleName)
+        switch resolved {
+        case "List", "MutableList", "ArrayList",
+             "AbstractList", "AbstractMutableList":
+            listExprIDs.insert(raw)
+        case "Set", "MutableSet", "HashSet", "LinkedHashSet",
+             "AbstractSet", "AbstractMutableSet":
+            setExprIDs.insert(raw)
+        case "Map", "MutableMap", "HashMap", "LinkedHashMap",
+             "AbstractMap", "AbstractMutableMap":
+            mapExprIDs.insert(raw)
+        case "Array", "IntArray", "LongArray", "DoubleArray",
+             "FloatArray", "BooleanArray", "CharArray",
+             "ByteArray", "ShortArray", "UIntArray", "ULongArray":
+            arrayExprIDs.insert(raw)
+        case "Sequence":
+            sequenceExprIDs.insert(raw)
+        default:
+            break
+        }
     }
 }

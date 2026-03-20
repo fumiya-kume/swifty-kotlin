@@ -921,6 +921,189 @@ final class CollectionLiteralLoweringTests: XCTestCase {
         )
     }
 
+    // MARK: - LOWERING-001: Extended non-tracked receiver tests
+
+    /// Build a one-function module with a virtualCall that has arguments,
+    /// on a receiver whose static type is `receiverTypeName`.
+    private func buildAndLowerVirtualCallWithArgs(
+        receiverTypeName: String,
+        callee: String,
+        argCount: Int = 0,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) throws -> [String] {
+        let interner = StringInterner()
+        let arena = KIRArena()
+        let (ctx, types, symbols) = makeKIRContextWithSema(interner: interner)
+
+        let symbolID = defineNominalSymbol(
+            name: receiverTypeName, interner: interner, symbols: symbols
+        )
+        let receiverType = types.make(.classType(ClassType(classSymbol: symbolID)))
+
+        let paramExpr = arena.appendExpr(.symbolRef(SymbolID(rawValue: 100)), type: receiverType)
+        let resultExpr = arena.appendExpr(.temporary(1))
+
+        var argExprs: [KIRExprID] = []
+        var bodyInstructions: [KIRInstruction] = [
+            .constValue(result: paramExpr, value: .symbolRef(SymbolID(rawValue: 100)))
+        ]
+        for i in 0..<argCount {
+            let argExpr = arena.appendExpr(.temporary(Int32(10 + i)))
+            argExprs.append(argExpr)
+            bodyInstructions.append(.constValue(result: argExpr, value: .intLiteral(Int64(i))))
+        }
+        bodyInstructions.append(.virtualCall(
+            symbol: nil,
+            callee: interner.intern(callee),
+            receiver: paramExpr,
+            arguments: argExprs,
+            result: resultExpr,
+            canThrow: false,
+            thrownResult: nil,
+            dispatch: .vtable(slot: 0)
+        ))
+        bodyInstructions.append(.returnUnit)
+
+        let fn = KIRFunction(
+            symbol: SymbolID(rawValue: 1),
+            name: interner.intern("foo"),
+            params: [KIRParameter(symbol: SymbolID(rawValue: 100), type: receiverType)],
+            returnType: types.unitType,
+            body: bodyInstructions,
+            isSuspend: false,
+            isInline: false
+        )
+        let declID = arena.appendDecl(.function(fn))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [declID])], arena: arena)
+
+        try CollectionLiteralLoweringPass().run(module: module, ctx: ctx)
+
+        return calleesInDecl(declID, module: module, interner: interner)
+    }
+
+    func testVirtualCallOnArrayTypedParameterRewritesToKkArrayToList() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Array", callee: "toList")
+        XCTAssertTrue(
+            callees.contains("kk_array_toList"),
+            "virtualCall(toList) on Array-typed parameter should be rewritten to kk_array_toList, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnArrayTypedParameterRewritesToKkArraySize() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Array", callee: "size")
+        XCTAssertTrue(
+            callees.contains("kk_array_size"),
+            "virtualCall(size) on Array-typed parameter should be rewritten to kk_array_size, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListAsSequence() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "asSequence")
+        XCTAssertTrue(
+            callees.contains("kk_list_asSequence"),
+            "virtualCall(asSequence) on List-typed parameter should be rewritten to kk_list_asSequence, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListContains() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "List", callee: "contains", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_list_contains"),
+            "virtualCall(contains) on List-typed parameter should be rewritten to kk_list_contains, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSetTypedParameterRewritesToKkSetContains() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "Set", callee: "contains", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_set_contains"),
+            "virtualCall(contains) on Set-typed parameter should be rewritten to kk_set_contains, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSetTypedParameterRewritesToKkSetIsEmpty() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Set", callee: "isEmpty")
+        XCTAssertTrue(
+            callees.contains("kk_set_is_empty"),
+            "virtualCall(isEmpty) on Set-typed parameter should be rewritten to kk_set_is_empty, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnMapTypedParameterRewritesToKkMapIsEmpty() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Map", callee: "isEmpty")
+        XCTAssertTrue(
+            callees.contains("kk_map_is_empty"),
+            "virtualCall(isEmpty) on Map-typed parameter should be rewritten to kk_map_is_empty, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListReversed() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "reversed")
+        XCTAssertTrue(
+            callees.contains("kk_list_reversed"),
+            "virtualCall(reversed) on List-typed parameter should be rewritten to kk_list_reversed, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListSorted() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "sorted")
+        XCTAssertTrue(
+            callees.contains("kk_list_sorted"),
+            "virtualCall(sorted) on List-typed parameter should be rewritten to kk_list_sorted, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListDistinct() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "List", callee: "distinct")
+        XCTAssertTrue(
+            callees.contains("kk_list_distinct"),
+            "virtualCall(distinct) on List-typed parameter should be rewritten to kk_list_distinct, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListIndexOf() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "List", callee: "indexOf", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_list_indexOf"),
+            "virtualCall(indexOf) on List-typed parameter should be rewritten to kk_list_indexOf, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListTake() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "List", callee: "take", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_list_take"),
+            "virtualCall(take) on List-typed parameter should be rewritten to kk_list_take, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnListTypedParameterRewritesToKkListDrop() throws {
+        let callees = try buildAndLowerVirtualCallWithArgs(
+            receiverTypeName: "List", callee: "drop", argCount: 1
+        )
+        XCTAssertTrue(
+            callees.contains("kk_list_drop"),
+            "virtualCall(drop) on List-typed parameter should be rewritten to kk_list_drop, got: \(callees)"
+        )
+    }
+
+    func testVirtualCallOnSequenceTypedParameterRewritesToKkSequenceToList() throws {
+        let callees = try buildAndLowerVirtualCall(receiverTypeName: "Sequence", callee: "toList")
+        XCTAssertTrue(
+            callees.contains("kk_sequence_to_list"),
+            "virtualCall(toList) on Sequence-typed parameter should be rewritten to kk_sequence_to_list, got: \(callees)"
+        )
+    }
+
     func testWithoutSemaContextVirtualCallIsNotRewritten() throws {
         let interner = StringInterner()
         let arena = KIRArena()
