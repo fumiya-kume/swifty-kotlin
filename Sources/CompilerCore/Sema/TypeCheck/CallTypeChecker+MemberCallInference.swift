@@ -1159,12 +1159,27 @@ extension CallTypeChecker {
                 let keyType = inferredLambdaReturnType(
                     argExpr: args[0].expr, ast: ast, sema: sema
                 )
+                // Two-lambda variant: groupBy(keySelector, valueTransform)
+                var valueElementType = collectionElementType
+                if args.count >= 2 {
+                    let valueLambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType],
+                        returnType: sema.types.anyType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[1].expr), case .lambdaLiteral = lambdaExpr {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    }
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: valueLambdaExpectedType)
+                    valueElementType = inferredLambdaReturnType(
+                        argExpr: args[1].expr, ast: ast, sema: sema
+                    )
+                }
                 if let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner),
                    let mapSymbol = lookupStdlibSymbol("Map", symbols: sema.symbols, interner: interner)
                 {
                     let listType = sema.types.make(.classType(ClassType(
                         classSymbol: listSymbol,
-                        args: [.invariant(collectionElementType)],
+                        args: [.invariant(valueElementType)],
                         nullability: .nonNull
                     )))
                     resultType = sema.types.make(.classType(ClassType(

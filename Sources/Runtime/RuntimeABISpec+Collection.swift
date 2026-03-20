@@ -1525,6 +1525,19 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
+                RuntimeABIFunctionSpec(
+                    name: "kk_list_groupByTransform",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "keyFnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "keyClosureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "valueFnPtr", type: .intptr),
+                        RuntimeABIParameter(name: "valueClosureRaw", type: .intptr),
+                        RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,

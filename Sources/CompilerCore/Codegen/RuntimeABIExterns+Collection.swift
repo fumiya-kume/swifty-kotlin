@@ -60,6 +60,7 @@ public extension RuntimeABIExterns {
         kk_list_runningReduce,
         kk_list_scanReduce,
         kk_list_groupBy,
+        kk_list_groupByTransform,
         kk_list_sortedBy,
         kk_list_count,
         kk_list_first,
@@ -960,6 +961,12 @@ public extension RuntimeABIExterns {
     static let kk_list_groupBy = ExternDecl(
         name: "kk_list_groupBy",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_groupByTransform = ExternDecl(
+        name: "kk_list_groupByTransform",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

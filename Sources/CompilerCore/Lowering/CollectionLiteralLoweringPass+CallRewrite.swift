@@ -2379,6 +2379,44 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-631: groupBy with value transform (two-lambda variant) ---
+                    // Arguments: [receiver, keyLambda, keyClosureRaw, valueLambda] (4 args)
+                    // or [receiver, keyLambda, keyClosureRaw, valueLambda, valueClosureRaw] (5 args)
+                    if callee == lookup.groupByName,
+                       arguments.count == 4 || arguments.count == 5,
+                       listExprIDs.contains(arguments[0].rawValue)
+                    {
+                        let receiverID = arguments[0]
+                        let keyLambdaID = arguments[1]
+                        let keyClosureRawID = arguments[2]
+                        let valueLambdaID = arguments[3]
+                        let valueClosureRawID: KIRExprID
+                        if arguments.count == 5 {
+                            valueClosureRawID = arguments[4]
+                        } else {
+                            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                            valueClosureRawID = zeroExpr
+                        }
+                        let hofResult = module.arena.appendExpr(
+                            .temporary(Int32(module.arena.expressions.count)), type: nil
+                        )
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkListGroupByTransformName,
+                            arguments: [receiverID, keyLambdaID, keyClosureRawID, valueLambdaID, valueClosureRawID],
+                            result: hofResult,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if let result {
+                            mapExprIDs.insert(result.rawValue)
+                            mapExprIDs.insert(hofResult.rawValue)
+                            loweredBody.append(.copy(from: hofResult, to: result))
+                        }
+                        continue
+                    }
+
                     // --- Rewrite additional HOF collection member calls (STDLIB-005) ---
                     // 1-param lambda HOFs with [receiver, lambda, closureRaw?]
                     if callee == lookup.groupByName || callee == lookup.sortedByName || callee == lookup.findName

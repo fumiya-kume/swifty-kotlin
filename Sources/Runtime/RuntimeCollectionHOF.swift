@@ -615,6 +615,38 @@ public func kk_list_groupBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     return registerRuntimeObject(RuntimeMapBox(keys: groupKeys, values: values))
 }
 
+// MARK: - groupBy with value transform (two-lambda variant)
+// Kotlin: list.groupBy(keySelector, valueTransform) -> Map<K, List<V>>
+
+@_cdecl("kk_list_groupByTransform")
+public func kk_list_groupByTransform(_ listRaw: Int, _ keyFnPtr: Int, _ keyClosureRaw: Int, _ valueFnPtr: Int, _ valueClosureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    var groupKeys: [Int] = []
+    var groupElements: [[Int]] = []
+    var keyToIndex: [Int: Int] = [:]
+    for elem in list.elements {
+        var thrown = 0
+        let key = runtimeInvokeCollectionLambda1(fnPtr: keyFnPtr, closureRaw: keyClosureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        let unboxedKey = maybeUnbox(key)
+        var thrown2 = 0
+        let transformedValue = runtimeInvokeCollectionLambda1(fnPtr: valueFnPtr, closureRaw: valueClosureRaw, value: elem, outThrown: &thrown2)
+        if thrown2 != 0 { return handleCollectionLambdaThrow(thrown2, outThrown) }
+        if let grpIdx = keyToIndex[unboxedKey] {
+            groupElements[grpIdx].append(transformedValue)
+        } else {
+            let newIndex = groupKeys.count
+            keyToIndex[unboxedKey] = newIndex
+            groupKeys.append(unboxedKey)
+            groupElements.append([transformedValue])
+        }
+    }
+    let values = groupElements.map { registerRuntimeObject(RuntimeListBox(elements: $0)) }
+    return registerRuntimeObject(RuntimeMapBox(keys: groupKeys, values: values))
+}
+
 @_cdecl("kk_list_sortedBy")
 public func kk_list_sortedBy(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else {
