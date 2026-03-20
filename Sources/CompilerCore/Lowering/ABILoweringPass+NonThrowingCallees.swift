@@ -506,8 +506,17 @@ extension ABILoweringPass {
             interner.intern("kk_arraydeque_size"),
             interner.intern("kk_arraydeque_isEmpty"),
             interner.intern("kk_arraydeque_toString"),
-            // File I/O (STDLIB-320) — constructor is non-throwing
+            // File I/O (STDLIB-320/321/323) — non-throwing file operations
             interner.intern("kk_file_new"),
+            interner.intern("kk_file_exists"),
+            interner.intern("kk_file_isFile"),
+            interner.intern("kk_file_isDirectory"),
+            interner.intern("kk_file_name"),
+            interner.intern("kk_file_path"),
+            interner.intern("kk_file_delete"),
+            interner.intern("kk_file_mkdirs"),
+            interner.intern("kk_file_listFiles"),
+            interner.intern("kk_file_walk"),
             // StringBuilder (STDLIB-255/256/257)
             interner.intern("kk_string_builder_new"),
             interner.intern("kk_string_builder_new_from_string"),
