@@ -182,6 +182,53 @@ final class CallTypeChecker {
             return returnType
         }
 
+        // --- runCatching(block) (STDLIB-590) ---
+        // `runCatching { expr }` executes the block lambda and wraps the result
+        // in a Result<T>.  Similar to top-level `run`, but returns Result<T>.
+        if let calleeName, args.count == 1,
+           calleeName == knownNames.runCatching,
+           locals[calleeName] == nil,
+           isLambdaOrCallableRefArg(args[0].expr, ast: ast),
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           isSyntheticStdlibSymbol(calleeName, fqComponents: ["kotlin", "runCatching"], ctx: ctx)
+        {
+            let lambdaType = driver.inferExpr(
+                args[0].expr, ctx: ctx, locals: &locals, expectedType: nil
+            )
+            let innerType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                fnType.returnType
+            } else {
+                sema.bindings.exprTypes[args[0].expr].flatMap { typeID in
+                    if case let .functionType(fnType) = sema.types.kind(of: typeID) {
+                        return fnType.returnType
+                    }
+                    return nil
+                } ?? sema.types.anyType
+            }
+            // Build Result<T> type
+            let resultType: TypeID = if let resultClassSymbol = sema.symbols.lookup(fqName: knownNames.kotlinResultFQName) {
+                sema.types.make(.classType(ClassType(
+                    classSymbol: resultClassSymbol,
+                    args: [.out(innerType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                sema.types.anyType
+            }
+            // Mark the lambda for closure ABI expansion in KIR
+            sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+            // Bind the call to the synthetic runCatching function symbol
+            if let runCatchingSymbol = sema.symbols.lookup(fqName: knownNames.kotlinRunCatchingFQName) {
+                sema.bindings.bindCall(id, binding: CallBinding(
+                    chosenCallee: runCatchingSymbol,
+                    substitutedTypeArguments: [innerType],
+                    parameterMapping: [0: 0]
+                ))
+            }
+            sema.bindings.bindExprType(id, type: resultType)
+            return resultType
+        }
+
         // --- Flow builder function (CORO-003) ---
         // `flow { emit(...) }` is treated as a builtin cold stream factory.
         // We infer the lambda with a flow-builder scope so unqualified `emit`

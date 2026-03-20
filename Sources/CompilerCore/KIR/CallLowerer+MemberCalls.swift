@@ -2516,6 +2516,7 @@ extension CallLowerer {
             "onEach", "onEachIndexed",
             "ifEmpty",
             "chunked",
+            "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -3159,6 +3160,24 @@ extension CallLowerer {
         if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
             callArguments = []
         }
+        // Result HOF functions accept an outThrown parameter but we don't need
+        // the codegen to generate conditional thrown-check branches. Instead,
+        // append a zero (null) pointer argument so the runtime receives the
+        // expected parameter count, and keep canThrow=false to avoid control-
+        // flow complexity.
+        let resultHOFCallees: Set = [
+            interner.intern("kk_result_onSuccess"),
+            interner.intern("kk_result_onFailure"),
+            interner.intern("kk_result_getOrElse"),
+            interner.intern("kk_result_map"),
+            interner.intern("kk_result_fold"),
+            interner.intern("kk_result_recover"),
+        ]
+        if resultHOFCallees.contains(loweredCallee) {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            callArguments.append(zeroExpr)
+        }
         let throwingCallees = Self.throwingMemberCalleeNames(interner: interner)
         let canThrow = throwingCallees.contains(loweredCallee)
         instructions.append(.call(
@@ -3198,6 +3217,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_list_binarySearch_compare"),
+            interner.intern("kk_result_getOrThrow"),
         ])
     }
 

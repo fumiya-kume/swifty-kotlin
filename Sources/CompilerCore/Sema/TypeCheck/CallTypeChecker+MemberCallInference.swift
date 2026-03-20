@@ -418,6 +418,163 @@ extension CallTypeChecker {
             }
         }
 
+        // --- Result member functions (STDLIB-590) ---
+        // Result<T>.onSuccess/onFailure/getOrElse/map/fold/recover
+        // These require special handling because the generic type parameter T
+        // needs to be extracted from the receiver's Result<out T> type and used
+        // to construct the expected lambda parameter types.
+        if args.count >= 1, args.count <= 2 {
+            let calleeStr = interner.resolve(calleeName)
+            let resultMemberNames: Set = [
+                "onSuccess", "onFailure", "getOrElse", "map", "fold", "recover",
+            ]
+            if resultMemberNames.contains(calleeStr),
+               let resultElementType = extractResultElementType(receiverType, sema: sema, interner: interner)
+            {
+                let throwableType = driver.helpers.throwableType(sema: sema, interner: interner) ?? sema.types.anyType
+                let nonNullReceiverType = safeCall ? sema.types.makeNonNullable(receiverType) : receiverType
+
+                switch calleeStr {
+                case "onSuccess" where args.count == 1:
+                    // onSuccess(action: (T) -> Unit): Result<T>
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [resultElementType],
+                        returnType: sema.types.unitType
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    if let onSuccessSymbol = lookupResultMember("onSuccess", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: onSuccessSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(nonNullReceiverType) : nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "onFailure" where args.count == 1:
+                    // onFailure(action: (Throwable) -> Unit): Result<T>
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [throwableType],
+                        returnType: sema.types.unitType
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    if let onFailureSymbol = lookupResultMember("onFailure", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: onFailureSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(nonNullReceiverType) : nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "getOrElse" where args.count == 1:
+                    // getOrElse(onFailure: (Throwable) -> T): T
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [throwableType],
+                        returnType: resultElementType
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    if let getOrElseSymbol = lookupResultMember("getOrElse", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: getOrElseSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(resultElementType) : resultElementType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "map" where args.count == 1:
+                    // map(transform: (T) -> R): Result<R>
+                    // Note: only intercept for Result receiver, not for collections
+                    // expectedType is Result<R>, so extract R for the lambda return type
+                    let lambdaReturnType = expectedType.flatMap({ extractResultElementType($0, sema: sema, interner: interner) }) ?? sema.types.anyType
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [resultElementType],
+                        returnType: lambdaReturnType
+                    )))
+                    let lambdaType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    let mappedType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: lambdaType) {
+                        fnType.returnType
+                    } else {
+                        sema.types.anyType
+                    }
+                    if let mapSymbol = lookupResultMember("map", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: mapSymbol,
+                            substitutedTypeArguments: [resultElementType, mappedType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let mappedResultType = makeResultType(elementType: mappedType, sema: sema, interner: interner) ?? sema.types.anyType
+                    let finalType = safeCall ? sema.types.makeNullable(mappedResultType) : mappedResultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "recover" where args.count == 1:
+                    // recover(transform: (Throwable) -> T): Result<T>
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [throwableType],
+                        returnType: resultElementType
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    if let recoverSymbol = lookupResultMember("recover", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: recoverSymbol,
+                            substitutedTypeArguments: [resultElementType],
+                            parameterMapping: [0: 0]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(nonNullReceiverType) : nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                case "fold" where args.count == 2:
+                    // fold(onSuccess: (T) -> R, onFailure: (Throwable) -> R): R
+                    let onSuccessExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [resultElementType],
+                        returnType: expectedType ?? sema.types.anyType
+                    )))
+                    let onSuccessType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: onSuccessExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    let foldReturnType: TypeID = if case let .functionType(fnType) = sema.types.kind(of: onSuccessType) {
+                        fnType.returnType
+                    } else {
+                        sema.types.anyType
+                    }
+                    let onFailureExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [throwableType],
+                        returnType: foldReturnType
+                    )))
+                    _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: onFailureExpectedType)
+                    sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+                    if let foldSymbol = lookupResultMember("fold", sema: sema, interner: interner) {
+                        sema.bindings.bindCall(id, binding: CallBinding(
+                            chosenCallee: foldSymbol,
+                            substitutedTypeArguments: [resultElementType, foldReturnType],
+                            parameterMapping: [0: 0, 1: 1]
+                        ))
+                    }
+                    let finalType = safeCall ? sema.types.makeNullable(foldReturnType) : foldReturnType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+
+                default:
+                    break
+                }
+            }
+        }
+
         // --- takeIf / takeUnless (STDLIB-160) ---
         // T.takeIf((T) -> Boolean): T? / T.takeUnless((T) -> Boolean): T?
         // Inline-expanded by CallLowerer; no runtime call.
@@ -3843,5 +4000,61 @@ extension CallTypeChecker {
         }
         let nonNullReceiver = sema.types.makeNonNullable(receiverType)
         return sema.types.isSubtype(nonNullReceiver, closeableType)
+    }
+
+    // MARK: - Result helpers (STDLIB-590)
+
+    /// Extract the element type T from a Result<out T> receiver type.
+    private func extractResultElementType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let nonNull = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNull),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              symbol.fqName == knownNames.kotlinResultFQName,
+              let firstArg = classType.args.first
+        else {
+            return nil
+        }
+        switch firstArg {
+        case let .invariant(type), let .out(type), let .in(type):
+            return type
+        case .star:
+            return sema.types.anyType
+        }
+    }
+
+    /// Look up a synthetic Result member function by name.
+    private func lookupResultMember(
+        _ name: String,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> SymbolID? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        let memberFQName = knownNames.kotlinResultFQName + [interner.intern(name)]
+        return sema.symbols.lookupAll(fqName: memberFQName).first(where: { symbolID in
+            guard let sym = sema.symbols.symbol(symbolID) else { return false }
+            return sym.kind == .function && sym.flags.contains(.synthetic)
+        })
+    }
+
+    /// Construct a Result<T> type from an element type.
+    private func makeResultType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard let resultClassSymbol = sema.symbols.lookup(fqName: knownNames.kotlinResultFQName) else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: resultClassSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 }
