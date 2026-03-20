@@ -468,6 +468,10 @@ final class RuntimeSequenceCoroutine {
             let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
             _ = fn(builderHandle, &thrown)
 
+            if thrown != 0 {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
+            }
+
             coroutine.markFinished()
         }
     }
