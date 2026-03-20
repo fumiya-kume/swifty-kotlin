@@ -1,7 +1,7 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.random.Random (STDLIB-165).
-/// Registers the Random object and nextInt/nextDouble/nextBoolean methods.
+/// Synthetic stdlib stubs for kotlin.random.Random (STDLIB-165, STDLIB-514, STDLIB-515).
+/// Registers the Random object and nextInt/nextLong/nextFloat/nextDouble/nextBoolean methods.
 extension DataFlowSemaPhase {
     func registerSyntheticRandomStubs(
         symbols: SymbolTable,
@@ -41,6 +41,8 @@ extension DataFlowSemaPhase {
         symbols.setPropertyType(randomType, for: randomSymbol)
 
         let intType = types.intType
+        let longType = types.longType
+        let floatType = types.floatType
         let doubleType = types.doubleType
         let boolType = types.make(.primitive(.boolean, .nonNull))
 
@@ -76,6 +78,53 @@ extension DataFlowSemaPhase {
                 (name: "from", type: intType),
                 (name: "until", type: intType),
             ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextLong",
+            externalLinkName: "kk_random_nextLong",
+            returnType: longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextLong",
+            externalLinkName: "kk_random_nextLong_until",
+            returnType: longType,
+            parameters: [(name: "until", type: longType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextLong",
+            externalLinkName: "kk_random_nextLong_range",
+            returnType: longType,
+            parameters: [
+                (name: "from", type: longType),
+                (name: "until", type: longType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextFloat",
+            externalLinkName: "kk_random_nextFloat",
+            returnType: floatType,
+            parameters: [],
             symbols: symbols,
             interner: interner
         )

@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Random (STDLIB-165)
+// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515)
 
 @_cdecl("kk_random_nextInt")
 public func kk_random_nextInt(_: Int) -> Int {
@@ -33,10 +33,39 @@ public func kk_random_nextInt_range(_: Int, _ from: Int, _ until: Int, _ outThro
     return Int.random(in: from ..< until)
 }
 
+@_cdecl("kk_random_nextLong")
+public func kk_random_nextLong(_: Int) -> Int {
+    Int.random(in: Int.min ... Int.max)
+}
+
+@_cdecl("kk_random_nextLong_until")
+public func kk_random_nextLong_until(_: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard until > 0 else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
+        return 0
+    }
+    return Int.random(in: 0 ..< until)
+}
+
+@_cdecl("kk_random_nextLong_range")
+public func kk_random_nextLong_range(_: Int, _ from: Int, _ until: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard until > from else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
+        return 0
+    }
+    return Int.random(in: from ..< until)
+}
+
+@_cdecl("kk_random_nextFloat")
+public func kk_random_nextFloat(_: Int) -> Int {
+    kk_float_to_bits(Float.random(in: 0 ..< 1))
+}
+
 @_cdecl("kk_random_nextDouble")
 public func kk_random_nextDouble(_: Int) -> Int {
-    let d = Double.random(in: 0 ..< 1)
-    return kk_box_double(kk_double_to_bits(d))
+    kk_double_to_bits(Double.random(in: 0 ..< 1))
 }
 
 @_cdecl("kk_random_nextBoolean")
