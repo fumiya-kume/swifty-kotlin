@@ -3107,6 +3107,30 @@ extension CallTypeChecker {
                 }
             }
 
+            // STDLIB-532/533/534: orEmpty() on nullable String?, List?, Map? receivers
+            if interner.resolve(calleeName) == "orEmpty", args.isEmpty {
+                let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+                let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+                if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType) {
+                    let resultType = sema.types.stringType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                if isListLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                    let resultType = nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+                let knownNames = KnownCompilerNames(interner: interner)
+                if case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+                   let symbol = sema.symbols.symbol(classType.classSymbol),
+                   knownNames.isMapLikeSymbol(symbol) {
+                    let resultType = nonNullReceiverType
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
+                }
+            }
+
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
