@@ -314,6 +314,7 @@ struct CollectionLiteralLookupTables {
     let removeName: InternedString
 
     // ListIterator member names (STDLIB-538)
+    let listIteratorMemberName: InternedString
     let hasPreviousName: InternedString
     let previousName: InternedString
 
@@ -818,6 +819,7 @@ struct CollectionLiteralLookupTables {
         removeName = interner.intern("remove")
 
         // ListIterator member names (STDLIB-538)
+        listIteratorMemberName = interner.intern("listIterator")
         hasPreviousName = interner.intern("hasPrevious")
         previousName = interner.intern("previous")
 
