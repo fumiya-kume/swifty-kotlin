@@ -2183,7 +2183,7 @@ extension CallTypeChecker {
                             )
                         }
                         switch calleeStr {
-                        case "toList", "toCharArray", "lines", "toByteArray", "encodeToByteArray":
+                        case "toList", "toCharArray", "lines", "lineSequence", "toByteArray", "encodeToByteArray":
                             sema.bindings.markCollectionExpr(id)
                         default:
                             break
@@ -2284,6 +2284,13 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.char, .nullable))
                     case "lines":
                         makeSyntheticListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.stringType
+                        )
+                    case "lineSequence":
+                        makeSyntheticSequenceType(
                             symbols: sema.symbols,
                             types: sema.types,
                             interner: interner,

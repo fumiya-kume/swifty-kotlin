@@ -167,6 +167,13 @@ extension CallTypeChecker {
             regexType ?? sema.types.anyType
         case ("lines", 0):
             listStringType
+        case ("lineSequence", 0):
+            makeSyntheticSequenceType(
+                symbols: sema.symbols,
+                types: sema.types,
+                interner: interner,
+                elementType: sema.types.stringType
+            )
         case ("replaceFirstChar", 1):
             sema.types.stringType
         case ("matches", 1), ("contains", 1):

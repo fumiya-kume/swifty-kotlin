@@ -1108,6 +1108,26 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-666: String.lineSequence ---
+
+        let sequenceStringType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: stringType
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lineSequence",
+            externalLinkName: "kk_string_lines",
+            receiverType: stringType,
+            parameters: [],
+            returnType: sequenceStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-144: String.trimStart / trimEnd ---
 
         registerSyntheticStringExtensionFunction(

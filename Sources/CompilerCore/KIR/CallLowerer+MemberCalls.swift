@@ -1553,7 +1553,7 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                if calleeStr == "lines" {
+                if calleeStr == "lines" || calleeStr == "lineSequence" {
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern("kk_string_lines"),
@@ -3316,7 +3316,7 @@ extension CallLowerer {
                 return interner.intern("kk_string_compareTo_member")
             case "get":
                 return interner.intern("kk_string_get")
-            case "lines":
+            case "lines", "lineSequence":
                 return interner.intern("kk_string_lines")
             case "toRegex":
                 return interner.intern("kk_string_toRegex")
