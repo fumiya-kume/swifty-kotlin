@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -953,16 +953,37 @@ symbol s951 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s952 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s953 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s954 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#951 params=[(T#951) -> T#952] ret=T#952 suspend=0 defaults=[0] vararg=[0]
-symbol s955 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s956 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#955 params=[] ret=Class#955 suspend=0 defaults=[] vararg=[]
-symbol s957 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s958 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s959 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s955
-expr e0 string(hello) type=String
-expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-40958
-expr e3 localAssign field value=e2 type=Unit ref=s959
-expr e4 name(field) type=Int ref=s959
-expr e5 int(0) type=Int
+symbol s955 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s956 kind=local fq=__local_7.list vis=private flags=_
+symbol s957 kind=local fq=__destructuring_21.evens vis=private flags=_ type=T#28
+symbol s958 kind=local fq=__destructuring_21.odds vis=private flags=_ type=T#29
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s955
+expr e0 name(listOf) type=_
+expr e1 int(1) type=Int
+expr e2 int(2) type=Int
+expr e3 int(3) type=Int
+expr e4 int(4) type=Int
+expr e5 int(5) type=Int
+expr e6 call callee=e0 args=[_:e1,_:e2,_:e3,_:e4,_:e5] type=Class#65<out Int>
+expr e7 localDecl list mutable=0 type=_ init=e6 type=Unit ref=s956
+expr e8 name(list) type=Class#65<out Int> ref=s956
+expr e9 name(it) type=_
+expr e10 int(2) type=_
+expr e11 binary(modulo) lhs=e9 rhs=e10 type=_
+expr e12 int(0) type=_
+expr e13 binary(equal) lhs=e11 rhs=e12 type=_
+expr e14 name(it) type=Int ref=s-1004864
+expr e15 int(2) type=Int
+expr e16 binary(modulo) lhs=e14 rhs=e15 type=Int
+expr e17 int(0) type=Int
+expr e18 binary(equal) lhs=e16 rhs=e17 type=Boolean
+expr e19 lambda params=[] body=e18 type=(Int) -> Boolean
+expr e20 memberCall recv=e8 callee=partition args=[_:e19] type=Class#27<Class#65<Int>, Class#65<Int>>
+expr e21 destructuringDecl names=[evens,odds] mutable=0 init=e20 type=Unit
+expr e22 name(println) type=_
+expr e23 name(evens) type=T#28 ref=s957
+expr e24 call callee=e22 args=[_:e23] type=Unit call=s804 map=[0->0] targs=[]
+expr e25 name(println) type=_
+expr e26 name(odds) type=T#29 ref=s958
+expr e27 call callee=e25 args=[_:e26] type=Unit call=s804 map=[0->0] targs=[]
