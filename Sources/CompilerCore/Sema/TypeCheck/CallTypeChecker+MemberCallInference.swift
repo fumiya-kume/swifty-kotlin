@@ -122,6 +122,23 @@ extension CallTypeChecker {
         return knownNames.isCoroutineHandleSymbol(symbol)
     }
 
+    /// Returns true when the receiver type is java.io.File.
+    private func isFileType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let nonNullType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullType),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return symbol.fqName.count >= 2
+            && interner.resolve(symbol.fqName.last!) == "File"
+            && interner.resolve(symbol.fqName[symbol.fqName.count - 2]) == "io"
+    }
+
     private func isChannelReceiverType(
         _ receiverType: TypeID,
         sema: SemaModule,
@@ -453,6 +470,69 @@ extension CallTypeChecker {
                 let nullableReceiverType = sema.types.makeNullable(nonNullReceiverType)
                 let finalType = nullableReceiverType
                 sema.bindings.markTakeIfTakeUnlessExpr(id, kind: takeKind)
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
+        // --- File lambda-accepting methods: forEachLine, useLines (STDLIB-322) ---
+        // These require the lambda to use the collection HOF closure ABI (closureRaw
+        // prepended), and the lambda's implicit `it` must be correctly resolved.
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            let isFileReceiver = isFileType(receiverType, sema: sema, interner: interner)
+            if isFileReceiver && (calleeStr == "forEachLine" || calleeStr == "useLines") {
+                let nonNullReceiverType = safeCall
+                    ? sema.types.makeNonNullable(receiverType)
+                    : receiverType
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                let lambdaParamType: TypeID
+                let lambdaReturnType: TypeID
+                let callReturnType: TypeID
+                if calleeStr == "forEachLine" {
+                    // forEachLine { line: String -> Unit }
+                    lambdaParamType = sema.types.stringType
+                    lambdaReturnType = sema.types.unitType
+                    callReturnType = sema.types.unitType
+                } else {
+                    // useLines { lines: List<String> -> T }
+                    let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                    lambdaParamType = if let listSym = listSymbol {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: listSym,
+                            args: [.out(sema.types.stringType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        sema.types.anyType
+                    }
+                    lambdaReturnType = expectedType ?? sema.types.anyType
+                    callReturnType = expectedType ?? sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [lambdaParamType],
+                    returnType: lambdaReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let inferredLambdaType = driver.inferExpr(
+                    args[0].expr, ctx: ctx, locals: &locals,
+                    expectedType: lambdaExpectedType
+                )
+                // For useLines, extract the actual return type from the lambda
+                let finalReturnType: TypeID
+                if calleeStr == "useLines" {
+                    if case let .functionType(fnType) = sema.types.kind(of: inferredLambdaType) {
+                        finalReturnType = fnType.returnType
+                    } else {
+                        finalReturnType = callReturnType
+                    }
+                } else {
+                    finalReturnType = callReturnType
+                }
+                let finalType = safeCall ? sema.types.makeNullable(finalReturnType) : finalReturnType
                 sema.bindings.bindExprType(id, type: finalType)
                 return finalType
             }

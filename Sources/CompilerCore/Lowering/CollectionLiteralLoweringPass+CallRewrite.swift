@@ -725,6 +725,24 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- Append closureRaw argument for File lambda-accepting methods (STDLIB-322) ---
+                    // When the KIR callee is already rewritten via externalLinkName,
+                    // the lambda argument must be supplemented with closureRaw (0)
+                    // so the runtime receives (fileRaw, fnPtr, closureRaw, outThrown).
+                    if callee == lookup.kkFileForEachLineName || callee == lookup.kkFileUseLinesName {
+                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        loweredBody.append(.call(
+                            symbol: symbol,
+                            callee: callee,
+                            arguments: arguments + [zeroExpr],
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
                     // --- Rewrite arrayOf → kk_array_of ---
                     if lookup.arrayOfFactoryNames.contains(callee) {
                         let count = arguments.count

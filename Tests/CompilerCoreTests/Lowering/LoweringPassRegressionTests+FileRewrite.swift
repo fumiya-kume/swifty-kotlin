@@ -36,15 +36,15 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .virtualCall(
+                // The KIR builder emits a .call with the already-rewritten callee
+                // name (from externalLinkName) rather than a .virtualCall.
+                .call(
                     symbol: nil,
-                    callee: interner.intern("forEachLine"),
-                    receiver: fileExpr,
-                    arguments: [lambdaExpr],
+                    callee: interner.intern("kk_file_forEachLine"),
+                    arguments: [fileExpr, lambdaExpr],
                     result: resultExpr,
                     canThrow: true,
-                    thrownResult: nil,
-                    dispatch: .vtable(slot: 0)
+                    thrownResult: nil
                 ),
                 .returnUnit,
             ],
