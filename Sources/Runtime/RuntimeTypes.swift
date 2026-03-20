@@ -337,11 +337,43 @@ final class RuntimeSequenceBuilderBox {
 }
 
 /// Runtime box for the `iterator { yield(x) }` builder (STDLIB-331/564).
-/// Accumulates yielded elements eagerly during builder block execution,
-/// then provides `hasNext` / `next` traversal over the collected values.
+///
+/// Implements **continuation-based lazy iteration** using a cooperative
+/// producer-consumer pattern. The builder lambda runs on a background thread
+/// and suspends on each `yield()` call until the consumer calls `next()`.
+///
+/// Protocol:
+///   1. `kk_iterator_builder_build(fnPtr)` creates the box and spawns the
+///      producer thread. The producer immediately blocks on `producerGate`
+///      until the first `hasNext` / `next` call.
+///   2. `hasNext` signals `producerGate` (let producer run), then waits on
+///      `consumerGate`. When the producer yields a value or finishes, it
+///      signals `consumerGate`.
+///   3. `next` returns the most recently yielded value (already fetched by
+///      `hasNext`).
+///
+/// Memory: The box is registered in the runtime object table; the background
+/// thread retains the box via its closure capture. The thread exits naturally
+/// when the builder lambda returns.
 final class RuntimeIteratorBuilderBox {
-    var elements: [Int] = []
-    var index: Int = 0
+    /// Semaphore the producer blocks on; signalled by the consumer (`hasNext`).
+    let producerGate = DispatchSemaphore(value: 0)
+    /// Semaphore the consumer blocks on; signalled by the producer (`yield` or end).
+    let consumerGate = DispatchSemaphore(value: 0)
+
+    /// The most recently yielded value, valid when `state == .hasValue`.
+    var yieldedValue: Int = 0
+    /// Current state of the iterator.
+    var state: IteratorState = .initial
+
+    enum IteratorState {
+        /// Producer has not yet been advanced.
+        case initial
+        /// Producer yielded a value; `yieldedValue` is valid.
+        case hasValue
+        /// Producer finished (lambda returned).
+        case done
+    }
 }
 
 /// Runtime box for `Grouping<T, K>` returned by `groupingBy`.

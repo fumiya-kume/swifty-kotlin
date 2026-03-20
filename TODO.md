@@ -72,7 +72,7 @@
   - [x] Sema に `iterator` stub を登録する（receiver は `SequenceScope<T>` を流用。Kotlin の `IteratorScope` 相当）
   - [x] Lowering で `iterator {}` → `kk_iterator_builder_build`、`yield` → `kk_iterator_builder_yield`、`hasNext`/`next` → `kk_iterator_builder_*` に変換する
   - [x] Runtime に eager バッファ方式 of `kk_iterator_builder_*` を追加する（`RuntimeSequence.swift`）
-  - [ ] continuation ベースの遅延イテレーション（`STDLIB-564` と統合可）
+  - [x] continuation ベースの遅延イテレーション（`STDLIB-564` と統合可）
   - [x] diff/golden ケースを追加する
   - **完了条件**: `val iter = iterator { yield(1); yield(2) }; println(iter.next())` → `1` が `kotlinc` と一致する
 
@@ -161,7 +161,7 @@
 #### D. kotlin.sequences — 単一 API 単位
 
 - [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース。現状 eager builder）
-- [ ] STDLIB-564: `iterator {}` の continuation ベース Runtime（現状 eager `kk_iterator_builder_*`）
+- [x] STDLIB-564: `iterator {}` の continuation ベース Runtime（現状 eager `kk_iterator_builder_*`）
 - [ ] STDLIB-624: `Iterable.asSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/iterable_as_sequence.kt`）
 - [ ] STDLIB-625: `sequenceOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）
 - [ ] STDLIB-626: `generateSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）

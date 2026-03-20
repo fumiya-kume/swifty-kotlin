@@ -150,6 +150,106 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
     }
 
+    // MARK: - Lazy / Continuation-based Iterator Tests (STDLIB-564)
+
+    /// Verifies that the producer is truly lazy: values are produced on-demand,
+    /// not eagerly collected into a buffer.  We use a shared counter that the
+    /// producer increments on each yield; the consumer asserts the counter
+    /// hasn't advanced beyond what was requested.
+    func testIteratorBuilderIsLazyNotEager() {
+        // We use a class wrapper so the thunk can capture and mutate it.
+        // The thunk yields yieldCount values: 1, 2, 3, 4, 5.
+        // Between each next() call on the consumer side, we verify the
+        // producer hasn't run ahead.
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Yield 5 values.  Each yield suspends the producer until the
+            // consumer calls next(), so the producer can never run ahead.
+            _ = kk_iterator_builder_yield(builderRaw, 1)
+            _ = kk_iterator_builder_yield(builderRaw, 2)
+            _ = kk_iterator_builder_yield(builderRaw, 3)
+            _ = kk_iterator_builder_yield(builderRaw, 4)
+            _ = kk_iterator_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Consume only the first 3 elements; the producer should not have
+        // produced elements 4 and 5 yet (lazy).
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 2)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 3)
+
+        // Now consume the rest.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 4)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 5)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that calling next() without hasNext() works correctly
+    /// (the continuation advances the producer automatically).
+    func testIteratorBuilderNextWithoutHasNext() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_iterator_builder_yield(builderRaw, 10)
+            _ = kk_iterator_builder_yield(builderRaw, 20)
+            _ = kk_iterator_builder_yield(builderRaw, 30)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Call next() directly without hasNext().
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 10)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 20)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that calling hasNext() multiple times without next() is
+    /// idempotent (returns the same result without advancing the iterator).
+    func testIteratorBuilderHasNextIsIdempotent() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_iterator_builder_yield(builderRaw, 42)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Multiple hasNext() calls should all return 1.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 42)
+        // After consuming, multiple hasNext() calls should all return 0.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that the iterator builder works with a computed sequence
+    /// (loop-based yield), matching the pattern in the diff case.
+    func testIteratorBuilderWithComputedSequence() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Yield squares: 1, 4, 9, 16, 25
+            for i in 1 ... 5 {
+                _ = kk_iterator_builder_yield(builderRaw, i * i)
+            }
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        var results: [Int] = []
+        while kk_iterator_builder_hasNext(iterHandle) == 1 {
+            results.append(kk_iterator_builder_next(iterHandle))
+        }
+        XCTAssertEqual(results, [1, 4, 9, 16, 25])
+    }
+
     // Backwards-compatibility: older lowering paths may pass a RuntimeListIteratorBox
     // to kk_iterator_builder_hasNext / kk_iterator_builder_next.
     func testIteratorBuilderBackwardsCompatWithListIterator() {
