@@ -155,7 +155,8 @@ final class LambdaLowerer {
             }
         }
         let usesClosureRawCapture = needsClosureParam && captureBindings.count == 1
-        let functionCaptureBindings = usesClosureRawCapture ? [] : captureBindings
+        let usesClosureObjectCapture = needsClosureParam && captureBindings.count >= 2
+        let functionCaptureBindings = (usesClosureRawCapture || usesClosureObjectCapture) ? [] : captureBindings
 
         let scopeSnapshot = driver.ctx.saveScope()
         let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
@@ -184,6 +185,32 @@ final class LambdaLowerer {
             driver.ctx.setLocalValue(closureExpr, for: closureCapture.capturedSymbol)
             if closureCapture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: closureParam.symbol, exprID: closureExpr)
+            }
+        }
+        // Multi-capture HOF lambda: closureRaw is a packed closure object.
+        // Load each capture from the object via kk_array_get_inbounds.
+        if usesClosureObjectCapture,
+           let closureParam = lambdaParameters.first,
+           let closureObjExpr = driver.ctx.localValue(for: closureParam.symbol)
+        {
+            let kkArrayGet = interner.intern("kk_array_get_inbounds")
+            for (captureIndex, capture) in captureBindings.enumerated() {
+                let fieldOffset = Int64(captureIndex + 2)
+                let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: sema.types.intType)
+                lambdaBody.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                let loadedExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: capture.param.type)
+                lambdaBody.append(.call(
+                    symbol: nil,
+                    callee: kkArrayGet,
+                    arguments: [closureObjExpr, offsetExpr],
+                    result: loadedExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                driver.ctx.setLocalValue(loadedExpr, for: capture.capturedSymbol)
+                if capture.capturedSymbol == savedReceiverSymbol {
+                    driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: loadedExpr)
+                }
             }
         }
         // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
@@ -264,7 +291,7 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: usesClosureRawCapture ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
+            captureArguments: (usesClosureRawCapture || usesClosureObjectCapture) ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
             hasClosureParam: needsClosureParam
         )
         return lambdaValueExpr
