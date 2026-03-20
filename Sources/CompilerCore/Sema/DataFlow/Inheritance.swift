@@ -13,6 +13,7 @@ extension DataFlowSemaPhase {
                 bindInheritanceEdges(
                     declID: declID,
                     currentPackage: file.packageFQName,
+                    imports: file.imports,
                     ast: ast,
                     symbols: symbols,
                     bindings: bindings,
@@ -26,6 +27,7 @@ extension DataFlowSemaPhase {
     private func bindInheritanceEdges(
         declID: DeclID,
         currentPackage: [InternedString],
+        imports: [ImportDecl],
         ast: ASTModule,
         symbols: SymbolTable,
         bindings: BindingTable,
@@ -61,6 +63,7 @@ extension DataFlowSemaPhase {
             if let resolved = resolveNominalSymbolAndTypeArgs(
                 superTypeRef,
                 currentPackage: currentPackage,
+                imports: imports,
                 ast: ast,
                 symbols: symbols,
                 types: types,
@@ -81,6 +84,7 @@ extension DataFlowSemaPhase {
             bindInheritanceEdges(
                 declID: nestedDeclID,
                 currentPackage: currentPackage,
+                imports: imports,
                 ast: ast,
                 symbols: symbols,
                 bindings: bindings,
@@ -98,6 +102,7 @@ extension DataFlowSemaPhase {
     private func resolveNominalSymbolAndTypeArgs(
         _ typeRefID: TypeRefID,
         currentPackage: [InternedString],
+        imports: [ImportDecl],
         ast: ASTModule,
         symbols: SymbolTable,
         types: TypeSystem,
@@ -122,6 +127,20 @@ extension DataFlowSemaPhase {
         var candidatePaths: [[InternedString]] = [path]
         if path.count == 1, !currentPackage.isEmpty {
             candidatePaths.append(currentPackage + path)
+        }
+        // Also try matching against imports: if the simple name matches
+        // the last component of an import path, use the full import path.
+        if path.count == 1 {
+            let simpleName = path[0]
+            for importDecl in imports {
+                if let alias = importDecl.alias {
+                    if alias == simpleName {
+                        candidatePaths.append(importDecl.path)
+                    }
+                } else if let lastComponent = importDecl.path.last, lastComponent == simpleName {
+                    candidatePaths.append(importDecl.path)
+                }
+            }
         }
 
         for candidatePath in candidatePaths {
@@ -331,6 +350,7 @@ extension DataFlowSemaPhase {
                     guard let resolved = resolveNominalSymbolAndTypeArgs(
                         entry.typeRef,
                         currentPackage: file.packageFQName,
+                        imports: file.imports,
                         ast: ast,
                         symbols: symbols,
                         types: types,
