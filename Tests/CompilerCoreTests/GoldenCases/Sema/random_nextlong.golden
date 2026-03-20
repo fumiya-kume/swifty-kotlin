@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -953,16 +953,21 @@ symbol s951 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s952 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s953 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s954 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#951 params=[(T#951) -> T#952] ret=T#952 suspend=0 defaults=[0] vararg=[0]
-symbol s955 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s956 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#955 params=[] ret=Class#955 suspend=0 defaults=[] vararg=[]
-symbol s957 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s958 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s959 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s955
-expr e0 string(hello) type=String
-expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-40958
-expr e3 localAssign field value=e2 type=Unit ref=s959
-expr e4 name(field) type=Int ref=s959
-expr e5 int(0) type=Int
+symbol s955 kind=function fq=useRandomLong vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s956 kind=local fq=__local_2.a vis=private flags=_
+symbol s957 kind=local fq=__local_6.b vis=private flags=_
+symbol s958 kind=local fq=__local_11.c vis=private flags=_
+file f0 package=_
+  decl d0 fun useRandomLong suspend=0 inline=0 sym=s955
+expr e0 name(Random) type=Class#13 ref=s13
+expr e1 memberCall recv=e0 callee=nextLong args=[] type=Long call=s19 map=[] targs=[]
+expr e2 localDecl a mutable=0 type=_ init=e1 type=Unit ref=s956
+expr e3 name(Random) type=Class#13 ref=s13
+expr e4 long(100) type=Long
+expr e5 memberCall recv=e3 callee=nextLong args=[_:e4] type=Long call=s20 map=[0->0] targs=[]
+expr e6 localDecl b mutable=0 type=_ init=e5 type=Unit ref=s957
+expr e7 name(Random) type=Class#13 ref=s13
+expr e8 long(10) type=Long
+expr e9 long(100) type=Long
+expr e10 memberCall recv=e7 callee=nextLong args=[_:e8,_:e9] type=Long call=s22 map=[0->0,1->1] targs=[]
+expr e11 localDecl c mutable=0 type=_ init=e10 type=Unit ref=s958
