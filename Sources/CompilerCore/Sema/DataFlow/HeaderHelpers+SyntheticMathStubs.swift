@@ -102,6 +102,10 @@ extension DataFlowSemaPhase {
             ("acos", "kk_math_acos_float"), ("atan", "kk_math_atan_float"),
             ("sqrt", "kk_math_sqrt_float"), ("round", "kk_math_round_float"),
             ("ceil", "kk_math_ceil_float"), ("floor", "kk_math_floor_float"),
+            ("abs", "kk_math_abs_float"),
+            ("exp", "kk_math_exp_float"), ("ln", "kk_math_ln_float"),
+            ("log2", "kk_math_log2_float"), ("log10", "kk_math_log10_float"),
+            ("sign", "kk_math_sign_float"),
         ] {
             registerSyntheticMathTopLevelFunction(
                 named: name,
@@ -124,6 +128,32 @@ extension DataFlowSemaPhase {
             ],
             returnType: floatType,
             externalLinkName: "kk_math_atan2_float",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "log",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: floatType),
+                (name: "base", type: floatType),
+            ],
+            returnType: floatType,
+            externalLinkName: "kk_math_log_float",
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticMathTopLevelFunction(
+            named: "hypot",
+            packageFQName: kotlinMathPkg,
+            parameters: [
+                (name: "x", type: floatType),
+                (name: "y", type: floatType),
+            ],
+            returnType: floatType,
+            externalLinkName: "kk_math_hypot_float",
             symbols: symbols,
             interner: interner
         )

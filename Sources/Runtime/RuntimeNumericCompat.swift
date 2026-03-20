@@ -402,6 +402,57 @@ public func kk_math_floor_float(_ value: Int) -> Int {
     kk_float_to_bits(floor(kk_bits_to_float(value)))
 }
 
+// MARK: - STDLIB-430: additional Float overloads (abs, exp, ln, log2, log10, log, sign, hypot)
+
+@_cdecl("kk_math_abs_float")
+public func kk_math_abs_float(_ value: Int) -> Int {
+    kk_float_to_bits(Swift.abs(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_exp_float")
+public func kk_math_exp_float(_ value: Int) -> Int {
+    kk_float_to_bits(exp(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_ln_float")
+public func kk_math_ln_float(_ value: Int) -> Int {
+    kk_float_to_bits(log(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_log2_float")
+public func kk_math_log2_float(_ value: Int) -> Int {
+    kk_float_to_bits(log2(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_log10_float")
+public func kk_math_log10_float(_ value: Int) -> Int {
+    kk_float_to_bits(log10(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_log_float")
+public func kk_math_log_float(_ x: Int, _ base: Int) -> Int {
+    let rawX = kk_bits_to_float(x)
+    let rawBase = kk_bits_to_float(base)
+    return kk_float_to_bits(log(rawX) / log(rawBase))
+}
+
+@_cdecl("kk_math_sign_float")
+public func kk_math_sign_float(_ value: Int) -> Int {
+    let f = kk_bits_to_float(value)
+    if f.isNaN { return kk_float_to_bits(Float.nan) }
+    if f > 0 { return kk_float_to_bits(1.0) }
+    if f < 0 { return kk_float_to_bits(-1.0) }
+    // Preserve sign of zero: return the original value for +0.0 / -0.0
+    return value
+}
+
+@_cdecl("kk_math_hypot_float")
+public func kk_math_hypot_float(_ x: Int, _ y: Int) -> Int {
+    let rawX = kk_bits_to_float(x)
+    let rawY = kk_bits_to_float(y)
+    return kk_float_to_bits(hypot(rawX, rawY))
+}
+
 // MARK: - STDLIB-510~511: roundToInt / roundToLong extensions
 
 // Kotlin's roundToInt/roundToLong use Math.round() semantics: ties round

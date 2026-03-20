@@ -96,6 +96,46 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_floor_float(floatToBits(-2.3))), -3.0)
     }
 
+    // MARK: - Float abs / exp / ln / log / sign / hypot (STDLIB-430)
+
+    func testAbsFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_abs_float(floatToBits(-3.14))), Float(3.14), accuracy: 1e-5)
+        XCTAssertTrue(floatFromBits(kk_math_abs_float(floatToBits(Float.nan))).isNaN)
+    }
+
+    func testExpFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_exp_float(floatToBits(0.0))), 1.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_exp_float(floatToBits(1.0))), Float(M_E), accuracy: 1e-5)
+    }
+
+    func testLnFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(1.0))), 0.0, accuracy: 1e-6)
+        XCTAssertEqual(floatFromBits(kk_math_ln_float(floatToBits(Float(M_E)))), 1.0, accuracy: 1e-5)
+    }
+
+    func testLog2Float() {
+        XCTAssertEqual(floatFromBits(kk_math_log2_float(floatToBits(8.0))), 3.0, accuracy: 1e-6)
+    }
+
+    func testLog10Float() {
+        XCTAssertEqual(floatFromBits(kk_math_log10_float(floatToBits(100.0))), 2.0, accuracy: 1e-6)
+    }
+
+    func testLogFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_log_float(floatToBits(8.0), floatToBits(2.0))), 3.0, accuracy: 1e-5)
+    }
+
+    func testSignFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_sign_float(floatToBits(-5.0))), -1.0)
+        XCTAssertEqual(floatFromBits(kk_math_sign_float(floatToBits(5.0))), 1.0)
+        XCTAssertEqual(floatFromBits(kk_math_sign_float(floatToBits(0.0))), 0.0)
+        XCTAssertTrue(floatFromBits(kk_math_sign_float(floatToBits(Float.nan))).isNaN)
+    }
+
+    func testHypotFloat() {
+        XCTAssertEqual(floatFromBits(kk_math_hypot_float(floatToBits(3.0), floatToBits(4.0))), 5.0, accuracy: 1e-6)
+    }
+
     // MARK: - roundToInt / roundToLong (STDLIB-510..511)
 
     func testFloatRoundToInt() {

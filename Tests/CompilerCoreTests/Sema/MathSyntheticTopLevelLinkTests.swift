@@ -57,6 +57,14 @@ final class MathSyntheticTopLevelLinkTests: XCTestCase {
             ("round", "kk_math_round_float"),
             ("ceil", "kk_math_ceil_float"),
             ("floor", "kk_math_floor_float"),
+            ("abs", "kk_math_abs_float"),
+            ("exp", "kk_math_exp_float"),
+            ("ln", "kk_math_ln_float"),
+            ("log2", "kk_math_log2_float"),
+            ("log10", "kk_math_log10_float"),
+            ("log", "kk_math_log_float"),
+            ("sign", "kk_math_sign_float"),
+            ("hypot", "kk_math_hypot_float"),
         ]
 
         for (name, expectedLink) in floatOverloads {

@@ -39,6 +39,14 @@ public extension RuntimeABIExterns {
         kk_math_round_float,
         kk_math_ceil_float,
         kk_math_floor_float,
+        kk_math_abs_float,
+        kk_math_exp_float,
+        kk_math_ln_float,
+        kk_math_log2_float,
+        kk_math_log10_float,
+        kk_math_log_float,
+        kk_math_sign_float,
+        kk_math_hypot_float,
         // STDLIB-510~511: roundToInt / roundToLong
         kk_float_roundToInt,
         kk_double_roundToInt,
@@ -210,6 +218,14 @@ public extension RuntimeABIExterns {
     static let kk_math_round_float = ExternDecl(name: "kk_math_round_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_ceil_float = ExternDecl(name: "kk_math_ceil_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_math_floor_float = ExternDecl(name: "kk_math_floor_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_abs_float = ExternDecl(name: "kk_math_abs_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_exp_float = ExternDecl(name: "kk_math_exp_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_ln_float = ExternDecl(name: "kk_math_ln_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_log2_float = ExternDecl(name: "kk_math_log2_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_log10_float = ExternDecl(name: "kk_math_log10_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_log_float = ExternDecl(name: "kk_math_log_float", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_sign_float = ExternDecl(name: "kk_math_sign_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_hypot_float = ExternDecl(name: "kk_math_hypot_float", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
 
     // STDLIB-510~511: roundToInt / roundToLong
 
