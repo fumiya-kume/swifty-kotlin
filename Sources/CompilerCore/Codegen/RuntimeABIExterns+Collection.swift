@@ -21,6 +21,9 @@ public extension RuntimeABIExterns {
         kk_list_to_mutable_list,
         kk_list_joinToString,
         kk_list_to_set,
+        kk_set_to_set,
+        kk_list_to_mutable_set,
+        kk_set_to_mutable_set,
         kk_list_intersect,
         kk_list_union,
         kk_list_subtract,
@@ -375,6 +378,25 @@ public extension RuntimeABIExterns {
 
     static let kk_list_to_set = ExternDecl(
         name: "kk_list_to_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-651: Set.toSet(), List.toMutableSet(), Set.toMutableSet()
+    static let kk_set_to_set = ExternDecl(
+        name: "kk_set_to_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_to_mutable_set = ExternDecl(
+        name: "kk_list_to_mutable_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_to_mutable_set = ExternDecl(
+        name: "kk_set_to_mutable_set",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
