@@ -174,7 +174,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         appendSyntheticDataCopyIfNeeded(
             name: ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$copy"),
             owner: nominalSymbol, module: module, sema: sema,
-            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner,
+            diagnostics: ctx.diagnostics
         )
         if nominalSymbol.kind == .class {
             let hashCodeName = ctx.interner.intern("hashCode")
@@ -510,7 +511,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         module: KIRModule,
         sema: SemaModule,
         existingFunctionSymbols: Set<SymbolID>,
-        interner: StringInterner
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine
     ) {
         guard owner.kind == .class || owner.kind == .enumClass || owner.kind == .object else {
             return
@@ -545,6 +547,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         guard let resolvedCtorSymbol = ctorSymbol,
               let ctorSignature = sema.symbols.functionSignature(for: resolvedCtorSymbol)
         else {
+            let ownerName = interner.resolve(owner.name)
+            diagnostics.warning(
+                "KSWIFTK-DATA-0001",
+                "data class '\(ownerName)' has no primary constructor; copy() returns self unchanged",
+                range: owner.declSite
+            )
             let resultExpr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)),
                 type: receiverType
@@ -588,6 +596,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
         // Pair up symbols and types, truncating to the shorter array for safety.
         let pairCount = min(ctorParamSymbols.count, ctorParamTypes.count)
+        if ctorParamSymbols.count != ctorParamTypes.count {
+            let ownerName = interner.resolve(owner.name)
+            diagnostics.warning(
+                "KSWIFTK-DATA-0002",
+                "data class '\(ownerName)' constructor signature mismatch: \(ctorParamSymbols.count) parameter symbols vs \(ctorParamTypes.count) parameter types; copy() uses first \(pairCount)",
+                range: owner.declSite
+            )
+        }
         let propertyParams: [(symbol: SymbolID, type: TypeID)] = (0..<pairCount).map { i in
             (ctorParamSymbols[i], ctorParamTypes[i])
         }
