@@ -149,6 +149,12 @@ extension ExprLowerer {
                 )
                 let nullValue = arena.appendExpr(.null, type: sema.types.nullableAnyType)
                 let zeroValue = arena.appendExpr(.intLiteral(0), type: intType)
+
+                // Wrap the entire finally guard region with sentinels so
+                // that an outer appendThrowAwareInstructions pass does not
+                // double-wrap the already-routed exception handling.
+                instructions.append(.beginFinallyGuard)
+
                 instructions.append(.constValue(result: nullValue, value: .null))
                 instructions.append(.constValue(result: zeroValue, value: .intLiteral(0)))
                 instructions.append(.copy(from: nullValue, to: exSlot))
@@ -174,6 +180,7 @@ extension ExprLowerer {
                 instructions.append(.rethrow(value: exSlot))
 
                 instructions.append(.label(afterRethrowLabel))
+                instructions.append(.endFinallyGuard)
             } else {
                 // No throwable calls — append the finally body directly.
                 instructions.append(contentsOf: finallyInstructions)

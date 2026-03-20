@@ -590,6 +590,12 @@ final class InlineLoweringPass: LoweringPass {
                         result: loweredResult
                     )
                 )
+
+            case .beginFinallyGuard:
+                lowered.append(.beginFinallyGuard)
+
+            case .endFinallyGuard:
+                lowered.append(.endFinallyGuard)
             }
         }
 
@@ -905,6 +911,12 @@ final class InlineLoweringPass: LoweringPass {
                 } else {
                     lowered.append(.nonLocalReturn(nil))
                 }
+
+            case .beginFinallyGuard:
+                lowered.append(.beginFinallyGuard)
+
+            case .endFinallyGuard:
+                lowered.append(.endFinallyGuard)
             }
         }
 

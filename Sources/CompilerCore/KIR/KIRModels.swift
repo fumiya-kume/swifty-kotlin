@@ -112,6 +112,11 @@ public enum KIRInstruction: Equatable, Sendable {
     /// During inline expansion this is converted into a real return
     /// from the enclosing (caller) function.
     case nonLocalReturn(KIRExprID?)
+    /// Sentinel markers delimiting an already-wrapped finally guard region.
+    /// `appendThrowAwareInstructions` passes instructions between these
+    /// sentinels through verbatim to prevent double-wrapping.
+    case beginFinallyGuard
+    case endFinallyGuard
 }
 
 public struct KIRFunction: Sendable {
@@ -395,6 +400,10 @@ public final class KIRModule {
             } else {
                 return "nonLocalReturnUnit"
             }
+        case .beginFinallyGuard:
+            return "beginFinallyGuard"
+        case .endFinallyGuard:
+            return "endFinallyGuard"
         }
     }
 }

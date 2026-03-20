@@ -176,7 +176,8 @@ extension NativeEmitter {
                 return [result]
             case .jump, .label, .jumpIfEqual, .jumpIfNotNull,
                  .storeGlobal, .rethrow, .returnIfEqual, .returnUnit, .returnValue,
-                 .beginBlock, .endBlock, .nop, .nonLocalReturn:
+                 .beginBlock, .endBlock, .nop, .nonLocalReturn,
+                 .beginFinallyGuard, .endFinallyGuard:
                 return []
             }
         }
@@ -515,7 +516,7 @@ extension NativeEmitter {
             }
 
             switch instruction {
-            case .nop, .beginBlock, .endBlock:
+            case .nop, .beginBlock, .endBlock, .beginFinallyGuard, .endFinallyGuard:
                 continue
 
             case let .label(id):

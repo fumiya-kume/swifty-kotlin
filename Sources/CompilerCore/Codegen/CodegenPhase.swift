@@ -291,6 +291,10 @@ public final class CodegenPhase: CompilerPhase {
             } else {
                 return "nonLocalReturnUnit"
             }
+        case .beginFinallyGuard:
+            return "beginFinallyGuard"
+        case .endFinallyGuard:
+            return "endFinallyGuard"
         }
     }
 
