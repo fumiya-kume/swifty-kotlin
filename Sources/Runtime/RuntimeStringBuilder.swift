@@ -143,6 +143,15 @@ public func kk_string_builder_deleteCharAt(_ sbRaw: Int, _ index: Int) -> Int {
     return sbRaw
 }
 
+@_cdecl("kk_string_builder_appendRange_obj")
+public func kk_string_builder_appendRange_obj(_ sbRaw: Int, _ csqRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return sbRaw }
+    let csq = runtimeElementToString(csqRaw)
+    // Use UTF-16 code unit indexing to match Kotlin CharSequence semantics.
+    sb.value.append(runtimeUTF16Substring(csq, startIndex: startIndex, endIndex: endIndex))
+    return sbRaw
+}
+
 @_cdecl("kk_string_builder_get")
 public func kk_string_builder_get(_ sbRaw: Int, _ index: Int) -> Int {
     guard let sb = runtimeStringBuilderBox(from: sbRaw) else { return 0 }

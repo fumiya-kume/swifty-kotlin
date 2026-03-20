@@ -232,6 +232,15 @@ public func kk_string_builder_append_line_noarg() -> Int {
     return 0
 }
 
+@_cdecl("kk_string_builder_append_range")
+public func kk_string_builder_append_range(_ csqRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    // Use runtimeElementToString for consistency with the object-backed path
+    // (kk_string_builder_appendRange_obj), which also accepts arbitrary runtime values.
+    let string = runtimeElementToString(csqRaw)
+    runtimeBuilderState.appendString(runtimeUTF16Substring(string, startIndex: startIndex, endIndex: endIndex))
+    return 0
+}
+
 @_cdecl("kk_string_builder_insert")
 public func kk_string_builder_insert(_ index: Int, _ valueRaw: Int) -> Int {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: valueRaw),

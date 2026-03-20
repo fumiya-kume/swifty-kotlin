@@ -18,11 +18,11 @@
 ## 未完了バックログ
 
 
-- [x] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
+- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
   - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
-  - [x] [Sources/Runtime/RuntimePreconditions.swift](Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
-  - [x] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
-  - [x] lazy message throw の回帰ケースを追加する
+  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
+  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
+  - [ ] lazy message throw の回帰ケースを追加する
   - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
 
 - [ ] STDLIB-258: `assert()` 関数を `kotlin.Preconditions` に追加する
@@ -152,7 +152,7 @@
 - [x] STDLIB-522: `LongRange` の完全サポート（stub + Runtime）
 - [ ] STDLIB-523: `UIntRange` の完全サポート
 - [ ] STDLIB-524: `ULongRange` の完全サポート
-- [x] STDLIB-525: `Int/Long.coerceIn(range)` の実装（レシーバがInt/Longの場合のClosedRange引数オーバーロード）
+- [ ] STDLIB-525: `IntRange.coerceIn(ClosedRange)` の実装
 
 #### D. kotlin.collections — 単一 API 単位
 
@@ -177,7 +177,7 @@
 - [ ] STDLIB-544: `lastOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-545: `singleOrNull` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-546: `asReversed()` と `reversed()` の区別 diff 検証
-- [x] STDLIB-547: `binarySearch(compare)` オーバーロード
+- [ ] STDLIB-547: `binarySearch(compare)` オーバーロード
 - [ ] STDLIB-548: `chunked(step)` オプション
 - [ ] STDLIB-549: `windowed(step, partialWindows)` オプション
 - [ ] STDLIB-550: `zip` の Pair 型 diff 検証
@@ -186,14 +186,14 @@
 
 #### E. kotlin.sequences — 単一 API 単位
 
-- [x] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
+- [ ] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
 - [ ] STDLIB-554: `List.asSequence()` の stub と Lowering
 - [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
 - [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張
 - [ ] STDLIB-557: `foldIndexed` の Sequence 拡張
-- [x] STDLIB-558: `runningFold` の Sequence 拡張
-- [x] STDLIB-559: `runningReduce` の Sequence 拡張
-- [x] STDLIB-560: `scan` の Sequence 拡張
+- [ ] STDLIB-558: `runningFold` の Sequence 拡張
+- [ ] STDLIB-559: `runningReduce` の Sequence 拡張
+- [ ] STDLIB-560: `scan` の Sequence 拡張
 - [ ] STDLIB-561: `Sequence.plus(other)` の実装
 - [ ] STDLIB-562: `Sequence.minus(element)` の実装
 - [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース）
@@ -212,22 +212,22 @@
 
 #### G. kotlin.text / String — 単一 API 単位
 
-- [x] STDLIB-573: `String.encodeToByteArray()` の実装（デフォルト UTF-8、charset 引数なし）
-- [x] STDLIB-574: `ByteArray.decodeToString()` の実装（デフォルト UTF-8、charset 引数なし）
+- [ ] STDLIB-573: `String.encodeToByteArray(charset)` の実装
+- [ ] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
 - [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [x] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
 - [x] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
-- [ ] STDLIB-579: `buildString.appendLine` の完全性確認
-- [ ] STDLIB-580: `buildString.appendRange` の完全性確認
-- [x] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
+- [x] STDLIB-579: `buildString.appendLine` の完全性確認
+- [x] STDLIB-580: `buildString.appendRange` の完全性確認
+- [ ] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
 
 #### H. kotlin.time / kotlin.system
 
 - [ ] STDLIB-582: `Duration.inWholeMilliseconds` の Runtime 確認
 - [ ] STDLIB-583: `Duration.inWholeSeconds` の Runtime 確認
 - [ ] STDLIB-584: `Duration.inWholeMinutes` の Runtime 確認
-- [x] STDLIB-585: `measureTime { }` の戻り型を `Duration` に統一
+- [ ] STDLIB-585: `measureTime { }` の戻り型を `Duration` に統一
 - [ ] STDLIB-586: `RuntimeDuration` の RuntimeTests 追加
 - [ ] STDLIB-587: `measureTimeMillis` の diff テスト追加
 - [ ] STDLIB-588: `measureNanoTime` の diff テスト追加
@@ -237,12 +237,12 @@
 - [ ] STDLIB-589: `Result.recover` の stub と Runtime
 - [ ] STDLIB-590: `Result.onFailure` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-591: `contract { returns() }` の意味ある実装検討
-- [ ] STDLIB-592: `contract { callsInPlace }` の意味ある実装検討
-- [ ] STDLIB-593: `contract { returnsNotNull }` の意味ある実装検討
+- [x] STDLIB-592: `contract { callsInPlace }` の意味ある実装検討
+- [x] STDLIB-593: `contract { returnsNotNull }` の意味ある実装検討
 
 #### J. kotlin.io.Closeable / その他
 
-- [x] STDLIB-594: `Closeable.use { }` の Runtime 実装（try-finally 相当）
+- [ ] STDLIB-594: `Closeable.use { }` の Runtime 実装（try-finally 相当）
 - [ ] STDLIB-595: `UInt.toInt` / `toLong` / `toUInt` の diff 検証
 - [ ] STDLIB-596: `ULong.toLong` / `toULong` の diff 検証
 - [ ] STDLIB-597: `RegexOption.MULTILINE` の互換性確認
@@ -258,10 +258,10 @@
 - [ ] STDLIB-604: `countOneBits` のエッジケーステスト
 - [ ] STDLIB-605: `countLeadingZeroBits` のエッジケーステスト
 - [ ] STDLIB-606: `countTrailingZeroBits` のエッジケーステスト
-- [x] STDLIB-607: diff_cases 全 197 .kt ファイルの stdlib サポート状況棚卸し (195 PASS, 2 SKIP, 0 FAIL)
-- [x] STDLIB-608: `list_of.kt` の diff 通過確認
-- [x] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
-- [x] STDLIB-610: `string_stdlib.kt` の diff 通過確認
+- [ ] STDLIB-607: diff_cases 全 198 ファイルの stdlib サポート状況棚卸し
+- [ ] STDLIB-608: `list_of.kt` の diff 通過確認
+- [ ] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
+- [ ] STDLIB-610: `string_stdlib.kt` の diff 通過確認
 
 #### L. 既存・補足
 
@@ -272,7 +272,7 @@
 - [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
-- [x] STDLIB-618: `builder_dsl.kt` の diff 通過確認
+- [ ] STDLIB-618: `builder_dsl.kt` の diff 通過確認
 - [ ] STDLIB-619: `require_check_error.kt` の diff 通過確認
 - [ ] STDLIB-620: `regex_basic.kt` の diff 通過確認
 
@@ -282,16 +282,16 @@
  
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
  
-- [x] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
-  - `RuntimeStringIterableBox` で文字列ハンドルのみ保持、消費時に遅延展開
+- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+  - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
 - [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
   - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
   - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
 - [ ] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
   - 現状: `KKD\x01` などのタグを返すのみで、スレッド制御は未実装（`RuntimeCoroutine.swift`）
-- [x] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
-  - NFC 正規化によるマッチングで実装済み（`RuntimeRegex.swift`）
+- [ ] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
+  - 現状: `nsRegexOption(fromOrdinal:)` で `return []` として no-op（`RuntimeRegex.swift:259`）
 - [ ] STDLIB-331: `yieldAll` を `RuntimeSequence.swift` に実装し、Lowering と連携する
 - [ ] STDLIB-324: File I/O のメンバー呼び出し（`readText` / `readLines` / `exists` 等）を `VirtualCallRewrite.swift` に統合する
   - 現状: Runtime は実装済みだが、Lowering が未対応のため標準ライブラリ呼び出しがリンクされない
@@ -344,6 +344,8 @@
   - 完了: `runtimeFlowEvaluateSource` の一括収集を廃止し、各要素を emit 時に即座に op chain → collector へ渡す遅延評価に変更。`take` で打ち切れば無限ストリームも動作する
 - [ ] CORO-003: `currentScope` の管理に TLS (Thread Local Storage) を使用しないようにする
   - 現状: サスペンド・レジュームが別スレッドで行われた場合にスコープが消失する。コルーチンコンテキストに含めるべき
+- [ ] REFL-004: 実行時リフレクション用メタデータの生成 (MetadataSerializer の活用)
+  - 現状: コンパイル時のリンク用メタデータはあるが、実行時に `KClass` からアクセス可能なバイナリメタデータが存在しない
 - [ ] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
   - 現状: 合成ロジックが未実装。`CallLowerer+EnumStdlib.swift` が参照するシンボルが生成されていない
  - [ ] VAL-001: Value Class のアンボックス化（Unboxing）とマングリングの実装
@@ -356,17 +358,17 @@
   - 現状: `DataEnumSealedSynthesisPass.swift` に実装が皆無
 - [ ] DATA-004: 複数プロパティを持つ Data Class の `equals()` / `toString()` 修正
   - 現状: `object`（シングルトン）以外ではプロパティを考慮した比較・文字列表現が生成されない
-- [x] INLINE-001: Inline 関数における非局所 return (Non-local return) の実装
-  - KIRInstruction に `nonLocalReturn` 命令を追加し、InlineLoweringPass でインライン展開時に caller の `returnValue`/`returnUnit` へ変換する仕組みを実装済み
+- [ ] INLINE-001: Inline 関数における非局所 return (Non-local return) の実装
+  - 現状: `InlineLoweringPass.swift` で return が単純にインライン化されるだけで、外側の関数を抜けるセマンティクスがない
 - [ ] INLINE-002: Inline 関数に渡されたラムダ引数のインライン展開
   - 現状: ラムダはインライン化されず、単なる間接呼び出しとして残るため overhead が削減されない
-- [x] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装
-  - 完了: キャプチャ変数を `kk_closure_obj_*` オブジェクトに格納し、`kk_closure_invoke_*` ラッパー経由で呼び出す closure conversion を実装
+- [ ] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装
+  - 現状: `LambdaClosureConversionPass.swift` は rename のみの stub。キャプチャした変数を保持するオブジェクト構造と、ポリモーフィックな `kk_lambda_invoke` が未実装
 - [ ] ENUM-002: `enumValues()` が正しい Array オブジェクトを返すようにする
   - 現状: 現在は `count` (Int) のみを返しており、Kotlin の Array<T> セマンティクスを満たしていない（`DataEnumSealedSynthesisPass.swift:494`）
-- [x] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
 
-
+ 
 ---
  
 ## 🧪 テストケース一括管理

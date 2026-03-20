@@ -159,6 +159,32 @@ public enum ContractReturnsEffect: Equatable, Sendable {
     case returnsBooleanValue(expectedValue: Bool, conditionParameterIndex: Int?)
 }
 
+/// STDLIB-592: `contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }` effect.
+/// Records that a lambda parameter is guaranteed to be invoked a specific number of times.
+public struct ContractCallsInPlaceEffect: Equatable, Sendable {
+    public let parameterSymbol: SymbolID
+    public let kind: InvocationKind
+
+    public init(parameterSymbol: SymbolID, kind: InvocationKind) {
+        self.parameterSymbol = parameterSymbol
+        self.kind = kind
+    }
+}
+
+/// Kotlin `InvocationKind` enum modelling how many times a lambda parameter is called.
+public enum InvocationKind: String, Equatable, Sendable {
+    case atMostOnce = "AT_MOST_ONCE"
+    case atLeastOnce = "AT_LEAST_ONCE"
+    case exactlyOnce = "EXACTLY_ONCE"
+    case unknown = "UNKNOWN"
+}
+
+/// STDLIB-593: `contract { returnsNotNull() }` effect.
+/// Records that the function is guaranteed to return a non-null value.
+public struct ContractReturnsNotNullEffect: Equatable, Sendable {
+    public init() {}
+}
+
 public struct NominalLayout: Equatable, Sendable {
     public let objectHeaderWords: Int
     public let instanceFieldCount: Int
@@ -325,6 +351,8 @@ public final class SymbolTable {
     private var expectActualLinks: [SymbolID: SymbolID] = [:]
     private var contractNonNullEffects: [SymbolID: ContractNonNullEffect] = [:]
     private var contractReturnsEffects: [SymbolID: ContractReturnsEffect] = [:]
+    private var contractCallsInPlaceEffects: [SymbolID: [ContractCallsInPlaceEffect]] = [:]
+    private var contractReturnsNotNullEffects: Set<SymbolID> = []
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
@@ -833,6 +861,26 @@ public final class SymbolTable {
 
     public func contractReturnsEffect(for function: SymbolID) -> ContractReturnsEffect? {
         contractReturnsEffects[function]
+    }
+
+    /// STDLIB-592: Record a `callsInPlace` effect for a function's lambda parameter.
+    public func addContractCallsInPlaceEffect(_ effect: ContractCallsInPlaceEffect, for function: SymbolID) {
+        contractCallsInPlaceEffects[function, default: []].append(effect)
+    }
+
+    /// STDLIB-592: Returns the `callsInPlace` effects recorded for a function, if any.
+    public func contractCallsInPlaceEffects(for function: SymbolID) -> [ContractCallsInPlaceEffect] {
+        contractCallsInPlaceEffects[function] ?? []
+    }
+
+    /// STDLIB-593: Record that a function has a `returnsNotNull` contract effect.
+    public func setContractReturnsNotNull(for function: SymbolID) {
+        contractReturnsNotNullEffects.insert(function)
+    }
+
+    /// STDLIB-593: Returns whether a function has a `returnsNotNull` contract effect.
+    public func hasContractReturnsNotNull(for function: SymbolID) -> Bool {
+        contractReturnsNotNullEffects.contains(function)
     }
 
     // MARK: - Indexed queries

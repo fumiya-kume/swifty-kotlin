@@ -14,6 +14,7 @@ public extension RuntimeABIExterns {
         kk_string_builder_reverse,
         kk_string_builder_deleteCharAt,
         kk_string_builder_get,
+        kk_string_builder_appendRange_obj,
     ]
 
     static let kk_string_builder_new = ExternDecl(
@@ -91,6 +92,12 @@ public extension RuntimeABIExterns {
     static let kk_string_builder_get = ExternDecl(
         name: "kk_string_builder_get",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_string_builder_appendRange_obj = ExternDecl(
+        name: "kk_string_builder_appendRange_obj",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 }

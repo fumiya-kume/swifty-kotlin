@@ -129,6 +129,14 @@ public extension RuntimeABISpec {
             section: "Sequence"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_sequence_of_single",
+            parameters: [
+                RuntimeABIParameter(name: "element", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_sequence_generate",
             parameters: [
                 RuntimeABIParameter(name: "seed", type: .intptr),
@@ -494,6 +502,26 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "fnPtr", type: .intptr),
                 RuntimeABIParameter(name: "closureRaw", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        // STDLIB-561: Sequence.plus(other)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_plus",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Sequence"
+        ),
+        // STDLIB-562: Sequence.minus(element)
+        RuntimeABIFunctionSpec(
+            name: "kk_sequence_minus",
+            parameters: [
+                RuntimeABIParameter(name: "seqRaw", type: .intptr),
+                RuntimeABIParameter(name: "element", type: .intptr),
             ],
             returnType: .intptr,
             section: "Sequence"

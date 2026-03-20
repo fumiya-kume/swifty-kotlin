@@ -2693,6 +2693,17 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_windowed_partial",
+            parameters: [
+                RuntimeABIParameter(name: "str", type: .intptr),
+                RuntimeABIParameter(name: "size", type: .intptr),
+                RuntimeABIParameter(name: "step", type: .intptr),
+                RuntimeABIParameter(name: "partialWindows", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-318: commonPrefixWith / commonSuffixWith
         RuntimeABIFunctionSpec(
             name: "kk_string_commonPrefixWith",
@@ -2936,6 +2947,14 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_duration_inWholeSeconds",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeMinutes",
             parameters: [
                 RuntimeABIParameter(name: "durationRaw", type: .intptr),
             ],

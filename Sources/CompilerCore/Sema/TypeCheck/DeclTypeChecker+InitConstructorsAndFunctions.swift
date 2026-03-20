@@ -388,6 +388,8 @@ extension DeclTypeChecker {
     /// - `returns()` -- bare returns effect (STDLIB-591)
     /// - `returns(true)` / `returns(false)` -- Boolean return value effect (STDLIB-591)
     /// - `returns() implies (param != null)` -- non-null smart cast
+    /// - `callsInPlace(lambda[, kind])` -- STDLIB-592
+    /// - `returnsNotNull()` -- STDLIB-593
     private func recordSingleContractEffect(
         effectExprID: ExprID,
         function: FunDecl,
@@ -469,6 +471,46 @@ extension DeclTypeChecker {
             }
             return
         }
+
+        // Pattern 3 (STDLIB-592): callsInPlace(lambdaParam) or callsInPlace(lambdaParam, InvocationKind.*)
+        if case let .call(calleeExprID, _, callArgs, _) = effectExpr,
+           let calleeExpr = ast.arena.expr(calleeExprID),
+           case let .nameRef(calleeName, _) = calleeExpr,
+           interner.resolve(calleeName) == "callsInPlace",
+           callArgs.count >= 1, callArgs.count <= 2,
+           let firstArgExpr = ast.arena.expr(callArgs[0].expr),
+           case let .nameRef(lambdaParamName, _) = firstArgExpr
+        {
+            var invocationKind: InvocationKind = .exactlyOnce
+            if callArgs.count == 2 {
+                invocationKind = resolveInvocationKindArg(
+                    callArgs[1].expr, ast: ast, interner: interner
+                ) ?? .unknown
+            }
+            if let parameterIndex = function.valueParams.firstIndex(where: { $0.name == lambdaParamName }),
+               parameterIndex < signature.valueParameterSymbols.count
+            {
+                sema.symbols.addContractCallsInPlaceEffect(
+                    ContractCallsInPlaceEffect(
+                        parameterSymbol: signature.valueParameterSymbols[parameterIndex],
+                        kind: invocationKind
+                    ),
+                    for: symbol
+                )
+            }
+            return
+        }
+
+        // Pattern 4 (STDLIB-593): returnsNotNull()
+        if case let .call(calleeExprID, _, returnNNArgs, _) = effectExpr,
+           let calleeExpr = ast.arena.expr(calleeExprID),
+           case let .nameRef(calleeName, _) = calleeExpr,
+           interner.resolve(calleeName) == "returnsNotNull",
+           returnNNArgs.isEmpty
+        {
+            sema.symbols.setContractReturnsNotNull(for: symbol)
+            return
+        }
     }
 
     /// Records a `returns() implies (param != null)` contract effect as a
@@ -514,6 +556,31 @@ extension DeclTypeChecker {
             ),
             for: symbol
         )
+    }
+
+    /// Resolve an `InvocationKind.*` member-access expression to an `InvocationKind` value.
+    /// The AST represents `InvocationKind.EXACTLY_ONCE` as a zero-arg `.memberCall` or
+    /// as a plain `.nameRef` when already resolved.
+    private func resolveInvocationKindArg(
+        _ exprID: ExprID,
+        ast: ASTModule,
+        interner: StringInterner
+    ) -> InvocationKind? {
+        guard let expr = ast.arena.expr(exprID) else { return nil }
+        // Match `InvocationKind.EXACTLY_ONCE` — parsed as memberCall with zero args
+        if case let .memberCall(receiverExprID, memberName, _, memberArgs, _) = expr,
+           memberArgs.isEmpty,
+           let receiverExpr = ast.arena.expr(receiverExprID),
+           case let .nameRef(receiverName, _) = receiverExpr,
+           interner.resolve(receiverName) == "InvocationKind"
+        {
+            return InvocationKind(rawValue: interner.resolve(memberName))
+        }
+        // Also handle a plain nameRef that already holds the entry name.
+        if case let .nameRef(name, _) = expr {
+            return InvocationKind(rawValue: interner.resolve(name))
+        }
+        return nil
     }
 
     /// Extracts a boolean literal value from an expression (`true` or `false`).
