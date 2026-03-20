@@ -341,7 +341,7 @@ final class NameManglerTests: XCTestCase {
 
     // MARK: - Value Class Mangling
 
-    func testEncodeTypePreservesValueClassAsClassName() throws {
+    func testEncodeTypeUnboxesValueClassToUnderlyingType() throws {
         let mangler = NameMangler()
         let interner = StringInterner()
         let symbols = SymbolTable()
@@ -361,9 +361,9 @@ final class NameManglerTests: XCTestCase {
 
         let meterType = types.make(.classType(ClassType(classSymbol: meterSym, args: [], nullability: .nonNull)))
         let encoded = mangler.encodeType(meterType, symbols: symbols, types: types, nameResolver: { interner.resolve($0) })
-        // Since ABILoweringPass disables value class unboxing, the mangler
-        // must encode the wrapper class name to match the actual ABI.
-        XCTAssertTrue(encoded.contains("Meter"), "Non-null value class should encode as class name, not underlying type")
+        // Non-null value class should encode using VC<underlying> notation
+        // which contains the underlying type (Int -> "I")
+        XCTAssertEqual(encoded, "VC<I>", "Non-null value class should encode as VC<underlying>")
     }
 
     func testEncodeTypeNullableValueClassNotUnboxed() throws {
@@ -425,12 +425,11 @@ final class NameManglerTests: XCTestCase {
             types: types,
             nameResolver: { interner.resolve($0) }
         )
-        // Since ABILoweringPass disables value class unboxing (value
-        // classes remain heap-allocated at runtime), the mangler must
-        // encode the wrapper class name — not the underlying primitive.
-        // This prevents signature collisions between e.g. `fun f(Meter)`
-        // and `fun f(Int)`.
-        XCTAssertTrue(sig.contains("Meter"), "Mangled signature should contain the value class name")
+        // With value class unboxing enabled, the mangler encodes the
+        // underlying type wrapped in VC<...> to distinguish from the
+        // raw primitive type. This prevents signature collisions between
+        // e.g. `fun f(Meter)` and `fun f(Int)`.
+        XCTAssertTrue(sig.contains("VC<I>"), "Mangled signature should contain VC<underlying> for value class param")
     }
 
     func testMangledSignatureForFunctionWithoutSignatureReturnsUnderscore() throws {
