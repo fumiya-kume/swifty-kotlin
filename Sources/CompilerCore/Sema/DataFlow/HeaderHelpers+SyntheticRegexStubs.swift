@@ -113,6 +113,14 @@ extension DataFlowSemaPhase {
             classSymbol: regexOptionSymbol, args: [], nullability: .nonNull
         )))
 
+        // Set property types for enum entries so that
+        // resolveClassNameMemberValue can resolve e.g. RegexOption.DOT_MATCHES_ALL.
+        setRegexOptionEntryTypes(
+            enumSymbol: regexOptionSymbol,
+            enumType: regexOptionType,
+            symbols: symbols
+        )
+
         // --- STDLIB-480: Regex(pattern, option) constructor ---
         registerRegexTopLevelFunction(
             named: "Regex",
@@ -433,16 +441,37 @@ extension DataFlowSemaPhase {
                 continue
             }
             let entrySymbol = symbols.define(
-                kind: .property,
+                kind: .field,
                 name: entryName,
                 fqName: entryFQName,
                 declSite: nil,
                 visibility: .public,
-                flags: [.synthetic, .static]
+                flags: [.synthetic]
             )
             symbols.setParentSymbol(symbol, for: entrySymbol)
         }
         return symbol
+    }
+
+    /// Set propertyType on each enum entry so that resolveClassNameMemberValue
+    /// (which checks `.field` + propertyType) can resolve `RegexOption.XXX`.
+    private func setRegexOptionEntryTypes(
+        enumSymbol: SymbolID,
+        enumType: TypeID,
+        symbols: SymbolTable
+    ) {
+        guard let enumInfo = symbols.symbol(enumSymbol) else { return }
+        let children = symbols.children(ofFQName: enumInfo.fqName)
+        for child in children {
+            guard let childSym = symbols.symbol(child),
+                  childSym.kind == .field
+            else {
+                continue
+            }
+            if symbols.propertyType(for: child) == nil {
+                symbols.setPropertyType(enumType, for: child)
+            }
+        }
     }
 
     private func makeSetType(

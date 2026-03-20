@@ -484,7 +484,12 @@ public final class SymbolTable {
                 && !existingNonPackageKinds.contains(.property)
         }
         if isCallableLike(kind) {
-            return existingNonPackageKinds.allSatisfy(isCallableLike)
+            // Allow functions/constructors to coexist with nominal types
+            // (class, enumClass, interface) — Kotlin supports factory
+            // functions with the same name as a class (e.g. Regex(pattern)).
+            return existingNonPackageKinds.allSatisfy {
+                isCallableLike($0) || isNominalType($0)
+            }
         }
         guard isOverloadable(kind) else {
             return false
@@ -523,6 +528,10 @@ public final class SymbolTable {
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
         kind == .function || kind == .constructor
+    }
+
+    private func isNominalType(_ kind: SymbolKind) -> Bool {
+        kind == .class || kind == .enumClass || kind == .interface
     }
 
     public func setFunctionSignature(_ signature: FunctionSignature, for symbol: SymbolID) {
