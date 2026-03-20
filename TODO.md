@@ -1,6 +1,6 @@
 # Kotlin Compiler Remaining Tasks
 
-最終更新: 2026-03-17
+最終更新: 2026-03-21
 
 ## 運用ルール
 
@@ -18,17 +18,6 @@
 ## 未完了バックログ
 
 
-- [ ] STDLIB-257: Precondition lazy message fallback の失敗経路を明確化する
-  - 背景: `require {}` / `check {}` の lazy message 評価失敗が default message fallback に見える余地がある
-  - [ ] [Sources/Runtime/RuntimePreconditions.swift](/Users/kuu/kotlin-compiler/Sources/Runtime/RuntimePreconditions.swift) の `preconditionWithLazyMessage` / `runtimeEvaluateLazyMessage` を棚卸しする
-  - [ ] lazy message closure 自体の失敗と、通常の precondition failure を区別できるよう契約を整理する
-  - [ ] lazy message throw の回帰ケースを追加する
-  - **完了条件**: lazy message 評価失敗が通常の `require/check` 失敗に紛れず観測できる
-
-- [ ] STDLIB-258: `assert()` 関数を `kotlin.Preconditions` に追加する
-  - [ ] `HeaderHelpers+SyntheticPreconditionStubs.swift` に `assert` stub を登録する
-  - [ ] Runtime に `kk_precondition_assert` を追加し、`-ea` (enable assertions) フラグ相当の制御を検討する
-  - **完了条件**: `assert(x > 0)` がビルド・実行可能であること
 
 ---
 
@@ -37,28 +26,32 @@
 - [ ] STDLIB-320: `java.io.File` 基本操作（`readText` / `writeText` / `readLines`）を実装する
   - [x] Sema に `File(String)` コンストラクタと `readText(): String` / `writeText(String)` / `readLines(): List<String>` stub を登録する
   - [x] Runtime に `kk_file_readText` / `kk_file_writeText` / `kk_file_readLines` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
-  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
+  - [x] Codegen に `kk_file_*` extern 宣言を追加する（`RuntimeABIExterns.swift`）
+  - [ ] Lowering でメンバー呼び出しを `kk_file_*` に変換する（ctor の `kk_file_new` のみ `CollectionLiteralLoweringPass+CallRewrite` 済み）
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp/test.txt").writeText("hello"); File("/tmp/test.txt").readText()` → `"hello"` が動作する
 
 - [ ] STDLIB-321: `File.exists()` / `File.isFile` / `File.isDirectory` / `File.name` / `File.path` を実装する
   - [x] Sema に各プロパティ / メソッド stub を登録する
   - [x] Runtime に `kk_file_exists` / `kk_file_isFile` / `kk_file_isDirectory` / `kk_file_name` / `kk_file_path` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
-  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
+  - [x] Codegen extern（`RuntimeABIExterns.swift`）
+  - [ ] Lowering メンバー呼び出し変換
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp").isDirectory` → `true` が動作する
 
 - [ ] STDLIB-322: `File.forEachLine {}` / `File.useLines {}` / `File.bufferedReader()` を実装する
   - [x] Sema に各 member stub を登録する
-  - [ ] Runtime に `kk_file_useLines` / `kk_file_bufferedReader` を追加する（`kk_file_forEachLine` は PR #333 で実装済み）
-  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
+  - [x] Runtime に `kk_file_useLines` / `kk_file_bufferedReader` を追加する（`kk_file_forEachLine` は PR #333 で実装済み。`RuntimeFileIO.swift`）
+  - [x] Codegen extern
+  - [ ] Lowering メンバー呼び出し変換
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("test.txt").forEachLine { println(it) }` が各行を出力する
 
 - [ ] STDLIB-323: `File.walk()` / `File.listFiles()` / `File.delete()` / `File.mkdirs()` を実装する
   - [x] Sema に各 member stub を登録する
   - [x] Runtime に `kk_file_walk` / `kk_file_listFiles` / `kk_file_delete` / `kk_file_mkdirs` を追加する（PR #333, `Sources/Runtime/RuntimeFileIO.swift`）
-  - [ ] Codegen/Lowering に `kk_file_*` extern 宣言とメンバー呼び出し変換を追加する
+  - [x] Codegen extern
+  - [ ] Lowering メンバー呼び出し変換
   - [ ] diff/golden ケースを追加する
   - **完了条件**: `File("/tmp/test").mkdirs()` でディレクトリが作成される
 
@@ -66,44 +59,27 @@
 
 ### 📦 Stdlib — sequence / iterator ビルダー（stdlib 版）
 
-- [ ] STDLIB-330: `sequence {}` ビルダー（`kotlin.sequences.sequence`）を実装する
-  - [ ] Sema に `sequence(block: suspend SequenceScope<T>.() -> Unit): Sequence<T>` stub を登録する（`SequenceScope` 未登録）
-  - [ ] `SequenceScope.yield(value)` / `yieldAll(iterable)` を解決可能にする（`yieldAll` 未実装）
-  - [x] Runtime に `kk_sequence_builder_create` / `kk_sequence_builder_yield` / `kk_sequence_builder_build` を追加する（`Sources/Runtime/RuntimeSequence.swift`）
-  - [x] Lowering で `sequence {}` → `kk_sequence_builder_build`、`yield()` → `kk_sequence_builder_yield` に変換する（`CollectionLiteralLoweringPass+CallRewrite.swift`）
+- [ ] STDLIB-330: `sequence {}` ビルダー（`kotlin.sequences.sequence`）を実装する (eager builder 版実装済み)
+  - [x] Sema に `sequence` stub と `SequenceScope` / `yield` / `yieldAll` を登録する（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`）
+  - [x] Runtime に `kk_sequence_builder_create` / `kk_sequence_builder_yield` / `kk_sequence_builder_yieldAll` / `kk_sequence_builder_build` を追加する（`Sources/Runtime/RuntimeSequence.swift`）
+  - [x] Lowering で `sequence {}` → `kk_sequence_builder_build`、`yield` / `yieldAll` → `kk_sequence_builder_yield` / `kk_sequence_builder_yieldAll` に変換する（`CollectionLiteralLoweringPass+CallRewrite.swift`）
   - [x] Codegen に `kk_sequence_builder_*` extern 宣言を追加する（`RuntimeABIExterns+Sequence.swift`）
   - [ ] continuation ベースの lazy sequence 生成に切り替える（現在は eager builder）
-  - [ ] diff/golden ケースを追加する
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `sequence { yield(1); yield(2); yield(3) }.toList()` → `[1, 2, 3]` が `kotlinc` と一致する
 
-- [ ] STDLIB-331: `iterator {}` ビルダー（`kotlin.sequences.iterator`）を実装する
-  - [ ] Sema に `iterator(block: suspend IteratorScope<T>.() -> Unit): Iterator<T>` stub を登録する
-  - [x] Lowering で `iterator {}` -> `kk_iterator_builder_build` に変換する
-  - [ ] Runtime で continuation ベースのイテレータ生成を実装する
-  - [ ] diff/golden ケースを追加する
+- [ ] STDLIB-331: `iterator {}` ビルダー（`kotlin.sequences.iterator`）を実装する (eager builder 版実装済み)
+  - [x] Sema に `iterator` stub を登録する（receiver は `SequenceScope<T>` を流用。Kotlin の `IteratorScope` 相当）
+  - [x] Lowering で `iterator {}` → `kk_iterator_builder_build`、`yield` → `kk_iterator_builder_yield`、`hasNext`/`next` → `kk_iterator_builder_*` に変換する
+  - [x] Runtime に eager バッファ方式 of `kk_iterator_builder_*` を追加する（`RuntimeSequence.swift`）
+  - [ ] continuation ベースの遅延イテレーション（`STDLIB-564` と統合可）
+  - [x] diff/golden ケースを追加する
   - **完了条件**: `val iter = iterator { yield(1); yield(2) }; println(iter.next())` → `1` が `kotlinc` と一致する
 
 ---
 
 ### 🛡️ Type Safety — Sema / Runtime 境界
 
-- [ ] TYPE-101: Collection HOF 推論で `Any` に潰れている戻り型を generic 保持に置き換える
-  - [x] `CallTypeChecker+MemberCallInference.swift` の `flatMap` / `associateBy` / `associateWith` / `associate` / `mapIndexed` / `groupBy` の戻り型推論を棚卸しする
-  - [ ] ラムダ戻り型 `R`、key 型 `K`、value 型 `V` を `Any` にフォールバックせず `TypeID` として保持する共通ヘルパーを導入する
-  - [ ] `flatMap` を `List<R>`、`associateBy` を `Map<K, T>`、`associateWith` を `Map<T, V>`、`associate` を `Map<K, V>` として推論できるようにする
-  - [x] `mapIndexed` を `List<R>`、`groupBy` を `Map<K, List<T>>` として推論できるようにする
-  - [ ] `Any` に落ちたことで通ってしまっていた不正プログラムの negative golden を追加する
-  - [ ] 正常系の diff/golden ケースを追加する
-  - **完了条件**: `listOf(1).mapIndexed { _, x -> "$x" }` の型が `List<String>` になり、`associateBy` / `flatMap` / `groupBy` でも `kotlinc` と同等の型推論結果になる
-
-- [ ] TYPE-102: synthetic collection stub の暫定 `Any` 戻り型を実型ベースに置き換える
-  - [ ] `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift` の `partition` など、コメントで「use Any for now」としている箇所を対応する（`mapIndexed` stub は `List<R>` で定義済み）
-  - [ ] synthetic stub 側で関数型 type parameter `R`、`Pair<List<T>, List<T>>`、`Map<K, V>` を表現するための builder を追加する
-  - [x] `mapIndexed` の stub 定義（`List<R>`）を推論コード（`CallTypeChecker+MemberCallInference.swift`）が利用するよう連携する（現在は stub を無視して `List<Any>` を返している）
-  - [ ] fallback 推論に依存せず、stub 定義だけで Kotlin 標準ライブラリ署名を再現できるようにする
-  - [ ] `lookupByShortName(...).first!` に依存する箇所を、診断可能な lookup helper に寄せる
-  - [ ] 対応した stub の golden 署名を更新し、既存ケースとの差分を固定する
-  - **完了条件**: synthetic stub のダンプで `partition` が `Pair<List<T>, List<T>>`、`mapIndexed` が `List<R>` として表現され、後段の推論特例が不要になる
 
 - [ ] TYPE-103: `arrayOf()` 系の「型を `Any` に erase してヒューリスティックで補う」処理を廃止する
   - [ ] `CallTypeChecker+MemberCallFallbacks.swift` の array-like 判定で `Any` を特別扱いしている分岐を調査する
@@ -119,42 +95,21 @@
 
 各タスクは他タスクに依存せず、並列実施可能。1 タスク = 1 API または 1 検証項目。
 
-#### A. kotlin.math — 各関数を個別タスク化
-
-- [ ] STDLIB-500: `kotlin.math.sin` の Float オーバーロード
-- [ ] STDLIB-501: `kotlin.math.cos` の Float オーバーロード
-- [ ] STDLIB-502: `kotlin.math.tan` の Float オーバーロード
-- [ ] STDLIB-503: `kotlin.math.asin` の Float オーバーロード
-- [ ] STDLIB-504: `kotlin.math.acos` の Float オーバーロード
-- [ ] STDLIB-505: `kotlin.math.atan` の Float オーバーロード
-- [ ] STDLIB-506: `kotlin.math.atan2` の Float オーバーロード
-- [ ] STDLIB-507: `kotlin.math.sqrt` の Float オーバーロード
-- [ ] STDLIB-508: `kotlin.math.round` の Float オーバーロード
-- [ ] STDLIB-509: `kotlin.math.ceil` / `floor` の Float オーバーロード
-- [ ] STDLIB-510: `roundToInt()` の Float/Double 拡張
-- [ ] STDLIB-511: `roundToLong()` の Float/Double 拡張
-- [ ] STDLIB-512: `ulp` / `nextUp` / `nextDown` の Double 拡張
-- [ ] STDLIB-513: `ulp` / `nextUp` / `nextDown` の Float 拡張
-
-#### B. kotlin.random
+#### A. kotlin.random
 
 - [ ] STDLIB-514: `Random.nextLong()` の stub と Runtime
 - [ ] STDLIB-515: `Random.nextFloat()` の stub と Runtime
 - [ ] STDLIB-516: `Random(seed)` コンストラクタの再現性検証（diff テスト）
+- [ ] STDLIB-653: `Random.nextBytes(ByteArray)` の stub と Runtime（`HeaderHelpers+SyntheticRandomStubs.swift`, `RuntimeRandom.swift`）
+- [ ] STDLIB-654: `Random.nextDouble(until: Double)` の stub と Runtime
+- [ ] STDLIB-655: `Random.nextFloat(until: Float)` の stub と Runtime
 
-#### C. kotlin.ranges / 型強制
+#### B. kotlin.ranges / 型強制
 
-- [ ] STDLIB-517: `Int.coerceIn(Int, Int)` の golden テスト
-- [ ] STDLIB-518: `Long.coerceIn(Long, Long)` の golden テスト
-- [ ] STDLIB-519: `Double.coerceIn(Double, Double)` の golden テスト
-- [ ] STDLIB-520: `Float.coerceIn(Float, Float)` の golden テスト
-- [ ] STDLIB-521: `coerceAtLeast` / `coerceAtMost` の Long 版 golden テスト
-- [x] STDLIB-522: `LongRange` の完全サポート（stub + Runtime）
-- [ ] STDLIB-523: `UIntRange` の完全サポート
-- [ ] STDLIB-524: `ULongRange` の完全サポート
-- [ ] STDLIB-525: `IntRange.coerceIn(ClosedRange)` の実装
+- [ ] STDLIB-637: `UIntRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）
+- [ ] STDLIB-638: `ULongRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）
 
-#### D. kotlin.collections — 単一 API 単位
+#### C. kotlin.collections — 単一 API 単位
 
 - [ ] STDLIB-526: `reduceOrNull` の Iterable 拡張
 - [ ] STDLIB-527: `scan` の Iterable 拡張
@@ -165,12 +120,9 @@
 - [ ] STDLIB-532: `Map?.orEmpty()` 拡張
 - [ ] STDLIB-533: `List?.orEmpty()` 拡張
 - [ ] STDLIB-534: `String?.orEmpty()` 拡張
-- [x] STDLIB-535: `associateByTo` の stub と Runtime
-- [x] STDLIB-536: `associateWithTo` の stub と Runtime
-- [x] STDLIB-537: `groupByTo` の stub と Runtime
 - [ ] STDLIB-538: `ListIterator.hasPrevious()` / `previous()`
-- [ ] STDLIB-539: `ArrayList` 型エイリアスの golden テスト
-- [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト
+- [ ] STDLIB-539: `ArrayList` 型エイリアスの golden テスト（型スタブは `HeaderHelpers+SyntheticComparableAndCollectionStubs` で登録済み）
+- [ ] STDLIB-540: `LinkedList` 型エイリアスの golden テスト（`ArrayList` / `HashMap` / `LinkedHashMap` も同ファイルでスタブ登録済み）
 - [ ] STDLIB-541: `HashMap` 型エイリアスの golden テスト
 - [ ] STDLIB-542: `LinkedHashMap` 型エイリアスの golden テスト
 - [ ] STDLIB-543: `firstOrNull` の kotlinc 挙動 diff 検証
@@ -183,92 +135,100 @@
 - [ ] STDLIB-550: `zip` の Pair 型 diff 検証
 - [ ] STDLIB-551: `unzip` の Pair 型 diff 検証
 - [ ] STDLIB-552: `flatten()` の kotlinc 互換 diff 検証
+- [ ] STDLIB-627: `partition()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_partition.kt`）
+- [ ] STDLIB-628: `associate()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
+- [ ] STDLIB-629: `associateBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
+- [ ] STDLIB-630: `associateWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
+- [ ] STDLIB-631: `groupBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/stdlib_collection_hof.kt`）
+- [ ] STDLIB-632: `mapNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）
+- [ ] STDLIB-633: `filterNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）
+- [ ] STDLIB-634: `List.subList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sublist.kt`）
+- [ ] STDLIB-635: `Array.copyOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）
+- [ ] STDLIB-636: `Array.copyOfRange()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）
+- [ ] STDLIB-641: `Map.maxByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）
+- [ ] STDLIB-642: `Map.minByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）
+- [ ] STDLIB-643: `List.shuffled()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_shuffled_random.kt`）
+- [ ] STDLIB-644: `Map.plus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）
+- [ ] STDLIB-645: `Map.minus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）
+- [ ] STDLIB-646: `Set.intersect()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
+- [ ] STDLIB-647: `Set.union()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
+- [ ] STDLIB-648: `Set.subtract()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
+- [ ] STDLIB-649: `List.sortedWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sorted_variants.kt`）
+- [ ] STDLIB-650: `Collection.toMutableList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
+- [ ] STDLIB-651: `Iterable.toSet()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
+- [ ] STDLIB-652: `Map.toMutableMap()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
 
-#### E. kotlin.sequences — 単一 API 単位
+#### D. kotlin.sequences — 単一 API 単位
 
-- [ ] STDLIB-553: `yieldAll(iterable)` の Runtime 実装
-- [ ] STDLIB-554: `List.asSequence()` の stub と Lowering
-- [ ] STDLIB-555: `Iterable.asSequence()` の stub と Lowering
-- [ ] STDLIB-556: `reduceIndexed` の Sequence 拡張
-- [ ] STDLIB-557: `foldIndexed` の Sequence 拡張
-- [ ] STDLIB-558: `runningFold` の Sequence 拡張
-- [ ] STDLIB-559: `runningReduce` の Sequence 拡張
-- [ ] STDLIB-560: `scan` の Sequence 拡張
-- [ ] STDLIB-561: `Sequence.plus(other)` の実装
-- [ ] STDLIB-562: `Sequence.minus(element)` の実装
-- [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース）
-- [ ] STDLIB-564: `iterator {}` の continuation ベース Runtime
+- [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース。現状 eager builder）
+- [ ] STDLIB-564: `iterator {}` の continuation ベース Runtime（現状 eager `kk_iterator_builder_*`）
+- [ ] STDLIB-624: `Iterable.asSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/iterable_as_sequence.kt`）
+- [ ] STDLIB-625: `sequenceOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）
+- [ ] STDLIB-626: `generateSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）
 
-#### F. kotlin.io / java.io.File — 単一 API 単位
+#### E. kotlin.io / java.io.File — 単一 API 単位
 
-- [ ] STDLIB-565: File メンバー呼び出しの VirtualCallRewrite 統合（readText, writeText, readLines, exists, isFile, isDirectory, name, path, forEachLine, delete, mkdirs, listFiles, walk）
-- [ ] STDLIB-566: `File.useLines {}` の Runtime 実装
-- [ ] STDLIB-567: `File.bufferedReader()` の Runtime 実装
-- [ ] STDLIB-568: diff_cases に `file_readtext.kt` を追加
-- [ ] STDLIB-569: diff_cases に `file_exists.kt` を追加
-- [ ] STDLIB-570: diff_cases に `file_mkdirs.kt` を追加
-- [ ] STDLIB-571: `readlnOrNull` の stub と Runtime
+- [ ] STDLIB-565: File メンバー呼び出しの VirtualCallRewrite 統合（readText, writeText, readLines, exists, isFile, isDirectory, name, path, forEachLine, delete, mkdirs, listFiles, walk）。`File(String)` → `kk_file_new` の ctor rewrite のみ `CollectionLiteralLoweringPass+CallRewrite` に実装済み
 - [ ] STDLIB-572: `print` の 0 引数オーバーロード
+- [ ] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）
+- [ ] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）
+- [ ] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）
+- [ ] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_readtext.kt` 周辺）
+- [ ] STDLIB-665: `java.io.File.readBytes(): ByteArray` の Sema stub / Runtime / Lowering / diff
 
-#### G. kotlin.text / String — 単一 API 単位
+#### F. kotlin.text / String — 単一 API 単位
 
 - [ ] STDLIB-573: `String.encodeToByteArray(charset)` の実装
 - [ ] STDLIB-574: `ByteArray.decodeToString(charset)` の実装
 - [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
-- [x] STDLIB-577: `padStart(length, padChar: Char)` オーバーロード
-- [x] STDLIB-578: `padEnd(length, padChar: Char)` オーバーロード
-- [x] STDLIB-579: `buildString.appendLine` の完全性確認
-- [x] STDLIB-580: `buildString.appendRange` の完全性確認
-- [ ] STDLIB-581: `String.toByteArray()` の charset オーバーロード（既存 toByteArray の拡張）
+- [ ] STDLIB-581: `String.toByteArray(Charset)` / charset 付き `encodeToByteArray` の完全互換（無印版は `kk_string_encodeToByteArray` 等で対応）
+- [ ] STDLIB-639: `String.lines()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_lines.kt`）
+- [ ] STDLIB-640: `CharArray.concatToString()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_concat.kt`）
+- [ ] STDLIB-666: `String.lineSequence()` の stub / Runtime / Lowering と `lines()` との差分検証
+- [ ] STDLIB-667: `String.encodeToByteArray()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_tobytearray.kt`）
+- [ ] STDLIB-668: `String.removePrefix()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_remove_prefix_suffix_surrounding.kt`）
+- [ ] STDLIB-669: `String.removeSuffix()` の kotlinc 挙動 diff 検証（同上）
+- [ ] STDLIB-670: `String.removeSurrounding()` の kotlinc 挙動 diff 検証（同上）
+- [ ] STDLIB-671: `String.chunked(Int)` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_chunked_windowed.kt`）
+- [ ] STDLIB-672: `String.windowed(Int, ...)` の kotlinc 挙動 diff 検証（同上）
 
-#### H. kotlin.time / kotlin.system
+#### G. kotlin.time / kotlin.system
 
-- [ ] STDLIB-582: `Duration.inWholeMilliseconds` の Runtime 確認
-- [ ] STDLIB-583: `Duration.inWholeSeconds` の Runtime 確認
-- [ ] STDLIB-584: `Duration.inWholeMinutes` の Runtime 確認
-- [ ] STDLIB-585: `measureTime { }` の戻り型を `Duration` に統一
-- [ ] STDLIB-586: `RuntimeDuration` の RuntimeTests 追加
-- [ ] STDLIB-587: `measureTimeMillis` の diff テスト追加
-- [ ] STDLIB-588: `measureNanoTime` の diff テスト追加
+- [ ] STDLIB-656: `System.nanoTime(): Long` の Sema stub と `kk_system_nanoTime` 呼び出し下げ（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeSystem.swift`）
+- [ ] STDLIB-657: `exitProcess(Int)` の `Nothing` 終了セマンティクスと下げ（`RuntimeSystem.swift`）
+- [ ] STDLIB-660: `measureTimedValue { }` の stub / Lowering / Runtime（`RuntimeDuration.swift` の STDLIB-231 相当コメント参照）
+- [ ] STDLIB-661: `Duration.inWholeMicroseconds` の Sema / `kk_duration_*` / ABI
+- [ ] STDLIB-662: `Duration.inWholeHours` の Sema / `kk_duration_*` / ABI
+- [ ] STDLIB-663: `Long` 受け Duration 工場（例 `5L.seconds`）の Sema stub（`HeaderHelpers+SyntheticDurationStubs.swift` は Int のみ）
 
-#### I. kotlin.Result / kotlin.contracts
+#### H. kotlin.Result / kotlin.contracts
 
-- [ ] STDLIB-589: `Result.recover` の stub と Runtime
 - [ ] STDLIB-590: `Result.onFailure` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-591: `contract { returns() }` の意味ある実装検討
-- [x] STDLIB-592: `contract { callsInPlace }` の意味ある実装検討
-- [x] STDLIB-593: `contract { returnsNotNull }` の意味ある実装検討
 
-#### J. kotlin.io.Closeable / その他
+#### I. kotlin.io.Closeable / その他
 
-- [ ] STDLIB-594: `Closeable.use { }` の Runtime 実装（try-finally 相当）
-- [ ] STDLIB-595: `UInt.toInt` / `toLong` / `toUInt` の diff 検証
-- [ ] STDLIB-596: `ULong.toLong` / `toULong` の diff 検証
+- [ ] STDLIB-622: `println()` の 0 引数オーバーロードの kotlinc 挙動 diff 検証（`Scripts/diff_cases/println_no_arg.kt`）
+- [ ] STDLIB-623: `Closeable.use { }` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/closeable_use.kt`）
 - [ ] STDLIB-597: `RegexOption.MULTILINE` の互換性確認
 - [ ] STDLIB-598: `RegexOption.IGNORE_CASE` の互換性確認
 - [ ] STDLIB-599: `RegexOption.DOT_MATCHES_ALL` の互換性確認
-- [ ] STDLIB-600: `assert()` の stub と Runtime（既存 STDLIB-258 と統合可）
 
-#### K. テスト・検証（各 1 タスク）
+#### J. テスト・検証（各 1 タスク）
 
-- [ ] STDLIB-601: Coercion の Long golden テスト
-- [ ] STDLIB-602: Coercion の Double golden テスト
-- [ ] STDLIB-603: Coercion の Float golden テスト
 - [ ] STDLIB-604: `countOneBits` のエッジケーステスト
 - [ ] STDLIB-605: `countLeadingZeroBits` のエッジケーステスト
 - [ ] STDLIB-606: `countTrailingZeroBits` のエッジケーステスト
-- [ ] STDLIB-607: diff_cases 全 198 ファイルの stdlib サポート状況棚卸し
+- [ ] STDLIB-607: diff_cases 全 `.kt` ファイル（現状 231 件程度）の stdlib サポート状況棚卸し
 - [ ] STDLIB-608: `list_of.kt` の diff 通過確認
 - [ ] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
 - [ ] STDLIB-610: `string_stdlib.kt` の diff 通過確認
 
-#### L. 既存・補足
+#### K. 既存・補足
 
 - [ ] STDLIB-611: `Comparator.thenBy` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-612: `Comparator.thenByDescending` の kotlinc 挙動 diff 検証
-- [x] STDLIB-613: `compareBy` の複数セレクタオーバーロード
-- [x] STDLIB-614: `minOf` / `maxOf` の 3 引数以上オーバーロード
 - [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
 - [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
@@ -281,92 +241,67 @@
 ## バックログ: Incomplete/Half-baked Implementations
  
 監査で見つかった「簡易実装（Stub）」や「中途半端なパス」を将来の改善項目として追跡する。
- 
-- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
-  - 現状: `kk_string_toList` を呼び出して `List<Char>` を実体化して返している（`RuntimeStringStdlib.swift`）
-- [ ] STDLIB-250: `kk_with_context` を非同期実行に対応させる
-  - 現状: 実行コンテキストを取得するのみで、実際の実行は同期的なまま（`RuntimeCoroutine.swift`）
-- [ ] STDLIB-088: `Flow` の lazy/cold stream セマンティクスを完全に実装する
-  - 現状: `map`/`filter` 等が非常に最小限の stub 実装（`RuntimeCoroutine.swift`）
-- [x] STDLIB-133: Coroutine Dispatcher のスケジューラ実体を実装する
-  - 実装済み: `RuntimeDispatcher` クラスで GCD キューベースのスケジューリングを実装（`RuntimeCoroutine.swift`）
-- [x] STDLIB-480: `Regex` の `CANON_EQ` オプションに対応する
-  - NFC 正規化によるマッチングで実装済み（`RuntimeRegex.swift`）
-- [ ] STDLIB-331: `yieldAll` を `RuntimeSequence.swift` に実装し、Lowering と連携する
-- [ ] STDLIB-324: File I/O のメンバー呼び出し（`readText` / `readLines` / `exists` 等）を `VirtualCallRewrite.swift` に統合する
-  - 現状: Runtime は実装済みだが、Lowering が未対応のため標準ライブラリ呼び出しがリンクされない
-- [ ] KIR-001: KIR の `Set` などのシンボル名を完全修飾名 (`kotlin.collections.Set`) に統一する
-  - 現状: `CallSupportLowerer+DefaultArgsAndVarargs.swift:132` に TODO コメントあり
-- [ ] TYPE-110: `toHashSet()` 等の戻り型を `MutableSet<T>` に修正する（型システムに可変コレクション型を追加する）
-  - 現状: `HeaderHelpers+SyntheticComparableAndCollectionStubs.swift:1223-1225` で `Set<T>` として返している（KL: mutable collection types are not yet supported in the type system）
-- [ ] TYPE-111: HOF セレクタの Nullable キー（`K?`）をサポートする
-  - 現状: `distinctBy` 等のセレクタ戻り型が `Any` に固定されており Nullable キーが利用不可（`HeaderHelpers+SyntheticComparableAndCollectionStubs.swift:1490`）
-- [ ] STDLIB-088: Data Class の `copy()` メソッドを正しく実装する
-  - 現状: `DataEnumSealedSynthesisPass.swift` で `$self` を返すだけの stub になっている
-- [ ] STDLIB-089: Data Class (non-object) の `toString`, `equals`, `hashCode` を自動生成する
-  - 現状: `DataEnumSealedSynthesisPass.swift` で `object` の場合にしか生成されていない
-- [ ] STDLIB-090: Data Class の `componentN()` 関数を自動生成する
-  - 現状: `DataEnumSealedSynthesisPass.swift` に全く実装されていない
-- [ ] LOWER-005: `TailrecLoweringPass` で `$default` stub 呼び出しを最適化対象に含める
-  - 現状: default 引数を含む再帰呼び出しは `foo$default` という別シンボルを呼ぶため、symbol identity チェック (`isSelfRecursiveCall`) で不一致となりループ最適化されない
-- [ ] RUNTIME-001: Collection HOF のキー重複排除で `equals`/`hashCode` ベースの構造等価性を使用する
-  - 現状: `distinctBy` 等は raw Int（identity）で比較。String は interning で動作するが、data class 等のカスタム型で誤結果になる（`RuntimeCollectionHOF.swift:1002-1014`）
-- [ ] LOWERING-001: Lowering の virtual call rewrite を tracked receiver 以外の collection receiver にも適用する
-  - 現状: `listExprIDs`/`setExprIDs` 等に含まれない receiver（関数引数や戻り値として受け取った List 等）は rewrite されない（`VirtualCallRewrite.swift:112`, `CallRewrite.swift:980`）
-- [ ] CORO-001: Channel の suspend セマンティクスを実装する（send の一時停止とバックプレッシャー）
-  - 現状: buffered channel は満杯時に drop、rendezvous は基本的に動作するが Kotlin の suspend 型セマンティクスとは異なる（`RuntimeCoroutine.swift:890-976`）
-- [ ] TEST-001: `RuntimeDuration.swift` のテストを追加する
-  - 現状: Duration ファクトリ、`inWhole*` アクセサ、`toString()` フォーマット、`measureTime` のテストが未追加（`RuntimeDuration.swift:17-19`）
-- [ ] TEST-002: Long/Double/Float 型強制変換の golden/smoke テストを追加する
-  - 現状: `HeaderHelpers+SyntheticCoercionStubs.swift:4` に TODO コメントあり
-- [ ] TEST-003: Numeric bit-count 関数のエッジケーステストを追加する
-  - 現状: `RuntimeNumericCompat.swift:481` に TODO コメントあり
-- [ ] STDLIB-431: `Random.nextLong()` / `nextFloat()` を実装する
-  - [ ] `HeaderHelpers+SyntheticRandomStubs.swift` に `nextLong` / `nextFloat` stub を登録する
-  - [ ] Runtime に `kk_random_nextLong` / `kk_random_nextFloat` を追加する
-  - **完了条件**: `Random.nextLong()` が 64-bit 乱数を返すこと
-- [ ] STDLIB-430: `kotlin.math` の `Float` オーバーロード（`sin`, `cos` 等）を完備する
-  - 現状: `HeaderHelpers+SyntheticMathStubs.swift` に TODO あり。現状は `Double` にキャストして計算している可能性がある
-  - **完了条件**: `sin(1.0f)` が `Float` 型の戻り値を返し、`Double` への暗黙キャストが発生しないこと
-- [ ] REFL-001: `KClass` / `KType` を型システムでモデル化する (TYPE-111)
-  - 現状: `anyType` をプレースホルダーとして使用しており、型安全性が欠如している
-- [ ] REFL-002: スタンドアロンの `T::class` 参照を `Unit` ではなく、正しいメタデータ参照として下げる
-  - 現状: `simpleName` 呼び出しがない限り `Unit` にフォールバックされる
-- [ ] REFL-003: 呼び出し可能参照 (`::foo`) に `KFunction` / `KProperty` の型アイデンティティを付与する
-  - 現状: 単なるラムダとして生成されており、リフレクション API での利用が不可
-- [ ] CODE-001: `return`, `break`, `continue` の際、囲んでいる `finally` ブロックを確実に実行するようにする
-  - 現状: `ExprLowerer+ControlFlowAndBlocks.swift` で直接 `returnValue` / `jump` を発行しており、`finally` がスキップされる
-- [x] CODE-002: 例外型チェックの精度を向上させる (UNKNOWN token 0 の対応)
-  - 完了: トークンが 0 (UNKNOWN) の場合、`kk_op_is` を呼び出して実行時型チェックを行うように変更。全 catch 節に無条件マッチする問題を修正
-- [ ] CORO-001: コルーチンのサスペンドを真に非ブロッキングにする
-  - 現状: `waitForResumeSignal` で `DispatchSemaphore` を使用してスレッドをブロックしている。本来は継続（Continuation）を保存してスレッドを解放すべき
-- [x] CORO-002: `Flow` の評価を遅延（Lazy）にする
-  - 完了: `runtimeFlowEvaluateSource` の一括収集を廃止し、各要素を emit 時に即座に op chain → collector へ渡す遅延評価に変更。`take` で打ち切れば無限ストリームも動作する
-- [ ] CORO-003: `currentScope` の管理に TLS (Thread Local Storage) を使用しないようにする
-  - 現状: サスペンド・レジュームが別スレッドで行われた場合にスコープが消失する。コルーチンコンテキストに含めるべき
-- [ ] REFL-004: 実行時リフレクション用メタデータの生成 (MetadataSerializer の活用)
-  - 現状: コンパイル時のリンク用メタデータはあるが、実行時に `KClass` からアクセス可能なバイナリメタデータが存在しない
-- [ ] ENUM-001: Enum エントリの静的初期化と `valueOf` / `values` の KIR 合成
-  - 現状: 合成ロジックが未実装。`CallLowerer+EnumStdlib.swift` が参照するシンボルが生成されていない
- - [ ] VAL-001: Value Class のアンボックス化（Unboxing）とマングリングの実装
-   - 現状: 単なる class として扱われており、最適化（インライン化）が行われていない
- - [ ] DATA-001: Data Class の `copy()` 生成を完備する
-  - 現状: キャリアレシーバ（`this`）を即座に返す stub になっている。引数によるプロパティ上書きロジックが必要（`DataEnumSealedSynthesisPass.swift:227`）
-- [ ] DATA-002: Data Class の `componentN()` シンボルの合成
-  - 現状: `DataEnumSealedSynthesisPass.swift` に実装が皆無
-- [ ] DATA-003: Data Class の `hashCode()` シンボルの合成
-  - 現状: `DataEnumSealedSynthesisPass.swift` に実装が皆無
-- [ ] DATA-004: 複数プロパティを持つ Data Class の `equals()` / `toString()` 修正
-  - 現状: `object`（シングルトン）以外ではプロパティを考慮した比較・文字列表現が生成されない
-- [ ] INLINE-001: Inline 関数における非局所 return (Non-local return) の実装
-  - 現状: `InlineLoweringPass.swift` で return が単純にインライン化されるだけで、外側の関数を抜けるセマンティクスがない
-- [ ] INLINE-002: Inline 関数に渡されたラムダ引数のインライン展開
-  - 現状: ラムダはインライン化されず、単なる間接呼び出しとして残るため overhead が削減されない
-- [ ] CLSR-001: 安定したクロージャオブジェクトの合成と LambdaClosureConversionPass の実装
-  - 現状: `LambdaClosureConversionPass.swift` は rename のみの stub。キャプチャした変数を保持するオブジェクト構造と、ポリモーフィックな `kk_lambda_invoke` が未実装
-- [ ] ENUM-002: `enumValues()` が正しい Array オブジェクトを返すようにする
-  - 現状: 現在は `count` (Int) のみを返しており、Kotlin の Array<T> セマンティクスを満たしていない（`DataEnumSealedSynthesisPass.swift:494`）
-- [ ] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+
+- [x] STDLIB-317: `String.asIterable()` を lazy `Iterable<Char>` ビューに変更する
+  - 現状: `kk_string_asIterable` (lazy view) は実装済み。KIR 下げも対応。
+- [x] STDLIB-250: `kk_with_context` の非同期セマンティクスを Kotlin に近づける
+  - 現状: `RuntimeCoroutine.swift` で dispatch とスコープ伝播、デッドロック回避が実装済み。
+- [x] STDLIB-088: `Flow` の cold / op-chain とソース収集の Kotlin 完全一致
+  - 現状: `RuntimeCoroutine.swift` で lazy 経路が実装済み。
+- [/] STDLIB-324: File メンバー呼び出しを `kk_file_*` に繋ぐ Lowering 統合
+  - 現状: `File(String)` コンストラクタは対応済み。`readText` 等の virtual rewrite は未対応（`STDLIB-565`）。
+- [x] KIR-001: KIR の `Set` などのシンボル名を完全修飾名 (`kotlin.collections.Set`) に統一する
+  - 現状: `CompilerKnownNames.swift` の `isSetLikeSymbol` 等で FQN 対応済み。
+- [x] TYPE-110: `toHashSet()` 等の戻り型を `MutableSet<T>` に修正する
+  - 現状: `HeaderHelpers` で `MutableSet<T>` を返すように修正済み。
+- [x] TYPE-111: HOF セレクタの Nullable キー（`K?`）をサポートする
+  - 現状: `distinctBy` 等のセレクタ戻り型が `Any?` に変更され、Nullable キーに対応済み。
+- [x] STDLIB-089: Data Class (non-object) の `toString`, `equals`, `hashCode` を自動生成する
+  - 現状: `DataEnumSealedSynthesisPass.swift` で実装済み。
+- [x] STDLIB-090: Data Class の `componentN()` 関数を自動生成する
+  - 現状: `DataEnumSealedSynthesisPass.swift` で実装済み。
+- [x] LOWER-005: `TailrecLoweringPass` で `$default` stub 呼び出しを最適化対象に含める
+  - 現状: `TailrecLoweringPass.swift` で `$default` チェックが実装済み。
+- [x] RUNTIME-001: Collection HOF のキー重複排除で `equals`/`hashCode` ベースの構造等価性を使用する
+  - 現状: `RuntimeElementKey` を使用して構造等価性が導入済み。
+- [/] LOWERING-001: virtual call rewrite を **tracked 外**の collection receiver にも適用する
+  - 現状: `CollectionLiteralLoweringPass+VirtualCallRewrite.swift` で tracked 制限あり。既知の制限として残存。
+- [ ] CORO-001: Channel の send / バックプレッシャーを Kotlin suspend セマンティクスに揃える
+  - 現状: 満杯時の扱い・Flow 側の eager ソースなど、Kotlin との差が残る（`RuntimeCoroutine.swift` の `RuntimeChannelHandle.send` 等）
+- [ ] TEST-001: `kk_measureTime` およびシステム計測の Runtime XCTest 強化
+  - 現状: `RuntimeDurationTests` で Duration 工場・`inWhole*`・`toString` はカバー。`kk_measureTime` 本体のテストは薄い
+- [ ] TEST-002: Long/Double/Float 型強制の golden/smoke テスト追加
+  - 現状: `HeaderHelpers+SyntheticCoercionStubs.swift` 先頭にテスト参照コメント。ケース拡充は未了
+- [ ] TEST-003: Numeric bit-count 系のエッジケーステスト追加
+  - 現状: `RuntimeNumericCompat.swift` にビット数まわりの TODO コメント（行は実装変更で前後しうる）
+- [ ] STDLIB-431: `Random.nextLong()` / `nextFloat()` の実装追跡（互換性セクションの `STDLIB-514` / `STDLIB-515` と重複。片方に統合可）
+- [ ] STDLIB-430: `kotlin.math` Float オーバーロードの **kotlinc 完全一致検証**（スタブは `HeaderHelpers+SyntheticMathStubs.swift` の `kk_math_*_float` 等で登録済み）
+  - **完了条件**: `sin(1.0f)` が `Float` のみで完結し `kotlinc` と stdout 一致
+- [ ] REFL-001: `KClass` / `KType` を型システムで端到端にモデル化する
+  - 現状: 一部 `KClassType` 等はあるが、`anyType` フォールバックやエッジが残る
+- [ ] REFL-002: `T::class` のメタデータ下げとスタンドアロン参照の型精度
+  - 現状: `ExprLowerer+ControlFlowAndBlocks.swift` 等で `kk_kclass_create` 経路あり。全経路・診断は未固定
+- [ ] REFL-003: 呼び出し可能参照 (`::foo`) の `KFunction` / `KProperty` 同一性と下げ
+  - 現状: `ExprTypeChecker+NameLambdaAndCallableRefInference.swift` 等で kind 束縛あり。KIR/実行時・リフレクション API まで含め差分あり
+- [ ] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
+  - 現状: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
+- [ ] CORO-004: サスペンドを `DispatchSemaphore` 待ちではない継続モデルにする
+  - 現状: `waitForResumeSignal` 等（`RuntimeCoroutine.swift`）
+- [ ] CORO-003: スコープを TLS / `threadDictionary` 依存から減らす
+  - 現状: Task-local registry 等で改善あり。Flow collect 等に `threadDictionary` 残存（`RuntimeCoroutine.swift`）
+- [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
+  - 現状: リンク用メタデータはあるが実行時参照は限定
+- [ ] ENUM-001: Enum **静的初期化順・エッジ**と `entries` / 合成の Kotlin 完全一致
+  - 現状: `valueOf` / `kk_enum_make_values_array` 等の合成・Runtime は存在（`DataEnumSealedSynthesisPass.swift`, `RuntimeEnum.swift`）。初期化順や未カバーケースは要 diff
+- [ ] ENUM-002: `enumValues` / `entries` の **Array vs List** など ABI 上の Kotlin 差分の整理
+  - 現状: `kk_enum_make_values_array` が `List` を返す（`RuntimeEnum.swift`）。Kotlin JVM の `Array` との差を diff で固定するか方針決定
+- [ ] VAL-001: Value class のアンボックス化とマングリング
+  - 現状: `ValueClassUnboxingPass` disabled 等（`LoweringPhase.swift`）
+- [ ] DATA-001: Data class `copy()` の **primary ctor 不在・シグネチャ異常**時のフォールバックとエッジ
+  - 現状: 通常 ctor がある data class は引数付き `copy` を合成（`DataEnumSealedSynthesisPass.swift` `appendSyntheticDataCopyIfNeeded`）。ctor 解決失敗時のみ self-return
+- [x] INLINE-001: 非局所 return の残差（`InlineLoweringPass.swift`）
+- [x] INLINE-002: ラムダ引数インライン展開の網羅と最適化品質
+- [ ] CLSR-001: クロージャキャプチャ・`kk_lambda_invoke` まわりの Kotlin 完全一致（`LambdaClosureConversionPass.swift` は実装拡大済み、差分は diff で固定）
 
  
 ---
