@@ -299,10 +299,11 @@ final class RuntimeBitCountTests: IsolatedRuntimeXCTestCase {
     // MARK: - Cross-function invariants (STDLIB-501)
 
     func testBitCountInvariant_oneBitsPlusZeroBitsEquals32() {
-        // For any non-zero 32-bit value without leading/trailing zero overlap,
-        // countLeadingZeroBits + countTrailingZeroBits + countOneBits >= 32
-        // and for a value with a single contiguous run of 1-bits,
-        // countLeadingZeroBits + countTrailingZeroBits + countOneBits == 32
+        // For any 32-bit value:
+        // countLeadingZeroBits + countTrailingZeroBits + countOneBits <= 32
+        // (equals 32 only when ones form a single contiguous block)
+        // When ones are non-contiguous, the internal zero gaps are not counted
+        // by either leading or trailing, so the sum is strictly less than 32.
         let testValues: [Int] = [
             0, 1, -1, 42, 255, 256, 1024,
             0x7FFF_FFFF, Int(Int32.min), -2, -128,
@@ -314,8 +315,8 @@ final class RuntimeBitCountTests: IsolatedRuntimeXCTestCase {
             let leading = kk_int_countLeadingZeroBits(value)
             let trailing = kk_int_countTrailingZeroBits(value)
             // The sum of leading zeros, trailing zeros, and one-bits
-            // must be >= 32 (equals 32 only when ones form a contiguous block)
-            XCTAssertGreaterThanOrEqual(
+            // must be <= 32 (equals 32 only when ones form a contiguous block)
+            XCTAssertLessThanOrEqual(
                 leading + trailing + ones, 32,
                 "Invariant violated for value \(value): leading=\(leading) trailing=\(trailing) ones=\(ones)"
             )
