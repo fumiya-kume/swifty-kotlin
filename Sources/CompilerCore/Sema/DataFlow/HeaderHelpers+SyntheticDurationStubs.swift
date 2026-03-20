@@ -174,6 +174,69 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-663: Long receiver Duration factory extension properties ---
+        // Kotlin: val Long.seconds: Duration  (extension on Duration.Companion)
+
+        registerDurationFactoryExtensionProperty(
+            named: "seconds",
+            externalLinkName: "kk_duration_from_seconds_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "milliseconds",
+            externalLinkName: "kk_duration_from_milliseconds_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "minutes",
+            externalLinkName: "kk_duration_from_minutes_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "nanoseconds",
+            externalLinkName: "kk_duration_from_nanoseconds_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "microseconds",
+            externalLinkName: "kk_duration_from_microseconds_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "hours",
+            externalLinkName: "kk_duration_from_hours_long",
+            receiverType: longType,
+            returnType: durationType,
+            packageFQName: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Duration Helpers
