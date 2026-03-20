@@ -1739,6 +1739,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_range_isEmpty = ExternDecl(
+        name: "kk_range_isEmpty",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_range_sum = ExternDecl(
+        name: "kk_range_sum",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_range_toList = ExternDecl(
         name: "kk_range_toList",
         parameterTypes: ["intptr_t"],
@@ -2526,6 +2538,8 @@ public enum RuntimeABIExterns {
             kk_range_first,
             kk_range_last,
             kk_range_count,
+            kk_range_isEmpty,
+            kk_range_sum,
             kk_range_toList,
             kk_range_forEach,
             kk_range_map,

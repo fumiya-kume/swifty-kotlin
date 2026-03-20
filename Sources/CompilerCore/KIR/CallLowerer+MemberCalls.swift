@@ -101,6 +101,7 @@ extension CallLowerer {
         "toHashSet",
         "containsAll", "binarySearch",
         "addFirst", "addLast",
+        "sum",
         "to", // FUNC-002
     ]
 

@@ -1660,6 +1660,23 @@ extension CollectionLiteralLoweringPass {
             ))
             return true
         }
+        // STDLIB-637: isEmpty / sum
+        if callee == lookup.isEmptyName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeIsEmptyName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+        if callee == lookup.sumName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeSumName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
 
         // contains — delegate to kk_op_contains (STDLIB-090)
         if callee == lookup.containsName, arguments.count == 1 {

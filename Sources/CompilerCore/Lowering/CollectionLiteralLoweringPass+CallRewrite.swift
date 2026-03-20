@@ -1226,6 +1226,36 @@ extension CollectionLiteralLoweringPass {
                                 ))
                                 continue
                             }
+                            // STDLIB-637: UIntRange/ULongRange isEmpty
+                            if rangeExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkRangeIsEmptyName,
+                                    arguments: [receiverID],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                        }
+                    }
+
+                    // STDLIB-637: range sum()
+                    if callee == lookup.sumName {
+                        if arguments.count == 1 {
+                            let receiverID = arguments[0]
+                            if rangeExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkRangeSumName,
+                                    arguments: [receiverID],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
                         }
                     }
 
