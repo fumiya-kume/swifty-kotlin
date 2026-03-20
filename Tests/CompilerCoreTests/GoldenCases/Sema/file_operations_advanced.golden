@@ -1,0 +1,84 @@
+decl[0] function #955 main params=0 suspend=false inline=false
+  const r0=unit
+  const r1=stringLiteral(CompilerCore.InternedString(rawValue: 5))
+  call kk_file_new symbol=<init> args=[r1] ret=r2 thrown=false thrownResult=_
+  const r3=unit
+  const r4=unit
+  const r5=stringLiteral(CompilerCore.InternedString(rawValue: 7))
+  call kk_file_new symbol=<init> args=[r5] ret=r6 thrown=false thrownResult=_
+  const r7=unit
+  const r8=unit
+  const r9=stringLiteral(CompilerCore.InternedString(rawValue: 9))
+  call kk_file_new symbol=<init> args=[r9] ret=r10 thrown=false thrownResult=_
+  const r11=unit
+  call kk_file_mkdirs symbol=mkdirs args=[r10] ret=r75 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r75] ret=r12 thrown=false thrownResult=_
+  const r13=unit
+  const r14=unit
+  const r15=stringLiteral(CompilerCore.InternedString(rawValue: 13))
+  const r16=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r12, r16] ret=r17 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r15, r17] ret=r18 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r18] ret=r19 thrown=false thrownResult=_
+  call kk_file_walk symbol=walk args=[r2] ret=r20 thrown=true thrownResult=_
+  const r21=unit
+  const r22=unit
+  const r23=stringLiteral(CompilerCore.InternedString(rawValue: 16))
+  call kk_collection_toList symbol=toList args=[r20] ret=r24 thrown=true thrownResult=_
+  call kk_list_size symbol=_ args=[r24] ret=r25 thrown=false thrownResult=_
+  const r26=intLiteral(1)
+  call kk_any_to_string symbol=_ args=[r25, r26] ret=r27 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r23, r27] ret=r28 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r28] ret=r29 thrown=false thrownResult=_
+  call kk_file_listFiles symbol=listFiles args=[r2] ret=r30 thrown=true thrownResult=_
+  const r31=unit
+  const r32=unit
+  const r33=stringLiteral(CompilerCore.InternedString(rawValue: 21))
+  call kk_collection_toList symbol=toList args=[r30] ret=r34 thrown=true thrownResult=_
+  call kk_list_size symbol=_ args=[] ret=r35 thrown=false thrownResult=_
+  const r36=intLiteral(1)
+  call kk_any_to_string symbol=_ args=[r35, r36] ret=r37 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r33, r37] ret=r38 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r38] ret=r39 thrown=false thrownResult=_
+  call kk_file_listFiles symbol=listFiles args=[r6] ret=r40 thrown=true thrownResult=_
+  const r41=unit
+  const r42=unit
+  const r43=stringLiteral(CompilerCore.InternedString(rawValue: 23))
+  call kk_collection_toList symbol=toList args=[r40] ret=r44 thrown=true thrownResult=_
+  call kk_list_size symbol=_ args=[] ret=r45 thrown=false thrownResult=_
+  const r46=intLiteral(1)
+  call kk_any_to_string symbol=_ args=[r45, r46] ret=r47 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r43, r47] ret=r48 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r48] ret=r49 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r2] ret=r76 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r76] ret=r50 thrown=false thrownResult=_
+  const r51=unit
+  const r52=unit
+  const r53=stringLiteral(CompilerCore.InternedString(rawValue: 26))
+  const r54=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r50, r54] ret=r55 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r53, r55] ret=r56 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r56] ret=r57 thrown=false thrownResult=_
+  const r58=unit
+  const r59=stringLiteral(CompilerCore.InternedString(rawValue: 27))
+  call kk_file_new symbol=<init> args=[r59] ret=r60 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r60] ret=r77 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r77] ret=r61 thrown=false thrownResult=_
+  const r62=unit
+  const r63=stringLiteral(CompilerCore.InternedString(rawValue: 28))
+  call kk_file_new symbol=<init> args=[r63] ret=r64 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r64] ret=r78 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r78] ret=r65 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r6] ret=r79 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r79] ret=r66 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r2] ret=r80 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r80] ret=r67 thrown=false thrownResult=_
+  const r68=unit
+  const r69=unit
+  const r70=stringLiteral(CompilerCore.InternedString(rawValue: 30))
+  const r71=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r67, r71] ret=r72 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r70, r72] ret=r73 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r73] ret=r74 thrown=false thrownResult=_
+  return r74
+lowerings: TailrecLowering, NormalizeBlocks, OperatorLowering, ForLowering, CollectionLiteralLowering, FlowLowering, ValueClassUnboxing, PropertyLowering, StdlibDelegateLowering, JvmStaticLowering, DataEnumSealedSynthesis, EnumEntriesLowering, EnumNameAccessLowering, LambdaClosureConversion, InlineLowering, CoroutineLowering, ABILowering

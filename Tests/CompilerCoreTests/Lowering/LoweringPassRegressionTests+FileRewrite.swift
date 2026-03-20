@@ -102,4 +102,96 @@ extension LoweringPassRegressionTests {
         }
     }
 
+    func testFileMkdirsRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").mkdirs()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileMkdirsRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_mkdirs"))
+            XCTAssertFalse(callees.contains("mkdirs"))
+        }
+    }
+
+    func testFileDeleteRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").delete()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileDeleteRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_delete"))
+            XCTAssertFalse(callees.contains("delete"))
+        }
+    }
+
+    func testFileListFilesRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").listFiles()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileListFilesRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_listFiles"))
+            XCTAssertFalse(callees.contains("listFiles"))
+        }
+    }
+
+    func testFileWalkRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").walk()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileWalkRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_walk"))
+            XCTAssertFalse(callees.contains("walk"))
+        }
+    }
+
 }

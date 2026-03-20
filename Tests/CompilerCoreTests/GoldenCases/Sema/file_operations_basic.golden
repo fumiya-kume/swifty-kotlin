@@ -1,0 +1,59 @@
+decl[0] function #955 main params=0 suspend=false inline=false
+  const r0=unit
+  const r1=stringLiteral(CompilerCore.InternedString(rawValue: 5))
+  call kk_file_new symbol=<init> args=[r1] ret=r2 thrown=false thrownResult=_
+  const r3=unit
+  call kk_file_mkdirs symbol=mkdirs args=[r2] ret=r52 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r52] ret=r4 thrown=false thrownResult=_
+  const r5=unit
+  const r6=unit
+  const r7=stringLiteral(CompilerCore.InternedString(rawValue: 9))
+  const r8=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r4, r8] ret=r9 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r7, r9] ret=r10 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r10] ret=r11 thrown=false thrownResult=_
+  call kk_file_exists symbol=exists args=[r2] ret=r53 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r53] ret=r12 thrown=false thrownResult=_
+  const r13=unit
+  const r14=unit
+  const r15=stringLiteral(CompilerCore.InternedString(rawValue: 12))
+  const r16=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r12, r16] ret=r17 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r15, r17] ret=r18 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r18] ret=r19 thrown=false thrownResult=_
+  call kk_file_isDirectory symbol=isDirectory args=[r2] ret=r54 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r54] ret=r20 thrown=false thrownResult=_
+  const r21=unit
+  const r22=unit
+  const r23=stringLiteral(CompilerCore.InternedString(rawValue: 15))
+  const r24=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r20, r24] ret=r25 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r23, r25] ret=r26 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r26] ret=r27 thrown=false thrownResult=_
+  call kk_file_listFiles symbol=listFiles args=[r2] ret=r28 thrown=true thrownResult=_
+  const r29=unit
+  const r30=unit
+  const r31=stringLiteral(CompilerCore.InternedString(rawValue: 18))
+  const r32=intLiteral(1)
+  call kk_list_to_string symbol=_ args=[r28] ret=r33 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r31, r33] ret=r34 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r34] ret=r35 thrown=false thrownResult=_
+  call kk_file_walk symbol=walk args=[r2] ret=r36 thrown=true thrownResult=_
+  const r37=unit
+  const r38=unit
+  const r39=stringLiteral(CompilerCore.InternedString(rawValue: 21))
+  const r40=intLiteral(1)
+  call kk_list_to_string symbol=_ args=[r36] ret=r41 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r39, r41] ret=r42 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r42] ret=r43 thrown=false thrownResult=_
+  call kk_file_delete symbol=delete args=[r2] ret=r55 thrown=true thrownResult=_
+  call kk_unbox_bool symbol=_ args=[r55] ret=r44 thrown=false thrownResult=_
+  const r45=unit
+  const r46=unit
+  const r47=stringLiteral(CompilerCore.InternedString(rawValue: 24))
+  const r48=intLiteral(2)
+  call kk_any_to_string symbol=_ args=[r44, r48] ret=r49 thrown=false thrownResult=_
+  call kk_string_concat symbol=_ args=[r47, r49] ret=r50 thrown=false thrownResult=_
+  call kk_println_any symbol=println args=[r50] ret=r51 thrown=false thrownResult=_
+  return r51
+lowerings: TailrecLowering, NormalizeBlocks, OperatorLowering, ForLowering, CollectionLiteralLowering, FlowLowering, ValueClassUnboxing, PropertyLowering, StdlibDelegateLowering, JvmStaticLowering, DataEnumSealedSynthesis, EnumEntriesLowering, EnumNameAccessLowering, LambdaClosureConversion, InlineLowering, CoroutineLowering, ABILowering
