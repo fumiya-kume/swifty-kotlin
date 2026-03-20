@@ -654,6 +654,44 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result { fileExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // --- Rewrite File member calls: readText/writeText/readLines (STDLIB-320) ---
+                    if callee == lookup.readTextName && arguments.count == 1 && fileExprIDs.contains(arguments[0].rawValue) {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileReadTextName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
+                    if callee == lookup.writeTextName && arguments.count == 2 && fileExprIDs.contains(arguments[0].rawValue) {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileWriteTextName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
+                    if callee == lookup.readLinesName && arguments.count == 1 && fileExprIDs.contains(arguments[0].rawValue) {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileReadLinesName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
                         continue
                     }
 
