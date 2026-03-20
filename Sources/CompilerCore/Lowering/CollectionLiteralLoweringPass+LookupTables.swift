@@ -251,6 +251,7 @@ struct CollectionLiteralLookupTables {
     let kkMapIteratorName: InternedString
     let kkMapIteratorHasNextName: InternedString
     let kkMapIteratorNextName: InternedString
+    let kkMutableMapPutAllName: InternedString
 
     let kkArraySizeName: InternedString
     let kkArrayNewName: InternedString
@@ -500,6 +501,10 @@ struct CollectionLiteralLookupTables {
     let kkFileMkdirsName: InternedString
     let listFilesName: InternedString
     let kkFileListFilesName: InternedString
+    let useLinesName: InternedString
+    let kkFileUseLinesName: InternedString
+    let bufferedReaderName: InternedString
+    let kkFileBufferedReaderName: InternedString
     let walkName: InternedString
     let kkFileWalkName: InternedString
 
@@ -752,6 +757,7 @@ struct CollectionLiteralLookupTables {
         kkMapIteratorName = interner.intern("kk_map_iterator")
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
         kkMapIteratorNextName = interner.intern("kk_map_iterator_next")
+        kkMutableMapPutAllName = interner.intern("kk_mutable_map_putAll")
 
         kkArraySizeName = interner.intern("kk_array_size")
         kkArrayNewName = interner.intern("kk_array_new")
@@ -986,6 +992,10 @@ struct CollectionLiteralLookupTables {
         kkFileMkdirsName = interner.intern("kk_file_mkdirs")
         listFilesName = interner.intern("listFiles")
         kkFileListFilesName = interner.intern("kk_file_listFiles")
+        useLinesName = interner.intern("useLines")
+        kkFileUseLinesName = interner.intern("kk_file_useLines")
+        bufferedReaderName = interner.intern("bufferedReader")
+        kkFileBufferedReaderName = interner.intern("kk_file_bufferedReader")
         walkName = interner.intern("walk")
         kkFileWalkName = interner.intern("kk_file_walk")
 
