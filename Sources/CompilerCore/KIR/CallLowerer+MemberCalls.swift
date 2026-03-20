@@ -2242,6 +2242,8 @@ extension CallLowerer {
                     "kk_array_toMutableList"
                 case "copyOf":
                     "kk_array_copyOf"
+                case "concatToString":
+                    "kk_chararray_concatToString"
                 default:
                     nil
                 }
