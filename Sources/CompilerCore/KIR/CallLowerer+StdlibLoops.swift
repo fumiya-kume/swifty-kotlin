@@ -370,6 +370,133 @@ extension CallLowerer {
         )
     }
 
+    // MARK: - measureTimedValue (STDLIB-660)
+
+    func lowerMeasureTimedValueCallExpr(
+        _ exprID: ExprID,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .measureTimedValue,
+              args.count == 1
+        else {
+            return nil
+        }
+
+        // Resolve the TimedValue class type for the result.
+        let timedValueFQName = [interner.intern("kotlin"), interner.intern("time"), interner.intern("TimedValue")]
+        let resultType: TypeID
+        if let timedValueSymbol = sema.symbols.lookup(fqName: timedValueFQName) {
+            resultType = sema.types.make(.classType(ClassType(
+                classSymbol: timedValueSymbol, args: [], nullability: .nonNull
+            )))
+        } else {
+            resultType = sema.types.anyType
+        }
+
+        // Emit start nanoTime.
+        let startTimeExpr = emitNanoTimeCall(sema: sema, arena: arena, interner: interner, instructions: &instructions)
+
+        // Lower the block and capture its return value.
+        let blockResultExpr: KIRExprID
+
+        if let actionExprNode = ast.arena.expr(args[0].expr),
+           case let .lambdaLiteral(_, bodyExpr, _, _) = actionExprNode
+        {
+            // Inline: lower the lambda body directly.
+            let bodyResult = driver.lowerExpr(
+                bodyExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            blockResultExpr = bodyResult
+        } else {
+            // Non-inline: the argument is a callable reference.
+            let actionExpr = driver.lowerExpr(
+                args[0].expr, ast: ast, sema: sema, arena: arena, interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+            guard let callableInfo = driver.ctx.callableValueInfo(for: actionExpr) else {
+                // Degrade gracefully: return a TimedValue with zero duration.
+                let durationExpr = emitDurationFromElapsed(
+                    startTimeExpr: startTimeExpr, resultType: sema.types.anyType,
+                    sema: sema, arena: arena, interner: interner, instructions: &instructions
+                )
+                let nullExpr = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                return emitTimedValueNew(
+                    valueExpr: nullExpr, durationExpr: durationExpr, resultType: resultType,
+                    sema: sema, arena: arena, interner: interner, instructions: &instructions
+                )
+            }
+            let callResultType = sema.types.makeNullable(sema.types.anyType)
+            let callResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: callResultType)
+            let thrownResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.types.nullableAnyType
+            )
+            instructions.append(.call(
+                symbol: callableInfo.symbol, callee: callableInfo.callee,
+                arguments: callableInfo.captureArguments,
+                result: callResult, canThrow: true, thrownResult: thrownResult
+            ))
+            // Propagate exceptions.
+            let rethrowLabel = driver.ctx.makeLoopLabel()
+            let continueLabel = driver.ctx.makeLoopLabel()
+            instructions.append(.jumpIfNotNull(value: thrownResult, target: rethrowLabel))
+            instructions.append(.jump(continueLabel))
+            instructions.append(.label(rethrowLabel))
+            instructions.append(.rethrow(value: thrownResult))
+            instructions.append(.label(continueLabel))
+            blockResultExpr = callResult
+        }
+
+        // Emit end nanoTime, compute elapsed, box into Duration.
+        let durationFQName = [interner.intern("kotlin"), interner.intern("time"), interner.intern("Duration")]
+        let durationType: TypeID
+        if let durationSymbol = sema.symbols.lookup(fqName: durationFQName) {
+            durationType = sema.types.make(.classType(ClassType(
+                classSymbol: durationSymbol, args: [], nullability: .nonNull
+            )))
+        } else {
+            durationType = sema.types.anyType
+        }
+        let durationExpr = emitDurationFromElapsed(
+            startTimeExpr: startTimeExpr, resultType: durationType,
+            sema: sema, arena: arena, interner: interner, instructions: &instructions
+        )
+
+        // Create TimedValue(value, duration) via kk_timedvalue_new.
+        return emitTimedValueNew(
+            valueExpr: blockResultExpr, durationExpr: durationExpr, resultType: resultType,
+            sema: sema, arena: arena, interner: interner, instructions: &instructions
+        )
+    }
+
+    /// Emits a `kk_timedvalue_new(value, duration)` call.
+    private func emitTimedValueNew(
+        valueExpr: KIRExprID,
+        durationExpr: KIRExprID,
+        resultType: TypeID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let newCallee = interner.intern("kk_timedvalue_new")
+        let timedValueExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil, callee: newCallee, arguments: [valueExpr, durationExpr],
+            result: timedValueExpr, canThrow: false, thrownResult: nil
+        ))
+        return timedValueExpr
+    }
+
     // MARK: - Helpers
 
     /// Emits a `kk_system_nanoTime()` call and returns the result expression.

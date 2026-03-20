@@ -137,7 +137,7 @@ public func kk_duration_toString(_ durationRaw: Int) -> Int {
     })
 }
 
-// MARK: - measureTime / measureTimedValue (STDLIB-231)
+// MARK: - measureTime / measureTimedValue (STDLIB-231/660)
 
 @_cdecl("kk_measureTime")
 public func kk_measureTime(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
@@ -155,4 +155,56 @@ public func kk_measureTime(_ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeM
     let elapsedNs = delta <= UInt64(Int64.max) ? Int64(delta) : Int64.max
     let box = RuntimeDurationBox(nanoseconds: elapsedNs)
     return registerRuntimeObject(box)
+}
+
+// MARK: - TimedValue (STDLIB-660)
+
+/// Runtime representation of `kotlin.time.TimedValue<T>`.
+/// Stores the lambda's return value and the elapsed Duration.
+final class RuntimeTimedValueBox {
+    let value: Int
+    let duration: Int  // handle to RuntimeDurationBox
+    init(value: Int, duration: Int) {
+        self.value = value
+        self.duration = duration
+    }
+}
+
+@_cdecl("kk_timedvalue_new")
+public func kk_timedvalue_new(_ value: Int, _ duration: Int) -> Int {
+    let box = RuntimeTimedValueBox(value: value, duration: duration)
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_timedvalue_value")
+public func kk_timedvalue_value(_ timedValueRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: timedValueRaw),
+          let box = tryCast(ptr, to: RuntimeTimedValueBox.self) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_timedvalue_value received invalid TimedValue handle")
+    }
+    return box.value
+}
+
+@_cdecl("kk_timedvalue_duration")
+public func kk_timedvalue_duration(_ timedValueRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: timedValueRaw),
+          let box = tryCast(ptr, to: RuntimeTimedValueBox.self) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_timedvalue_duration received invalid TimedValue handle")
+    }
+    return box.duration
+}
+
+@_cdecl("kk_timedvalue_toString")
+public func kk_timedvalue_toString(_ timedValueRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: timedValueRaw),
+          let box = tryCast(ptr, to: RuntimeTimedValueBox.self) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_timedvalue_toString received invalid TimedValue handle")
+    }
+    let valueStr = runtimeElementToString(box.value)
+    let durationStr = runtimeElementToString(box.duration)
+    let result = "TimedValue(value=\(valueStr), duration=\(durationStr))"
+    let utf8 = Array(result.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
 }

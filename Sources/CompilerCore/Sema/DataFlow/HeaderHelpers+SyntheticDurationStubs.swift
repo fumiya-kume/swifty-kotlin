@@ -146,6 +146,34 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // --- STDLIB-660: TimedValue class ---
+        let timedValueSymbol = ensureClassSymbol(
+            named: "TimedValue",
+            in: kotlinTimePkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // TimedValue.value property (returns Any? — generic T erased to Any?)
+        registerDurationMemberProperty(
+            named: "value",
+            externalLinkName: "kk_timedvalue_value",
+            ownerSymbol: timedValueSymbol,
+            returnType: types.makeNullable(types.anyType),
+            symbols: symbols,
+            interner: interner
+        )
+
+        // TimedValue.duration property (returns Duration)
+        registerDurationMemberProperty(
+            named: "duration",
+            externalLinkName: "kk_timedvalue_duration",
+            ownerSymbol: timedValueSymbol,
+            returnType: durationType,
+            symbols: symbols,
+            interner: interner
+        )
     }
 
     // MARK: - Duration Helpers

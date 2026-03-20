@@ -153,11 +153,37 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    // MARK: - Duration / measureTime (STDLIB-230/231)
+    // MARK: - Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
 
     public static let kk_measureTime = ExternDecl(
         name: "kk_measureTime",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    // MARK: - TimedValue (STDLIB-660)
+
+    public static let kk_timedvalue_new = ExternDecl(
+        name: "kk_timedvalue_new",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_timedvalue_value = ExternDecl(
+        name: "kk_timedvalue_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_timedvalue_duration = ExternDecl(
+        name: "kk_timedvalue_duration",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_timedvalue_toString = ExternDecl(
+        name: "kk_timedvalue_toString",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -2563,7 +2589,7 @@ public enum RuntimeABIExterns {
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
-        // Duration / measureTime (STDLIB-230/231)
+        // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [
             kk_measureTime,
             kk_duration_inWholeMilliseconds,
@@ -2579,6 +2605,10 @@ public enum RuntimeABIExterns {
             kk_duration_from_nanoseconds,
             kk_duration_from_minutes,
             kk_duration_from_hours,
+            kk_timedvalue_new,
+            kk_timedvalue_value,
+            kk_timedvalue_duration,
+            kk_timedvalue_toString,
         ]
         return all
     }()

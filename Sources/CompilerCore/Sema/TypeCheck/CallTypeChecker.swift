@@ -418,6 +418,37 @@ final class CallTypeChecker {
             return durationType
         }
 
+        // --- Stdlib kotlin.time.measureTimedValue { ... } (STDLIB-660) ---
+        if let calleeName,
+           interner.resolve(calleeName) == "measureTimedValue",
+           args.count == 1,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
+           isSyntheticStdlibSymbol(calleeName, fqComponents: ["kotlin", "time", "measureTimedValue"], ctx: ctx)
+        {
+            // Infer the block argument — the lambda can return any type T.
+            let blockReturnType = driver.inferExpr(
+                args[0].expr,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: nil
+            )
+            _ = blockReturnType // suppress unused warning
+
+            // Look up the TimedValue class to build the return type.
+            let timedValueFQName = [interner.intern("kotlin"), interner.intern("time"), interner.intern("TimedValue")]
+            let timedValueType: TypeID
+            if let timedValueSymbol = sema.symbols.lookup(fqName: timedValueFQName) {
+                timedValueType = sema.types.make(.classType(ClassType(
+                    classSymbol: timedValueSymbol, args: [], nullability: .nonNull
+                )))
+            } else {
+                timedValueType = sema.types.anyType
+            }
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .measureTimedValue)
+            sema.bindings.bindExprType(id, type: timedValueType)
+            return timedValueType
+        }
+
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086, TYPE-103) ---
         if let calleeName,
            knownNames.isPrimitiveArrayConstructorTypeName(calleeName),

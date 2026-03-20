@@ -444,6 +444,30 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // measureTimedValue returns TimedValue (STDLIB-660)
+        let timedValueFQName = kotlinTimePkg + [interner.intern("TimedValue")]
+        let timedValueType: TypeID
+        if let timedValueSymbol = symbols.lookup(fqName: timedValueFQName) {
+            timedValueType = types.make(.classType(ClassType(
+                classSymbol: timedValueSymbol, args: [], nullability: .nonNull
+            )))
+        } else {
+            timedValueType = types.anyType
+        }
+        let measureTimedValueBlockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.makeNullable(types.anyType)
+        )))
+        registerSyntheticTopLevelFunction(
+            named: "measureTimedValue",
+            packageFQName: kotlinTimePkg,
+            parameters: [(name: "block", type: measureTimedValueBlockType)],
+            returnType: timedValueType,
+            externalLinkName: "kk_measureTimedValue",
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-410: emptyList/emptySet/emptyMap ---
         let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
         //

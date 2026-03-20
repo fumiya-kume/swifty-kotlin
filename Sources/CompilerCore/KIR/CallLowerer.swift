@@ -156,6 +156,19 @@ final class CallLowerer {
             return loweredMeasureTimeDuration
         }
 
+        if let loweredMeasureTimedValue = lowerMeasureTimedValueCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredMeasureTimedValue
+        }
+
         if let loweredArrayConstructor = lowerArrayConstructorCallExpr(
             exprID,
             args: args,
