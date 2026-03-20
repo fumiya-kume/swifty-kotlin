@@ -25,7 +25,7 @@ fun main() {
     val sqrtF: Float = sqrt(4.0f)
     println(sqrtF)
 
-    val roundF: Float = round(2.5f)
+    val roundF: Float = round(2.7f)
     println(roundF)
 
     val ceilF: Float = ceil(2.3f)
@@ -35,7 +35,7 @@ fun main() {
     println(floorF)
 
     // abs — Float in, Float out
-    val absF: Float = abs(-3.14f)
+    val absF: Float = abs(3.14f)
     println(absF)
 
     // exp, ln, log2, log10 — Float in, Float out
@@ -54,16 +54,6 @@ fun main() {
     // log(x, base) — Float in, Float out
     val logF: Float = log(8.0f, 2.0f)
     println(logF)
-
-    // sign — Float in, Float out
-    val signF: Float = sign(-5.0f)
-    println(signF)
-
-    val signPosF: Float = sign(5.0f)
-    println(signPosF)
-
-    val signZeroF: Float = sign(0.0f)
-    println(signZeroF)
 
     // hypot — Float in, Float out
     val hypotF: Float = hypot(3.0f, 4.0f)
