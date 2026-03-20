@@ -190,8 +190,8 @@ public func kk_random_nextDouble(_ receiver: Int) -> Int {
 public func kk_random_nextDouble_until(_ randomRaw: Int, _ untilBits: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     let until = kk_bits_to_double(untilBits)
-    guard until > 0.0 else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
+    guard until > 0.0, until.isFinite else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive and finite, but was \(until).")
         return 0
     }
     if let box = seededBox(from: randomRaw) {
@@ -205,7 +205,7 @@ public func kk_random_nextDouble_range(_ randomRaw: Int, _ fromBits: Int, _ unti
     outThrown?.pointee = 0
     let from = kk_bits_to_double(fromBits)
     let until = kk_bits_to_double(untilBits)
-    guard until > from else {
+    guard until > from, from.isFinite, until.isFinite else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
         return 0
     }
