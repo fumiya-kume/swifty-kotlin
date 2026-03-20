@@ -1109,6 +1109,14 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListIteratorMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         return listInterfaceSymbol
     }
 
@@ -1149,6 +1157,218 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 1
             ),
             for: listGetSymbol
+        )
+    }
+
+    /// STDLIB-538: Register `ListIterator<T>` interface extending `Iterator<T>`,
+    /// with `hasPrevious(): Boolean` and `previous(): T` members.
+    private func ensureSyntheticListIteratorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let listIteratorName = interner.intern("ListIterator")
+        let listIteratorFQName = kotlinCollectionsPkg + [listIteratorName]
+        if let existing = symbols.lookup(fqName: listIteratorFQName) {
+            return existing
+        }
+
+        // Look up the parent Iterator<T> symbol.
+        let iteratorName = interner.intern("Iterator")
+        let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+        let iteratorSymbol = symbols.lookup(fqName: iteratorFQName)
+
+        let listIteratorSymbol = symbols.define(
+            kind: .interface,
+            name: listIteratorName,
+            fqName: listIteratorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+
+        // Type parameter T
+        let tpName = interner.intern("T")
+        let tpFQName = listIteratorFQName + [tpName]
+        let tpSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tpName,
+            fqName: tpFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tpType = types.make(.typeParam(TypeParamType(symbol: tpSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([tpSymbol], for: listIteratorSymbol)
+        types.setNominalTypeParameterVariances([.out], for: listIteratorSymbol)
+
+        // Supertype: Iterator<T>
+        if let iteratorSymbol {
+            symbols.setDirectSupertypes([iteratorSymbol], for: listIteratorSymbol)
+            types.setNominalDirectSupertypes([iteratorSymbol], for: listIteratorSymbol)
+            symbols.setSupertypeTypeArgs([.out(tpType)], for: listIteratorSymbol, supertype: iteratorSymbol)
+            types.setNominalSupertypeTypeArgs([.out(tpType)], for: listIteratorSymbol, supertype: iteratorSymbol)
+        }
+
+        let listIteratorReceiverType = types.make(.classType(ClassType(
+            classSymbol: listIteratorSymbol,
+            args: [.out(tpType)],
+            nullability: .nonNull
+        )))
+
+        // hasNext(): Boolean (inherited from Iterator, registered for member resolution)
+        let hasNextName = interner.intern("hasNext")
+        let hasNextFQName = listIteratorFQName + [hasNextName]
+        if symbols.lookup(fqName: hasNextFQName) == nil {
+            let hasNextSym = symbols.define(
+                kind: .function, name: hasNextName, fqName: hasNextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listIteratorSymbol, for: hasNextSym)
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
+            ))), for: hasNextSym)
+            symbols.setExternalLinkName("kk_list_iterator_hasNext", for: hasNextSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [tpSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: hasNextSym
+            )
+        }
+
+        // next(): T (inherited from Iterator, registered for member resolution)
+        let nextName = interner.intern("next")
+        let nextFQName = listIteratorFQName + [nextName]
+        if symbols.lookup(fqName: nextFQName) == nil {
+            let nextSym = symbols.define(
+                kind: .function, name: nextName, fqName: nextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listIteratorSymbol, for: nextSym)
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: tpType, isSuspend: false, nullability: .nonNull
+            ))), for: nextSym)
+            symbols.setExternalLinkName("kk_list_iterator_next", for: nextSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: tpType,
+                    typeParameterSymbols: [tpSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: nextSym
+            )
+        }
+
+        // hasPrevious(): Boolean
+        let hasPreviousName = interner.intern("hasPrevious")
+        let hasPreviousFQName = listIteratorFQName + [hasPreviousName]
+        let hasPreviousSym = symbols.define(
+            kind: .function, name: hasPreviousName, fqName: hasPreviousFQName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listIteratorSymbol, for: hasPreviousSym)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
+        ))), for: hasPreviousSym)
+        symbols.setExternalLinkName("kk_list_iterator_hasPrevious", for: hasPreviousSym)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listIteratorReceiverType,
+                parameterTypes: [],
+                returnType: types.booleanType,
+                typeParameterSymbols: [tpSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: hasPreviousSym
+        )
+
+        // previous(): T
+        let previousName = interner.intern("previous")
+        let previousFQName = listIteratorFQName + [previousName]
+        let previousSym = symbols.define(
+            kind: .function, name: previousName, fqName: previousFQName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listIteratorSymbol, for: previousSym)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: tpType, isSuspend: false, nullability: .nonNull
+        ))), for: previousSym)
+        symbols.setExternalLinkName("kk_list_iterator_previous", for: previousSym)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listIteratorReceiverType,
+                parameterTypes: [],
+                returnType: tpType,
+                typeParameterSymbols: [tpSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: previousSym
+        )
+
+        return listIteratorSymbol
+    }
+
+    /// STDLIB-538: Register `List<E>.listIterator(): ListIterator<E>`.
+    private func registerListIteratorMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listIteratorInterfaceSymbol = ensureSyntheticListIteratorStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        let memberName = interner.intern("listIterator")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listIteratorInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: returnType, isSuspend: false, nullability: .nonNull
+        ))), for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listReceiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
         )
     }
 

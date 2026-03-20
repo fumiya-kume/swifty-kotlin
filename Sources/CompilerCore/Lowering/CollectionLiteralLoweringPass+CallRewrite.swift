@@ -875,6 +875,23 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // --- STDLIB-538: Rewrite explicit listIterator() on list → kk_list_iterator ---
+                    if callee == lookup.listIteratorMemberName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            if let result { listIteratorExprIDs.insert(result.rawValue) }
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListIteratorName,
+                                arguments: [receiverID],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            continue
+                        }
+                    }
+
                     // --- STDLIB-538: Rewrite hasPrevious()/previous() on list iterator ---
                     let isListIteratorReceiverCall = arguments.count == 1
                         && listIteratorExprIDs.contains(arguments[0].rawValue)

@@ -308,6 +308,7 @@ struct CollectionLiteralLookupTables {
     let removeName: InternedString
 
     // ListIterator member names (STDLIB-538)
+    let listIteratorMemberName: InternedString
     let hasPreviousName: InternedString
     let previousName: InternedString
 
@@ -502,6 +503,10 @@ struct CollectionLiteralLookupTables {
     let kkFileListFilesName: InternedString
     let walkName: InternedString
     let kkFileWalkName: InternedString
+    let useLinesName: InternedString
+    let kkFileUseLinesName: InternedString
+    let bufferedReaderName: InternedString
+    let kkFileBufferedReaderName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -805,6 +810,7 @@ struct CollectionLiteralLookupTables {
         removeName = interner.intern("remove")
 
         // ListIterator member names (STDLIB-538)
+        listIteratorMemberName = interner.intern("listIterator")
         hasPreviousName = interner.intern("hasPrevious")
         previousName = interner.intern("previous")
 
@@ -988,6 +994,10 @@ struct CollectionLiteralLookupTables {
         kkFileListFilesName = interner.intern("kk_file_listFiles")
         walkName = interner.intern("walk")
         kkFileWalkName = interner.intern("kk_file_walk")
+        useLinesName = interner.intern("useLines")
+        kkFileUseLinesName = interner.intern("kk_file_useLines")
+        bufferedReaderName = interner.intern("bufferedReader")
+        kkFileBufferedReaderName = interner.intern("kk_file_bufferedReader")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
