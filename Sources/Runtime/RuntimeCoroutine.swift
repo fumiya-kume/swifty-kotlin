@@ -62,8 +62,25 @@ final class RuntimeContinuationState {
     /// of Thread Local Storage, so it survives suspend/resume across threads.
     var scope: RuntimeCoroutineScope?
     private let stateLock = NSLock()
-    private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
+
+    /// CORO-004: Continuation-based resume model.
+    ///
+    /// Instead of blocking a GCD thread with DispatchSemaphore.wait(), we store
+    /// a resume closure when the coroutine suspends.  When signalResume() is
+    /// called (from a timer, cancellation, etc.) the closure is dispatched on a
+    /// GCD queue, releasing the original thread back to the pool.
+    ///
+    /// If no continuation closure is installed (e.g. during tests that call
+    /// waitForResumeSignal() synchronously), we fall back to a one-shot
+    /// DispatchSemaphore for backward compatibility.
+    private var resumeContinuation: (() -> Void)?
+    /// Lazily created fallback semaphore, only used by legacy synchronous
+    /// callers that invoke waitForResumeSignal() without a continuation.
+    private var fallbackSemaphore: DispatchSemaphore?
+    /// True if signalResume() was called before any continuation or wait was
+    /// installed (edge case: timer fires immediately).
+    private var resumeSignalPending = false
 
     init(
         functionID: Int64,
@@ -103,19 +120,76 @@ final class RuntimeContinuationState {
         timer.resume()
     }
 
-    func waitForResumeSignal() {
-        resumeSemaphore.wait()
+    /// CORO-004: Install a resume continuation.  Called by the suspend-entry
+    /// loop right before it would otherwise block.  If a resume signal has
+    /// already been delivered (pending), the continuation is dispatched
+    /// immediately.
+    func installResumeContinuation(_ continuation: @escaping () -> Void) {
+        stateLock.lock()
+        if resumeSignalPending {
+            resumeSignalPending = false
+            stateLock.unlock()
+            // Signal already arrived — dispatch continuation immediately.
+            DispatchQueue.global().async(execute: continuation)
+            return
+        }
+        resumeContinuation = continuation
+        stateLock.unlock()
     }
 
+    /// Legacy blocking wait.  Used only when no continuation has been installed
+    /// (e.g. direct test calls).  Creates a one-shot semaphore on demand.
+    func waitForResumeSignal() {
+        stateLock.lock()
+        if resumeSignalPending {
+            resumeSignalPending = false
+            stateLock.unlock()
+            return
+        }
+        if fallbackSemaphore == nil {
+            fallbackSemaphore = DispatchSemaphore(value: 0)
+        }
+        let sem = fallbackSemaphore!
+        stateLock.unlock()
+        sem.wait()
+    }
+
+    /// Wake the coroutine.  If a continuation closure is installed, it is
+    /// dispatched asynchronously on a GCD queue (non-blocking).  Otherwise
+    /// the fallback semaphore is signalled.
     func signalResume() {
-        resumeSemaphore.signal()
+        stateLock.lock()
+        if let cont = resumeContinuation {
+            resumeContinuation = nil
+            stateLock.unlock()
+            DispatchQueue.global().async(execute: cont)
+            return
+        }
+        if let sem = fallbackSemaphore {
+            stateLock.unlock()
+            sem.signal()
+            return
+        }
+        // Neither continuation nor semaphore installed yet — mark pending.
+        resumeSignalPending = true
+        stateLock.unlock()
+    }
+
+    /// Reset resume state for the next suspend point.  Called after the
+    /// coroutine loop resumes to prepare for the next potential suspension.
+    func resetResumeState() {
+        stateLock.lock()
+        resumeContinuation = nil
+        fallbackSemaphore = nil
+        resumeSignalPending = false
+        stateLock.unlock()
     }
 
     private func completeDelayTimer(timerID: ObjectIdentifier) {
         stateLock.lock()
         delayTimers.removeValue(forKey: timerID)
         stateLock.unlock()
-        resumeSemaphore.signal()
+        signalResume()
     }
 
     private func releaseAllDelayTimers() -> [DispatchSourceTimer] {
@@ -2195,6 +2269,32 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         return 0
     }
 
+    // CORO-004: Continuation-based suspend/resume.
+    //
+    // Instead of blocking a GCD thread on DispatchSemaphore.wait() when the
+    // coroutine suspends, we use a DispatchSemaphore only at the *outermost*
+    // level (the completion gate) and install a non-blocking continuation
+    // closure for each internal suspend point.
+    //
+    // Flow:
+    //   1. The loop runs the entry point.
+    //   2. If it returns COROUTINE_SUSPENDED, install a continuation closure
+    //      on the RuntimeContinuationState.  This closure will re-enter the
+    //      loop when signalResume() fires (from a timer, cancellation, etc.).
+    //      The current GCD thread is released — no blocking.
+    //   3. When the resume closure fires, it repeats from step 1.
+    //   4. When the entry point returns a concrete value (not suspended) or
+    //      throws, signal the completion gate so the caller unblocks.
+    //
+    // The completion gate semaphore is only waited on by the outermost
+    // synchronous caller (runBlocking, join, await, withContext).  Launched
+    // coroutines never block a GCD thread during internal suspensions.
+
+    let completionGate = DispatchSemaphore(value: 0)
+    // Thread-safe result box — written inside the loop, read after the gate.
+    final class ResultBox: @unchecked Sendable { var value: Int = 0 }
+    let resultBox = ResultBox()
+
     // CORO-003: Install the scope carried by this continuation into the
     // task-scope map so that child launches dispatched on this thread can
     // discover their parent scope without TLS.
@@ -2203,32 +2303,74 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     RuntimeCoroutineScope.installScope(contState?.scope, forTask: currentTaskKey)
 
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
-    var outThrown = 0
 
-    while true {
-        outThrown = 0
+    // The loop body is factored into a closure so it can be re-entered from
+    // the resume continuation without recursion or blocking.
+    //
+    // Using a box to hold the closure so it can reference itself.
+    final class LoopBodyBox: @unchecked Sendable {
+        var body: (() -> Void)?
+    }
+    let loopBodyBox = LoopBodyBox()
+
+    // Shared mutable state for the task key, protected by the single-shot
+    // continuation model (only one invocation of the loop body runs at a time).
+    final class TaskKeyBox: @unchecked Sendable {
+        var key: ObjectIdentifier
+        init(key: ObjectIdentifier) { self.key = key }
+    }
+    let taskKeyBox = TaskKeyBox(key: currentTaskKey)
+
+    loopBodyBox.body = {
+        var outThrown = 0
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             _ = kk_coroutine_state_exit(continuation, 0)
-            return 0
+            resultBox.value = 0
+            completionGate.signal()
+            return
         }
         if result != suspendedToken {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
-            return result
+            resultBox.value = result
+            completionGate.signal()
+            return
         }
         guard let state = runtimeContinuationState(from: continuation) else {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
-            return 0
+            resultBox.value = 0
+            completionGate.signal()
+            return
         }
-        state.waitForResumeSignal()
-        // CORO-003: After suspend/resume we may be on a different thread.
-        // Re-install the task key so the scope map lookup still works.
-        RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
-        currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
-        RuntimeCoroutineScope.installScope(state.scope, forTask: currentTaskKey)
+        // CORO-004: Install a continuation closure instead of blocking.
+        // When signalResume() fires, this closure will be dispatched on a
+        // GCD global queue, re-entering the loop without blocking any thread.
+        state.resetResumeState()
+        state.installResumeContinuation {
+            // CORO-003: After suspend/resume we are on a (possibly different)
+            // GCD thread.  Re-install the task key so the scope map lookup
+            // still works.
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            let freshKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+            taskKeyBox.key = freshKey
+            RuntimeCoroutineScope.installScope(state.scope, forTask: freshKey)
+            loopBodyBox.body?()
+        }
+        // The current thread is released here — no blocking.
     }
+
+    // Kick off the first iteration synchronously on the current thread.
+    loopBodyBox.body?()
+
+    // Block only at the outermost level until the coroutine completes.
+    completionGate.wait()
+
+    // Break the strong reference cycle: loopBodyBox -> closure -> loopBodyBox
+    loopBodyBox.body = nil
+
+    return resultBox.value
 }
