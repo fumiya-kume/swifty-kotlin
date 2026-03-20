@@ -251,6 +251,7 @@ struct CollectionLiteralLookupTables {
     let kkMapIteratorName: InternedString
     let kkMapIteratorHasNextName: InternedString
     let kkMapIteratorNextName: InternedString
+    let kkMutableMapPutAllName: InternedString
 
     let kkArraySizeName: InternedString
     let kkArrayNewName: InternedString
@@ -752,6 +753,7 @@ struct CollectionLiteralLookupTables {
         kkMapIteratorName = interner.intern("kk_map_iterator")
         kkMapIteratorHasNextName = interner.intern("kk_map_iterator_hasNext")
         kkMapIteratorNextName = interner.intern("kk_map_iterator_next")
+        kkMutableMapPutAllName = interner.intern("kk_mutable_map_putAll")
 
         kkArraySizeName = interner.intern("kk_array_size")
         kkArrayNewName = interner.intern("kk_array_new")

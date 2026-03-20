@@ -196,20 +196,48 @@ extension CollectionLiteralLoweringPass {
                     }
 
                     if lookup.mutableMapConstructorNames.contains(callee) {
+                        // Create an empty mutable map first
                         let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                         loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
                         let nullExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
                         loweredBody.append(.constValue(result: nullExpr, value: .intLiteral(0)))
                         let nullExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
                         loweredBody.append(.constValue(result: nullExpr2, value: .intLiteral(0)))
-                        loweredBody.append(.call(
-                            symbol: nil,
-                            callee: lookup.kkMapOfName,
-                            arguments: [nullExpr, nullExpr2, zeroExpr],
-                            result: result,
-                            canThrow: false,
-                            thrownResult: nil
-                        ))
+
+                        if arguments.count == 1 {
+                            // Copy constructor: HashMap(otherMap)
+                            // 1. Create empty map into the result
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkMapOfName,
+                                arguments: [nullExpr, nullExpr2, zeroExpr],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            // 2. putAll from source map (result is Unit, discarded)
+                            let putAllResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkMutableMapPutAllName,
+                                arguments: result.map { [$0, arguments[0]] } ?? [arguments[0]],
+                                result: putAllResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                        } else {
+                            // 0 args or capacity arg → empty map
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkMapOfName,
+                                arguments: [nullExpr, nullExpr2, zeroExpr],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                        }
                         continue
                     }
 
