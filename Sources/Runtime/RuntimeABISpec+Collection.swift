@@ -918,6 +918,16 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_string_builder_append_range",
+            parameters: [
+                RuntimeABIParameter(name: "csqRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_builder_insert",
             parameters: [
                 RuntimeABIParameter(name: "index", type: .intptr),
@@ -1219,6 +1229,33 @@ public extension RuntimeABISpec {
             "kk_list_map", "kk_list_filter", "kk_list_mapNotNull", "kk_list_forEach",
             "kk_list_flatMap", "kk_list_any", "kk_list_none", "kk_list_all",
         ]
+        let reduceOrNullSpec = hofSpec("kk_list_reduceOrNull")
+        let scanSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_scan",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let runningFoldSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_runningFold",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "initial", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let runningReduceSpec = hofSpec("kk_list_runningReduce")
+        let scanReduceSpec = hofSpec("kk_list_scanReduce")
         let genericAfter = [
             "kk_list_reduce", "kk_list_groupBy", "kk_list_sortedBy",
             "kk_list_count", "kk_list_first", "kk_list_last", "kk_list_find",
@@ -1422,35 +1459,10 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
-        let scanSpec = RuntimeABIFunctionSpec(
-            name: "kk_list_scan",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        )
-        let runningFoldSpec = RuntimeABIFunctionSpec(
-            name: "kk_list_runningFold",
-            parameters: [
-                RuntimeABIParameter(name: "listRaw", type: .intptr),
-                RuntimeABIParameter(name: "initial", type: .intptr),
-                RuntimeABIParameter(name: "fnPtr", type: .intptr),
-                RuntimeABIParameter(name: "closureRaw", type: .intptr),
-                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        )
         return before.map { hofSpec($0) }
             + [filterNotNullSpec, foldSpec]
             + genericAfter.map { hofSpec($0) }
-            + [scanSpec, runningFoldSpec]
-            + ["kk_list_runningReduce", "kk_list_reduceOrNull", "kk_list_scanReduce"].map { hofSpec($0) }
+            + [reduceOrNullSpec, scanSpec, runningFoldSpec, runningReduceSpec, scanReduceSpec]
             + [
                 associateBySpec, associateWithSpec, associateSpec,
                 zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,

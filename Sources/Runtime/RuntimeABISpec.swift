@@ -2936,6 +2936,14 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_inWholeMinutes",
+            parameters: [
+                RuntimeABIParameter(name: "durationRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_inWholeNanoseconds",
             parameters: [
                 RuntimeABIParameter(name: "durationRaw", type: .intptr),

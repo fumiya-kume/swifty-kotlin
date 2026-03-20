@@ -568,6 +568,8 @@ extension CollectionLiteralLoweringPass {
                             rewrittenCallee = lookup.kkStringBuilderDeleteName
                         } else if builderCallee == lookup.buildStringName, callee == lookup.lengthName, arguments.count == 0 {
                             rewrittenCallee = lookup.kkStringBuilderLengthName
+                        } else if builderCallee == lookup.buildStringName, callee == lookup.appendRangeName, arguments.count == 3 {
+                            rewrittenCallee = lookup.kkStringBuilderAppendRangeName
                         } else if builderCallee == lookup.buildListName, callee == lookup.addName, arguments.count == 1 {
                             rewrittenCallee = lookup.kkBuilderListAddName
                         } else if builderCallee == lookup.buildSetName, callee == lookup.addName, arguments.count == 1 {
@@ -1148,6 +1150,7 @@ extension CollectionLiteralLoweringPass {
                         || callee == lookup.kkSequenceTakeName || callee == lookup.kkSequenceFlatMapName
                         || callee == lookup.kkSequenceDropName || callee == lookup.kkSequenceDistinctName
                         || callee == lookup.kkSequenceZipName
+                        || callee == lookup.kkSequencePlusName || callee == lookup.kkSequenceMinusName
                     {
                         loweredBody.append(instruction)
                         if let result { sequenceExprIDs.insert(result.rawValue) }
@@ -1324,6 +1327,80 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceZipName,
+                                arguments: arguments,
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // plus(other) on sequence → kk_sequence_plus (STDLIB-561)
+                    // If the argument is not a collection, wrap it in a
+                    // single-element sequence first so the runtime ABI always
+                    // receives a collection handle.
+                    if callee == lookup.plusMemberName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let argID = arguments[1]
+                            // Only sequence/list/array are supported by
+                            // kk_sequence_plus at the ABI level (not Set/Map).
+                            let isArgCollection = listExprIDs.contains(argID.rawValue)
+                                || sequenceExprIDs.contains(argID.rawValue)
+                                || arrayExprIDs.contains(argID.rawValue)
+                            let effectiveArg: KIRExprID
+                            if isArgCollection {
+                                effectiveArg = argID
+                            } else {
+                                let wrappedExpr = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkSequenceOfSingleName,
+                                    arguments: [argID],
+                                    result: wrappedExpr,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                effectiveArg = wrappedExpr
+                            }
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequencePlusName,
+                                arguments: [receiverID, effectiveArg],
+                                result: result,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result { sequenceExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+
+                    // minus(element) on sequence → kk_sequence_minus (STDLIB-562)
+                    // Only rewrite when the argument is a single element (not a
+                    // collection).  Collection-removal is not yet supported at the
+                    // ABI level and falls through to the generic member-call path.
+                    if callee == lookup.minusMemberName, arguments.count == 2 {
+                        let receiverID = arguments[0]
+                        if sequenceExprIDs.contains(receiverID.rawValue) {
+                            let argID = arguments[1]
+                            // Only sequence/list/array are supported by the
+                            // ABI (not Set/Map) -- consistent with plus path.
+                            let isArgCollection = listExprIDs.contains(argID.rawValue)
+                                || sequenceExprIDs.contains(argID.rawValue)
+                                || arrayExprIDs.contains(argID.rawValue)
+                            guard !isArgCollection else {
+                                // Fall through: collection-removal not supported
+                                loweredBody.append(instruction)
+                                continue
+                            }
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkSequenceMinusName,
                                 arguments: arguments,
                                 result: result,
                                 canThrow: false,
@@ -2504,7 +2581,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduceOrNull: args = [receiver, lambda, closureRaw?]
-                    if callee == lookup.reduceOrNullName, (arguments.count == 2 || arguments.count == 3) {
+                    if callee == lookup.reduceOrNullName, arguments.count == 2 || arguments.count == 3 {
                         let receiverID = arguments[0]
                         let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
@@ -2722,6 +2799,38 @@ extension CollectionLiteralLoweringPass {
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: lookup.kkSequenceRunningReduceName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            listExprIDs.insert(hofResult.rawValue)
+                            if let result { listExprIDs.insert(result.rawValue) }
+                            continue
+                        }
+                    }
+                    // scanReduce: args = [receiver, lambda, closureRaw?] — alias for runningReduce
+                    if callee == lookup.scanReduceName, (arguments.count == 2 || arguments.count == 3) {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListScanReduceName,
                                 arguments: [receiverID, lambdaID, closureRawID],
                                 result: hofResult,
                                 canThrow: canThrow,

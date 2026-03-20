@@ -597,7 +597,11 @@ extension CallLowerer {
         return knownNames.isStringBuilderSymbol(symbol)
     }
 
-    private func isSequenceLikeType(
+    /// Check whether a type is Sequence-like (for member-call and operator
+    /// lowering decisions).  Shared across `CallLowerer+MemberCalls` and
+    /// `CallLowerer+Operators`; kept `internal` to avoid exposing it beyond
+    /// the `CallLowerer` extensions.
+    func isSequenceLikeType(
         _ receiverType: TypeID,
         sema: SemaModule,
         interner: StringInterner
@@ -2137,6 +2141,25 @@ extension CallLowerer {
                     ))
                     return result
                 }
+            }
+        }
+
+        // StringBuilder 3-arg member calls (STDLIB-580)
+        // Use interner.resolve for a single string comparison instead of
+        // constructing the full KnownCompilerNames struct.
+        if args.count == 3, interner.resolve(calleeName) == "appendRange" {
+            let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+            let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+            if isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_builder_appendRange_obj"),
+                    arguments: [loweredReceiverID] + normalizedArgIDs,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
             }
         }
 

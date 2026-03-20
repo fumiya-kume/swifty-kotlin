@@ -41,6 +41,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             listExprIDs: &listExprIDs, setExprIDs: &setExprIDs, mapExprIDs: &mapExprIDs, sequenceExprIDs: &sequenceExprIDs,
+            arrayExprIDs: arrayExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -108,6 +109,7 @@ extension CollectionLiteralLoweringPass {
         setExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
         sequenceExprIDs: inout Set<Int32>,
+        arrayExprIDs: Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         // asSequence() → kk_list_asSequence only when receiver is a tracked list.
@@ -581,6 +583,74 @@ extension CollectionLiteralLoweringPass {
                 module: module,
                 loweredBody: &loweredBody
             )
+            return true
+        }
+
+        // plus(other) on sequence → kk_sequence_plus (STDLIB-561)
+        // Wrap single-element arguments in a one-element sequence so the
+        // runtime ABI always receives a collection handle.
+        // TODO: Extract shared helper (e.g., emitSequencePlusMinusRewrite) to
+        // deduplicate logic across VirtualCallRewrite, CallRewrite, and
+        // CallLowerer+Operators (see PR #460 review).
+        if callee == lookup.plusMemberName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
+            let argID = arguments[0]
+            // Only sequence/list/array are supported by kk_sequence_plus
+            // at the ABI level (not Set/Map).
+            let isArgCollection = listExprIDs.contains(argID.rawValue)
+                || sequenceExprIDs.contains(argID.rawValue)
+                || arrayExprIDs.contains(argID.rawValue)
+            let effectiveArg: KIRExprID
+            if isArgCollection {
+                effectiveArg = argID
+            } else {
+                let wrappedExpr = module.arena.appendExpr(
+                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                )
+                loweredBody.append(.call(
+                    symbol: nil,
+                    callee: lookup.kkSequenceOfSingleName,
+                    arguments: [argID],
+                    result: wrappedExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                effectiveArg = wrappedExpr
+            }
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequencePlusName,
+                arguments: [receiver, effectiveArg],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
+            return true
+        }
+
+        // minus(element) on sequence → kk_sequence_minus (STDLIB-562)
+        // Only rewrite when the argument is a single element (not a collection).
+        // Collection-removal is not yet supported at the ABI level.
+        if callee == lookup.minusMemberName, arguments.count == 1, sequenceExprIDs.contains(receiver.rawValue) {
+            let argID = arguments[0]
+            // Only sequence/list/array are supported by the ABI (not
+            // Set/Map) -- consistent with plus path.
+            let isArgCollection = listExprIDs.contains(argID.rawValue)
+                || sequenceExprIDs.contains(argID.rawValue)
+                || arrayExprIDs.contains(argID.rawValue)
+            guard !isArgCollection else {
+                // Fall through: collection-removal not supported
+                return false
+            }
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkSequenceMinusName,
+                arguments: [receiver] + arguments,
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result { sequenceExprIDs.insert(result.rawValue) }
             return true
         }
 
@@ -1386,6 +1456,36 @@ extension CollectionLiteralLoweringPass {
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
                 kkName: lookup.kkListRunningReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
+        // reduceOrNull: args = [lambda]
+        if callee == lookup.reduceOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(
+                kkName: lookup.kkListReduceOrNullName, receiver: receiver, arguments: arguments + [zeroExpr],
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, module: module,
+                loweredBody: &loweredBody
+            )
+            return true
+        }
+
+        // scanReduce: args = [lambda] — alias for runningReduce
+        if callee == lookup.scanReduceName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkListScanReduceName, receiver: receiver, arguments: arguments + [zeroExpr],
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, module: module,
                 loweredBody: &loweredBody

@@ -638,13 +638,12 @@ extension CallTypeChecker {
              interner.intern("sortedByDescending"), interner.intern("sortedWith"), interner.intern("partition"),
              interner.intern("takeWhile"), interner.intern("dropWhile"),
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
-             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
+             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
+             interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
+             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"):
             return argCount == 1
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
             return isSetReceiver && argCount == 1
-        case interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
-             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"):
-            return argCount == 1
         case interner.intern("containsKey"), interner.intern("mapValues"), interner.intern("mapKeys"):
             return isMapReceiver && argCount == 1
         case knownNames.getValue:

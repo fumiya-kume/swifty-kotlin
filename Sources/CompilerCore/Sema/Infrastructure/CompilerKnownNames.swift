@@ -160,6 +160,7 @@ struct KnownCompilerNames {
     // StringBuilder member names
     let append: InternedString
     let appendLine: InternedString
+    let appendRange: InternedString
     let deleteCharAt: InternedString
     let get: InternedString
     let insert: InternedString
@@ -288,6 +289,7 @@ struct KnownCompilerNames {
         // StringBuilder member names
         append = interner.intern("append")
         appendLine = interner.intern("appendLine")
+        appendRange = interner.intern("appendRange")
         deleteCharAt = interner.intern("deleteCharAt")
         get = interner.intern("get")
         insert = interner.intern("insert")

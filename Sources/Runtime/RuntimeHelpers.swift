@@ -112,6 +112,40 @@ func tryCast<T: AnyObject>(_ ptr: UnsafeMutableRawPointer, to _: T.Type) -> T? {
     return anyObject as? T
 }
 
+// MARK: - UTF-16 Substring Helper (Kotlin-compatible indexing)
+
+/// Extracts a substring from `source` using UTF-16 code unit indices,
+/// approximating Kotlin's `CharSequence.subSequence(startIndex, endIndex)` semantics.
+///
+/// Kotlin `StringBuilder.appendRange` and `CharSequence` use UTF-16 code unit indexing.
+/// Swift `String.Index` is based on `Character` (extended grapheme clusters) by default,
+/// which differs for non-BMP characters (emoji, surrogate pairs). This helper bridges the
+/// gap by operating on the `.utf16` view directly.
+///
+/// **Limitation:** Swift `String` cannot represent unpaired UTF-16 surrogates. When
+/// `startIndex` or `endIndex` splits a surrogate pair (e.g., slicing in the middle of
+/// an emoji), `String(decoding:as:)` replaces the ill-formed code unit with U+FFFD
+/// (replacement character). This diverges from JVM Kotlin, where unpaired surrogates
+/// are preserved as `Char` values. For well-formed UTF-16 input (the common case),
+/// behavior is identical. Callers/tests should not assume full fidelity for these
+/// edge cases.
+///
+/// - Parameters:
+///   - source: The Swift string to slice.
+///   - startIndex: Start offset in UTF-16 code units (inclusive).
+///   - endIndex: End offset in UTF-16 code units (exclusive).
+/// - Returns: The substring, or triggers `fatalError` on out-of-bounds.
+func runtimeUTF16Substring(_ source: String, startIndex: Int, endIndex: Int) -> String {
+    let utf16 = source.utf16
+    let length = utf16.count
+    guard startIndex >= 0, endIndex >= startIndex, endIndex <= length else {
+        fatalError("StringIndexOutOfBoundsException: startIndex=\(startIndex), endIndex=\(endIndex), length=\(length)")
+    }
+    let start = utf16.index(utf16.startIndex, offsetBy: startIndex)
+    let end = utf16.index(utf16.startIndex, offsetBy: endIndex)
+    return String(decoding: utf16[start..<end], as: UTF16.self)
+}
+
 func extractString(from ptr: UnsafeMutableRawPointer?) -> String? {
     guard let ptr = normalizeNullableRuntimePointer(ptr) else {
         return nil
