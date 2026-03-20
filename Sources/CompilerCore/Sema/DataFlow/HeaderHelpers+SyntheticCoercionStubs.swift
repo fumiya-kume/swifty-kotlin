@@ -204,6 +204,131 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-510..511: roundToInt / roundToLong extension functions ---
+        let kotlinMathPkg = kotlinPkg + [interner.intern("math")]
+        if symbols.lookup(fqName: kotlinMathPkg) == nil {
+            let mathName = interner.intern("math")
+            let mathSym = symbols.define(kind: .package, name: mathName, fqName: kotlinMathPkg, declSite: nil, visibility: .public, flags: [.synthetic])
+            if let kotlinSym = symbols.lookup(fqName: kotlinPkg) {
+                symbols.setParentSymbol(kotlinSym, for: mathSym)
+            }
+        }
+        if let mathPackageSymbol = symbols.lookup(fqName: kotlinMathPkg) {
+            registerSyntheticCoercionFunction(
+                named: "roundToInt",
+                externalLinkName: "kk_float_roundToInt",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "roundToInt",
+                externalLinkName: "kk_double_roundToInt",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.intType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "roundToLong",
+                externalLinkName: "kk_float_roundToLong",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "roundToLong",
+                externalLinkName: "kk_double_roundToLong",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.longType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+
+            // --- STDLIB-512..513: ulp / nextUp / nextDown extension properties ---
+            // Registered as zero-parameter extension functions (the property accessor pattern).
+            registerSyntheticCoercionFunction(
+                named: "ulp",
+                externalLinkName: "kk_double_ulp",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "nextUp",
+                externalLinkName: "kk_double_nextUp",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "nextDown",
+                externalLinkName: "kk_double_nextDown",
+                receiverType: types.doubleType,
+                parameters: [],
+                returnType: types.doubleType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "ulp",
+                externalLinkName: "kk_float_ulp",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "nextUp",
+                externalLinkName: "kk_float_nextUp",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+            registerSyntheticCoercionFunction(
+                named: "nextDown",
+                externalLinkName: "kk_float_nextDown",
+                receiverType: types.floatType,
+                parameters: [],
+                returnType: types.floatType,
+                packageFQName: kotlinMathPkg,
+                packageSymbol: mathPackageSymbol,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         // Int.countOneBits() / countLeadingZeroBits() / countTrailingZeroBits() (STDLIB-501)
         // Use if-let instead of guard-return so future registrations below are not skipped.
         if let kotlinPackageSymbol = symbols.lookup(fqName: kotlinPkg) {

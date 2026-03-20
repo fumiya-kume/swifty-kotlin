@@ -148,6 +148,12 @@ final class ABIMismatchTests: XCTestCase {
 
     func testMathFunctionCount() {
         // 23 existing + 11 Float trig/math + 4 roundToInt/roundToLong + 6 ulp/nextUp/nextDown = 44
+        // 23 original Double functions (abs_int, abs, sqrt, pow, ceil, floor, round,
+        //   sin, cos, tan, asin, acos, atan, atan2,
+        //   exp, ln, log2, log10, log, sign, hypot, PI, E)
+        // + 11 Float overloads (sin_float..floor_float)
+        // + 4 roundToInt/roundToLong (float/double)
+        // + 6 ulp/nextUp/nextDown (float/double)
         XCTAssertEqual(RuntimeABISpec.mathFunctions.count, 44)
         XCTAssertEqual(RuntimeABISpec.randomFunctions.count, 5)
     }
