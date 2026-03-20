@@ -498,6 +498,21 @@ extension ExprTypeChecker {
             }
         }
 
+        // ── this::class — instance class reference on implicit receiver ──
+        // REFL-002: When the receiver is `this`, infer `this` first, then
+        // bind the classRefTargetType from the receiver's resolved type so
+        // KIR lowering can emit `kk_kclass_create` with the correct token.
+        if member == KnownCompilerNames(interner: interner).className,
+           let receiver,
+           case .thisRef = ast.arena.expr(receiver)
+        {
+            if let result = inferExprReceiverClassRef(
+                id, receiver: receiver, range: range, ctx: ctx, locals: &locals
+            ) {
+                return result
+            }
+        }
+
         let receiverType: TypeID? = if let receiver {
             driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
         } else {
@@ -687,6 +702,41 @@ extension ExprTypeChecker {
             return kClassType
         }
         return nil
+    }
+
+    /// REFL-002: Infers `::class` when the receiver is an expression (e.g. `this::class`).
+    /// Infers the receiver first, then derives the `classRefTargetType` from the
+    /// receiver's resolved type so KIR lowering emits the correct type token.
+    private func inferExprReceiverClassRef(
+        _ id: ExprID,
+        receiver: ExprID,
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let receiverType = driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+
+        // Skip error types — don't bind a classRef for unresolvable receivers.
+        if nonNullReceiverType == sema.types.errorType {
+            return nil
+        }
+
+        // Resolve the nominal type from the receiver.  For class/interface
+        // types we use the type directly; for primitives we also accept them.
+        let targetType: TypeID
+        switch sema.types.kind(of: nonNullReceiverType) {
+        case .classType, .primitive, .any:
+            targetType = nonNullReceiverType
+        default:
+            return nil
+        }
+
+        sema.bindings.bindClassRefTargetType(id, type: targetType)
+        let kClassType = sema.types.makeKClassType(argument: targetType)
+        sema.bindings.bindExprType(id, type: kClassType)
+        return kClassType
     }
 
     func inferSuperRefExpr(

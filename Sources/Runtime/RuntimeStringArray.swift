@@ -114,6 +114,11 @@ private enum RuntimeTypeTokenEncoding {
     static let ulongBase: Int64 = 8
     static let ubyteBase: Int64 = 9
     static let ushortBase: Int64 = 10
+    // REFL-002: Additional primitive bases for Long, Double, Float, Char.
+    static let longBase: Int64 = 11
+    static let doubleBase: Int64 = 12
+    static let floatBase: Int64 = 13
+    static let charBase: Int64 = 14
 }
 
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
@@ -227,6 +232,46 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
             return 1
         }
         return tryCast(ptr, to: RuntimeIntBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.longBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeLongBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.doubleBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeDoubleBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.floatBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeFloatBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.charBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeCharBox.self) == nil ? 0 : 1
 
     case RuntimeTypeTokenEncoding.booleanBase:
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
@@ -356,6 +401,15 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
         "UShort"
     case RuntimeTypeTokenEncoding.booleanBase:
         "Boolean"
+    // REFL-002: Additional primitive bases for accurate simpleName.
+    case RuntimeTypeTokenEncoding.longBase:
+        "Long"
+    case RuntimeTypeTokenEncoding.doubleBase:
+        "Double"
+    case RuntimeTypeTokenEncoding.floatBase:
+        "Float"
+    case RuntimeTypeTokenEncoding.charBase:
+        "Char"
     case RuntimeTypeTokenEncoding.nullBase:
         "Nothing"
     default:

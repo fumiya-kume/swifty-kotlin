@@ -1435,9 +1435,15 @@ extension ExprLowerer {
                 }
 
                 // 3. Call kk_kclass_create to produce a KClass metadata object.
+                // REFL-002: Prefer the precise KClass<T> type derived from
+                // classRefTargetType over the fallback to Any.  This ensures
+                // downstream passes see the accurate parameterised KClass type
+                // even when the Sema-bound expression type was widened.
+                let resultType: TypeID = boundType
+                    ?? sema.types.makeKClassType(argument: classRefTargetType)
                 let result = arena.appendExpr(
                     .temporary(Int32(arena.expressions.count)),
-                    type: boundType ?? sema.types.anyType
+                    type: resultType
                 )
                 instructions.append(.call(
                     symbol: nil,

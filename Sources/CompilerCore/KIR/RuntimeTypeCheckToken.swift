@@ -14,6 +14,11 @@ enum RuntimeTypeCategory {
     case ulong
     case ubyte
     case ushort
+    // REFL-002: Additional primitive categories for precise ::class tokens.
+    case long
+    case double
+    case float
+    case char
 
     /// The base constant used in the runtime token encoding.
     var base: Int64 {
@@ -29,6 +34,10 @@ enum RuntimeTypeCategory {
         case .ulong:    RuntimeTypeCheckToken.ulongBase
         case .ubyte:    RuntimeTypeCheckToken.ubyteBase
         case .ushort:   RuntimeTypeCheckToken.ushortBase
+        case .long:     RuntimeTypeCheckToken.longBase
+        case .double:   RuntimeTypeCheckToken.doubleBase
+        case .float:    RuntimeTypeCheckToken.floatBase
+        case .char:     RuntimeTypeCheckToken.charBase
         }
     }
 
@@ -45,6 +54,10 @@ enum RuntimeTypeCategory {
         case .ulong:    PrimitiveType.ulong.kotlinName
         case .ubyte:    PrimitiveType.ubyte.kotlinName
         case .ushort:   PrimitiveType.ushort.kotlinName
+        case .long:     PrimitiveType.long.kotlinName
+        case .double:   PrimitiveType.double.kotlinName
+        case .float:    PrimitiveType.float.kotlinName
+        case .char:     PrimitiveType.char.kotlinName
         case .unknown, .nominal:  nil
         }
     }
@@ -74,6 +87,11 @@ enum RuntimeTypeCheckToken {
     static let ulongBase: Int64 = 8
     static let ubyteBase: Int64 = 9
     static let ushortBase: Int64 = 10
+    // REFL-002: Additional primitive bases for Long, Double, Float, Char.
+    static let longBase: Int64 = 11
+    static let doubleBase: Int64 = 12
+    static let floatBase: Int64 = 13
+    static let charBase: Int64 = 14
 
     static let baseMask: Int64 = 0xFF
     static let nullableFlag: Int64 = 1 << 8
@@ -103,6 +121,12 @@ enum RuntimeTypeCheckToken {
         case .primitive(.ubyte, _):     category = .ubyte
         case .primitive(.ushort, _):    category = .ushort
         case .primitive(.boolean, _):   category = .boolean
+        // REFL-002: Classify additional primitive types so ::class tokens
+        // carry distinct base values instead of falling through to .unknown.
+        case .primitive(.long, _):      category = .long
+        case .primitive(.double, _):    category = .double
+        case .primitive(.float, _):     category = .float
+        case .primitive(.char, _):      category = .char
         case .nothing:                  category = nullable ? .null : .unknown
         case let .classType(classType): category = .nominal(classType.classSymbol)
         default:                        category = .unknown
@@ -132,6 +156,15 @@ enum RuntimeTypeCheckToken {
             encode(base: ushortBase, nullable: nullable)
         case builtinNames.boolean:
             encode(base: booleanBase, nullable: nullable)
+        // REFL-002: Encode additional primitive builtin names.
+        case builtinNames.long:
+            encode(base: longBase, nullable: nullable)
+        case builtinNames.double:
+            encode(base: doubleBase, nullable: nullable)
+        case builtinNames.float:
+            encode(base: floatBase, nullable: nullable)
+        case builtinNames.char:
+            encode(base: charBase, nullable: nullable)
         case builtinNames.nothing:
             nullable ? nullBase : unknownBase
         default:
@@ -159,8 +192,8 @@ enum RuntimeTypeCheckToken {
         if let name = descriptor.category.simpleName {
             return name
         }
-        // Handle primitives not covered by RuntimeTypeCategory (char, long, float, double)
-        // and nominal types that need symbol resolution.
+        // Handle nominal types that need symbol resolution and any
+        // primitives not yet covered by RuntimeTypeCategory.
         switch sema.types.kind(of: type) {
         case .nothing:
             return "Nothing"
