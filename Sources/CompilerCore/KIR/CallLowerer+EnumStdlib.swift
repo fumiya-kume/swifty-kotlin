@@ -28,7 +28,12 @@ extension CallLowerer {
         let entries = sema.symbols.children(ofFQName: nominalSymbol.fqName)
             .compactMap { sema.symbols.symbol($0) }
             .filter { $0.kind == .field }
-            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            .sorted(by: {
+                let lhsOffset = $0.declSite?.start.offset ?? Int.max
+                let rhsOffset = $1.declSite?.start.offset ?? Int.max
+                if lhsOffset != rhsOffset { return lhsOffset < rhsOffset }
+                return $0.id.rawValue < $1.id.rawValue
+            })
 
         let entryType = sema.types.make(.classType(ClassType(
             classSymbol: nominalSymbol.id,

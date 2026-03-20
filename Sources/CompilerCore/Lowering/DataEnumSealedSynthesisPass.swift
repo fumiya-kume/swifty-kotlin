@@ -126,6 +126,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         appendSyntheticEnumValueOfIfNeeded(
             name: ctx.interner.intern("valueOf"),
             owner: valueOfOwner,
+            enumName: nominalSymbol.name,
             enumType: sema.types.make(.classType(ClassType(
                 classSymbol: nominalSymbol.id,
                 args: [],
@@ -174,7 +175,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         appendSyntheticDataCopyIfNeeded(
             name: ctx.interner.intern("\(ctx.interner.resolve(nominalSymbol.name))$copy"),
             owner: nominalSymbol, module: module, sema: sema,
-            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner
+            existingFunctionSymbols: existingFunctionSymbols, interner: ctx.interner,
+            diagnostics: ctx.diagnostics
         )
         if nominalSymbol.kind == .class {
             let hashCodeName = ctx.interner.intern("hashCode")
@@ -471,7 +473,17 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         symbols.children(ofFQName: owner.fqName)
             .compactMap { symbols.symbol($0) }
             .filter { $0.kind == .field }
-            .sorted(by: { $0.id.rawValue < $1.id.rawValue })
+            .sorted(by: {
+                // Sort by source declaration offset first (Kotlin guarantees
+                // enum entry order matches declaration order).  Fall back to
+                // symbol ID which is monotonically assigned in parse order.
+                let lhsOffset = $0.declSite?.start.offset ?? Int.max
+                let rhsOffset = $1.declSite?.start.offset ?? Int.max
+                if lhsOffset != rhsOffset {
+                    return lhsOffset < rhsOffset
+                }
+                return $0.id.rawValue < $1.id.rawValue
+            })
     }
 
     private func appendSyntheticCountFunctionIfNeeded(
@@ -510,7 +522,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         module: KIRModule,
         sema: SemaModule,
         existingFunctionSymbols: Set<SymbolID>,
-        interner: StringInterner
+        interner: StringInterner,
+        diagnostics: DiagnosticEngine
     ) {
         guard owner.kind == .class || owner.kind == .enumClass || owner.kind == .object else {
             return
@@ -545,6 +558,12 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         guard let resolvedCtorSymbol = ctorSymbol,
               let ctorSignature = sema.symbols.functionSignature(for: resolvedCtorSymbol)
         else {
+            let ownerName = interner.resolve(owner.name)
+            diagnostics.warning(
+                "KSWIFTK-DATA-0001",
+                "data class '\(ownerName)' has no primary constructor; copy() returns self unchanged",
+                range: owner.declSite
+            )
             let resultExpr = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)),
                 type: receiverType
@@ -588,6 +607,14 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
 
         // Pair up symbols and types, truncating to the shorter array for safety.
         let pairCount = min(ctorParamSymbols.count, ctorParamTypes.count)
+        if ctorParamSymbols.count != ctorParamTypes.count {
+            let ownerName = interner.resolve(owner.name)
+            diagnostics.warning(
+                "KSWIFTK-DATA-0002",
+                "data class '\(ownerName)' constructor signature mismatch: \(ctorParamSymbols.count) parameter symbols vs \(ctorParamTypes.count) parameter types; copy() uses first \(pairCount)",
+                range: owner.declSite
+            )
+        }
         let propertyParams: [(symbol: SymbolID, type: TypeID)] = (0..<pairCount).map { i in
             (ctorParamSymbols[i], ctorParamTypes[i])
         }
@@ -1696,6 +1723,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     private func appendSyntheticEnumValueOfIfNeeded(
         name: InternedString,
         owner: SemanticSymbol,
+        enumName: InternedString,
         enumType: TypeID,
         entries: [SemanticSymbol],
         module: KIRModule,
@@ -1771,7 +1799,29 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             body.append(.label(nextLabel))
         }
 
-        // No match – call throw helper
+        // No match – build "ClassName." + name and call throw helper.
+        // Kotlin throws: IllegalArgumentException: No enum constant ClassName.value
+        let classNameStr = interner.resolve(enumName)
+        let prefixInterned = interner.intern("\(classNameStr).")
+        let prefixExpr = module.arena.appendExpr(
+            .stringLiteral(prefixInterned),
+            type: stringType
+        )
+        body.append(.constValue(result: prefixExpr, value: .stringLiteral(prefixInterned)))
+
+        let qualifiedNameExpr = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: stringType
+        )
+        body.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_string_concat"),
+            arguments: [prefixExpr, paramRef],
+            result: qualifiedNameExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
         let throwCallee = interner.intern("kk_enum_valueOf_throw")
         let throwResult = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)),
@@ -1780,7 +1830,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         body.append(.call(
             symbol: nil,
             callee: throwCallee,
-            arguments: [paramRef],
+            arguments: [qualifiedNameExpr],
             result: throwResult,
             canThrow: true,
             thrownResult: nil
