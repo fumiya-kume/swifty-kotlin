@@ -11,9 +11,18 @@ import Foundation
 /// Create a `pthread_key_t` with a destructor that releases the stored object.
 private func makePthreadKey() -> pthread_key_t {
     var key = pthread_key_t()
+    #if canImport(Glibc) || canImport(Musl)
+    // Linux: pthread destructor expects Optional pointer.
+    pthread_key_create(&key) { (ptr: UnsafeMutableRawPointer?) in
+        guard let ptr else { return }
+        Unmanaged<AnyObject>.fromOpaque(ptr).release()
+    }
+    #else
+    // Darwin: pthread destructor expects non-optional pointer.
     pthread_key_create(&key) { (ptr: UnsafeMutableRawPointer) in
         Unmanaged<AnyObject>.fromOpaque(ptr).release()
     }
+    #endif
     return key
 }
 
