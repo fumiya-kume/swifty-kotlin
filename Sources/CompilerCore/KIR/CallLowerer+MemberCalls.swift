@@ -88,7 +88,7 @@ extension CallLowerer {
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toMutableSet", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "replaceFirstChar",

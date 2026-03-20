@@ -1458,6 +1458,143 @@ extension DataFlowSemaPhase {
         )
     }
 
+    /// STDLIB-651: Register `List<T>.toMutableSet()` returning `MutableSet<T>`.
+    private func registerListToMutableSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toMutableSet")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let mutableSetType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_to_mutable_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mutableSetType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// STDLIB-651: Register `Set<E>.toSet()` returning `Set<E>`.
+    private func registerSetToSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("toSet")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_to_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// STDLIB-651: Register `Set<E>.toMutableSet()` returning `MutableSet<E>`.
+    private func registerSetToMutableSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) {
+        let memberName = interner.intern("toMutableSet")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let mutableSetType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_to_mutable_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mutableSetType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     /// STDLIB-510: Register `List<T>.intersect(other)`, `.union(other)`, `.subtract(other)` returning `Set<T>`.
     /// Kotlin stdlib declares the parameter as `Iterable<T>`.
     private func registerListSetOperationMembers(
@@ -2808,6 +2945,14 @@ extension DataFlowSemaPhase {
             listTypeParamType: listTypeParamType,
             mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
         )
+        // STDLIB-651: List.toMutableSet() → kk_list_to_mutable_set
+        registerListToMutableSetMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
+        )
         registerListAsSequenceMember(
             symbols: symbols, types: types, interner: interner,
             listInterfaceSymbol: listInterfaceSymbol,
@@ -3619,6 +3764,15 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-651: Set.toSet() → kk_set_to_set
+        registerSetToSetMember(
+            symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+
         return setInterfaceSymbol
     }
 
@@ -3862,6 +4016,26 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+
+        // STDLIB-651: Set.toMutableSet() → kk_set_to_mutable_set
+        // Register on Set (not MutableSet) since Set.toMutableSet() returns MutableSet
+        if let setFQName = symbols.symbol(setInterfaceSymbol)?.fqName {
+            let setTypeParamName = interner.intern("E")
+            let setTypeParamFQName = setFQName + [setTypeParamName]
+            if let setTypeParamSymbol = symbols.lookup(fqName: setTypeParamFQName) {
+                let setTypeParamType = types.make(.typeParam(TypeParamType(
+                    symbol: setTypeParamSymbol, nullability: .nonNull
+                )))
+                registerSetToMutableSetMember(
+                    symbols: symbols, types: types, interner: interner,
+                    setFQName: setFQName,
+                    setInterfaceSymbol: setInterfaceSymbol,
+                    typeParamSymbol: setTypeParamSymbol,
+                    typeParamType: setTypeParamType,
+                    mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
+                )
+            }
+        }
     }
 
     private func registerMutableSetAddMember(

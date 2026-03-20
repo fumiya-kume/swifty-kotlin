@@ -300,6 +300,33 @@ public func kk_list_to_set(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
+// MARK: - Set.toSet(), toMutableSet() (STDLIB-651)
+
+@_cdecl("kk_set_to_set")
+public func kk_set_to_set(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    // Return a defensive copy (Kotlin semantics: toSet() on Set returns a new Set)
+    return registerRuntimeObject(RuntimeSetBox(elements: Array(set.elements)))
+}
+
+@_cdecl("kk_list_to_mutable_set")
+public func kk_list_to_mutable_set(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
+}
+
+@_cdecl("kk_set_to_mutable_set")
+public func kk_set_to_mutable_set(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: Array(set.elements)))
+}
+
 // MARK: - List intersect / union / subtract / toHashSet (STDLIB-510)
 
 @_cdecl("kk_list_intersect")
