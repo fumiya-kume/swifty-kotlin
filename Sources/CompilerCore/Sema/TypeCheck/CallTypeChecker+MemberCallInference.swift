@@ -1060,14 +1060,29 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
                 }
-                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
-                    params: [collectionElementType, collectionElementType],
-                    returnType: sema.types.intType
-                )))
                 if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    // Lambda argument: infer as (T, T) -> Int comparator function
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType, collectionElementType],
+                        returnType: sema.types.intType
+                    )))
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                } else {
+                    // Non-lambda argument (e.g. compareBy { ... }, reverseOrder(), etc.)
+                    // Pass Comparator<T> expected type so factory functions can infer element type.
+                    let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+                    let comparatorExpectedType: TypeID? = if let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName) {
+                        sema.types.make(.classType(ClassType(
+                            classSymbol: comparatorSymbol,
+                            args: [.invariant(collectionElementType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        nil
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: comparatorExpectedType)
                 }
-                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                 resultType = receiverType
 
             case "partition":

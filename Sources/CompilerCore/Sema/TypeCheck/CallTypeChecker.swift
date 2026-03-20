@@ -705,6 +705,126 @@ final class CallTypeChecker {
             return sema.types.unitType
         }
 
+        // --- Comparator factory functions: compareBy, compareByDescending (STDLIB-649) ---
+        if let calleeName,
+           args.count == 1,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            let calleeNameStr = interner.resolve(calleeName)
+            if calleeNameStr == "compareBy" || calleeNameStr == "compareByDescending" {
+                // Resolve the Comparator<T> return type.
+                // The lambda selector has signature (T) -> Comparable<*>.
+                // T is inferred from explicit type args, calling context, or defaults to Any.
+                let elementType: TypeID = if let explicitT = explicitTypeArgs.first {
+                    explicitT
+                } else if let expectedType,
+                    case let .classType(classType) = sema.types.kind(of: expectedType),
+                    let firstArg = classType.args.first
+                {
+                    switch firstArg {
+                    case let .invariant(t), let .out(t), let .in(t): t
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+                let selectorExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [elementType],
+                    returnType: sema.types.anyType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: selectorExpectedType)
+
+                let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+                let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName)
+                let resultType: TypeID = if let comparatorSymbol {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: comparatorSymbol,
+                        args: [.invariant(elementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+
+                // Bind to the synthetic function symbol
+                let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
+                let funcFQName = comparisonsPkg + [calleeName]
+                if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
+                    guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                    return sig.parameterTypes.count == 1
+                }) {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [elementType],
+                            parameterMapping: [0: 0]
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                }
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
+        // --- Comparator factory functions: naturalOrder, reverseOrder (STDLIB-649) ---
+        if let calleeName,
+           args.isEmpty,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            let calleeNameStr = interner.resolve(calleeName)
+            if calleeNameStr == "naturalOrder" || calleeNameStr == "reverseOrder" {
+                let elementType: TypeID = if let expectedType,
+                    case let .classType(classType) = sema.types.kind(of: expectedType),
+                    let firstArg = classType.args.first
+                {
+                    switch firstArg {
+                    case let .invariant(t), let .out(t), let .in(t): t
+                    case .star: sema.types.anyType
+                    }
+                } else {
+                    sema.types.anyType
+                }
+
+                let comparatorFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Comparator")]
+                let comparatorSymbol = sema.symbols.lookup(fqName: comparatorFQName)
+                let resultType: TypeID = if let comparatorSymbol {
+                    sema.types.make(.classType(ClassType(
+                        classSymbol: comparatorSymbol,
+                        args: [.invariant(elementType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    sema.types.anyType
+                }
+
+                let comparisonsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("comparisons")]
+                let funcFQName = comparisonsPkg + [calleeName]
+                if let chosen = sema.symbols.lookupAll(fqName: funcFQName).first(where: { candidate in
+                    guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                    return sig.parameterTypes.isEmpty
+                }) {
+                    sema.bindings.bindCall(
+                        id,
+                        binding: CallBinding(
+                            chosenCallee: chosen,
+                            substitutedTypeArguments: [elementType],
+                            parameterMapping: [:]
+                        )
+                    )
+                    sema.bindings.bindCallableTarget(id, target: .symbol(chosen))
+                }
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+        }
+
         if let calleeName,
            calleeName == knownNames.channel,
            args.isEmpty

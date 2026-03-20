@@ -921,7 +921,7 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
-    private enum ComparatorSource {
+    enum ComparatorSource {
         case ascending
         case descending
         case multiSelector
@@ -930,7 +930,7 @@ extension CollectionLiteralLoweringPass {
         case unknown
     }
 
-    private func isComparatorFromCall(
+    func isComparatorFromCall(
         exprID: KIRExprID,
         body: [KIRInstruction],
         ascendingCallee: InternedString,
