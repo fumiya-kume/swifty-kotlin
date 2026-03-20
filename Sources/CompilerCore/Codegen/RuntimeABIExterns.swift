@@ -2113,6 +2113,12 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_readBytes = ExternDecl(
+        name: "kk_file_readBytes",
+        parameterTypes: [intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let kk_file_forEachLine = ExternDecl(
         name: "kk_file_forEachLine",
         parameterTypes: [intptr, intptr, intptr, nullableIntptrPtr],
@@ -2209,6 +2215,7 @@ public enum RuntimeABIExterns {
         kk_file_readText,
         kk_file_writeText,
         kk_file_readLines,
+        kk_file_readBytes,
         kk_file_forEachLine,
         kk_file_exists,
         kk_file_isFile,

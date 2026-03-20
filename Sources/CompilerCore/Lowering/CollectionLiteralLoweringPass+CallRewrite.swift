@@ -694,6 +694,8 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileDeleteName
                         case lookup.mkdirsName:
                             kkCallee = lookup.kkFileMkdirsName
+                        case lookup.readBytesName:
+                            kkCallee = lookup.kkFileReadBytesName
                         default:
                             kkCallee = nil
                         }

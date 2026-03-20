@@ -92,6 +92,24 @@ public func kk_file_readLines(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<
     }
 }
 
+// MARK: - STDLIB-665: File.readBytes()
+
+@_cdecl("kk_file_readBytes")
+public func kk_file_readBytes(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_readBytes received invalid File handle")
+    }
+    do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: file.path))
+        let elements = data.map { Int(Int8(bitPattern: $0)) }
+        return registerRuntimeObject(RuntimeListBox(elements: elements))
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+}
+
 // MARK: - STDLIB-321: File properties and existence checks
 
 @_cdecl("kk_file_exists")

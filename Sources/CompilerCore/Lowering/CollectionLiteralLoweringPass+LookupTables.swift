@@ -508,6 +508,8 @@ struct CollectionLiteralLookupTables {
     let kkFileListFilesName: InternedString
     let walkName: InternedString
     let kkFileWalkName: InternedString
+    let readBytesName: InternedString
+    let kkFileReadBytesName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -999,6 +1001,8 @@ struct CollectionLiteralLookupTables {
         kkFileListFilesName = interner.intern("kk_file_listFiles")
         walkName = interner.intern("walk")
         kkFileWalkName = interner.intern("kk_file_walk")
+        readBytesName = interner.intern("readBytes")
+        kkFileReadBytesName = interner.intern("kk_file_readBytes")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]
