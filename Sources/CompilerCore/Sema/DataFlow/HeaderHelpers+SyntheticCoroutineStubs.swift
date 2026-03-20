@@ -311,7 +311,7 @@ extension DataFlowSemaPhase {
             ownerType: channelType,
             name: "close",
             externalLinkName: "kk_channel_close",
-            returnType: types.unitType,
+            returnType: types.booleanType,
             symbols: symbols,
             interner: interner
         )
