@@ -369,4 +369,17 @@ struct TypeCheckHelpers {
             sema.symbols.symbol(symbolID)?.kind == .typeParameter
         }
     }
+
+    /// Construct a non-null Throwable type from the kotlin.Throwable symbol.
+    func throwableType(sema: SemaModule, interner: StringInterner) -> TypeID? {
+        let throwableFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Throwable")]
+        guard let throwableSymbol = sema.symbols.lookup(fqName: throwableFQName) else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+    }
 }

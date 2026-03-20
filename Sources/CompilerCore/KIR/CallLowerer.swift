@@ -589,16 +589,25 @@ final class CallLowerer {
                 instructions.append(.constValue(result: capacityExpr, value: .intLiteral(0)))
                 finalArgIDs.append(capacityExpr)
             }
+            let callCanThrow = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
             instructions.append(.call(
                 symbol: chosen ?? loweredCallable?.symbol,
                 callee: loweredCalleeName,
                 arguments: finalArgIDs,
                 result: result,
-                canThrow: false,
+                canThrow: callCanThrow,
                 thrownResult: nil
             ))
         }
         return result
+    }
+
+    /// Returns true if the callee is a runtime function that requires a thrown
+    /// channel (outThrown) parameter in its ABI. This ensures the codegen
+    /// appends the extra `intptr_t * _Nullable` slot.
+    private func needsThrownChannel(calleeName: InternedString, interner: StringInterner) -> Bool {
+        let name = interner.resolve(calleeName)
+        return name == "kk_runCatching"
     }
 
     private func tryLowerCollectionToListCall(
@@ -664,25 +673,47 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"].contains(externalLinkName),
-              loweredArguments.count == originalArgs.count,
-              loweredArguments.count == 2
+              loweredArguments.count == originalArgs.count
         else {
             return loweredArguments
         }
 
-        var finalArgs = [loweredArguments[0], loweredArguments[1]]
-        if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
-           let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
-           let closureRaw = callableInfo.captureArguments.first
-        {
-            finalArgs.append(closureRaw)
-        } else {
-            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            finalArgs.append(zeroExpr)
+        let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
+        if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
+            var finalArgs = [loweredArguments[0], loweredArguments[1]]
+            if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
+               let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
         }
-        return finalArgs
+
+        // STDLIB-590: runCatching { block } — expand lambda arg to (fnPtr, closureRaw)
+        if externalLinkName == "kk_runCatching", loweredArguments.count == 1 {
+            var finalArgs: [KIRExprID] = []
+            let lambdaID = loweredArguments[0]
+            // The lowered lambda is a function pointer; its callableValueInfo
+            // holds (callee=fnPtr, captureArguments=[closureRaw]).
+            finalArgs.append(lambdaID) // fnPtr
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID),
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw) // closureRaw
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
+            }
+            return finalArgs
+        }
+
+        return loweredArguments
     }
 
     func appendReifiedTypeTokens(

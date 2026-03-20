@@ -118,6 +118,7 @@ struct KnownCompilerNames {
     let main: InternedString
     let with: InternedString
     let run: InternedString
+    let runCatching: InternedString
     let withContext: InternedString
     let flow: InternedString
     let emit: InternedString
@@ -189,6 +190,8 @@ struct KnownCompilerNames {
     let kotlinxCoroutinesRunBlockingFQName: [InternedString]
     let kotlinxCoroutinesLaunchFQName: [InternedString]
     let kotlinxCoroutinesAsyncFQName: [InternedString]
+    let kotlinResultFQName: [InternedString]
+    let kotlinRunCatchingFQName: [InternedString]
 
     init(interner: StringInterner) {
         self.interner = interner
@@ -247,6 +250,7 @@ struct KnownCompilerNames {
         main = interner.intern("main")
         with = interner.intern("with")
         run = interner.intern("run")
+        runCatching = interner.intern("runCatching")
         withContext = interner.intern("withContext")
         flow = interner.intern("flow")
         emit = interner.intern("emit")
@@ -327,6 +331,10 @@ struct KnownCompilerNames {
         kotlinxCoroutinesRunBlockingFQName = [kotlinx, coroutines, runBlocking]
         kotlinxCoroutinesLaunchFQName = [kotlinx, coroutines, launch]
         kotlinxCoroutinesAsyncFQName = [kotlinx, coroutines, async]
+
+        let resultName = interner.intern("Result")
+        kotlinResultFQName = [kotlin, resultName]
+        kotlinRunCatchingFQName = [kotlin, runCatching]
     }
 
     func builtinType(named name: InternedString, nullability: Nullability = .nonNull, types: TypeSystem) -> TypeID? {
