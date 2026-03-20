@@ -3112,6 +3112,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
+                        fileExprIDs: fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
