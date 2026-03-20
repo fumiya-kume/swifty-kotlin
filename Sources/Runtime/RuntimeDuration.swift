@@ -201,7 +201,8 @@ public func kk_timedvalue_toString(_ timedValueRaw: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_timedvalue_toString received invalid TimedValue handle")
     }
     let valueStr = runtimeElementToString(box.value)
-    let durationStr = runtimeElementToString(box.duration)
+    let durationStrHandle = kk_duration_toString(box.duration)
+    let durationStr = runtimeElementToString(durationStrHandle)
     let result = "TimedValue(value=\(valueStr), duration=\(durationStr))"
     let utf8 = Array(result.utf8)
     return utf8.withUnsafeBufferPointer { buf in

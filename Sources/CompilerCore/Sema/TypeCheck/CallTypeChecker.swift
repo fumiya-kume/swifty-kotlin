@@ -420,19 +420,25 @@ final class CallTypeChecker {
 
         // --- Stdlib kotlin.time.measureTimedValue { ... } (STDLIB-660) ---
         if let calleeName,
-           interner.resolve(calleeName) == "measureTimedValue",
+           calleeName == interner.intern("measureTimedValue"),
            args.count == 1,
            !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx),
            isSyntheticStdlibSymbol(calleeName, fqComponents: ["kotlin", "time", "measureTimedValue"], ctx: ctx)
         {
-            // Infer the block argument — the lambda can return any type T.
-            let blockReturnType = driver.inferExpr(
+            // Infer the block argument with an expected function type () -> T
+            // so non-callable arguments are caught during type checking.
+            let blockType = sema.types.make(.functionType(FunctionType(
+                params: [],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            _ = driver.inferExpr(
                 args[0].expr,
                 ctx: ctx,
                 locals: &locals,
-                expectedType: nil
+                expectedType: blockType
             )
-            _ = blockReturnType // suppress unused warning
 
             // Look up the TimedValue class to build the return type.
             let timedValueFQName = [interner.intern("kotlin"), interner.intern("time"), interner.intern("TimedValue")]
