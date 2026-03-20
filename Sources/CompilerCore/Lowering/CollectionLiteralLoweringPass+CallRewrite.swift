@@ -671,8 +671,8 @@ extension CollectionLiteralLoweringPass {
                         }
                         
                         if let target = kkCallee {
-                            let memberArgs = (callee == lookup.forEachLineName || callee == lookup.useLinesName) ? 
-                                [receiverID] + arguments.dropFirst() : 
+                            let memberArgs = (callee == lookup.forEachLineName || callee == lookup.useLinesName) ?
+                                [receiverID] + arguments.dropFirst() :
                                 [receiverID]
                             loweredBody.append(.call(
                                 symbol: nil,
@@ -682,6 +682,17 @@ extension CollectionLiteralLoweringPass {
                                 canThrow: canThrow,
                                 thrownResult: thrownResult
                             ))
+                            // Track walk()/listFiles()/readLines() results as lists
+                            // so chained operations (forEach, sortedBy, etc.) are rewritten correctly
+                            if let result,
+                               callee == lookup.walkName || callee == lookup.listFilesName || callee == lookup.readLinesName
+                            {
+                                listExprIDs.insert(result.rawValue)
+                            }
+                            // Track bufferedReader() result as a file-like expr for chained member calls
+                            if let result, callee == lookup.bufferedReaderName {
+                                fileExprIDs.insert(result.rawValue)
+                            }
                             continue
                         }
                     }

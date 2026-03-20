@@ -225,7 +225,8 @@ public func kk_file_walk(_ fileRaw: Int) -> Int {
     guard let file = runtimeFileBox(from: fileRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_walk received invalid File handle")
     }
-    var files: [Int] = []
+    // Kotlin's File.walk() includes the root directory itself as the first element
+    var files: [Int] = [registerRuntimeObject(RuntimeFileBox(file.path))]
     if let enumerator = FileManager.default.enumerator(atPath: file.path) {
         while let relativePath = enumerator.nextObject() as? String {
             let fullPath = (file.path as NSString).appendingPathComponent(relativePath)
