@@ -738,6 +738,8 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileReadTextName
                         case lookup.writeTextName:
                             kkCallee = lookup.kkFileWriteTextName
+                        case lookup.appendTextName:
+                            kkCallee = lookup.kkFileAppendTextName
                         case lookup.readLinesName:
                             kkCallee = lookup.kkFileReadLinesName
                         case lookup.existsName:
