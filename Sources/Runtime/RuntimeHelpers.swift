@@ -202,6 +202,15 @@ public enum KxMiniRuntime {
         DispatchQueue.global().async(execute: DispatchWorkItem(block: block))
     }
 
+    static func launch(on dispatcher: RuntimeDispatcher, block: @Sendable @escaping () -> Void) {
+        dispatcher.queue.async {
+            let saved = RuntimeDispatcher.current
+            RuntimeDispatcher.current = dispatcher
+            block()
+            RuntimeDispatcher.current = saved
+        }
+    }
+
     public static func async(_ block: @escaping () -> UnsafeMutableRawPointer?) -> KKContinuation {
         KKDispatchContinuation(context: nil) { _ in
             _ = block()
