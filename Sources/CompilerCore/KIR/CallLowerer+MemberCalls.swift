@@ -4150,9 +4150,7 @@ extension CallLowerer {
                         let closeCandidateFQ = recvInfo.fqName + [closeName]
                         if let concreteSym = sema.symbols.lookup(fqName: closeCandidateFQ) {
                             concreteCloseSymbol = concreteSym
-                            concreteCloseName = interner.intern(
-                                sema.symbols.symbol(concreteSym)?.fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "close"
-                            )
+                            concreteCloseName = sema.symbols.symbol(concreteSym)?.name ?? closeName
                         }
                     }
                 }
