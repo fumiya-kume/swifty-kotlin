@@ -2063,8 +2063,6 @@ extension CallLowerer {
                     "kk_list_indexOf"
                 case "lastIndexOf":
                     "kk_list_lastIndexOf"
-                case "binarySearch":
-                    "kk_list_binarySearch"
                 case "partition":
                     "kk_list_partition"
                 case "getOrNull":
@@ -3212,6 +3210,12 @@ extension CallLowerer {
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {
+                // STDLIB-547: When the element-based binarySearch overload was
+                // recovered but the call actually has a HOF lambda argument,
+                // redirect to the comparison-based runtime function.
+                if externalLinkName == "kk_list_binarySearch" && hasHOFLambdaArg {
+                    return interner.intern("kk_list_binarySearch_compare")
+                }
                 return interner.intern(externalLinkName)
             }
             if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(

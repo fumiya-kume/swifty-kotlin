@@ -1318,7 +1318,24 @@ extension CallTypeChecker {
                     }
                  }
                  resultType = sema.types.makeNullable(selectorType)
-             case "distinctBy":
+             case "binarySearch":
+                // STDLIB-547: binarySearch(comparison: (T) -> Int) overload
+                guard args.count == 1 else {
+                    // Element-based overload (no lambda) — just return Int.
+                    sema.bindings.bindExprType(id, type: sema.types.intType)
+                    return sema.types.intType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [collectionElementType],
+                    returnType: sema.types.intType
+                )))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), case .lambdaLiteral = lambdaExpr {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.intType
+
+            case "distinctBy":
                  guard args.count == 1 else {
                      sema.bindings.bindExprType(id, type: sema.types.anyType)
                     return sema.types.anyType
