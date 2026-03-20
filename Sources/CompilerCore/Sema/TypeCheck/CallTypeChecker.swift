@@ -646,7 +646,7 @@ final class CallTypeChecker {
            )
         {
             switch enumSpecialKind {
-            case let .enumValues(_, listType, stubSymbol):
+            case let .enumValues(_, arrayType, stubSymbol):
                 sema.bindings.bindCall(
                     id,
                     binding: CallBinding(
@@ -658,8 +658,8 @@ final class CallTypeChecker {
                 sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
                 sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumValues)
                 sema.bindings.markCollectionExpr(id)
-                sema.bindings.bindExprType(id, type: listType)
-                return listType
+                sema.bindings.bindExprType(id, type: arrayType)
+                return arrayType
             case let .enumValueOf(enumType, stubSymbol):
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
                 sema.bindings.bindCall(

@@ -51,7 +51,7 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
-        // enumValues<T>(): Array<T> — top-level inline reified (returns List<T> for minimal impl)
+        // enumValues<T>(): Array<T> — top-level inline reified
         registerEnumValuesFunction(
             symbols: symbols,
             types: types,
@@ -187,15 +187,15 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinPkg: [InternedString],
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg _: [InternedString]
     ) {
         let enumValuesName = interner.intern("enumValues")
         let enumValuesFQName = kotlinPkg + [enumValuesName]
         guard symbols.lookupAll(fqName: enumValuesFQName).isEmpty else { return }
 
-        let listName = interner.intern("List")
-        let listFQName = kotlinCollectionsPkg + [listName]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else { return }
+        let arrayName = interner.intern("Array")
+        let arrayFQName = kotlinPkg + [arrayName]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else { return }
 
         let tParamName = interner.intern("T")
         let tParamFQName = enumValuesFQName + [tParamName]
@@ -209,8 +209,8 @@ extension DataFlowSemaPhase {
         )
         let tParamType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
         let arrayType = types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(tParamType)],
+            classSymbol: arraySymbol,
+            args: [.invariant(tParamType)],
             nullability: .nonNull
         )))
 

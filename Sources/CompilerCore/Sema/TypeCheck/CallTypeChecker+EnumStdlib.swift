@@ -1,7 +1,7 @@
 import Foundation
 
 enum EnumStdlibSpecialCallResult {
-    case enumValues(enumType: TypeID, listType: TypeID, stubSymbol: SymbolID)
+    case enumValues(enumType: TypeID, arrayType: TypeID, stubSymbol: SymbolID)
     case enumValueOf(enumType: TypeID, stubSymbol: SymbolID)
 }
 
@@ -63,17 +63,16 @@ extension CallTypeChecker {
             guard args.isEmpty else {
                 return nil
             }
-            let listSymbol = sema.symbols.lookup(fqName: [
+            let arraySymbol = sema.symbols.lookup(fqName: [
                 interner.intern("kotlin"),
-                interner.intern("collections"),
-                interner.intern("List"),
+                interner.intern("Array"),
             ])
-            guard let listSymbol else {
+            guard let arraySymbol else {
                 return nil
             }
-            let listType = sema.types.make(.classType(ClassType(
-                classSymbol: listSymbol,
-                args: [.out(enumType)],
+            let arrayType = sema.types.make(.classType(ClassType(
+                classSymbol: arraySymbol,
+                args: [.invariant(enumType)],
                 nullability: .nonNull
             )))
             let stubSymbol = sema.symbols.lookup(fqName: [
@@ -83,7 +82,7 @@ extension CallTypeChecker {
             guard let stubSymbol else {
                 return nil
             }
-            return .enumValues(enumType: enumType, listType: listType, stubSymbol: stubSymbol)
+            return .enumValues(enumType: enumType, arrayType: arrayType, stubSymbol: stubSymbol)
         }
 
         if calleeName == enumValueOfName {

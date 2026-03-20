@@ -1588,8 +1588,8 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
     }
 
     /// Synthesizes the `entries` getter on the companion object.
-    /// `Color.entries` returns a List containing all enum entry singletons.
-    /// The body is: kk_array_new(count) → kk_array_set for each entry → kk_enum_make_values_array.
+    /// `Color.entries` returns an EnumEntries (List) containing all enum entry singletons.
+    /// The body is: kk_array_new(count) → kk_array_set for each entry → kk_enum_make_entries_list.
     private func appendSyntheticEnumEntriesGetterIfNeeded(
         owner: SemanticSymbol,
         enumSymbol: SemanticSymbol,
@@ -1608,7 +1608,7 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             args: [],
             nullability: .nonNull
         )))
-        // entries getter returns Array<T>, represented as anyType at the erased level
+        // entries getter returns EnumEntries<T> (List), represented as anyType at the erased level
         let returnType = sema.types.anyType
 
         let signature = FunctionSignature(parameterTypes: [], returnType: returnType, isSuspend: false)
@@ -1658,13 +1658,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
             ))
         }
 
-        // kk_enum_make_values_array(array, count) -- result uses the enum type
+        // kk_enum_make_entries_list(array, count) -- returns List for EnumEntries
         let listExpr = module.arena.appendExpr(
             .temporary(Int32(module.arena.expressions.count)), type: returnType
         )
         body.append(.call(
             symbol: nil,
-            callee: interner.intern("kk_enum_make_values_array"),
+            callee: interner.intern("kk_enum_make_entries_list"),
             arguments: [arrayExpr, countExpr],
             result: listExpr,
             canThrow: false,

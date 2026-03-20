@@ -817,9 +817,16 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
-    /// STDLIB-171: enumValues<T>() — creates List of enum instances
+    /// STDLIB-171: enumValues<T>() / T.values() — creates Array of enum instances
     public static let kk_enum_make_values_array = ExternDecl(
         name: "kk_enum_make_values_array",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// ENUM-002: T.entries — creates EnumEntries (List) of enum instances
+    public static let kk_enum_make_entries_list = ExternDecl(
+        name: "kk_enum_make_entries_list",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -2370,6 +2377,7 @@ public enum RuntimeABIExterns {
             kk_string_equals,
             kk_enum_valueOf_throw,
             kk_enum_make_values_array,
+            kk_enum_make_entries_list,
             kk_string_toBoolean,
             kk_string_toBooleanStrict,
             kk_string_lines,

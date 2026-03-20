@@ -631,9 +631,19 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Exception"
         ),
-        // STDLIB-171: enumValues<T>()
+        // STDLIB-171: enumValues<T>() / T.values() — returns Array<T>
         RuntimeABIFunctionSpec(
             name: "kk_enum_make_values_array",
+            parameters: [
+                RuntimeABIParameter(name: "valuesRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Enum"
+        ),
+        // ENUM-002: T.entries — returns EnumEntries<T> (List)
+        RuntimeABIFunctionSpec(
+            name: "kk_enum_make_entries_list",
             parameters: [
                 RuntimeABIParameter(name: "valuesRaw", type: .intptr),
                 RuntimeABIParameter(name: "count", type: .intptr),
