@@ -775,7 +775,7 @@ extension NativeEmitter {
 
                 if calleeName == "kk_println_float" || calleeName == "kk_println_double"
                     || calleeName == "kk_println_long" || calleeName == "kk_println_char"
-                    || calleeName == "kk_println_bool"
+                    || calleeName == "kk_println_bool" || calleeName == "kk_println_ulong"
                 {
                     let printValue = argumentValues.first ?? zeroValue
                     if let printFunction = declareExternalFunction(

@@ -160,6 +160,15 @@ extension ExprTypeChecker {
             if sema.bindings.isCollectionSymbol(local.symbol) {
                 sema.bindings.markCollectionExpr(id)
             }
+            if sema.bindings.isRangeSymbol(local.symbol) {
+                sema.bindings.markRangeExpr(id)
+            }
+            if sema.bindings.isCharRangeSymbol(local.symbol) {
+                sema.bindings.markCharRangeExpr(id)
+            }
+            if sema.bindings.isULongRangeSymbol(local.symbol) {
+                sema.bindings.markULongRangeExpr(id)
+            }
             if sema.bindings.isFlowSymbol(local.symbol) {
                 sema.bindings.markFlowExpr(id)
                 if let flowElementType = sema.bindings.flowElementType(forSymbol: local.symbol) {

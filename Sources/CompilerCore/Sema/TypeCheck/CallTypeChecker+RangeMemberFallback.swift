@@ -90,7 +90,15 @@ extension CallTypeChecker {
             }
         }
 
-        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange, isLongRange: isLongRange, isUIntRange: isUIntRange, isULongRange: isULongRange)
+        let resultType = rangeMemberResultType(
+            memberName: memberName,
+            sema: sema,
+            interner: interner,
+            isCharRange: isCharRange,
+            isLongRange: isLongRange,
+            isUIntRange: isUIntRange,
+            isULongRange: isULongRange
+        )
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -143,7 +151,15 @@ extension CallTypeChecker {
         return sema.types.intType
     }
 
-    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false, isLongRange: Bool = false, isUIntRange: Bool = false, isULongRange: Bool = false) -> TypeID {
+    private func rangeMemberResultType(
+        memberName: String,
+        sema: SemaModule,
+        interner: StringInterner,
+        isCharRange: Bool = false,
+        isLongRange: Bool = false,
+        isUIntRange: Bool = false,
+        isULongRange: Bool = false
+    ) -> TypeID {
         let elementType = rangeMemberElementType(
             sema: sema,
             isCharRange: isCharRange,
@@ -162,11 +178,35 @@ extension CallTypeChecker {
             return sema.types.booleanType
         case "forEach":
             return sema.types.unitType
+        case "toList":
+            return rangeMemberListType(elementType: elementType, sema: sema, interner: interner)
+        case "map":
+            return rangeMemberListType(elementType: sema.types.anyType, sema: sema, interner: interner)
         case "reversed":
             return elementType
         default:
             return sema.types.anyType
         }
+    }
+
+    private func rangeMemberListType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = sema.symbols.lookup(fqName: listFQName) else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     private func rangeMemberLambdaExpectation(

@@ -282,6 +282,7 @@ struct CollectionLiteralLookupTables {
     // Range factory / member ABI names (STDLIB-090/091/092/093)
     let kkOpRangeToName: InternedString
     let kkOpRangeUntilName: InternedString
+    let kkOpULongRangeUntilName: InternedString
     let kkOpDownToName: InternedString
     let kkOpStepName: InternedString
     let kkRangeFirstName: InternedString
@@ -794,6 +795,7 @@ struct CollectionLiteralLookupTables {
 
         kkOpRangeToName = interner.intern("kk_op_rangeTo")
         kkOpRangeUntilName = interner.intern("kk_op_rangeUntil")
+        kkOpULongRangeUntilName = interner.intern("kk_op_ulong_rangeUntil")
         kkOpDownToName = interner.intern("kk_op_downTo")
         kkOpStepName = interner.intern("kk_op_step")
         kkRangeFirstName = interner.intern("kk_range_first")

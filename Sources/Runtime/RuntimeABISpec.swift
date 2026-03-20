@@ -1322,6 +1322,14 @@ public enum RuntimeABISpec {
             section: "Print"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_println_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .void,
+            section: "Print"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_print_noarg",
             parameters: [],
             returnType: .void,
