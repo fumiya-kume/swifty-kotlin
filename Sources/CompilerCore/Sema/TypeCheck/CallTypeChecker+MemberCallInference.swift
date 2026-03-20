@@ -2343,6 +2343,8 @@ extension CallTypeChecker {
                         sema.types.stringType
                     case "prependIndent", "replaceIndent":
                         sema.types.stringType
+                    case "commonPrefixWith", "commonSuffixWith":
+                        sema.types.stringType
                     default:
                         nil
                     }
@@ -2396,6 +2398,40 @@ extension CallTypeChecker {
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
+                }
+            }
+            // String stdlib: 2-arg commonPrefixWith/commonSuffixWith(other, ignoreCase) (STDLIB-575/576)
+            if args.count == 2 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
+                let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.stringType),
+                   sema.types.isSubtype(arg1Type, boolType)
+                {
+                    let calleeStr = interner.resolve(calleeName)
+                    if calleeStr == "commonPrefixWith" || calleeStr == "commonSuffixWith" {
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
                 }
             }
             if args.count == 1 {

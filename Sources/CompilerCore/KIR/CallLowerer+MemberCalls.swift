@@ -1710,9 +1710,17 @@ extension CallLowerer {
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
                 case "commonPrefixWith":
-                    ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_commonPrefixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "commonSuffixWith":
-                    ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_commonSuffixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "padStart":
                     if loweredArgIDs.count >= 2 {
                         ("kk_string_padStart", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])

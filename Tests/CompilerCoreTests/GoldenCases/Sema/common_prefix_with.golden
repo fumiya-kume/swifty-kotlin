@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -953,16 +953,74 @@ symbol s951 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s952 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s953 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s954 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#951 params=[(T#951) -> T#952] ret=T#952 suspend=0 defaults=[0] vararg=[0]
-symbol s955 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s956 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#955 params=[] ret=Class#955 suspend=0 defaults=[] vararg=[]
-symbol s957 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s958 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s959 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s955
-expr e0 string(hello) type=String
-expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-40958
-expr e3 localAssign field value=e2 type=Unit ref=s959
-expr e4 name(field) type=Int ref=s959
-expr e5 int(0) type=Int
+symbol s955 kind=function fq=main vis=public flags=_ sig=recv=_ params=[] ret=Unit suspend=0 defaults=[] vararg=[]
+symbol s956 kind=local fq=__local_1.a vis=private flags=_
+symbol s957 kind=local fq=__local_3.b vis=private flags=_
+file f0 package=_
+  decl d0 fun main suspend=0 inline=0 sym=s955
+expr e0 string(HelloWorld) type=String
+expr e1 localDecl a mutable=0 type=_ init=e0 type=Unit ref=s956
+expr e2 string(HelloKotlin) type=String
+expr e3 localDecl b mutable=0 type=_ init=e2 type=Unit ref=s957
+expr e4 name(println) type=_
+expr e5 name(a) type=String ref=s956
+expr e6 name(b) type=String ref=s957
+expr e7 memberCall recv=e5 callee=commonPrefixWith args=[_:e6] type=String call=s475 map=[0->0] targs=[]
+expr e8 call callee=e4 args=[_:e7] type=Unit call=s804 map=[0->0] targs=[]
+expr e9 name(println) type=_
+expr e10 string(abc) type=String
+expr e11 string(xyz) type=String
+expr e12 memberCall recv=e10 callee=commonPrefixWith args=[_:e11] type=String call=s475 map=[0->0] targs=[]
+expr e13 call callee=e9 args=[_:e12] type=Unit call=s804 map=[0->0] targs=[]
+expr e14 name(println) type=_
+expr e15 string() type=String
+expr e16 string(abc) type=String
+expr e17 memberCall recv=e15 callee=commonPrefixWith args=[_:e16] type=String call=s475 map=[0->0] targs=[]
+expr e18 call callee=e14 args=[_:e17] type=Unit call=s804 map=[0->0] targs=[]
+expr e19 name(println) type=_
+expr e20 string(HelloWorld) type=String
+expr e21 string(HelloKotlin) type=String
+expr e22 bool(false) type=Boolean
+expr e23 memberCall recv=e20 callee=commonPrefixWith args=[_:e21,_:e22] type=String call=s479 map=[0->0,1->1] targs=[]
+expr e24 call callee=e19 args=[_:e23] type=Unit call=s804 map=[0->0] targs=[]
+expr e25 name(println) type=_
+expr e26 string(HelloWorld) type=String
+expr e27 string(helloKotlin) type=String
+expr e28 bool(true) type=Boolean
+expr e29 memberCall recv=e26 callee=commonPrefixWith args=[_:e27,_:e28] type=String call=s479 map=[0->0,1->1] targs=[]
+expr e30 call callee=e25 args=[_:e29] type=Unit call=s804 map=[0->0] targs=[]
+expr e31 name(println) type=_
+expr e32 string(ABCdef) type=String
+expr e33 string(abcXYZ) type=String
+expr e34 bool(true) type=Boolean
+expr e35 memberCall recv=e32 callee=commonPrefixWith args=[_:e33,_:e34] type=String call=s479 map=[0->0,1->1] targs=[]
+expr e36 call callee=e31 args=[_:e35] type=Unit call=s804 map=[0->0] targs=[]
+expr e37 name(println) type=_
+expr e38 string(XYZ) type=String
+expr e39 string(abc) type=String
+expr e40 bool(true) type=Boolean
+expr e41 memberCall recv=e38 callee=commonPrefixWith args=[_:e39,_:e40] type=String call=s479 map=[0->0,1->1] targs=[]
+expr e42 call callee=e37 args=[_:e41] type=Unit call=s804 map=[0->0] targs=[]
+expr e43 name(println) type=_
+expr e44 string(Hello) type=String
+expr e45 string(hello) type=String
+expr e46 bool(false) type=Boolean
+expr e47 memberCall recv=e44 callee=commonPrefixWith args=[_:e45,_:e46] type=String call=s479 map=[0->0,1->1] targs=[]
+expr e48 call callee=e43 args=[_:e47] type=Unit call=s804 map=[0->0] targs=[]
+expr e49 name(println) type=_
+expr e50 string(HelloWorld) type=String
+expr e51 string(MyWorld) type=String
+expr e52 memberCall recv=e50 callee=commonSuffixWith args=[_:e51] type=String call=s477 map=[0->0] targs=[]
+expr e53 call callee=e49 args=[_:e52] type=Unit call=s804 map=[0->0] targs=[]
+expr e54 name(println) type=_
+expr e55 string(HelloWORLD) type=String
+expr e56 string(MyWorld) type=String
+expr e57 bool(true) type=Boolean
+expr e58 memberCall recv=e55 callee=commonSuffixWith args=[_:e56,_:e57] type=String call=s481 map=[0->0,1->1] targs=[]
+expr e59 call callee=e54 args=[_:e58] type=Unit call=s804 map=[0->0] targs=[]
+expr e60 name(println) type=_
+expr e61 string(HelloWORLD) type=String
+expr e62 string(MyWorld) type=String
+expr e63 bool(false) type=Boolean
+expr e64 memberCall recv=e61 callee=commonSuffixWith args=[_:e62,_:e63] type=String call=s481 map=[0->0,1->1] targs=[]
+expr e65 call callee=e60 args=[_:e64] type=Unit call=s804 map=[0->0] targs=[]
