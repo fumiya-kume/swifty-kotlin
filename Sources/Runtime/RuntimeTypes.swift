@@ -355,7 +355,7 @@ final class RuntimeSequenceBuilderBox {
 /// Memory: The box is registered in the runtime object table; the background
 /// thread retains the box via its closure capture. The thread exits naturally
 /// when the builder lambda returns.
-final class RuntimeIteratorBuilderBox {
+final class RuntimeIteratorBuilderBox: @unchecked Sendable {
     /// Semaphore the producer blocks on; signalled by the consumer (`hasNext`).
     let producerGate = DispatchSemaphore(value: 0)
     /// Semaphore the consumer blocks on; signalled by the producer (`yield` or end).
