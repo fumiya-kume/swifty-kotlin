@@ -447,9 +447,58 @@ final class RuntimeNotNullBox {
     var currentValue: Int?
 }
 
+/// Runtime reflection metadata record stored in the global registry.
+/// Populated from the binary metadata blob emitted by `RuntimeReflectionMetadataEmitter`.
+/// Each entry corresponds to a type or declaration that can be queried via `KClass` at runtime.
+struct RuntimeKClassMetadataEntry {
+    let qualifiedName: String
+    let simpleName: String
+    let supertypeName: String?
+    let isDataClass: Bool
+    let isSealedClass: Bool
+    let isValueClass: Bool
+    let isInterface: Bool
+    let isObject: Bool
+    let isEnumClass: Bool
+    let isAnnotationClass: Bool
+    let isAbstract: Bool
+    let fieldCount: Int
+    let memberCount: Int
+}
+
+/// Global registry mapping type tokens to runtime metadata entries.
+/// Populated during module initialization via `kk_kclass_register_metadata`.
+final class RuntimeKClassMetadataRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var entries: [Int: RuntimeKClassMetadataEntry] = [:]
+
+    func register(typeToken: Int, entry: RuntimeKClassMetadataEntry) {
+        lock.lock()
+        defer { lock.unlock() }
+        entries[typeToken] = entry
+    }
+
+    func lookup(typeToken: Int) -> RuntimeKClassMetadataEntry? {
+        lock.lock()
+        defer { lock.unlock() }
+        return entries[typeToken]
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        entries.removeAll()
+    }
+}
+
+let runtimeKClassMetadataRegistry = RuntimeKClassMetadataRegistry()
+
 /// Runtime box for `KClass<T>` metadata references produced by `T::class`.
 /// Stores the type token and an optional name-hint pointer so that
 /// `.simpleName` / `.qualifiedName` can be resolved at runtime.
+/// When metadata has been registered via `kk_kclass_register_metadata`,
+/// additional properties (isData, isSealed, qualifiedName, etc.) are
+/// available through the global metadata registry.
 final class RuntimeKClassBox {
     let typeToken: Int
     let nameHint: Int
@@ -457,6 +506,11 @@ final class RuntimeKClassBox {
     init(typeToken: Int, nameHint: Int) {
         self.typeToken = typeToken
         self.nameHint = nameHint
+    }
+
+    /// Looks up the associated metadata entry from the global registry.
+    var metadata: RuntimeKClassMetadataEntry? {
+        runtimeKClassMetadataRegistry.lookup(typeToken: typeToken)
     }
 }
 

@@ -424,16 +424,170 @@ public func kk_kclass_simple_name(_ kclassRaw: Int) -> Int {
 }
 
 /// Returns the `qualifiedName` of a `KClass<T>` metadata object.
-/// Delegates to `kk_type_token_qualified_name` using the stored token and hint.
-/// NOTE: Currently returns the same value as `simpleName` because
-/// `kk_type_token_qualified_name` falls back to `kk_type_token_simple_name`.
-/// A future implementation may return package-qualified names for nominal types.
+/// When binary metadata has been registered via `kk_kclass_register_metadata`,
+/// returns the fully-qualified name (e.g. "com.example.Foo"). Otherwise
+/// falls back to `kk_type_token_qualified_name` which returns the simple name.
 @_cdecl("kk_kclass_qualified_name")
 public func kk_kclass_qualified_name(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return runtimeNullSentinelInt
     }
+    // Try the metadata registry first for proper qualified names.
+    if let metadata = box.metadata {
+        let utf8 = Array(metadata.qualifiedName.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+        }
+    }
     return kk_type_token_qualified_name(box.typeToken, box.nameHint)
+}
+
+// MARK: - REFL-004: KClass Binary Metadata Accessors
+
+/// Registers runtime reflection metadata for a type identified by `typeToken`.
+/// Called during module initialization to populate the global metadata registry
+/// from the binary metadata blob emitted by `RuntimeReflectionMetadataEmitter`.
+///
+/// Parameters are passed as intptr_t values:
+/// - typeToken: The type token identifying the type.
+/// - qualifiedNameRaw: Runtime string pointer for the qualified name.
+/// - simpleNameRaw: Runtime string pointer for the simple name.
+/// - supertypeNameRaw: Runtime string pointer for the supertype name (0 if none).
+/// - flags: Bit-packed flags (bit 0=dataClass, bit 1=sealedClass, bit 2=valueClass,
+///          bit 3=interface, bit 4=object, bit 5=enumClass, bit 6=annotationClass,
+///          bit 7=abstract).
+/// - fieldCount: Number of declared fields (-1 if unknown).
+/// - memberCount: Number of declared members (-1 if unknown).
+@_cdecl("kk_kclass_register_metadata")
+public func kk_kclass_register_metadata(
+    _ typeToken: Int,
+    _ qualifiedNameRaw: Int,
+    _ simpleNameRaw: Int,
+    _ supertypeNameRaw: Int,
+    _ flags: Int,
+    _ fieldCount: Int,
+    _ memberCount: Int
+) -> Int {
+    let qualifiedName = extractString(from: UnsafeMutableRawPointer(bitPattern: qualifiedNameRaw)) ?? "Unknown"
+    let simpleName = extractString(from: UnsafeMutableRawPointer(bitPattern: simpleNameRaw)) ?? "Unknown"
+    let supertypeName: String?
+    if supertypeNameRaw != 0, supertypeNameRaw != runtimeNullSentinelInt {
+        supertypeName = extractString(from: UnsafeMutableRawPointer(bitPattern: supertypeNameRaw))
+    } else {
+        supertypeName = nil
+    }
+
+    let entry = RuntimeKClassMetadataEntry(
+        qualifiedName: qualifiedName,
+        simpleName: simpleName,
+        supertypeName: supertypeName,
+        isDataClass: (flags & (1 << 0)) != 0,
+        isSealedClass: (flags & (1 << 1)) != 0,
+        isValueClass: (flags & (1 << 2)) != 0,
+        isInterface: (flags & (1 << 3)) != 0,
+        isObject: (flags & (1 << 4)) != 0,
+        isEnumClass: (flags & (1 << 5)) != 0,
+        isAnnotationClass: (flags & (1 << 6)) != 0,
+        isAbstract: (flags & (1 << 7)) != 0,
+        fieldCount: fieldCount,
+        memberCount: memberCount
+    )
+    runtimeKClassMetadataRegistry.register(typeToken: typeToken, entry: entry)
+    return 0
+}
+
+/// Returns 1 if the KClass represents a data class, 0 otherwise.
+@_cdecl("kk_kclass_is_data")
+public func kk_kclass_is_data(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isDataClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents a sealed class, 0 otherwise.
+@_cdecl("kk_kclass_is_sealed")
+public func kk_kclass_is_sealed(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isSealedClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents a value (inline) class, 0 otherwise.
+@_cdecl("kk_kclass_is_value")
+public func kk_kclass_is_value(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isValueClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an interface, 0 otherwise.
+@_cdecl("kk_kclass_is_interface")
+public func kk_kclass_is_interface(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isInterface ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an object declaration, 0 otherwise.
+@_cdecl("kk_kclass_is_object")
+public func kk_kclass_is_object(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isObject ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an enum class, 0 otherwise.
+@_cdecl("kk_kclass_is_enum")
+public func kk_kclass_is_enum(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isEnumClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an abstract class, 0 otherwise.
+@_cdecl("kk_kclass_is_abstract")
+public func kk_kclass_is_abstract(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isAbstract ? 1 : 0
+}
+
+/// Returns the supertype name as a runtime string pointer, or null sentinel if none.
+@_cdecl("kk_kclass_supertype_name")
+public func kk_kclass_supertype_name(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata,
+          let superName = metadata.supertypeName else {
+        return runtimeNullSentinelInt
+    }
+    let utf8 = Array(superName.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Returns the number of declared members, or -1 if unknown.
+@_cdecl("kk_kclass_members_count")
+public func kk_kclass_members_count(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return -1
+    }
+    return metadata.memberCount
 }
 
 @_cdecl("kk_type_register_super")

@@ -1582,6 +1582,68 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // REFL-004: KClass binary metadata registration and accessors
+
+    public static let kk_kclass_register_metadata = ExternDecl(
+        name: "kk_kclass_register_metadata",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_data = ExternDecl(
+        name: "kk_kclass_is_data",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_sealed = ExternDecl(
+        name: "kk_kclass_is_sealed",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_value = ExternDecl(
+        name: "kk_kclass_is_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_interface = ExternDecl(
+        name: "kk_kclass_is_interface",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_object = ExternDecl(
+        name: "kk_kclass_is_object",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_enum = ExternDecl(
+        name: "kk_kclass_is_enum",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_is_abstract = ExternDecl(
+        name: "kk_kclass_is_abstract",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_supertype_name = ExternDecl(
+        name: "kk_kclass_supertype_name",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_kclass_members_count = ExternDecl(
+        name: "kk_kclass_members_count",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_is = ExternDecl(
         name: "kk_op_is",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2410,6 +2472,17 @@ public enum RuntimeABIExterns {
             kk_kclass_create,
             kk_kclass_simple_name,
             kk_kclass_qualified_name,
+            // REFL-004: KClass binary metadata
+            kk_kclass_register_metadata,
+            kk_kclass_is_data,
+            kk_kclass_is_sealed,
+            kk_kclass_is_value,
+            kk_kclass_is_interface,
+            kk_kclass_is_object,
+            kk_kclass_is_enum,
+            kk_kclass_is_abstract,
+            kk_kclass_supertype_name,
+            kk_kclass_members_count,
             kk_op_is,
             kk_op_cast,
             kk_op_safe_cast,
