@@ -1895,8 +1895,15 @@ extension DataFlowSemaPhase {
             return sig.parameterTypes.count == 2
         }
         if !hasTwoParamChunked {
+            // Use invariant List<T> (not List<out T>) for the transform parameter
+            // to avoid variance violations when the lambda is in contravariant position.
+            let invariantListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.invariant(listTypeParamType)],
+                nullability: .nonNull
+            )))
             let transformType = types.make(.functionType(FunctionType(
-                params: [listReturnType],
+                params: [invariantListType],
                 returnType: types.anyType,
                 isSuspend: false,
                 nullability: .nonNull

@@ -13,6 +13,7 @@ extension CallTypeChecker {
                  "kk_list_onEach", "kk_list_onEachIndexed",
                  "kk_list_maxByOrNull", "kk_list_minByOrNull",
                  "kk_list_maxOfOrNull", "kk_list_minOfOrNull",
+                 "kk_list_chunked_transform",
                  "kk_set_contains", "kk_set_containsAll", "kk_set_intersect", "kk_set_union", "kk_set_subtract",
                  "kk_map_get", "kk_map_contains_key", "kk_map_contains_value",
                  "kk_map_getValue", "kk_map_getOrDefault", "kk_map_getOrElse":
