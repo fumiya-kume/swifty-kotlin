@@ -1266,6 +1266,11 @@ public func kk_list_chunked_transform(_ listRaw: Int, _ size: Int, _ fnPtr: Int,
     return registerRuntimeObject(RuntimeListBox(elements: result))
 }
 
+@_cdecl("kk_list_windowed_default")
+public func kk_list_windowed_default(_ listRaw: Int, _ size: Int) -> Int {
+    return kk_list_windowed(listRaw, size, 1)
+}
+
 @_cdecl("kk_list_windowed")
 public func kk_list_windowed(_ listRaw: Int, _ size: Int, _ step: Int) -> Int {
     guard let _listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

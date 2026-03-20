@@ -141,6 +141,7 @@ struct CollectionLiteralLookupTables {
     let kkListIndexOfLastName: InternedString
     let kkListChunkedName: InternedString
     let kkListChunkedTransformName: InternedString
+    let kkListWindowedDefaultName: InternedString
     let kkListWindowedName: InternedString
     let kkListWindowedPartialName: InternedString
     let kkListSortedDescendingName: InternedString
@@ -502,6 +503,10 @@ struct CollectionLiteralLookupTables {
     let kkFileListFilesName: InternedString
     let walkName: InternedString
     let kkFileWalkName: InternedString
+    let useLinesName: InternedString
+    let kkFileUseLinesName: InternedString
+    let bufferedReaderName: InternedString
+    let kkFileBufferedReaderName: InternedString
 
     // Common lookup sets
     let listFactoryNames: Set<InternedString>
@@ -647,6 +652,7 @@ struct CollectionLiteralLookupTables {
         kkListIndexOfLastName = interner.intern("kk_list_indexOfLast")
         kkListChunkedName = interner.intern("kk_list_chunked")
         kkListChunkedTransformName = interner.intern("kk_list_chunked_transform")
+        kkListWindowedDefaultName = interner.intern("kk_list_windowed_default")
         kkListWindowedName = interner.intern("kk_list_windowed")
         kkListWindowedPartialName = interner.intern("kk_list_windowed_partial")
         kkListSortedDescendingName = interner.intern("kk_list_sortedDescending")
@@ -988,6 +994,10 @@ struct CollectionLiteralLookupTables {
         kkFileListFilesName = interner.intern("kk_file_listFiles")
         walkName = interner.intern("walk")
         kkFileWalkName = interner.intern("kk_file_walk")
+        useLinesName = interner.intern("useLines")
+        kkFileUseLinesName = interner.intern("kk_file_useLines")
+        bufferedReaderName = interner.intern("bufferedReader")
+        kkFileBufferedReaderName = interner.intern("kk_file_bufferedReader")
 
         listFactoryNames = [listOfName, mutableListOfName, emptyListName, listOfNotNullName]
         setFactoryNames = [setOfName, mutableSetOfName, emptySetName]

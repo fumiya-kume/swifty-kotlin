@@ -1565,6 +1565,15 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 RuntimeABIFunctionSpec(
+                    name: "kk_list_windowed_default",
+                    parameters: [
+                        RuntimeABIParameter(name: "listRaw", type: .intptr),
+                        RuntimeABIParameter(name: "size", type: .intptr),
+                    ],
+                    returnType: .intptr,
+                    section: "Collection"
+                ),
+                RuntimeABIFunctionSpec(
                     name: "kk_list_windowed",
                     parameters: [
                         RuntimeABIParameter(name: "listRaw", type: .intptr),

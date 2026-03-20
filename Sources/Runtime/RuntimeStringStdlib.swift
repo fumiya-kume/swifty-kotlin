@@ -1035,6 +1035,11 @@ public func kk_string_chunked(_ strRaw: Int, _ size: Int) -> Int {
     return runtimeMakeStringListRaw(chunks)
 }
 
+@_cdecl("kk_string_windowed_default")
+public func kk_string_windowed_default(_ strRaw: Int, _ size: Int) -> Int {
+    return kk_string_windowed(strRaw, size, 1)
+}
+
 @_cdecl("kk_string_windowed")
 public func kk_string_windowed(_ strRaw: Int, _ size: Int, _ step: Int) -> Int {
     // Validate handle before any early return so invalid handles always trap

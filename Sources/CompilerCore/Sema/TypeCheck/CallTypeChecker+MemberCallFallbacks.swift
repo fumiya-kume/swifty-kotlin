@@ -177,6 +177,8 @@ extension CallTypeChecker {
             sema.types.stringType
         case ("chunked", 1):
             listStringType
+        case ("windowed", 1):
+            listStringType
         case ("windowed", 2):
             listStringType
         case ("windowed", 3):
@@ -666,7 +668,7 @@ extension CallTypeChecker {
         case interner.intern("reduceIndexed"):
             return argCount == 1
         case interner.intern("windowed"):
-            return argCount == 2 || argCount == 3
+            return argCount == 1 || argCount == 2 || argCount == 3
         case interner.intern("chunked"):
             return argCount == 1 || argCount == 2
         case interner.intern("count"), interner.intern("first"), interner.intern("last"):

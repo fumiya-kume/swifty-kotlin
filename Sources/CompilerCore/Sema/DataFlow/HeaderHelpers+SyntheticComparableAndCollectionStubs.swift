@@ -1865,6 +1865,13 @@ extension DataFlowSemaPhase {
         registerMemberOverload(
             memberName: interner.intern("windowed"),
             memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType],
+            externalLinkName: "kk_list_windowed_default",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
             parameterTypes: [types.intType, types.intType],
             externalLinkName: "kk_list_windowed",
             returnTypeOverride: listOfListReturnType

@@ -1660,6 +1660,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "windowed" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_windowed_default"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let stringGetThrownExpr: KIRExprID?
                 if calleeStr == "get" {
                     let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
