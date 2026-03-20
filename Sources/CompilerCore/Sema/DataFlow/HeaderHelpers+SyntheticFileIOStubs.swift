@@ -169,6 +169,31 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // MARK: - File.readBytes() (STDLIB-665)
+
+        // ByteArray is represented as List<Int> in the runtime
+        let intType = types.intType
+        let listOfIntType: TypeID = if let listSym = listSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: listSym,
+                args: [.out(intType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        registerFileMemberFunction(
+            named: "readBytes",
+            externalLinkName: "kk_file_readBytes",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: listOfIntType,
+            symbols: symbols,
+            interner: interner
+        )
+
         // MARK: - File line-by-line operations (STDLIB-322)
 
         registerFileMemberFunction(
