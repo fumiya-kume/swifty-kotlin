@@ -495,9 +495,11 @@ extension CallTypeChecker {
                 case "map" where args.count == 1:
                     // map(transform: (T) -> R): Result<R>
                     // Note: only intercept for Result receiver, not for collections
+                    // expectedType is Result<R>, so extract R for the lambda return type
+                    let lambdaReturnType = expectedType.flatMap({ extractResultElementType($0, sema: sema, interner: interner) }) ?? sema.types.anyType
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                         params: [resultElementType],
-                        returnType: expectedType ?? sema.types.anyType
+                        returnType: lambdaReturnType
                     )))
                     let lambdaType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                     sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)

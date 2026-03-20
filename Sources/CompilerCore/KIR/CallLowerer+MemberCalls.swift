@@ -3104,7 +3104,6 @@ extension CallLowerer {
             interner.intern("kk_result_onSuccess"),
             interner.intern("kk_result_onFailure"),
             interner.intern("kk_result_getOrElse"),
-            interner.intern("kk_result_getOrThrow"),
             interner.intern("kk_result_map"),
             interner.intern("kk_result_fold"),
             interner.intern("kk_result_recover"),
@@ -3153,6 +3152,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_list_binarySearch_compare"),
+            interner.intern("kk_result_getOrThrow"),
         ])
     }
 
