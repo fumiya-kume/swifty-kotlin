@@ -647,9 +647,6 @@ public func kk_int_countTrailingZeroBits(_ value: Int) -> Int {
     Int(Int32(truncatingIfNeeded: value).trailingZeroBitCount)
 }
 
-// TODO: Add runtime-level tests for bit-count functions covering edge cases:
-// 0, 1, powers of two, -1, Int.MIN_VALUE, Int.MAX_VALUE (STDLIB-501)
-
 @_cdecl("kk_int_coerceIn")
 public func kk_int_coerceIn(_ value: Int, _ minimum: Int, _ maximum: Int) -> Int {
     precondition(minimum <= maximum, "Cannot coerce value to an empty range: maximum \(maximum) is less than minimum \(minimum).")
