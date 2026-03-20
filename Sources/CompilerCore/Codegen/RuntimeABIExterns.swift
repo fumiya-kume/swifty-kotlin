@@ -373,6 +373,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // STDLIB-640: CharArray.concatToString()
+    public static let kk_chararray_concatToString = ExternDecl(
+        name: "kk_chararray_concatToString",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-317: String.asIterable() — lazy Iterable<Char>
     public static let kk_string_asIterable = ExternDecl(
         name: "kk_string_asIterable",
@@ -2323,6 +2330,7 @@ public enum RuntimeABIExterns {
             kk_string_reversed,
             kk_string_toList,
             kk_string_toCharArray,
+            kk_chararray_concatToString,
             kk_string_asIterable,
             kk_string_iterable_toList,
             kk_string_iterable_iterator,

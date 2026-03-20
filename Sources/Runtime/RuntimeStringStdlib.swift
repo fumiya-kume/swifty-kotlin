@@ -155,6 +155,25 @@ public func kk_string_toCharArray(_ strRaw: Int) -> Int {
     return runtimeMakeArrayRaw(charRaws)
 }
 
+// MARK: - STDLIB-640: CharArray.concatToString()
+
+/// Converts a `CharArray` to a `String` by concatenating all characters.
+/// This is the inverse of `String.toCharArray()`.
+@_cdecl("kk_chararray_concatToString")
+public func kk_chararray_concatToString(_ arrRaw: Int) -> Int {
+    guard let box = runtimeArrayBox(from: arrRaw) else {
+        return runtimeMakeStringRaw("")
+    }
+    var scalars = String.UnicodeScalarView()
+    for i in 0..<box.elements.count {
+        let charValue = kk_unbox_char(box.elements[i])
+        if let scalar = UnicodeScalar(charValue) {
+            scalars.append(scalar)
+        }
+    }
+    return runtimeMakeStringRaw(String(scalars))
+}
+
 // MARK: - STDLIB-317: String.asIterable() — lazy Iterable<Char> view
 
 /// Returns a lazy `Iterable<Char>` wrapper around the given string.

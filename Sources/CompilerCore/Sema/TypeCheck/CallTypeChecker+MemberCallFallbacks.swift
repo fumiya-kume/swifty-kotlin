@@ -1424,13 +1424,14 @@ extension CallTypeChecker {
             "map", "filter", "forEach", "any", "none",
             "copyOf", "copyOfRange", "fill",
             "size", "get", "contains", "isEmpty",
+            "concatToString",
         ]
         return arrayMembers.contains(memberName)
     }
 
     private func isValidArrayMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "toList", "toMutableList", "copyOf", "size", "isEmpty":
+        case "toList", "toMutableList", "copyOf", "size", "isEmpty", "concatToString":
             argCount == 0
         case "map", "filter", "forEach", "any", "none", "fill", "get", "contains":
             argCount == 1
@@ -1453,6 +1454,8 @@ extension CallTypeChecker {
             sema.types.booleanType
         case "forEach", "fill":
             sema.types.unitType
+        case "concatToString":
+            sema.types.stringType
         default:
             sema.types.anyType
         }

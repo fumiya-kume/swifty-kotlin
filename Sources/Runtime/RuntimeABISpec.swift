@@ -857,6 +857,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-640: CharArray.concatToString()
+        RuntimeABIFunctionSpec(
+            name: "kk_chararray_concatToString",
+            parameters: [
+                RuntimeABIParameter(name: "arrRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-317: String.asIterable() — lazy Iterable<Char>
         RuntimeABIFunctionSpec(
             name: "kk_string_asIterable",

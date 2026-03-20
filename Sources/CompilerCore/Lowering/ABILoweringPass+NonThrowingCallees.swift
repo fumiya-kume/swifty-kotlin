@@ -296,6 +296,7 @@ extension ABILoweringPass {
             interner.intern("kk_array_toList"),
             interner.intern("kk_array_toMutableList"),
             interner.intern("kk_array_copyOf"),
+            interner.intern("kk_chararray_concatToString"),
             interner.intern("kk_array_copyOfRange"),
             interner.intern("kk_array_fill"),
             interner.intern("kk_list_asSequence"),
