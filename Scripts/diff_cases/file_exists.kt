@@ -1,3 +1,4 @@
+// DIFF_LINE_PATTERN: kswiftk_exists_[0-9]+
 import java.io.File
 
 fun main() {

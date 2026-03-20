@@ -263,11 +263,58 @@ extension CallLowerer {
             return result
         }
         if case .add = op, sema.bindings.exprTypes[exprID] == stringType {
+            // Convert non-String operands to String via kk_any_to_string before concat
+            let effectiveLhs: KIRExprID
+            let lhsType = sema.bindings.exprTypes[lhs]
+            if let lhsType, lhsType != stringType {
+                let tag: Int64 = switch sema.types.kind(of: lhsType) {
+                case .primitive(.boolean, _): 2
+                case .primitive(.string, _): 3
+                default: 1
+                }
+                let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+                instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+                let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_any_to_string"),
+                    arguments: [lhsID, tagID],
+                    result: converted,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                effectiveLhs = converted
+            } else {
+                effectiveLhs = lhsID
+            }
+            let effectiveRhs: KIRExprID
+            let rhsType = sema.bindings.exprTypes[rhs]
+            if let rhsType, rhsType != stringType {
+                let tag: Int64 = switch sema.types.kind(of: rhsType) {
+                case .primitive(.boolean, _): 2
+                case .primitive(.string, _): 3
+                default: 1
+                }
+                let tagID = arena.appendExpr(.intLiteral(tag), type: intType)
+                instructions.append(.constValue(result: tagID, value: .intLiteral(tag)))
+                let converted = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: stringType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_any_to_string"),
+                    arguments: [rhsID, tagID],
+                    result: converted,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                effectiveRhs = converted
+            } else {
+                effectiveRhs = rhsID
+            }
             instructions.append(
                 .call(
                     symbol: nil,
                     callee: interner.intern("kk_string_concat"),
-                    arguments: [lhsID, rhsID],
+                    arguments: [effectiveLhs, effectiveRhs],
                     result: result,
                     canThrow: false,
                     thrownResult: nil
@@ -275,9 +322,9 @@ extension CallLowerer {
             )
             return result
         }
-        // String comparison desugaring: route <, <=, >, >= on String operands
-        // through kk_string_compareTo (content comparison) instead of the default
-        // kk_op_lt/le/gt/ge path which compares raw pointer addresses.
+        // String comparison desugaring: route ==, !=, <, <=, >, >= on String operands
+        // through kk_string_equals / kk_string_compareTo (content comparison) instead
+        // of the default pointer-based paths.
         let lhsType = sema.bindings.exprTypes[lhs]
         let rhsType = sema.bindings.exprTypes[rhs]
         let nullableStringType = sema.types.make(.primitive(.string, .nullable))
@@ -285,6 +332,21 @@ extension CallLowerer {
             && (rhsType == stringType || rhsType == nullableStringType)
         if isStringOperand {
             switch op {
+            case .equal, .notEqual:
+                let eqResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_string_equals"),
+                    arguments: [lhsID, rhsID],
+                    result: eqResult,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                let cmpOp: KIRBinaryOp = op == .equal ? .notEqual : .equal
+                instructions.append(.binary(op: cmpOp, lhs: eqResult, rhs: zeroExpr, result: result))
+                return result
             case .lessThan, .lessOrEqual, .greaterThan, .greaterOrEqual:
                 let compareResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
                 instructions.append(.call(
