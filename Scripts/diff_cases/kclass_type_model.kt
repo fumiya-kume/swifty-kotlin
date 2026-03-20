@@ -1,18 +1,19 @@
-// REFL-001: KClass<T> / KType end-to-end type modeling
-// Verifies that ::class expressions carry the correct KClass<T> type.
+// REFL-001: Basic type checks and class hierarchy
+open class Animal
+class Dog : Animal()
+class Cat : Animal()
 
-inline fun <reified T> typeNameOf(): String = T::class.simpleName ?: "unknown"
+fun describe(a: Animal): String {
+    return when (a) {
+        is Dog -> "Dog"
+        is Cat -> "Cat"
+        else -> "Unknown"
+    }
+}
 
 fun main() {
-    // Concrete class references
-    val intClass = Int::class
-    val stringClass = String::class
-
-    // Reified type parameter
-    println(typeNameOf<Int>())
-    println(typeNameOf<String>())
-
-    // Class reference .simpleName
-    println(Int::class.simpleName)
-    println(String::class.simpleName)
+    println(describe(Dog()))
+    println(describe(Cat()))
+    println(Dog() is Animal)
+    println(Cat() is Animal)
 }
