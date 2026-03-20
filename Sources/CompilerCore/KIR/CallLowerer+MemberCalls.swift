@@ -4137,11 +4137,29 @@ extension CallLowerer {
                     dispatch: closeDispatch
                 ))
             } else {
-                // Fallback: if dispatch resolution fails (e.g. synthetic-only receiver),
-                // emit a static call so compilation still proceeds.
+                // Fallback: if virtual dispatch is not needed (e.g. final class with
+                // no subtypes), resolve the concrete close() method on the receiver type
+                // so that the static call targets the correct mangled name.
+                var concreteCloseSymbol: SymbolID? = nil
+                var concreteCloseName = closeName
+                if let recvTypeID = receiverTypeForDispatch,
+                   case let .classType(recvClass) = sema.types.kind(of: recvTypeID)
+                {
+                    let recvSymbol = recvClass.classSymbol
+                    if let recvInfo = sema.symbols.symbol(recvSymbol) {
+                        let closeCandidateFQ = recvInfo.fqName + [closeName]
+                        if let concreteSym = sema.symbols.lookup(fqName: closeCandidateFQ) {
+                            concreteCloseSymbol = concreteSym
+                            concreteCloseName = interner.intern(
+                                sema.symbols.symbol(concreteSym)?.fqName.map { interner.resolve($0) }.joined(separator: ".") ?? "close"
+                            )
+                        }
+                    }
+                }
+                let callSymbol = concreteCloseSymbol ?? closeSymbol
                 instructions.append(.call(
-                    symbol: closeSymbol,
-                    callee: closeName,
+                    symbol: callSymbol,
+                    callee: concreteCloseName,
                     arguments: [loweredReceiverID],
                     result: closeResult,
                     canThrow: true,
