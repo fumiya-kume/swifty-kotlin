@@ -874,6 +874,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticStringExtensionFunction(
+            named: "singleOrNull",
+            externalLinkName: "kk_string_singleOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-191: prependIndent / replaceIndent ---
 
         registerSyntheticStringExtensionFunction(

@@ -760,6 +760,15 @@ public func kk_string_lastOrNull(_ strRaw: Int) -> Int {
     return kk_box_char(Int(last.value))
 }
 
+@_cdecl("kk_string_singleOrNull")
+public func kk_string_singleOrNull(_ strRaw: Int) -> Int {
+    let scalars = runtimeStringScalars(strRaw)
+    guard scalars.count == 1 else {
+        return runtimeNullSentinelInt
+    }
+    return kk_box_char(Int(scalars[0].value))
+}
+
 // MARK: - STDLIB-187: isEmpty / isNotEmpty / isBlank / isNotBlank
 
 @_cdecl("kk_string_isEmpty")

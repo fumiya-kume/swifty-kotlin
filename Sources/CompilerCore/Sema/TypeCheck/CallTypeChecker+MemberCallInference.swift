@@ -2297,7 +2297,7 @@ extension CallTypeChecker {
                         sema.types.make(.primitive(.boolean, .nonNull))
                     case "first", "last", "single":
                         sema.types.make(.primitive(.char, .nonNull))
-                    case "firstOrNull", "lastOrNull":
+                    case "firstOrNull", "lastOrNull", "singleOrNull":
                         sema.types.make(.primitive(.char, .nullable))
                     case "lines":
                         makeSyntheticListType(

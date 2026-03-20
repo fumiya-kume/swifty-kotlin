@@ -418,6 +418,18 @@ public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
     return list.elements[list.elements.count - 1]
 }
 
+// MARK: - STDLIB-211: List.singleOrNull()
+
+@_cdecl("kk_list_singleOrNull")
+public func kk_list_singleOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          list.elements.count == 1
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements[0]
+}
+
 // STDLIB-213: List.subList(fromIndex, toIndex)
 @_cdecl("kk_list_subList")
 public func kk_list_subList(_ listRaw: Int, _ fromIndex: Int, _ toIndex: Int) -> Int {

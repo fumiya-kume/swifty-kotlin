@@ -500,6 +500,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_singleOrNull = ExternDecl(
+        name: "kk_string_singleOrNull",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_string_iterator = ExternDecl(
         name: "kk_string_iterator",
         parameterTypes: ["intptr_t"],
@@ -2348,6 +2354,7 @@ public enum RuntimeABIExterns {
             kk_string_single,
             kk_string_firstOrNull,
             kk_string_lastOrNull,
+            kk_string_singleOrNull,
             kk_string_isEmpty,
             kk_string_isNotEmpty,
             kk_string_isBlank,

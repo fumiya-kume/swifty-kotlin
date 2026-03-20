@@ -517,6 +517,7 @@ extension CallTypeChecker {
             interner.intern("dropWhile"),
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("singleOrNull"),
             interner.intern("joinToString"),
         ]
         let setOnlyMembers: Set = [
@@ -533,6 +534,7 @@ extension CallTypeChecker {
         let collectionSpecificMembers: Set = [
             interner.intern("firstOrNull"),
             interner.intern("lastOrNull"),
+            interner.intern("singleOrNull"),
         ]
         let mutableListOnlyMembers: Set = [
             interner.intern("sort"),
@@ -629,7 +631,7 @@ extension CallTypeChecker {
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
-             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("sort"):
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
@@ -752,6 +754,7 @@ extension CallTypeChecker {
             || memberName == interner.intern("elementAtOrNull")
             || memberName == interner.intern("firstOrNull")
             || memberName == interner.intern("lastOrNull")
+            || memberName == interner.intern("singleOrNull")
         {
             return sema.types.makeNullable(receiverElementType)
         }
@@ -805,6 +808,7 @@ extension CallTypeChecker {
             || memberName == interner.intern("minByOrNull")
             || memberName == interner.intern("firstOrNull")
             || memberName == interner.intern("lastOrNull")
+            || memberName == interner.intern("singleOrNull")
         {
             return sema.types.makeNullable(receiverElementType)
         }
