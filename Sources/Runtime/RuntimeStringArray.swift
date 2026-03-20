@@ -704,7 +704,7 @@ public func kk_readline() -> Int {
 public func kk_readln(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let line = readLine() else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "ReadAfterEOFException")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "EOF has already been reached")
         return 0
     }
     let utf8 = Array(line.utf8)
