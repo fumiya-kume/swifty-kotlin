@@ -138,7 +138,7 @@ final class OperatorLoweringPass: LoweringPass {
         let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
         // For == / != on non-primitive reference types, use structural equality
         let needsStructuralEquality = (op == .equal || op == .notEqual) && rank == 0
-            && isReferenceType(lhs, arena: arena, types: types)
+            && (isReferenceType(lhs, arena: arena, types: types) || isReferenceType(rhs, arena: arena, types: types))
         let callee: InternedString = switch op {
         case .add: interner.intern("kk_op_\(prefix)add")
         case .subtract: interner.intern("kk_op_\(prefix)sub")
