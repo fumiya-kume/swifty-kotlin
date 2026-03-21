@@ -2830,9 +2830,10 @@ extension CollectionLiteralLoweringPass {
                             }
                         }
                     }
-                    // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull (STDLIB-301)
+                    // maxByOrNull / minByOrNull / maxOfOrNull / minOfOrNull / maxOf / minOf (STDLIB-301)
                     if callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
                         || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
+                        || callee == lookup.maxOfName || callee == lookup.minOfName
                     {
                         if arguments.count == 2 || arguments.count == 3 {
                             let receiverID = arguments[0]
@@ -2850,7 +2851,9 @@ extension CollectionLiteralLoweringPass {
                                 case lookup.maxByOrNullName: lookup.kkListMaxByOrNullName
                                 case lookup.minByOrNullName: lookup.kkListMinByOrNullName
                                 case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
-                                default: lookup.kkListMinOfOrNullName
+                                case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
+                                case lookup.maxOfName: lookup.kkListMaxOfName
+                                default: lookup.kkListMinOfName
                                 }
                                 let hofResult = module.arena.appendExpr(
                                     .temporary(Int32(module.arena.expressions.count)), type: nil
@@ -2859,6 +2862,104 @@ extension CollectionLiteralLoweringPass {
                                     symbol: nil,
                                     callee: kkName,
                                     arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    // maxWith / maxWithOrNull / minWith / minWithOrNull (comparator-based) (STDLIB-301c)
+                    if callee == lookup.maxWithName || callee == lookup.maxWithOrNullName
+                        || callee == lookup.minWithName || callee == lookup.minWithOrNullName
+                    {
+                        if arguments.count == 2 || arguments.count == 3 {
+                            let receiverID = arguments[0]
+                            let lambdaID = arguments[1]
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                let closureRawID: KIRExprID
+                                if arguments.count == 3 {
+                                    closureRawID = arguments[2]
+                                } else {
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    closureRawID = zeroExpr
+                                }
+                                let kkName: InternedString = switch callee {
+                                case lookup.maxWithName: lookup.kkListMaxWithName
+                                case lookup.maxWithOrNullName: lookup.kkListMaxWithOrNullName
+                                case lookup.minWithName: lookup.kkListMinWithName
+                                default: lookup.kkListMinWithOrNullName
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, lambdaID, closureRawID],
+                                    result: hofResult,
+                                    canThrow: canThrow,
+                                    thrownResult: thrownResult
+                                ))
+                                if let result {
+                                    loweredBody.append(.copy(from: hofResult, to: result))
+                                }
+                                continue
+                            }
+                        }
+                    }
+
+                    // maxOfWith / maxOfWithOrNull / minOfWith / minOfWithOrNull (comparator + selector) (STDLIB-301d)
+                    if callee == lookup.maxOfWithName || callee == lookup.maxOfWithOrNullName
+                        || callee == lookup.minOfWithName || callee == lookup.minOfWithOrNullName
+                    {
+                        if arguments.count >= 3 && arguments.count <= 5 {
+                            let receiverID = arguments[0]
+                            let cmpLambdaID = arguments[1]
+                            let selLambdaID: KIRExprID
+                            let cmpClosureRawID: KIRExprID
+                            let selClosureRawID: KIRExprID
+                            if listExprIDs.contains(receiverID.rawValue) {
+                                if arguments.count == 5 {
+                                    cmpClosureRawID = arguments[2]
+                                    selLambdaID = arguments[3]
+                                    selClosureRawID = arguments[4]
+                                } else if arguments.count == 4 {
+                                    selLambdaID = arguments[2]
+                                    let zeroExpr1 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr1, value: .intLiteral(0)))
+                                    cmpClosureRawID = zeroExpr1
+                                    let zeroExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr2, value: .intLiteral(0)))
+                                    selClosureRawID = zeroExpr2
+                                } else {
+                                    selLambdaID = arguments[2]
+                                    let zeroExpr1 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr1, value: .intLiteral(0)))
+                                    cmpClosureRawID = zeroExpr1
+                                    let zeroExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr2, value: .intLiteral(0)))
+                                    selClosureRawID = zeroExpr2
+                                }
+                                let kkName: InternedString = switch callee {
+                                case lookup.maxOfWithName: lookup.kkListMaxOfWithName
+                                case lookup.maxOfWithOrNullName: lookup.kkListMaxOfWithOrNullName
+                                case lookup.minOfWithName: lookup.kkListMinOfWithName
+                                default: lookup.kkListMinOfWithOrNullName
+                                }
+                                let hofResult = module.arena.appendExpr(
+                                    .temporary(Int32(module.arena.expressions.count)), type: nil
+                                )
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: kkName,
+                                    arguments: [receiverID, cmpLambdaID, cmpClosureRawID, selLambdaID, selClosureRawID],
                                     result: hofResult,
                                     canThrow: canThrow,
                                     thrownResult: thrownResult

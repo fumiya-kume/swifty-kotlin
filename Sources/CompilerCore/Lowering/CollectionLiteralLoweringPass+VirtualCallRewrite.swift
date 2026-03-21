@@ -1144,6 +1144,16 @@ extension CollectionLiteralLoweringPass {
         case lookup.minByOrNullName: lookup.kkListMinByOrNullName
         case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
         case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
+        case lookup.maxOfName: lookup.kkListMaxOfName
+        case lookup.minOfName: lookup.kkListMinOfName
+        case lookup.maxWithName: lookup.kkListMaxWithName
+        case lookup.maxWithOrNullName: lookup.kkListMaxWithOrNullName
+        case lookup.minWithName: lookup.kkListMinWithName
+        case lookup.minWithOrNullName: lookup.kkListMinWithOrNullName
+        case lookup.maxOfWithName: lookup.kkListMaxOfWithName
+        case lookup.maxOfWithOrNullName: lookup.kkListMaxOfWithOrNullName
+        case lookup.minOfWithName: lookup.kkListMinOfWithName
+        case lookup.minOfWithOrNullName: lookup.kkListMinOfWithOrNullName
         case lookup.distinctByName: lookup.kkListDistinctByName
         default: callee
         }

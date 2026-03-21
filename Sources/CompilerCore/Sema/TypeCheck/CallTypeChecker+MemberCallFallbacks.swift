@@ -562,6 +562,16 @@ extension CallTypeChecker {
             interner.intern("elementAt"),
             interner.intern("single"),
             interner.intern("toMutableList"),
+            interner.intern("maxOf"),
+            interner.intern("minOf"),
+            interner.intern("maxWith"),
+            interner.intern("maxWithOrNull"),
+            interner.intern("minWith"),
+            interner.intern("minWithOrNull"),
+            interner.intern("maxOfWith"),
+            interner.intern("maxOfWithOrNull"),
+            interner.intern("minOfWith"),
+            interner.intern("minOfWithOrNull"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -694,8 +704,14 @@ extension CallTypeChecker {
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
              interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
-             interner.intern("elementAt"):
+             interner.intern("elementAt"),
+             interner.intern("maxOf"), interner.intern("minOf"),
+             interner.intern("maxWith"), interner.intern("maxWithOrNull"),
+             interner.intern("minWith"), interner.intern("minWithOrNull"):
             return argCount == 1
+        case interner.intern("maxOfWith"), interner.intern("maxOfWithOrNull"),
+             interner.intern("minOfWith"), interner.intern("minOfWithOrNull"):
+            return argCount == 2
         case interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
@@ -859,6 +875,8 @@ extension CallTypeChecker {
             || memberName == interner.intern("minOrNull")
             || memberName == interner.intern("maxByOrNull")
             || memberName == interner.intern("minByOrNull")
+            || memberName == interner.intern("maxWithOrNull")
+            || memberName == interner.intern("minWithOrNull")
             || memberName == interner.intern("firstOrNull")
             || memberName == interner.intern("lastOrNull")
             || memberName == interner.intern("singleOrNull")
@@ -866,10 +884,26 @@ extension CallTypeChecker {
             return sema.types.makeNullable(receiverElementType)
         }
 
+        if memberName == interner.intern("maxWith")
+            || memberName == interner.intern("minWith")
+        {
+            return receiverElementType
+        }
+
         if memberName == interner.intern("maxOfOrNull")
             || memberName == interner.intern("minOfOrNull")
+            || memberName == interner.intern("maxOfWithOrNull")
+            || memberName == interner.intern("minOfWithOrNull")
         {
             return sema.types.nullableAnyType
+        }
+
+        if memberName == interner.intern("maxOf")
+            || memberName == interner.intern("minOf")
+            || memberName == interner.intern("maxOfWith")
+            || memberName == interner.intern("minOfWith")
+        {
+            return sema.types.anyType
         }
 
         if (memberName == interner.intern("toList") || memberName == interner.intern("subList")),
@@ -1028,6 +1062,12 @@ extension CallTypeChecker {
             interner.intern("minByOrNull"),
             interner.intern("maxOfOrNull"),
             interner.intern("minOfOrNull"),
+            interner.intern("maxOf"),
+            interner.intern("minOf"),
+            interner.intern("maxWith"),
+            interner.intern("maxWithOrNull"),
+            interner.intern("minWith"),
+            interner.intern("minWithOrNull"),
         ]
         let mapOnlyMembers: Set = [
             mapValues,
@@ -1179,6 +1219,35 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // maxWith / maxWithOrNull / minWith / minWithOrNull: comparator lambda (T, T) -> Int
+        if (memberName == interner.intern("maxWith") || memberName == interner.intern("maxWithOrNull")
+            || memberName == interner.intern("minWith") || memberName == interner.intern("minWithOrNull")),
+           argCount == 1
+        {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType, receiverElementType],
+                returnType: sema.types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // maxOfWith / maxOfWithOrNull / minOfWith / minOfWithOrNull: comparator + selector (2 args)
+        // The first arg is the comparator, second is the selector; provide expected type for selector (arg index 1)
+        if (memberName == interner.intern("maxOfWith") || memberName == interner.intern("maxOfWithOrNull")
+            || memberName == interner.intern("minOfWith") || memberName == interner.intern("minOfWithOrNull")),
+           argCount == 2
+        {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         if memberName == knownNames.getOrPut, isMutableMapReceiver, argCount == 2 {

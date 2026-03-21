@@ -122,6 +122,16 @@ struct CollectionLiteralLookupTables {
     let kkListMinByOrNullName: InternedString
     let kkListMaxOfOrNullName: InternedString
     let kkListMinOfOrNullName: InternedString
+    let kkListMaxOfName: InternedString
+    let kkListMinOfName: InternedString
+    let kkListMaxWithName: InternedString
+    let kkListMaxWithOrNullName: InternedString
+    let kkListMinWithName: InternedString
+    let kkListMinWithOrNullName: InternedString
+    let kkListMaxOfWithName: InternedString
+    let kkListMaxOfWithOrNullName: InternedString
+    let kkListMinOfWithName: InternedString
+    let kkListMinOfWithOrNullName: InternedString
     let kkListTakeName: InternedString
     let kkListDropName: InternedString
     let kkListReversedName: InternedString
@@ -373,6 +383,16 @@ struct CollectionLiteralLookupTables {
     let minByOrNullName: InternedString
     let maxOfOrNullName: InternedString
     let minOfOrNullName: InternedString
+    let maxOfName: InternedString
+    let minOfName: InternedString
+    let maxWithName: InternedString
+    let maxWithOrNullName: InternedString
+    let minWithName: InternedString
+    let minWithOrNullName: InternedString
+    let maxOfWithName: InternedString
+    let maxOfWithOrNullName: InternedString
+    let minOfWithName: InternedString
+    let minOfWithOrNullName: InternedString
     let dropName: InternedString
     let reversedName: InternedString
     let asReversedName: InternedString
@@ -648,6 +668,16 @@ struct CollectionLiteralLookupTables {
         kkListMinByOrNullName = interner.intern("kk_list_minByOrNull")
         kkListMaxOfOrNullName = interner.intern("kk_list_maxOfOrNull")
         kkListMinOfOrNullName = interner.intern("kk_list_minOfOrNull")
+        kkListMaxOfName = interner.intern("kk_list_maxOf")
+        kkListMinOfName = interner.intern("kk_list_minOf")
+        kkListMaxWithName = interner.intern("kk_list_maxWith")
+        kkListMaxWithOrNullName = interner.intern("kk_list_maxWithOrNull")
+        kkListMinWithName = interner.intern("kk_list_minWith")
+        kkListMinWithOrNullName = interner.intern("kk_list_minWithOrNull")
+        kkListMaxOfWithName = interner.intern("kk_list_maxOfWith")
+        kkListMaxOfWithOrNullName = interner.intern("kk_list_maxOfWithOrNull")
+        kkListMinOfWithName = interner.intern("kk_list_minOfWith")
+        kkListMinOfWithOrNullName = interner.intern("kk_list_minOfWithOrNull")
         kkListTakeName = interner.intern("kk_list_take")
         kkListDropName = interner.intern("kk_list_drop")
         kkListReversedName = interner.intern("kk_list_reversed")
@@ -887,6 +917,16 @@ struct CollectionLiteralLookupTables {
         minByOrNullName = interner.intern("minByOrNull")
         maxOfOrNullName = interner.intern("maxOfOrNull")
         minOfOrNullName = interner.intern("minOfOrNull")
+        maxOfName = interner.intern("maxOf")
+        minOfName = interner.intern("minOf")
+        maxWithName = interner.intern("maxWith")
+        maxWithOrNullName = interner.intern("maxWithOrNull")
+        minWithName = interner.intern("minWith")
+        minWithOrNullName = interner.intern("minWithOrNull")
+        maxOfWithName = interner.intern("maxOfWith")
+        maxOfWithOrNullName = interner.intern("maxOfWithOrNull")
+        minOfWithName = interner.intern("minOfWith")
+        minOfWithOrNullName = interner.intern("minOfWithOrNull")
         dropName = interner.intern("drop")
         reversedName = interner.intern("reversed")
         asReversedName = interner.intern("asReversed")

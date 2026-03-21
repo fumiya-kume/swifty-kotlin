@@ -2562,6 +2562,144 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_list_minOfOrNull",
                 returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
             )
+
+            // maxOf / minOf (non-OrNull, throws on empty) (STDLIB-301b)
+            registerByOrNull(
+                name: "maxOf",
+                externalLinkName: "kk_list_maxOf",
+                returnTypeBuilder: { selectorResultType in selectorResultType }
+            )
+            registerByOrNull(
+                name: "minOf",
+                externalLinkName: "kk_list_minOf",
+                returnTypeBuilder: { selectorResultType in selectorResultType }
+            )
+        }
+
+        // maxWith / maxWithOrNull / minWith / minWithOrNull (comparator-based) (STDLIB-301c)
+        do {
+            let comparatorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType, listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
+            func registerWithComparator(
+                name: String,
+                externalLinkName: String,
+                returnType: TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [comparatorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerWithComparator(name: "maxWith", externalLinkName: "kk_list_maxWith", returnType: listTypeParamType)
+            registerWithComparator(name: "maxWithOrNull", externalLinkName: "kk_list_maxWithOrNull", returnType: nullableElementType)
+            registerWithComparator(name: "minWith", externalLinkName: "kk_list_minWith", returnType: listTypeParamType)
+            registerWithComparator(name: "minWithOrNull", externalLinkName: "kk_list_minWithOrNull", returnType: nullableElementType)
+        }
+
+        // maxOfWith / maxOfWithOrNull / minOfWith / minOfWithOrNull (comparator + selector) (STDLIB-301d)
+        do {
+            func registerOfWithComparator(
+                name: String,
+                externalLinkName: String,
+                returnTypeBuilder: (TypeID) -> TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+                // Introduce a type parameter R (no Comparable bound needed – the comparator handles ordering)
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+
+                let comparatorType = types.make(.functionType(FunctionType(
+                    params: [rType, rType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let returnType = returnTypeBuilder(rType)
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [comparatorType, selectorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], []],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerOfWithComparator(
+                name: "maxOfWith",
+                externalLinkName: "kk_list_maxOfWith",
+                returnTypeBuilder: { rType in rType }
+            )
+            registerOfWithComparator(
+                name: "maxOfWithOrNull",
+                externalLinkName: "kk_list_maxOfWithOrNull",
+                returnTypeBuilder: { rType in types.makeNullable(rType) }
+            )
+            registerOfWithComparator(
+                name: "minOfWith",
+                externalLinkName: "kk_list_minOfWith",
+                returnTypeBuilder: { rType in rType }
+            )
+            registerOfWithComparator(
+                name: "minOfWithOrNull",
+                externalLinkName: "kk_list_minOfWithOrNull",
+                returnTypeBuilder: { rType in types.makeNullable(rType) }
+            )
         }
 
         // random / randomOrNull (STDLIB-166)
