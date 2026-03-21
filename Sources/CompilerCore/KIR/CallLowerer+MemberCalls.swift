@@ -3170,7 +3170,8 @@ extension CallLowerer {
             return
         }
         var callArguments = finalArguments
-        if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
+        if loweredCallee == interner.intern("kk_system_currentTimeMillis")
+            || loweredCallee == interner.intern("kk_system_nanoTime") {
             callArguments = []
         }
         // Result HOF functions accept an outThrown parameter but we don't need

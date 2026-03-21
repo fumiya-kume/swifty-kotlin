@@ -195,7 +195,7 @@
 
 #### G. kotlin.time / kotlin.system
 
-- [ ] STDLIB-656: `System.nanoTime(): Long` の Sema stub と `kk_system_nanoTime` 呼び出し下げ（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeSystem.swift`）
+- [x] STDLIB-656: `System.nanoTime(): Long` の Sema stub と `kk_system_nanoTime` 呼び出し下げ（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeSystem.swift`）
 - [ ] STDLIB-657: `exitProcess(Int)` の `Nothing` 終了セマンティクスと下げ（`RuntimeSystem.swift`）
 - [ ] STDLIB-660: `measureTimedValue { }` の stub / Lowering / Runtime（`RuntimeDuration.swift` の STDLIB-231 相当コメント参照）
 - [ ] STDLIB-661: `Duration.inWholeMicroseconds` の Sema / `kk_duration_*` / ABI

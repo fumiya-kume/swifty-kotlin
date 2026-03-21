@@ -251,6 +251,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticSystemMember(
+            ownerSymbol: systemSymbol,
+            ownerType: systemType,
+            name: "nanoTime",
+            externalLinkName: "kk_system_nanoTime",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- kotlin.synchronized (STDLIB-325) ---
         registerSyntheticTopLevelFunction(
