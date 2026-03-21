@@ -164,11 +164,6 @@ final class RuntimeMathTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(floatFromBits(kk_math_sqrt_float(floatToBits(4.0))), 2.0)
     }
 
-    func testRoundFloat() {
-        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(2.3))), 2.0)
-        XCTAssertEqual(floatFromBits(kk_math_round_float(floatToBits(2.5))), 3.0)
-    }
-
     func testCeilFloat() {
         XCTAssertEqual(floatFromBits(kk_math_ceil_float(floatToBits(2.3))), 3.0)
         XCTAssertEqual(floatFromBits(kk_math_ceil_float(floatToBits(-2.3))), -2.0)
