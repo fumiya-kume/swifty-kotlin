@@ -35,10 +35,42 @@ final class RuntimeRegexBox {
 final class RuntimeMatchResultBox {
     let value: String
     let groupValues: [String]
+    /// Per-group MatchGroup data (index 0 = entire match, 1.. = capture groups).
+    let groups: [RuntimeMatchGroupBox?]
+    /// Named capture group name -> group index mapping.
+    let namedGroups: [String: Int]
 
-    init(value: String, groupValues: [String]) {
+    init(value: String, groupValues: [String], groups: [RuntimeMatchGroupBox?] = [], namedGroups: [String: Int] = [:]) {
         self.value = value
         self.groupValues = groupValues
+        self.groups = groups
+        self.namedGroups = namedGroups
+    }
+}
+
+/// Runtime box for `kotlin.text.MatchGroup`.
+/// Stores the matched value and the range as (start, endInclusive) indices.
+final class RuntimeMatchGroupBox {
+    let value: String
+    let rangeStart: Int
+    let rangeEnd: Int
+
+    init(value: String, rangeStart: Int, rangeEnd: Int) {
+        self.value = value
+        self.rangeStart = rangeStart
+        self.rangeEnd = rangeEnd
+    }
+}
+
+/// Runtime box for `kotlin.text.MatchGroupCollection`.
+/// Wraps the groups array and named-group mapping from a MatchResult.
+final class RuntimeMatchGroupCollectionBox {
+    let groups: [RuntimeMatchGroupBox?]
+    let namedGroups: [String: Int]
+
+    init(groups: [RuntimeMatchGroupBox?], namedGroups: [String: Int]) {
+        self.groups = groups
+        self.namedGroups = namedGroups
     }
 }
 
@@ -77,21 +109,57 @@ private func matchResultBoxFromRaw(_ raw: Int) -> RuntimeMatchResultBox? {
     return tryCast(pointer, to: RuntimeMatchResultBox.self)
 }
 
-private func makeMatchResult(from result: NSTextCheckingResult, in str: String) -> RuntimeMatchResultBox {
+/// Extracts named capture group names from a regex pattern string.
+/// Matches `(?<name>...)` syntax used by both Kotlin and NSRegularExpression.
+private func extractNamedGroupNames(from pattern: String) -> [String] {
+    guard let detector = try? NSRegularExpression(pattern: "\\(\\?<([a-zA-Z_][a-zA-Z0-9_]*)>", options: []) else {
+        return []
+    }
+    let nsRange = NSRange(pattern.startIndex..., in: pattern)
+    let matches = detector.matches(in: pattern, options: [], range: nsRange)
+    return matches.compactMap { match -> String? in
+        guard match.numberOfRanges >= 2 else { return nil }
+        let nameRange = match.range(at: 1)
+        guard nameRange.location != NSNotFound, let range = Range(nameRange, in: pattern) else { return nil }
+        return String(pattern[range])
+    }
+}
+
+private func makeMatchResult(from result: NSTextCheckingResult, in str: String, regexBox: RuntimeRegexBox? = nil) -> RuntimeMatchResultBox {
     let matchRange = Range(result.range, in: str)!
     let value = String(str[matchRange])
 
     var groupValues: [String] = []
+    var groups: [RuntimeMatchGroupBox?] = []
     for i in 0 ..< result.numberOfRanges {
         let groupRange = result.range(at: i)
         if groupRange.location != NSNotFound, let range = Range(groupRange, in: str) {
-            groupValues.append(String(str[range]))
+            let groupValue = String(str[range])
+            groupValues.append(groupValue)
+            // Compute UTF-16 based indices matching Kotlin's String indexing
+            let startIndex = str.distance(from: str.startIndex, to: range.lowerBound)
+            let endIndex = startIndex + str[range].count - 1
+            groups.append(RuntimeMatchGroupBox(value: groupValue, rangeStart: startIndex, rangeEnd: endIndex))
         } else {
             groupValues.append("")
+            groups.append(nil)
         }
     }
 
-    return RuntimeMatchResultBox(value: value, groupValues: groupValues)
+    // Build named group mapping
+    var namedGroups: [String: Int] = [:]
+    if let regexBox = regexBox {
+        let names = extractNamedGroupNames(from: regexBox.pattern)
+        for (idx, name) in names.enumerated() {
+            // Named groups are numbered starting from 1 (index 0 is the full match)
+            let groupIndex = idx + 1
+            if groupIndex < result.numberOfRanges {
+                namedGroups[name] = groupIndex
+            }
+        }
+    }
+
+    return RuntimeMatchResultBox(value: value, groupValues: groupValues, groups: groups, namedGroups: namedGroups)
 }
 
 // MARK: - STDLIB-100: Regex constructor, matches, contains
@@ -156,7 +224,7 @@ public func kk_regex_find(_ regexRaw: Int, _ strRaw: Int) -> Int {
     guard let result = regexBox.regex.firstMatch(in: str, options: [], range: range) else {
         return runtimeNullSentinelInt
     }
-    let matchResult = makeMatchResult(from: result, in: str)
+    let matchResult = makeMatchResult(from: result, in: str, regexBox: regexBox)
     return registerRuntimeObject(matchResult)
 }
 
@@ -168,7 +236,7 @@ public func kk_regex_findAll(_ regexRaw: Int, _ strRaw: Int) -> Int {
     let range = NSRange(str.startIndex..., in: str)
     let results = regexBox.regex.matches(in: str, options: [], range: range)
     let matchResults = results.map { result -> Int in
-        let matchResult = makeMatchResult(from: result, in: str)
+        let matchResult = makeMatchResult(from: result, in: str, regexBox: regexBox)
         return registerRuntimeObject(matchResult)
     }
     return regexMakeListRaw(matchResults)
@@ -229,7 +297,7 @@ public func kk_regex_replace_lambda(
     for match in matches {
         let matchRange = Range(match.range, in: str)!
         result.append(String(str[lastEnd ..< matchRange.lowerBound]))
-        let matchResult = makeMatchResult(from: match, in: str)
+        let matchResult = makeMatchResult(from: match, in: str, regexBox: regexBox)
         let matchResultRaw = registerRuntimeObject(matchResult)
         var thrown = 0
         let replacementRaw = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: matchResultRaw, outThrown: &thrown)
@@ -260,7 +328,7 @@ public func kk_regex_matchEntire(_ regexRaw: Int, _ strRaw: Int) -> Int {
     guard matchRange.lowerBound == str.startIndex && matchRange.upperBound == str.endIndex else {
         return runtimeNullSentinelInt
     }
-    let matchResult = makeMatchResult(from: result, in: str)
+    let matchResult = makeMatchResult(from: result, in: str, regexBox: regexBox)
     return registerRuntimeObject(matchResult)
 }
 
@@ -387,4 +455,61 @@ public func kk_match_result_value(_ matchRaw: Int) -> Int {
 public func kk_match_result_groupValues(_ matchRaw: Int) -> Int {
     guard let matchResult = matchResultBoxFromRaw(matchRaw) else { return regexMakeStringListRaw([]) }
     return regexMakeStringListRaw(matchResult.groupValues)
+}
+
+// MARK: - MatchResult.groups / MatchGroupCollection / MatchGroup
+
+@_cdecl("kk_match_result_groups")
+public func kk_match_result_groups(_ matchRaw: Int) -> Int {
+    guard let matchResult = matchResultBoxFromRaw(matchRaw) else {
+        return registerRuntimeObject(RuntimeMatchGroupCollectionBox(groups: [], namedGroups: [:]))
+    }
+    let collection = RuntimeMatchGroupCollectionBox(
+        groups: matchResult.groups,
+        namedGroups: matchResult.namedGroups
+    )
+    return registerRuntimeObject(collection)
+}
+
+private func matchGroupCollectionBoxFromRaw(_ raw: Int) -> RuntimeMatchGroupCollectionBox? {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(pointer, to: RuntimeMatchGroupCollectionBox.self)
+}
+
+private func matchGroupBoxFromRaw(_ raw: Int) -> RuntimeMatchGroupBox? {
+    guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
+    return tryCast(pointer, to: RuntimeMatchGroupBox.self)
+}
+
+/// MatchGroupCollection.get(name: String) -> MatchGroup?
+@_cdecl("kk_match_group_collection_get")
+public func kk_match_group_collection_get(_ collectionRaw: Int, _ nameRaw: Int) -> Int {
+    guard let collection = matchGroupCollectionBoxFromRaw(collectionRaw) else {
+        return runtimeNullSentinelInt
+    }
+    guard let name = regexStringFromRaw(nameRaw) else {
+        return runtimeNullSentinelInt
+    }
+    guard let groupIndex = collection.namedGroups[name],
+          groupIndex < collection.groups.count,
+          let group = collection.groups[groupIndex] else {
+        return runtimeNullSentinelInt
+    }
+    return registerRuntimeObject(group)
+}
+
+/// MatchGroup.value: String
+@_cdecl("kk_match_group_value")
+public func kk_match_group_value(_ groupRaw: Int) -> Int {
+    guard let group = matchGroupBoxFromRaw(groupRaw) else { return regexMakeStringRaw("") }
+    return regexMakeStringRaw(group.value)
+}
+
+/// MatchGroup.range: IntRange
+@_cdecl("kk_match_group_range")
+public func kk_match_group_range(_ groupRaw: Int) -> Int {
+    guard let group = matchGroupBoxFromRaw(groupRaw) else {
+        return registerRuntimeObject(RuntimeRangeBox(first: 0, last: -1, step: 1))
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: group.rangeStart, last: group.rangeEnd, step: 1))
 }

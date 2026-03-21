@@ -2197,6 +2197,34 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MatchResult.groups
+    public static let kk_match_result_groups = ExternDecl(
+        name: "kk_match_result_groups",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroupCollection.get(name)
+    public static let kk_match_group_collection_get = ExternDecl(
+        name: "kk_match_group_collection_get",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroup.value
+    public static let kk_match_group_value = ExternDecl(
+        name: "kk_match_group_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroup.range
+    public static let kk_match_group_range = ExternDecl(
+        name: "kk_match_group_range",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - File I/O (STDLIB-320/321/322/323)
 
     // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
@@ -2370,6 +2398,10 @@ public enum RuntimeABIExterns {
         kk_regex_create_with_option,
         kk_regex_create_with_options,
         kk_regex_containsMatchIn,
+        kk_match_result_groups,
+        kk_match_group_collection_get,
+        kk_match_group_value,
+        kk_match_group_range,
     ]
 
     // MARK: - All Functions (canonical list)
