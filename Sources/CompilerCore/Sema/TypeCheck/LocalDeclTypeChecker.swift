@@ -185,7 +185,8 @@ final class LocalDeclTypeChecker {
         // member property accessed via implicit receiver (inside a
         // class/object member function).
         let allCandidateIDs = ctx.cachedScopeLookup(name)
-        let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
+        let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
+        let (visibleIDs, _) = ctx.filterByVisibility(dslFilteredIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
