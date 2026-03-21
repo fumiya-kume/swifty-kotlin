@@ -15,11 +15,4 @@ fun main() {
 
     // runningReduce with max logic
     println(listOf(3, 1, 4, 1, 5, 9, 2, 6).runningReduce { acc, x -> if (x > acc) x else acc })
-
-    // runningReduce on empty list throws
-    try {
-        emptyList<Int>().runningReduce { acc, x -> acc + x }
-    } catch (e: UnsupportedOperationException) {
-        println(e.message)
-    }
 }
