@@ -35,6 +35,25 @@ extension CollectionLiteralLoweringPass {
             || fqName == lookup.mutableMapOfFQName
     }
 
+    private func isJavaIOFileMember(
+        symbol: SymbolID?,
+        ctx: KIRContext,
+        interner: StringInterner
+    ) -> Bool {
+        guard let symbol,
+              let resolved = ctx.sema?.symbols.symbol(symbol)
+        else {
+            return false
+        }
+
+        let javaIOFilePrefix: [InternedString] = [
+            interner.intern("java"),
+            interner.intern("io"),
+            interner.intern("File"),
+        ]
+        return resolved.fqName.starts(with: javaIOFilePrefix)
+    }
+
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     func rewriteCalls(module: KIRModule, ctx: KIRContext) throws {
         let lookup = CollectionLiteralLookupTables(interner: ctx.interner)
@@ -654,6 +673,57 @@ extension CollectionLiteralLoweringPass {
                             canThrow: false,
                             thrownResult: nil
                         ))
+                        if let result { fileExprIDs.insert(result.rawValue) }
+                        continue
+                    }
+
+                    // --- Rewrite File member calls: readText/writeText/readLines (STDLIB-320) ---
+                    if callee == lookup.readTextName,
+                       arguments.count == 1,
+                       fileExprIDs.contains(arguments[0].rawValue),
+                       isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileReadTextName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
+                    if callee == lookup.writeTextName,
+                       arguments.count == 2,
+                       fileExprIDs.contains(arguments[0].rawValue),
+                       isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileWriteTextName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
+                    if callee == lookup.readLinesName,
+                       arguments.count == 1,
+                       fileExprIDs.contains(arguments[0].rawValue),
+                       isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileReadLinesName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        if let result { listExprIDs.insert(result.rawValue) }
                         continue
                     }
 
