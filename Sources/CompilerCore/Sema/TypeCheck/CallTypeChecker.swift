@@ -2207,6 +2207,32 @@ final class CallTypeChecker {
         locals: inout LocalBindings
     ) {
         let sema = ctx.sema
+
+        // STDLIB-591: contract { returns() implies condition } — the argument
+        // expression at conditionParameterIndex is guaranteed true after normal
+        // return, so we run branchOnCondition and apply the true-state smart casts.
+        // Only applies for bare `returns()` (returnsValue == nil); `returns(true/false)`
+        // effects are handled by branching logic at the call site.
+        if let conditionEffect = sema.symbols.contractConditionEffect(for: chosen),
+           conditionEffect.returnsValue == nil,
+           conditionEffect.conditionParameterIndex < args.count
+        {
+            let conditionExprID = args[conditionEffect.conditionParameterIndex].expr
+            let branch = ctx.dataFlow.branchOnCondition(
+                conditionExprID,
+                base: ctx.flowState,
+                locals: locals,
+                ast: ctx.ast,
+                sema: sema,
+                interner: ctx.interner,
+                scope: ctx.scope
+            )
+            driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &locals, sema: sema)
+            return
+        }
+
+        // Existing: contract { returns() implies (param != null) } — narrow the
+        // parameter directly to non-null after normal return.
         guard let effect = sema.symbols.contractNonNullEffect(for: chosen),
               effect.appliesOnAnyReturn,
               let parameterIndex = sema.symbols.functionSignature(for: chosen)?

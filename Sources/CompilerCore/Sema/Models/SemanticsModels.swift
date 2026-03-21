@@ -179,6 +179,27 @@ public enum InvocationKind: String, Equatable, Sendable {
     case unknown = "UNKNOWN"
 }
 
+/// STDLIB-591: `contract { returns() implies (condition) }` effect where `condition`
+/// is a Boolean parameter.  After normal return, the argument expression at
+/// `conditionParameterIndex` is guaranteed true, enabling smart casts derived from
+/// that expression (e.g. `require(x != null)` narrows `x` to non-null).
+public struct ContractConditionEffect: Equatable, Sendable {
+    /// Index into the function signature's value-parameter list whose argument
+    /// expression is guaranteed true on normal return.
+    public let conditionParameterIndex: Int
+
+    /// When to apply the smart cast:
+    /// - `nil`: applies on any normal return (`returns() implies condition`)
+    /// - `true`: applies when function returns true (`returns(true) implies condition`)
+    /// - `false`: applies when function returns false (`returns(false) implies condition`)
+    public let returnsValue: Bool?
+
+    public init(conditionParameterIndex: Int, returnsValue: Bool? = nil) {
+        self.conditionParameterIndex = conditionParameterIndex
+        self.returnsValue = returnsValue
+    }
+}
+
 /// STDLIB-593: `contract { returnsNotNull() }` effect.
 /// Records that the function is guaranteed to return a non-null value.
 public struct ContractReturnsNotNullEffect: Equatable, Sendable {
@@ -353,6 +374,7 @@ public final class SymbolTable {
     private var contractReturnsEffects: [SymbolID: ContractReturnsEffect] = [:]
     private var contractCallsInPlaceEffects: [SymbolID: [ContractCallsInPlaceEffect]] = [:]
     private var contractReturnsNotNullEffects: Set<SymbolID> = []
+    private var contractConditionEffects: [SymbolID: ContractConditionEffect] = [:]
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
@@ -908,6 +930,17 @@ public final class SymbolTable {
     /// STDLIB-593: Returns whether a function has a `returnsNotNull` contract effect.
     public func hasContractReturnsNotNull(for function: SymbolID) -> Bool {
         contractReturnsNotNullEffects.contains(function)
+    }
+
+    /// STDLIB-591: Record a `returns() implies condition` effect where the
+    /// condition is a Boolean parameter at the given index.
+    public func setContractConditionEffect(_ effect: ContractConditionEffect, for function: SymbolID) {
+        contractConditionEffects[function] = effect
+    }
+
+    /// STDLIB-591: Returns the `returns() implies condition` effect for a function, if any.
+    public func contractConditionEffect(for function: SymbolID) -> ContractConditionEffect? {
+        contractConditionEffects[function]
     }
 
     // MARK: - Indexed queries
