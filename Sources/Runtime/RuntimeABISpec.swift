@@ -1322,6 +1322,14 @@ public enum RuntimeABISpec {
             section: "Print"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_println_ulong",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .void,
+            section: "Print"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_print_noarg",
             parameters: [],
             returnType: .void,
@@ -2325,6 +2333,15 @@ public enum RuntimeABISpec {
             section: "Range"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_op_ulong_rangeUntil",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_op_downTo",
             parameters: [
                 RuntimeABIParameter(name: "a", type: .intptr),
@@ -2384,6 +2401,14 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_range_toList",
+            parameters: [
+                RuntimeABIParameter(name: "rangeRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Range"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_ulong_range_toList",
             parameters: [
                 RuntimeABIParameter(name: "rangeRaw", type: .intptr),
             ],

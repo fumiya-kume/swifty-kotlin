@@ -24,6 +24,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         fileExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
@@ -84,6 +85,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             rangeExprIDs: &rangeExprIDs, charRangeExprIDs: &charRangeExprIDs,
+            ulongRangeExprIDs: &ulongRangeExprIDs,
             listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -1759,11 +1761,13 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard rangeExprIDs.contains(receiver.rawValue) else { return false }
         let isCharRange = charRangeExprIDs.contains(receiver.rawValue)
+        let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
 
         // first / last / count — simple property access (STDLIB-092)
         if callee == lookup.firstName, arguments.isEmpty {
@@ -1819,9 +1823,16 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // toList — returns a List (STDLIB-091 / STDLIB-290)
+        // toList — returns a List (STDLIB-091 / STDLIB-290 / STDLIB-524)
         if callee == lookup.toListName, arguments.isEmpty {
-            let toListCallee = isCharRange ? lookup.kkCharRangeToListName : lookup.kkRangeToListName
+            let toListCallee: InternedString
+            if isCharRange {
+                toListCallee = lookup.kkCharRangeToListName
+            } else if isULongRange {
+                toListCallee = lookup.kkULongRangeToListName
+            } else {
+                toListCallee = lookup.kkRangeToListName
+            }
             loweredBody.append(.call(
                 symbol: nil, callee: toListCallee,
                 arguments: [receiver], result: result,
@@ -1873,6 +1884,8 @@ extension CollectionLiteralLoweringPass {
                 rangeExprIDs.insert(result.rawValue)
                 // Propagate char range through reversed() (STDLIB-290)
                 if isCharRange { charRangeExprIDs.insert(result.rawValue) }
+                // Propagate ULong range through reversed() (STDLIB-524)
+                if isULongRange { ulongRangeExprIDs.insert(result.rawValue) }
             }
             return true
         }

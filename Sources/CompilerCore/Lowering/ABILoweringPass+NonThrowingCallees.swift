@@ -165,6 +165,7 @@ extension ABILoweringPass {
             interner.intern("kk_range_next"),
             interner.intern("kk_op_rangeTo"),
             interner.intern("kk_op_rangeUntil"),
+            interner.intern("kk_op_ulong_rangeUntil"),
             interner.intern("kk_op_downTo"),
             interner.intern("kk_op_step"),
             interner.intern("kk_range_first"),
@@ -173,6 +174,7 @@ extension ABILoweringPass {
             interner.intern("kk_range_isEmpty"),
             interner.intern("kk_range_sum"),
             interner.intern("kk_range_toList"),
+            interner.intern("kk_ulong_range_toList"),
             interner.intern("kk_range_reversed"),
             interner.intern("kk_char_range_toList"),
             // kk_property_access removed — PropertyLowering now emits direct accessor
@@ -261,6 +263,7 @@ extension ABILoweringPass {
             interner.intern("kk_op_dgt"),
             interner.intern("kk_op_dge"),
             interner.intern("kk_println_long"),
+            interner.intern("kk_println_ulong"),
             interner.intern("kk_int_to_float_bits"),
             interner.intern("kk_int_to_double_bits"),
             interner.intern("kk_float_to_double_bits"),

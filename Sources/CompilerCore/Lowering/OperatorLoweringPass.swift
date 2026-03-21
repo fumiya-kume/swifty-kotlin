@@ -44,6 +44,7 @@ final class OperatorLoweringPass: LoweringPass {
             rangeCallees: [
                 ctx.interner.intern("kk_op_rangeTo"),
                 ctx.interner.intern("kk_op_rangeUntil"),
+                ctx.interner.intern("kk_op_ulong_rangeUntil"),
                 ctx.interner.intern("kk_op_downTo"),
                 ctx.interner.intern("kk_op_step"),
                 ctx.interner.intern("kk_range_reversed"),
@@ -198,6 +199,7 @@ final class OperatorLoweringPass: LoweringPass {
 
         let primitiveCallee: String? = switch types.kind(of: argType) {
         case .primitive(.long, .nonNull): "kk_println_long"
+        case .primitive(.ulong, .nonNull): "kk_println_ulong"
         case .primitive(.float, .nonNull): "kk_println_float"
         case .primitive(.double, .nonNull): "kk_println_double"
         case .primitive(.char, .nonNull): "kk_println_char"

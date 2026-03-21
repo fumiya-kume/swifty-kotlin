@@ -74,6 +74,7 @@ extension CollectionLiteralLoweringPass {
             var sequenceExprIDs: Set<Int32> = []
             var rangeExprIDs: Set<Int32> = []
             var charRangeExprIDs: Set<Int32> = []
+            var ulongRangeExprIDs: Set<Int32> = []
             var stringExprIDs: Set<Int32> = []
             var fileExprIDs: Set<Int32> = []
 
@@ -90,6 +91,7 @@ extension CollectionLiteralLoweringPass {
                 sequenceExprIDs: &sequenceExprIDs,
                 rangeExprIDs: &rangeExprIDs,
                 charRangeExprIDs: &charRangeExprIDs,
+                ulongRangeExprIDs: &ulongRangeExprIDs,
                 stringExprIDs: &stringExprIDs,
                 fileExprIDs: &fileExprIDs
             )
@@ -1835,6 +1837,10 @@ extension CollectionLiteralLoweringPass {
                             if let result {
                                 rangeExprIDs.insert(result.rawValue)
                                 rangeExprIDs.insert(transformResult.rawValue)
+                                if ulongRangeExprIDs.contains(receiverID.rawValue) {
+                                    ulongRangeExprIDs.insert(transformResult.rawValue)
+                                    ulongRangeExprIDs.insert(result.rawValue)
+                                }
                                 loweredBody.append(.copy(from: transformResult, to: result))
                             }
                             continue
@@ -1953,9 +1959,15 @@ extension CollectionLiteralLoweringPass {
                             let toListResult = module.arena.appendExpr(
                                 .temporary(Int32(module.arena.expressions.count)), type: nil
                             )
-                            // Use char range variant if this is a CharRange (STDLIB-290)
-                            let rangeToListCallee = charRangeExprIDs.contains(receiverID.rawValue)
-                                ? lookup.kkCharRangeToListName : lookup.kkRangeToListName
+                            // Use char/ULong range variant if applicable (STDLIB-290, STDLIB-524)
+                            let rangeToListCallee: InternedString
+                            if charRangeExprIDs.contains(receiverID.rawValue) {
+                                rangeToListCallee = lookup.kkCharRangeToListName
+                            } else if ulongRangeExprIDs.contains(receiverID.rawValue) {
+                                rangeToListCallee = lookup.kkULongRangeToListName
+                            } else {
+                                rangeToListCallee = lookup.kkRangeToListName
+                            }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: rangeToListCallee,
@@ -3366,6 +3378,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
+                        ulongRangeExprIDs: &ulongRangeExprIDs,
                         fileExprIDs: &fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
@@ -3395,6 +3408,9 @@ extension CollectionLiteralLoweringPass {
                     }
                     if charRangeExprIDs.contains(from.rawValue) {
                         charRangeExprIDs.insert(to.rawValue)
+                    }
+                    if ulongRangeExprIDs.contains(from.rawValue) {
+                        ulongRangeExprIDs.insert(to.rawValue)
                     }
                     if stringExprIDs.contains(from.rawValue) {
                         stringExprIDs.insert(to.rawValue)

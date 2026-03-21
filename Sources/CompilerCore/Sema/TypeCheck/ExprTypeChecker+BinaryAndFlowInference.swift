@@ -343,12 +343,13 @@ extension ExprTypeChecker {
                 }
             }
         case .rangeTo, .rangeUntil, .downTo:
-            // LongRange when either operand is Long; UIntRange when UInt (STDLIB-523);
-            // ULongRange when ULong; IntRange otherwise.
+            // LongRange when either operand is Long; ULongRange when ULong (STDLIB-524);
+            // UIntRange when UInt (STDLIB-523); IntRange otherwise.
             if lhs == longType || rhs == longType {
                 type = longType
             } else if lhs == ulongType || rhs == ulongType {
                 type = ulongType
+                sema.bindings.markULongRangeExpr(id)
             } else if lhs == uintType || rhs == uintType {
                 type = uintType
             } else {
@@ -360,8 +361,8 @@ extension ExprTypeChecker {
                 sema.bindings.markCharRangeExpr(id)
             }
         case .step:
-            // LongRange when the receiver (lhs) is Long; UIntRange when UInt (STDLIB-523);
-            // ULongRange when ULong; IntRange otherwise.
+            // LongRange when the receiver (lhs) is Long; ULongRange when ULong (STDLIB-524);
+            // UIntRange when UInt (STDLIB-523); IntRange otherwise.
             if lhs == longType {
                 type = longType
             } else if lhs == ulongType {
@@ -375,6 +376,10 @@ extension ExprTypeChecker {
             // For step, inherit CharRange flag from the receiver (the range expression)
             if sema.bindings.isCharRangeExpr(lhsID) {
                 sema.bindings.markCharRangeExpr(id)
+            }
+            // Inherit ULong range flag from the receiver (STDLIB-524)
+            if sema.bindings.isULongRangeExpr(lhsID) {
+                sema.bindings.markULongRangeExpr(id)
             }
         case .bitwiseAnd, .bitwiseOr, .bitwiseXor, .shl, .shr, .ushr:
             preconditionFailure("Bitwise/shift binary operators must be parsed as infix member calls")

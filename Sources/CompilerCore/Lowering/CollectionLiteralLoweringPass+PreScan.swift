@@ -68,6 +68,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>,
         fileExprIDs: inout Set<Int32>
     ) {
@@ -88,8 +89,10 @@ extension CollectionLiteralLoweringPass {
             stringExprIDs: &stringExprIDs
         )
 
-        // First pass: collect char-valued expression IDs to detect char range arguments (STDLIB-290)
+        // First pass: collect char-valued and ulong-valued expression IDs to detect
+        // char range and ULong range arguments (STDLIB-290, STDLIB-524).
         var charValuedExprIDs: Set<Int32> = []
+        var ulongValuedExprIDs: Set<Int32> = []
         for instruction in function.body {
             switch instruction {
             case let .call(_, callee, _, result, _, _, _):
@@ -98,13 +101,27 @@ extension CollectionLiteralLoweringPass {
                 }
             case let .constValue(result, .charLiteral):
                 charValuedExprIDs.insert(result.rawValue)
+            case let .constValue(result, .ulongLiteral):
+                ulongValuedExprIDs.insert(result.rawValue)
             case let .copy(from, to):
                 if charValuedExprIDs.contains(from.rawValue) {
                     charValuedExprIDs.insert(to.rawValue)
                 }
+                if ulongValuedExprIDs.contains(from.rawValue) {
+                    ulongValuedExprIDs.insert(to.rawValue)
+                }
             default:
                 break
             }
+        }
+
+        if let sema {
+            seedULongValuedExprIDsFromStaticTypes(
+                function: function,
+                arena: arena,
+                sema: sema,
+                ulongValuedExprIDs: &ulongValuedExprIDs
+            )
         }
 
         for instruction in function.body {
@@ -119,6 +136,8 @@ extension CollectionLiteralLoweringPass {
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
                     charValuedExprIDs: charValuedExprIDs,
+                    ulongRangeExprIDs: &ulongRangeExprIDs,
+                    ulongValuedExprIDs: ulongValuedExprIDs,
                     stringExprIDs: &stringExprIDs,
                     fileExprIDs: &fileExprIDs
                 )
@@ -130,6 +149,7 @@ extension CollectionLiteralLoweringPass {
                     sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
+                    ulongRangeExprIDs: &ulongRangeExprIDs,
                     stringExprIDs: &stringExprIDs
                 )
             case let .copy(from, to):
@@ -140,6 +160,7 @@ extension CollectionLiteralLoweringPass {
                     arrayExprIDs: &arrayExprIDs, sequenceExprIDs: &sequenceExprIDs,
                     rangeExprIDs: &rangeExprIDs,
                     charRangeExprIDs: &charRangeExprIDs,
+                    ulongRangeExprIDs: &ulongRangeExprIDs,
                     stringExprIDs: &stringExprIDs,
                     fileExprIDs: &fileExprIDs
                 )
@@ -164,6 +185,8 @@ extension CollectionLiteralLoweringPass {
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
         charValuedExprIDs: Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
+        ulongValuedExprIDs: Set<Int32>,
         stringExprIDs: inout Set<Int32>,
         fileExprIDs: inout Set<Int32>
     ) {
@@ -175,6 +198,7 @@ extension CollectionLiteralLoweringPass {
         // Classify range factory calls
         if let result,
            callee == lookup.kkOpRangeToName || callee == lookup.kkOpRangeUntilName
+           || callee == lookup.kkOpULongRangeUntilName
            || callee == lookup.kkOpDownToName || callee == lookup.kkOpStepName
         {
             rangeExprIDs.insert(result.rawValue)
@@ -182,11 +206,21 @@ extension CollectionLiteralLoweringPass {
             if arguments.contains(where: { charValuedExprIDs.contains($0.rawValue) }) {
                 charRangeExprIDs.insert(result.rawValue)
             }
+            // Detect ULongRange: if any argument is a ULong-valued expression (STDLIB-524)
+            if arguments.contains(where: { ulongValuedExprIDs.contains($0.rawValue) }) {
+                ulongRangeExprIDs.insert(result.rawValue)
+            }
             // step on a char range propagates char range
             if callee == lookup.kkOpStepName, !arguments.isEmpty,
                charRangeExprIDs.contains(arguments[0].rawValue)
             {
                 charRangeExprIDs.insert(result.rawValue)
+            }
+            // step on a ULong range propagates ULong range (STDLIB-524)
+            if callee == lookup.kkOpStepName, !arguments.isEmpty,
+               ulongRangeExprIDs.contains(arguments[0].rawValue)
+            {
+                ulongRangeExprIDs.insert(result.rawValue)
             }
         }
         // Classify sequence factory calls (STDLIB-097, STDLIB-317)
@@ -339,6 +373,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>
     ) {
         if callee == lookup.asSequenceName
@@ -407,6 +442,10 @@ extension CollectionLiteralLoweringPass {
                     if charRangeExprIDs.contains(receiverRaw) {
                         charRangeExprIDs.insert(result.rawValue)
                     }
+                    // Propagate ULong range through reversed() (STDLIB-524)
+                    if ulongRangeExprIDs.contains(receiverRaw) {
+                        ulongRangeExprIDs.insert(result.rawValue)
+                    }
                 }
             } else if callee == lookup.toListName || callee == lookup.mapName {
                 if let result { listExprIDs.insert(result.rawValue) }
@@ -431,6 +470,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         stringExprIDs: inout Set<Int32>,
         fileExprIDs: inout Set<Int32>
     ) {
@@ -454,6 +494,9 @@ extension CollectionLiteralLoweringPass {
         }
         if charRangeExprIDs.contains(from.rawValue) {
             charRangeExprIDs.insert(to.rawValue)
+        }
+        if ulongRangeExprIDs.contains(from.rawValue) {
+            ulongRangeExprIDs.insert(to.rawValue)
         }
         if stringExprIDs.contains(from.rawValue) {
             stringExprIDs.insert(to.rawValue)
@@ -536,6 +579,45 @@ extension CollectionLiteralLoweringPass {
                 sequenceExprIDs: &sequenceExprIDs,
                 stringExprIDs: &stringExprIDs
             )
+        }
+    }
+
+    private func seedULongValuedExprIDsFromStaticTypes(
+        function: KIRFunction,
+        arena: KIRArena,
+        sema: SemaModule,
+        ulongValuedExprIDs: inout Set<Int32>
+    ) {
+        var referencedExprIDs: Set<Int32> = []
+        for instruction in function.body {
+            switch instruction {
+            case let .call(_, _, arguments, result, _, _, _):
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .virtualCall(_, _, receiver, arguments, result, _, _, _):
+                referencedExprIDs.insert(receiver.rawValue)
+                for arg in arguments { referencedExprIDs.insert(arg.rawValue) }
+                if let result { referencedExprIDs.insert(result.rawValue) }
+            case let .copy(from, to):
+                referencedExprIDs.insert(from.rawValue)
+                referencedExprIDs.insert(to.rawValue)
+            case let .constValue(result, _):
+                referencedExprIDs.insert(result.rawValue)
+            case let .returnValue(expr):
+                referencedExprIDs.insert(expr.rawValue)
+            default:
+                break
+            }
+        }
+
+        for rawID in referencedExprIDs {
+            let exprID = KIRExprID(rawValue: rawID)
+            guard let typeID = arena.exprType(exprID),
+                  sema.types.makeNonNullable(typeID) == sema.types.ulongType
+            else {
+                continue
+            }
+            ulongValuedExprIDs.insert(rawID)
         }
     }
 

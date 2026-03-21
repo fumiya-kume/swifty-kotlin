@@ -191,6 +191,11 @@ public func kk_println_long(_ value: Int) {
     Swift.print(value)
 }
 
+@_cdecl("kk_println_ulong")
+public func kk_println_ulong(_ value: Int) {
+    Swift.print(UInt(bitPattern: value))
+}
+
 @_cdecl("kk_println_float")
 public func kk_println_float(_ value: Int) {
     let rendered = runtimeFormatFloatingPoint(kk_bits_to_float(value))

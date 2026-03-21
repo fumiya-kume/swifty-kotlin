@@ -651,6 +651,8 @@ final class CallLowerer {
                 nil
             case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
                 interner.intern("kk_range_toList")
+            case interner.intern("ULongRange"):
+                interner.intern("kk_ulong_range_toList")
             case interner.intern("CharRange"):
                 interner.intern("kk_char_range_toList")
             case knownNames.string:
