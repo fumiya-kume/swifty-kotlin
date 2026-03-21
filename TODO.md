@@ -169,10 +169,10 @@
 #### E. kotlin.io / java.io.File — 単一 API 単位
 
 - [ ] STDLIB-565: File メンバー呼び出しの VirtualCallRewrite 統合（readText, writeText, readLines, exists, isFile, isDirectory, name, path, forEachLine, delete, mkdirs, listFiles, walk）。`File(String)` → `kk_file_new` の ctor rewrite のみ `CollectionLiteralLoweringPass+CallRewrite` に実装済み
-- [ ] STDLIB-572: `print` の 0 引数オーバーロード
+- [x] STDLIB-572: `print` の 0 引数オーバーロード — PASS（stub / runtime / codegen 統合テスト済み）
 - [x] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）— PASS
-- [ ] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）
-- [ ] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）
+- [x] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）— PASS
+- [x] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）— PASS
 - [ ] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_readtext.kt` 周辺）
 - [ ] STDLIB-665: `java.io.File.readBytes(): ByteArray` の Sema stub / Runtime / Lowering / diff
 
