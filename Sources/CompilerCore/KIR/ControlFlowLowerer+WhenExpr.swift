@@ -102,6 +102,20 @@ extension ControlFlowLowerer {
                 instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
             }
 
+            // Emit guard condition: if the guard evaluates to false, skip to next branch.
+            if let guardExprID = branch.guard_ {
+                let guardID = driver.lowerExpr(
+                    guardExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                instructions.append(.jumpIfEqual(lhs: guardID, rhs: falseID, target: nextBranchLabels[index]))
+            }
+
             let bodyID = driver.lowerExpr(
                 branch.body,
                 ast: ast,

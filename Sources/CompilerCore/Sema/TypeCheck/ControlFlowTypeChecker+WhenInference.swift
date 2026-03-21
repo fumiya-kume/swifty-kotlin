@@ -309,6 +309,21 @@ extension ControlFlowTypeChecker {
                         driver.exprChecker.applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                     }
                 }
+
+                // Type-check guard expression as Boolean (Kotlin 2.1 when guard conditions).
+                // The guard is checked within the narrowed context so smart casts from
+                // `is` checks are available.
+                if let guardExpr = branch.guard_ {
+                    let guardType = driver.inferExpr(guardExpr, ctx: branchCtx, locals: &branchLocals)
+                    if guardType != boolType, guardType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0074",
+                            "When branch guard condition must be a Boolean expression.",
+                            range: ast.arena.exprRange(guardExpr)
+                        )
+                    }
+                }
+
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
@@ -447,6 +462,19 @@ extension ControlFlowTypeChecker {
                     branchLocals = locals
                     driver.exprChecker.applyFlowStateToLocals(joinedState, locals: &branchLocals, sema: sema)
                 }
+
+                // Type-check guard expression as Boolean (Kotlin 2.1 when guard conditions).
+                if let guardExpr = branch.guard_ {
+                    let guardType = driver.inferExpr(guardExpr, ctx: branchCtx, locals: &branchLocals)
+                    if guardType != boolType, guardType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0074",
+                            "When branch guard condition must be a Boolean expression.",
+                            range: ast.arena.exprRange(guardExpr)
+                        )
+                    }
+                }
+
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
