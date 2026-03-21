@@ -773,13 +773,12 @@ extension CollectionLiteralLoweringPass {
                         }
                         
                         if let target = kkCallee {
-                            let memberArgs: [KIRExprID]
-                            if callee == lookup.forEachLineName || callee == lookup.useLinesName || callee == lookup.writeTextName {
-                                // These calls pass additional arguments beyond the receiver
-                                memberArgs = [receiverID] + arguments.dropFirst()
-                            } else {
-                                memberArgs = [receiverID]
-                            }
+                            let needsExtraArgs = callee == lookup.forEachLineName
+                                || callee == lookup.useLinesName
+                                || callee == lookup.writeTextName
+                            let memberArgs = needsExtraArgs
+                                ? [receiverID] + arguments.dropFirst()
+                                : [receiverID]
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: target,
@@ -3367,7 +3366,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
-                        fileExprIDs: fileExprIDs,
+                        fileExprIDs: &fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue

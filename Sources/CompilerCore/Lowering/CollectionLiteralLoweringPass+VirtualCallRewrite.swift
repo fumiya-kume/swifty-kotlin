@@ -24,7 +24,7 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
-        fileExprIDs: Set<Int32> = [],
+        fileExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -109,17 +109,95 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // --- File member virtualCall rewrite (STDLIB-321) ---
+        // --- Rewrite File member virtual calls (STDLIB-320) ---
         if fileExprIDs.contains(receiver.rawValue) {
-            if rewriteFileVirtualCall(
+            if rewriteFileMemberVirtualCall(
                 callee: callee, receiver: receiver, arguments: arguments,
                 result: result, origCanThrow: origCanThrow,
                 origThrownResult: origThrownResult, lookup: lookup,
+                listExprIDs: &listExprIDs,
                 loweredBody: &loweredBody
             ) { return true }
         }
 
         return false
+    }
+
+    // MARK: - File member operations (STDLIB-320)
+
+    private func rewriteFileMemberVirtualCall(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        let kkCallee: InternedString?
+
+        switch callee {
+        case lookup.readTextName:
+            kkCallee = lookup.kkFileReadTextName
+        case lookup.writeTextName:
+            kkCallee = lookup.kkFileWriteTextName
+        case lookup.readLinesName:
+            kkCallee = lookup.kkFileReadLinesName
+        case lookup.existsName:
+            kkCallee = lookup.kkFileExistsName
+        case lookup.isFileName:
+            kkCallee = lookup.kkFileIsFileName
+        case lookup.isDirectoryName:
+            kkCallee = lookup.kkFileIsDirectoryName
+        case lookup.namePropertyName:
+            kkCallee = lookup.kkFileNameName
+        case lookup.pathPropertyName:
+            kkCallee = lookup.kkFilePathName
+        case lookup.forEachLineName:
+            kkCallee = lookup.kkFileForEachLineName
+        case lookup.useLinesName:
+            kkCallee = lookup.kkFileUseLinesName
+        case lookup.bufferedReaderName:
+            kkCallee = lookup.kkFileBufferedReaderName
+        case lookup.walkName:
+            kkCallee = lookup.kkFileWalkName
+        case lookup.listFilesName:
+            kkCallee = lookup.kkFileListFilesName
+        case lookup.deleteName:
+            kkCallee = lookup.kkFileDeleteName
+        case lookup.mkdirsName:
+            kkCallee = lookup.kkFileMkdirsName
+        default:
+            kkCallee = nil
+        }
+
+        guard let target = kkCallee else { return false }
+
+        // Methods that pass extra arguments beyond the receiver
+        let needsExtraArgs = callee == lookup.forEachLineName
+            || callee == lookup.useLinesName
+            || callee == lookup.writeTextName
+        let memberArgs = needsExtraArgs ?
+            [receiver] + arguments :
+            [receiver]
+
+        loweredBody.append(.call(
+            symbol: nil,
+            callee: target,
+            arguments: memberArgs,
+            result: result,
+            canThrow: origCanThrow,
+            thrownResult: origThrownResult
+        ))
+
+        // Track results that produce lists (readLines returns List<String>)
+        if callee == lookup.readLinesName, let result {
+            listExprIDs.insert(result.rawValue)
+        }
+
+        return true
     }
 
     // MARK: - Sequence operations
@@ -1838,79 +1916,5 @@ extension CollectionLiteralLoweringPass {
         default:
             break
         }
-    }
-
-    // MARK: - File member operations (STDLIB-321)
-
-    private func rewriteFileVirtualCall(
-        callee: InternedString,
-        receiver: KIRExprID,
-        arguments: [KIRExprID],
-        result: KIRExprID?,
-        origCanThrow: Bool,
-        origThrownResult: KIRExprID?,
-        lookup: CollectionLiteralLookupTables,
-        loweredBody: inout [KIRInstruction]
-    ) -> Bool {
-        let kkCallee: InternedString?
-
-        switch callee {
-        case lookup.existsName:
-            kkCallee = lookup.kkFileExistsName
-        case lookup.isFileName:
-            kkCallee = lookup.kkFileIsFileName
-        case lookup.isDirectoryName:
-            kkCallee = lookup.kkFileIsDirectoryName
-        case lookup.namePropertyName:
-            kkCallee = lookup.kkFileNameName
-        case lookup.pathPropertyName:
-            kkCallee = lookup.kkFilePathName
-        case lookup.readTextName:
-            kkCallee = lookup.kkFileReadTextName
-        case lookup.writeTextName:
-            kkCallee = lookup.kkFileWriteTextName
-        case lookup.readLinesName:
-            kkCallee = lookup.kkFileReadLinesName
-        case lookup.forEachLineName:
-            kkCallee = lookup.kkFileForEachLineName
-        case lookup.useLinesName:
-            kkCallee = lookup.kkFileUseLinesName
-        case lookup.bufferedReaderName:
-            // Only rewrite argument-less bufferedReader(); the runtime
-            // function kk_file_bufferedReader does not accept charset/bufferSize.
-            kkCallee = arguments.isEmpty ? lookup.kkFileBufferedReaderName : nil
-        case lookup.walkName:
-            kkCallee = lookup.kkFileWalkName
-        case lookup.listFilesName:
-            kkCallee = lookup.kkFileListFilesName
-        case lookup.deleteName:
-            kkCallee = lookup.kkFileDeleteName
-        case lookup.mkdirsName:
-            kkCallee = lookup.kkFileMkdirsName
-        default:
-            kkCallee = nil
-        }
-
-        guard let target = kkCallee else { return false }
-
-        // forEachLine, useLines, and writeText pass additional arguments
-        let memberArgs: [KIRExprID]
-        if callee == lookup.forEachLineName || callee == lookup.useLinesName {
-            memberArgs = [receiver] + arguments
-        } else if callee == lookup.writeTextName {
-            memberArgs = [receiver] + arguments
-        } else {
-            memberArgs = [receiver]
-        }
-
-        loweredBody.append(.call(
-            symbol: nil,
-            callee: target,
-            arguments: memberArgs,
-            result: result,
-            canThrow: origCanThrow,
-            thrownResult: origThrownResult
-        ))
-        return true
     }
 }
