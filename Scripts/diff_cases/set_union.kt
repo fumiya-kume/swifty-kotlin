@@ -53,8 +53,4 @@ fun main() {
     // Union with empty list
     println(a.union(emptyList()))
 
-    // Boolean set union
-    val boolA = setOf(true, false)
-    val boolB = setOf(true)
-    println(boolA.union(boolB))
 }
