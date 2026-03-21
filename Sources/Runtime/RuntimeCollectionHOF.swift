@@ -168,7 +168,7 @@ public func kk_map_forEach(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     guard let map = runtimeMapBox(from: mapRaw) else { invalidContainerPanic(#function, "map") }
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
+        _ = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: runtimeMapEntryNew(key: key, value: value), outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     }
     return 0
@@ -181,7 +181,7 @@ public func kk_map_map(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     mapped.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: runtimeMapEntryNew(key: key, value: value), outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mapped.append(maybeUnbox(result))
     }
@@ -197,7 +197,7 @@ public func kk_map_filter(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outT
     filteredValues.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: runtimeMapEntryNew(key: key, value: value), outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 {
             filteredKeys.append(key)
@@ -214,7 +214,7 @@ public func kk_map_count(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outTh
     var count = 0
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let result = lambda(closureRaw, runtimeMapEntryNew(key: key, value: value), &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { count += 1 }
     }
@@ -227,7 +227,7 @@ public func kk_map_any(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let result = lambda(closureRaw, runtimeMapEntryNew(key: key, value: value), &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 1 }
     }
@@ -240,7 +240,7 @@ public func kk_map_all(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThro
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let result = lambda(closureRaw, runtimeMapEntryNew(key: key, value: value), &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) == 0 { return 0 }
     }
@@ -310,7 +310,7 @@ public func kk_map_mapValues(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ o
     mappedValues.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: runtimeMapEntryNew(key: key, value: value), outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mappedValues.append(maybeUnbox(result))
     }
@@ -325,7 +325,7 @@ public func kk_map_mapKeys(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     mappedKeys.reserveCapacity(min(map.keys.count, map.values.count))
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: kk_pair_new(key, value), outThrown: &thrown)
+        let result = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: runtimeMapEntryNew(key: key, value: value), outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         mappedKeys.append(maybeUnbox(result))
     }
@@ -353,7 +353,7 @@ public func kk_map_flatMap(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ out
     var result: [Int] = []
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let subListRaw = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let subListRaw = lambda(closureRaw, runtimeMapEntryNew(key: key, value: value), &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if let subList = runtimeListBox(from: subListRaw) {
             result.append(contentsOf: subList.elements)
@@ -371,17 +371,26 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     guard pairCount > 0 else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var bestKey = map.keys[0]
     var bestValue = map.values[0]
     var thrown = 0
-    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    var bestSelector = runtimeInvokeCollectionLambda1(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        value: runtimeMapEntryNew(key: bestKey, value: bestValue),
+        outThrown: &thrown
+    )
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0
-        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let selector = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: runtimeMapEntryNew(key: key, value: value),
+            outThrown: &thrown
+        )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(selector, bestSelector) > 0 {
             bestKey = key
@@ -389,7 +398,7 @@ public func kk_map_maxByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
             bestSelector = selector
         }
     }
-    return kk_pair_new(bestKey, bestValue)
+    return runtimeMapEntryNew(key: bestKey, value: bestValue)
 }
 
 @_cdecl("kk_map_minByOrNull")
@@ -401,17 +410,26 @@ public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     guard pairCount > 0 else {
         return runtimeNullSentinelInt
     }
-    let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var bestKey = map.keys[0]
     var bestValue = map.values[0]
     var thrown = 0
-    var bestSelector = lambda(closureRaw, kk_pair_new(bestKey, bestValue), &thrown)
+    var bestSelector = runtimeInvokeCollectionLambda1(
+        fnPtr: fnPtr,
+        closureRaw: closureRaw,
+        value: runtimeMapEntryNew(key: bestKey, value: bestValue),
+        outThrown: &thrown
+    )
     if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
     for idx in 1 ..< pairCount {
         let key = map.keys[idx]
         let value = map.values[idx]
         thrown = 0
-        let selector = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let selector = runtimeInvokeCollectionLambda1(
+            fnPtr: fnPtr,
+            closureRaw: closureRaw,
+            value: runtimeMapEntryNew(key: key, value: value),
+            outThrown: &thrown
+        )
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(selector, bestSelector) < 0 {
             bestKey = key
@@ -419,7 +437,7 @@ public func kk_map_minByOrNull(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
             bestSelector = selector
         }
     }
-    return kk_pair_new(bestKey, bestValue)
+    return runtimeMapEntryNew(key: bestKey, value: bestValue)
 }
 
 @_cdecl("kk_list_flatMap")

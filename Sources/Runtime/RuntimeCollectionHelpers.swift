@@ -1,3 +1,26 @@
+private let mapEntryRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.collections.Map.Entry".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
+@inline(__always)
+func runtimeMapEntryNew(key: Int, value: Int) -> Int {
+    let raw = kk_pair_new(key, value)
+    runtimeRegisterObjectType(rawValue: raw, classID: mapEntryRuntimeTypeID)
+    return raw
+}
+
+@inline(__always)
+func runtimeIsMapEntry(rawValue: Int) -> Bool {
+    runtimeObjectTypeID(rawValue: rawValue) == mapEntryRuntimeTypeID
+}
+
 func runtimeListBox(from rawValue: Int) -> RuntimeListBox? {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: rawValue) else {
         return nil
@@ -270,6 +293,9 @@ func runtimeElementToString(_ elem: Int) -> String {
     if let pairBox = tryCast(ptr, to: RuntimePairBox.self) {
         let first = runtimeElementToString(pairBox.first)
         let second = runtimeElementToString(pairBox.second)
+        if runtimeIsMapEntry(rawValue: elem) {
+            return "\(first)=\(second)"
+        }
         return "(\(first), \(second))"
     }
     if let tripleBox = tryCast(ptr, to: RuntimeTripleBox.self) {

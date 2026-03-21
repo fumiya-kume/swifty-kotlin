@@ -1202,6 +1202,9 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
+    if pairRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
@@ -1217,6 +1220,9 @@ public func component1(_ pairRaw: Int) -> Int {
 
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
+    if pairRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
