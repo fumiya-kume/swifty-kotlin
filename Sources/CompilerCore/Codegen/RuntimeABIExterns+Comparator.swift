@@ -95,6 +95,30 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_compareValues = ExternDecl(
+        name: "kk_compareValues",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_compareValuesBy1 = ExternDecl(
+        name: "kk_compareValuesBy1",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_compareValuesBy = ExternDecl(
+        name: "kk_compareValuesBy",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_compareValuesBy3 = ExternDecl(
+        name: "kk_compareValuesBy3",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let comparatorExterns: [ExternDecl] = [
         kk_comparator_from_selector,
         kk_comparator_from_selector_descending,
@@ -112,5 +136,9 @@ public extension RuntimeABIExterns {
         kk_comparator_reverse_order_trampoline,
         kk_comparator_natural_order,
         kk_comparator_reverse_order,
+        kk_compareValues,
+        kk_compareValuesBy1,
+        kk_compareValuesBy,
+        kk_compareValuesBy3,
     ]
 }
