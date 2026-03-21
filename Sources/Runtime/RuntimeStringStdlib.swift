@@ -965,7 +965,7 @@ public func kk_string_trimEnd(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_toByteArray")
 public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    return runtimeMakeListRaw(source.utf8.map(Int.init))
+    return runtimeMakeListRaw(source.utf8.map { Int(Int8(bitPattern: $0)) })
 }
 
 // STDLIB-573: String.encodeToByteArray()
@@ -973,6 +973,15 @@ public func kk_string_toByteArray(_ strRaw: Int) -> Int {
 @_cdecl("kk_string_encodeToByteArray")
 public func kk_string_encodeToByteArray(_ strRaw: Int) -> Int {
     kk_string_toByteArray(strRaw)
+}
+
+// STDLIB-573: String.encodeToByteArray(startIndex, endIndex)
+// Slices by UTF-16 code unit range to match Kotlin String indexing semantics.
+@_cdecl("kk_string_encodeToByteArray_range")
+public func kk_string_encodeToByteArray_range(_ strRaw: Int, _ startIndex: Int, _ endIndex: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let slice = runtimeUTF16Substring(source, startIndex: startIndex, endIndex: endIndex)
+    return runtimeMakeListRaw(slice.utf8.map { Int(Int8(bitPattern: $0)) })
 }
 
 // STDLIB-573: String.encodeToByteArray(charset) — charset-aware overload.

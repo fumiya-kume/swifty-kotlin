@@ -871,6 +871,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-573: String.encodeToByteArray(startIndex, endIndex)
+    public static let kk_string_encodeToByteArray_range = ExternDecl(
+        name: "kk_string_encodeToByteArray_range",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-573: String.encodeToByteArray(charset)
     public static let kk_string_encodeToByteArray_charset = ExternDecl(
         name: "kk_string_encodeToByteArray_charset",
@@ -2020,6 +2027,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_structural_eq = ExternDecl(
+        name: "kk_structural_eq",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Regex (STDLIB-100/101/102/103)
 
     public static let kk_regex_create = ExternDecl(
@@ -2350,6 +2363,7 @@ public enum RuntimeABIExterns {
             kk_any_to_string,
             kk_any_hashCode,
             kk_any_equals,
+            kk_structural_eq,
             kk_string_replaceRange,
             kk_string_substring,
             kk_string_split,
@@ -2377,6 +2391,7 @@ public enum RuntimeABIExterns {
             kk_string_trimEnd,
             kk_string_toByteArray,
             kk_string_encodeToByteArray,
+            kk_string_encodeToByteArray_range,
             kk_string_encodeToByteArray_charset,
             kk_bytearray_decodeToString,
             kk_bytearray_decodeToString_charset,
