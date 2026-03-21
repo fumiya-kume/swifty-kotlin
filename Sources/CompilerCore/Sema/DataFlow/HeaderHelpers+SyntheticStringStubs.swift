@@ -1224,16 +1224,86 @@ extension DataFlowSemaPhase {
         )
 
         // STDLIB-574: ByteArray.decodeToString()
-        registerSyntheticStringExtensionFunction(
-            named: "decodeToString",
-            externalLinkName: "kk_bytearray_decodeToString",
-            receiverType: listIntType,
-            parameters: [],
-            returnType: stringType,
-            packageFQName: kotlinTextPkg,
+        let byteArrayType = makeNominalType(
             symbols: symbols,
-            interner: interner
+            types: types,
+            fqName: [interner.intern("kotlin"), interner.intern("ByteArray")]
         )
+
+        // Register on both List<Int> (internal representation) and ByteArray (user-facing type)
+        for receiverType in [listIntType, byteArrayType] {
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString",
+                receiverType: receiverType,
+                parameters: [],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // STDLIB-574: Charset class & Charsets object for decodeToString(charset) overload
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset", in: kotlinTextPkg, symbols: symbols, interner: interner
+        )
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        let charsetsName = interner.intern("Charsets")
+        let charsetsFQName = kotlinTextPkg + [charsetsName]
+        let charsetsSymbol: SymbolID
+        if let existing = symbols.lookup(fqName: charsetsFQName) {
+            charsetsSymbol = existing
+        } else {
+            charsetsSymbol = symbols.define(
+                kind: .object,
+                name: charsetsName,
+                fqName: charsetsFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let charsetsType = types.make(.classType(ClassType(
+            classSymbol: charsetsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetsType, for: charsetsSymbol)
+
+        for charsetPropName in ["UTF_8", "US_ASCII", "ISO_8859_1"] {
+            let propName = interner.intern(charsetPropName)
+            let propFQName = charsetsFQName + [propName]
+            guard symbols.lookup(fqName: propFQName) == nil else { continue }
+            let propSymbol = symbols.define(
+                kind: .property,
+                name: propName,
+                fqName: propFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(charsetsSymbol, for: propSymbol)
+            symbols.setPropertyType(charsetType, for: propSymbol)
+        }
+
+        // STDLIB-574: ByteArray.decodeToString(charset: Charset) overload
+        for receiverType in [listIntType, byteArrayType] {
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString_charset",
+                receiverType: receiverType,
+                parameters: [
+                    ("charset", charsetType, false, false),
+                ],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- STDLIB-316: String.chunked / String.windowed ---
 

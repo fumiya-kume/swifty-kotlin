@@ -1031,6 +1031,30 @@ public func kk_bytearray_decodeToString(_ arrRaw: Int) -> Int {
     return runtimeMakeStringRaw(decoded)
 }
 
+// STDLIB-574: ByteArray.decodeToString(charset)
+// Charset IDs: 0 = UTF-8, 1 = US-ASCII, 2 = ISO-8859-1 (Latin-1)
+@_cdecl("kk_bytearray_decodeToString_charset")
+public func kk_bytearray_decodeToString_charset(_ arrRaw: Int, _ charsetId: Int) -> Int {
+    guard let list = runtimeListBox(from: arrRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString_charset received invalid list handle \(arrRaw)")
+    }
+    let bytes = list.elements.map { UInt8(truncatingIfNeeded: $0) }
+    let decoded: String
+    switch charsetId {
+    case 0: // Charsets.UTF_8
+        decoded = String(decoding: bytes, as: UTF8.self)
+    case 1: // Charsets.US_ASCII
+        // ASCII: bytes > 127 become replacement character U+FFFD
+        decoded = String(bytes.map { $0 <= 127 ? Character(Unicode.Scalar($0)) : "\u{FFFD}" })
+    case 2: // Charsets.ISO_8859_1 (Latin-1)
+        // ISO-8859-1: each byte maps directly to its Unicode code point (0x00..0xFF)
+        decoded = String(bytes.map { Character(Unicode.Scalar($0)) })
+    default:
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_bytearray_decodeToString_charset unsupported charset ID \(charsetId)")
+    }
+    return runtimeMakeStringRaw(decoded)
+}
+
 @_cdecl("kk_string_format")
 public func kk_string_format(_ formatRaw: Int, _ argsArrayRaw: Int) -> Int {
     let template = runtimeStringFromRawOrPanic(formatRaw, caller: #function)

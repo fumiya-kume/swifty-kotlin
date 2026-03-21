@@ -2657,6 +2657,31 @@ extension CallLowerer {
             ))
             return result
         }
+        // STDLIB-574: Charsets.UTF_8 / US_ASCII / ISO_8859_1 → integer constants
+        if let parentInfo = sema.symbols.symbol(parent),
+           parentInfo.name == knownNames.charsets
+        {
+            let charsetID: Int
+            switch interner.resolve(info.name) {
+            case "UTF_8":
+                charsetID = 0
+            case "US_ASCII":
+                charsetID = 1
+            case "ISO_8859_1":
+                charsetID = 2
+            default:
+                return nil
+            }
+            let resultType = sema.bindings.exprTypes[exprID]
+                ?? sema.symbols.propertyType(for: valueSym)
+                ?? sema.types.anyType
+            let result = arena.appendExpr(
+                .intLiteral(Int64(charsetID)),
+                type: resultType
+            )
+            instructions.append(.constValue(result: result, value: .intLiteral(Int64(charsetID))))
+            return result
+        }
         let propType = sema.bindings.exprTypes[exprID]
             ?? sema.symbols.propertyType(for: valueSym)
             ?? sema.types.anyType

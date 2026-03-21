@@ -722,6 +722,16 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "ByteArray"
         ),
+        // STDLIB-574: ByteArray.decodeToString(charset)
+        RuntimeABIFunctionSpec(
+            name: "kk_bytearray_decodeToString_charset",
+            parameters: [
+                RuntimeABIParameter(name: "arrRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetId", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "ByteArray"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_char_isDigit",
             parameters: [

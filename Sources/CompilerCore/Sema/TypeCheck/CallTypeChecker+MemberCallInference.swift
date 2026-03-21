@@ -2390,6 +2390,62 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // STDLIB-574: ByteArray.decodeToString() / ByteArray.decodeToString(charset)
+            do {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let byteArrayFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("ByteArray")]
+                if let baSymbol = sema.symbols.lookup(fqName: byteArrayFQName),
+                   case .classType(let ct) = sema.types.kind(of: receiverTypeForCheck),
+                   ct.classSymbol == baSymbol
+                {
+                    let calleeStr = interner.resolve(calleeName)
+                    if calleeStr == "decodeToString" && (args.count == 0 || args.count == 1) {
+                        let resultType = sema.types.stringType
+                        // Try to bind to the synthetic extension function symbol
+                        let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
+                        let decodeToStringFQName = kotlinTextPkg + [interner.intern("decodeToString")]
+                        let candidates = sema.symbols.lookupAll(fqName: decodeToStringFQName)
+                        if let chosen = candidates.first(where: { candidate in
+                            guard let sig = sema.symbols.functionSignature(for: candidate) else { return false }
+                            if sig.parameterTypes.count != args.count { return false }
+                            // For the 1-arg overload, verify the parameter is Charset type
+                            if args.count == 1, let paramType = sig.parameterTypes.first {
+                                let charsetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charset")]
+                                guard let charsetSym = sema.symbols.lookup(fqName: charsetFQName),
+                                      case .classType(let ct) = sema.types.kind(of: paramType),
+                                      ct.classSymbol == charsetSym else { return false }
+                            }
+                            return true
+                        }) {
+                            _ = bindCallAndResolveReturnType(
+                                id,
+                                chosen: chosen,
+                                resolved: ResolvedCall(
+                                    chosenCallee: chosen,
+                                    substitutedTypeArguments: [:],
+                                    parameterMapping: [:],
+                                    diagnostic: nil
+                                ),
+                                sema: sema
+                            )
+                        }
+                        // Infer charset argument if present, passing Charset expected type
+                        if args.count == 1 {
+                            let charsetFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charset")]
+                            let charsetExpectedType: TypeID? = {
+                                guard let sym = sema.symbols.lookup(fqName: charsetFQName) else { return nil }
+                                return sema.symbols.propertyType(for: sym)
+                            }()
+                            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: charsetExpectedType)
+                        }
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
             // String stdlib: nullable-receiver 0-arg methods (NULL-002)
             // isNullOrEmpty/isNullOrBlank accept String? receiver directly (no safe-call needed).
             if args.isEmpty {

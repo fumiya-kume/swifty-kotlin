@@ -107,6 +107,7 @@ struct KnownCompilerNames {
     let job: InternedString
     let deferred: InternedString
     let dispatchers: InternedString
+    let charsets: InternedString
     let throwable: InternedString
     let exception: InternedString
     let cancellationException: InternedString
@@ -239,6 +240,7 @@ struct KnownCompilerNames {
         job = interner.intern("Job")
         deferred = interner.intern("Deferred")
         dispatchers = interner.intern("Dispatchers")
+        charsets = interner.intern("Charsets")
         throwable = interner.intern("Throwable")
         exception = interner.intern("Exception")
         cancellationException = interner.intern("CancellationException")
