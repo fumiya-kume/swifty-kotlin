@@ -455,6 +455,15 @@ public enum RuntimeABISpec {
             section: "String"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_structural_eq",
+            parameters: [
+                RuntimeABIParameter(name: "lhs", type: .intptr),
+                RuntimeABIParameter(name: "rhs", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collections"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_string_replaceRange",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
@@ -709,6 +718,17 @@ public enum RuntimeABISpec {
             name: "kk_string_encodeToByteArray",
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-573: String.encodeToByteArray(startIndex, endIndex)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_encodeToByteArray_range",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+                RuntimeABIParameter(name: "endIndex", type: .intptr),
             ],
             returnType: .intptr,
             section: "String"

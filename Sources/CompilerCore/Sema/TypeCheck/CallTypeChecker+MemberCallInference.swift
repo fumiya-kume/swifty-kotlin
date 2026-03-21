@@ -707,10 +707,9 @@ extension CallTypeChecker {
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
             "sort", "sortBy", "sortByDescending",
-            "maxByOrNull", "minByOrNull",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
-        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys", "maxByOrNull", "minByOrNull"]
+        let mapOnlyCollectionHOFNames: Set = ["mapValues", "mapKeys"]
         let mutableListOnlyCollectionHOFNames: Set = ["sort", "sortBy", "sortByDescending"]
         let isFlowReceiver = if sema.bindings.isFlowExpr(receiverID) {
             true
@@ -2776,6 +2775,45 @@ extension CallTypeChecker {
                             return boundType
                         }
                         let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                        sema.bindings.bindExprType(id, type: finalType)
+                        return finalType
+                    }
+                }
+            }
+            if args.count == 2 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.intType),
+                   sema.types.isSubtype(arg1Type, sema.types.intType)
+                {
+                    let calleeStr = interner.resolve(calleeName)
+                    if calleeStr == "encodeToByteArray" || calleeStr == "toByteArray" {
+                        let resultType = makeSyntheticListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.intType
+                        )
+                        if let boundType = tryBindSyntheticStringMemberFallback(
+                            id,
+                            calleeName: calleeName,
+                            receiverType: receiverTypeForCheck,
+                            args: args,
+                            argTypes: argTypes,
+                            range: range,
+                            ctx: ctx,
+                            expectedType: expectedType,
+                            explicitTypeArgs: explicitTypeArgs,
+                            safeCall: safeCall
+                        ) {
+                            return boundType
+                        }
+                        sema.bindings.markCollectionExpr(id)
+                        let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
                     }
