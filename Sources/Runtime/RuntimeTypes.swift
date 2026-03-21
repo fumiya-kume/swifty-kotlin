@@ -648,6 +648,7 @@ struct RuntimeKClassMetadataEntry {
     let isAbstract: Bool
     let fieldCount: Int
     let memberCount: Int
+    let constructorCount: Int
 }
 
 /// Global registry mapping type tokens to runtime metadata entries.
@@ -695,6 +696,71 @@ final class RuntimeKClassBox {
     /// Looks up the associated metadata entry from the global registry.
     var metadata: RuntimeKClassMetadataEntry? {
         runtimeKClassMetadataRegistry.lookup(typeToken: typeToken)
+    }
+}
+
+// MARK: - kotlin.reflect.KType (REFL-005)
+
+/// Runtime box for `kotlin.reflect.KType`.
+/// Represents a Kotlin type at runtime, as returned by `typeOf<T>()`.
+final class RuntimeKTypeBox {
+    /// The classifier — typically a `KClass` raw handle.
+    let classifierRaw: Int
+    /// Type arguments as `RuntimeKTypeProjectionBox` raw handles.
+    let argumentRaws: [Int]
+    /// Whether the type is marked nullable (`T?`).
+    let isMarkedNullable: Bool
+
+    init(classifierRaw: Int, argumentRaws: [Int], isMarkedNullable: Bool) {
+        self.classifierRaw = classifierRaw
+        self.argumentRaws = argumentRaws
+        self.isMarkedNullable = isMarkedNullable
+    }
+}
+
+/// Runtime representation of `kotlin.reflect.KVariance`.
+/// Matches the Kotlin enum ordinals: IN=0, OUT=1, INVARIANT=2.
+enum RuntimeKVariance: Int {
+    case `in` = 0
+    case out = 1
+    case invariant = 2
+}
+
+/// Runtime box for `kotlin.reflect.KTypeProjection`.
+/// Represents a type argument with optional variance.
+final class RuntimeKTypeProjectionBox {
+    /// The projected type as a `RuntimeKTypeBox` raw handle, or 0 for star projection.
+    let typeRaw: Int
+    /// The variance (nil for star projection).
+    let variance: RuntimeKVariance?
+
+    init(typeRaw: Int, variance: RuntimeKVariance?) {
+        self.typeRaw = typeRaw
+        self.variance = variance
+    }
+}
+
+/// Runtime box for `kotlin.reflect.KCallable<*>`.
+/// Represents a member (property or function) of a class.
+final class RuntimeKCallableBox {
+    let nameRaw: Int
+    let kind: RuntimeCallableRefKind
+
+    init(nameRaw: Int, kind: RuntimeCallableRefKind) {
+        self.nameRaw = nameRaw
+        self.kind = kind
+    }
+}
+
+/// Runtime box for `kotlin.reflect.KFunction<T>`.
+/// Represents a constructor or function member.
+final class RuntimeKFunctionBox {
+    let nameRaw: Int
+    let arity: Int
+
+    init(nameRaw: Int, arity: Int) {
+        self.nameRaw = nameRaw
+        self.arity = arity
     }
 }
 

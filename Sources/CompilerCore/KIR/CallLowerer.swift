@@ -208,6 +208,19 @@ final class CallLowerer {
             return loweredEnumValueOf
         }
 
+        // REFL-005: typeOf<T>() — reified inline function returning KType
+        if let loweredTypeOf = lowerTypeOfCallExpr(
+            exprID,
+            calleeExpr: calleeExpr,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            instructions: &instructions
+        ) {
+            return loweredTypeOf
+        }
+
         if let loweredComparison = lowerComparisonSpecialCallExpr(
             exprID,
             args: args,
@@ -976,6 +989,100 @@ final class CallLowerer {
             symbol: nil,
             callee: runtimeCallee,
             arguments: [loweredArgumentID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
+    // MARK: - REFL-005: typeOf<T>() Lowering
+
+    /// Lowers `typeOf<T>()` calls to `kk_typeof(typeToken, nameHint, isNullable)`.
+    /// Returns nil if the expression is not a typeOf call.
+    private func lowerTypeOfCallExpr(
+        _ exprID: ExprID,
+        calleeExpr: ExprID,
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        // Check if the callee is "typeOf".
+        guard let callee = ast.arena.expr(calleeExpr),
+              case let .nameRef(name, _) = callee,
+              interner.resolve(name) == "typeOf"
+        else {
+            return nil
+        }
+
+        // Resolve the type argument from the call binding.
+        let callBinding = sema.bindings.callBindings[exprID]
+        let typeArg: TypeID
+        if let binding = callBinding,
+           !binding.substitutedTypeArguments.isEmpty
+        {
+            typeArg = binding.substitutedTypeArguments[0]
+        } else {
+            // Fallback: typeOf<T>() with no resolved type argument defaults to Any.
+            typeArg = sema.types.anyType
+        }
+
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+
+        // 1. Encode the type token.
+        let tokenExpr: KIRExprID
+        if case let .typeParam(typeParam) = sema.types.kind(of: typeArg) {
+            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParam.symbol)
+            tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+        } else {
+            let encoded = RuntimeTypeCheckToken.encode(type: typeArg, sema: sema, interner: interner)
+            tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
+        }
+
+        // 2. Name hint.
+        let nameHintExpr: KIRExprID
+        if let name = RuntimeTypeCheckToken.simpleName(of: typeArg, sema: sema, interner: interner) {
+            let internedName = interner.intern(name)
+            nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: intType)
+            instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
+        } else {
+            nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: nameHintExpr, value: .intLiteral(0)))
+        }
+
+        // 3. Nullability flag.
+        let isNullable: Int64 = {
+            switch sema.types.kind(of: typeArg) {
+            case let .primitive(_, nullability):
+                return nullability == .nullable ? 1 : 0
+            case let .classType(ct):
+                return ct.nullability == .nullable ? 1 : 0
+            case let .typeParam(tp):
+                return tp.nullability == .nullable ? 1 : 0
+            case let .kClassType(kc):
+                return kc.nullability == .nullable ? 1 : 0
+            case let .any(nullability):
+                return nullability == .nullable ? 1 : 0
+            case let .nothing(nullability):
+                return nullability == .nullable ? 1 : 0
+            default:
+                return 0
+            }
+        }()
+        let isNullableExpr = arena.appendExpr(.intLiteral(isNullable), type: intType)
+        instructions.append(.constValue(result: isNullableExpr, value: .intLiteral(isNullable)))
+
+        // 4. Call kk_typeof.
+        let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_typeof"),
+            arguments: [tokenExpr, nameHintExpr, isNullableExpr],
             result: result,
             canThrow: false,
             thrownResult: nil
