@@ -280,6 +280,260 @@ extension KotlinLexer {
         ))
     }
 
+    // MARK: - Multi-dollar string support (Kotlin 2.1+)
+
+    /// Scans a multi-dollar single-line string: `$$"..."`, `$$$"..."`, etc.
+    /// The `dollarCount` is the number of `$` in the prefix (e.g. 2 for `$$`).
+    /// Only `dollarCount` consecutive `$` followed by `{` triggers interpolation.
+    /// Only `dollarCount` consecutive `$` followed by an identifier start triggers simple name interpolation.
+    /// Fewer `$` are treated as literal text.
+    func scanMultiDollarString(leadingTrivia: [TriviaPiece], start: Int, dollarCount: Int) -> [Token] {
+        let openStart = offset
+        // Skip the dollar prefix and opening quote
+        offset += dollarCount + 1
+        var tokens: [Token] = []
+        tokens.append(
+            Token(
+                kind: .multiDollarStringQuote(dollarCount: dollarCount),
+                range: makeRange(start: openStart, end: openStart + dollarCount + 1),
+                leadingTrivia: leadingTrivia
+            )
+        )
+        var segmentStart = offset
+
+        while offset < bytes.count {
+            let ch = bytes[offset]
+
+            // Closing quote
+            if ch == 0x22 {
+                appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+                tokens.append(
+                    Token(
+                        kind: .multiDollarStringQuote(dollarCount: dollarCount),
+                        range: makeRange(start: offset, end: offset + 1),
+                        leadingTrivia: []
+                    )
+                )
+                offset += 1
+                return tokens
+            }
+
+            // Check for dollar sequences
+            if ch == 0x24 {
+                let consecutiveDollars = countConsecutiveDollars(at: offset)
+                let afterDollars = offset + consecutiveDollars
+
+                // Expression interpolation: exactly dollarCount $ followed by {
+                if consecutiveDollars >= dollarCount,
+                   afterDollars < bytes.count,
+                   bytes[afterDollars] == 0x7B
+                {
+                    // Emit any literal dollars before the interpolation threshold
+                    let literalDollars = consecutiveDollars - dollarCount
+                    if literalDollars > 0 {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset + literalDollars, leadingTrivia: [])
+                    } else {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+                    }
+                    let templateStart = offset + literalDollars
+                    offset = afterDollars + 1 // skip past $...${
+                    tokens.append(
+                        Token(
+                            kind: .templateExprStart,
+                            range: makeRange(start: templateStart, end: templateStart + dollarCount + 1),
+                            leadingTrivia: []
+                        )
+                    )
+                    let templateExpr = scanTemplateExpression()
+                    tokens.append(contentsOf: templateExpr.tokens)
+                    tokens.append(Token(kind: .templateExprEnd, range: templateExpr.closeRange, leadingTrivia: []))
+                    segmentStart = offset
+                    continue
+                }
+
+                // Simple name interpolation: exactly dollarCount $ followed by identifier start
+                if consecutiveDollars >= dollarCount,
+                   afterDollars < bytes.count,
+                   isIdentifierStart(bytes[afterDollars]),
+                   bytes[afterDollars] != 0x24  // exclude '$' itself which is also identifier start
+                {
+                    let literalDollars = consecutiveDollars - dollarCount
+                    if literalDollars > 0 {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset + literalDollars, leadingTrivia: [])
+                    } else {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+                    }
+                    let templateStart = offset + literalDollars
+                    tokens.append(
+                        Token(
+                            kind: .templateSimpleNameStart,
+                            range: makeRange(start: templateStart, end: templateStart + dollarCount),
+                            leadingTrivia: []
+                        )
+                    )
+                    offset = afterDollars
+                    if let templateName = scanTemplateName(leadingTrivia: [], start: offset) {
+                        tokens.append(templateName)
+                        segmentStart = offset
+                        continue
+                    }
+                    segmentStart = offset
+                    continue
+                }
+
+                // Not enough dollars for interpolation — treat all as literal
+                offset += consecutiveDollars
+                continue
+            }
+
+            // Escape sequences (same as regular strings)
+            if ch == 0x5C {
+                if offset + 1 >= bytes.count {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0002",
+                        "Unterminated string escape.",
+                        range: makeRange(start: offset, end: bytes.count)
+                    )
+                    break
+                }
+                let escaped = bytes[offset + 1]
+                if escaped == 0x75 {
+                    if let unicode = scanUnicodeEscape(escapeStart: offset + 1) {
+                        offset += 1 + unicode.length
+                        continue
+                    } else {
+                        let missingEnd = min(offset + 12, bytes.count)
+                        diagnostics.error(
+                            "KSWIFTK-LEX-0003",
+                            "Invalid unicode escape sequence in string literal.",
+                            range: makeRange(start: offset, end: missingEnd)
+                        )
+                        if offset + 6 <= bytes.count {
+                            offset += 6
+                        } else {
+                            offset += 2
+                        }
+                        segmentStart = offset
+                        continue
+                    }
+                }
+                if scalarValue(forEscape: escaped) == nil {
+                    diagnostics.error(
+                        "KSWIFTK-LEX-0003",
+                        "Invalid escape sequence in string literal.",
+                        range: makeRange(start: offset, end: min(offset + 2, bytes.count))
+                    )
+                    offset += 2
+                    segmentStart = offset
+                    continue
+                }
+                offset += 2
+                continue
+            }
+
+            if ch == 0x0A || ch == 0x0D {
+                diagnostics.warning(
+                    "KSWIFTK-LEX-0004",
+                    "Unescaped line break in string literal.",
+                    range: makeRange(start: offset, end: offset + 1)
+                )
+                offset += 1
+                continue
+            }
+
+            offset += 1
+        }
+
+        diagnostics.error(
+            "KSWIFTK-LEX-0002",
+            "Unterminated string literal.",
+            range: makeRange(start: start, end: bytes.count)
+        )
+        appendSegment(to: &tokens, from: segmentStart, to: bytes.count, leadingTrivia: [])
+        return tokens
+    }
+
+    /// Scans a multi-dollar raw (triple-quoted) string: `$$"""..."""`, `$$$"""..."""`, etc.
+    func scanMultiDollarRawString(leadingTrivia: [TriviaPiece], start: Int, dollarCount: Int) -> [Token] {
+        let quoteStart = offset
+        // Skip the dollar prefix and opening triple-quote
+        offset += dollarCount + 3
+        var tokens: [Token] = []
+        tokens.append(
+            Token(
+                kind: .multiDollarRawStringQuote(dollarCount: dollarCount),
+                range: makeRange(start: quoteStart, end: quoteStart + dollarCount + 3),
+                leadingTrivia: leadingTrivia
+            )
+        )
+
+        var segmentStart = offset
+        while offset + 2 < bytes.count {
+            if starts(with: "\"\"\"", at: offset) {
+                break
+            }
+
+            if bytes[offset] == 0x24 {
+                let consecutiveDollars = countConsecutiveDollars(at: offset)
+                let afterDollars = offset + consecutiveDollars
+
+                // Expression interpolation: dollarCount $ followed by {
+                if consecutiveDollars >= dollarCount,
+                   afterDollars < bytes.count,
+                   bytes[afterDollars] == 0x7B
+                {
+                    let literalDollars = consecutiveDollars - dollarCount
+                    if literalDollars > 0 {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset + literalDollars, leadingTrivia: [])
+                    } else {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+                    }
+                    let templateStart = offset + literalDollars
+                    offset = afterDollars + 1
+                    tokens.append(
+                        Token(
+                            kind: .templateExprStart,
+                            range: makeRange(start: templateStart, end: templateStart + dollarCount + 1),
+                            leadingTrivia: []
+                        )
+                    )
+                    let templateExpr = scanTemplateExpression()
+                    tokens.append(contentsOf: templateExpr.tokens)
+                    tokens.append(Token(kind: .templateExprEnd, range: templateExpr.closeRange, leadingTrivia: []))
+                    segmentStart = offset
+                    continue
+                }
+
+                // Not enough dollars — treat as literal
+                offset += consecutiveDollars
+                continue
+            }
+
+            offset += 1
+        }
+
+        if offset + 2 >= bytes.count {
+            diagnostics.error(
+                "KSWIFTK-LEX-0002",
+                "Unterminated raw string literal.",
+                range: makeRange(start: start, end: bytes.count)
+            )
+            appendSegment(to: &tokens, from: segmentStart, to: bytes.count, leadingTrivia: [])
+            return tokens
+        }
+
+        appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+        tokens.append(
+            Token(
+                kind: .multiDollarRawStringQuote(dollarCount: dollarCount),
+                range: makeRange(start: offset, end: offset + 3),
+                leadingTrivia: []
+            )
+        )
+        offset += 3
+        return tokens
+    }
+
     func appendSegment(to tokens: inout [Token], from: Int, to: Int, leadingTrivia: [TriviaPiece]) {
         if from >= to {
             return
