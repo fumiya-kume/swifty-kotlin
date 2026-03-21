@@ -1724,9 +1724,15 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
-                case "encodeToByteArray", "toByteArray":
+                case "encodeToByteArray":
                     if loweredArgIDs.count == 1 {
                         ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
+                    } else {
+                        ("kk_string_encodeToByteArray_range", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    }
+                case "toByteArray":
+                    if loweredArgIDs.count == 1 {
+                        ("kk_string_toByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
                     } else {
                         ("kk_string_encodeToByteArray_range", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
                     }
