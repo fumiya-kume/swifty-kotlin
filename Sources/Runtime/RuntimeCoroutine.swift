@@ -46,6 +46,18 @@ private func pthreadSetValue<T: AnyObject>(_ key: pthread_key_t, _ value: T?) {
     }
 }
 
+private final class RuntimeResumeContinuationBox: @unchecked Sendable {
+    let closure: () -> Void
+
+    init(_ closure: @escaping () -> Void) {
+        self.closure = closure
+    }
+
+    func invoke() {
+        closure()
+    }
+}
+
 final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
@@ -74,7 +86,7 @@ final class RuntimeContinuationState {
     /// If no continuation closure is installed (e.g. during tests that call
     /// waitForResumeSignal() synchronously), we fall back to a one-shot
     /// DispatchSemaphore for backward compatibility.
-    private var resumeContinuation: (() -> Void)?
+    private var resumeContinuation: RuntimeResumeContinuationBox?
     /// Lazily created fallback semaphore, only used by legacy synchronous
     /// callers that invoke waitForResumeSignal() without a continuation.
     private var fallbackSemaphore: DispatchSemaphore?
@@ -125,15 +137,18 @@ final class RuntimeContinuationState {
     /// already been delivered (pending), the continuation is dispatched
     /// immediately.
     func installResumeContinuation(_ continuation: @escaping () -> Void) {
+        let boxedContinuation = RuntimeResumeContinuationBox(continuation)
         stateLock.lock()
         if resumeSignalPending {
             resumeSignalPending = false
             stateLock.unlock()
             // Signal already arrived — dispatch continuation immediately.
-            DispatchQueue.global().async(execute: continuation)
+            DispatchQueue.global().async {
+                boxedContinuation.invoke()
+            }
             return
         }
-        resumeContinuation = continuation
+        resumeContinuation = boxedContinuation
         stateLock.unlock()
     }
 
@@ -162,7 +177,9 @@ final class RuntimeContinuationState {
         if let cont = resumeContinuation {
             resumeContinuation = nil
             stateLock.unlock()
-            DispatchQueue.global().async(execute: cont)
+            DispatchQueue.global().async {
+                cont.invoke()
+            }
             return
         }
         if let sem = fallbackSemaphore {
