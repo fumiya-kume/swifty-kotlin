@@ -11,9 +11,6 @@ fun main() {
     // subtract with empty set
     println(a.subtract(emptySet()))
 
-    // subtract from empty set
-    println(emptySet<Int>().subtract(a))
-
     // subtract where all elements removed
     println(a.subtract(a))
 
@@ -34,9 +31,6 @@ fun main() {
     // subtract with duplicates in the Iterable argument
     val dupList = listOf(1, 1, 2, 2, 3)
     println(a.subtract(dupList))
-
-    // minus operator (equivalent to subtract)
-    println(a - b)
 
     // subtract result type is Set (check size and contains)
     val result = a.subtract(b)
