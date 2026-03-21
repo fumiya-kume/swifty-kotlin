@@ -1,7 +1,9 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.random.Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516).
-/// Registers the Random class, its constructor, and nextInt/nextLong/nextFloat/nextDouble/nextBoolean methods.
+/// Synthetic stdlib stubs for kotlin.random.Random
+/// (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-654).
+/// Registers the Random object, seeded constructor-style factory, and
+/// nextInt/nextLong/nextFloat/nextDouble/nextBoolean methods.
 extension DataFlowSemaPhase {
     func registerSyntheticRandomStubs(
         symbols: SymbolTable,
@@ -161,6 +163,31 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_random_nextDouble",
             returnType: doubleType,
             parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextDouble",
+            externalLinkName: "kk_random_nextDouble_until",
+            returnType: doubleType,
+            parameters: [(name: "until", type: doubleType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextDouble",
+            externalLinkName: "kk_random_nextDouble_range",
+            returnType: doubleType,
+            parameters: [
+                (name: "from", type: doubleType),
+                (name: "until", type: doubleType),
+            ],
             symbols: symbols,
             interner: interner
         )

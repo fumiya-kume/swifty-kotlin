@@ -100,7 +100,7 @@ public func kk_random_create_seeded(_ seed: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516)
+// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-654)
 
 @_cdecl("kk_random_nextInt")
 public func kk_random_nextInt(_ receiver: Int) -> Int {
@@ -196,6 +196,35 @@ public func kk_random_nextDouble(_ receiver: Int) -> Int {
         return kk_double_to_bits(box.nextDouble())
     }
     return kk_double_to_bits(Double.random(in: 0 ..< 1))
+}
+
+@_cdecl("kk_random_nextDouble_until")
+public func kk_random_nextDouble_until(_ randomRaw: Int, _ untilBits: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let until = kk_bits_to_double(untilBits)
+    guard until > 0.0, until.isFinite else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive and finite, but was \(until).")
+        return 0
+    }
+    if let box = seededBox(from: randomRaw) {
+        return kk_double_to_bits(box.nextDouble() * until)
+    }
+    return kk_double_to_bits(Double.random(in: 0.0 ..< until))
+}
+
+@_cdecl("kk_random_nextDouble_range")
+public func kk_random_nextDouble_range(_ randomRaw: Int, _ fromBits: Int, _ untilBits: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let from = kk_bits_to_double(fromBits)
+    let until = kk_bits_to_double(untilBits)
+    guard until > from, from.isFinite, until.isFinite else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
+        return 0
+    }
+    if let box = seededBox(from: randomRaw) {
+        return kk_double_to_bits(from + (box.nextDouble() * (until - from)))
+    }
+    return kk_double_to_bits(Double.random(in: from ..< until))
 }
 
 @_cdecl("kk_random_nextBoolean")

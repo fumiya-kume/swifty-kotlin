@@ -1,4 +1,4 @@
-// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515)
+// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-654)
 
 public extension RuntimeABIExterns {
     static let randomExterns: [ExternDecl] = [
@@ -12,6 +12,8 @@ public extension RuntimeABIExterns {
         kk_random_nextFloat,
         kk_random_nextFloat_until,
         kk_random_nextDouble,
+        kk_random_nextDouble_until,
+        kk_random_nextDouble_range,
         kk_random_nextBoolean,
     ]
 
@@ -72,6 +74,18 @@ public extension RuntimeABIExterns {
     static let kk_random_nextDouble = ExternDecl(
         name: "kk_random_nextDouble",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextDouble_until = ExternDecl(
+        name: "kk_random_nextDouble_until",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextDouble_range = ExternDecl(
+        name: "kk_random_nextDouble_range",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

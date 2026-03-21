@@ -41,6 +41,15 @@ final class RandomSyntheticLinkTests: XCTestCase {
         XCTAssertTrue(links.contains("kk_random_nextFloat_until"), "nextFloat(until) stub missing")
     }
 
+    func testNextDoubleStubsHaveCorrectExternalLinks() throws {
+        let (sema, interner) = try makeSema()
+
+        let links = externalLinks(for: "nextDouble", sema: sema, interner: interner)
+        XCTAssertTrue(links.contains("kk_random_nextDouble"), "nextDouble() stub missing")
+        XCTAssertTrue(links.contains("kk_random_nextDouble_until"), "nextDouble(until) stub missing")
+        XCTAssertTrue(links.contains("kk_random_nextDouble_range"), "nextDouble(from, until) stub missing")
+    }
+
     func testExistingRandomStubsStillPresent() throws {
         let (sema, interner) = try makeSema()
 
@@ -51,6 +60,8 @@ final class RandomSyntheticLinkTests: XCTestCase {
 
         let doubleLinks = externalLinks(for: "nextDouble", sema: sema, interner: interner)
         XCTAssertTrue(doubleLinks.contains("kk_random_nextDouble"), "nextDouble() stub missing")
+        XCTAssertTrue(doubleLinks.contains("kk_random_nextDouble_until"), "nextDouble(until) stub missing")
+        XCTAssertTrue(doubleLinks.contains("kk_random_nextDouble_range"), "nextDouble(from, until) stub missing")
 
         let boolLinks = externalLinks(for: "nextBoolean", sema: sema, interner: interner)
         XCTAssertTrue(boolLinks.contains("kk_random_nextBoolean"), "nextBoolean() stub missing")
