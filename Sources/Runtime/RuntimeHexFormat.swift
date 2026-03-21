@@ -30,6 +30,7 @@ private func hexFormatMakeStringRaw(_ value: String) -> Int {
 }
 
 private func hexFormatBoxFromRaw(_ raw: Int) -> RuntimeHexFormatBox? {
+    if raw == runtimeNullSentinelInt { return nil }
     guard let pointer = UnsafeMutableRawPointer(bitPattern: raw) else { return nil }
     return tryCast(pointer, to: RuntimeHexFormatBox.self)
 }
@@ -39,11 +40,13 @@ private func hexFormatMakeListRaw(_ values: [Int]) -> Int {
     return registerRuntimeObject(box)
 }
 
+private let cachedDefaultHexFormatRaw: Int = registerRuntimeObject(RuntimeHexFormatBox())
+
 // MARK: - HexFormat.Default companion property
 
 @_cdecl("kk_hexformat_default")
 public func kk_hexformat_default() -> Int {
-    registerRuntimeObject(RuntimeHexFormatBox())
+    cachedDefaultHexFormatRaw
 }
 
 // MARK: - HexFormat { } builder DSL
