@@ -1,29 +1,25 @@
 fun main() {
-    // reduceOrNull on non-empty list
-    val sum = listOf(1, 2, 3, 4).reduceOrNull { acc, e -> acc + e }
-    println(sum)  // 10
+    // reduce on non-empty list
+    val sum = listOf(1, 2, 3, 4).reduce { acc, e -> acc + e }
+    println(sum)
 
-    // reduceOrNull on empty list returns null
-    val empty = listOf<Int>().reduceOrNull { acc, e -> acc + e }
-    println(empty)  // null
+    // reduce with string concatenation
+    val concat = listOf("a", "b", "c").reduce { acc, e -> acc + e }
+    println(concat)
 
-    // reduceOrNull with string concatenation
-    val concat = listOf("a", "b", "c").reduceOrNull { acc, e -> acc + e }
-    println(concat)  // abc
+    // reduce on single-element list returns that element
+    val single = listOf(42).reduce { acc, e -> acc + e }
+    println(single)
 
-    // reduceOrNull on single-element list returns that element
-    val single = listOf(42).reduceOrNull { acc, e -> acc + e }
-    println(single)  // 42
+    // reduce with multiplication
+    val product = listOf(2, 3, 4).reduce { acc, e -> acc * e }
+    println(product)
 
-    // reduceOrNull with multiplication
-    val product = listOf(2, 3, 4).reduceOrNull { acc, e -> acc * e }
-    println(product)  // 24
+    // fold with initial value
+    val foldSum = listOf(1, 2, 3).fold(0) { acc, e -> acc + e }
+    println(foldSum)
 
-    // reduceOrNull result used with elvis operator
-    val withDefault = listOf<Int>().reduceOrNull { acc, e -> acc + e } ?: -1
-    println(withDefault)  // -1
-
-    // reduceOrNull on empty string list
-    val emptyStr = listOf<String>().reduceOrNull { acc, e -> acc + e }
-    println(emptyStr)  // null
+    // fold on empty list returns initial value
+    val foldEmpty = listOf<Int>().fold(0) { acc, e -> acc + e }
+    println(foldEmpty)
 }
