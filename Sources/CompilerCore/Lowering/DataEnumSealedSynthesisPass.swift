@@ -616,11 +616,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         let selfParam = KIRParameter(symbol: selfParamSymbol, type: receiverType)
 
         // Look up the primary constructor to get property parameter types.
+        // Use primaryConstructorSymbol() which picks by declaration-site offset
+        // so that secondary constructors are never selected over the primary one.
         let initName = interner.intern("<init>")
-        let ctorFQName = owner.fqName + [initName]
-        let ctorSymbol = sema.symbols.lookupAll(fqName: ctorFQName).first { symbolID in
-            sema.symbols.symbol(symbolID)?.kind == .constructor
-        }
+        let ctorSymbol = primaryConstructorSymbol(owner: owner, symbols: sema.symbols)?.id
 
         // Guard: if no constructor is found, emit a simple self-returning copy()
         // to avoid generating an invalid .call instruction with nil symbol.
@@ -667,10 +666,13 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
         // types in parameterTypes. When a receiver type is prepended to
         // parameterTypes (but not to valueParameterSymbols), we strip the leading
         // receiver entry from parameterTypes so that both arrays align 1-to-1.
+        // We check both the locally-constructed receiverType and the signature's
+        // own receiverType so that generic data classes (whose receiver type
+        // may carry type arguments) are handled correctly.
         let ctorParamSymbols = ctorSignature.valueParameterSymbols
         var ctorParamTypes = ctorSignature.parameterTypes
         if ctorParamTypes.count > ctorParamSymbols.count,
-           ctorParamTypes.first == receiverType {
+           ctorParamTypes.first == receiverType || ctorParamTypes.first == ctorSignature.receiverType {
             ctorParamTypes.removeFirst()
         }
 
