@@ -1061,7 +1061,12 @@ final class CallTypeChecker {
             let (vis, invis) = ctx.filterByVisibility(dslFiltered)
             candidates = vis
             callInvisible = invis
-            // If all candidates were blocked by DslMarker, emit a specific diagnostic.
+            if candidates.isEmpty, let local = locals[calleeName] {
+                if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
+                    candidates = [local.symbol]
+                }
+            }
+            // Only emit the DslMarker diagnostic after local function fallback.
             if candidates.isEmpty, !dslBlockedCandidates.isEmpty {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-DSLMARKER",
@@ -1070,11 +1075,6 @@ final class CallTypeChecker {
                 )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
-            }
-            if candidates.isEmpty, let local = locals[calleeName] {
-                if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
-                    candidates = [local.symbol]
-                }
             }
             if candidates.isEmpty {
                 let classSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
