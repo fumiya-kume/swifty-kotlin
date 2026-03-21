@@ -5555,23 +5555,31 @@ extension DataFlowSemaPhase {
         let reduceIndexedName = interner.intern("reduceIndexed")
         let reduceIndexedFQName = listFQName + [reduceIndexedName]
         if symbols.lookup(fqName: reduceIndexedFQName) == nil {
-            let operationType = types.make(.functionType(FunctionType(params: [types.intType, listTypeParamType, listTypeParamType], returnType: listTypeParamType, isSuspend: false, nullability: .nonNull)))
+            let sName = interner.intern("S")
+            let sFQName = reduceIndexedFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
             let memberSymbol = symbols.define(kind: .function, name: reduceIndexedName, fqName: reduceIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_reduceIndexed", for: memberSymbol)
-            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: listTypeParamType, typeParameterSymbols: [listTypeParamSymbol], classTypeParameterCount: 1), for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: sType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
         }
 
         // reduceIndexedOrNull(operation: (Int, S, T) -> S): S?
         let reduceIndexedOrNullName = interner.intern("reduceIndexedOrNull")
         let reduceIndexedOrNullFQName = listFQName + [reduceIndexedOrNullName]
         if symbols.lookup(fqName: reduceIndexedOrNullFQName) == nil {
-            let operationType = types.make(.functionType(FunctionType(params: [types.intType, listTypeParamType, listTypeParamType], returnType: listTypeParamType, isSuspend: false, nullability: .nonNull)))
-            let nullableElementType = types.makeNullable(listTypeParamType)
+            let sName = interner.intern("S")
+            let sFQName = reduceIndexedOrNullFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
+            let nullableAccumulatorType = types.makeNullable(sType)
             let memberSymbol = symbols.define(kind: .function, name: reduceIndexedOrNullName, fqName: reduceIndexedOrNullFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_reduceIndexedOrNull", for: memberSymbol)
-            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: nullableElementType, typeParameterSymbols: [listTypeParamSymbol], classTypeParameterCount: 1), for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: nullableAccumulatorType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
         }
 
         // runningFoldIndexed(initial: R, operation: (Int, R, T) -> R): List<R>
@@ -5594,11 +5602,16 @@ extension DataFlowSemaPhase {
         let runningReduceIndexedName = interner.intern("runningReduceIndexed")
         let runningReduceIndexedFQName = listFQName + [runningReduceIndexedName]
         if symbols.lookup(fqName: runningReduceIndexedFQName) == nil {
-            let operationType = types.make(.functionType(FunctionType(params: [types.intType, listTypeParamType, listTypeParamType], returnType: listTypeParamType, isSuspend: false, nullability: .nonNull)))
+            let sName = interner.intern("S")
+            let sFQName = runningReduceIndexedFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
+            let listSType = types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(sType)], nullability: .nonNull)))
             let memberSymbol = symbols.define(kind: .function, name: runningReduceIndexedName, fqName: runningReduceIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
             symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
             symbols.setExternalLinkName("kk_list_runningReduceIndexed", for: memberSymbol)
-            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: receiverType, typeParameterSymbols: [listTypeParamSymbol], classTypeParameterCount: 1), for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: listSType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
         }
 
         // scanIndexed(initial: R, operation: (Int, R, T) -> R): List<R>

@@ -3032,7 +3032,9 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // filterIndexed: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.filterIndexedName || callee == lookup.kkListFilterIndexedName), (arguments.count == 2 || arguments.count == 3) {
+                    if ((callee == lookup.filterIndexedName)
+                        || (callee == lookup.kkListFilterIndexedName && listExprIDs.contains(arguments[0].rawValue))),
+                       (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
@@ -3045,7 +3047,9 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // reduceIndexedOrNull: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.reduceIndexedOrNullName || callee == lookup.kkListReduceIndexedOrNullName), (arguments.count == 2 || arguments.count == 3) {
+                    if ((callee == lookup.reduceIndexedOrNullName)
+                        || (callee == lookup.kkListReduceIndexedOrNullName && listExprIDs.contains(arguments[0].rawValue))),
+                       (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
@@ -3057,7 +3061,11 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // runningFoldIndexed / scanIndexed: args = [receiver, initial, lambda, closureRaw?]
-                    if (callee == lookup.runningFoldIndexedName || callee == lookup.scanIndexedName || callee == lookup.kkListRunningFoldIndexedName || callee == lookup.kkListScanIndexedName), (3 ... 4).contains(arguments.count) {
+                    if ((callee == lookup.runningFoldIndexedName)
+                        || (callee == lookup.scanIndexedName)
+                        || (callee == lookup.kkListRunningFoldIndexedName && listExprIDs.contains(arguments[0].rawValue))
+                        || (callee == lookup.kkListScanIndexedName && listExprIDs.contains(arguments[0].rawValue))),
+                       (3 ... 4).contains(arguments.count) {
                         let receiverID = arguments[0]; let initialID = arguments[1]; let lambdaID = arguments[2]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
@@ -3071,7 +3079,9 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
                     // runningReduceIndexed: args = [receiver, lambda, closureRaw?]
-                    if (callee == lookup.runningReduceIndexedName || callee == lookup.kkListRunningReduceIndexedName), (arguments.count == 2 || arguments.count == 3) {
+                    if ((callee == lookup.runningReduceIndexedName)
+                        || (callee == lookup.kkListRunningReduceIndexedName && listExprIDs.contains(arguments[0].rawValue))),
+                       (arguments.count == 2 || arguments.count == 3) {
                         let receiverID = arguments[0]; let lambdaID = arguments[1]
                         if listExprIDs.contains(receiverID.rawValue) {
                             let closureRawID: KIRExprID
