@@ -1665,7 +1665,7 @@ public func kk_list_zipWithNextTransform(_ listRaw: Int, _ fnPtr: Int, _ closure
         var thrown = 0
         let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elems[i], rhs: elems[i + 1], outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
-        results.append(result)
+        results.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: results))
 }

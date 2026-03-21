@@ -3197,13 +3197,15 @@ extension DataFlowSemaPhase {
                 ),
                 for: memberSymbol
             )
+        }
 
-            // zipWithNext(transform: (T, T) -> R): List<R>
+        let zipWithNextTransformFQName = zipWithNextFQName + [interner.intern("transform")]
+        if symbols.lookup(fqName: zipWithNextTransformFQName) == nil {
             let rName = interner.intern("R")
             let rSymbol = symbols.define(
                 kind: .typeParameter,
                 name: rName,
-                fqName: zipWithNextFQName + [rName],
+                fqName: zipWithNextTransformFQName + [rName],
                 declSite: nil,
                 visibility: .private,
                 flags: []
@@ -3223,7 +3225,7 @@ extension DataFlowSemaPhase {
             let transformMemberSymbol = symbols.define(
                 kind: .function,
                 name: zipWithNextName,
-                fqName: zipWithNextFQName + [interner.intern("transform")],
+                fqName: zipWithNextTransformFQName,
                 declSite: nil,
                 visibility: .public,
                 flags: [.synthetic, .inlineFunction]

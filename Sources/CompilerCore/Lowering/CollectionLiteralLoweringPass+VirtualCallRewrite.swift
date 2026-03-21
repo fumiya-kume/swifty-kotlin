@@ -1357,7 +1357,7 @@ extension CollectionLiteralLoweringPass {
         }
 
         // zipWithNext(transform) — HOF
-        if callee == lookup.zipWithNextName, arguments.count >= 1 {
+        if callee == lookup.zipWithNextName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
             let hofResult = emitHOFCall(
