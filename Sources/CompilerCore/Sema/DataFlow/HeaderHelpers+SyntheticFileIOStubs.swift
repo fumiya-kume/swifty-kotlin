@@ -6,6 +6,7 @@
 /// - STDLIB-321: `name`, `path` properties; `exists()`, `isFile()`, `isDirectory()` query methods
 /// - STDLIB-322: `forEachLine(action:)` member function
 /// - STDLIB-323: `delete()`, `mkdirs()`, `listFiles()`, `walk()` filesystem operations
+/// - STDLIB-664: `appendText(text: String)` member function
 /// - STDLIB-567: `bufferedReader()` returning `BufferedReader` with `readLine()`, `readLines()`, `close()`
 ///
 /// Each stub registers the java.io.File class, its constructor, member properties,
@@ -151,6 +152,19 @@ extension DataFlowSemaPhase {
         registerFileMemberFunction(
             named: "writeText",
             externalLinkName: "kk_file_writeText",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File.appendText() (STDLIB-664)
+
+        registerFileMemberFunction(
+            named: "appendText",
+            externalLinkName: "kk_file_appendText",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [("text", types.stringType)],

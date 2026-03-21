@@ -12,7 +12,7 @@ fun main() {
         f.writeText("replaced")
         println(f.readText())
 
-        // append via readText + writeText (appendText not yet supported by kswiftc)
+        // append via readText + writeText
         f.writeText(f.readText() + "_tail")
         println(f.readText())
     } finally {

@@ -173,8 +173,8 @@
 - [x] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）— PASS
 - [x] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）— PASS
 - [x] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）— PASS
-- [ ] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_readtext.kt` 周辺）
-- [ ] STDLIB-665: `java.io.File.readBytes(): ByteArray` の Sema stub / Runtime / Lowering / diff
+- [x] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_appendtext_readbytes.kt`）
+- [x] STDLIB-665: `java.io.File.readBytes(): ByteArray` の Sema stub / Runtime / Lowering / diff
 
 #### F. kotlin.text / String — 単一 API 単位
 

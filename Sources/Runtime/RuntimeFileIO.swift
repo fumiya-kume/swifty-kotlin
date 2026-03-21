@@ -76,6 +76,9 @@ public func kk_file_writeText(_ fileRaw: Int, _ textRaw: Int, _ outThrown: Unsaf
     return 0
 }
 
+// MARK: - STDLIB-664: File.appendText()
+
+
 @_cdecl("kk_file_appendText")
 public func kk_file_appendText(_ fileRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
