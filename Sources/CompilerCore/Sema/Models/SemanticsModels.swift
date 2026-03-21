@@ -409,6 +409,7 @@ public final class SymbolTable {
 
             let shouldCoexist = canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
                 || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
+                || canCoexistAsSyntheticPropertyFamily(kind: kind, flags: flags, existingSymbols: existingSymbols)
             if shouldCoexist {
                 return appendNewSymbol(
                     kind: kind,
@@ -524,6 +525,23 @@ public final class SymbolTable {
         }
 
         return hasOpposite && !hasSame && !hasNonMPP
+    }
+
+    private func canCoexistAsSyntheticPropertyFamily(
+        kind: SymbolKind,
+        flags: SymbolFlags,
+        existingSymbols: [SemanticSymbol]
+    ) -> Bool {
+        guard kind == .property, flags.contains(.synthetic) else {
+            return false
+        }
+        let existingNonPackageSymbols = existingSymbols.filter { $0.kind != .package }
+        guard !existingNonPackageSymbols.isEmpty else {
+            return false
+        }
+        return existingNonPackageSymbols.allSatisfy { symbol in
+            symbol.kind == .property && symbol.flags.contains(.synthetic)
+        }
     }
 
     private func isOverloadable(_ kind: SymbolKind) -> Bool {

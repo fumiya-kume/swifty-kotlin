@@ -18,6 +18,11 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        let durationCompanionFQName = ensureDurationCompanionSymbol(
+            ownerSymbol: durationSymbol,
+            symbols: symbols,
+            interner: interner
+        )
         let durationType = types.make(.classType(ClassType(
             classSymbol: durationSymbol,
             args: [],
@@ -92,7 +97,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_seconds",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -102,7 +107,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_milliseconds",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -112,7 +117,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_minutes",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -122,7 +127,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_nanoseconds",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -132,7 +137,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_microseconds",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -142,7 +147,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_hours",
             receiverType: intType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -183,7 +188,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_seconds_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -193,7 +198,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_milliseconds_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -203,7 +208,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_minutes_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -213,7 +218,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_nanoseconds_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -223,7 +228,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_microseconds_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
@@ -233,10 +238,39 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_duration_from_hours_long",
             receiverType: longType,
             returnType: durationType,
-            packageFQName: kotlinTimePkg,
+            companionFQName: durationCompanionFQName,
             symbols: symbols,
             interner: interner
         )
+    }
+
+    private func ensureDurationCompanionSymbol(
+        ownerSymbol: SymbolID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> [InternedString] {
+        if let existingCompanion = symbols.companionObjectSymbol(for: ownerSymbol),
+           let companionInfo = symbols.symbol(existingCompanion)
+        {
+            return companionInfo.fqName
+        }
+
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return []
+        }
+        let companionName = interner.intern("Companion")
+        let companionFQName = ownerInfo.fqName + [companionName]
+        let companionSymbol = symbols.define(
+            kind: .object,
+            name: companionName,
+            fqName: companionFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .static]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: companionSymbol)
+        symbols.setCompanionObjectSymbol(companionSymbol, for: ownerSymbol)
+        return companionFQName
     }
 
     // MARK: - Duration Helpers
@@ -303,12 +337,12 @@ extension DataFlowSemaPhase {
         externalLinkName: String,
         receiverType: TypeID,
         returnType: TypeID,
-        packageFQName: [InternedString],
+        companionFQName: [InternedString],
         symbols: SymbolTable,
         interner: StringInterner
     ) {
         let propertyName = interner.intern(name)
-        let propertyFQName = packageFQName + [propertyName]
+        let propertyFQName = companionFQName + [propertyName]
 
         // Check if already registered
         if let existing = symbols.lookupAll(fqName: propertyFQName).first(where: { symbolID in

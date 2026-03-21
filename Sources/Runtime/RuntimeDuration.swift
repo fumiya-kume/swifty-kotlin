@@ -62,6 +62,42 @@ public func kk_duration_from_hours(_ value: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+@_cdecl("kk_duration_from_seconds_long")
+public func kk_duration_from_seconds_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000_000_000))
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_duration_from_milliseconds_long")
+public func kk_duration_from_milliseconds_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000_000))
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_duration_from_microseconds_long")
+public func kk_duration_from_microseconds_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 1_000))
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_duration_from_nanoseconds_long")
+public func kk_duration_from_nanoseconds_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: Int64(value))
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_duration_from_minutes_long")
+public func kk_duration_from_minutes_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 60 * 1_000_000_000))
+    return registerRuntimeObject(box)
+}
+
+@_cdecl("kk_duration_from_hours_long")
+public func kk_duration_from_hours_long(_ value: Int) -> Int {
+    let box = RuntimeDurationBox(nanoseconds: saturatingMultiply(Int64(value), 3600 * 1_000_000_000))
+    return registerRuntimeObject(box)
+}
+
 // MARK: - Duration properties
 
 @_cdecl("kk_duration_inWholeMilliseconds")
