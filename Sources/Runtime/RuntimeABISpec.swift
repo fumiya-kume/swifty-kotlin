@@ -3339,6 +3339,7 @@ public enum RuntimeABISpec {
             + stringBuilderFunctions
             + fileIOFunctions
             + durationFunctions
+            + atomicFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

@@ -2755,6 +2755,7 @@ public enum RuntimeABIExterns {
             kk_timedvalue_duration,
             kk_timedvalue_toString,
         ]
+        all += atomicExterns
         return all
     }()
 
