@@ -259,7 +259,7 @@ private func runtimeSequenceTransformElement(
             outThrown: outThrown,
             yield: yield
         )
-    case .source, .stringSource, .builder, .generator:
+    case .source, .stringSource, .builder, .generator, .lazyBuilder:
         runtimeSequenceTransformElement(
             element,
             steps: steps,
@@ -281,7 +281,7 @@ private func runtimeTraverseSequenceWithState(
 ) {
     let transformSteps = seq.steps.filter {
         switch $0 {
-        case .source, .stringSource, .builder, .generator:
+        case .source, .stringSource, .builder, .generator, .lazyBuilder:
             false
         default:
             true
@@ -302,6 +302,14 @@ private func runtimeTraverseSequenceWithState(
         switch step {
         case let .source(sourceElements), let .builder(sourceElements):
             for element in sourceElements {
+                emit(element)
+                if state.stop { return }
+            }
+            return
+        case let .lazyBuilder(coroutine):
+            // STDLIB-563: Materialize the lazy coroutine and iterate.
+            let materialized = coroutine.materializeAll()
+            for element in materialized {
                 emit(element)
                 if state.stop { return }
             }
@@ -369,6 +377,9 @@ private func extractSourceElements(from step: SequenceStepKind) -> [Int]? {
         return sourceElements
     case let .builder(builderElements):
         return builderElements
+    case let .lazyBuilder(coroutine):
+        // STDLIB-563: Materialize the lazy coroutine into an element array.
+        return coroutine.materializeAll()
     default:
         return nil
     }
@@ -499,7 +510,7 @@ private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
     // Apply transformation steps in order
     for step in seq.steps {
         switch step {
-        case .source, .stringSource, .builder, .generator:
+        case .source, .stringSource, .builder, .generator, .lazyBuilder:
             break
         case let .mapStep(fnPtr, closureRaw):
             elements = applyMapStep(elements, fnPtr: fnPtr, closureRaw: closureRaw, outThrown: nil)
@@ -1961,8 +1972,18 @@ public func kk_sequence_builder_create() -> Int {
     return registerRuntimeObject(builder)
 }
 
+/// Resolve a raw handle to a RuntimeSequenceCoroutineBuilderProxy, or nil.
+private func runtimeCoroutineBuilderProxy(from rawValue: Int) -> RuntimeSequenceCoroutineBuilderProxy? {
+    resolveRuntimeHandle(rawValue, as: RuntimeSequenceCoroutineBuilderProxy.self)
+}
+
 @_cdecl("kk_sequence_builder_yield")
 public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
+    // STDLIB-563: If the handle is a coroutine builder proxy, yield lazily.
+    if let proxy = runtimeCoroutineBuilderProxy(from: builderRaw) {
+        proxy.coroutine.yieldValue(value)
+        return 0
+    }
     if let builder = runtimeSequenceBuilderBox(from: builderRaw) {
         builder.elements.append(value)
         return 0
@@ -1980,6 +2001,21 @@ public func kk_sequence_builder_yield(_ builderRaw: Int, _ value: Int) -> Int {
 
 @_cdecl("kk_sequence_builder_yieldAll")
 public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int) -> Int {
+    // STDLIB-563: If the handle is a coroutine builder proxy, yield each element lazily.
+    if let proxy = runtimeCoroutineBuilderProxy(from: builderRaw) {
+        if let elements = runtimeSequenceSourceElements(from: collectionRaw) {
+            for elem in elements {
+                proxy.coroutine.yieldValue(elem)
+            }
+        } else if let set = runtimeSetBox(from: collectionRaw) {
+            for elem in set.elements {
+                proxy.coroutine.yieldValue(elem)
+            }
+        } else {
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid collection handle (expected List, Array, Set, or Sequence)")
+        }
+        return 0
+    }
     guard let builder = runtimeSequenceBuilderBox(from: builderRaw) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_sequence_builder_yieldAll received invalid builder handle")
     }
@@ -1996,17 +2032,12 @@ public func kk_sequence_builder_yieldAll(_ builderRaw: Int, _ collectionRaw: Int
 
 @_cdecl("kk_sequence_builder_build")
 public func kk_sequence_builder_build(_ fnPtr: Int) -> Int {
-    let builder = RuntimeSequenceBuilderBox()
-    let builderHandle = registerRuntimeObject(builder)
-
-    var thrown = 0
-    _ = runtimeInvokeClosureThunk(fnPtr: fnPtr, closureRaw: builderHandle, outThrown: &thrown)
-
-    if thrown != 0 {
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
-    }
-
-    let seq = RuntimeSequenceBox(steps: [.builder(elements: builder.elements)])
+    // STDLIB-563: Use continuation-based lazy evaluation.
+    // The coroutine runs the builder lambda on a background thread;
+    // yield() suspends the producer and the elements are materialized
+    // on demand when the sequence is consumed by a terminal operation.
+    let coroutine = RuntimeSequenceCoroutine(fnPtr: fnPtr)
+    let seq = RuntimeSequenceBox(steps: [.lazyBuilder(coroutine: coroutine)])
     return registerRuntimeObject(seq)
 }
 

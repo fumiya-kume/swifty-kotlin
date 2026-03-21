@@ -524,6 +524,153 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(sequenceElements(combined), [99])
     }
 
+    // MARK: - Lazy Sequence Builder Tests (STDLIB-563)
+
+    func testSequenceBuilderBuildYieldsElementsInOrder() {
+        // sequence { yield(1); yield(2); yield(3) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [1, 2, 3])
+    }
+
+    func testSequenceBuilderBuildEmptyBlock() {
+        // sequence { }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [])
+    }
+
+    func testSequenceBuilderBuildSingleElement() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 42)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [42])
+    }
+
+    func testSequenceBuilderBuildWithMap() {
+        // sequence { yield(1); yield(2); yield(3) }.map { it * 10 }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+
+        // Apply map: multiply by 10
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value * 10
+        }
+        let mapped = kk_sequence_map(
+            seqHandle,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(mapped), [10, 20, 30])
+    }
+
+    func testSequenceBuilderBuildWithTake() {
+        // sequence { yield(1); yield(2); yield(3); yield(4); yield(5) }.take(3).toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            _ = kk_sequence_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let taken = kk_sequence_take(seqHandle, 3)
+        XCTAssertEqual(sequenceElements(taken), [1, 2, 3])
+    }
+
+    func testSequenceBuilderBuildWithFilter() {
+        // sequence { yield(1); yield(2); yield(3); yield(4) }.filter { it % 2 == 0 }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value % 2 == 0 ? 1 : 0
+        }
+        let filtered = kk_sequence_filter(
+            seqHandle,
+            unsafeBitCast(filterFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(filtered), [2, 4])
+    }
+
+    func testSequenceBuilderBuildYieldAllFromList() {
+        // sequence { yieldAll(listOf(10, 20)); yield(30) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Create a list [10, 20]
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, 10, &thrown)
+            _ = kk_array_set(arr, 1, 20, &thrown)
+            let list = kk_list_of(arr, 2)
+            _ = kk_sequence_builder_yieldAll(builderRaw, list)
+            _ = kk_sequence_builder_yield(builderRaw, 30)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [10, 20, 30])
+    }
+
+    func testSequenceBuilderBuildReiterableProducesSameElements() {
+        // Verify that materializing the same lazy sequence twice produces the same result
+        // (cached after first materialization).
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 7)
+            _ = kk_sequence_builder_yield(builderRaw, 8)
+            _ = kk_sequence_builder_yield(builderRaw, 9)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [7, 8, 9])
+        // Second materialization should produce the same result (cached).
+        XCTAssertEqual(sequenceElements(seqHandle), [7, 8, 9])
+    }
+
+    func testSequenceBuilderBuildManyElements() {
+        // sequence { for (i in 0..99) yield(i) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            for i in 0 ..< 100 {
+                _ = kk_sequence_builder_yield(builderRaw, i)
+            }
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let result = sequenceElements(seqHandle)
+        XCTAssertEqual(result.count, 100)
+        XCTAssertEqual(result.first, 0)
+        XCTAssertEqual(result.last, 99)
+    }
+
     // MARK: - Helpers
 
     private func sequenceElements(_ seqRaw: Int) -> [Int] {

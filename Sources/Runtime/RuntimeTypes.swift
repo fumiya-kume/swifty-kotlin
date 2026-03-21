@@ -318,6 +318,11 @@ enum SequenceStepKind {
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
     case onEachStep(fnPtr: Int, closureRaw: Int)
+    /// STDLIB-563: Lazy continuation-based builder.
+    /// The coroutine runs the builder lambda on a background thread;
+    /// each `yield()` suspends the producer until the consumer requests
+    /// the next element.
+    case lazyBuilder(coroutine: RuntimeSequenceCoroutine)
 }
 
 /// Runtime box for `Sequence<T>`.
@@ -332,8 +337,155 @@ final class RuntimeSequenceBox {
 
 /// Runtime box for the `sequence { yield(x) }` builder.
 /// Accumulates yielded elements during builder block execution.
+/// Used as a fallback when the lazy coroutine path is not available.
 final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
+}
+
+/// STDLIB-563: Continuation-based lazy sequence coroutine.
+///
+/// Runs the builder lambda on a background thread. Each call to `yield(value)`
+/// suspends the producer (via `producerSemaphore`) until the consumer calls
+/// `materializeAll()`, which signals the producer to continue.
+///
+/// The coroutine is started lazily on the first call to `materializeAll()`.
+///
+/// Thread protocol:
+///   Producer thread (background):
+///     1. Runs builder lambda
+///     2. On yield(value): store value, signal consumer, wait on producer semaphore
+///     3. On completion: set finished flag, signal consumer
+///
+///   Consumer thread (caller):
+///     1. materializeAll(): signal producer, wait on consumer semaphore, read value
+///     2. Returns when producer has finished
+final class RuntimeSequenceCoroutine: @unchecked Sendable {
+    /// The builder lambda function pointer (closureThunk convention).
+    let fnPtr: Int
+
+    /// Semaphore the producer waits on after yielding a value.
+    /// Signaled by the consumer when it wants the next element.
+    private let producerSemaphore = DispatchSemaphore(value: 0)
+
+    /// Semaphore the consumer waits on when requesting a value.
+    /// Signaled by the producer after yielding or finishing.
+    private let consumerSemaphore = DispatchSemaphore(value: 0)
+
+    /// Guard for mutable state access.
+    private let stateLock = NSLock()
+
+    /// The most recently yielded value (producer -> consumer).
+    private var yieldedValue: Int = 0
+
+    /// Whether the producer has finished (either completed or threw).
+    private var finished = false
+
+    /// Whether the coroutine background thread has been started.
+    private var started = false
+
+    /// All elements materialized so far (cache for re-iteration).
+    private var materializedElements: [Int] = []
+
+    /// Whether the coroutine has been fully exhausted.
+    private var fullyMaterialized = false
+
+    init(fnPtr: Int) {
+        self.fnPtr = fnPtr
+    }
+
+    /// Called by the producer (background thread) to yield a value.
+    /// Suspends the producer until the consumer requests the next element.
+    func yieldValue(_ value: Int) {
+        stateLock.lock()
+        yieldedValue = value
+        stateLock.unlock()
+
+        // Signal the consumer that a value is available
+        consumerSemaphore.signal()
+        // Wait for the consumer to request the next element
+        producerSemaphore.wait()
+    }
+
+    /// Called by the producer when it finishes (normally or via exception).
+    func markFinished() {
+        stateLock.lock()
+        finished = true
+        stateLock.unlock()
+        consumerSemaphore.signal()
+    }
+
+    /// Materialize all elements from the coroutine and return them.
+    /// This is the main entry point for evaluateSequence.
+    /// The coroutine is started lazily on the first call.
+    func materializeAll() -> [Int] {
+        stateLock.lock()
+        if fullyMaterialized {
+            let elems = materializedElements
+            stateLock.unlock()
+            return elems
+        }
+        stateLock.unlock()
+
+        ensureStarted()
+
+        while true {
+            // Request next element from producer
+            producerSemaphore.signal()
+            consumerSemaphore.wait()
+
+            stateLock.lock()
+            if finished {
+                fullyMaterialized = true
+                let elems = materializedElements
+                stateLock.unlock()
+                return elems
+            }
+            materializedElements.append(yieldedValue)
+            stateLock.unlock()
+        }
+    }
+
+    /// Start the background thread if not already started.
+    private func ensureStarted() {
+        stateLock.lock()
+        guard !started else {
+            stateLock.unlock()
+            return
+        }
+        started = true
+        stateLock.unlock()
+
+        let coroutine = self
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Wait for the first consumer request before starting
+            coroutine.producerSemaphore.wait()
+
+            let builderHandle = registerRuntimeObject(
+                RuntimeSequenceCoroutineBuilderProxy(coroutine: coroutine)
+            )
+
+            var thrown = 0
+            let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
+            _ = fn(builderHandle, &thrown)
+
+            if thrown != 0 {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
+            }
+
+            coroutine.markFinished()
+        }
+    }
+}
+
+/// Proxy object passed to the builder lambda as the "builder" handle.
+/// When `kk_sequence_builder_yield` receives this handle, it delegates
+/// to the coroutine's `yieldValue()` which suspends the producer thread.
+final class RuntimeSequenceCoroutineBuilderProxy {
+    let coroutine: RuntimeSequenceCoroutine
+
+    init(coroutine: RuntimeSequenceCoroutine) {
+        self.coroutine = coroutine
+    }
 }
 
 /// Runtime box for the `iterator { yield(x) }` builder (STDLIB-331/564).
