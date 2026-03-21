@@ -520,7 +520,8 @@ public func kk_kclass_register_metadata(
     _ supertypeNameRaw: Int,
     _ flags: Int,
     _ fieldCount: Int,
-    _ memberCount: Int
+    _ memberCount: Int,
+    _ constructorCount: Int
 ) -> Int {
     let qualifiedName = extractString(from: UnsafeMutableRawPointer(bitPattern: qualifiedNameRaw)) ?? "Unknown"
     let simpleName = extractString(from: UnsafeMutableRawPointer(bitPattern: simpleNameRaw)) ?? "Unknown"
@@ -545,7 +546,7 @@ public func kk_kclass_register_metadata(
         isAbstract: (flags & (1 << 7)) != 0,
         fieldCount: fieldCount,
         memberCount: memberCount,
-        constructorCount: 0
+        constructorCount: constructorCount
     )
     runtimeKClassMetadataRegistry.register(typeToken: typeToken, entry: entry)
     return 0
@@ -664,11 +665,11 @@ public func kk_kclass_isInstance(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
 /// populated by a future metadata emission pass.
 @_cdecl("kk_kclass_members")
 public func kk_kclass_members(_ kclassRaw: Int) -> Int {
-    guard let _ = runtimeKClassBox(from: kclassRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+    guard runtimeKClassBox(from: kclassRaw) != nil else {
+        return 0
     }
-    // Return an empty list for now; full member metadata is a future enhancement.
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    // TODO(REFL-005): Build RuntimeKCallableBox values from emitted metadata.
+    return 0
 }
 
 /// Returns the constructors of this KClass as a runtime list of KFunction boxes.
@@ -676,11 +677,11 @@ public func kk_kclass_members(_ kclassRaw: Int) -> Int {
 /// populated by a future metadata emission pass.
 @_cdecl("kk_kclass_constructors")
 public func kk_kclass_constructors(_ kclassRaw: Int) -> Int {
-    guard let _ = runtimeKClassBox(from: kclassRaw) else {
-        return registerRuntimeObject(RuntimeListBox(elements: []))
+    guard runtimeKClassBox(from: kclassRaw) != nil else {
+        return 0
     }
-    // Return an empty list for now; constructor metadata is a future enhancement.
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    // TODO(REFL-005): Build RuntimeKFunctionBox values from emitted metadata.
+    return 0
 }
 
 // MARK: - REFL-005: KType and typeOf<T>()
@@ -781,16 +782,10 @@ public func kk_ktypeprojection_variance(_ projRaw: Int) -> Int {
 /// This is the reified inline function entry point. The compiler emits the
 /// type token and nullability at the call site.
 @_cdecl("kk_typeof")
-public func kk_typeof(_ typeToken: Int, _ nameHint: Int, _ isNullable: Int) -> Int {
+public func kk_typeof(_ typeToken: Int, _ nameHint: Int, _ argsRaw: Int, _ isNullable: Int) -> Int {
     // Create the KClass classifier for this type.
     let classifierRaw = kk_kclass_create(typeToken, nameHint)
-    // Create a KType with no type arguments (simple type).
-    let box = RuntimeKTypeBox(
-        classifierRaw: classifierRaw,
-        argumentRaws: [],
-        isMarkedNullable: isNullable != 0
-    )
-    return registerRuntimeObject(box)
+    return kk_ktype_create(classifierRaw, argsRaw, isNullable)
 }
 
 // MARK: - KType / KTypeProjection Box Helpers

@@ -148,7 +148,8 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             supertypeName,
             flags,
             5, // fieldCount
-            12 // memberCount
+            12, // memberCount
+            2 // constructorCount
         )
         XCTAssertEqual(result, 0)
 
@@ -162,6 +163,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         XCTAssertFalse(entry?.isSealedClass ?? true)
         XCTAssertEqual(entry?.fieldCount, 5)
         XCTAssertEqual(entry?.memberCount, 12)
+        XCTAssertEqual(entry?.constructorCount, 2)
     }
 
     func testRegisterMetadataWithNullSupertype() {
@@ -172,7 +174,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
             99, qualifiedName, simpleName,
             0, // null supertype
             0, // no flags
-            1, -1 // fieldCount=1, memberCount unknown
+            1, -1, 0 // fieldCount=1, memberCount unknown, constructorCount=0
         )
 
         let entry = runtimeKClassMetadataRegistry.lookup(typeToken: 99)
@@ -245,7 +247,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         let simpleName = makeRuntimeString("MemberTest")
         let _ = kk_kclass_register_metadata(
             typeToken, qualifiedName, simpleName,
-            0, 0, 3, 10 // 3 fields, 10 members
+            0, 0, 3, 10, 1 // 3 fields, 10 members, 1 constructor
         )
         let kclass = kk_kclass_create(typeToken, 0)
         XCTAssertEqual(kk_kclass_members_count(kclass), 10)
@@ -263,7 +265,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         let superName = makeRuntimeString("Parent")
         let _ = kk_kclass_register_metadata(
             typeToken, qualifiedName, simpleName,
-            superName, 0, 0, 0
+            superName, 0, 0, 0, 0
         )
         let kclass = kk_kclass_create(typeToken, 0)
         let resultRaw = kk_kclass_supertype_name(kclass)
@@ -277,7 +279,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         let simpleName = makeRuntimeString("Root")
         let _ = kk_kclass_register_metadata(
             typeToken, qualifiedName, simpleName,
-            0, 0, 0, 0
+            0, 0, 0, 0, 0
         )
         let kclass = kk_kclass_create(typeToken, 0)
         let resultRaw = kk_kclass_supertype_name(kclass)
@@ -292,7 +294,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         let simpleName = makeRuntimeString("MyClass")
         let _ = kk_kclass_register_metadata(
             typeToken, qualifiedName, simpleName,
-            0, 0, 0, 0
+            0, 0, 0, 0, 0
         )
         let nameHint = makeRuntimeString("MyClass")
         let kclass = kk_kclass_create(typeToken, nameHint)
@@ -345,7 +347,7 @@ final class RuntimeKClassMetadataTests: XCTestCase {
         let simpleName = makeRuntimeString("TestClass")
         let _ = kk_kclass_register_metadata(
             typeToken, qualifiedName, simpleName,
-            0, flags, 0, 0
+            0, flags, 0, 0, 0
         )
     }
 }

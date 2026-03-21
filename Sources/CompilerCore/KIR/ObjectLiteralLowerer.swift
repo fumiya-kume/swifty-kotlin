@@ -291,12 +291,18 @@ final class ObjectLiteralLowerer {
         let memberCountExpr = arena.appendExpr(.intLiteral(memberCount), type: intType)
         instructions.append(.constValue(result: memberCountExpr, value: .intLiteral(memberCount)))
 
+        let constructorCount = Int64(sema.symbols.children(ofFQName: symbol.fqName).filter { child in
+            sema.symbols.symbol(child)?.kind == .constructor
+        }.count)
+        let constructorCountExpr = arena.appendExpr(.intLiteral(constructorCount), type: intType)
+        instructions.append(.constValue(result: constructorCountExpr, value: .intLiteral(constructorCount)))
+
         // Call kk_kclass_register_metadata.
         let registerResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: intType)
         instructions.append(.call(
             symbol: nil,
             callee: interner.intern("kk_kclass_register_metadata"),
-            arguments: [typeTokenExpr, fqNameExpr, simpleNameExpr, supertypeNameExpr, flagsExpr, fieldCountExpr, memberCountExpr],
+            arguments: [typeTokenExpr, fqNameExpr, simpleNameExpr, supertypeNameExpr, flagsExpr, fieldCountExpr, memberCountExpr, constructorCountExpr],
             result: registerResult,
             canThrow: false,
             thrownResult: nil

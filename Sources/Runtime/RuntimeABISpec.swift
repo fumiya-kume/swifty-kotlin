@@ -2197,6 +2197,7 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "flags", type: .intptr),
                 RuntimeABIParameter(name: "fieldCount", type: .intptr),
                 RuntimeABIParameter(name: "memberCount", type: .intptr),
+                RuntimeABIParameter(name: "constructorCount", type: .intptr),
             ],
             returnType: .intptr,
             section: "TypeCheck"
@@ -2364,6 +2365,7 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "typeToken", type: .intptr),
                 RuntimeABIParameter(name: "nameHint", type: .intptr),
+                RuntimeABIParameter(name: "argsRaw", type: .intptr),
                 RuntimeABIParameter(name: "isNullable", type: .intptr),
             ],
             returnType: .intptr,

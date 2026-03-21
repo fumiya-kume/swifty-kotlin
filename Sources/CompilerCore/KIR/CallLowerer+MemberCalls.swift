@@ -163,6 +163,7 @@ extension CallLowerer {
                     sema: sema,
                     arena: arena,
                     interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
             }
@@ -4001,10 +4002,12 @@ extension CallLowerer {
         sema: SemaModule,
         arena: KIRArena,
         interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let intType = sema.types.make(.primitive(.int, .nonNull))
         let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+        let stringType = sema.types.stringType
 
         // 1. Create the KClass box via kk_kclass_create.
         let tokenExpr: KIRExprID
@@ -4021,7 +4024,7 @@ extension CallLowerer {
         let nameHintExpr: KIRExprID
         if let name = RuntimeTypeCheckToken.simpleName(of: classRefTargetType, sema: sema, interner: interner) {
             let internedName = interner.intern(name)
-            nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: intType)
+            nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: stringType)
             instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
         } else {
             nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
@@ -4048,7 +4051,7 @@ extension CallLowerer {
                 valueExpr = driver.lowerExpr(
                     firstArg.expr,
                     ast: ast, sema: sema, arena: arena, interner: interner,
-                    propertyConstantInitializers: [:],
+                    propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
             } else {

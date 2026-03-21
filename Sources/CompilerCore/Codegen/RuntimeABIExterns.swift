@@ -1713,7 +1713,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_kclass_register_metadata = ExternDecl(
         name: "kk_kclass_register_metadata",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -1837,7 +1837,7 @@ public enum RuntimeABIExterns {
 
     public static let kk_typeof = ExternDecl(
         name: "kk_typeof",
-        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

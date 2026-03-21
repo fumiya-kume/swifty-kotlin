@@ -998,7 +998,7 @@ final class CallLowerer {
 
     // MARK: - REFL-005: typeOf<T>() Lowering
 
-    /// Lowers `typeOf<T>()` calls to `kk_typeof(typeToken, nameHint, isNullable)`.
+    /// Lowers `typeOf<T>()` calls to `kk_typeof(typeToken, nameHint, argsRaw, isNullable)`.
     /// Returns nil if the expression is not a typeOf call.
     private func lowerTypeOfCallExpr(
         _ exprID: ExprID,
@@ -1009,7 +1009,10 @@ final class CallLowerer {
         interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> KIRExprID? {
-        // Check if the callee is "typeOf".
+        guard sema.bindings.stdlibSpecialCallKind(for: exprID) == .typeOf else {
+            return nil
+        }
+
         guard let callee = ast.arena.expr(calleeExpr),
               case let .nameRef(name, _) = callee,
               interner.resolve(name) == "typeOf"
@@ -1030,63 +1033,169 @@ final class CallLowerer {
         }
 
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        let stringType = sema.types.stringType
 
-        // 1. Encode the type token.
-        let tokenExpr: KIRExprID
-        if case let .typeParam(typeParam) = sema.types.kind(of: typeArg) {
-            let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParam.symbol)
-            tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
-            instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
-        } else {
-            let encoded = RuntimeTypeCheckToken.encode(type: typeArg, sema: sema, interner: interner)
-            tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
-            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
-        }
-
-        // 2. Name hint.
-        let nameHintExpr: KIRExprID
-        if let name = RuntimeTypeCheckToken.simpleName(of: typeArg, sema: sema, interner: interner) {
-            let internedName = interner.intern(name)
-            nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: intType)
-            instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
-        } else {
-            nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
-            instructions.append(.constValue(result: nameHintExpr, value: .intLiteral(0)))
-        }
-
-        // 3. Nullability flag.
-        let isNullable: Int64 = {
-            switch sema.types.kind(of: typeArg) {
-            case let .primitive(_, nullability):
-                return nullability == .nullable ? 1 : 0
-            case let .classType(ct):
-                return ct.nullability == .nullable ? 1 : 0
-            case let .typeParam(tp):
-                return tp.nullability == .nullable ? 1 : 0
-            case let .kClassType(kc):
-                return kc.nullability == .nullable ? 1 : 0
-            case let .any(nullability):
-                return nullability == .nullable ? 1 : 0
-            case let .nothing(nullability):
-                return nullability == .nullable ? 1 : 0
-            default:
-                return 0
+        func makeTypeTokenExpr(for type: TypeID) -> KIRExprID {
+            if case let .typeParam(typeParam) = sema.types.kind(of: type) {
+                let tokenSymbol = SyntheticSymbolScheme.reifiedTypeTokenSymbol(for: typeParam.symbol)
+                let tokenExpr = arena.appendExpr(.symbolRef(tokenSymbol), type: intType)
+                instructions.append(.constValue(result: tokenExpr, value: .symbolRef(tokenSymbol)))
+                return tokenExpr
             }
-        }()
-        let isNullableExpr = arena.appendExpr(.intLiteral(isNullable), type: intType)
-        instructions.append(.constValue(result: isNullableExpr, value: .intLiteral(isNullable)))
+            let encoded = RuntimeTypeCheckToken.encode(type: type, sema: sema, interner: interner)
+            let tokenExpr = arena.appendExpr(.intLiteral(encoded), type: intType)
+            instructions.append(.constValue(result: tokenExpr, value: .intLiteral(encoded)))
+            return tokenExpr
+        }
 
-        // 4. Call kk_typeof.
+        func makeNameHintExpr(for type: TypeID) -> KIRExprID {
+            if let name = RuntimeTypeCheckToken.simpleName(of: type, sema: sema, interner: interner) {
+                let internedName = interner.intern(name)
+                let nameHintExpr = arena.appendExpr(.stringLiteral(internedName), type: stringType)
+                instructions.append(.constValue(result: nameHintExpr, value: .stringLiteral(internedName)))
+                return nameHintExpr
+            }
+            let nameHintExpr = arena.appendExpr(.intLiteral(0), type: intType)
+            instructions.append(.constValue(result: nameHintExpr, value: .intLiteral(0)))
+            return nameHintExpr
+        }
+
+        func makeNullabilityExpr(for type: TypeID) -> KIRExprID {
+            let isNullable: Int64 = {
+                switch sema.types.kind(of: type) {
+                case let .primitive(_, nullability):
+                    return nullability == .nullable ? 1 : 0
+                case let .classType(ct):
+                    return ct.nullability == .nullable ? 1 : 0
+                case let .typeParam(tp):
+                    return tp.nullability == .nullable ? 1 : 0
+                case let .kClassType(kc):
+                    return kc.nullability == .nullable ? 1 : 0
+                case let .any(nullability):
+                    return nullability == .nullable ? 1 : 0
+                case let .nothing(nullability):
+                    return nullability == .nullable ? 1 : 0
+                default:
+                    return 0
+                }
+            }()
+            let isNullableExpr = arena.appendExpr(.intLiteral(isNullable), type: intType)
+            instructions.append(.constValue(result: isNullableExpr, value: .intLiteral(isNullable)))
+            return isNullableExpr
+        }
+
+        func lowerKTypeExpr(for type: TypeID) -> KIRExprID {
+            func lowerKTypeProjectionExpr(_ argument: TypeArg) -> KIRExprID {
+                let varianceOrdinal: Int64
+                let typeRawExpr: KIRExprID
+                switch argument {
+                case .star:
+                    varianceOrdinal = -1
+                    typeRawExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                    instructions.append(.constValue(result: typeRawExpr, value: .intLiteral(0)))
+                case let .invariant(argumentType):
+                    varianceOrdinal = 2
+                    typeRawExpr = lowerKTypeExpr(for: argumentType)
+                case let .out(argumentType):
+                    varianceOrdinal = 1
+                    typeRawExpr = lowerKTypeExpr(for: argumentType)
+                case let .in(argumentType):
+                    varianceOrdinal = 0
+                    typeRawExpr = lowerKTypeExpr(for: argumentType)
+                }
+                let varianceExpr = arena.appendExpr(.intLiteral(varianceOrdinal), type: intType)
+                instructions.append(.constValue(result: varianceExpr, value: .intLiteral(varianceOrdinal)))
+                let projectionExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_ktypeprojection_create"),
+                    arguments: [typeRawExpr, varianceExpr],
+                    result: projectionExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return projectionExpr
+            }
+
+            let tokenExpr = makeTypeTokenExpr(for: type)
+            let nameHintExpr = makeNameHintExpr(for: type)
+            let classifierExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_kclass_create"),
+                arguments: [tokenExpr, nameHintExpr],
+                result: classifierExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+
+            let typeArguments: [TypeArg] = switch sema.types.kind(of: sema.types.makeNonNullable(type)) {
+            case let .classType(classType):
+                classType.args
+            case let .kClassType(kClassType):
+                [.invariant(kClassType.argument)]
+            default:
+                []
+            }
+
+            let argsListExpr: KIRExprID
+            if typeArguments.isEmpty {
+                argsListExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: argsListExpr, value: .intLiteral(0)))
+            } else {
+                let countExpr = arena.appendExpr(.intLiteral(Int64(typeArguments.count)), type: intType)
+                instructions.append(.constValue(result: countExpr, value: .intLiteral(Int64(typeArguments.count))))
+                let arrayExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_array_new"),
+                    arguments: [countExpr],
+                    result: arrayExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                for (index, argument) in typeArguments.enumerated() {
+                    let projectionExpr = lowerKTypeProjectionExpr(argument)
+                    let indexExpr = arena.appendExpr(.intLiteral(Int64(index)), type: intType)
+                    instructions.append(.constValue(result: indexExpr, value: .intLiteral(Int64(index))))
+                    let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_set"),
+                        arguments: [arrayExpr, indexExpr, projectionExpr],
+                        result: setResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+                argsListExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern("kk_list_of"),
+                    arguments: [arrayExpr, countExpr],
+                    result: argsListExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+            }
+
+            let isNullableExpr = makeNullabilityExpr(for: type)
+            let ktypeExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+            instructions.append(.call(
+                symbol: nil,
+                callee: interner.intern("kk_typeof"),
+                arguments: [tokenExpr, nameHintExpr, argsListExpr, isNullableExpr],
+                result: ktypeExpr,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return ktypeExpr
+        }
+
         let resultType = sema.bindings.exprTypes[exprID] ?? sema.types.anyType
+        let lowered = lowerKTypeExpr(for: typeArg)
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
-        instructions.append(.call(
-            symbol: nil,
-            callee: interner.intern("kk_typeof"),
-            arguments: [tokenExpr, nameHintExpr, isNullableExpr],
-            result: result,
-            canThrow: false,
-            thrownResult: nil
-        ))
+        instructions.append(.copy(from: lowered, to: result))
         return result
     }
 }

@@ -502,6 +502,18 @@ final class CallTypeChecker {
             return timedValueType
         }
 
+        // --- Stdlib typeOf<T>() (REFL-005) ---
+        if let calleeName,
+           interner.resolve(calleeName) == "typeOf",
+           args.isEmpty,
+           explicitTypeArgs.count == 1,
+           !isShadowedByNonSyntheticSymbol(calleeName, locals: locals, ctx: ctx)
+        {
+            sema.bindings.markStdlibSpecialCallExpr(id, kind: .typeOf)
+            sema.bindings.bindExprType(id, type: sema.types.anyType)
+            return sema.types.anyType
+        }
+
         // --- Stdlib Array(size) { init } constructor (STDLIB-085/086, TYPE-103) ---
         if let calleeName,
            knownNames.isPrimitiveArrayConstructorTypeName(calleeName),
