@@ -5690,7 +5690,7 @@ extension DataFlowSemaPhase {
 
     // MARK: - Collection Type Aliases (STDLIB-560)
 
-    /// Register `ArrayList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
+    /// Register `ArrayList<E>`, `LinkedList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
     /// as type aliases pointing to their corresponding mutable collection types.
     private func registerSyntheticCollectionTypeAliases(
         symbols: SymbolTable,
@@ -5701,6 +5701,14 @@ extension DataFlowSemaPhase {
         // ArrayList<E> → MutableList<E>
         registerSingleTypeParamCollectionAlias(
             aliasName: "ArrayList",
+            targetName: "MutableList",
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        // LinkedList<E> → MutableList<E>
+        registerSingleTypeParamCollectionAlias(
+            aliasName: "LinkedList",
             targetName: "MutableList",
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg
