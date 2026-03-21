@@ -6,4 +6,5 @@ fun useRandom() {
     val c = Random.nextInt(1, 10)
     val d = Random.nextDouble()
     val e = Random.nextBoolean()
+    val f = Random.nextFloat()
 }
