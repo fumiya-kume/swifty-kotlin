@@ -1719,7 +1719,7 @@ final class SuspendedReceiver {
 ///   - **Cancellation**: `send` and `receive` check the caller's continuation
 ///     for cancellation before suspending, and suspended waiters can be removed
 ///     via `cancelAllWaiters()` (cooperatively from the coroutine runtime).
-final class RuntimeChannelHandle {
+final class RuntimeChannelHandle: @unchecked Sendable {
     private let lock = NSLock()
     // NOTE: `buffer`, `senderQueue`, and `receiverQueue` use `Array` with
     // `removeFirst()` which is O(n) due to element shifting.  For the current
