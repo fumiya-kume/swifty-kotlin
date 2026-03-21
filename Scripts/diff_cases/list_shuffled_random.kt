@@ -2,7 +2,6 @@ import kotlin.random.Random
 
 fun main() {
     val list = listOf(3, 1, 4, 1, 5, 9, 2, 6)
-<<<<<<< HEAD
 
     // shuffled() returns a new list with same size
     val shuffled = list.shuffled()
