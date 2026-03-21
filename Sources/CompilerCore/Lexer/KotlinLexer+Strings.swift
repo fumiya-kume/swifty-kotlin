@@ -504,6 +504,35 @@ extension KotlinLexer {
                     continue
                 }
 
+                if consecutiveDollars >= dollarCount,
+                   afterDollars < bytes.count,
+                   isIdentifierStart(bytes[afterDollars]),
+                   bytes[afterDollars] != 0x24
+                {
+                    let literalDollars = consecutiveDollars - dollarCount
+                    if literalDollars > 0 {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset + literalDollars, leadingTrivia: [])
+                    } else {
+                        appendSegment(to: &tokens, from: segmentStart, to: offset, leadingTrivia: [])
+                    }
+                    let templateStart = offset + literalDollars
+                    tokens.append(
+                        Token(
+                            kind: .templateSimpleNameStart,
+                            range: makeRange(start: templateStart, end: templateStart + dollarCount),
+                            leadingTrivia: []
+                        )
+                    )
+                    offset = afterDollars
+                    if let templateName = scanTemplateName(leadingTrivia: [], start: offset) {
+                        tokens.append(templateName)
+                        segmentStart = offset
+                        continue
+                    }
+                    segmentStart = offset
+                    continue
+                }
+
                 // Not enough dollars — treat as literal
                 offset += consecutiveDollars
                 continue
