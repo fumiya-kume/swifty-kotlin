@@ -599,6 +599,7 @@ final class LambdaLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
+        let isUnbound = sema.bindings.isUnboundCallableRef(exprID)
         var captureArguments: [KIRExprID] = []
         if let receiverExpr {
             let loweredReceiver = driver.lowerExpr(
@@ -610,7 +611,11 @@ final class LambdaLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            captureArguments.append(loweredReceiver)
+            // For unbound type references (Type::member), the receiver is
+            // not captured — it becomes a parameter of the function type.
+            if !isUnbound {
+                captureArguments.append(loweredReceiver)
+            }
         }
 
         let targetSymbol = resolveCallableRefTargetSymbol(
