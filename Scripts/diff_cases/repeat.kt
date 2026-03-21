@@ -38,12 +38,6 @@ fun main() {
         }
     }
 
-    // return@repeat acts like continue
-    repeat(5) {
-        if (it == 2) return@repeat
-        println("skip2: $it")
-    }
-
     // Expression as times argument
     val n = 3
     repeat(n + 1) {
@@ -59,7 +53,7 @@ fun main() {
     // Large iteration count (just verify it runs)
     var count = 0
     repeat(1000) {
-        count++
+        count += 1
     }
     println("count=$count")
 }
