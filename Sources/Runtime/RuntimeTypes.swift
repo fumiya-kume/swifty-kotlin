@@ -359,7 +359,7 @@ final class RuntimeSequenceBuilderBox {
 ///   Consumer thread (caller):
 ///     1. materializeAll(): signal producer, wait on consumer semaphore, read value
 ///     2. Returns when producer has finished
-final class RuntimeSequenceCoroutine {
+final class RuntimeSequenceCoroutine: @unchecked Sendable {
     /// The builder lambda function pointer (closureThunk convention).
     let fnPtr: Int
 
