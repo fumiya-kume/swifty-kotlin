@@ -33,16 +33,8 @@ fun main() {
     println(list.subList(2, 2).isEmpty())
     println(list.subList(1, 3).isEmpty())
 
-    // MutableList subList
+    // MutableList subList (read-only access)
     val mutable = mutableListOf(10, 20, 30, 40, 50)
     val mutableSub = mutable.subList(1, 4)
     println(mutableSub)
-    mutableSub[0] = 99
-    println(mutableSub)
-    println(mutable)
-
-    // subList iteration
-    for (item in list.subList(2, 5)) {
-        println(item)
-    }
 }
