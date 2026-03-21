@@ -414,6 +414,66 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
         consumerSemaphore.signal()
     }
 
+    /// Result type for `nextElement()`: either a value or end-of-sequence.
+    enum NextResult {
+        case value(Int)
+        case done
+    }
+
+    /// Request the next element from the coroutine, one at a time.
+    ///
+    /// If there are already-materialized elements beyond the current
+    /// consumption index, return the cached element. Otherwise, resume the
+    /// producer to compute the next value.
+    ///
+    /// Returns `.done` when the producer has finished and all cached
+    /// elements have been consumed.
+    private var consumptionIndex: Int = 0
+
+    func nextElement() -> NextResult {
+        stateLock.lock()
+        // If we have cached elements beyond the current index, return them.
+        if consumptionIndex < materializedElements.count {
+            let elem = materializedElements[consumptionIndex]
+            consumptionIndex += 1
+            stateLock.unlock()
+            return .value(elem)
+        }
+        // If fully materialized and no more cached elements, we're done.
+        if fullyMaterialized {
+            stateLock.unlock()
+            return .done
+        }
+        stateLock.unlock()
+
+        ensureStarted()
+
+        // Request next element from producer
+        producerSemaphore.signal()
+        consumerSemaphore.wait()
+
+        stateLock.lock()
+        if finished {
+            fullyMaterialized = true
+            stateLock.unlock()
+            return .done
+        }
+        let value = yieldedValue
+        materializedElements.append(value)
+        consumptionIndex += 1
+        stateLock.unlock()
+        return .value(value)
+    }
+
+    /// Reset the consumption index so re-iteration over the same coroutine
+    /// replays from the beginning (using cached elements first, then resuming
+    /// the producer if needed).
+    func resetIteration() {
+        stateLock.lock()
+        consumptionIndex = 0
+        stateLock.unlock()
+    }
+
     /// Materialize all elements from the coroutine and return them.
     /// This is the main entry point for evaluateSequence.
     /// The coroutine is started lazily on the first call.
