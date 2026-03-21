@@ -1529,6 +1529,68 @@ public enum RuntimeABIExterns {
         returnType: "void"
     )
 
+    // MARK: - Mutex / Semaphore (sync primitives)
+
+    public static let kk_mutex_create = ExternDecl(
+        name: "kk_mutex_create",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_lock = ExternDecl(
+        name: "kk_mutex_lock",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_unlock = ExternDecl(
+        name: "kk_mutex_unlock",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_tryLock = ExternDecl(
+        name: "kk_mutex_tryLock",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_isLocked = ExternDecl(
+        name: "kk_mutex_isLocked",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_create = ExternDecl(
+        name: "kk_semaphore_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_acquire = ExternDecl(
+        name: "kk_semaphore_acquire",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_release = ExternDecl(
+        name: "kk_semaphore_release",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_tryAcquire = ExternDecl(
+        name: "kk_semaphore_tryAcquire",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_availablePermits = ExternDecl(
+        name: "kk_semaphore_availablePermits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Boxing
 
     public static let kk_box_int = ExternDecl(
@@ -2613,6 +2675,17 @@ public enum RuntimeABIExterns {
             kk_is_cancellation_exception,
             kk_job_cancel,
             kk_coroutine_cancel,
+            // Mutex / Semaphore (sync primitives)
+            kk_mutex_create,
+            kk_mutex_lock,
+            kk_mutex_unlock,
+            kk_mutex_tryLock,
+            kk_mutex_isLocked,
+            kk_semaphore_create,
+            kk_semaphore_acquire,
+            kk_semaphore_release,
+            kk_semaphore_tryAcquire,
+            kk_semaphore_availablePermits,
             // Boxing
             kk_box_int,
             kk_box_bool,
