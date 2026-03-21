@@ -1159,7 +1159,7 @@ extension CallTypeChecker {
         }
 
         if memberName == interner.intern("filterIndexed"), argCount == 1 {
-            let expectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, sema.types.anyType], returnType: sema.types.booleanType, isSuspend: false, nullability: .nonNull)))
+            let expectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, receiverElementType], returnType: sema.types.booleanType, isSuspend: false, nullability: .nonNull)))
             return (argumentIndex: 0, expectedType: expectedType)
         }
 

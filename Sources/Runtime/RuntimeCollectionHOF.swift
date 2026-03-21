@@ -1066,7 +1066,7 @@ public func kk_list_runningFoldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: 
 public func kk_list_runningReduceIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
     guard !list.elements.isEmpty else {
-        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+        return registerRuntimeObject(RuntimeListBox(elements: []))
     }
     var acc = maybeUnbox(list.elements[0])
     var results: [Int] = []
