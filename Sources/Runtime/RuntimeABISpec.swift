@@ -3397,6 +3397,14 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_from_days",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_from_seconds_long",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -3438,6 +3446,14 @@ public enum RuntimeABISpec {
         ),
         RuntimeABIFunctionSpec(
             name: "kk_duration_from_hours_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_from_days_long",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
             ],
