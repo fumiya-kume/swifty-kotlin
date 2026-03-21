@@ -601,4 +601,63 @@ final class TypeSystemTests: XCTestCase {
             XCTFail("Expected kClassType after substitution, got \(ts.kind(of: result))")
         }
     }
+
+    // MARK: - REFL-001: KClass LUB tests
+
+    func testLubKClassSameArgument() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt1 = ts.makeKClassType(argument: intType)
+        let kClassInt2 = ts.makeKClassType(argument: intType)
+        // lub(KClass<Int>, KClass<Int>) == KClass<Int>
+        let result = ts.lub([kClassInt1, kClassInt2])
+        XCTAssertEqual(result, kClassInt1)
+    }
+
+    func testLubKClassDifferentArguments() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let stringType = ts.make(.primitive(.string, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        let kClassString = ts.makeKClassType(argument: stringType)
+        // lub(KClass<Int>, KClass<String>) should be KClass<lub(Int,String)>
+        let result = ts.lub([kClassInt, kClassString])
+        if case let .kClassType(kc) = ts.kind(of: result) {
+            XCTAssertEqual(kc.nullability, .nonNull)
+            // The inner argument should be a supertype of both Int and String
+            XCTAssertTrue(
+                ts.isSubtype(intType, kc.argument) && ts.isSubtype(stringType, kc.argument),
+                "KClass argument should be a supertype of both Int and String"
+            )
+        } else {
+            XCTFail("Expected kClassType for lub of two KClass types, got \(ts.renderType(result))")
+        }
+    }
+
+    func testLubKClassNullablePreserved() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassNonNull = ts.makeKClassType(argument: intType, nullability: .nonNull)
+        let kClassNullable = ts.makeKClassType(argument: intType, nullability: .nullable)
+        // lub(KClass<Int>, KClass<Int>?) == KClass<Int>?
+        let result = ts.lub([kClassNonNull, kClassNullable])
+        if case let .kClassType(kc) = ts.kind(of: result) {
+            XCTAssertEqual(kc.argument, intType)
+            XCTAssertEqual(kc.nullability, .nullable, "LUB of non-null and nullable KClass should be nullable")
+        } else {
+            XCTFail("Expected kClassType for lub, got \(ts.renderType(result))")
+        }
+    }
+
+    func testLubKClassAndNonKClassFallsToAny() {
+        let ts = TypeSystem()
+        let intType = ts.make(.primitive(.int, .nonNull))
+        let kClassInt = ts.makeKClassType(argument: intType)
+        // lub(KClass<Int>, Int) should fall back to Any? (not KClass)
+        let result = ts.lub([kClassInt, intType])
+        XCTAssertFalse(
+            { if case .kClassType = ts.kind(of: result) { return true }; return false }(),
+            "LUB of KClass and non-KClass should not be a KClass type"
+        )
+    }
 }
