@@ -840,7 +840,11 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
-        Swift.print("(\(first), \(second))")
+        if runtimeIsMapEntry(rawValue: intValue) {
+            Swift.print("\(first)=\(second)")
+        } else {
+            Swift.print("(\(first), \(second))")
+        }
         return
     }
     if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
@@ -1005,6 +1009,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
+        if runtimeIsMapEntry(rawValue: value) {
+            return "\(first)=\(second)"
+        }
         return "(\(first), \(second))"
     }
     if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
