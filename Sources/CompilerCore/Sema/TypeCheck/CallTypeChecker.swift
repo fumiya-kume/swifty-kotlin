@@ -905,7 +905,7 @@ final class CallTypeChecker {
             if candidates.isEmpty {
                 let classSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
                     guard let symbol = ctx.cachedSymbol(candidate) else { return false }
-                    return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass
+                    return symbol.kind == .class || symbol.kind == .enumClass || symbol.kind == .annotationClass || symbol.kind == .object
                 }
                 if let classSym = classSymbols.first, let classSymbol = ctx.cachedSymbol(classSym) {
                     // P5-112: Prohibit direct instantiation of abstract classes.

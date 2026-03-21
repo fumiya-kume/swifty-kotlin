@@ -2,6 +2,7 @@
 
 public extension RuntimeABIExterns {
     static let randomExterns: [ExternDecl] = [
+        kk_random_create_seeded,
         kk_random_nextInt,
         kk_random_nextInt_until,
         kk_random_nextInt_range,
@@ -12,6 +13,12 @@ public extension RuntimeABIExterns {
         kk_random_nextDouble,
         kk_random_nextBoolean,
     ]
+
+    static let kk_random_create_seeded = ExternDecl(
+        name: "kk_random_create_seeded",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
 
     static let kk_random_nextInt = ExternDecl(
         name: "kk_random_nextInt",

@@ -3,6 +3,14 @@
 public extension RuntimeABISpec {
     static let randomFunctions: [RuntimeABIFunctionSpec] = [
         RuntimeABIFunctionSpec(
+            name: "kk_random_create_seeded",
+            parameters: [
+                RuntimeABIParameter(name: "seed", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_random_nextInt",
             parameters: [
                 RuntimeABIParameter(name: "receiver", type: .intptr),

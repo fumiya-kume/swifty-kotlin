@@ -141,6 +141,7 @@ extension ABILoweringPass {
             interner.intern("kk_float_ulp"),
             interner.intern("kk_float_nextUp"),
             interner.intern("kk_float_nextDown"),
+            interner.intern("kk_random_create_seeded"),
             interner.intern("kk_random_nextInt"),
             interner.intern("kk_random_nextLong"),
             interner.intern("kk_random_nextFloat"),
