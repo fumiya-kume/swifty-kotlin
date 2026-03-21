@@ -685,7 +685,9 @@ extension CollectionLiteralLoweringPass {
                         case lookup.useLinesName:
                             kkCallee = lookup.kkFileUseLinesName
                         case lookup.bufferedReaderName:
-                            kkCallee = lookup.kkFileBufferedReaderName
+                            // Only rewrite argument-less bufferedReader(); the runtime
+                            // function kk_file_bufferedReader does not accept charset/bufferSize.
+                            kkCallee = arguments.count == 1 ? lookup.kkFileBufferedReaderName : nil
                         case lookup.walkName:
                             kkCallee = lookup.kkFileWalkName
                         case lookup.listFilesName:
@@ -701,9 +703,13 @@ extension CollectionLiteralLoweringPass {
                         }
                         
                         if let target = kkCallee {
-                            let memberArgs = (callee == lookup.forEachLineName || callee == lookup.useLinesName) ?
-                                [receiverID] + arguments.dropFirst() :
-                                [receiverID]
+                            let memberArgs: [KIRExprID]
+                            if callee == lookup.forEachLineName || callee == lookup.useLinesName || callee == lookup.writeTextName {
+                                // These calls pass additional arguments beyond the receiver
+                                memberArgs = [receiverID] + arguments.dropFirst()
+                            } else {
+                                memberArgs = [receiverID]
+                            }
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: target,
@@ -3161,6 +3167,7 @@ extension CollectionLiteralLoweringPass {
                         sequenceExprIDs: &sequenceExprIDs,
                         rangeExprIDs: &rangeExprIDs,
                         charRangeExprIDs: &charRangeExprIDs,
+                        fileExprIDs: fileExprIDs,
                         loweredBody: &loweredBody
                     ) {
                         continue
