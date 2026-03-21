@@ -133,10 +133,12 @@ extension ABILoweringPass {
             interner.intern("kk_math_log_float"),
             interner.intern("kk_math_sign_float"),
             interner.intern("kk_math_hypot_float"),
+            // STDLIB-510~511: roundToInt / roundToLong extensions
             interner.intern("kk_float_roundToInt"),
             interner.intern("kk_double_roundToInt"),
             interner.intern("kk_float_roundToLong"),
             interner.intern("kk_double_roundToLong"),
+            // STDLIB-512~513: ulp / nextUp / nextDown extensions
             interner.intern("kk_double_ulp"),
             interner.intern("kk_double_nextUp"),
             interner.intern("kk_double_nextDown"),
