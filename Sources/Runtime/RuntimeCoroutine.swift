@@ -368,6 +368,8 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
+    /// When true, child failures do not cancel sibling children (supervisor job semantics).
+    var isSupervisor = false
     fileprivate var parent: RuntimeCoroutineScope?
 
     // CORO-003: Task-local scope registry (replaces TLS).
@@ -2260,6 +2262,43 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
         UnsafeMutableRawPointer(bitPattern: scopeHandle)!
     ).takeUnretainedValue()
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+    let result = runSuspendEntryLoopWithContinuation(entryPointRaw: entryPointRaw, continuation: continuation)
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
+/// Creates a supervisor scope, runs the block synchronously, waits for all children.
+/// Unlike `coroutineScope`, child failures do not cancel siblings (SupervisorJob semantics).
+/// Used as the lowering target for `supervisorScope { }` blocks.
+@_cdecl("kk_supervisor_scope_run")
+public func kk_supervisor_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> Int {
+    let scopeHandle = kk_coroutine_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    scope.isSupervisor = true
+    let continuation = kk_coroutine_continuation_new(functionID)
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+    let result = runSuspendEntryLoopWithContinuation(
+        entryPointRaw: entryPointRaw, continuation: continuation
+    )
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
+/// Supervisor scope variant with pre-built continuation.
+@_cdecl("kk_supervisor_scope_run_with_cont")
+public func kk_supervisor_scope_run_with_cont(_ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let scopeHandle = kk_coroutine_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    scope.isSupervisor = true
     if let contState = runtimeContinuationState(from: continuation) {
         contState.scope = scope
     }

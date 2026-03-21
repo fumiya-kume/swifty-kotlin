@@ -1503,6 +1503,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_supervisor_scope_run = ExternDecl(
+        name: "kk_supervisor_scope_run",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_supervisor_scope_run_with_cont = ExternDecl(
+        name: "kk_supervisor_scope_run_with_cont",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Cancellation (CORO-002)
 
     public static let kk_coroutine_check_cancellation = ExternDecl(
@@ -2608,6 +2620,8 @@ public enum RuntimeABIExterns {
             kk_job_join,
             kk_coroutine_scope_run,
             kk_coroutine_scope_run_with_cont,
+            kk_supervisor_scope_run,
+            kk_supervisor_scope_run_with_cont,
             // Cancellation (CORO-002)
             kk_coroutine_check_cancellation,
             kk_is_cancellation_exception,

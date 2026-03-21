@@ -18,6 +18,7 @@ final class CoroutineLoweringPass: LoweringPass {
             ctx.interner.intern("async"),
             ctx.interner.intern("withContext"),
             ctx.interner.intern("coroutineScope"),
+            ctx.interner.intern("supervisorScope"),
             ctx.interner.intern("flow"),
             ctx.interner.intern("emit"),
             ctx.interner.intern("collect"),
@@ -68,11 +69,13 @@ final class CoroutineLoweringPass: LoweringPass {
         let kxMiniAsyncCallee = ctx.interner.intern("async")
         let kxMiniWithContextCallee = ctx.interner.intern("withContext")
         let kxMiniCoroutineScopeCallee = ctx.interner.intern("coroutineScope")
+        let kxMiniSupervisorScopeCallee = ctx.interner.intern("supervisorScope")
         let kxMiniDelayCallee = ctx.interner.intern("delay")
         let runtimeRunBlockingCallee = ctx.interner.intern("kk_kxmini_run_blocking")
         let runtimeLaunchCallee = ctx.interner.intern("kk_kxmini_launch")
         let runtimeAsyncCallee = ctx.interner.intern("kk_kxmini_async")
         let runtimeCoroutineScopeRunCallee = ctx.interner.intern("kk_coroutine_scope_run")
+        let runtimeSupervisorScopeRunCallee = ctx.interner.intern("kk_supervisor_scope_run")
         let runtimeDelayCallee = ctx.interner.intern("kk_kxmini_delay")
         let flowCollectCallee = ctx.interner.intern("kk_flow_collect")
         let runtimeSuspendCallNames: Set<InternedString> = [kxMiniDelayCallee, runtimeDelayCallee]
@@ -81,6 +84,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniLaunchCallee: runtimeLaunchCallee,
             kxMiniAsyncCallee: runtimeAsyncCallee,
             kxMiniCoroutineScopeCallee: runtimeCoroutineScopeRunCallee,
+            kxMiniSupervisorScopeCallee: runtimeSupervisorScopeRunCallee,
         ]
 
         let suspendFunctions = module.arena.declarations.compactMap { decl -> KIRFunction? in
@@ -235,6 +239,7 @@ final class CoroutineLoweringPass: LoweringPass {
             kxMiniLaunchCallee: ctx.interner.intern("kk_kxmini_launch_with_cont"),
             kxMiniAsyncCallee: ctx.interner.intern("kk_kxmini_async_with_cont"),
             kxMiniCoroutineScopeCallee: ctx.interner.intern("kk_coroutine_scope_run_with_cont"),
+            kxMiniSupervisorScopeCallee: ctx.interner.intern("kk_supervisor_scope_run_with_cont"),
         ]
 
         let rewriteContext = SuspendRewriteContext(

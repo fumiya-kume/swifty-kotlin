@@ -195,6 +195,34 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticCoroutineTopLevelFunction(
+            named: "coroutineScope",
+            packageFQName: coroutinesPkg,
+            parameterName: "block",
+            parameterType: types.make(.functionType(FunctionType(
+                params: [],
+                returnType: types.anyType,
+                isSuspend: true,
+                nullability: .nonNull
+            ))),
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "supervisorScope",
+            packageFQName: coroutinesPkg,
+            parameterName: "block",
+            parameterType: types.make(.functionType(FunctionType(
+                params: [],
+                returnType: types.anyType,
+                isSuspend: true,
+                nullability: .nonNull
+            ))),
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
             named: "delay",
             packageFQName: coroutinesPkg,
             parameterName: "timeMillis",

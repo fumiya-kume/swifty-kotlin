@@ -211,6 +211,8 @@ extension ABILoweringPass {
             interner.intern("kk_kxmini_async_with_cont"),
             interner.intern("kk_coroutine_scope_run"),
             interner.intern("kk_coroutine_scope_run_with_cont"),
+            interner.intern("kk_supervisor_scope_run"),
+            interner.intern("kk_supervisor_scope_run_with_cont"),
             interner.intern("kk_coroutine_scope_new"),
             interner.intern("kk_coroutine_scope_cancel"),
             interner.intern("kk_coroutine_scope_wait"),
