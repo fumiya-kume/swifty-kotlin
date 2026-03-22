@@ -261,6 +261,44 @@ extension CallTypeChecker {
         return finalType
     }
 
+    func tryFileMemberFallback(
+        _ id: ExprID,
+        calleeName: InternedString,
+        isClassNameReceiver: Bool,
+        safeCall: Bool,
+        receiverID: ExprID,
+        args: [CallArgument],
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        guard !isClassNameReceiver else {
+            return nil
+        }
+        let receiverType = sema.bindings.exprTypes[receiverID] ?? sema.types.anyType
+        let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        guard case let .classType(classType) = sema.types.kind(of: nonNullReceiverType),
+              let owner = sema.symbols.symbol(classType.classSymbol),
+              owner.fqName.count == 3,
+              interner.resolve(owner.fqName[0]) == "java",
+              interner.resolve(owner.fqName[1]) == "io",
+              interner.resolve(owner.fqName[2]) == "File"
+        else {
+            return nil
+        }
+
+        let memberName = interner.resolve(calleeName)
+        guard memberName == "appendText", args.count == 1 else {
+            return nil
+        }
+
+        _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: sema.types.stringType)
+        let finalType = safeCall ? sema.types.makeNullable(sema.types.unitType) : sema.types.unitType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
+    }
+
     func tryCollectionMemberFallback(
         _ id: ExprID,
         calleeName: InternedString,

@@ -1081,6 +1081,12 @@ public enum RuntimeABIExterns {
         returnType: "void"
     )
 
+    public static let kk_println_ulong = ExternDecl(
+        name: "kk_println_ulong",
+        parameterTypes: ["intptr_t"],
+        returnType: "void"
+    )
+
     public static let kk_print_noarg = ExternDecl(
         name: "kk_print_noarg",
         parameterTypes: [],
@@ -1803,6 +1809,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_op_ulong_rangeUntil = ExternDecl(
+        name: "kk_op_ulong_rangeUntil",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_op_downTo = ExternDecl(
         name: "kk_op_downTo",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -1849,6 +1861,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_range_toList = ExternDecl(
         name: "kk_range_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_ulong_range_toList = ExternDecl(
+        name: "kk_ulong_range_toList",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -2209,6 +2227,12 @@ public enum RuntimeABIExterns {
         returnType: intptr
     )
 
+    public static let kk_file_appendText = ExternDecl(
+        name: "kk_file_appendText",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
     public static let kk_file_readLines = ExternDecl(
         name: "kk_file_readLines",
         parameterTypes: [intptr, nullableIntptrPtr],
@@ -2316,6 +2340,7 @@ public enum RuntimeABIExterns {
         kk_file_new,
         kk_file_readText,
         kk_file_writeText,
+        kk_file_appendText,
         kk_file_readLines,
         kk_file_readBytes,
         kk_file_forEachLine,
@@ -2514,6 +2539,7 @@ public enum RuntimeABIExterns {
             kk_print_noarg,
             kk_println_any,
             kk_println_bool,
+            kk_println_ulong,
             kk_println_newline,
             // IO
             kk_readline,
@@ -2647,6 +2673,7 @@ public enum RuntimeABIExterns {
             // Range/Progression
             kk_op_rangeTo,
             kk_op_rangeUntil,
+            kk_op_ulong_rangeUntil,
             kk_op_downTo,
             kk_op_step,
             // IntRange members (STDLIB-090/091/092/093)
@@ -2656,6 +2683,7 @@ public enum RuntimeABIExterns {
             kk_range_isEmpty,
             kk_range_sum,
             kk_range_toList,
+            kk_ulong_range_toList,
             kk_range_forEach,
             kk_range_map,
             kk_range_reversed,

@@ -29,7 +29,7 @@ fun main() {
         println(file.path)            // "/tmp/kswiftk_exists_<timestamp>/test.txt"
         
         // Verify name and path work correctly
-        println(file.name == "test.txt")     // true
+        println(file.name.equals("test.txt"))     // true
         println(dir.name.startsWith("kswiftk_exists_"))  // true
         println(file.path.endsWith("/test.txt"))  // true
     } finally {

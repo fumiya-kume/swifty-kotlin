@@ -74,10 +74,12 @@ struct TypeCheckHelpers {
         if isRangeExpr, iterableType == sema.types.longType {
             return sema.types.longType
         }
-        // STDLIB-523: UIntRange / ULongRange support
+        // STDLIB-523: UIntRange support
         if isRangeExpr, iterableType == sema.types.uintType {
             return sema.types.uintType
         }
+        // Range expressions with element type ULong (i.e. ULong + range marker)
+        // are iterable, yielding ULong elements (STDLIB-524).
         if isRangeExpr, iterableType == sema.types.ulongType {
             return sema.types.ulongType
         }

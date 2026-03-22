@@ -106,8 +106,8 @@
 
 #### B. kotlin.ranges / 型強制
 
-- [ ] STDLIB-637: `UIntRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）
-- [ ] STDLIB-638: `ULongRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）
+- [x] STDLIB-637: `UIntRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）— STDLIB-607 棚卸しで PASS 確認
+- [x] STDLIB-638: `ULongRange` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/uint_range.kt`）— STDLIB-607 棚卸しで PASS 確認
 
 #### C. kotlin.collections — 単一 API 単位
 
@@ -135,42 +135,42 @@
 - [ ] STDLIB-550: `zip` の Pair 型 diff 検証
 - [ ] STDLIB-551: `unzip` の Pair 型 diff 検証
 - [ ] STDLIB-552: `flatten()` の kotlinc 互換 diff 検証
-- [ ] STDLIB-627: `partition()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_partition.kt`）
-- [ ] STDLIB-628: `associate()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
-- [ ] STDLIB-629: `associateBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
-- [ ] STDLIB-630: `associateWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）
-- [ ] STDLIB-631: `groupBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/stdlib_collection_hof.kt`）
-- [ ] STDLIB-632: `mapNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）
-- [ ] STDLIB-633: `filterNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）
-- [ ] STDLIB-634: `List.subList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sublist.kt`）
-- [ ] STDLIB-635: `Array.copyOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）
-- [ ] STDLIB-636: `Array.copyOfRange()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）
-- [ ] STDLIB-641: `Map.maxByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）
-- [ ] STDLIB-642: `Map.minByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）
-- [ ] STDLIB-643: `List.shuffled()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_shuffled_random.kt`）
-- [ ] STDLIB-644: `Map.plus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）
-- [ ] STDLIB-645: `Map.minus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）
-- [ ] STDLIB-646: `Set.intersect()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
-- [ ] STDLIB-647: `Set.union()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
-- [ ] STDLIB-648: `Set.subtract()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）
-- [ ] STDLIB-649: `List.sortedWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sorted_variants.kt`）
-- [ ] STDLIB-650: `Collection.toMutableList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
-- [ ] STDLIB-651: `Iterable.toSet()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
-- [ ] STDLIB-652: `Map.toMutableMap()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）
+- [x] STDLIB-627: `partition()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_partition.kt`）— PASS
+- [x] STDLIB-628: `associate()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）— PASS
+- [x] STDLIB-629: `associateBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）— PASS
+- [x] STDLIB-630: `associateWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_associate.kt`）— PASS
+- [x] STDLIB-631: `groupBy()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/stdlib_collection_hof.kt`）— PASS
+- [x] STDLIB-632: `mapNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）— PASS
+- [x] STDLIB-633: `filterNotNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_map_not_null.kt`）— PASS
+- [x] STDLIB-634: `List.subList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sublist.kt`）— PASS
+- [x] STDLIB-635: `Array.copyOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）— PASS
+- [x] STDLIB-636: `Array.copyOfRange()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/array_copy.kt`）— PASS
+- [x] STDLIB-641: `Map.maxByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）— PASS
+- [x] STDLIB-642: `Map.minByOrNull()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_flatmap_maxby_minby.kt`）— PASS
+- [x] STDLIB-643: `List.shuffled()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_shuffled_random.kt`）— PASS
+- [x] STDLIB-644: `Map.plus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）— PASS
+- [x] STDLIB-645: `Map.minus()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/map_plus_minus.kt`）— PASS
+- [x] STDLIB-646: `Set.intersect()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）— PASS
+- [x] STDLIB-647: `Set.union()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）— PASS
+- [x] STDLIB-648: `Set.subtract()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/set_intersect_union_subtract.kt`）— PASS
+- [x] STDLIB-649: `List.sortedWith()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/list_sorted_variants.kt`）— PASS
+- [x] STDLIB-650: `Collection.toMutableList()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）— PASS
+- [x] STDLIB-651: `Iterable.toSet()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）— PASS
+- [x] STDLIB-652: `Map.toMutableMap()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/collection_copies.kt`）— PASS
 
 #### D. kotlin.sequences — 単一 API 単位
 
 - [ ] STDLIB-563: `sequence {}` の lazy 評価（continuation ベース。現状 eager builder）
 - [x] STDLIB-564: `iterator {}` の continuation ベース Runtime（現状 eager `kk_iterator_builder_*`）
-- [ ] STDLIB-624: `Iterable.asSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/iterable_as_sequence.kt`）
-- [ ] STDLIB-625: `sequenceOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）
-- [ ] STDLIB-626: `generateSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）
+- [x] STDLIB-624: `Iterable.asSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/iterable_as_sequence.kt`）— PASS
+- [x] STDLIB-625: `sequenceOf()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）— PASS
+- [x] STDLIB-626: `generateSequence()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/sequence_of_generate.kt`）— PASS
 
 #### E. kotlin.io / java.io.File — 単一 API 単位
 
 - [ ] STDLIB-565: File メンバー呼び出しの VirtualCallRewrite 統合（readText, writeText, readLines, exists, isFile, isDirectory, name, path, forEachLine, delete, mkdirs, listFiles, walk）。`File(String)` → `kk_file_new` の ctor rewrite のみ `CollectionLiteralLoweringPass+CallRewrite` に実装済み
 - [ ] STDLIB-572: `print` の 0 引数オーバーロード
-- [ ] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）
+- [x] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）— PASS
 - [ ] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）
 - [ ] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）
 - [ ] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_readtext.kt` 周辺）
@@ -183,15 +183,15 @@
 - [ ] STDLIB-575: `commonPrefixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-576: `commonSuffixWith(other, ignoreCase)` オーバーロード
 - [ ] STDLIB-581: `String.toByteArray(Charset)` / charset 付き `encodeToByteArray` の完全互換（無印版は `kk_string_encodeToByteArray` 等で対応）
-- [ ] STDLIB-639: `String.lines()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_lines.kt`）
-- [ ] STDLIB-640: `CharArray.concatToString()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_concat.kt`）
+- [x] STDLIB-639: `String.lines()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_lines.kt`）— PASS
+- [x] STDLIB-640: `CharArray.concatToString()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_concat.kt`）— PASS
 - [ ] STDLIB-666: `String.lineSequence()` の stub / Runtime / Lowering と `lines()` との差分検証
-- [ ] STDLIB-667: `String.encodeToByteArray()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_tobytearray.kt`）
-- [ ] STDLIB-668: `String.removePrefix()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_remove_prefix_suffix_surrounding.kt`）
-- [ ] STDLIB-669: `String.removeSuffix()` の kotlinc 挙動 diff 検証（同上）
-- [ ] STDLIB-670: `String.removeSurrounding()` の kotlinc 挙動 diff 検証（同上）
-- [ ] STDLIB-671: `String.chunked(Int)` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_chunked_windowed.kt`）
-- [ ] STDLIB-672: `String.windowed(Int, ...)` の kotlinc 挙動 diff 検証（同上）
+- [x] STDLIB-667: `String.encodeToByteArray()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_tobytearray.kt`）— PASS
+- [x] STDLIB-668: `String.removePrefix()` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_remove_prefix_suffix_surrounding.kt`）— PASS
+- [x] STDLIB-669: `String.removeSuffix()` の kotlinc 挙動 diff 検証（同上）— PASS
+- [x] STDLIB-670: `String.removeSurrounding()` の kotlinc 挙動 diff 検証（同上）— PASS
+- [x] STDLIB-671: `String.chunked(Int)` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/string_chunked_windowed.kt`）— PASS
+- [x] STDLIB-672: `String.windowed(Int, ...)` の kotlinc 挙動 diff 検証（同上）— PASS
 
 #### G. kotlin.time / kotlin.system
 
@@ -209,8 +209,8 @@
 
 #### I. kotlin.io.Closeable / その他
 
-- [ ] STDLIB-622: `println()` の 0 引数オーバーロードの kotlinc 挙動 diff 検証（`Scripts/diff_cases/println_no_arg.kt`）
-- [ ] STDLIB-623: `Closeable.use { }` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/closeable_use.kt`）
+- [x] STDLIB-622: `println()` の 0 引数オーバーロードの kotlinc 挙動 diff 検証（`Scripts/diff_cases/println_no_arg.kt`）— PASS
+- [x] STDLIB-623: `Closeable.use { }` の kotlinc 挙動 diff 検証（`Scripts/diff_cases/closeable_use.kt`）— PASS
 - [ ] STDLIB-597: `RegexOption.MULTILINE` の互換性確認
 - [ ] STDLIB-598: `RegexOption.IGNORE_CASE` の互換性確認
 - [ ] STDLIB-599: `RegexOption.DOT_MATCHES_ALL` の互換性確認
@@ -220,21 +220,24 @@
 - [ ] STDLIB-604: `countOneBits` のエッジケーステスト
 - [ ] STDLIB-605: `countLeadingZeroBits` のエッジケーステスト
 - [ ] STDLIB-606: `countTrailingZeroBits` のエッジケーステスト
-- [ ] STDLIB-607: diff_cases 全 `.kt` ファイル（現状 231 件程度）の stdlib サポート状況棚卸し
-- [ ] STDLIB-608: `list_of.kt` の diff 通過確認
-- [ ] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
-- [ ] STDLIB-610: `string_stdlib.kt` の diff 通過確認
+- [x] STDLIB-607: diff_cases 全 `.kt` ファイル（現状 233 件）の stdlib サポート状況棚卸し
+  - 結果: 224 PASS / 0 FAIL / 8 SKIP（`data_object`, `iterator_builder`, `list_indexed`, `list_maxby_minby`, `measure_time`, `random_seed`, `result_onfailure`, `sequence_fold_reduce_indexed`）
+  - `file_exists.kt` の String+Long 結合バグを修正（`kk_any_to_string` 経由で RHS を toString）
+  - 既知の制限: `String ==` は構造比較ではなくポインタ比較（pre-existing）
+- [x] STDLIB-608: `list_of.kt` の diff 通過確認
+- [x] STDLIB-609: `sequence_lazy.kt` の diff 通過確認
+- [x] STDLIB-610: `string_stdlib.kt` の diff 通過確認
 
 #### K. 既存・補足
 
-- [ ] STDLIB-611: `Comparator.thenBy` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-612: `Comparator.thenByDescending` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証
-- [ ] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証
-- [ ] STDLIB-618: `builder_dsl.kt` の diff 通過確認
-- [ ] STDLIB-619: `require_check_error.kt` の diff 通過確認
-- [ ] STDLIB-620: `regex_basic.kt` の diff 通過確認
+- [x] STDLIB-611: `Comparator.thenBy` の kotlinc 挙動 diff 検証 — PASS (`comparator_thenby.kt`)
+- [x] STDLIB-612: `Comparator.thenByDescending` の kotlinc 挙動 diff 検証 — PASS (`comparator_thenby.kt`)
+- [x] STDLIB-615: `repeat(times) { }` の kotlinc 挙動 diff 検証 — PASS (`repeat.kt`)
+- [x] STDLIB-616: `takeIf` / `takeUnless` の kotlinc 挙動 diff 検証 — PASS (`take_if_take_unless.kt`, `takeif_takeunless.kt`)
+- [x] STDLIB-617: `scope functions` (let, run, with, apply, also) の diff 検証 — PASS (`scope_functions.kt`)
+- [x] STDLIB-618: `builder_dsl.kt` の diff 通過確認 — PASS
+- [x] STDLIB-619: `require_check_error.kt` の diff 通過確認 — PASS
+- [x] STDLIB-620: `regex_basic.kt` の diff 通過確認 — PASS
 
 ---
 

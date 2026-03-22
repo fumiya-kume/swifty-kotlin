@@ -282,6 +282,7 @@ struct CollectionLiteralLookupTables {
     // Range factory / member ABI names (STDLIB-090/091/092/093)
     let kkOpRangeToName: InternedString
     let kkOpRangeUntilName: InternedString
+    let kkOpULongRangeUntilName: InternedString
     let kkOpDownToName: InternedString
     let kkOpStepName: InternedString
     let kkRangeFirstName: InternedString
@@ -302,6 +303,9 @@ struct CollectionLiteralLookupTables {
     let kkBoxCharName: InternedString
     let kkCharRangeToListName: InternedString
     let kkCharRangeForEachName: InternedString
+
+    // ULongRange (STDLIB-524)
+    let kkULongRangeToListName: InternedString
 
     // Member names
     let sizeName: InternedString
@@ -486,6 +490,8 @@ struct CollectionLiteralLookupTables {
     let kkFileReadTextName: InternedString
     let writeTextName: InternedString
     let kkFileWriteTextName: InternedString
+    let appendTextName: InternedString
+    let kkFileAppendTextName: InternedString
     let readLinesName: InternedString
     let kkFileReadLinesName: InternedString
     let existsName: InternedString
@@ -791,6 +797,7 @@ struct CollectionLiteralLookupTables {
 
         kkOpRangeToName = interner.intern("kk_op_rangeTo")
         kkOpRangeUntilName = interner.intern("kk_op_rangeUntil")
+        kkOpULongRangeUntilName = interner.intern("kk_op_ulong_rangeUntil")
         kkOpDownToName = interner.intern("kk_op_downTo")
         kkOpStepName = interner.intern("kk_op_step")
         kkRangeFirstName = interner.intern("kk_range_first")
@@ -810,6 +817,9 @@ struct CollectionLiteralLookupTables {
         kkBoxCharName = interner.intern("kk_box_char")
         kkCharRangeToListName = interner.intern("kk_char_range_toList")
         kkCharRangeForEachName = interner.intern("kk_char_range_forEach")
+
+        // ULongRange (STDLIB-524)
+        kkULongRangeToListName = interner.intern("kk_ulong_range_toList")
 
         sizeName = interner.intern("size")
         getName = interner.intern("get")
@@ -982,6 +992,8 @@ struct CollectionLiteralLookupTables {
         kkFileReadTextName = interner.intern("kk_file_readText")
         writeTextName = interner.intern("writeText")
         kkFileWriteTextName = interner.intern("kk_file_writeText")
+        appendTextName = interner.intern("appendText")
+        kkFileAppendTextName = interner.intern("kk_file_appendText")
         readLinesName = interner.intern("readLines")
         kkFileReadLinesName = interner.intern("kk_file_readLines")
         existsName = interner.intern("exists")

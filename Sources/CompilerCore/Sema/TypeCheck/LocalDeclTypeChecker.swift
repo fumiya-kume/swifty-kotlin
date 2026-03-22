@@ -82,6 +82,18 @@ final class LocalDeclTypeChecker {
             sema.bindings.markCollectionExpr(id)
             sema.bindings.markCollectionSymbol(localSymbol)
         }
+        if let initializer, sema.bindings.isRangeExpr(initializer) {
+            sema.bindings.markRangeExpr(id)
+            sema.bindings.markRangeSymbol(localSymbol)
+            if sema.bindings.isCharRangeExpr(initializer) {
+                sema.bindings.markCharRangeExpr(id)
+                sema.bindings.markCharRangeSymbol(localSymbol)
+            }
+            if sema.bindings.isULongRangeExpr(initializer) {
+                sema.bindings.markULongRangeExpr(id)
+                sema.bindings.markULongRangeSymbol(localSymbol)
+            }
+        }
         if let initializer, sema.bindings.isFlowExpr(initializer) {
             sema.bindings.markFlowExpr(id)
             sema.bindings.markFlowSymbol(localSymbol)

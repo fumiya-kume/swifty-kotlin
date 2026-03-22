@@ -326,6 +326,18 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // appendText(text: String): Unit
+        registerSyntheticSystemMember(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            name: "appendText",
+            externalLinkName: "kk_file_appendText",
+            returnType: types.unitType,
+            parameters: [(name: "text", type: types.stringType)],
+            symbols: symbols,
+            interner: interner
+        )
+
         // readLines(): List<String>
         let listOfStringType = makeFileListOfStringType(
             symbols: symbols,

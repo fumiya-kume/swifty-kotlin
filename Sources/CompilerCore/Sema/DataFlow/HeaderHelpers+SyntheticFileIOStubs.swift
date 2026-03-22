@@ -2,6 +2,7 @@
 ///
 /// Covers:
 /// - STDLIB-320: `File(String)` constructor, `readText`, `writeText`, `readLines`
+/// - STDLIB-664: `appendText(text: String)` member function
 /// - STDLIB-321: `name`, `path` properties; `exists()`, `isFile()`, `isDirectory()` query methods
 /// - STDLIB-322: `forEachLine(action:)` member function
 /// - STDLIB-323: `delete()`, `mkdirs()`, `listFiles()`, `walk()` filesystem operations
@@ -150,6 +151,17 @@ extension DataFlowSemaPhase {
         registerFileMemberFunction(
             named: "writeText",
             externalLinkName: "kk_file_writeText",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
+            named: "appendText",
+            externalLinkName: "kk_file_appendText",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [("text", types.stringType)],
