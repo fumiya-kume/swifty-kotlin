@@ -2925,6 +2925,40 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Regex"
         ),
+        // MatchResult.groups / MatchGroupCollection / MatchGroup
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_groups",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_collection_get",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_value",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_range",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
         RuntimeABIFunctionSpec(
             name: "kk_string_chunked",
             parameters: [

@@ -12,6 +12,8 @@ extension DataFlowSemaPhase {
         // --- Class symbols ---
         let regexSymbol = ensureClassSymbol(named: "Regex", in: kotlinTextPkg, symbols: symbols, interner: interner)
         let matchResultSymbol = ensureClassSymbol(named: "MatchResult", in: kotlinTextPkg, symbols: symbols, interner: interner)
+        let matchGroupCollectionSymbol = ensureClassSymbol(named: "MatchGroupCollection", in: kotlinTextPkg, symbols: symbols, interner: interner)
+        let matchGroupSymbol = ensureClassSymbol(named: "MatchGroup", in: kotlinTextPkg, symbols: symbols, interner: interner)
 
         // --- Types ---
         let regexType = types.make(.classType(ClassType(
@@ -21,7 +23,15 @@ extension DataFlowSemaPhase {
             classSymbol: matchResultSymbol, args: [], nullability: .nonNull
         )))
         let nullableMatchResultType = types.makeNullable(matchResultType)
+        let matchGroupCollectionType = types.make(.classType(ClassType(
+            classSymbol: matchGroupCollectionSymbol, args: [], nullability: .nonNull
+        )))
+        let matchGroupType = types.make(.classType(ClassType(
+            classSymbol: matchGroupSymbol, args: [], nullability: .nonNull
+        )))
+        let nullableMatchGroupType = types.makeNullable(matchGroupType)
         let stringType = types.stringType
+        let intType = types.intType
         let listStringType = makeListOfStringType(symbols: symbols, types: types, interner: interner)
         let listMatchResultType = makeListType(
             symbols: symbols, types: types, interner: interner,
@@ -87,6 +97,48 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_match_result_groupValues",
             ownerSymbol: matchResultSymbol,
             returnType: listStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- MatchResult.groups: MatchGroupCollection ---
+        registerRegexMemberProperty(
+            named: "groups",
+            externalLinkName: "kk_match_result_groups",
+            ownerSymbol: matchResultSymbol,
+            returnType: matchGroupCollectionType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- MatchGroupCollection.get(name: String): MatchGroup? ---
+        registerRegexMemberFunction(
+            named: "get",
+            externalLinkName: "kk_match_group_collection_get",
+            ownerSymbol: matchGroupCollectionSymbol,
+            ownerType: matchGroupCollectionType,
+            parameters: [("name", stringType, false, false)],
+            returnType: nullableMatchGroupType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- MatchGroup.value: String ---
+        registerRegexMemberProperty(
+            named: "value",
+            externalLinkName: "kk_match_group_value",
+            ownerSymbol: matchGroupSymbol,
+            returnType: stringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- MatchGroup.range: IntRange (modeled as Int at runtime) ---
+        registerRegexMemberProperty(
+            named: "range",
+            externalLinkName: "kk_match_group_range",
+            ownerSymbol: matchGroupSymbol,
+            returnType: intType,
             symbols: symbols,
             interner: interner
         )
