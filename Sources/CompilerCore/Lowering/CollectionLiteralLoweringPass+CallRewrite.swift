@@ -740,6 +740,8 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileReadTextName
                         case lookup.writeTextName:
                             kkCallee = lookup.kkFileWriteTextName
+                        case lookup.appendTextName:
+                            kkCallee = lookup.kkFileAppendTextName
                         case lookup.readLinesName:
                             kkCallee = lookup.kkFileReadLinesName
                         case lookup.existsName:
@@ -775,12 +777,12 @@ extension CollectionLiteralLoweringPass {
                         }
                         
                         if let target = kkCallee {
-                            let needsExtraArgs = callee == lookup.forEachLineName
-                                || callee == lookup.useLinesName
-                                || callee == lookup.writeTextName
-                            let memberArgs = needsExtraArgs
-                                ? [receiverID] + arguments.dropFirst()
-                                : [receiverID]
+                            let memberArgs = (
+                                callee == lookup.forEachLineName
+                                    || callee == lookup.useLinesName
+                                    || callee == lookup.writeTextName
+                                    || callee == lookup.appendTextName
+                            ) ? [receiverID] + arguments.dropFirst() : [receiverID]
                             loweredBody.append(.call(
                                 symbol: nil,
                                 callee: target,
