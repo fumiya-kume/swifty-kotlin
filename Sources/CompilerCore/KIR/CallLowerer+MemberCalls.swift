@@ -3591,8 +3591,6 @@ extension CallLowerer {
                 return interner.intern("kk_array_none")
             case "copyOf":
                 return interner.intern("kk_array_copyOf")
-            case "contains":
-                return interner.intern("kk_list_contains")
             case "fill":
                 return interner.intern("kk_array_fill")
             default:

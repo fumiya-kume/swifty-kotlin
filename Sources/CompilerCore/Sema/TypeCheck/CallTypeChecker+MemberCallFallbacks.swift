@@ -791,8 +791,21 @@ extension CallTypeChecker {
         }
 
         // get() on List/Array returns the element type (TYPE-103).
-        if memberName == interner.intern("get") {
+        // For Map.get(key), the return type is V? (nullable value type).
+        if memberName == interner.intern("get"), !isMapReceiver {
             return receiverElementType
+        }
+
+        if memberName == interner.intern("get"), isMapReceiver {
+            if case let .classType(classType) = sema.types.kind(of: receiverElementType),
+               classType.args.count >= 2
+            {
+                return switch classType.args[1] {
+                case let .invariant(t), let .out(t), let .in(t): sema.types.makeNullable(t)
+                case .star: sema.types.nullableAnyType
+                }
+            }
+            return sema.types.nullableAnyType
         }
 
         if memberName == interner.intern("getOrNull")
