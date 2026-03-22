@@ -2777,6 +2777,15 @@ public enum RuntimeABISpec {
             section: "Bitwise"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_op_dmul",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_int_toString_radix",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
