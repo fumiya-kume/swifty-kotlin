@@ -1001,10 +1001,6 @@ extension CallTypeChecker {
             interner.intern("minOfOrNull"),
             interner.intern("maxOf"),
             interner.intern("minOf"),
-            interner.intern("maxWith"),
-            interner.intern("maxWithOrNull"),
-            interner.intern("minWith"),
-            interner.intern("minWithOrNull"),
         ]
         let mapOnlyMembers: Set = [
             mapValues,
