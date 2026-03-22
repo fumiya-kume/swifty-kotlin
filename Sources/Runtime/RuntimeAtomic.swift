@@ -3,38 +3,37 @@ import Foundation
 // MARK: - AtomicInt
 
 /// Backing storage for kotlin.concurrent.AtomicInt.
-/// Uses os_unfair_lock for atomic operations on macOS.
 final class AtomicIntBox {
     private var storage: Int
-    private var lock = os_unfair_lock()
+    private let lock = NSLock()
 
     init(initial: Int) {
         self.storage = initial
     }
 
     func load() -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         return storage
     }
 
     func store(_ value: Int) {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         storage = value
     }
 
     func exchange(_ new: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         storage = new
         return old
     }
 
     func compareAndSet(expect: Int, update: Int) -> Bool {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         if storage == expect {
             storage = update
             return true
@@ -43,8 +42,8 @@ final class AtomicIntBox {
     }
 
     func compareAndExchange(expect: Int, update: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         if old == expect {
             storage = update
@@ -53,16 +52,16 @@ final class AtomicIntBox {
     }
 
     func fetchAndAdd(_ delta: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         storage = old &+ delta
         return old
     }
 
     func addAndFetch(_ delta: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         storage = storage &+ delta
         return storage
     }
@@ -151,35 +150,35 @@ public func kk_atomic_int_decrementAndFetch(_ receiver: Int) -> Int {
 /// Backing storage for kotlin.concurrent.AtomicLong.
 final class AtomicLongBox {
     private var storage: Int
-    private var lock = os_unfair_lock()
+    private let lock = NSLock()
 
     init(initial: Int) {
         self.storage = initial
     }
 
     func load() -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         return storage
     }
 
     func store(_ value: Int) {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         storage = value
     }
 
     func exchange(_ new: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         storage = new
         return old
     }
 
     func compareAndSet(expect: Int, update: Int) -> Bool {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         if storage == expect {
             storage = update
             return true
@@ -188,8 +187,8 @@ final class AtomicLongBox {
     }
 
     func compareAndExchange(expect: Int, update: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         if old == expect {
             storage = update
@@ -198,16 +197,16 @@ final class AtomicLongBox {
     }
 
     func fetchAndAdd(_ delta: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         storage = old &+ delta
         return old
     }
 
     func addAndFetch(_ delta: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         storage = storage &+ delta
         return storage
     }
@@ -297,35 +296,35 @@ public func kk_atomic_long_decrementAndFetch(_ receiver: Int) -> Int {
 /// Values are stored as opaque intptr_t (object pointers or boxed values).
 final class AtomicRefBox {
     private var storage: Int
-    private var lock = os_unfair_lock()
+    private let lock = NSLock()
 
     init(initial: Int) {
         self.storage = initial
     }
 
     func load() -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         return storage
     }
 
     func store(_ value: Int) {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         storage = value
     }
 
     func exchange(_ new: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         storage = new
         return old
     }
 
     func compareAndSet(expect: Int, update: Int) -> Bool {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         if storage == expect {
             storage = update
             return true
@@ -334,8 +333,8 @@ final class AtomicRefBox {
     }
 
     func compareAndExchange(expect: Int, update: Int) -> Int {
-        os_unfair_lock_lock(&lock)
-        defer { os_unfair_lock_unlock(&lock) }
+        lock.lock()
+        defer { lock.unlock() }
         let old = storage
         if old == expect {
             storage = update
