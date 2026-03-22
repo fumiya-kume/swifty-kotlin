@@ -188,13 +188,11 @@ extension ControlFlowTypeChecker {
                                 "Duplicate condition in when branch.",
                                 range: ast.arena.exprRange(cond)
                             )
-                        } else if branch.conditions.count == 1 {
-                            // Only track cross-branch duplicates for
-                            // non-guarded branches (single condition).
-                            // Guard-bearing branches (multiple conditions)
-                            // don't fully cover the condition value, so a
-                            // later branch reusing the same key is not a
-                            // true duplicate.
+                        } else {
+                            // Track cross-branch duplicates for every covered
+                            // condition value. Comma-separated branch
+                            // conditions are lowered as an OR-chain, but each
+                            // listed condition still fully covers its own key.
                             if !allSeenConditionKeys.insert(key).inserted {
                                 ctx.semaCtx.diagnostics.warning(
                                     "KSWIFTK-SEMA-0073",
