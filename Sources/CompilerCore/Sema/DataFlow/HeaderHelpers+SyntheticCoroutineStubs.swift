@@ -399,23 +399,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Mutex.withLock(action): T inline function
-        registerSyntheticCoroutineMember(
-            ownerSymbol: mutexSymbol,
-            ownerType: mutexType,
-            name: "withLock",
-            externalLinkName: "kk_mutex_withLock",
-            returnType: types.anyType,
-            parameters: [(name: "action", type: types.make(.functionType(FunctionType(
-                params: [],
-                returnType: types.anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            ))))],
-            symbols: symbols,
-            interner: interner
-        )
-
         // Semaphore (kotlinx.coroutines.sync.Semaphore)
         let semaphoreSymbol = ensureInterfaceSymbol(
             named: "Semaphore",
@@ -494,22 +477,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Semaphore.withPermit(action): T inline function
-        registerSyntheticCoroutineMember(
-            ownerSymbol: semaphoreSymbol,
-            ownerType: semaphoreType,
-            name: "withPermit",
-            externalLinkName: "kk_semaphore_withPermit",
-            returnType: types.anyType,
-            parameters: [(name: "action", type: types.make(.functionType(FunctionType(
-                params: [],
-                returnType: types.anyType,
-                isSuspend: false,
-                nullability: .nonNull
-            ))))],
-            symbols: symbols,
-            interner: interner
-        )
     }
 
     private func registerSyntheticCoroutineTopLevelFunction(
