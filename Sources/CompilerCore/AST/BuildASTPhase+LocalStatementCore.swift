@@ -362,7 +362,8 @@ extension BuildASTPhase {
             context: LocalStatementCoreContext,
             options: LocalStatementCoreOptions
         ) -> ExprID? {
-            guard let lastToken = statementTokens.last else {
+            let strippedTokens = stripSemicolons(statementTokens)
+            guard let lastToken = strippedTokens.last else {
                 return nil
             }
 
@@ -376,7 +377,7 @@ extension BuildASTPhase {
                 return nil
             }
 
-            let lhsTokens = stripSemicolons(statementTokens.dropLast())
+            let lhsTokens = Array(strippedTokens.dropLast())
             guard !lhsTokens.isEmpty,
                   let lhsExpr = context.parseExpression(lhsTokens[...]),
                   let lhs = context.astArena.expr(lhsExpr),

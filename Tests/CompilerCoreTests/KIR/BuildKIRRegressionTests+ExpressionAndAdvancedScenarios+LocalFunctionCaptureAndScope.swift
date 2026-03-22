@@ -147,6 +147,30 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testLocalFunctionCapturesMutableOuterVarWithPostfixIncrementAndSemicolon() throws {
+        let source = """
+        fun main(): Int {
+            var counter = 0
+            fun increment() {
+                counter++;
+            }
+            increment();
+            increment();
+            return counter
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Local function mutable capture with postfix increment and semicolon should compile: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
     func testLocalFunctionCapturesMultipleOuterVals() throws {
         let source = """
         fun compute(): Int {
