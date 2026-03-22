@@ -1087,6 +1087,15 @@ func runtimeFormatFloatingPoint(_ value: Double) -> String {
 }
 
 func runtimeFormatFloatingPoint(_ value: Float) -> String {
+    if value.isNaN {
+        return "NaN"
+    }
+    if value == .infinity {
+        return "Infinity"
+    }
+    if value == -.infinity {
+        return "-Infinity"
+    }
     let rendered = String(describing: value)
     if rendered.contains("e") || rendered.contains("E") {
         return runtimeNormalizeScientificExponent(rendered)

@@ -144,6 +144,12 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(kk_compare_any(nan, nan), 0)
     }
 
+    func testFloatFormattingUsesKotlinSpecialValueSpellings() {
+        XCTAssertEqual(runtimeFormatFloatingPoint(Float.nan), "NaN")
+        XCTAssertEqual(runtimeFormatFloatingPoint(Float.infinity), "Infinity")
+        XCTAssertEqual(runtimeFormatFloatingPoint(-Float.infinity), "-Infinity")
+    }
+
     // MARK: - STDLIB-006 string runtime ABI
 
     func testStringTrimRemovesLeadingAndTrailingWhitespace() {
