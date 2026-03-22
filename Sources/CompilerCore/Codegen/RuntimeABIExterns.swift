@@ -2854,6 +2854,7 @@ public enum RuntimeABIExterns {
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
+        all += uuidExterns
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [
             kk_measureTime,
