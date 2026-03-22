@@ -1,0 +1,37 @@
+keyword(val) f0:0..3
+identifier(simple) f0:4..10
+symbol(=) f0:11..12
+multiDollarStringQuote(2) f0:13..16
+stringSegment(hello $world) f0:16..28
+multiDollarStringQuote(2) f0:28..29
+keyword(val) f0:30..33
+identifier(interp) f0:34..40
+symbol(=) f0:41..42
+multiDollarStringQuote(2) f0:43..46
+stringSegment(value = ) f0:46..54
+templateExprStart f0:54..57
+intLiteral(1) f0:57..58
+symbol(+) f0:59..60
+intLiteral(2) f0:61..62
+templateExprEnd f0:62..63
+multiDollarStringQuote(2) f0:63..64
+keyword(val) f0:65..68
+identifier(triple) f0:69..75
+symbol(=) f0:76..77
+multiDollarStringQuote(3) f0:78..82
+stringSegment(price $$100 name=) f0:82..99
+templateExprStart f0:99..103
+stringQuote f0:104..105
+stringSegment(Bob) f0:105..108
+stringQuote f0:108..109
+templateExprEnd f0:110..111
+multiDollarStringQuote(3) f0:111..112
+keyword(val) f0:113..116
+identifier(raw) f0:117..120
+symbol(=) f0:121..122
+multiDollarRawStringQuote(2) f0:123..128
+stringSegment(raw $literal ) f0:128..141
+templateExprStart f0:141..144
+intLiteral(42) f0:144..146
+templateExprEnd f0:146..147
+multiDollarRawStringQuote(2) f0:147..150
