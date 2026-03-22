@@ -1998,6 +1998,37 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                 let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "get" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get"),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "contains" {
+                    let listExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_toList"),
+                        arguments: [loweredReceiverID],
+                        result: listExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_list_contains"),
+                        arguments: [listExpr] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let runtimeCallee: String? = switch calleeStr {
                 case "map":
                     "kk_array_map"
@@ -3542,6 +3573,8 @@ extension CallLowerer {
 
         if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "get":
+                return interner.intern("kk_array_get")
             case "map":
                 return interner.intern("kk_array_map")
             case "filter":
@@ -3558,6 +3591,8 @@ extension CallLowerer {
                 return interner.intern("kk_array_none")
             case "copyOf":
                 return interner.intern("kk_array_copyOf")
+            case "contains":
+                return interner.intern("kk_list_contains")
             case "fill":
                 return interner.intern("kk_array_fill")
             default:
