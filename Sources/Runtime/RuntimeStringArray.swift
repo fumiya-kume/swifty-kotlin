@@ -1043,7 +1043,28 @@ private func runtimeRenderStringIterableForPrint(_ strRaw: Int) -> String {
     return "[\(rendered)]"
 }
 
-func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
+private func runtimeNormalizeScientificExponent(_ rendered: String) -> String {
+    guard let exponentIndex = rendered.firstIndex(of: "E") ?? rendered.firstIndex(of: "e") else {
+        return rendered
+    }
+    let mantissa = String(rendered[..<exponentIndex])
+    var exponent = String(rendered[rendered.index(after: exponentIndex)...])
+    if exponent.hasPrefix("+") {
+        exponent.removeFirst()
+    }
+    while exponent.count > 1, exponent.first == "0" {
+        exponent.removeFirst()
+    }
+    if exponent.hasPrefix("-0"), exponent.count > 2 {
+        exponent.remove(at: exponent.index(after: exponent.startIndex))
+    }
+    return "\(mantissa)E\(exponent)"
+}
+
+private func runtimeFormatFloatingPointCore(
+    _ value: Double,
+    scientificPrecision: Int
+) -> String {
     if value.isNaN {
         return "NaN"
     }
@@ -1053,7 +1074,24 @@ func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
     if value == -.infinity {
         return "-Infinity"
     }
+    let magnitude = abs(value)
+    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
+        let rendered = String(format: "%.\(scientificPrecision)E", value)
+        return runtimeNormalizeScientificExponent(rendered)
+    }
     return String(describing: value)
+}
+
+func runtimeFormatFloatingPoint(_ value: Double) -> String {
+    runtimeFormatFloatingPointCore(value, scientificPrecision: 14)
+}
+
+func runtimeFormatFloatingPoint(_ value: Float) -> String {
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    return rendered
 }
 
 // MARK: - String nullable receiver helpers
