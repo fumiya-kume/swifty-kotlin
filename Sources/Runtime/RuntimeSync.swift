@@ -9,13 +9,13 @@ import Foundation
 /// and resumes one waiter (FIFO order).
 final class RuntimeMutexHandle: @unchecked Sendable {
     private let lock = NSLock()
-    private var locked = false
-    private var waiters: [(continuation: Int, queue: DispatchQueue)] = []
+    private var isHeld = false
+    private var waiters: [Int] = []
 
     var isLocked: Bool {
         lock.lock()
         defer { lock.unlock() }
-        return locked
+        return isHeld
     }
 
     /// Try to acquire the lock without suspending.
@@ -23,10 +23,10 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     func tryLock() -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if locked {
+        if isHeld {
             return false
         }
-        locked = true
+        isHeld = true
         return true
     }
 
@@ -36,14 +36,13 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     /// suspended sentinel so the codegen suspend/resume loop can handle it.
     func lockSync(continuation: Int) -> Int {
         lock.lock()
-        if !locked {
-            locked = true
+        if !isHeld {
+            isHeld = true
             lock.unlock()
             return 0
         }
         // Already locked — suspend the caller.
-        let queue = DispatchQueue.global()
-        waiters.append((continuation: continuation, queue: queue))
+        waiters.append(continuation)
         lock.unlock()
         return Int(bitPattern: kk_coroutine_suspended())
     }
@@ -52,24 +51,22 @@ final class RuntimeMutexHandle: @unchecked Sendable {
     /// resumed on a GCD queue.
     func unlock() {
         lock.lock()
-        guard locked else {
+        guard isHeld else {
             lock.unlock()
             fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Mutex.unlock() called on an unlocked mutex")
         }
-        if let waiter = waiters.first {
+        while let continuation = waiters.first {
             waiters.removeFirst()
-            // Keep locked — ownership transfers to the waiter.
-            lock.unlock()
-            // Resume the waiter's continuation.
-            if waiter.continuation != 0,
-               let contPtr = UnsafeMutableRawPointer(bitPattern: waiter.continuation) {
-                let state = Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).takeUnretainedValue()
-                state.signalResume()
+            if runtimeSyncContinuationIsCancelled(continuation) {
+                continue
             }
-        } else {
-            locked = false
+            // Keep the mutex held — ownership transfers to the resumed waiter.
             lock.unlock()
+            runtimeSyncResume(continuation)
+            return
         }
+        isHeld = false
+        lock.unlock()
     }
 }
 
@@ -82,11 +79,13 @@ final class RuntimeMutexHandle: @unchecked Sendable {
 /// `release()` returns a permit and resumes one waiter (FIFO order).
 final class RuntimeSemaphoreHandle: @unchecked Sendable {
     private let lock = NSLock()
+    private let maxPermits: Int
     private var permits: Int
-    private var waiters: [(continuation: Int, queue: DispatchQueue)] = []
+    private var waiters: [Int] = []
 
     init(permits: Int) {
         precondition(permits >= 0, "Semaphore permits must be non-negative")
+        self.maxPermits = permits
         self.permits = permits
     }
 
@@ -115,8 +114,7 @@ final class RuntimeSemaphoreHandle: @unchecked Sendable {
             lock.unlock()
             return 0
         }
-        let queue = DispatchQueue.global()
-        waiters.append((continuation: continuation, queue: queue))
+        waiters.append(continuation)
         lock.unlock()
         return Int(bitPattern: kk_coroutine_suspended())
     }
@@ -124,20 +122,43 @@ final class RuntimeSemaphoreHandle: @unchecked Sendable {
     /// Release a permit.  If waiters are pending, resume the first one.
     func release() {
         lock.lock()
-        if let waiter = waiters.first {
+        while let continuation = waiters.first {
             waiters.removeFirst()
-            // Permit is consumed immediately by the waiter.
-            lock.unlock()
-            if waiter.continuation != 0,
-               let contPtr = UnsafeMutableRawPointer(bitPattern: waiter.continuation) {
-                let state = Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).takeUnretainedValue()
-                state.signalResume()
+            if runtimeSyncContinuationIsCancelled(continuation) {
+                continue
             }
-        } else {
-            permits += 1
+            // Permit is consumed immediately by the resumed waiter.
             lock.unlock()
+            runtimeSyncResume(continuation)
+            return
         }
+        guard permits < maxPermits else {
+            lock.unlock()
+            fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: Semaphore.release() exceeded acquired permits")
+        }
+        permits += 1
+        lock.unlock()
     }
+}
+
+private func runtimeSyncResume(_ continuation: Int) {
+    guard continuation != 0,
+          let contPtr = UnsafeMutableRawPointer(bitPattern: continuation)
+    else {
+        return
+    }
+    let state = Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).takeUnretainedValue()
+    state.signalResume()
+}
+
+private func runtimeSyncContinuationIsCancelled(_ continuation: Int) -> Bool {
+    guard continuation != 0,
+          let state = runtimeContinuationState(from: continuation),
+          let job = state.jobHandle
+    else {
+        return false
+    }
+    return job.cancellationSnapshot()
 }
 
 // MARK: - C ABI entry points

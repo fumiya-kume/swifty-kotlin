@@ -346,16 +346,6 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // Mutex constructor
-        registerSyntheticCoroutineConstructor(
-            ownerSymbol: mutexSymbol,
-            ownerType: mutexType,
-            externalLinkName: "kk_mutex_create",
-            parameters: [],
-            symbols: symbols,
-            interner: interner
-        )
-
         // Mutex.lock() suspend
         registerSyntheticCoroutineMember(
             ownerSymbol: mutexSymbol,
@@ -395,6 +385,7 @@ extension DataFlowSemaPhase {
             ownerType: mutexType,
             name: "isLocked",
             propertyType: types.booleanType,
+            externalLinkName: "kk_mutex_isLocked",
             symbols: symbols,
             interner: interner
         )
@@ -420,16 +411,6 @@ extension DataFlowSemaPhase {
             parameters: [(name: "permits", type: types.intType)],
             returnType: semaphoreType,
             externalLinkName: "kk_semaphore_create",
-            symbols: symbols,
-            interner: interner
-        )
-
-        // Semaphore constructor
-        registerSyntheticCoroutineConstructor(
-            ownerSymbol: semaphoreSymbol,
-            ownerType: semaphoreType,
-            externalLinkName: "kk_semaphore_create",
-            parameters: [(name: "permits", type: types.intType)],
             symbols: symbols,
             interner: interner
         )
@@ -473,6 +454,7 @@ extension DataFlowSemaPhase {
             ownerType: semaphoreType,
             name: "availablePermits",
             propertyType: types.intType,
+            externalLinkName: "kk_semaphore_availablePermits",
             symbols: symbols,
             interner: interner
         )
@@ -687,6 +669,7 @@ extension DataFlowSemaPhase {
         ownerType _: TypeID,
         name: String,
         propertyType: TypeID,
+        externalLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -708,6 +691,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        }
     }
 
     private func ensureObjectSymbol(
