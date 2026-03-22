@@ -150,6 +150,13 @@ final class RuntimeStringArrayTests: IsolatedRuntimeXCTestCase {
         XCTAssertEqual(runtimeFormatFloatingPoint(-Float.infinity), "-Infinity")
     }
 
+    func testDoubleFormattingUsesShortestScientificRepresentation() {
+        XCTAssertEqual(runtimeFormatFloatingPoint(1e-4), "1.0E-4")
+        XCTAssertEqual(runtimeFormatFloatingPoint(1e7), "1.0E7")
+        XCTAssertEqual(runtimeFormatFloatingPoint(1.23456789e8), "1.23456789E8")
+        XCTAssertEqual(runtimeFormatFloatingPoint(1.0000000000000002e20), "1.0000000000000002E20")
+    }
+
     // MARK: - STDLIB-006 string runtime ABI
 
     func testStringTrimRemovesLeadingAndTrailingWhitespace() {

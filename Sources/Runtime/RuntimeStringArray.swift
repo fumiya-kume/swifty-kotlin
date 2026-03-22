@@ -1047,7 +1047,7 @@ private func runtimeNormalizeScientificExponent(_ rendered: String) -> String {
     guard let exponentIndex = rendered.firstIndex(of: "E") ?? rendered.firstIndex(of: "e") else {
         return rendered
     }
-    let mantissa = String(rendered[..<exponentIndex])
+    let mantissa = runtimeNormalizeScientificMantissa(String(rendered[..<exponentIndex]))
     var exponent = String(rendered[rendered.index(after: exponentIndex)...])
     if exponent.hasPrefix("+") {
         exponent.removeFirst()
@@ -1061,9 +1061,62 @@ private func runtimeNormalizeScientificExponent(_ rendered: String) -> String {
     return "\(mantissa)E\(exponent)"
 }
 
+private func runtimeNormalizeScientificMantissa(_ mantissa: String) -> String {
+    guard let dotIndex = mantissa.firstIndex(of: ".") else {
+        return mantissa + ".0"
+    }
+    let integerPart = String(mantissa[..<dotIndex])
+    var fractionalPart = String(mantissa[mantissa.index(after: dotIndex)...])
+    while fractionalPart.last == "0" {
+        fractionalPart.removeLast()
+    }
+    if fractionalPart.isEmpty {
+        fractionalPart = "0"
+    }
+    return "\(integerPart).\(fractionalPart)"
+}
+
+private func runtimeScientificString(fromFixed rendered: String) -> String {
+    var body = rendered
+    var sign = ""
+    if body.hasPrefix("-") {
+        sign = "-"
+        body.removeFirst()
+    } else if body.hasPrefix("+") {
+        body.removeFirst()
+    }
+
+    let components = body.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    let integerPart = String(components.first ?? "")
+    let fractionalPart = components.count > 1 ? String(components[1]) : ""
+
+    let trimmedInteger = integerPart.drop(while: { $0 == "0" })
+    let exponent: Int
+    let significantDigits: String
+
+    if !trimmedInteger.isEmpty {
+        exponent = trimmedInteger.count - 1
+        significantDigits = String(trimmedInteger) + fractionalPart
+    } else if let firstNonZeroFraction = fractionalPart.firstIndex(where: { $0 != "0" }) {
+        exponent = -fractionalPart.distance(from: fractionalPart.startIndex, to: firstNonZeroFraction) - 1
+        significantDigits = String(fractionalPart[firstNonZeroFraction...])
+    } else {
+        return sign + "0.0E0"
+    }
+
+    let firstDigit = String(significantDigits.prefix(1))
+    var mantissaFraction = String(significantDigits.dropFirst())
+    while mantissaFraction.last == "0" {
+        mantissaFraction.removeLast()
+    }
+    if mantissaFraction.isEmpty {
+        mantissaFraction = "0"
+    }
+    return "\(sign)\(firstDigit).\(mantissaFraction)E\(exponent)"
+}
+
 private func runtimeFormatFloatingPointCore(
-    _ value: Double,
-    scientificPrecision: Int
+    _ value: Double
 ) -> String {
     if value.isNaN {
         return "NaN"
@@ -1074,16 +1127,19 @@ private func runtimeFormatFloatingPointCore(
     if value == -.infinity {
         return "-Infinity"
     }
-    let magnitude = abs(value)
-    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
-        let rendered = String(format: "%.\(scientificPrecision)E", value)
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
         return runtimeNormalizeScientificExponent(rendered)
     }
-    return String(describing: value)
+    let magnitude = abs(value)
+    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
+        return runtimeScientificString(fromFixed: rendered)
+    }
+    return rendered
 }
 
 func runtimeFormatFloatingPoint(_ value: Double) -> String {
-    runtimeFormatFloatingPointCore(value, scientificPrecision: 14)
+    runtimeFormatFloatingPointCore(value)
 }
 
 func runtimeFormatFloatingPoint(_ value: Float) -> String {
