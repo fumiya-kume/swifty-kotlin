@@ -105,7 +105,7 @@ public func kk_uuid_parse(_ stringRaw: Int, _ outThrown: UnsafeMutablePointer<In
         return 0
     }
 
-    let uuidString = stringBox.value.trimmingCharacters(in: .whitespaces)
+    let uuidString = stringBox.value
 
     // Parse standard format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     // or hex format: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
