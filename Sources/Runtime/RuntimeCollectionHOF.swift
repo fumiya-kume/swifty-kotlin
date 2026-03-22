@@ -1635,6 +1635,41 @@ public func kk_list_partition(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _
     return kk_pair_new(matchingList, nonMatchingList)
 }
 
+// MARK: - zipWithNext (STDLIB-316 List)
+
+@_cdecl("kk_list_zipWithNext")
+public func kk_list_zipWithNext(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elems = list.elements
+    guard elems.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var pairs: [Int] = []
+    pairs.reserveCapacity(elems.count - 1)
+    for i in 0 ..< elems.count - 1 {
+        pairs.append(kk_pair_new(elems[i], elems[i + 1]))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: pairs))
+}
+
+@_cdecl("kk_list_zipWithNextTransform")
+public func kk_list_zipWithNextTransform(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    let elems = list.elements
+    guard elems.count >= 2 else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var results: [Int] = []
+    results.reserveCapacity(elems.count - 1)
+    for i in 0 ..< elems.count - 1 {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elems[i], rhs: elems[i + 1], outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(maybeUnbox(result))
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 // MARK: - MutableList in-place sort (STDLIB-205)
 
 @_cdecl("kk_mutable_list_sort")

@@ -705,7 +705,7 @@ extension CallTypeChecker {
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
-            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
+            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
@@ -1365,6 +1365,61 @@ extension CallTypeChecker {
                     )))
                 } else {
                     resultType = sema.types.anyType
+                }
+
+            case "zipWithNext":
+                if args.isEmpty {
+                    guard explicitTypeArgs.isEmpty else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    // zipWithNext(): List<Pair<T, T>>
+                    if let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first,
+                       let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                    {
+                        let pairType = sema.types.make(.classType(ClassType(
+                            classSymbol: pairSymbol,
+                            args: [.invariant(collectionElementType), .invariant(collectionElementType)],
+                            nullability: .nonNull
+                        )))
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(pairType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
+                } else {
+                    // zipWithNext(transform: (T, T) -> R): List<R>
+                    guard args.count == 1 else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    guard explicitTypeArgs.count <= 1 else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    let lambdaReturnType = explicitTypeArgs.first ?? sema.types.anyType
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType, collectionElementType],
+                        returnType: lambdaReturnType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let bodyType = explicitTypeArgs.first
+                        ?? inferredLambdaReturnType(argExpr: args[0].expr, ast: ast, sema: sema)
+                    if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(bodyType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
                 }
 
             case "indexOfFirst", "indexOfLast":

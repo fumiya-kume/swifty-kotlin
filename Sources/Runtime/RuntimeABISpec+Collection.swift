@@ -1334,6 +1334,25 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         )
+        let zipWithNextSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_zipWithNext",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
+        let zipWithNextTransformSpec = RuntimeABIFunctionSpec(
+            name: "kk_list_zipWithNextTransform",
+            parameters: [
+                RuntimeABIParameter(name: "listRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        )
         let unzipSpec = RuntimeABIFunctionSpec(
             name: "kk_list_unzip",
             parameters: [
@@ -1538,7 +1557,7 @@ public extension RuntimeABISpec {
                     returnType: .intptr,
                     section: "Collection"
                 ),
-                zipSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
+                zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,

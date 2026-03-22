@@ -81,7 +81,7 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
@@ -2021,13 +2021,21 @@ extension CallLowerer {
                     nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == "kk_list_partition"
+                        || runtimeCallee == "kk_list_zipWithNextTransform"
+                    let thrownResult = canThrow
+                        ? arena.appendExpr(
+                            .temporary(Int32(arena.expressions.count)),
+                            type: sema.types.nullableAnyType
+                        )
+                        : nil
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
-                        thrownResult: nil
+                        canThrow: canThrow,
+                        thrownResult: thrownResult
                     ))
                     return result
                 }
@@ -2117,6 +2125,8 @@ extension CallLowerer {
                     "kk_list_lastIndexOf"
                 case "partition":
                     "kk_list_partition"
+                case "zipWithNext":
+                    "kk_list_zipWithNextTransform"
                 case "getOrNull":
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
@@ -2540,7 +2550,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
-            "sortedByDescending", "sortedWith", "partition",
+            "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile",
             "replaceFirstChar",
             "sortBy", "sortByDescending",
@@ -3483,6 +3493,10 @@ extension CallLowerer {
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            case "zipWithNext":
+                return interner.intern(hasHOFLambdaArg
+                    ? "kk_list_zipWithNextTransform"
+                    : "kk_list_zipWithNext")
             case "getOrNull":
                 return interner.intern("kk_list_getOrNull")
             case "elementAtOrNull":
@@ -3570,6 +3584,10 @@ extension CallLowerer {
         switch memberName {
         case "partition":
             return interner.intern("kk_list_partition")
+        case "zipWithNext":
+            return interner.intern(hasHOFLambdaArg
+                ? "kk_list_zipWithNextTransform"
+                : "kk_list_zipWithNext")
         case "indexOf":
             return interner.intern("kk_list_indexOf")
         case "lastIndexOf":

@@ -2649,6 +2649,63 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
+                    // zipWithNext(): List<Pair<T, T>> — 0-arg (receiver only)
+                    if callee == lookup.zipWithNextName, arguments.count == 1 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListZipWithNextName,
+                                arguments: arguments,
+                                result: hofResult,
+                                canThrow: false,
+                                thrownResult: nil
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
+                    // zipWithNext(transform): List<R> — 1-arg HOF (receiver + lambda + closure)
+                    if callee == lookup.zipWithNextName, arguments.count == 2 || arguments.count == 3 {
+                        let receiverID = arguments[0]
+                        if listExprIDs.contains(receiverID.rawValue) {
+                            let lambdaID = arguments[1]
+                            let closureRawID: KIRExprID
+                            if arguments.count == 3 {
+                                closureRawID = arguments[2]
+                            } else {
+                                let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                closureRawID = zeroExpr
+                            }
+                            let hofResult = module.arena.appendExpr(
+                                .temporary(Int32(module.arena.expressions.count)), type: nil
+                            )
+                            loweredBody.append(.call(
+                                symbol: nil,
+                                callee: lookup.kkListZipWithNextTransformName,
+                                arguments: [receiverID, lambdaID, closureRawID],
+                                result: hofResult,
+                                canThrow: canThrow,
+                                thrownResult: thrownResult
+                            ))
+                            if let result {
+                                listExprIDs.insert(result.rawValue)
+                                listExprIDs.insert(hofResult.rawValue)
+                                loweredBody.append(.copy(from: hofResult, to: result))
+                            }
+                            continue
+                        }
+                    }
+
                     if callee == lookup.withIndexName, arguments.count == 1 {
                         let receiverID = arguments[0]
                         if listExprIDs.contains(receiverID.rawValue) {

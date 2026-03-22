@@ -107,6 +107,8 @@ struct CollectionLiteralLookupTables {
     let kkListLastName: InternedString
     let kkListFindName: InternedString
     let kkListZipName: InternedString
+    let kkListZipWithNextName: InternedString
+    let kkListZipWithNextTransformName: InternedString
     let kkListUnzipName: InternedString
     let kkListWithIndexName: InternedString
     let kkListForEachIndexedName: InternedString
@@ -355,6 +357,7 @@ struct CollectionLiteralLookupTables {
     let mapValuesName: InternedString
     let mapKeysName: InternedString
     let zipName: InternedString
+    let zipWithNextName: InternedString
     let unzipName: InternedString
     let withIndexName: InternedString
     let forEachIndexedName: InternedString
@@ -630,6 +633,8 @@ struct CollectionLiteralLookupTables {
         kkListLastName = interner.intern("kk_list_last")
         kkListFindName = interner.intern("kk_list_find")
         kkListZipName = interner.intern("kk_list_zip")
+        kkListZipWithNextName = interner.intern("kk_list_zipWithNext")
+        kkListZipWithNextTransformName = interner.intern("kk_list_zipWithNextTransform")
         kkListUnzipName = interner.intern("kk_list_unzip")
         kkListWithIndexName = interner.intern("kk_list_withIndex")
         kkListForEachIndexedName = interner.intern("kk_list_forEachIndexed")
@@ -866,6 +871,7 @@ struct CollectionLiteralLookupTables {
         mapValuesName = interner.intern("mapValues")
         mapKeysName = interner.intern("mapKeys")
         zipName = interner.intern("zip")
+        zipWithNextName = interner.intern("zipWithNext")
         unzipName = interner.intern("unzip")
         withIndexName = interner.intern("withIndex")
         forEachIndexedName = interner.intern("forEachIndexed")
