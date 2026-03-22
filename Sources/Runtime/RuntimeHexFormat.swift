@@ -57,6 +57,7 @@ public func kk_hexformat_create(
     _ closureRaw: Int,
     _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
+    outThrown?.pointee = 0
     let format = RuntimeHexFormatBox()
     let formatRaw = registerRuntimeObject(format)
     // Invoke the builder lambda with the format object as receiver
