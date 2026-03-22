@@ -101,6 +101,52 @@ extension BuildKIRRegressionTests {
         }
     }
 
+    func testNestedLocalFunctionInfersExpressionBodyReturnType() throws {
+        let source = """
+        fun main(): Int {
+            fun outer(x: Int): Int {
+                fun inner(y: Int) = x + y
+                return inner(10)
+            }
+            return outer(5)
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Nested local function expression-body return type should be inferred: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 3)
+        }
+    }
+
+    func testLocalFunctionCapturesMutableOuterVarWithPostfixIncrement() throws {
+        let source = """
+        fun main(): Int {
+            var counter = 0
+            fun increment() {
+                counter++
+            }
+            increment()
+            increment()
+            return counter
+        }
+        """
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Local function mutable capture with postfix increment should compile: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+            let module = try XCTUnwrap(ctx.kir)
+            XCTAssertGreaterThanOrEqual(module.functionCount, 2)
+        }
+    }
+
     func testLocalFunctionCapturesMultipleOuterVals() throws {
         let source = """
         fun compute(): Int {
