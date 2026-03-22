@@ -48,7 +48,6 @@ extension DataFlowSemaPhase {
             ownerType: atomicIntType,
             valueType: intType,
             getterLinkName: "kk_atomic_int_load",
-            setterLinkName: "kk_atomic_int_store",
             symbols: symbols,
             interner: interner
         )
@@ -100,7 +99,6 @@ extension DataFlowSemaPhase {
             ownerType: atomicLongType,
             valueType: longType,
             getterLinkName: "kk_atomic_long_load",
-            setterLinkName: "kk_atomic_long_store",
             symbols: symbols,
             interner: interner
         )
@@ -153,7 +151,6 @@ extension DataFlowSemaPhase {
             ownerType: atomicRefType,
             valueType: anyNullableType,
             getterLinkName: "kk_atomic_ref_load",
-            setterLinkName: "kk_atomic_ref_store",
             symbols: symbols,
             interner: interner
         )
@@ -230,7 +227,6 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         valueType: TypeID,
         getterLinkName: String,
-        setterLinkName: String,
         symbols: SymbolTable,
         interner: StringInterner
     ) {

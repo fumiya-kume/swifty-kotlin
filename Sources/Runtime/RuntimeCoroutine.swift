@@ -368,8 +368,6 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
     private let lock = NSLock()
     private var children: [Int] = [] // opaque handles (RuntimeJobHandle or RuntimeAsyncTask)
     private(set) var isCancelled = false
-    /// When true, child failures do not cancel sibling children (supervisor job semantics).
-    var isSupervisor = false
     fileprivate var parent: RuntimeCoroutineScope?
 
     // CORO-003: Task-local scope registry (replaces TLS).
@@ -2279,7 +2277,6 @@ public func kk_supervisor_scope_run(_ entryPointRaw: Int, _ functionID: Int) -> 
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
         UnsafeMutableRawPointer(bitPattern: scopeHandle)!
     ).takeUnretainedValue()
-    scope.isSupervisor = true
     let continuation = kk_coroutine_continuation_new(functionID)
     if let contState = runtimeContinuationState(from: continuation) {
         contState.scope = scope
@@ -2298,7 +2295,6 @@ public func kk_supervisor_scope_run_with_cont(_ entryPointRaw: Int, _ continuati
     let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
         UnsafeMutableRawPointer(bitPattern: scopeHandle)!
     ).takeUnretainedValue()
-    scope.isSupervisor = true
     if let contState = runtimeContinuationState(from: continuation) {
         contState.scope = scope
     }
