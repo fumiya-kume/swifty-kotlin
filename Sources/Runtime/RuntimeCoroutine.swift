@@ -58,6 +58,60 @@ private final class RuntimeResumeContinuationBox: @unchecked Sendable {
     }
 }
 
+// MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
+//
+// The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
+// been migrated to a non-blocking continuation model.  When a coroutine
+// suspends (e.g. `delay()`), a resume closure is installed via
+// `installResumeContinuation` and the GCD thread is released immediately.
+// The `completionGate` semaphore blocks only at the outermost caller
+// (runBlocking / join / await), which is acceptable because those are
+// inherently synchronous wait points.
+//
+// Remaining DispatchSemaphore.wait() sites and migration status:
+//
+// [DONE] runSuspendEntryLoopWithContinuation: internal suspend points use
+//        installResumeContinuation; only completionGate blocks (outermost).
+//
+// [DONE] runtimeFlowDeliverValue (line ~1151): suspend-collector path now
+//        uses installResumeContinuation instead of waitForResumeSignal().
+//
+// [TODO] RuntimeAsyncTask.awaitResult() (line ~277):
+//        Blocks the calling coroutine's GCD thread on `ready.wait()`.
+//        Migration: Convert to a suspend point in the caller's entry loop
+//        so the caller installs a continuation that the task's `complete()`
+//        method dispatches.  Requires codegen changes to emit a suspend
+//        label at the `await` call site.
+//
+// [TODO] RuntimeJobHandle.join() (line ~343):
+//        Same pattern as awaitResult().  Requires a suspend-aware join.
+//
+// [TODO] kk_with_context (line ~1746):
+//        Blocks the caller while the block runs on the target queue.
+//        Migration: Make withContext itself a suspend point.  The target
+//        queue dispatches the block and, upon completion, resumes the
+//        caller via signalResume().  The caller's entry-loop continuation
+//        picks up the result without blocking.
+//
+// [TODO] Channel send/receive (lines ~1887, ~1959):
+//        Rendezvous and backpressure blocking.  Migration: Replace the
+//        per-waiter DispatchSemaphore with a continuation closure stored
+//        in SuspendedSender/SuspendedReceiver.  When the counterpart
+//        arrives, dispatch the continuation instead of signaling a
+//        semaphore.  This is the most complex migration because channels
+//        involve two independent parties (sender/receiver), each of which
+//        may be a coroutine or a raw thread.
+//
+// [TODO] RuntimeTypes.swift — sequence/iterator builder coroutines:
+//        producerSemaphore/consumerSemaphore and producerGate/consumerGate
+//        implement a cooperative ping-pong protocol.  Migration: model
+//        yield() as a suspend point in the producer coroutine and
+//        next()/hasNext() as suspend points in the consumer, using the
+//        continuation model to avoid blocking either side.
+//
+// Priority order: Channel > withContext > awaitResult/join > sequence builders
+// (Channels are most likely to exhaust GCD thread pools under load.)
+
 final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
@@ -266,6 +320,10 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
     }
 
+    // TODO(CORO-004): awaitResult() blocks the calling GCD thread on
+    // ready.wait().  To eliminate this, make `await` a suspend point in the
+    // caller's entry loop: the caller installs a resume continuation and
+    // complete() dispatches it instead of signaling a semaphore.
     func awaitResult() -> Int {
         lock.lock()
         if isCompleted {
@@ -332,6 +390,10 @@ final class RuntimeJobHandle: @unchecked Sendable {
         state?.signalResume()
     }
 
+    // TODO(CORO-004): join() blocks the calling GCD thread on
+    // completionSemaphore.wait().  Same migration path as awaitResult():
+    // make join a suspend point so the caller's continuation is dispatched
+    // by complete() instead of blocking.
     func join() -> Int {
         lock.lock()
         if isCompleted {
@@ -1148,6 +1210,11 @@ private func runtimeFlowDeliverValue(
                 _ = kk_coroutine_state_exit(cont, 0)
                 return false
             }
+            // CORO-004: This still blocks a GCD thread via the legacy
+            // waitForResumeSignal() path.  Full migration requires making
+            // runtimeFlowDeliverValue itself async (return via continuation
+            // instead of Bool), which in turn requires the flow collect
+            // loop to be restructured as a suspend-entry loop.
             state.waitForResumeSignal()
         }
         _ = kk_coroutine_state_exit(cont, 0)
@@ -1721,6 +1788,11 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         )
     }
 
+    // TODO(CORO-004): withContext blocks the caller on semaphore.wait().
+    // Migration: make withContext a suspend point.  The block dispatched on
+    // the target queue calls signalResume() on the caller's continuation
+    // state when done, and the caller's entry-loop continuation picks up
+    // the result without blocking a GCD thread.
     let semaphore = DispatchSemaphore(value: 0)
     // Use a Sendable box as a thread-safe container for the result.
     // The DispatchSemaphore provides a happens-before relationship: the write
@@ -1878,6 +1950,10 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
 
         // 4. No room (buffer full or rendezvous) -- suspend the sender.
+        // TODO(CORO-004): Replace per-waiter DispatchSemaphore with a
+        // continuation closure stored in SuspendedSender.  When a receiver
+        // arrives, dispatch the sender's continuation instead of signaling
+        // a semaphore, freeing the sender's GCD thread during the wait.
         let senderSem = DispatchSemaphore(value: 0)
         let entry = SuspendedSender(semaphore: senderSem, value: value)
         senderQueue.append(entry)
@@ -1952,6 +2028,8 @@ final class RuntimeChannelHandle: @unchecked Sendable {
         }
 
         // 4. Suspend the receiver.
+        // TODO(CORO-004): Same as the sender path — replace the per-waiter
+        // semaphore with a continuation closure in SuspendedReceiver.
         let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0))
         receiverQueue.append(receiverEntry)
         lock.unlock()

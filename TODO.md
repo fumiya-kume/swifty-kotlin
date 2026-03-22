@@ -289,7 +289,9 @@
 - [ ] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
   - 現状: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
 - [ ] CORO-004: サスペンドを `DispatchSemaphore` 待ちではない継続モデルにする
-  - 現状: `waitForResumeSignal` 等（`RuntimeCoroutine.swift`）
+  - 進捗: `runSuspendEntryLoopWithContinuation` の内部サスペンド（delay等）は `installResumeContinuation` ベースのノンブロッキングモデルに移行済み。`completionGate` は最外の同期待ちポイントのみでブロック（許容範囲）
+  - 残り: `awaitResult` / `join` / `withContext` / Channel send&receive / sequence builder の semaphore 待ちを continuation モデルに移行（優先順: Channel > withContext > await/join > sequence builders）
+  - 詳細: `RuntimeCoroutine.swift` 先頭の CORO-004 Migration Plan コメントブロック参照
 - [x] CORO-003: スコープを TLS / `threadDictionary` 依存から減らす
   - 完了: 全 `threadDictionary` 使用を `pthread_key_t` ベースの軽量 TLS に移行（タスクキー / Flow collect スタック / ディスパッチャー）
 - [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）
