@@ -8,6 +8,7 @@ enum KnownCompilerAnnotation {
     case jvmOverloads
     case throws_
     case suppress
+    case dslMarker
 
     var simpleName: String {
         switch self {
@@ -25,6 +26,8 @@ enum KnownCompilerAnnotation {
             "Throws"
         case .suppress:
             "Suppress"
+        case .dslMarker:
+            "DslMarker"
         }
     }
 
@@ -44,6 +47,8 @@ enum KnownCompilerAnnotation {
             "kotlin.jvm.Throws"
         case .suppress:
             "kotlin.Suppress"
+        case .dslMarker:
+            "kotlin.DslMarker"
         }
     }
 

@@ -18,7 +18,39 @@ extension ControlFlowTypeChecker {
 
         if let subjectID {
             let subjectType = driver.inferExpr(subjectID, ctx: ctx, locals: &locals)
+
+            // Handle `when (val x = expr)` subject variable declaration.
+            // If the AST arena records a subject variable name, introduce a
+            // local val binding so that branches can reference it and smart
+            // casts apply normally.
+            if let subjectVarName = ast.arena.whenSubjectVarName(for: id) {
+                let subjectVarSymbol = sema.symbols.define(
+                    kind: .local,
+                    name: subjectVarName,
+                    fqName: [
+                        interner.intern("__when_subject_\(id.rawValue)"),
+                        subjectVarName,
+                    ],
+                    declSite: range,
+                    visibility: .private,
+                    flags: []
+                )
+                locals[subjectVarName] = (subjectType, subjectVarSymbol, false, true)
+                sema.bindings.bindIdentifier(subjectID, symbol: subjectVarSymbol)
+                sema.symbols.setPropertyType(subjectType, for: subjectVarSymbol)
+            }
+
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
+                // For `when (val x = expr)`, look up the freshly created local binding.
+                if let subjectVarName = ast.arena.whenSubjectVarName(for: id),
+                   let local = locals[subjectVarName]
+                {
+                    return (
+                        subjectVarName, local.type, local.symbol,
+                        driver.helpers.isStableLocalSymbol(local.symbol, sema: sema),
+                        local.isMutable
+                    )
+                }
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case let .nameRef(subjectName, _) = subjectExpr,
                       let local = locals[subjectName]

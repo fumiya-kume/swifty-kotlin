@@ -1051,9 +1051,24 @@ final class CallTypeChecker {
                 guard let symbol = ctx.cachedSymbol(candidate) else { return false }
                 return symbol.kind == .function || symbol.kind == .constructor
             }
-            let (vis, invis) = ctx.filterByVisibility(allCallCandidates)
+            // @DslMarker restriction: filter out candidates that belong to an
+            // outer receiver class that shares a DslMarker annotation with the
+            // current implicit receiver.
+            let dslBlockedCandidates = allCallCandidates.filter { ctx.isCandidateBlockedByDslMarker($0) }
+            let dslFiltered = allCallCandidates.filter { !ctx.isCandidateBlockedByDslMarker($0) }
+            let (vis, invis) = ctx.filterByVisibility(dslFiltered)
             candidates = vis
             callInvisible = invis
+            // If all candidates were blocked by DslMarker, emit a specific diagnostic.
+            if candidates.isEmpty, !dslBlockedCandidates.isEmpty {
+                ctx.semaCtx.diagnostics.error(
+                    "KSWIFTK-SEMA-DSLMARKER",
+                    "'@DslMarker' implicit access to '\(interner.resolve(calleeName))' from outer receiver is restricted. Use explicit receiver.",
+                    range: range
+                )
+                sema.bindings.bindExprType(id, type: sema.types.errorType)
+                return sema.types.errorType
+            }
             if candidates.isEmpty, let local = locals[calleeName] {
                 if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
                     candidates = [local.symbol]
