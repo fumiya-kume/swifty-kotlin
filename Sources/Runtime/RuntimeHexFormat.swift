@@ -150,7 +150,7 @@ public func kk_bytearray_toHexString(_ arrayRaw: Int, _ formatRaw: Int) -> Int {
 @_cdecl("kk_string_hexToInt")
 public func kk_string_hexToInt(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
     let str = hexFormatStringFromRaw(receiverRaw) ?? ""
-    let cleaned = str.replacingOccurrences(of: " ", with: "")
+    let cleaned = str
     guard let value = UInt32(cleaned, radix: 16) else {
         return 0
     }
@@ -162,7 +162,7 @@ public func kk_string_hexToInt(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
 @_cdecl("kk_string_hexToLong")
 public func kk_string_hexToLong(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
     let str = hexFormatStringFromRaw(receiverRaw) ?? ""
-    let cleaned = str.replacingOccurrences(of: " ", with: "")
+    let cleaned = str
     guard let value = UInt64(cleaned, radix: 16) else {
         return kk_box_long(0)
     }
