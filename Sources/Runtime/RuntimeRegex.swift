@@ -137,8 +137,9 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String, 
             let groupValue = String(str[range])
             groupValues.append(groupValue)
             // Compute UTF-16 based indices matching Kotlin's String indexing
-            let startIndex = str.distance(from: str.startIndex, to: range.lowerBound)
-            let endIndex = startIndex + str[range].count - 1
+            let utf16Start = range.lowerBound.samePosition(in: str.utf16) ?? str.utf16.startIndex
+            let startIndex = str.utf16.distance(from: str.utf16.startIndex, to: utf16Start)
+            let endIndex = startIndex + str[range].utf16.count - 1
             groups.append(RuntimeMatchGroupBox(value: groupValue, rangeStart: startIndex, rangeEnd: endIndex))
         } else {
             groupValues.append("")
@@ -150,11 +151,12 @@ private func makeMatchResult(from result: NSTextCheckingResult, in str: String, 
     var namedGroups: [String: Int] = [:]
     if let regexBox = regexBox {
         let names = extractNamedGroupNames(from: regexBox.pattern)
-        for (idx, name) in names.enumerated() {
-            // Named groups are numbered starting from 1 (index 0 is the full match)
-            let groupIndex = idx + 1
-            if groupIndex < result.numberOfRanges {
+        for name in names {
+            let namedRange = result.range(withName: name)
+            guard namedRange.location != NSNotFound else { continue }
+            for groupIndex in 1 ..< result.numberOfRanges where result.range(at: groupIndex) == namedRange {
                 namedGroups[name] = groupIndex
+                break
             }
         }
     }
