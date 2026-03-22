@@ -55,9 +55,7 @@ struct TypeInferenceContext {
         copy.implicitReceiverType = newType
         // Update active DslMarker annotations for the new receiver.
         if let newType {
-            copy.activeDslMarkerAnnotations = activeDslMarkerAnnotations.union(
-                copy.collectDslMarkerAnnotations(for: newType)
-            )
+            copy.activeDslMarkerAnnotations = copy.collectDslMarkerAnnotations(for: newType)
         } else {
             copy.activeDslMarkerAnnotations = []
         }
@@ -113,9 +111,7 @@ struct TypeInferenceContext {
             copy.implicitReceiverType = implicitReceiverType
             // Update active DslMarker annotations when the receiver changes.
             if let newType = implicitReceiverType {
-                copy.activeDslMarkerAnnotations = activeDslMarkerAnnotations.union(
-                    copy.collectDslMarkerAnnotations(for: newType)
-                )
+                copy.activeDslMarkerAnnotations = copy.collectDslMarkerAnnotations(for: newType)
             } else {
                 copy.activeDslMarkerAnnotations = []
             }
@@ -127,6 +123,13 @@ struct TypeInferenceContext {
         if let flowState { copy.flowState = flowState }
         if let enclosingClassSymbol { copy.enclosingClassSymbol = enclosingClassSymbol }
         if let outerReceiverTypes { copy.outerReceiverTypes = outerReceiverTypes }
+        if let implicitReceiverType {
+            if let newType = implicitReceiverType {
+                copy.activeDslMarkerAnnotations = copy.collectDslMarkerAnnotations(for: newType)
+            } else {
+                copy.activeDslMarkerAnnotations = []
+            }
+        }
         return copy
     }
 
