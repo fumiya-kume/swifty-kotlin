@@ -2931,13 +2931,31 @@ extension CollectionLiteralLoweringPass {
                                     selLambdaID = arguments[3]
                                     selClosureRawID = arguments[4]
                                 } else if arguments.count == 4 {
-                                    selLambdaID = arguments[2]
-                                    let zeroExpr1 = module.arena.appendExpr(.intLiteral(0), type: nil)
-                                    loweredBody.append(.constValue(result: zeroExpr1, value: .intLiteral(0)))
-                                    cmpClosureRawID = zeroExpr1
-                                    let zeroExpr2 = module.arena.appendExpr(.intLiteral(0), type: nil)
-                                    loweredBody.append(.constValue(result: zeroExpr2, value: .intLiteral(0)))
-                                    selClosureRawID = zeroExpr2
+                                    let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                                    loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                                    let thirdExpr = module.arena.expr(arguments[2])
+                                    let fourthExpr = module.arena.expr(arguments[3])
+                                    let thirdLooksCallable: Bool = switch thirdExpr {
+                                    case .symbolRef, .externSymbolAddress:
+                                        true
+                                    default:
+                                        false
+                                    }
+                                    let fourthLooksCallable: Bool = switch fourthExpr {
+                                    case .symbolRef, .externSymbolAddress:
+                                        true
+                                    default:
+                                        false
+                                    }
+                                    if !thirdLooksCallable, fourthLooksCallable {
+                                        cmpClosureRawID = arguments[2]
+                                        selLambdaID = arguments[3]
+                                        selClosureRawID = zeroExpr
+                                    } else {
+                                        cmpClosureRawID = zeroExpr
+                                        selLambdaID = arguments[2]
+                                        selClosureRawID = arguments[3]
+                                    }
                                 } else {
                                     selLambdaID = arguments[2]
                                     let zeroExpr1 = module.arena.appendExpr(.intLiteral(0), type: nil)
