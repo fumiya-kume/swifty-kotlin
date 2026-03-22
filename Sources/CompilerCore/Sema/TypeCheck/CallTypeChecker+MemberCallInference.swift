@@ -3101,7 +3101,12 @@ extension CallTypeChecker {
                     ) {
                         return boundType
                     }
-                    sema.bindings.markCollectionExpr(id)
+                    switch calleeStr {
+                    case "filter", "map":
+                        sema.bindings.markCollectionExpr(id)
+                    default:
+                        break
+                    }
                     let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
