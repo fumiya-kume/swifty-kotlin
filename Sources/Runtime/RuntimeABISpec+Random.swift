@@ -1,4 +1,4 @@
-// Random functions (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-654).
+// Random functions (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-653, STDLIB-654, STDLIB-655).
 
 public extension RuntimeABISpec {
     static let randomFunctions: [RuntimeABIFunctionSpec] = [
@@ -82,6 +82,26 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "receiver", type: .intptr),
                 RuntimeABIParameter(name: "until", type: .intptr),
                 RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextFloat_range",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "from", type: .intptr),
+                RuntimeABIParameter(name: "until", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "Random"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_random_nextBytes",
+            parameters: [
+                RuntimeABIParameter(name: "receiver", type: .intptr),
+                RuntimeABIParameter(name: "array", type: .intptr),
             ],
             returnType: .intptr,
             section: "Random"
