@@ -3102,7 +3102,7 @@ extension CallTypeChecker {
                         return boundType
                     }
                     switch calleeStr {
-                    case "filter", "map":
+                    case "map":
                         sema.bindings.markCollectionExpr(id)
                     default:
                         break
