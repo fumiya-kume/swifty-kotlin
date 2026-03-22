@@ -19,6 +19,7 @@ extension DataFlowSemaPhase {
         let longType = types.longType
         let boolType = types.make(.primitive(.boolean, .nonNull))
         let anyNullableType = types.make(.any(.nullable))
+        let unitType = types.unitType
 
         // -- AtomicInt --
         let atomicIntSymbol = ensureClassSymbol(
@@ -57,6 +58,7 @@ extension DataFlowSemaPhase {
             ownerType: atomicIntType,
             valueType: intType,
             boolType: boolType,
+            unitType: unitType,
             prefix: "kk_atomic_int",
             symbols: symbols,
             interner: interner
@@ -108,6 +110,7 @@ extension DataFlowSemaPhase {
             ownerType: atomicLongType,
             valueType: longType,
             boolType: boolType,
+            unitType: unitType,
             prefix: "kk_atomic_long",
             symbols: symbols,
             interner: interner
@@ -160,6 +163,7 @@ extension DataFlowSemaPhase {
             ownerType: atomicRefType,
             valueType: anyNullableType,
             boolType: boolType,
+            unitType: unitType,
             prefix: "kk_atomic_ref",
             symbols: symbols,
             interner: interner
@@ -259,6 +263,7 @@ extension DataFlowSemaPhase {
         ownerType: TypeID,
         valueType: TypeID,
         boolType: TypeID,
+        unitType: TypeID,
         prefix: String,
         symbols: SymbolTable,
         interner: StringInterner
@@ -274,7 +279,7 @@ extension DataFlowSemaPhase {
         registerAtomicMember(
             ownerSymbol: ownerSymbol, ownerType: ownerType,
             name: "store", externalLinkName: "\(prefix)_store",
-            returnType: valueType, parameters: [(name: "value", type: valueType)],
+            returnType: unitType, parameters: [(name: "value", type: valueType)],
             symbols: symbols, interner: interner
         )
         // exchange(new: T) -> T
