@@ -253,7 +253,7 @@ public func kk_map_none(_ mapRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThr
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     for (key, value) in zip(map.keys, map.values) {
         var thrown = 0
-        let result = lambda(closureRaw, kk_pair_new(key, value), &thrown)
+        let result = lambda(closureRaw, runtimeMapEntryNew(key: key, value: value), &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if maybeUnbox(result) != 0 { return 0 }
     }
