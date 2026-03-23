@@ -18,7 +18,37 @@ extension ControlFlowTypeChecker {
 
         if let subjectID {
             let subjectType = driver.inferExpr(subjectID, ctx: ctx, locals: &locals)
+
+            // Register `when (val x = expr)` subject variable into locals so
+            // that branch bodies and guards can reference it.
+            if let subjectVarName = ast.arena.whenSubjectVarName(for: id) {
+                let subjectVarSymbol = sema.symbols.define(
+                    kind: .local,
+                    name: subjectVarName,
+                    fqName: [
+                        interner.intern("__when_\(id.rawValue)"),
+                        subjectVarName,
+                    ],
+                    declSite: range,
+                    visibility: .private,
+                    flags: []
+                )
+                locals[subjectVarName] = (subjectType, subjectVarSymbol, false, true)
+                sema.bindings.bindIdentifier(id, symbol: subjectVarSymbol)
+            }
+
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
+                // First try the subject variable name from `when (val x = expr)`.
+                if let subjectVarName = ast.arena.whenSubjectVarName(for: id),
+                   let local = locals[subjectVarName]
+                {
+                    return (
+                        subjectVarName, local.type, local.symbol,
+                        driver.helpers.isStableLocalSymbol(local.symbol, sema: sema),
+                        local.isMutable
+                    )
+                }
+                // Fall back to the subject expression being a simple name reference.
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case let .nameRef(subjectName, _) = subjectExpr,
                       let local = locals[subjectName]
