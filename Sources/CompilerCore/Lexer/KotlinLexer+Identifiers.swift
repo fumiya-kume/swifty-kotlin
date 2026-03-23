@@ -7,7 +7,24 @@ extension KotlinLexer {
         guard start < bytes.count, isIdentifierStart(bytes[start]) else {
             return nil
         }
-        return scanIdentifierCore(start: start, leadingTrivia: leadingTrivia)
+        // In string template simple name interpolation ($name), the `$` character
+        // must NOT be treated as part of the identifier — it terminates the name
+        // so that consecutive interpolations like `$name$other` are parsed as two
+        // separate template references.
+        var cursor = start
+        while cursor < bytes.count, isIdentifierContinue(bytes[cursor]), bytes[cursor] != 0x24 /* $ */ {
+            cursor += 1
+        }
+        guard cursor > start else { return nil }
+        let name = text(from: start ..< cursor)
+        offset = cursor
+        if let keyword = Keyword(rawValue: name) {
+            return Token(kind: .keyword(keyword), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+        }
+        if let softKeyword = SoftKeyword(rawValue: name) {
+            return Token(kind: .softKeyword(softKeyword), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
+        }
+        return Token(kind: .identifier(interner.intern(name)), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
     }
 
     private func scanIdentifierCore(start: Int, leadingTrivia: [TriviaPiece]) -> Token {
