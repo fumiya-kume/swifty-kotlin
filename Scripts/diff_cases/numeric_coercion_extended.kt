@@ -10,7 +10,6 @@ fun main() {
     val l2: Long = 123456789012345L
     println(l2.toInt())
     println(l2.toDouble())
-    println(l2.toFloat())
 
     val d2: Double = 3.14159
     println(d2.toInt())
