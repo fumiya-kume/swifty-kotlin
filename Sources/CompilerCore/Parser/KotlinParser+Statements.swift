@@ -6,6 +6,7 @@ extension KotlinParser {
             return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
         }
 
+        var atBlockStart = true
         while !stream.atEOF() {
             let token = stream.peek()
             if case .symbol(.rBrace) = token.kind {
@@ -14,13 +15,15 @@ extension KotlinParser {
             }
             if case .keyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                atBlockStart = false
                 continue
             }
             if case .softKeyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                atBlockStart = false
                 continue
             }
-            if isDeclarationStart(token.kind), hasLeadingNewline(token) {
+            if isDeclarationStart(token.kind), hasLeadingNewline(token) || atBlockStart {
                 children.append(.node(parseDeclaration()))
             } else if !shouldStopStatementBefore(token, inBlock: true) {
                 children.append(.node(parseStatement(inBlock: true)))
@@ -31,6 +34,7 @@ extension KotlinParser {
                     _ = consumeToken(into: &children, range: &range)
                 }
             }
+            atBlockStart = false
         }
 
         return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
