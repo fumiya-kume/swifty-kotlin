@@ -39,6 +39,8 @@ public extension RuntimeABIExterns {
         kk_set_is_empty,
         kk_set_toList,
         kk_collection_toList,
+        kk_collection_size,
+        kk_collection_isEmpty,
         kk_set_intersect,
         kk_set_union,
         kk_set_subtract,
@@ -480,6 +482,18 @@ public extension RuntimeABIExterns {
 
     static let kk_collection_toList = ExternDecl(
         name: "kk_collection_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_size = ExternDecl(
+        name: "kk_collection_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_isEmpty = ExternDecl(
+        name: "kk_collection_isEmpty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
