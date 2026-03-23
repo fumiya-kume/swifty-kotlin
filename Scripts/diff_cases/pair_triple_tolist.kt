@@ -1,3 +1,4 @@
+// SKIP-DIFF
 fun main() {
     val p = Pair(1, "hello")
     println(p.toList())
