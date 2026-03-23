@@ -1,6 +1,14 @@
 class Outer(val x: Int) {
-    class Nested { fun greet() = "I am nested" }
-    inner class Inner { fun greet() = "I see x=$x" }
+    class Nested {
+        fun greet(): String {
+            return "I am nested"
+        }
+    }
+    inner class Inner {
+        fun greet(): String {
+            return "I see x=$x"
+        }
+    }
 }
 fun main() {
     println(Outer.Nested().greet())
