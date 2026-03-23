@@ -1216,6 +1216,16 @@ final class CallTypeChecker {
             {
                 sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
             }
+            // Mark selector lambdas for compareValuesBy variants as collection HOF lambdas
+            // so closure conversion adds the closureRaw parameter.
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               ["kk_compareValuesBy1", "kk_compareValuesBy", "kk_compareValuesBy3"].contains(externalLinkName)
+            {
+                // Selector lambdas start at index 2 (after a, b arguments)
+                for i in 2..<args.count {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[i].expr)
+                }
+            }
             applyContractEffects(
                 chosen: chosen,
                 args: args,
