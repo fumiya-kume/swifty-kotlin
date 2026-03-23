@@ -279,6 +279,21 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
         }
         return true
     }
+    // Data class / user-defined object structural equality: compare classID and elements.
+    if let lhsObj = tryCast(lhsPtr, to: RuntimeObjectBox.self),
+       let rhsObj = tryCast(rhsPtr, to: RuntimeObjectBox.self)
+    {
+        guard lhsObj.classID == rhsObj.classID else { return false }
+        let lhsElems = lhsObj.elements
+        let rhsElems = rhsObj.elements
+        guard lhsElems.count == rhsElems.count else { return false }
+        for i in lhsElems.indices {
+            if !runtimeValuesEqual(lhsElems[i], rhsElems[i]) {
+                return false
+            }
+        }
+        return true
+    }
     return lhs == rhs
 }
 
