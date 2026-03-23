@@ -55,4 +55,42 @@ fun main() {
     val f = runCatching { throw RuntimeException("x") }
     println("s.isSuccess=${s.isSuccess} s.isFailure=${s.isFailure}")
     println("f.isSuccess=${f.isSuccess} f.isFailure=${f.isFailure}")
+
+    // 13. map on success — transforms the value
+    val mapSuccess = runCatching { 5 }
+    val mapped = mapSuccess.map { it * 10 }
+    println("map success: ${mapped.getOrNull()}")
+
+    // 14. map on failure — passes through the failure
+    val mapFail = runCatching { throw RuntimeException("map fail") }
+    val mappedFail = mapFail.map { 999 }
+    println("map failure isFailure: ${mappedFail.isFailure}")
+    println("map failure exception: ${mappedFail.exceptionOrNull()?.message}")
+
+    // 15. recover on failure — recovers with a new value
+    fun failingIntOp(): Int { throw RuntimeException("recover me") }
+    val recoverFail = runCatching { failingIntOp() }
+    val recovered = recoverFail.recover { -1 }
+    println("recover success: ${recovered.getOrNull()}")
+    println("recover isSuccess: ${recovered.isSuccess}")
+
+    // 16. recover on success — passes through the original value
+    val recoverSuccess = runCatching { 42 }
+    val recoveredSuccess = recoverSuccess.recover { -1 }
+    println("recover passthrough: ${recoveredSuccess.getOrNull()}")
+
+    // 17. Chaining: runCatching { }.onSuccess { }.onFailure { }
+    runCatching { 10 }
+        .onSuccess { println("chain onSuccess: $it") }
+        .onFailure { println("chain onFailure: ${it.message}") }
+
+    runCatching { throw RuntimeException("chain err") }
+        .onSuccess { println("chain2 onSuccess unexpected") }
+        .onFailure { println("chain2 onFailure: ${it.message}") }
+
+    // 18. getOrElse on failure — calls lambda with exception
+    fun failingIntOp2(): Int { throw RuntimeException("else fail") }
+    val elseOnFail = runCatching { failingIntOp2() }
+    val elseResult = elseOnFail.getOrElse { -99 }
+    println("getOrElse failure: $elseResult")
 }

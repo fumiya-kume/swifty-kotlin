@@ -1335,6 +1335,48 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // zipWithNext() — no-arg
+        if callee == lookup.zipWithNextName, arguments.isEmpty {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListZipWithNextName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        // zipWithNext(transform) — HOF
+        if callee == lookup.zipWithNextName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkListZipWithNextTransformName,
+                receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
         if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, arguments.count == 1 {
             let kkName: InternedString
             if callee == lookup.forEachIndexedName {

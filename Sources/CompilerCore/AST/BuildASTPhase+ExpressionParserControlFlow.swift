@@ -6,8 +6,21 @@ extension BuildASTPhase.ExpressionParser {
             return nil
         }
         var subject: ExprID?
+        var subjectVarName: InternedString?
         if matches(.symbol(.lParen)) {
             _ = consume()
+            // Check for `val identifier =` subject variable declaration
+            if matches(.keyword(.val)),
+               let identToken = peek(1),
+               let varName = identifierFromToken(identToken),
+               let eqToken = peek(2),
+               eqToken.kind == .symbol(.assign)
+            {
+                subjectVarName = varName
+                _ = consume() // val
+                _ = consume() // identifier
+                _ = consume() // =
+            }
             subject = parseExpression(minPrecedence: 0)
             _ = consumeIf(.symbol(.rParen))
         }
@@ -77,7 +90,11 @@ extension BuildASTPhase.ExpressionParser {
         }
 
         let range = SourceRange(start: whenToken.range.start, end: end)
-        return astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
+        let whenExprID = astArena.appendExpr(.whenExpr(subject: subject, branches: branches, elseExpr: elseExpr, range: range))
+        if let subjectVarName {
+            astArena.setWhenSubjectVarName(subjectVarName, for: whenExprID)
+        }
+        return whenExprID
     }
 
     private func parseWhenBranchCondition(subject: ExprID?) -> ExprID? {

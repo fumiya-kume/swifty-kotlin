@@ -307,13 +307,21 @@ private func runtimeTraverseSequenceWithState(
             }
             return
         case let .lazyBuilder(coroutine):
-            // STDLIB-563: Materialize the lazy coroutine and iterate.
-            let materialized = coroutine.materializeAll()
-            for element in materialized {
-                emit(element)
-                if state.stop { return }
+            // STDLIB-563: Lazy element-by-element iteration.
+            // Request one element at a time from the coroutine so that
+            // short-circuiting operations (take, first, etc.) only
+            // compute the elements they actually need.
+            coroutine.resetIteration()
+            while true {
+                let next = coroutine.nextElement()
+                switch next {
+                case let .value(element):
+                    emit(element)
+                    if state.stop { return }
+                case .done:
+                    return
+                }
             }
-            return
         case let .stringSource(strRaw):
             // Lazy: iterate string characters on demand without pre-materializing.
             // NOTE: Kotlin Char is a UTF-16 code unit (16-bit). Iterating unicodeScalars
@@ -474,6 +482,31 @@ private func applyDropWhileStep(_ elements: [Int], fnPtr: Int, closureRaw: Int, 
 /// Evaluates the lazy sequence chain and returns the materialized elements.
 /// This is the core of lazy semantics: steps are only executed here.
 private func evaluateSequence(_ seq: RuntimeSequenceBox) -> [Int] {
+    // STDLIB-563: When the source is a lazyBuilder and there are transformation
+    // steps (take, filter, etc.), delegate to the traverse-based path which
+    // iterates elements one at a time from the coroutine. This ensures that
+    // short-circuiting steps like take(N) only compute N elements.
+    let hasLazyBuilder = seq.steps.contains {
+        if case .lazyBuilder = $0 { return true }
+        return false
+    }
+    let hasTransformSteps = seq.steps.contains {
+        switch $0 {
+        case .source, .stringSource, .builder, .generator, .lazyBuilder:
+            return false
+        default:
+            return true
+        }
+    }
+    if hasLazyBuilder, hasTransformSteps {
+        var result: [Int] = []
+        runtimeTraverseSequence(seq, outThrown: nil) { elem in
+            result.append(elem)
+            return true
+        }
+        return result
+    }
+
     // Find the source elements
     var elements: [Int] = []
     for step in seq.steps {

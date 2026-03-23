@@ -232,6 +232,60 @@ extension DataFlowSemaPhase {
             interner: interner
         )
         registerSyntheticCoroutineTopLevelFunction(
+            named: "yield",
+            packageFQName: coroutinesPkg,
+            parameters: [],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "coroutineScope",
+            packageFQName: coroutinesPkg,
+            parameterName: "block",
+            parameterType: types.make(.functionType(FunctionType(
+                params: [],
+                returnType: types.anyType,
+                isSuspend: true,
+                nullability: .nonNull
+            ))),
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "withTimeout",
+            packageFQName: coroutinesPkg,
+            parameters: [
+                (name: "timeMillis", type: types.longType),
+                (name: "block", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.anyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "withTimeoutOrNull",
+            packageFQName: coroutinesPkg,
+            parameters: [
+                (name: "timeMillis", type: types.longType),
+                (name: "block", type: types.make(.functionType(FunctionType(
+                    params: [],
+                    returnType: types.anyType,
+                    isSuspend: true,
+                    nullability: .nonNull
+                )))),
+            ],
+            returnType: types.nullableAnyType,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticCoroutineTopLevelFunction(
             named: "withContext",
             packageFQName: coroutinesPkg,
             parameters: [

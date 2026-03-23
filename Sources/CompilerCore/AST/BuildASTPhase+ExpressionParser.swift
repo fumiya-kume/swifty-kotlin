@@ -355,6 +355,7 @@ extension BuildASTPhase {
                  .symbol(.minus), .symbol(.plus), .symbol(.bang),
                  .symbol(.doubleColon),
                  .stringQuote, .rawStringQuote,
+                 .multiDollarStringQuote, .multiDollarRawStringQuote,
                  .softKeyword:
                 true
             default:

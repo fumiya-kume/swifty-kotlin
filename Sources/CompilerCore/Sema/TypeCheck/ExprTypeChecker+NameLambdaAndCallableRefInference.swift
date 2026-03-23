@@ -65,7 +65,8 @@ extension ExprTypeChecker {
         // property accessed via implicit receiver (inside a class/object
         // member function).
         let allCandidateIDs = ctx.cachedScopeLookup(name)
-        let (visibleIDs, _) = ctx.filterByVisibility(allCandidateIDs)
+        let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
+        let (visibleIDs, _) = ctx.filterByVisibility(dslFilteredIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if let propSymbol = candidates.first(where: { sym in
             guard sym.kind == .property else { return false }
@@ -179,7 +180,11 @@ extension ExprTypeChecker {
             return local.type
         }
         let allCandidateIDs = ctx.cachedScopeLookup(name)
-        let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(allCandidateIDs)
+        // @DslMarker restriction: filter out candidates from outer receivers
+        // that share a DslMarker annotation with the current implicit receiver.
+        let dslBlockedIDs = allCandidateIDs.filter { ctx.isCandidateBlockedByDslMarker($0) }
+        let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
+        let (visibleIDs, invisibleSyms) = ctx.filterByVisibility(dslFilteredIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
         if let receiverType = ctx.implicitReceiverType {
             let memberType = resolveImplicitReceiverMember(
@@ -190,14 +195,31 @@ extension ExprTypeChecker {
                 sema: sema,
                 interner: interner,
                 nameRange: nameRange,
-                emitDiagnosticOnFailure: candidates.isEmpty && invisibleSyms.isEmpty
+                emitDiagnosticOnFailure: candidates.isEmpty && invisibleSyms.isEmpty && dslBlockedIDs.isEmpty
             )
             if let memberType, memberType != sema.types.errorType {
                 return memberType
             }
             if candidates.isEmpty, memberType == sema.types.errorType {
+                // If there were DslMarker-blocked candidates, emit a specific diagnostic.
+                if !dslBlockedIDs.isEmpty {
+                    ctx.semaCtx.diagnostics.error(
+                        "KSWIFTK-SEMA-DSLMARKER",
+                        "'@DslMarker' implicit access to '\(interner.resolve(name))' from outer receiver is restricted. Use explicit receiver.",
+                        range: nameRange
+                    )
+                }
                 return sema.types.errorType
             }
+        }
+        if candidates.isEmpty, !dslBlockedIDs.isEmpty {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-DSLMARKER",
+                "'@DslMarker' implicit access to '\(interner.resolve(name))' from outer receiver is restricted. Use explicit receiver.",
+                range: nameRange
+            )
+            sema.bindings.bindExprType(id, type: sema.types.errorType)
+            return sema.types.errorType
         }
         if candidates.isEmpty {
             if let receiverType = ctx.implicitReceiverType,
