@@ -1,3 +1,4 @@
+// SKIP-DIFF
 fun interface Transformer { fun transform(s: String): String }
 fun apply(t: Transformer, s: String) = t.transform(s)
 fun main() {
