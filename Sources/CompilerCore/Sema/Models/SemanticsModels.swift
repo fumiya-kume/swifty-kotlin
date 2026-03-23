@@ -179,6 +179,27 @@ public enum InvocationKind: String, Equatable, Sendable {
     case unknown = "UNKNOWN"
 }
 
+/// STDLIB-591: `contract { returns() implies (condition) }` effect where `condition`
+/// is a Boolean parameter.  After normal return, the argument expression at
+/// `conditionParameterIndex` is guaranteed true, enabling smart casts derived from
+/// that expression (e.g. `require(x != null)` narrows `x` to non-null).
+public struct ContractConditionEffect: Equatable, Sendable {
+    /// Index into the function signature's value-parameter list whose argument
+    /// expression is guaranteed true on normal return.
+    public let conditionParameterIndex: Int
+
+    /// When to apply the smart cast:
+    /// - `nil`: applies on any normal return (`returns() implies condition`)
+    /// - `true`: applies when function returns true (`returns(true) implies condition`)
+    /// - `false`: applies when function returns false (`returns(false) implies condition`)
+    public let returnsValue: Bool?
+
+    public init(conditionParameterIndex: Int, returnsValue: Bool? = nil) {
+        self.conditionParameterIndex = conditionParameterIndex
+        self.returnsValue = returnsValue
+    }
+}
+
 /// STDLIB-593: `contract { returnsNotNull() }` effect.
 /// Records that the function is guaranteed to return a non-null value.
 public struct ContractReturnsNotNullEffect: Equatable, Sendable {
@@ -353,6 +374,7 @@ public final class SymbolTable {
     private var contractReturnsEffects: [SymbolID: ContractReturnsEffect] = [:]
     private var contractCallsInPlaceEffects: [SymbolID: [ContractCallsInPlaceEffect]] = [:]
     private var contractReturnsNotNullEffects: Set<SymbolID> = []
+    private var contractConditionEffects: [SymbolID: ContractConditionEffect] = [:]
     /// CLASS-008: Interfaces delegated by a class via `: Interface by expr`.
     /// Key = class symbol, Value = set of interface symbols that class delegates to.
     private var delegatedInterfacesByClass: [SymbolID: Set<SymbolID>] = [:]
@@ -409,6 +431,7 @@ public final class SymbolTable {
 
             let shouldCoexist = canCoexistAsOverload(kind: kind, existingKinds: existingKinds)
                 || canCoexistAsExpectActual(kind: kind, flags: flags, existingSymbols: existingSymbols)
+                || canCoexistAsSyntheticPropertyFamily(kind: kind, flags: flags, existingSymbols: existingSymbols)
             if shouldCoexist {
                 return appendNewSymbol(
                     kind: kind,
@@ -484,7 +507,12 @@ public final class SymbolTable {
                 && !existingNonPackageKinds.contains(.property)
         }
         if isCallableLike(kind) {
-            return existingNonPackageKinds.allSatisfy(isCallableLike)
+            // Allow functions/constructors to coexist with nominal types
+            // (class, enumClass, interface) — Kotlin supports factory
+            // functions with the same name as a class (e.g. Regex(pattern)).
+            return existingNonPackageKinds.allSatisfy {
+                isCallableLike($0) || isNominalType($0)
+            }
         }
         guard isOverloadable(kind) else {
             return false
@@ -521,8 +549,29 @@ public final class SymbolTable {
         return hasOpposite && !hasSame && !hasNonMPP
     }
 
+    private func canCoexistAsSyntheticPropertyFamily(
+        kind: SymbolKind,
+        flags: SymbolFlags,
+        existingSymbols: [SemanticSymbol]
+    ) -> Bool {
+        guard kind == .property, flags.contains(.synthetic) else {
+            return false
+        }
+        let existingNonPackageSymbols = existingSymbols.filter { $0.kind != .package }
+        guard !existingNonPackageSymbols.isEmpty else {
+            return false
+        }
+        return existingNonPackageSymbols.allSatisfy { symbol in
+            symbol.kind == .property && symbol.flags.contains(.synthetic)
+        }
+    }
+
     private func isOverloadable(_ kind: SymbolKind) -> Bool {
         kind == .function || kind == .constructor
+    }
+
+    private func isNominalType(_ kind: SymbolKind) -> Bool {
+        kind == .class || kind == .enumClass || kind == .interface
     }
 
     public func setFunctionSignature(_ signature: FunctionSignature, for symbol: SymbolID) {
@@ -883,6 +932,17 @@ public final class SymbolTable {
         contractReturnsNotNullEffects.contains(function)
     }
 
+    /// STDLIB-591: Record a `returns() implies condition` effect where the
+    /// condition is a Boolean parameter at the given index.
+    public func setContractConditionEffect(_ effect: ContractConditionEffect, for function: SymbolID) {
+        contractConditionEffects[function] = effect
+    }
+
+    /// STDLIB-591: Returns the `returns() implies condition` effect for a function, if any.
+    public func contractConditionEffect(for function: SymbolID) -> ContractConditionEffect? {
+        contractConditionEffects[function]
+    }
+
     // MARK: - Indexed queries
 
     /// Returns all symbol IDs of a given kind.
@@ -917,8 +977,12 @@ public final class BindingTable {
     public private(set) var collectionExprIDs: Set<ExprID> = []
     public private(set) var rangeExprIDs: Set<ExprID> = []
     public private(set) var charRangeExprIDs: Set<ExprID> = []
+    public private(set) var ulongRangeExprIDs: Set<ExprID> = []
     public private(set) var flowExprIDs: Set<ExprID> = []
     public private(set) var collectionSymbolIDs: Set<SymbolID> = []
+    public private(set) var rangeSymbolIDs: Set<SymbolID> = []
+    public private(set) var charRangeSymbolIDs: Set<SymbolID> = []
+    public private(set) var ulongRangeSymbolIDs: Set<SymbolID> = []
     public private(set) var flowSymbolIDs: Set<SymbolID> = []
     public private(set) var flowElementTypesByExpr: [ExprID: TypeID] = [:]
     public private(set) var flowElementTypesBySymbol: [SymbolID: TypeID] = [:]
@@ -961,6 +1025,10 @@ public final class BindingTable {
     /// Maps callable reference expression IDs to their kind (function vs property)
     /// so that KIR lowering can emit KFunction / KProperty type identity (REFL-003).
     public private(set) var callableRefKinds: [ExprID: CallableRefKind] = [:]
+    /// Tracks callable reference expressions that are unbound type references
+    /// (e.g. `Type::member`).  The receiver is not captured; instead it
+    /// becomes a parameter of the resulting function type (REFL-003).
+    public private(set) var unboundCallableRefs: Set<ExprID> = []
 
     public init() {}
 
@@ -1037,6 +1105,14 @@ public final class BindingTable {
         charRangeExprIDs.contains(expr)
     }
 
+    public func markULongRangeExpr(_ expr: ExprID) {
+        ulongRangeExprIDs.insert(expr)
+    }
+
+    public func isULongRangeExpr(_ expr: ExprID) -> Bool {
+        ulongRangeExprIDs.contains(expr)
+    }
+
     public func markFlowExpr(_ expr: ExprID) {
         flowExprIDs.insert(expr)
     }
@@ -1068,6 +1144,30 @@ public final class BindingTable {
 
     public func isCollectionSymbol(_ symbol: SymbolID) -> Bool {
         collectionSymbolIDs.contains(symbol)
+    }
+
+    public func markRangeSymbol(_ symbol: SymbolID) {
+        rangeSymbolIDs.insert(symbol)
+    }
+
+    public func isRangeSymbol(_ symbol: SymbolID) -> Bool {
+        rangeSymbolIDs.contains(symbol)
+    }
+
+    public func markCharRangeSymbol(_ symbol: SymbolID) {
+        charRangeSymbolIDs.insert(symbol)
+    }
+
+    public func isCharRangeSymbol(_ symbol: SymbolID) -> Bool {
+        charRangeSymbolIDs.contains(symbol)
+    }
+
+    public func markULongRangeSymbol(_ symbol: SymbolID) {
+        ulongRangeSymbolIDs.insert(symbol)
+    }
+
+    public func isULongRangeSymbol(_ symbol: SymbolID) -> Bool {
+        ulongRangeSymbolIDs.contains(symbol)
     }
 
     public func markFlowSymbol(_ symbol: SymbolID) {
@@ -1268,6 +1368,16 @@ public final class BindingTable {
     /// Query the callable reference kind for an expression (REFL-003).
     public func callableRefKind(for expr: ExprID) -> CallableRefKind? {
         callableRefKinds[expr]
+    }
+
+    /// Mark a callable reference as an unbound type reference (REFL-003).
+    public func markUnboundCallableRef(_ expr: ExprID) {
+        unboundCallableRefs.insert(expr)
+    }
+
+    /// Query whether a callable reference is an unbound type reference (REFL-003).
+    public func isUnboundCallableRef(_ expr: ExprID) -> Bool {
+        unboundCallableRefs.contains(expr)
     }
 }
 

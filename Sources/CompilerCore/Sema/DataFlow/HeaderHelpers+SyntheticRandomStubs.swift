@@ -1,7 +1,9 @@
 import Foundation
 
-/// Synthetic stdlib stubs for kotlin.random.Random (STDLIB-165, STDLIB-514, STDLIB-515).
-/// Registers the Random object and nextInt/nextLong/nextFloat/nextDouble/nextBoolean methods.
+/// Synthetic stdlib stubs for kotlin.random.Random
+/// (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655).
+/// Registers the Random object, seeded constructor-style factory, and
+/// nextInt/nextLong/nextFloat/nextDouble/nextBoolean/nextBytes methods.
 extension DataFlowSemaPhase {
     func registerSyntheticRandomStubs(
         symbols: SymbolTable,
@@ -45,6 +47,20 @@ extension DataFlowSemaPhase {
         let floatType = types.floatType
         let doubleType = types.doubleType
         let boolType = types.make(.primitive(.boolean, .nonNull))
+
+        // Random(seed: Int) constructor (STDLIB-516)
+        // In Kotlin, Random(seed) is a top-level factory function, but from
+        // the user perspective it looks like a constructor call.  We register
+        // it as a constructor on the Random symbol so that the call resolver
+        // can find it when the user writes `Random(42)`.
+        registerSyntheticRandomConstructor(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            externalLinkName: "kk_random_create_seeded",
+            parameters: [(name: "seed", type: intType)],
+            symbols: symbols,
+            interner: interner
+        )
 
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
@@ -132,10 +148,78 @@ extension DataFlowSemaPhase {
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
+            name: "nextFloat",
+            externalLinkName: "kk_random_nextFloat_until",
+            returnType: floatType,
+            parameters: [(name: "until", type: floatType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-655: nextFloat(from, until)
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextFloat",
+            externalLinkName: "kk_random_nextFloat_range",
+            returnType: floatType,
+            parameters: [
+                (name: "from", type: floatType),
+                (name: "until", type: floatType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
             name: "nextDouble",
             externalLinkName: "kk_random_nextDouble",
             returnType: doubleType,
             parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextDouble",
+            externalLinkName: "kk_random_nextDouble_until",
+            returnType: doubleType,
+            parameters: [(name: "until", type: doubleType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextDouble",
+            externalLinkName: "kk_random_nextDouble_range",
+            returnType: doubleType,
+            parameters: [
+                (name: "from", type: doubleType),
+                (name: "until", type: doubleType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-653: nextBytes(array: ByteArray): ByteArray
+        let byteArrayType = makeListIntType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextBytes",
+            externalLinkName: "kk_random_nextBytes",
+            returnType: byteArrayType,
+            parameters: [(name: "array", type: byteArrayType)],
             symbols: symbols,
             interner: interner
         )
@@ -170,6 +254,71 @@ extension DataFlowSemaPhase {
             declSite: nil,
             visibility: .public,
             flags: [.synthetic]
+        )
+    }
+
+    /// Registers a constructor on the Random symbol (STDLIB-516).
+    private func registerSyntheticRandomConstructor(
+        ownerSymbol: SymbolID,
+        ownerType: TypeID,
+        externalLinkName: String,
+        parameters: [(name: String, type: TypeID)],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let initName = interner.intern("<init>")
+        let ctorFQName = ownerInfo.fqName + [initName]
+        let hasMatchingConstructor = symbols.lookupAll(fqName: ctorFQName).contains { symbolID in
+            guard let symbol = symbols.symbol(symbolID),
+                  symbol.kind == .constructor,
+                  let signature = symbols.functionSignature(for: symbolID)
+            else {
+                return false
+            }
+            return signature.parameterTypes == parameters.map(\.type)
+        }
+        guard !hasMatchingConstructor else {
+            return
+        }
+
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: ctorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
+
+        var valueParameterSymbols: [SymbolID] = []
+        for parameter in parameters {
+            let parameterName = interner.intern(parameter.name)
+            let paramSymbol = symbols.define(
+                kind: .valueParameter,
+                name: parameterName,
+                fqName: ctorFQName + [parameterName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(ctorSymbol, for: paramSymbol)
+            valueParameterSymbols.append(paramSymbol)
+        }
+
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: parameters.map(\.type),
+                returnType: ownerType,
+                valueParameterSymbols: valueParameterSymbols,
+                valueParameterHasDefaultValues: Array(repeating: false, count: valueParameterSymbols.count),
+                valueParameterIsVararg: Array(repeating: false, count: valueParameterSymbols.count)
+            ),
+            for: ctorSymbol
         )
     }
 
@@ -254,5 +403,26 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    /// Build a `List<Int>` type, which is the internal representation of ByteArray.
+    private func makeListIntType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(types.intType)],
+            nullability: .nonNull
+        )))
     }
 }

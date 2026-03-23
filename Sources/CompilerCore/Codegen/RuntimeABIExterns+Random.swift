@@ -1,7 +1,8 @@
-// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515)
+// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-653, STDLIB-654, STDLIB-655)
 
 public extension RuntimeABIExterns {
     static let randomExterns: [ExternDecl] = [
+        kk_random_create_seeded,
         kk_random_nextInt,
         kk_random_nextInt_until,
         kk_random_nextInt_range,
@@ -9,9 +10,20 @@ public extension RuntimeABIExterns {
         kk_random_nextLong_until,
         kk_random_nextLong_range,
         kk_random_nextFloat,
+        kk_random_nextFloat_until,
+        kk_random_nextFloat_range,
+        kk_random_nextBytes,
         kk_random_nextDouble,
+        kk_random_nextDouble_until,
+        kk_random_nextDouble_range,
         kk_random_nextBoolean,
     ]
+
+    static let kk_random_create_seeded = ExternDecl(
+        name: "kk_random_create_seeded",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
 
     static let kk_random_nextInt = ExternDecl(
         name: "kk_random_nextInt",
@@ -55,9 +67,39 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_random_nextFloat_until = ExternDecl(
+        name: "kk_random_nextFloat_until",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextFloat_range = ExternDecl(
+        name: "kk_random_nextFloat_range",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextBytes = ExternDecl(
+        name: "kk_random_nextBytes",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     static let kk_random_nextDouble = ExternDecl(
         name: "kk_random_nextDouble",
         parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextDouble_until = ExternDecl(
+        name: "kk_random_nextDouble_until",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_random_nextDouble_range = ExternDecl(
+        name: "kk_random_nextDouble_range",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

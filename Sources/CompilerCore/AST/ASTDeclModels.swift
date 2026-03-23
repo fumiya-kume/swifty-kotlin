@@ -352,6 +352,22 @@ public struct PropertyAccessorDecl: Equatable {
     }
 }
 
+/// Kotlin 2.0 explicit backing field declaration for a property.
+/// Example: `val fullName: String  field = ""  get() = field.uppercase()`
+/// The backing field may have a type that differs from the property type.
+public struct ExplicitBackingField {
+    /// Optional explicit type annotation for the backing field.
+    /// When `nil`, the type is inferred from the initializer expression.
+    public let type: TypeRefID?
+    /// The initializer expression for the backing field (required).
+    public let initializer: ExprID
+
+    public init(type: TypeRefID?, initializer: ExprID) {
+        self.type = type
+        self.initializer = initializer
+    }
+}
+
 public struct PropertyDecl {
     public let range: SourceRange
     public let name: InternedString
@@ -373,6 +389,10 @@ public struct PropertyDecl {
     /// `true` for synthetic member properties materialized from primary
     /// constructor `val` / `var` parameters.
     public let isSynthesizedPrimaryConstructorProperty: Bool
+    /// Kotlin 2.0 explicit backing field declaration (`field = expr` or
+    /// `field: Type = expr`).  When present, the backing field has its own
+    /// type and initializer distinct from the property's.
+    public let explicitBackingField: ExplicitBackingField?
 
     public init(
         range: SourceRange,
@@ -387,7 +407,8 @@ public struct PropertyDecl {
         delegateExpression: ExprID? = nil,
         delegateBody: FunctionBody? = nil,
         receiverType: TypeRefID? = nil,
-        isSynthesizedPrimaryConstructorProperty: Bool = false
+        isSynthesizedPrimaryConstructorProperty: Bool = false,
+        explicitBackingField: ExplicitBackingField? = nil
     ) {
         self.range = range
         self.name = name
@@ -402,6 +423,7 @@ public struct PropertyDecl {
         self.delegateBody = delegateBody
         self.receiverType = receiverType
         self.isSynthesizedPrimaryConstructorProperty = isSynthesizedPrimaryConstructorProperty
+        self.explicitBackingField = explicitBackingField
     }
 }
 

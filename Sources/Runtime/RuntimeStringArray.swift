@@ -114,6 +114,11 @@ private enum RuntimeTypeTokenEncoding {
     static let ulongBase: Int64 = 8
     static let ubyteBase: Int64 = 9
     static let ushortBase: Int64 = 10
+    // REFL-002: Additional primitive bases for Long, Double, Float, Char.
+    static let longBase: Int64 = 11
+    static let doubleBase: Int64 = 12
+    static let floatBase: Int64 = 13
+    static let charBase: Int64 = 14
 }
 
 func runtimePanicMessage(fromCString cstr: UnsafePointer<CChar>) -> String {
@@ -228,6 +233,46 @@ public func kk_op_is(_ value: Int, _ typeToken: Int) -> Int {
         }
         return tryCast(ptr, to: RuntimeIntBox.self) == nil ? 0 : 1
 
+    case RuntimeTypeTokenEncoding.longBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeLongBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.doubleBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeDoubleBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.floatBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeFloatBox.self) == nil ? 0 : 1
+
+    case RuntimeTypeTokenEncoding.charBase:
+        guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
+            return 1
+        }
+        let isObjPtr = runtimeStorage.withLock { state in
+            state.objectPointers.contains(UInt(bitPattern: ptr))
+        }
+        if !isObjPtr { return 1 }
+        return tryCast(ptr, to: RuntimeCharBox.self) == nil ? 0 : 1
+
     case RuntimeTypeTokenEncoding.booleanBase:
         guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
             return (value == 0 || value == 1) ? 1 : 0
@@ -291,6 +336,14 @@ public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
             return (range.first - element) % (-range.step) == 0 ? 1 : 0
         }
         return 0
+    }
+    // List check
+    if let list = runtimeListBox(from: container) {
+        return list.elements.contains(element) ? 1 : 0
+    }
+    // Set check
+    if let set = runtimeSetBox(from: container) {
+        return set.elements.contains(element) ? 1 : 0
     }
     // Array check
     guard let array = runtimeArrayBox(from: container) else {
@@ -356,6 +409,15 @@ public func kk_type_token_simple_name(_ typeToken: Int, _ nameHint: Int) -> Int 
         "UShort"
     case RuntimeTypeTokenEncoding.booleanBase:
         "Boolean"
+    // REFL-002: Additional primitive bases for accurate simpleName.
+    case RuntimeTypeTokenEncoding.longBase:
+        "Long"
+    case RuntimeTypeTokenEncoding.doubleBase:
+        "Double"
+    case RuntimeTypeTokenEncoding.floatBase:
+        "Float"
+    case RuntimeTypeTokenEncoding.charBase:
+        "Char"
     case RuntimeTypeTokenEncoding.nullBase:
         "Nothing"
     default:
@@ -424,16 +486,170 @@ public func kk_kclass_simple_name(_ kclassRaw: Int) -> Int {
 }
 
 /// Returns the `qualifiedName` of a `KClass<T>` metadata object.
-/// Delegates to `kk_type_token_qualified_name` using the stored token and hint.
-/// NOTE: Currently returns the same value as `simpleName` because
-/// `kk_type_token_qualified_name` falls back to `kk_type_token_simple_name`.
-/// A future implementation may return package-qualified names for nominal types.
+/// When binary metadata has been registered via `kk_kclass_register_metadata`,
+/// returns the fully-qualified name (e.g. "com.example.Foo"). Otherwise
+/// falls back to `kk_type_token_qualified_name` which returns the simple name.
 @_cdecl("kk_kclass_qualified_name")
 public func kk_kclass_qualified_name(_ kclassRaw: Int) -> Int {
     guard let box = runtimeKClassBox(from: kclassRaw) else {
         return runtimeNullSentinelInt
     }
+    // Try the metadata registry first for proper qualified names.
+    if let metadata = box.metadata {
+        let utf8 = Array(metadata.qualifiedName.utf8)
+        return utf8.withUnsafeBufferPointer { buf in
+            Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+        }
+    }
     return kk_type_token_qualified_name(box.typeToken, box.nameHint)
+}
+
+// MARK: - REFL-004: KClass Binary Metadata Accessors
+
+/// Registers runtime reflection metadata for a type identified by `typeToken`.
+/// Called during module initialization to populate the global metadata registry
+/// from the binary metadata blob emitted by `RuntimeReflectionMetadataEmitter`.
+///
+/// Parameters are passed as intptr_t values:
+/// - typeToken: The type token identifying the type.
+/// - qualifiedNameRaw: Runtime string pointer for the qualified name.
+/// - simpleNameRaw: Runtime string pointer for the simple name.
+/// - supertypeNameRaw: Runtime string pointer for the supertype name (0 if none).
+/// - flags: Bit-packed flags (bit 0=dataClass, bit 1=sealedClass, bit 2=valueClass,
+///          bit 3=interface, bit 4=object, bit 5=enumClass, bit 6=annotationClass,
+///          bit 7=abstract).
+/// - fieldCount: Number of declared fields (-1 if unknown).
+/// - memberCount: Number of declared members (-1 if unknown).
+@_cdecl("kk_kclass_register_metadata")
+public func kk_kclass_register_metadata(
+    _ typeToken: Int,
+    _ qualifiedNameRaw: Int,
+    _ simpleNameRaw: Int,
+    _ supertypeNameRaw: Int,
+    _ flags: Int,
+    _ fieldCount: Int,
+    _ memberCount: Int
+) -> Int {
+    let qualifiedName = extractString(from: UnsafeMutableRawPointer(bitPattern: qualifiedNameRaw)) ?? "Unknown"
+    let simpleName = extractString(from: UnsafeMutableRawPointer(bitPattern: simpleNameRaw)) ?? "Unknown"
+    let supertypeName: String?
+    if supertypeNameRaw != 0, supertypeNameRaw != runtimeNullSentinelInt {
+        supertypeName = extractString(from: UnsafeMutableRawPointer(bitPattern: supertypeNameRaw))
+    } else {
+        supertypeName = nil
+    }
+
+    let entry = RuntimeKClassMetadataEntry(
+        qualifiedName: qualifiedName,
+        simpleName: simpleName,
+        supertypeName: supertypeName,
+        isDataClass: (flags & (1 << 0)) != 0,
+        isSealedClass: (flags & (1 << 1)) != 0,
+        isValueClass: (flags & (1 << 2)) != 0,
+        isInterface: (flags & (1 << 3)) != 0,
+        isObject: (flags & (1 << 4)) != 0,
+        isEnumClass: (flags & (1 << 5)) != 0,
+        isAnnotationClass: (flags & (1 << 6)) != 0,
+        isAbstract: (flags & (1 << 7)) != 0,
+        fieldCount: fieldCount,
+        memberCount: memberCount
+    )
+    runtimeKClassMetadataRegistry.register(typeToken: typeToken, entry: entry)
+    return 0
+}
+
+/// Returns 1 if the KClass represents a data class, 0 otherwise.
+@_cdecl("kk_kclass_is_data")
+public func kk_kclass_is_data(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isDataClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents a sealed class, 0 otherwise.
+@_cdecl("kk_kclass_is_sealed")
+public func kk_kclass_is_sealed(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isSealedClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents a value (inline) class, 0 otherwise.
+@_cdecl("kk_kclass_is_value")
+public func kk_kclass_is_value(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isValueClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an interface, 0 otherwise.
+@_cdecl("kk_kclass_is_interface")
+public func kk_kclass_is_interface(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isInterface ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an object declaration, 0 otherwise.
+@_cdecl("kk_kclass_is_object")
+public func kk_kclass_is_object(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isObject ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an enum class, 0 otherwise.
+@_cdecl("kk_kclass_is_enum")
+public func kk_kclass_is_enum(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isEnumClass ? 1 : 0
+}
+
+/// Returns 1 if the KClass represents an abstract class, 0 otherwise.
+@_cdecl("kk_kclass_is_abstract")
+public func kk_kclass_is_abstract(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return 0
+    }
+    return metadata.isAbstract ? 1 : 0
+}
+
+/// Returns the supertype name as a runtime string pointer, or null sentinel if none.
+@_cdecl("kk_kclass_supertype_name")
+public func kk_kclass_supertype_name(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata,
+          let superName = metadata.supertypeName else {
+        return runtimeNullSentinelInt
+    }
+    let utf8 = Array(superName.utf8)
+    return utf8.withUnsafeBufferPointer { buf in
+        Int(bitPattern: kk_string_from_utf8(buf.baseAddress!, Int32(buf.count)))
+    }
+}
+
+/// Returns the number of declared members, or -1 if unknown.
+@_cdecl("kk_kclass_members_count")
+public func kk_kclass_members_count(_ kclassRaw: Int) -> Int {
+    guard let box = runtimeKClassBox(from: kclassRaw),
+          let metadata = box.metadata else {
+        return -1
+    }
+    return metadata.memberCount
 }
 
 @_cdecl("kk_type_register_super")
@@ -632,7 +848,11 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
-        Swift.print("(\(first), \(second))")
+        if runtimeIsMapEntry(rawValue: intValue) {
+            Swift.print("\(first)=\(second)")
+        } else {
+            Swift.print("(\(first), \(second))")
+        }
         return
     }
     if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
@@ -654,6 +874,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         let rendered = arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", ")
         Swift.print("[\(rendered)]")
+        return
+    }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        Swift.print(sbBox.value)
         return
     }
     Swift.print("<object \(raw)>")
@@ -704,7 +928,7 @@ public func kk_readline() -> Int {
 public func kk_readln(_ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0
     guard let line = readLine() else {
-        outThrown?.pointee = runtimeAllocateThrowable(message: "ReadAfterEOFException")
+        outThrown?.pointee = runtimeAllocateThrowable(message: "EOF has already been reached")
         return 0
     }
     let utf8 = Array(line.utf8)
@@ -797,6 +1021,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if let pairBox = tryCast(raw, to: RuntimePairBox.self) {
         let first = runtimeRenderAnyForPrint(pairBox.first)
         let second = runtimeRenderAnyForPrint(pairBox.second)
+        if runtimeIsMapEntry(rawValue: value) {
+            return "\(first)=\(second)"
+        }
         return "(\(first), \(second))"
     }
     if let tripleBox = tryCast(raw, to: RuntimeTripleBox.self) {
@@ -815,6 +1042,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        return sbBox.value
+    }
     return "<object \(raw)>"
 }
 
@@ -828,7 +1058,81 @@ private func runtimeRenderStringIterableForPrint(_ strRaw: Int) -> String {
     return "[\(rendered)]"
 }
 
-func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
+private func runtimeNormalizeScientificExponent(_ rendered: String) -> String {
+    guard let exponentIndex = rendered.firstIndex(of: "E") ?? rendered.firstIndex(of: "e") else {
+        return rendered
+    }
+    let mantissa = runtimeNormalizeScientificMantissa(String(rendered[..<exponentIndex]))
+    var exponent = String(rendered[rendered.index(after: exponentIndex)...])
+    if exponent.hasPrefix("+") {
+        exponent.removeFirst()
+    }
+    while exponent.count > 1, exponent.first == "0" {
+        exponent.removeFirst()
+    }
+    if exponent.hasPrefix("-0"), exponent.count > 2 {
+        exponent.remove(at: exponent.index(after: exponent.startIndex))
+    }
+    return "\(mantissa)E\(exponent)"
+}
+
+private func runtimeNormalizeScientificMantissa(_ mantissa: String) -> String {
+    guard let dotIndex = mantissa.firstIndex(of: ".") else {
+        return mantissa + ".0"
+    }
+    let integerPart = String(mantissa[..<dotIndex])
+    var fractionalPart = String(mantissa[mantissa.index(after: dotIndex)...])
+    while fractionalPart.last == "0" {
+        fractionalPart.removeLast()
+    }
+    if fractionalPart.isEmpty {
+        fractionalPart = "0"
+    }
+    return "\(integerPart).\(fractionalPart)"
+}
+
+private func runtimeScientificString(fromFixed rendered: String) -> String {
+    var body = rendered
+    var sign = ""
+    if body.hasPrefix("-") {
+        sign = "-"
+        body.removeFirst()
+    } else if body.hasPrefix("+") {
+        body.removeFirst()
+    }
+
+    let components = body.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    let integerPart = String(components.first ?? "")
+    let fractionalPart = components.count > 1 ? String(components[1]) : ""
+
+    let trimmedInteger = integerPart.drop(while: { $0 == "0" })
+    let exponent: Int
+    let significantDigits: String
+
+    if !trimmedInteger.isEmpty {
+        exponent = trimmedInteger.count - 1
+        significantDigits = String(trimmedInteger) + fractionalPart
+    } else if let firstNonZeroFraction = fractionalPart.firstIndex(where: { $0 != "0" }) {
+        exponent = -fractionalPart.distance(from: fractionalPart.startIndex, to: firstNonZeroFraction) - 1
+        significantDigits = String(fractionalPart[firstNonZeroFraction...])
+    } else {
+        return sign + "0.0E0"
+    }
+
+    let firstDigit = String(significantDigits.prefix(1))
+    var mantissaFraction = String(significantDigits.dropFirst())
+    while mantissaFraction.last == "0" {
+        mantissaFraction.removeLast()
+    }
+    if mantissaFraction.isEmpty {
+        mantissaFraction = "0"
+    }
+    return "\(sign)\(firstDigit).\(mantissaFraction)E\(exponent)"
+}
+
+private func runtimeFormatFloatingPointCore(
+    _ value: Double
+) -> String {
     if value.isNaN {
         return "NaN"
     }
@@ -838,7 +1142,36 @@ func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
     if value == -.infinity {
         return "-Infinity"
     }
-    return String(describing: value)
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    let magnitude = abs(value)
+    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
+        return runtimeScientificString(fromFixed: rendered)
+    }
+    return rendered
+}
+
+func runtimeFormatFloatingPoint(_ value: Double) -> String {
+    runtimeFormatFloatingPointCore(value)
+}
+
+func runtimeFormatFloatingPoint(_ value: Float) -> String {
+    if value.isNaN {
+        return "NaN"
+    }
+    if value == .infinity {
+        return "Infinity"
+    }
+    if value == -.infinity {
+        return "-Infinity"
+    }
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    return rendered
 }
 
 // MARK: - String nullable receiver helpers

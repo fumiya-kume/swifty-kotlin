@@ -1,6 +1,7 @@
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
+        kk_list_of_not_null,
         kk_emptyList,
         kk_list_size,
         kk_list_get,
@@ -21,6 +22,9 @@ public extension RuntimeABIExterns {
         kk_list_to_mutable_list,
         kk_list_joinToString,
         kk_list_to_set,
+        kk_set_to_set,
+        kk_list_to_mutable_set,
+        kk_set_to_mutable_set,
         kk_list_intersect,
         kk_list_union,
         kk_list_subtract,
@@ -36,6 +40,8 @@ public extension RuntimeABIExterns {
         kk_set_is_empty,
         kk_set_toList,
         kk_collection_toList,
+        kk_collection_size,
+        kk_collection_isEmpty,
         kk_set_intersect,
         kk_set_union,
         kk_set_subtract,
@@ -57,6 +63,7 @@ public extension RuntimeABIExterns {
         kk_list_runningReduce,
         kk_list_scanReduce,
         kk_list_groupBy,
+        kk_list_groupByTransform,
         kk_list_sortedBy,
         kk_list_count,
         kk_list_first,
@@ -69,10 +76,19 @@ public extension RuntimeABIExterns {
         kk_list_associateWithTo,
         kk_list_groupByTo,
         kk_list_zip,
+        kk_list_zipWithNext,
+        kk_list_zipWithNextTransform,
         kk_list_unzip,
         kk_list_withIndex,
         kk_list_forEachIndexed,
         kk_list_mapIndexed,
+        kk_list_filterIndexed,
+        kk_list_foldIndexed,
+        kk_list_reduceIndexed,
+        kk_list_reduceIndexedOrNull,
+        kk_list_runningFoldIndexed,
+        kk_list_runningReduceIndexed,
+        kk_list_scanIndexed,
         kk_list_sumOf,
         kk_list_maxOrNull,
         kk_list_minOrNull,
@@ -80,6 +96,16 @@ public extension RuntimeABIExterns {
         kk_list_minByOrNull,
         kk_list_maxOfOrNull,
         kk_list_minOfOrNull,
+        kk_list_maxOf,
+        kk_list_minOf,
+        kk_list_maxWith,
+        kk_list_maxWithOrNull,
+        kk_list_minWith,
+        kk_list_minWithOrNull,
+        kk_list_maxOfWith,
+        kk_list_maxOfWithOrNull,
+        kk_list_minOfWith,
+        kk_list_minOfWithOrNull,
         kk_list_take,
         kk_list_drop,
         kk_list_reversed,
@@ -100,6 +126,7 @@ public extension RuntimeABIExterns {
         kk_list_filterIsInstance,
         kk_list_chunked,
         kk_list_chunked_transform,
+        kk_list_windowed_default,
         kk_list_windowed,
         kk_list_windowed_partial,
         kk_list_sortedDescending,
@@ -250,6 +277,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_of_not_null = ExternDecl(
+        name: "kk_list_of_not_null",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-410: emptyList/emptySet/emptyMap
     static let kk_emptyList = ExternDecl(
         name: "kk_emptyList",
@@ -379,6 +412,25 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-651: Set.toSet(), List.toMutableSet(), Set.toMutableSet()
+    static let kk_set_to_set = ExternDecl(
+        name: "kk_set_to_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_to_mutable_set = ExternDecl(
+        name: "kk_list_to_mutable_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_to_mutable_set = ExternDecl(
+        name: "kk_set_to_mutable_set",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-510: List.intersect / union / subtract / toHashSet
     static let kk_list_intersect = ExternDecl(
         name: "kk_list_intersect",
@@ -454,6 +506,18 @@ public extension RuntimeABIExterns {
 
     static let kk_collection_toList = ExternDecl(
         name: "kk_collection_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_size = ExternDecl(
+        name: "kk_collection_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_isEmpty = ExternDecl(
+        name: "kk_collection_isEmpty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -940,6 +1004,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_groupByTransform = ExternDecl(
+        name: "kk_list_groupByTransform",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_list_sortedBy = ExternDecl(
         name: "kk_list_sortedBy",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
@@ -976,6 +1046,18 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_zipWithNext = ExternDecl(
+        name: "kk_list_zipWithNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_zipWithNextTransform = ExternDecl(
+        name: "kk_list_zipWithNextTransform",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     static let kk_list_unzip = ExternDecl(
         name: "kk_list_unzip",
         parameterTypes: ["intptr_t"],
@@ -999,6 +1081,14 @@ public extension RuntimeABIExterns {
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
+
+    static let kk_list_filterIndexed = ExternDecl(name: "kk_list_filterIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_foldIndexed = ExternDecl(name: "kk_list_foldIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_reduceIndexed = ExternDecl(name: "kk_list_reduceIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_reduceIndexedOrNull = ExternDecl(name: "kk_list_reduceIndexedOrNull", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_runningFoldIndexed = ExternDecl(name: "kk_list_runningFoldIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_runningReduceIndexed = ExternDecl(name: "kk_list_runningReduceIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_scanIndexed = ExternDecl(name: "kk_list_scanIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
 
     static let kk_list_sumOf = ExternDecl(
         name: "kk_list_sumOf",
@@ -1039,6 +1129,66 @@ public extension RuntimeABIExterns {
     static let kk_list_minOfOrNull = ExternDecl(
         name: "kk_list_minOfOrNull",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOf = ExternDecl(
+        name: "kk_list_maxOf",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOf = ExternDecl(
+        name: "kk_list_minOf",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxWith = ExternDecl(
+        name: "kk_list_maxWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxWithOrNull = ExternDecl(
+        name: "kk_list_maxWithOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minWith = ExternDecl(
+        name: "kk_list_minWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minWithOrNull = ExternDecl(
+        name: "kk_list_minWithOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOfWith = ExternDecl(
+        name: "kk_list_maxOfWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_maxOfWithOrNull = ExternDecl(
+        name: "kk_list_maxOfWithOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOfWith = ExternDecl(
+        name: "kk_list_minOfWith",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_minOfWithOrNull = ExternDecl(
+        name: "kk_list_minOfWithOrNull",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 
@@ -1153,6 +1303,12 @@ public extension RuntimeABIExterns {
     static let kk_list_chunked_transform = ExternDecl(
         name: "kk_list_chunked_transform",
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_windowed_default = ExternDecl(
+        name: "kk_list_windowed_default",
+        parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 

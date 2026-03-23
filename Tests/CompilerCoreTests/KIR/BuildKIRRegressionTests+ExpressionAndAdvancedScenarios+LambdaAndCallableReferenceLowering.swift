@@ -263,11 +263,13 @@ extension BuildKIRRegressionTests {
             })?.id)
 
             let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            // REFL-003: After callable ref tagging, look for the plus call
+            // by either symbol match or callee name match.
             let plusCall = try XCTUnwrap(mainBody.first { instruction in
-                guard case let .call(symbol, _, _, _, _, _, _) = instruction else {
+                guard case let .call(symbol, callee, _, _, _, _, _) = instruction else {
                     return false
                 }
-                return symbol == plusSymbol
+                return symbol == plusSymbol || ctx.interner.resolve(callee) == "plus"
             })
 
             guard case let .call(_, callee, arguments, _, _, _, _) = plusCall else {

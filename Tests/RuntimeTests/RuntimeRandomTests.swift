@@ -66,4 +66,29 @@ final class RuntimeRandomTests: IsolatedRuntimeXCTestCase {
         let f = Float(bitPattern: UInt32(truncatingIfNeeded: bits))
         XCTAssertTrue(f >= 0.0 && f < 1.0, "nextFloat should return a value in [0, 1), got \(f)")
     }
+
+    // MARK: - nextFloat(until)
+
+    func testNextFloatUntilReturnsWithinRange() {
+        var thrown: Int = 0
+        let untilBits = Int(Float(10.0).bitPattern)
+        let bits = kk_random_nextFloat_until(0, untilBits, &thrown)
+        XCTAssertEqual(thrown, 0)
+        let f = Float(bitPattern: UInt32(truncatingIfNeeded: bits))
+        XCTAssertTrue(f >= 0.0 && f < 10.0, "nextFloat(until=10) should return a value in [0, 10), got \(f)")
+    }
+
+    func testNextFloatUntilThrowsOnZero() {
+        var thrown: Int = 0
+        let untilBits = Int(Float(0.0).bitPattern)
+        _ = kk_random_nextFloat_until(0, untilBits, &thrown)
+        XCTAssertNotEqual(thrown, 0, "until=0 should produce an exception")
+    }
+
+    func testNextFloatUntilThrowsOnNegative() {
+        var thrown: Int = 0
+        let untilBits = Int(Float(-5.0).bitPattern)
+        _ = kk_random_nextFloat_until(0, untilBits, &thrown)
+        XCTAssertNotEqual(thrown, 0, "until=-5 should produce an exception")
+    }
 }

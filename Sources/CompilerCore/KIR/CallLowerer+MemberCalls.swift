@@ -81,26 +81,27 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
         "putAll", "addAll",
         "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull", "maxOrNull", "minOrNull",
         "plus", "minus",
-        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toTypedArray",
+        "asSequence", "asIterable", "toList", "toSet", "toMap", "toMutableList", "toMutableSet", "toTypedArray",
         "take", "drop", "reversed", "asReversed", "sorted", "distinct", "flatten", "chunked", "windowed", "collect", "subList",
         "sortedDescending", "sortedByDescending", "sortedWith", "partition",
         "replaceFirstChar",
         "sort", "sortBy", "sortByDescending",
         "onEach", "onEachIndexed",
         "copyOf", "copyOfRange", "fill",
-        "firstOrNull", "lastOrNull",
+        "firstOrNull", "lastOrNull", "singleOrNull",
         "addAll", "removeAll", "retainAll",
         "intersect", "union", "subtract",
         "toHashSet",
         "containsAll", "binarySearch",
         "addFirst", "addLast",
+        "sum",
         "to", // FUNC-002
     ]
 
@@ -825,6 +826,7 @@ extension CallLowerer {
                 argExprIDs: args.map(\.expr),
                 sema: sema,
                 arena: arena,
+                interner: interner,
                 instructions: &instructions
             )
         }()
@@ -1553,10 +1555,12 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                if calleeStr == "lines" {
+                if calleeStr == "lines" || calleeStr == "lineSequence" {
+                    let rtName = calleeStr == "lineSequence"
+                        ? "kk_string_lineSequence" : "kk_string_lines"
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_string_lines"),
+                        callee: interner.intern(rtName),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: false,
@@ -1580,8 +1584,10 @@ extension CallLowerer {
                     ))
                     return result
                 }
-                if calleeStr == "firstOrNull" || calleeStr == "lastOrNull" {
-                    let kkName = calleeStr == "firstOrNull" ? "kk_string_firstOrNull" : "kk_string_lastOrNull"
+                if calleeStr == "firstOrNull" || calleeStr == "lastOrNull" || calleeStr == "singleOrNull" {
+                    let kkName = calleeStr == "firstOrNull" ? "kk_string_firstOrNull"
+                        : calleeStr == "lastOrNull" ? "kk_string_lastOrNull"
+                        : "kk_string_singleOrNull"
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(kkName),
@@ -1660,6 +1666,17 @@ extension CallLowerer {
                     ))
                     return result
                 }
+                if calleeStr == "windowed" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_string_windowed_default"),
+                        arguments: [loweredReceiverID, loweredArgIDs[0]],
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let stringGetThrownExpr: KIRExprID?
                 if calleeStr == "get" {
                     let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -1709,10 +1726,22 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
+                case "encodeToByteArray":
+                    ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
+                case "toByteArray":
+                    ("kk_string_toByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
                 case "commonPrefixWith":
-                    ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_commonPrefixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_commonPrefixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "commonSuffixWith":
-                    ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_commonSuffixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_commonSuffixWith", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "padStart":
                     if loweredArgIDs.count >= 2 {
                         ("kk_string_padStart", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
@@ -1771,6 +1800,23 @@ extension CallLowerer {
                 instructions.append(.call(
                     symbol: nil,
                     callee: interner.intern("kk_string_compareToIgnoreCase"),
+                    arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                return result
+            }
+            // STDLIB-575/576: commonPrefixWith / commonSuffixWith (ignoreCase overloads)
+            if sema.types.isSubtype(nonNullReceiverType, sema.types.stringType),
+               calleeStr == "commonPrefixWith" || calleeStr == "commonSuffixWith"
+            {
+                let runtimeName = calleeStr == "commonPrefixWith"
+                    ? "kk_string_commonPrefixWith_ignoreCase"
+                    : "kk_string_commonSuffixWith_ignoreCase"
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: interner.intern(runtimeName),
                     arguments: [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]],
                     result: result,
                     canThrow: false,
@@ -1952,6 +1998,37 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                 let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "get" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get"),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "contains" {
+                    let listExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_toList"),
+                        arguments: [loweredReceiverID],
+                        result: listExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_list_contains"),
+                        arguments: [listExpr] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let runtimeCallee: String? = switch calleeStr {
                 case "map":
                     "kk_array_map"
@@ -1969,13 +2046,21 @@ extension CallLowerer {
                     nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == "kk_list_partition"
+                        || runtimeCallee == "kk_list_zipWithNextTransform"
+                    let thrownResult = canThrow
+                        ? arena.appendExpr(
+                            .temporary(Int32(arena.expressions.count)),
+                            type: sema.types.nullableAnyType
+                        )
+                        : nil
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
-                        thrownResult: nil
+                        canThrow: canThrow,
+                        thrownResult: thrownResult
                     ))
                     return result
                 }
@@ -2063,10 +2148,10 @@ extension CallLowerer {
                     "kk_list_indexOf"
                 case "lastIndexOf":
                     "kk_list_lastIndexOf"
-                case "binarySearch":
-                    "kk_list_binarySearch"
                 case "partition":
                     "kk_list_partition"
+                case "zipWithNext":
+                    "kk_list_zipWithNextTransform"
                 case "getOrNull":
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
@@ -2242,6 +2327,8 @@ extension CallLowerer {
                     "kk_array_toMutableList"
                 case "copyOf":
                     "kk_array_copyOf"
+                case "concatToString":
+                    "kk_chararray_concatToString"
                 default:
                     nil
                 }
@@ -2488,13 +2575,14 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
-            "sortedByDescending", "sortedWith", "partition",
+            "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile",
             "replaceFirstChar",
             "sortBy", "sortByDescending",
             "onEach", "onEachIndexed",
             "ifEmpty",
             "chunked",
+            "onSuccess", "onFailure", "recover",
         ].contains(interner.resolve(calleeName))
     }
 
@@ -2503,6 +2591,7 @@ extension CallLowerer {
         argExprIDs: [ExprID],
         sema: SemaModule,
         arena: KIRArena,
+        interner: StringInterner,
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         guard loweredArgIDs.count == argExprIDs.count else {
@@ -2518,7 +2607,50 @@ extension CallLowerer {
             else {
                 continue
             }
-            if let closureRaw = callableInfo.captureArguments.first {
+            if callableInfo.captureArguments.count >= 2 {
+                // Multi-capture: pack captures into a closure object.
+                // The lambda has been generated to unpack them via kk_array_get_inbounds.
+                let intType = sema.types.intType
+                let anyType = sema.types.anyType
+                let kkObjectNew = interner.intern("kk_object_new")
+                let kkArraySet = interner.intern("kk_array_set")
+
+                let slotCount = Int64(2 + callableInfo.captureArguments.count)
+                let slotCountExpr = arena.appendExpr(.intLiteral(slotCount), type: intType)
+                instructions.append(.constValue(result: slotCountExpr, value: .intLiteral(slotCount)))
+
+                let classIDExpr = arena.appendExpr(.intLiteral(0), type: intType)
+                instructions.append(.constValue(result: classIDExpr, value: .intLiteral(0)))
+
+                let closureObjExpr = arena.appendExpr(
+                    .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                instructions.append(.call(
+                    symbol: nil,
+                    callee: kkObjectNew,
+                    arguments: [slotCountExpr, classIDExpr],
+                    result: closureObjExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+
+                for (captureIndex, captureArg) in callableInfo.captureArguments.enumerated() {
+                    let fieldOffset = Int64(captureIndex + 2)
+                    let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: intType)
+                    instructions.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                    let unusedResult = arena.appendExpr(
+                        .temporary(Int32(clamping: arena.expressions.count)), type: anyType)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: kkArraySet,
+                        arguments: [closureObjExpr, offsetExpr, captureArg],
+                        result: unusedResult,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                }
+
+                finalArgs.append(closureObjExpr)
+            } else if let closureRaw = callableInfo.captureArguments.first {
                 finalArgs.append(closureRaw)
             } else {
                 let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
@@ -2562,6 +2694,27 @@ extension CallLowerer {
             default:
                 return nil
             }
+            let result = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.bindings.exprTypes[exprID]
+                    ?? sema.symbols.propertyType(for: valueSym)
+                    ?? sema.types.anyType
+            )
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            return result
+        }
+        // STDLIB-581: Charsets.UTF_8 / ISO_8859_1 / US_ASCII / UTF_16 / ...
+        if let parentInfo = sema.symbols.symbol(parent),
+           parentInfo.name == knownNames.charsets
+        {
+            let runtimeCallee = interner.intern("kk_charset_\(interner.resolve(info.name).lowercased())")
             let result = arena.appendExpr(
                 .temporary(Int32(arena.expressions.count)),
                 type: sema.bindings.exprTypes[exprID]
@@ -3073,6 +3226,8 @@ extension CallLowerer {
         )
         if loweredCallee == interner.intern("kk_channel_send")
             || loweredCallee == interner.intern("kk_channel_receive")
+            || loweredCallee == interner.intern("kk_mutex_lock")
+            || loweredCallee == interner.intern("kk_semaphore_acquire")
         {
             let continuationExpr = arena.appendExpr(
                 .intLiteral(0),
@@ -3091,8 +3246,27 @@ extension CallLowerer {
             return
         }
         var callArguments = finalArguments
-        if loweredCallee == interner.intern("kk_system_currentTimeMillis") {
+        if loweredCallee == interner.intern("kk_system_currentTimeMillis")
+            || loweredCallee == interner.intern("kk_system_nanoTime") {
             callArguments = []
+        }
+        // Result HOF functions accept an outThrown parameter but we don't need
+        // the codegen to generate conditional thrown-check branches. Instead,
+        // append a zero (null) pointer argument so the runtime receives the
+        // expected parameter count, and keep canThrow=false to avoid control-
+        // flow complexity.
+        let resultHOFCallees: Set = [
+            interner.intern("kk_result_onSuccess"),
+            interner.intern("kk_result_onFailure"),
+            interner.intern("kk_result_getOrElse"),
+            interner.intern("kk_result_map"),
+            interner.intern("kk_result_fold"),
+            interner.intern("kk_result_recover"),
+        ]
+        if resultHOFCallees.contains(loweredCallee) {
+            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            callArguments.append(zeroExpr)
         }
         let throwingCallees = Self.throwingMemberCalleeNames(interner: interner)
         let canThrow = throwingCallees.contains(loweredCallee)
@@ -3113,6 +3287,12 @@ extension CallLowerer {
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
             interner.intern("kk_list_random"),
+            interner.intern("kk_list_maxOf"),
+            interner.intern("kk_list_minOf"),
+            interner.intern("kk_list_maxWith"),
+            interner.intern("kk_list_minWith"),
+            interner.intern("kk_list_maxOfWith"),
+            interner.intern("kk_list_minOfWith"),
             interner.intern("kk_list_fold"),
             interner.intern("kk_list_reduce"),
             interner.intern("kk_list_reduceOrNull"),
@@ -3120,6 +3300,13 @@ extension CallLowerer {
             interner.intern("kk_list_runningFold"),
             interner.intern("kk_list_runningReduce"),
             interner.intern("kk_list_scanReduce"),
+            interner.intern("kk_list_filterIndexed"),
+            interner.intern("kk_list_foldIndexed"),
+            interner.intern("kk_list_reduceIndexed"),
+            interner.intern("kk_list_reduceIndexedOrNull"),
+            interner.intern("kk_list_runningFoldIndexed"),
+            interner.intern("kk_list_runningReduceIndexed"),
+            interner.intern("kk_list_scanIndexed"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
@@ -3133,6 +3320,7 @@ extension CallLowerer {
             interner.intern("kk_sequence_firstOrNull"),
             interner.intern("kk_sequence_count"),
             interner.intern("kk_list_binarySearch_compare"),
+            interner.intern("kk_result_getOrThrow"),
         ])
     }
 
@@ -3212,6 +3400,12 @@ extension CallLowerer {
             if let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
                !externalLinkName.isEmpty
             {
+                // STDLIB-547: When the element-based binarySearch overload was
+                // recovered but the call actually has a HOF lambda argument,
+                // redirect to the comparison-based runtime function.
+                if externalLinkName == "kk_list_binarySearch" && hasHOFLambdaArg {
+                    return interner.intern("kk_list_binarySearch_compare")
+                }
                 return interner.intern(externalLinkName)
             }
             if let unresolvedSynthetic = unresolvedSyntheticMemberCallee(
@@ -3318,6 +3512,8 @@ extension CallLowerer {
                 return interner.intern("kk_string_get")
             case "lines":
                 return interner.intern("kk_string_lines")
+            case "lineSequence":
+                return interner.intern("kk_string_lineSequence")
             case "toRegex":
                 return interner.intern("kk_string_toRegex")
             default:
@@ -3331,12 +3527,18 @@ extension CallLowerer {
                 return interner.intern("kk_list_firstOrNull")
             case "lastOrNull":
                 return interner.intern("kk_list_lastOrNull")
+            case "singleOrNull":
+                return interner.intern("kk_list_singleOrNull")
             case "indexOf":
                 return interner.intern("kk_list_indexOf")
             case "lastIndexOf":
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            case "zipWithNext":
+                return interner.intern(hasHOFLambdaArg
+                    ? "kk_list_zipWithNextTransform"
+                    : "kk_list_zipWithNext")
             case "getOrNull":
                 return interner.intern("kk_list_getOrNull")
             case "elementAtOrNull":
@@ -3398,6 +3600,8 @@ extension CallLowerer {
 
         if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "get":
+                return interner.intern("kk_array_get")
             case "map":
                 return interner.intern("kk_array_map")
             case "filter":
@@ -3424,6 +3628,10 @@ extension CallLowerer {
         switch memberName {
         case "partition":
             return interner.intern("kk_list_partition")
+        case "zipWithNext":
+            return interner.intern(hasHOFLambdaArg
+                ? "kk_list_zipWithNextTransform"
+                : "kk_list_zipWithNext")
         case "indexOf":
             return interner.intern("kk_list_indexOf")
         case "lastIndexOf":
@@ -3432,6 +3640,8 @@ extension CallLowerer {
             return interner.intern("kk_list_firstOrNull")
         case "lastOrNull":
             return interner.intern("kk_list_lastOrNull")
+        case "singleOrNull":
+            return interner.intern("kk_list_singleOrNull")
         case "getOrNull":
             return interner.intern("kk_list_getOrNull")
         case "elementAtOrNull":
@@ -4137,11 +4347,27 @@ extension CallLowerer {
                     dispatch: closeDispatch
                 ))
             } else {
-                // Fallback: if dispatch resolution fails (e.g. synthetic-only receiver),
-                // emit a static call so compilation still proceeds.
+                // Fallback: if virtual dispatch is not needed (e.g. final class with
+                // no subtypes), resolve the concrete close() method on the receiver type
+                // so that the static call targets the correct mangled name.
+                var concreteCloseSymbol: SymbolID? = nil
+                var concreteCloseName = closeName
+                if let recvTypeID = receiverTypeForDispatch,
+                   case let .classType(recvClass) = sema.types.kind(of: recvTypeID)
+                {
+                    let recvSymbol = recvClass.classSymbol
+                    if let recvInfo = sema.symbols.symbol(recvSymbol) {
+                        let closeCandidateFQ = recvInfo.fqName + [closeName]
+                        if let concreteSym = sema.symbols.lookup(fqName: closeCandidateFQ) {
+                            concreteCloseSymbol = concreteSym
+                            concreteCloseName = sema.symbols.symbol(concreteSym)?.name ?? closeName
+                        }
+                    }
+                }
+                let callSymbol = concreteCloseSymbol ?? closeSymbol
                 instructions.append(.call(
-                    symbol: closeSymbol,
-                    callee: closeName,
+                    symbol: callSymbol,
+                    callee: concreteCloseName,
                     arguments: [loweredReceiverID],
                     result: closeResult,
                     canThrow: true,

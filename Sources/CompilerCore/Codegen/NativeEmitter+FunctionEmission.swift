@@ -150,7 +150,7 @@ extension NativeEmitter {
         var values: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         var externalFunctions: [String: LLVMFunction] = [:]
         var generatedStringLiteralCount: Int32 = 0
-        let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue)
+        let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue, context: context, module: llvmModule)
 
         func assignmentTargets(for instruction: KIRInstruction) -> [KIRExprID] {
             switch instruction {
@@ -176,7 +176,8 @@ extension NativeEmitter {
                 return [result]
             case .jump, .label, .jumpIfEqual, .jumpIfNotNull,
                  .storeGlobal, .rethrow, .returnIfEqual, .returnUnit, .returnValue,
-                 .beginBlock, .endBlock, .nop, .nonLocalReturn:
+                 .beginBlock, .endBlock, .nop, .nonLocalReturn,
+                 .beginFinallyGuard, .endFinallyGuard:
                 return []
             }
         }
@@ -515,7 +516,7 @@ extension NativeEmitter {
             }
 
             switch instruction {
-            case .nop, .beginBlock, .endBlock:
+            case .nop, .beginBlock, .endBlock, .beginFinallyGuard, .endFinallyGuard:
                 continue
 
             case let .label(id):
@@ -774,7 +775,7 @@ extension NativeEmitter {
 
                 if calleeName == "kk_println_float" || calleeName == "kk_println_double"
                     || calleeName == "kk_println_long" || calleeName == "kk_println_char"
-                    || calleeName == "kk_println_bool"
+                    || calleeName == "kk_println_bool" || calleeName == "kk_println_ulong"
                 {
                     let printValue = argumentValues.first ?? zeroValue
                     if let printFunction = declareExternalFunction(

@@ -307,7 +307,16 @@ extension LoweringPassRegressionTests {
         // Verify valueOf body contains string comparison calls
         let valueOfCallees = extractCallees(from: valueOfFn.body, interner: interner)
         XCTAssertTrue(valueOfCallees.contains("kk_string_equals"), "valueOf should call kk_string_equals")
+        XCTAssertTrue(valueOfCallees.contains("kk_string_concat"), "valueOf should call kk_string_concat to build 'ClassName.value' for error message")
         XCTAssertTrue(valueOfCallees.contains("kk_enum_valueOf_throw"), "valueOf should call kk_enum_valueOf_throw for no-match case")
+
+        // Verify valueOf body contains the class name prefix string "Color."
+        let valueOfStringConsts = valueOfFn.body.compactMap { inst -> InternedString? in
+            guard case let .constValue(_, value) = inst, case let .stringLiteral(s) = value else { return nil }
+            return s
+        }
+        XCTAssertTrue(valueOfStringConsts.contains(interner.intern("Color.")),
+                       "valueOf should contain 'Color.' prefix for Kotlin-compatible error message")
     }
 
     // MARK: - DATA-003: hashCode() synthesis for data classes
@@ -864,5 +873,403 @@ extension LoweringPassRegressionTests {
             return instruction
         }
         XCTAssertEqual(xGetterCalls.count, 2, "equals should compare both receiver and narrowed other")
+    }
+
+    // MARK: - DATA-001: copy() edge cases
+
+    /// When a data class has no primary constructor, copy() should fall back to
+    /// returning self and emit a KSWIFTK-DATA-0001 warning.
+    func testDataCopyNoPrimaryCtorEmitsWarningAndReturnsSelf() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("test")
+        let packagePath = [packageName]
+
+        // Define a data class with NO constructor
+        let pointName = interner.intern("Point")
+        let pointSymbol = symbols.define(
+            kind: .class,
+            name: pointName,
+            fqName: packagePath + [pointName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let arena = KIRArena()
+        let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [pointDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopyNoCtor",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // Verify copy() is synthesized with only self parameter (fallback)
+        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 1, "copy() without ctor should have only self param")
+
+        // Verify the body returns self (constValue + returnValue)
+        let returnInstructions = copyFunction.body.filter {
+            if case .returnValue = $0 { return true }
+            return false
+        }
+        XCTAssertEqual(returnInstructions.count, 1, "copy() fallback should have exactly one return")
+
+        // Verify KSWIFTK-DATA-0001 warning was emitted
+        let dataWarnings = diagnostics.diagnostics.filter { $0.code == "KSWIFTK-DATA-0001" }
+        XCTAssertEqual(dataWarnings.count, 1, "Expected one KSWIFTK-DATA-0001 warning, got \(dataWarnings.count)")
+        XCTAssertEqual(dataWarnings.first?.severity, .warning)
+        XCTAssertTrue(dataWarnings.first?.message.contains("Point") ?? false)
+    }
+
+    /// When a data class has a proper primary constructor, copy() should include
+    /// parameters matching the constructor and call it.
+    func testDataCopyWithPrimaryCtorIncludesCtorParams() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("test")
+        let packagePath = [packageName]
+
+        let pointName = interner.intern("Point")
+        let pointSymbol = symbols.define(
+            kind: .class,
+            name: pointName,
+            fqName: packagePath + [pointName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        // Define a constructor with two Int parameters (x, y)
+        let initName = interner.intern("<init>")
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: packagePath + [pointName, initName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let xParamName = interner.intern("x")
+        let yParamName = interner.intern("y")
+        let xParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: xParamName,
+            fqName: packagePath + [pointName, initName, xParamName],
+            declSite: nil,
+            visibility: .private
+        )
+        let yParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: yParamName,
+            fqName: packagePath + [pointName, initName, yParamName],
+            declSite: nil,
+            visibility: .private
+        )
+
+        let ctorSignature = FunctionSignature(
+            parameterTypes: [intType, intType],
+            returnType: types.make(.classType(ClassType(classSymbol: pointSymbol, args: [], nullability: .nonNull))),
+            isSuspend: false,
+            valueParameterSymbols: [xParamSymbol, yParamSymbol],
+            valueParameterHasDefaultValues: [false, false],
+            valueParameterIsVararg: [false, false]
+        )
+        symbols.setFunctionSignature(ctorSignature, for: ctorSymbol)
+
+        let arena = KIRArena()
+        let pointDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: pointSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [pointDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopyWithCtor",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // copy() should have self + x + y = 3 params
+        let copyFunction = try findKIRFunction(named: "Point$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 3, "copy() should have self + 2 ctor params")
+
+        // Verify the body calls the constructor
+        let callees = extractCallees(from: copyFunction.body, interner: interner)
+        XCTAssertTrue(callees.contains("<init>"), "copy() should call <init>")
+
+        // No warnings should be emitted for normal case
+        let dataWarnings = diagnostics.diagnostics.filter { $0.code.hasPrefix("KSWIFTK-DATA-") }
+        XCTAssertEqual(dataWarnings.count, 0, "No DATA warnings expected for normal data class copy")
+    }
+
+    /// When a data class constructor has a signature mismatch between
+    /// parameterTypes and valueParameterSymbols, copy() should emit
+    /// KSWIFTK-DATA-0002 warning and use the shorter count.
+    func testDataCopySignatureMismatchEmitsWarning() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("test")
+        let packagePath = [packageName]
+
+        let personName = interner.intern("Person")
+        let personSymbol = symbols.define(
+            kind: .class,
+            name: personName,
+            fqName: packagePath + [personName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let initName = interner.intern("<init>")
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: packagePath + [personName, initName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let stringType = types.make(.primitive(.string, .nonNull))
+        let nameParamName = interner.intern("name")
+        let nameParamSymbol = symbols.define(
+            kind: .valueParameter,
+            name: nameParamName,
+            fqName: packagePath + [personName, initName, nameParamName],
+            declSite: nil,
+            visibility: .private
+        )
+
+        // Mismatch: 1 symbol but 2 types (extra type with no matching symbol)
+        let ctorSignature = FunctionSignature(
+            parameterTypes: [stringType, intType],
+            returnType: types.make(.classType(ClassType(classSymbol: personSymbol, args: [], nullability: .nonNull))),
+            isSuspend: false,
+            valueParameterSymbols: [nameParamSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false]
+        )
+        symbols.setFunctionSignature(ctorSignature, for: ctorSymbol)
+
+        let arena = KIRArena()
+        let personDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: personSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [personDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopyMismatch",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // copy() should use min(1, 2) = 1 ctor param, so self + 1 = 2 params
+        let copyFunction = try findKIRFunction(named: "Person$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 2, "copy() with mismatch should have self + min(symbols, types) params")
+
+        // Verify KSWIFTK-DATA-0002 warning was emitted
+        let mismatchWarnings = diagnostics.diagnostics.filter { $0.code == "KSWIFTK-DATA-0002" }
+        XCTAssertEqual(mismatchWarnings.count, 1, "Expected one KSWIFTK-DATA-0002 warning, got \(mismatchWarnings.count)")
+        XCTAssertEqual(mismatchWarnings.first?.severity, .warning)
+        XCTAssertTrue(mismatchWarnings.first?.message.contains("Person") ?? false)
+    }
+
+    /// When a data class constructor has zero value parameters, copy()
+    /// should produce a function with only the self parameter.
+    func testDataCopyZeroCtorParams() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("test")
+        let packagePath = [packageName]
+
+        let emptyName = interner.intern("Empty")
+        let emptySymbol = symbols.define(
+            kind: .class,
+            name: emptyName,
+            fqName: packagePath + [emptyName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        let initName = interner.intern("<init>")
+        let ctorSymbol = symbols.define(
+            kind: .constructor,
+            name: initName,
+            fqName: packagePath + [emptyName, initName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        // Constructor with zero value params
+        let ctorSignature = FunctionSignature(
+            parameterTypes: [],
+            returnType: types.make(.classType(ClassType(classSymbol: emptySymbol, args: [], nullability: .nonNull))),
+            isSuspend: false,
+            valueParameterSymbols: [],
+            valueParameterHasDefaultValues: [],
+            valueParameterIsVararg: []
+        )
+        symbols.setFunctionSignature(ctorSignature, for: ctorSymbol)
+
+        let arena = KIRArena()
+        let emptyDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: emptySymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [emptyDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopyZeroParams",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // copy() with zero ctor params should have only self param
+        let copyFunction = try findKIRFunction(named: "Empty$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 1, "copy() with zero ctor params should have only self param")
+
+        // Should still call the constructor
+        let callees = extractCallees(from: copyFunction.body, interner: interner)
+        XCTAssertTrue(callees.contains("<init>"), "copy() should call <init> even with zero params")
+
+        // No warnings
+        let dataWarnings = diagnostics.diagnostics.filter { $0.code.hasPrefix("KSWIFTK-DATA-") }
+        XCTAssertEqual(dataWarnings.count, 0, "No DATA warnings expected for zero-param data class copy")
+    }
+
+    /// When a data class constructor has a function signature but the symbol
+    /// lookup returns no constructor kind, copy() should fall back to self.
+    func testDataCopyCtorWithoutConstructorKindFallsBack() throws {
+        let interner = StringInterner()
+        let diagnostics = DiagnosticEngine()
+        let symbols = SymbolTable()
+        let types = TypeSystem()
+        let bindings = BindingTable()
+        let sema = SemaModule(symbols: symbols, types: types, bindings: bindings, diagnostics: diagnostics)
+
+        let packageName = interner.intern("test")
+        let packagePath = [packageName]
+
+        let widgetName = interner.intern("Widget")
+        let widgetSymbol = symbols.define(
+            kind: .class,
+            name: widgetName,
+            fqName: packagePath + [widgetName],
+            declSite: nil,
+            visibility: .public,
+            flags: [.dataType]
+        )
+
+        // Define <init> with kind .function instead of .constructor
+        let initName = interner.intern("<init>")
+        let wrongKindSymbol = symbols.define(
+            kind: .function,
+            name: initName,
+            fqName: packagePath + [widgetName, initName],
+            declSite: nil,
+            visibility: .public
+        )
+
+        let intType = types.make(.primitive(.int, .nonNull))
+        let sig = FunctionSignature(
+            parameterTypes: [intType],
+            returnType: types.make(.classType(ClassType(classSymbol: widgetSymbol, args: [], nullability: .nonNull))),
+            isSuspend: false,
+            valueParameterSymbols: [wrongKindSymbol],
+            valueParameterHasDefaultValues: [false],
+            valueParameterIsVararg: [false]
+        )
+        symbols.setFunctionSignature(sig, for: wrongKindSymbol)
+
+        let arena = KIRArena()
+        let widgetDecl = arena.appendDecl(.nominalType(KIRNominalType(symbol: widgetSymbol)))
+        let module = KIRModule(files: [KIRFile(fileID: FileID(rawValue: 0), decls: [widgetDecl])], arena: arena)
+
+        let ctx = CompilationContext(
+            options: CompilerOptions(
+                moduleName: "DataCopyWrongKind",
+                inputs: [],
+                outputPath: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).path,
+                emit: .kirDump,
+                target: defaultTargetTriple()
+            ),
+            sourceManager: SourceManager(),
+            diagnostics: diagnostics,
+            interner: interner
+        )
+        ctx.sema = sema
+        ctx.kir = module
+
+        try LoweringPhase().run(ctx)
+
+        // Should fall back to self-returning copy (only self param)
+        let copyFunction = try findKIRFunction(named: "Widget$copy", in: module, interner: interner)
+        XCTAssertEqual(copyFunction.params.count, 1, "copy() with wrong ctor kind should fall back to self-only")
+
+        // Should emit the no-ctor warning
+        let dataWarnings = diagnostics.diagnostics.filter { $0.code == "KSWIFTK-DATA-0001" }
+        XCTAssertEqual(dataWarnings.count, 1, "Expected KSWIFTK-DATA-0001 for non-constructor init")
     }
 }

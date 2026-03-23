@@ -252,6 +252,8 @@ extension TypeSystem {
         }
         let result: TypeID = if filtered.dropFirst().allSatisfy({ $0 == first }) {
             first
+        } else if let kClassLub = lubKClassTypes(filtered) {
+            kClassLub
         } else if filtered.allSatisfy({ isSubtype($0, nullableAnyType) }) {
             nullableAnyType
         } else {
@@ -407,6 +409,27 @@ extension TypeSystem {
         default:
             return false
         }
+    }
+
+    /// If **all** types in `filtered` are `KClass<…>`, compute
+    /// `KClass<lub(T1, T2, …)>` with the appropriate nullability.
+    /// Returns `nil` when the types are not all KClass.
+    private func lubKClassTypes(_ filtered: [TypeID]) -> TypeID? {
+        var arguments: [TypeID] = []
+        var hasNullable = false
+        for typeID in filtered {
+            guard case let .kClassType(kc) = kind(of: typeID) else {
+                return nil
+            }
+            arguments.append(kc.argument)
+            if kc.nullability == .nullable || kc.nullability == .platformType {
+                hasNullable = true
+            }
+        }
+        guard !arguments.isEmpty else { return nil }
+        let argLub = lub(arguments)
+        let resultNullability: Nullability = hasNullable ? .nullable : .nonNull
+        return makeKClassType(argument: argLub, nullability: resultNullability)
     }
 
 }

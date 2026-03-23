@@ -76,8 +76,10 @@ public enum StdlibSpecialCallKind: Equatable {
     case measureTimeMillis
     case measureNanoTime
     case measureTime
+    case measureTimedValue
     case enumValues
     case enumValueOf
+    case enumEntries
 }
 
 /// Identifies whether a callable reference (`::foo`) refers to a function

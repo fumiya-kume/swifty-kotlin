@@ -184,7 +184,8 @@ extension GoldenHarnessTests {
             } else {
                 branch.conditions.map { "e\($0.rawValue)" }.joined(separator: ",")
             }
-            return "\(conditions)->e\(branch.body.rawValue)"
+            let guardPart = branch.guard_.map { " if e\($0.rawValue)" } ?? ""
+            return "\(conditions)\(guardPart)->e\(branch.body.rawValue)"
         }.joined(separator: ",")
         let renderedElse = elseExpr.map { "e\($0.rawValue)" } ?? "_"
         let renderedSubject = subject.map { "e\($0.rawValue)" } ?? "_"

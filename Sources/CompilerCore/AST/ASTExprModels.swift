@@ -89,11 +89,13 @@ public enum CompoundAssignOp: Equatable {
 
 public struct WhenBranch: Equatable {
     public let conditions: [ExprID]
+    public let guard_: ExprID?
     public let body: ExprID
     public let range: SourceRange
 
-    public init(conditions: [ExprID], body: ExprID, range: SourceRange) {
+    public init(conditions: [ExprID], guard: ExprID? = nil, body: ExprID, range: SourceRange) {
         self.conditions = conditions
+        self.guard_ = `guard`
         self.body = body
         self.range = range
     }
@@ -178,4 +180,13 @@ public enum Expr: Equatable {
     case notInExpr(lhs: ExprID, rhs: ExprID, range: SourceRange)
     case destructuringDecl(names: [InternedString?], isMutable: Bool, initializer: ExprID, range: SourceRange)
     case forDestructuringExpr(names: [InternedString?], iterable: ExprID, body: ExprID, range: SourceRange)
+
+    /// Whether this expression can serve as a collection HOF lambda argument.
+    /// Both lambda literals and callable references (`::foo`) qualify (REFL-003).
+    public var isLambdaOrCallableRef: Bool {
+        switch self {
+        case .lambdaLiteral, .callableRef: true
+        default: false
+        }
+    }
 }

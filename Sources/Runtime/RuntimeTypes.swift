@@ -318,6 +318,11 @@ enum SequenceStepKind {
     case takeWhileStep(fnPtr: Int, closureRaw: Int)
     case dropWhileStep(fnPtr: Int, closureRaw: Int)
     case onEachStep(fnPtr: Int, closureRaw: Int)
+    /// STDLIB-563: Lazy continuation-based builder.
+    /// The coroutine runs the builder lambda on a background thread;
+    /// each `yield()` suspends the producer until the consumer requests
+    /// the next element.
+    case lazyBuilder(coroutine: RuntimeSequenceCoroutine)
 }
 
 /// Runtime box for `Sequence<T>`.
@@ -332,16 +337,262 @@ final class RuntimeSequenceBox {
 
 /// Runtime box for the `sequence { yield(x) }` builder.
 /// Accumulates yielded elements during builder block execution.
+/// Used as a fallback when the lazy coroutine path is not available.
 final class RuntimeSequenceBuilderBox {
     var elements: [Int] = []
 }
 
+/// STDLIB-563: Continuation-based lazy sequence coroutine.
+///
+/// Runs the builder lambda on a background thread. Each call to `yield(value)`
+/// suspends the producer (via `producerSemaphore`) until the consumer calls
+/// `materializeAll()`, which signals the producer to continue.
+///
+/// The coroutine is started lazily on the first call to `materializeAll()`.
+///
+/// Thread protocol:
+///   Producer thread (background):
+///     1. Runs builder lambda
+///     2. On yield(value): store value, signal consumer, wait on producer semaphore
+///     3. On completion: set finished flag, signal consumer
+///
+///   Consumer thread (caller):
+///     1. materializeAll(): signal producer, wait on consumer semaphore, read value
+///     2. Returns when producer has finished
+// TODO(CORO-004): The producer/consumer semaphore ping-pong blocks two GCD
+// threads (one producer, one consumer) for the entire iteration.  To migrate:
+// model yield() as a suspend point in the producer's coroutine entry loop and
+// next()/hasNext() as suspend points in the consumer, using the continuation
+// model so neither side blocks a thread while waiting for the other.
+final class RuntimeSequenceCoroutine: @unchecked Sendable {
+    /// The builder lambda function pointer (closureThunk convention).
+    let fnPtr: Int
+
+    /// Semaphore the producer waits on after yielding a value.
+    /// Signaled by the consumer when it wants the next element.
+    private let producerSemaphore = DispatchSemaphore(value: 0)
+
+    /// Semaphore the consumer waits on when requesting a value.
+    /// Signaled by the producer after yielding or finishing.
+    private let consumerSemaphore = DispatchSemaphore(value: 0)
+
+    /// Guard for mutable state access.
+    private let stateLock = NSLock()
+
+    /// The most recently yielded value (producer -> consumer).
+    private var yieldedValue: Int = 0
+
+    /// Whether the producer has finished (either completed or threw).
+    private var finished = false
+
+    /// Whether the coroutine background thread has been started.
+    private var started = false
+
+    /// All elements materialized so far (cache for re-iteration).
+    private var materializedElements: [Int] = []
+
+    /// Whether the coroutine has been fully exhausted.
+    private var fullyMaterialized = false
+
+    init(fnPtr: Int) {
+        self.fnPtr = fnPtr
+    }
+
+    /// Called by the producer (background thread) to yield a value.
+    /// Suspends the producer until the consumer requests the next element.
+    func yieldValue(_ value: Int) {
+        stateLock.lock()
+        yieldedValue = value
+        stateLock.unlock()
+
+        // Signal the consumer that a value is available
+        consumerSemaphore.signal()
+        // Wait for the consumer to request the next element
+        producerSemaphore.wait()
+    }
+
+    /// Called by the producer when it finishes (normally or via exception).
+    func markFinished() {
+        stateLock.lock()
+        finished = true
+        stateLock.unlock()
+        consumerSemaphore.signal()
+    }
+
+    /// Result type for `nextElement()`: either a value or end-of-sequence.
+    enum NextResult {
+        case value(Int)
+        case done
+    }
+
+    /// Request the next element from the coroutine, one at a time.
+    ///
+    /// If there are already-materialized elements beyond the current
+    /// consumption index, return the cached element. Otherwise, resume the
+    /// producer to compute the next value.
+    ///
+    /// Returns `.done` when the producer has finished and all cached
+    /// elements have been consumed.
+    private var consumptionIndex: Int = 0
+
+    func nextElement() -> NextResult {
+        stateLock.lock()
+        // If we have cached elements beyond the current index, return them.
+        if consumptionIndex < materializedElements.count {
+            let elem = materializedElements[consumptionIndex]
+            consumptionIndex += 1
+            stateLock.unlock()
+            return .value(elem)
+        }
+        // If fully materialized and no more cached elements, we're done.
+        if fullyMaterialized {
+            stateLock.unlock()
+            return .done
+        }
+        stateLock.unlock()
+
+        ensureStarted()
+
+        // Request next element from producer
+        producerSemaphore.signal()
+        consumerSemaphore.wait()
+
+        stateLock.lock()
+        if finished {
+            fullyMaterialized = true
+            stateLock.unlock()
+            return .done
+        }
+        let value = yieldedValue
+        materializedElements.append(value)
+        consumptionIndex += 1
+        stateLock.unlock()
+        return .value(value)
+    }
+
+    /// Reset the consumption index so re-iteration over the same coroutine
+    /// replays from the beginning (using cached elements first, then resuming
+    /// the producer if needed).
+    func resetIteration() {
+        stateLock.lock()
+        consumptionIndex = 0
+        stateLock.unlock()
+    }
+
+    /// Materialize all elements from the coroutine and return them.
+    /// This is the main entry point for evaluateSequence.
+    /// The coroutine is started lazily on the first call.
+    func materializeAll() -> [Int] {
+        stateLock.lock()
+        if fullyMaterialized {
+            let elems = materializedElements
+            stateLock.unlock()
+            return elems
+        }
+        stateLock.unlock()
+
+        ensureStarted()
+
+        while true {
+            // Request next element from producer
+            producerSemaphore.signal()
+            consumerSemaphore.wait()
+
+            stateLock.lock()
+            if finished {
+                fullyMaterialized = true
+                let elems = materializedElements
+                stateLock.unlock()
+                return elems
+            }
+            materializedElements.append(yieldedValue)
+            stateLock.unlock()
+        }
+    }
+
+    /// Start the background thread if not already started.
+    private func ensureStarted() {
+        stateLock.lock()
+        guard !started else {
+            stateLock.unlock()
+            return
+        }
+        started = true
+        stateLock.unlock()
+
+        let coroutine = self
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Wait for the first consumer request before starting
+            coroutine.producerSemaphore.wait()
+
+            let builderHandle = registerRuntimeObject(
+                RuntimeSequenceCoroutineBuilderProxy(coroutine: coroutine)
+            )
+
+            var thrown = 0
+            let fn = unsafeBitCast(coroutine.fnPtr, to: KKClosureThunkEntryPoint.self)
+            _ = fn(builderHandle, &thrown)
+
+            if thrown != 0 {
+                fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: sequence lambda threw but no outThrown available")
+            }
+
+            coroutine.markFinished()
+        }
+    }
+}
+
+/// Proxy object passed to the builder lambda as the "builder" handle.
+/// When `kk_sequence_builder_yield` receives this handle, it delegates
+/// to the coroutine's `yieldValue()` which suspends the producer thread.
+final class RuntimeSequenceCoroutineBuilderProxy {
+    let coroutine: RuntimeSequenceCoroutine
+
+    init(coroutine: RuntimeSequenceCoroutine) {
+        self.coroutine = coroutine
+    }
+}
+
 /// Runtime box for the `iterator { yield(x) }` builder (STDLIB-331/564).
-/// Accumulates yielded elements eagerly during builder block execution,
-/// then provides `hasNext` / `next` traversal over the collected values.
-final class RuntimeIteratorBuilderBox {
-    var elements: [Int] = []
-    var index: Int = 0
+///
+/// Implements **continuation-based lazy iteration** using a cooperative
+/// producer-consumer pattern. The builder lambda runs on a background thread
+/// and suspends on each `yield()` call until the consumer calls `next()`.
+///
+/// Protocol:
+///   1. `kk_iterator_builder_build(fnPtr)` creates the box and spawns the
+///      producer thread. The producer immediately blocks on `producerGate`
+///      until the first `hasNext` / `next` call.
+///   2. `hasNext` signals `producerGate` (let producer run), then waits on
+///      `consumerGate`. When the producer yields a value or finishes, it
+///      signals `consumerGate`.
+///   3. `next` returns the most recently yielded value (already fetched by
+///      `hasNext`).
+///
+/// Memory: The box is registered in the runtime object table; the background
+/// thread retains the box via its closure capture. The thread exits naturally
+/// when the builder lambda returns.
+// TODO(CORO-004): Same semaphore ping-pong pattern as RuntimeSequenceCoroutine.
+// Migrate to continuation model so neither producer nor consumer blocks a GCD thread.
+final class RuntimeIteratorBuilderBox: @unchecked Sendable {
+    /// Semaphore the producer blocks on; signalled by the consumer (`hasNext`).
+    let producerGate = DispatchSemaphore(value: 0)
+    /// Semaphore the consumer blocks on; signalled by the producer (`yield` or end).
+    let consumerGate = DispatchSemaphore(value: 0)
+
+    /// The most recently yielded value, valid when `state == .hasValue`.
+    var yieldedValue: Int = 0
+    /// Current state of the iterator.
+    var state: IteratorState = .initial
+
+    enum IteratorState {
+        /// Producer has not yet been advanced.
+        case initial
+        /// Producer yielded a value; `yieldedValue` is valid.
+        case hasValue
+        /// Producer finished (lambda returned).
+        case done
+    }
 }
 
 /// Runtime box for `Grouping<T, K>` returned by `groupingBy`.
@@ -447,9 +698,58 @@ final class RuntimeNotNullBox {
     var currentValue: Int?
 }
 
+/// Runtime reflection metadata record stored in the global registry.
+/// Populated from the binary metadata blob emitted by `RuntimeReflectionMetadataEmitter`.
+/// Each entry corresponds to a type or declaration that can be queried via `KClass` at runtime.
+struct RuntimeKClassMetadataEntry {
+    let qualifiedName: String
+    let simpleName: String
+    let supertypeName: String?
+    let isDataClass: Bool
+    let isSealedClass: Bool
+    let isValueClass: Bool
+    let isInterface: Bool
+    let isObject: Bool
+    let isEnumClass: Bool
+    let isAnnotationClass: Bool
+    let isAbstract: Bool
+    let fieldCount: Int
+    let memberCount: Int
+}
+
+/// Global registry mapping type tokens to runtime metadata entries.
+/// Populated during module initialization via `kk_kclass_register_metadata`.
+final class RuntimeKClassMetadataRegistry: @unchecked Sendable {
+    private let lock = NSLock()
+    private var entries: [Int: RuntimeKClassMetadataEntry] = [:]
+
+    func register(typeToken: Int, entry: RuntimeKClassMetadataEntry) {
+        lock.lock()
+        defer { lock.unlock() }
+        entries[typeToken] = entry
+    }
+
+    func lookup(typeToken: Int) -> RuntimeKClassMetadataEntry? {
+        lock.lock()
+        defer { lock.unlock() }
+        return entries[typeToken]
+    }
+
+    func reset() {
+        lock.lock()
+        defer { lock.unlock() }
+        entries.removeAll()
+    }
+}
+
+let runtimeKClassMetadataRegistry = RuntimeKClassMetadataRegistry()
+
 /// Runtime box for `KClass<T>` metadata references produced by `T::class`.
 /// Stores the type token and an optional name-hint pointer so that
 /// `.simpleName` / `.qualifiedName` can be resolved at runtime.
+/// When metadata has been registered via `kk_kclass_register_metadata`,
+/// additional properties (isData, isSealed, qualifiedName, etc.) are
+/// available through the global metadata registry.
 final class RuntimeKClassBox {
     let typeToken: Int
     let nameHint: Int
@@ -457,6 +757,11 @@ final class RuntimeKClassBox {
     init(typeToken: Int, nameHint: Int) {
         self.typeToken = typeToken
         self.nameHint = nameHint
+    }
+
+    /// Looks up the associated metadata entry from the global registry.
+    var metadata: RuntimeKClassMetadataEntry? {
+        runtimeKClassMetadataRegistry.lookup(typeToken: typeToken)
     }
 }
 

@@ -36,15 +36,15 @@ extension LoweringPassRegressionTests {
                     canThrow: false,
                     thrownResult: nil
                 ),
-                .virtualCall(
+                // The KIR builder emits a .call with the already-rewritten callee
+                // name (from externalLinkName) rather than a .virtualCall.
+                .call(
                     symbol: nil,
-                    callee: interner.intern("forEachLine"),
-                    receiver: fileExpr,
-                    arguments: [lambdaExpr],
+                    callee: interner.intern("kk_file_forEachLine"),
+                    arguments: [fileExpr, lambdaExpr],
                     result: resultExpr,
                     canThrow: true,
-                    thrownResult: nil,
-                    dispatch: .vtable(slot: 0)
+                    thrownResult: nil
                 ),
                 .returnUnit,
             ],
@@ -99,6 +99,203 @@ extension LoweringPassRegressionTests {
             XCTAssertTrue(callees.contains("kk_file_walk"))
             XCTAssertTrue(callees.contains("kk_list_forEach"))
             XCTAssertFalse(callees.contains("walk"))
+        }
+    }
+
+    func testFileMkdirsRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").mkdirs()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileMkdirsRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_mkdirs"))
+            XCTAssertFalse(callees.contains("mkdirs"))
+        }
+    }
+
+    func testFileReadTextRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/test.txt")
+            val content = f.readText()
+            println(content)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileReadTextRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_new"))
+            XCTAssertTrue(callees.contains("kk_file_readText"))
+            XCTAssertFalse(callees.contains("readText"))
+        }
+    }
+
+    func testFileDeleteRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").delete()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileDeleteRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_delete"))
+            XCTAssertFalse(callees.contains("delete"))
+        }
+    }
+
+    func testFileWriteTextRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/test.txt")
+            f.writeText("hello world")
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileWriteTextRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_new"))
+            XCTAssertTrue(callees.contains("kk_file_writeText"))
+            XCTAssertFalse(callees.contains("writeText"))
+        }
+    }
+
+    func testFileListFilesRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").listFiles()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileListFilesRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_listFiles"))
+            XCTAssertFalse(callees.contains("listFiles"))
+        }
+    }
+
+    func testFileReadLinesRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            val f = File("/tmp/test.txt")
+            val lines = f.readLines()
+            println(lines.size)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileReadLinesRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_new"))
+            XCTAssertTrue(callees.contains("kk_file_readLines"))
+            XCTAssertFalse(callees.contains("readLines"))
+        }
+    }
+
+    func testFileWalkRewrite() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test").walk()
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileWalkRewrite", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_walk"))
+            XCTAssertFalse(callees.contains("walk"))
+        }
+    }
+
+    func testFileBasicOperationsIntegration() throws {
+        let source = """
+        import java.io.File
+
+        fun main() {
+            File("/tmp/test.txt").writeText("hello")
+            val content = File("/tmp/test.txt").readText()
+            println(content)
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path], moduleName: "FileBasicOperations", emit: .kirDump)
+            try runToKIR(ctx)
+            try LoweringPhase().run(ctx)
+
+            let module = try XCTUnwrap(ctx.kir)
+            let mainBody = try findKIRFunctionBody(named: "main", in: module, interner: ctx.interner)
+            let callees = extractCallees(from: mainBody, interner: ctx.interner)
+
+            XCTAssertTrue(callees.contains("kk_file_new"))
+            XCTAssertTrue(callees.contains("kk_file_writeText"))
+            XCTAssertTrue(callees.contains("kk_file_readText"))
+            XCTAssertFalse(callees.contains("writeText"))
+            XCTAssertFalse(callees.contains("readText"))
         }
     }
 

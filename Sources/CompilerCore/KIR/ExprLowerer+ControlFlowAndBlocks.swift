@@ -2,6 +2,102 @@
 import Foundation
 
 extension ExprLowerer {
+    private func ensureMutableCaptureCell(
+        for symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        if let existingCell = driver.ctx.mutableCaptureCell(for: symbol) {
+            return existingCell
+        }
+        guard let semanticSymbol = sema.symbols.symbol(symbol),
+              semanticSymbol.kind == .local,
+              semanticSymbol.flags.contains(.mutable),
+              let currentValue = driver.ctx.localValue(for: symbol)
+        else {
+            return nil
+        }
+
+        let countExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+        instructions.append(.constValue(result: countExpr, value: .intLiteral(1)))
+
+        let cellExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: cellExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [cellExpr, zeroExpr, currentValue],
+            result: setResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        driver.ctx.setMutableCaptureCell(cellExpr, for: symbol)
+        return cellExpr
+    }
+
+    private func loadMutableCaptureCellValue(
+        symbol: SymbolID,
+        resultType: TypeID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let cellExpr = driver.ctx.mutableCaptureCell(for: symbol) else {
+            return nil
+        }
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_get_inbounds"),
+            arguments: [cellExpr, zeroExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
+    private func storeMutableCaptureCellValue(
+        _ valueID: KIRExprID,
+        for symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> Bool {
+        guard let cellExpr = driver.ctx.mutableCaptureCell(for: symbol) else {
+            return false
+        }
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: arena.exprType(valueID) ?? sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [cellExpr, zeroExpr, valueID],
+            result: setResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return true
+    }
 
     // MARK: - Finally Block Inlining Helper (CODE-001)
 
@@ -18,18 +114,12 @@ extension ExprLowerer {
     /// itself contains return/break/continue, because lowering that nested
     /// control-flow will only see *outer* finally blocks on the stack.
     ///
-    /// **Known limitation – exception routing**: Inlined finally
-    /// instructions are currently appended into the same instruction buffer
-    /// that `appendThrowAwareInstructions` later wraps.  If the inlined
-    /// finally throws, the exception may be routed to the *same* try-catch
-    /// dispatch label instead of propagating outward.
-    ///
-    /// TODO(CODE-001): Fix exception routing for inlined finally blocks.
-    /// The correct approach is to lower inlined finally blocks into a
-    /// separate instruction list and splice them *after* the throw-aware
-    /// wrapping, or to extend `appendThrowAwareInstructions` to accept an
-    /// alternate thrown target for inlined-finally instructions so they
-    /// propagate to the *outer* exception handler.
+    /// **Exception routing (CODE-001)**: Each inlined finally block is
+    /// lowered into a separate instruction buffer and wrapped with
+    /// `appendThrowAwareInstructions` using its own rethrow label.  If
+    /// the inlined finally body throws, the exception propagates outward
+    /// via `.rethrow` rather than being caught by the enclosing try-catch
+    /// dispatch, matching Kotlin semantics.
     private func inlineAllEnclosingFinallyBlocks(
         ast: ASTModule,
         sema: SemaModule,
@@ -97,12 +187,23 @@ extension ExprLowerer {
     ) {
         guard !blocks.isEmpty else { return }
 
+        let intType = sema.types.make(.primitive(.int, .nonNull))
+
         // Process innermost-first (reversed) so that the stack is trimmed
         // correctly: for each finally block, we temporarily set the stack
         // depth to its original stack index so that re-entrant lowering only
         // sees outer blocks.
+        //
+        // CODE-001 fix: Each inlined finally block is lowered into a separate
+        // instruction buffer, then wrapped with appendThrowAwareInstructions
+        // that routes exceptions to a *rethrow* label instead of the
+        // enclosing try-catch dispatch.  This matches Kotlin semantics where
+        // an exception thrown from a finally block propagates outward (to the
+        // next outer exception handler) rather than being caught by the
+        // try-catch that owns the finally.
         for i in stride(from: blocks.count - 1, through: 0, by: -1) {
             let entry = blocks[i]
+            var finallyInstructions: [KIRInstruction] = []
             driver.ctx.withFinallyStackDepth(entry.stackIndex) {
                 _ = lowerExpr(
                     entry.exprID,
@@ -111,8 +212,74 @@ extension ExprLowerer {
                     arena: arena,
                     interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &finallyInstructions
+                )
+            }
+
+            // Check whether the finally body contains any call / virtualCall
+            // instructions that could throw.  If it does, wrap with throw-aware
+            // routing; otherwise append directly to avoid unnecessary labels
+            // and exception-slot overhead.
+            let hasThrowableCall = finallyInstructions.contains { instr in
+                switch instr {
+                case .call(_, _, _, _, _, _, _),
+                     .virtualCall(_, _, _, _, _, _, _, _),
+                     .rethrow:
+                    return true
+                default:
+                    return false
+                }
+            }
+
+            if hasThrowableCall {
+                // Allocate per-inlined-finally exception slots so that any
+                // throw inside the finally body is captured and rethrown
+                // outward rather than routed to the enclosing try's catch.
+                let exSlot = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: sema.types.nullableAnyType
+                )
+                let exTypeSlot = arena.appendExpr(
+                    .temporary(Int32(arena.expressions.count)),
+                    type: intType
+                )
+                let nullValue = arena.appendExpr(.null, type: sema.types.nullableAnyType)
+                let zeroValue = arena.appendExpr(.intLiteral(0), type: intType)
+
+                // Wrap the entire finally guard region with sentinels so
+                // that an outer appendThrowAwareInstructions pass does not
+                // double-wrap the already-routed exception handling.
+                instructions.append(.beginFinallyGuard)
+
+                instructions.append(.constValue(result: nullValue, value: .null))
+                instructions.append(.constValue(result: zeroValue, value: .intLiteral(0)))
+                instructions.append(.copy(from: nullValue, to: exSlot))
+                instructions.append(.copy(from: zeroValue, to: exTypeSlot))
+
+                let rethrowLabel = driver.ctx.makeLoopLabel()
+                let afterRethrowLabel = driver.ctx.makeLoopLabel()
+
+                driver.controlFlowLowerer.appendThrowAwareInstructions(
+                    finallyInstructions,
+                    exceptionSlot: exSlot,
+                    exceptionTypeSlot: exTypeSlot,
+                    thrownTarget: rethrowLabel,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
                     instructions: &instructions
                 )
+                instructions.append(.jump(afterRethrowLabel))
+
+                // Rethrow block: propagates the exception outward.
+                instructions.append(.label(rethrowLabel))
+                instructions.append(.rethrow(value: exSlot))
+
+                instructions.append(.label(afterRethrowLabel))
+                instructions.append(.endFinallyGuard)
+            } else {
+                // No throwable calls — append the finally body directly.
+                instructions.append(contentsOf: finallyInstructions)
             }
         }
     }
@@ -418,12 +585,25 @@ extension ExprLowerer {
 
                 // General fallback: try to find a getter symbol for the property
                 if let symbol = sema.bindings.identifierSymbols[exprID],
+                   !driver.ctx.isMutableCaptureBoxed(symbol),
                    let localValue = driver.ctx.localValue(for: symbol)
                 {
                     return localValue
                 }
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
+                if driver.ctx.isMutableCaptureBoxed(symbol),
+                   let loadedValue = loadMutableCaptureCellValue(
+                       symbol: symbol,
+                       resultType: boundType ?? sema.types.anyType,
+                       sema: sema,
+                       arena: arena,
+                       interner: interner,
+                       instructions: &instructions
+                   )
+                {
+                    return loadedValue
+                }
                 if let localValue = driver.ctx.localValue(for: symbol) {
                     return localValue
                 }
@@ -713,6 +893,18 @@ extension ExprLowerer {
                 var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
+                    if let semanticSymbol = sema.symbols.symbol(capturedSymbol),
+                       semanticSymbol.kind == .local,
+                       semanticSymbol.flags.contains(.mutable)
+                    {
+                        _ = ensureMutableCaptureCell(
+                            for: capturedSymbol,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                    }
                     guard let captureValue = driver.lambdaLowerer.captureValueExpr(
                         for: capturedSymbol,
                         sema: sema,
@@ -742,6 +934,11 @@ extension ExprLowerer {
                 )
 
                 let scopeSnapshot = driver.ctx.saveScope()
+                let boxedCaptureSymbols = Set(
+                    captureBindings.compactMap { binding in
+                        driver.ctx.isMutableCaptureBoxed(binding.capturedSymbol) ? binding.capturedSymbol : nil
+                    }
+                )
                 let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
                 defer { driver.ctx.restoreScope(scopeSnapshot) }
                 driver.ctx.resetScopeForFunction()
@@ -752,7 +949,11 @@ extension ExprLowerer {
                 for capture in captureBindings {
                     let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
                     localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-                    driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
+                    if boxedCaptureSymbols.contains(capture.capturedSymbol) {
+                        driver.ctx.setMutableCaptureCell(captureExpr, for: capture.capturedSymbol)
+                    } else {
+                        driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
+                    }
                     if capture.capturedSymbol == savedReceiverSymbol {
                         driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
                     }
@@ -966,6 +1167,14 @@ extension ExprLowerer {
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     instructions.append(.copy(from: valueID, to: globalRef))
+                } else if storeMutableCaptureCellValue(
+                    valueID,
+                    for: symbol,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                ) {
                 } else if let receiverExprID = driver.ctx.activeImplicitReceiverExprID(),
                           let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                           let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
@@ -1329,6 +1538,27 @@ extension ExprLowerer {
                     let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propType)
                     instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
                     instructions.append(.copy(from: resultID, to: globalRef))
+                } else if driver.ctx.isMutableCaptureBoxed(symbol),
+                          let loadedValue = loadMutableCaptureCellValue(
+                              symbol: symbol,
+                              resultType: boundType ?? sema.types.anyType,
+                              sema: sema,
+                              arena: arena,
+                              interner: interner,
+                              instructions: &instructions
+                          )
+                {
+                    let resultType = arena.exprType(loadedValue) ?? sema.types.intType
+                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                    instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
+                    _ = storeMutableCaptureCellValue(
+                        resultID,
+                        for: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
                 } else {
                     if let storageID = driver.ctx.localValue(for: symbol) {
                         // Compute lhs op rhs and update storage in place so the value
@@ -1435,9 +1665,13 @@ extension ExprLowerer {
                 }
 
                 // 3. Call kk_kclass_create to produce a KClass metadata object.
+                // Prefer the sema-bound KClass<T> type and fall back to
+                // KClass<classRefTargetType> so the result always carries the
+                // precise generic parameter instead of degrading to Any.
+                let kClassFallback = sema.types.makeKClassType(argument: classRefTargetType)
                 let result = arena.appendExpr(
                     .temporary(Int32(arena.expressions.count)),
-                    type: boundType ?? sema.types.anyType
+                    type: boundType ?? kClassFallback
                 )
                 instructions.append(.call(
                     symbol: nil,

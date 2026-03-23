@@ -5,6 +5,8 @@ extension CollectionLiteralLoweringPass {
         let module: KIRModule
         let lookup: CollectionLiteralLookupTables
         let functionBody: [KIRInstruction]
+        let sema: SemaModule?
+        let interner: StringInterner
     }
 
     func rewriteVirtualCallInstruction(
@@ -22,10 +24,27 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
+        fileExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
         let lookup = context.lookup
+
+        // LOWERING-001: If the receiver is not in any tracking set yet,
+        // attempt to classify it from its static type in the KIR arena.
+        // This handles non-tracked receivers such as function parameters,
+        // function return values, and field loads whose concrete collection
+        // kind was not determined by the factory-call pre-scan.
+        classifyReceiverByStaticType(
+            receiver: receiver,
+            context: context,
+            listExprIDs: &listExprIDs,
+            setExprIDs: &setExprIDs,
+            mapExprIDs: &mapExprIDs,
+            arrayExprIDs: &arrayExprIDs,
+            sequenceExprIDs: &sequenceExprIDs
+        )
 
         if rewriteArrayVirtualCall(
             callee: callee, receiver: receiver, arguments: arguments,
@@ -66,6 +85,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
             rangeExprIDs: &rangeExprIDs, charRangeExprIDs: &charRangeExprIDs,
+            ulongRangeExprIDs: &ulongRangeExprIDs,
             listExprIDs: &listExprIDs,
             loweredBody: &loweredBody
         ) { return true }
@@ -91,7 +111,95 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // --- Rewrite File member virtual calls (STDLIB-320) ---
+        if fileExprIDs.contains(receiver.rawValue) {
+            if rewriteFileMemberVirtualCall(
+                callee: callee, receiver: receiver, arguments: arguments,
+                result: result, origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult, lookup: lookup,
+                listExprIDs: &listExprIDs,
+                loweredBody: &loweredBody
+            ) { return true }
+        }
+
         return false
+    }
+
+    // MARK: - File member operations (STDLIB-320)
+
+    private func rewriteFileMemberVirtualCall(
+        callee: InternedString,
+        receiver: KIRExprID,
+        arguments: [KIRExprID],
+        result: KIRExprID?,
+        origCanThrow: Bool,
+        origThrownResult: KIRExprID?,
+        lookup: CollectionLiteralLookupTables,
+        listExprIDs: inout Set<Int32>,
+        loweredBody: inout [KIRInstruction]
+    ) -> Bool {
+        let kkCallee: InternedString?
+
+        switch callee {
+        case lookup.readTextName:
+            kkCallee = lookup.kkFileReadTextName
+        case lookup.writeTextName:
+            kkCallee = lookup.kkFileWriteTextName
+        case lookup.readLinesName:
+            kkCallee = lookup.kkFileReadLinesName
+        case lookup.existsName:
+            kkCallee = lookup.kkFileExistsName
+        case lookup.isFileName:
+            kkCallee = lookup.kkFileIsFileName
+        case lookup.isDirectoryName:
+            kkCallee = lookup.kkFileIsDirectoryName
+        case lookup.namePropertyName:
+            kkCallee = lookup.kkFileNameName
+        case lookup.pathPropertyName:
+            kkCallee = lookup.kkFilePathName
+        case lookup.forEachLineName:
+            kkCallee = lookup.kkFileForEachLineName
+        case lookup.useLinesName:
+            kkCallee = lookup.kkFileUseLinesName
+        case lookup.bufferedReaderName:
+            kkCallee = lookup.kkFileBufferedReaderName
+        case lookup.walkName:
+            kkCallee = lookup.kkFileWalkName
+        case lookup.listFilesName:
+            kkCallee = lookup.kkFileListFilesName
+        case lookup.deleteName:
+            kkCallee = lookup.kkFileDeleteName
+        case lookup.mkdirsName:
+            kkCallee = lookup.kkFileMkdirsName
+        default:
+            kkCallee = nil
+        }
+
+        guard let target = kkCallee else { return false }
+
+        // Methods that pass extra arguments beyond the receiver
+        let needsExtraArgs = callee == lookup.forEachLineName
+            || callee == lookup.useLinesName
+            || callee == lookup.writeTextName
+        let memberArgs = needsExtraArgs ?
+            [receiver] + arguments :
+            [receiver]
+
+        loweredBody.append(.call(
+            symbol: nil,
+            callee: target,
+            arguments: memberArgs,
+            result: result,
+            canThrow: origCanThrow,
+            thrownResult: origThrownResult
+        ))
+
+        // Track results that produce lists (readLines returns List<String>)
+        if callee == lookup.readLinesName, let result {
+            listExprIDs.insert(result.rawValue)
+        }
+
+        return true
     }
 
     // MARK: - Sequence operations
@@ -114,9 +222,8 @@ extension CollectionLiteralLoweringPass {
     ) -> Bool {
         // asSequence() → kk_list_asSequence only when receiver is a tracked list.
         // Array receivers are handled by rewriteArrayVirtualCall (guarded by arrayExprIDs).
-        // KNOWN LIMITATION: Non-tracked receivers (e.g., List parameter, function return)
-        // fall through so the original symbol linkage is preserved.  A future improvement
-        // could use the receiver's static type for dispatch instead of *ExprIDs membership.
+        // Non-tracked receivers are now classified by static type via
+        // classifyReceiverByStaticType (LOWERING-001) before reaching here.
         if callee == lookup.asSequenceName, arguments.isEmpty,
            listExprIDs.contains(receiver.rawValue)
         {
@@ -284,6 +391,27 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // shuffled(random: Random) overload (STDLIB-531)
+        if callee == lookup.shuffledName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListShuffledRandomName,
+                arguments: [receiver] + arguments,
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
         if callee == lookup.flattenName, arguments.isEmpty, listExprIDs.contains(receiver.rawValue) {
             let transformResult = module.arena.appendExpr(
                 .temporary(Int32(module.arena.expressions.count)), type: nil
@@ -339,6 +467,26 @@ extension CollectionLiteralLoweringPass {
                 result: transformResult,
                 canThrow: true,
                 thrownResult: thrownExpr
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(transformResult.rawValue)
+                loweredBody.append(.copy(from: transformResult, to: result))
+            }
+            return true
+        }
+
+        if callee == lookup.windowedName, arguments.count == 1, listExprIDs.contains(receiver.rawValue) {
+            let transformResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListWindowedDefaultName,
+                arguments: [receiver, arguments[0]],
+                result: transformResult,
+                canThrow: false,
+                thrownResult: nil
             ))
             if let result {
                 listExprIDs.insert(result.rawValue)
@@ -905,7 +1053,7 @@ extension CollectionLiteralLoweringPass {
         return true
     }
 
-    private enum ComparatorSource {
+    enum ComparatorSource {
         case ascending
         case descending
         case multiSelector
@@ -914,7 +1062,7 @@ extension CollectionLiteralLoweringPass {
         case unknown
     }
 
-    private func isComparatorFromCall(
+    func isComparatorFromCall(
         exprID: KIRExprID,
         body: [KIRInstruction],
         ascendingCallee: InternedString,
@@ -975,11 +1123,19 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.sortedByDescendingName || callee == lookup.sortedWithName
             || callee == lookup.maxByOrNullName || callee == lookup.minByOrNullName
             || callee == lookup.maxOfOrNullName || callee == lookup.minOfOrNullName
+            || callee == lookup.maxOfName || callee == lookup.minOfName
+            || callee == lookup.maxWithName || callee == lookup.maxWithOrNullName
+            || callee == lookup.minWithName || callee == lookup.minWithOrNullName
+            || callee == lookup.maxOfWithName || callee == lookup.maxOfWithOrNullName
+            || callee == lookup.minOfWithName || callee == lookup.minOfWithOrNullName
             || callee == lookup.distinctByName
         else {
             return false
         }
-        guard arguments.count == 1 || (callee == lookup.sortedWithName && arguments.count == 2),
+        let acceptsTwoArguments = callee == lookup.sortedWithName
+            || callee == lookup.maxOfWithName || callee == lookup.maxOfWithOrNullName
+            || callee == lookup.minOfWithName || callee == lookup.minOfWithOrNullName
+        guard arguments.count == 1 || (acceptsTwoArguments && arguments.count == 2),
               listExprIDs.contains(receiver.rawValue)
         else { return false }
 
@@ -996,12 +1152,23 @@ extension CollectionLiteralLoweringPass {
         case lookup.minByOrNullName: lookup.kkListMinByOrNullName
         case lookup.maxOfOrNullName: lookup.kkListMaxOfOrNullName
         case lookup.minOfOrNullName: lookup.kkListMinOfOrNullName
+        case lookup.maxOfName: lookup.kkListMaxOfName
+        case lookup.minOfName: lookup.kkListMinOfName
+        case lookup.maxWithName: lookup.kkListMaxWithName
+        case lookup.maxWithOrNullName: lookup.kkListMaxWithOrNullName
+        case lookup.minWithName: lookup.kkListMinWithName
+        case lookup.minWithOrNullName: lookup.kkListMinWithOrNullName
+        case lookup.maxOfWithName: lookup.kkListMaxOfWithName
+        case lookup.maxOfWithOrNullName: lookup.kkListMaxOfWithOrNullName
+        case lookup.minOfWithName: lookup.kkListMinOfWithName
+        case lookup.minOfWithOrNullName: lookup.kkListMinOfWithOrNullName
         case lookup.distinctByName: lookup.kkListDistinctByName
         default: callee
         }
 
         var hofArgs: [KIRExprID]
-        if callee == lookup.sortedWithName, arguments.count == 1 {
+        if (callee == lookup.sortedWithName || callee == lookup.maxWithName || callee == lookup.maxWithOrNullName
+            || callee == lookup.minWithName || callee == lookup.minWithOrNullName), arguments.count == 1 {
             let comparatorExpr = arguments[0]
             let source = isComparatorFromCall(
                 exprID: comparatorExpr,
@@ -1039,11 +1206,54 @@ extension CollectionLiteralLoweringPass {
             let trampolineExpr = module.arena.appendExpr(.externSymbolAddress(trampolineName), type: nil)
             loweredBody.append(.constValue(result: trampolineExpr, value: .externSymbolAddress(trampolineName)))
             hofArgs = [trampolineExpr, closureExpr]
+        } else if (callee == lookup.maxOfWithName || callee == lookup.maxOfWithOrNullName
+            || callee == lookup.minOfWithName || callee == lookup.minOfWithOrNullName), arguments.count == 2 {
+            let comparatorExpr = arguments[0]
+            let selectorExpr = arguments[1]
+            let cmpTrampolineName: InternedString
+            let cmpClosureExpr: KIRExprID
+            switch isComparatorFromCall(
+                exprID: comparatorExpr,
+                body: context.functionBody,
+                ascendingCallee: lookup.kkComparatorFromSelectorName,
+                descendingCallee: lookup.kkComparatorFromSelectorDescendingName,
+                multiSelectorCallee: lookup.kkComparatorFromMultiSelectorsName,
+                naturalOrderCallee: lookup.kkComparatorNaturalOrderName,
+                reverseOrderCallee: lookup.kkComparatorReverseOrderName,
+                multiSelector3Callee: lookup.kkComparatorFromMultiSelectors3Name
+            ) {
+            case .descending:
+                cmpTrampolineName = lookup.kkComparatorFromSelectorDescendingTrampolineName
+                cmpClosureExpr = comparatorExpr
+            case .multiSelector:
+                cmpTrampolineName = lookup.kkComparatorFromMultiSelectorsTrampolineName
+                cmpClosureExpr = comparatorExpr
+            case .naturalOrder:
+                cmpTrampolineName = lookup.kkComparatorNaturalOrderTrampolineName
+                let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zero, value: .intLiteral(0)))
+                cmpClosureExpr = zero
+            case .reverseOrder:
+                cmpTrampolineName = lookup.kkComparatorReverseOrderTrampolineName
+                let zero = module.arena.appendExpr(.intLiteral(0), type: nil)
+                loweredBody.append(.constValue(result: zero, value: .intLiteral(0)))
+                cmpClosureExpr = zero
+            default:
+                cmpTrampolineName = lookup.kkComparatorFromSelectorTrampolineName
+                cmpClosureExpr = comparatorExpr
+            }
+            let cmpTrampolineExpr = module.arena.appendExpr(.externSymbolAddress(cmpTrampolineName), type: nil)
+            loweredBody.append(.constValue(result: cmpTrampolineExpr, value: .externSymbolAddress(cmpTrampolineName)))
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            hofArgs = [cmpTrampolineExpr, cmpClosureExpr, selectorExpr, zeroExpr]
         } else {
             hofArgs = arguments
         }
         let needsClosureRaw = callee != lookup.maxByOrNullName && callee != lookup.minByOrNullName
             && callee != lookup.maxOfOrNullName && callee != lookup.minOfOrNullName
+            && callee != lookup.maxOfWithName && callee != lookup.maxOfWithOrNullName
+            && callee != lookup.minOfWithName && callee != lookup.minOfWithOrNullName
         if needsClosureRaw {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -1187,6 +1397,48 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // zipWithNext() — no-arg
+        if callee == lookup.zipWithNextName, arguments.isEmpty {
+            let hofResult = module.arena.appendExpr(
+                .temporary(Int32(module.arena.expressions.count)), type: nil
+            )
+            loweredBody.append(.call(
+                symbol: nil,
+                callee: lookup.kkListZipWithNextName,
+                arguments: [receiver],
+                result: hofResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+                loweredBody.append(.copy(from: hofResult, to: result))
+            }
+            return true
+        }
+
+        // zipWithNext(transform) — HOF
+        if callee == lookup.zipWithNextName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(
+                kkName: lookup.kkListZipWithNextTransformName,
+                receiver: receiver,
+                arguments: arguments + [zeroExpr],
+                result: result,
+                origCanThrow: origCanThrow,
+                origThrownResult: origThrownResult,
+                module: module,
+                loweredBody: &loweredBody
+            )
+            if let result {
+                listExprIDs.insert(result.rawValue)
+                listExprIDs.insert(hofResult.rawValue)
+            }
+            return true
+        }
+
         if callee == lookup.forEachIndexedName || callee == lookup.mapIndexedName || callee == lookup.onEachIndexedName, arguments.count == 1 {
             let kkName: InternedString
             if callee == lookup.forEachIndexedName {
@@ -1252,10 +1504,8 @@ extension CollectionLiteralLoweringPass {
         sequenceExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
-        // KNOWN LIMITATION: Only tracked array receivers are rewritten.
-        // Array.asSequence() for non-tracked receivers (e.g., function parameters)
-        // is not rewritten here.  A dedicated Sema stub or type-based dispatch
-        // would be needed to handle those cases.
+        // Non-tracked array receivers are now classified by static type via
+        // classifyReceiverByStaticType (LOWERING-001) before reaching here.
         guard arrayExprIDs.contains(receiver.rawValue) else { return false }
 
         // toList on array → kk_array_toList (result is List)
@@ -1563,6 +1813,60 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // filterIndexed: args = [lambda]
+        if callee == lookup.filterIndexedName || callee == lookup.kkListFilterIndexedName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListFilterIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // foldIndexed: args = [initial, lambda]
+        if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName), arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListFoldIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceIndexed: args = [lambda]
+        if (callee == lookup.reduceIndexedName || callee == lookup.kkListReduceIndexedName), arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceIndexedOrNull: args = [lambda]
+        if callee == lookup.reduceIndexedOrNullName || callee == lookup.kkListReduceIndexedOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceIndexedOrNullName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // runningFoldIndexed: args = [initial, lambda]
+        if callee == lookup.runningFoldIndexedName || callee == lookup.kkListRunningFoldIndexedName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListRunningFoldIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // runningReduceIndexed: args = [lambda]
+        if callee == lookup.runningReduceIndexedName || callee == lookup.kkListRunningReduceIndexedName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListRunningReduceIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // scanIndexed: args = [initial, lambda]
+        if callee == lookup.scanIndexedName || callee == lookup.kkListScanIndexedName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListScanIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+
         if callee == lookup.indexOfFirstName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
@@ -1615,11 +1919,13 @@ extension CollectionLiteralLoweringPass {
         lookup: CollectionLiteralLookupTables,
         rangeExprIDs: inout Set<Int32>,
         charRangeExprIDs: inout Set<Int32>,
+        ulongRangeExprIDs: inout Set<Int32>,
         listExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard rangeExprIDs.contains(receiver.rawValue) else { return false }
         let isCharRange = charRangeExprIDs.contains(receiver.rawValue)
+        let isULongRange = ulongRangeExprIDs.contains(receiver.rawValue)
 
         // first / last / count — simple property access (STDLIB-092)
         if callee == lookup.firstName, arguments.isEmpty {
@@ -1646,6 +1952,23 @@ extension CollectionLiteralLoweringPass {
             ))
             return true
         }
+        // STDLIB-637: isEmpty / sum
+        if callee == lookup.isEmptyName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeIsEmptyName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
+        if callee == lookup.sumName, arguments.isEmpty {
+            loweredBody.append(.call(
+                symbol: nil, callee: lookup.kkRangeSumName,
+                arguments: [receiver], result: result,
+                canThrow: false, thrownResult: nil
+            ))
+            return true
+        }
 
         // contains — delegate to kk_op_contains (STDLIB-090)
         if callee == lookup.containsName, arguments.count == 1 {
@@ -1658,9 +1981,16 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
-        // toList — returns a List (STDLIB-091 / STDLIB-290)
+        // toList — returns a List (STDLIB-091 / STDLIB-290 / STDLIB-524)
         if callee == lookup.toListName, arguments.isEmpty {
-            let toListCallee = isCharRange ? lookup.kkCharRangeToListName : lookup.kkRangeToListName
+            let toListCallee: InternedString
+            if isCharRange {
+                toListCallee = lookup.kkCharRangeToListName
+            } else if isULongRange {
+                toListCallee = lookup.kkULongRangeToListName
+            } else {
+                toListCallee = lookup.kkRangeToListName
+            }
             loweredBody.append(.call(
                 symbol: nil, callee: toListCallee,
                 arguments: [receiver], result: result,
@@ -1712,10 +2042,71 @@ extension CollectionLiteralLoweringPass {
                 rangeExprIDs.insert(result.rawValue)
                 // Propagate char range through reversed() (STDLIB-290)
                 if isCharRange { charRangeExprIDs.insert(result.rawValue) }
+                // Propagate ULong range through reversed() (STDLIB-524)
+                if isULongRange { ulongRangeExprIDs.insert(result.rawValue) }
             }
             return true
         }
 
         return false
+    }
+
+    // MARK: - Static type fallback classification (LOWERING-001)
+
+    /// Classify a receiver expression by its static type in the KIR arena.
+    /// If the receiver is already in one of the tracking sets, this is a no-op.
+    /// Otherwise, look up the expression's TypeID, resolve its class symbol,
+    /// and insert it into the appropriate tracking set so that downstream
+    /// rewrite logic can match on it.
+    private func classifyReceiverByStaticType(
+        receiver: KIRExprID,
+        context: VirtualCallRewriteContext,
+        listExprIDs: inout Set<Int32>,
+        setExprIDs: inout Set<Int32>,
+        mapExprIDs: inout Set<Int32>,
+        arrayExprIDs: inout Set<Int32>,
+        sequenceExprIDs: inout Set<Int32>
+    ) {
+        let raw = receiver.rawValue
+        // Already classified -- skip.
+        if listExprIDs.contains(raw) || setExprIDs.contains(raw)
+            || mapExprIDs.contains(raw) || arrayExprIDs.contains(raw)
+            || sequenceExprIDs.contains(raw)
+        {
+            return
+        }
+        guard let sema = context.sema else { return }
+        guard let typeID = context.module.arena.exprType(receiver) else { return }
+
+        let types = sema.types
+        let symbols = sema.symbols
+        let interner = context.interner
+
+        let kind = types.kind(of: typeID)
+        guard case let .classType(classType) = kind else { return }
+        let classSymbol = classType.classSymbol
+        guard let symInfo = symbols.symbol(classSymbol) else { return }
+        guard let simpleName = symInfo.fqName.last else { return }
+
+        let resolved = interner.resolve(simpleName)
+        switch resolved {
+        case "List", "MutableList", "ArrayList",
+             "AbstractList", "AbstractMutableList":
+            listExprIDs.insert(raw)
+        case "Set", "MutableSet", "HashSet", "LinkedHashSet",
+             "AbstractSet", "AbstractMutableSet":
+            setExprIDs.insert(raw)
+        case "Map", "MutableMap", "HashMap", "LinkedHashMap",
+             "AbstractMap", "AbstractMutableMap":
+            mapExprIDs.insert(raw)
+        case "Array", "IntArray", "LongArray", "DoubleArray",
+             "FloatArray", "BooleanArray", "CharArray",
+             "ByteArray", "ShortArray", "UIntArray", "ULongArray":
+            arrayExprIDs.insert(raw)
+        case "Sequence":
+            sequenceExprIDs.insert(raw)
+        default:
+            break
+        }
     }
 }

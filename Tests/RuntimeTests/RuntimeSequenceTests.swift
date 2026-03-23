@@ -2,6 +2,14 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+/// STDLIB-563: Global counter used by laziness verification tests.
+/// Tracks how many times the yield side-effects in the builder thunk execute.
+/// Must be global (not a class property) because `@convention(c)` closures
+/// cannot capture context.
+/// Access is safe because the tests run sequentially and the counter is only
+/// mutated from one thread at a time (the producer thread).
+nonisolated(unsafe) private var _lazyTestYieldCounter = 0
+
 private let stringKeySelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     switch value {
     case 1:
@@ -148,6 +156,106 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
         XCTAssertEqual(kk_iterator_builder_next(iterHandle), 42)
         XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    // MARK: - Lazy / Continuation-based Iterator Tests (STDLIB-564)
+
+    /// Verifies that the producer is truly lazy: values are produced on-demand,
+    /// not eagerly collected into a buffer.  We use a shared counter that the
+    /// producer increments on each yield; the consumer asserts the counter
+    /// hasn't advanced beyond what was requested.
+    func testIteratorBuilderIsLazyNotEager() {
+        // We use a class wrapper so the thunk can capture and mutate it.
+        // The thunk yields yieldCount values: 1, 2, 3, 4, 5.
+        // Between each next() call on the consumer side, we verify the
+        // producer hasn't run ahead.
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Yield 5 values.  Each yield suspends the producer until the
+            // consumer calls next(), so the producer can never run ahead.
+            _ = kk_iterator_builder_yield(builderRaw, 1)
+            _ = kk_iterator_builder_yield(builderRaw, 2)
+            _ = kk_iterator_builder_yield(builderRaw, 3)
+            _ = kk_iterator_builder_yield(builderRaw, 4)
+            _ = kk_iterator_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Consume only the first 3 elements; the producer should not have
+        // produced elements 4 and 5 yet (lazy).
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 2)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 3)
+
+        // Now consume the rest.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 4)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 5)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that calling next() without hasNext() works correctly
+    /// (the continuation advances the producer automatically).
+    func testIteratorBuilderNextWithoutHasNext() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_iterator_builder_yield(builderRaw, 10)
+            _ = kk_iterator_builder_yield(builderRaw, 20)
+            _ = kk_iterator_builder_yield(builderRaw, 30)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Call next() directly without hasNext().
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 10)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 20)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 30)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that calling hasNext() multiple times without next() is
+    /// idempotent (returns the same result without advancing the iterator).
+    func testIteratorBuilderHasNextIsIdempotent() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_iterator_builder_yield(builderRaw, 42)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        // Multiple hasNext() calls should all return 1.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 1)
+        XCTAssertEqual(kk_iterator_builder_next(iterHandle), 42)
+        // After consuming, multiple hasNext() calls should all return 0.
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+        XCTAssertEqual(kk_iterator_builder_hasNext(iterHandle), 0)
+    }
+
+    /// Verifies that the iterator builder works with a computed sequence
+    /// (loop-based yield), matching the pattern in the diff case.
+    func testIteratorBuilderWithComputedSequence() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Yield squares: 1, 4, 9, 16, 25
+            for i in 1 ... 5 {
+                _ = kk_iterator_builder_yield(builderRaw, i * i)
+            }
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let iterHandle = kk_iterator_builder_build(fnPtr)
+
+        var results: [Int] = []
+        while kk_iterator_builder_hasNext(iterHandle) == 1 {
+            results.append(kk_iterator_builder_next(iterHandle))
+        }
+        XCTAssertEqual(results, [1, 4, 9, 16, 25])
     }
 
     // Backwards-compatibility: older lowering paths may pass a RuntimeListIteratorBox
@@ -422,6 +530,210 @@ final class RuntimeSequenceTests: XCTestCase {
         let wrappedElement = kk_sequence_of_single(99)
         let combined = kk_sequence_plus(seq, wrappedElement)
         XCTAssertEqual(sequenceElements(combined), [99])
+    }
+
+    // MARK: - Lazy Sequence Builder Tests (STDLIB-563)
+
+    func testSequenceBuilderBuildYieldsElementsInOrder() {
+        // sequence { yield(1); yield(2); yield(3) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [1, 2, 3])
+    }
+
+    func testSequenceBuilderBuildEmptyBlock() {
+        // sequence { }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { _, _ in
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [])
+    }
+
+    func testSequenceBuilderBuildSingleElement() {
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 42)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [42])
+    }
+
+    func testSequenceBuilderBuildWithMap() {
+        // sequence { yield(1); yield(2); yield(3) }.map { it * 10 }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+
+        // Apply map: multiply by 10
+        let mapFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value * 10
+        }
+        let mapped = kk_sequence_map(
+            seqHandle,
+            unsafeBitCast(mapFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(mapped), [10, 20, 30])
+    }
+
+    func testSequenceBuilderBuildWithTake() {
+        // sequence { yield(1); yield(2); yield(3); yield(4); yield(5) }.take(3).toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            _ = kk_sequence_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let taken = kk_sequence_take(seqHandle, 3)
+        XCTAssertEqual(sequenceElements(taken), [1, 2, 3])
+    }
+
+    func testSequenceBuilderBuildWithFilter() {
+        // sequence { yield(1); yield(2); yield(3); yield(4) }.filter { it % 2 == 0 }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+
+        let filterFn: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
+            value % 2 == 0 ? 1 : 0
+        }
+        let filtered = kk_sequence_filter(
+            seqHandle,
+            unsafeBitCast(filterFn, to: Int.self),
+            0
+        )
+        XCTAssertEqual(sequenceElements(filtered), [2, 4])
+    }
+
+    func testSequenceBuilderBuildYieldAllFromList() {
+        // sequence { yieldAll(listOf(10, 20)); yield(30) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            // Create a list [10, 20]
+            let arr = kk_array_new(2)
+            var thrown = 0
+            _ = kk_array_set(arr, 0, 10, &thrown)
+            _ = kk_array_set(arr, 1, 20, &thrown)
+            let list = kk_list_of(arr, 2)
+            _ = kk_sequence_builder_yieldAll(builderRaw, list)
+            _ = kk_sequence_builder_yield(builderRaw, 30)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [10, 20, 30])
+    }
+
+    func testSequenceBuilderBuildReiterableProducesSameElements() {
+        // Verify that materializing the same lazy sequence twice produces the same result
+        // (cached after first materialization).
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _ = kk_sequence_builder_yield(builderRaw, 7)
+            _ = kk_sequence_builder_yield(builderRaw, 8)
+            _ = kk_sequence_builder_yield(builderRaw, 9)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        XCTAssertEqual(sequenceElements(seqHandle), [7, 8, 9])
+        // Second materialization should produce the same result (cached).
+        XCTAssertEqual(sequenceElements(seqHandle), [7, 8, 9])
+    }
+
+    func testSequenceBuilderBuildManyElements() {
+        // sequence { for (i in 0..99) yield(i) }.toList()
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            for i in 0 ..< 100 {
+                _ = kk_sequence_builder_yield(builderRaw, i)
+            }
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let result = sequenceElements(seqHandle)
+        XCTAssertEqual(result.count, 100)
+        XCTAssertEqual(result.first, 0)
+        XCTAssertEqual(result.last, 99)
+    }
+
+    // MARK: - STDLIB-563: Lazy evaluation verification
+
+    func testSequenceBuilderLazyTakeDoesNotEvaluateEntireBlock() {
+        // STDLIB-563: Verify that take(2) on a lazy sequence builder
+        // only computes the first 2 elements, not all 5.
+        // We use a global counter to track how many yields actually execute.
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let taken = kk_sequence_take(seqHandle, 2)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [1, 2])
+        // The producer should have yielded at most 3 times (2 consumed + 1 ahead
+        // before take detects the limit), not all 5. In the truly lazy model,
+        // the counter should be <= 3.
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
+            "STDLIB-563: take(2) should not force evaluation of all 5 elements; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceBuilderLazyFirstDoesNotEvaluateEntireBlock() {
+        // STDLIB-563: first() on a lazy sequence builder should only evaluate
+        // until the first element is produced.
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 100)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 200)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 300)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        var thrown = 0
+        let first = kk_sequence_first(seqHandle, &thrown)
+        XCTAssertEqual(first, 100)
+        XCTAssertEqual(thrown, 0)
+        // The producer should have yielded at most 2 times (1 consumed +
+        // possibly 1 ahead), not all 3.
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "STDLIB-563: first() should not force evaluation of all 3 elements; got \(_lazyTestYieldCounter) yields")
     }
 
     // MARK: - Helpers

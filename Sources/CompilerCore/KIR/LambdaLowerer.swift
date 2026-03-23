@@ -146,6 +146,13 @@ final class LambdaLowerer {
                 type: lambdaParameterTypes[1]
             )
             lambdaParameters = [closureParam, param0, param1]
+        } else if needsClosureParam, effectiveParamCount == 3 {
+            // foldIndexed/reduceIndexed/scanIndexed etc.: (closureRaw, param0, param1, param2, outThrown)
+            let closureParam = KIRParameter(symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID), type: sema.types.intType)
+            let param0 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0), type: lambdaParameterTypes[0])
+            let param1 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1), type: lambdaParameterTypes[1])
+            let param2 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 2), type: lambdaParameterTypes[2])
+            lambdaParameters = [closureParam, param0, param1, param2]
         } else {
             lambdaParameters = (0 ..< effectiveParamCount).map { index in
                 KIRParameter(
@@ -155,7 +162,8 @@ final class LambdaLowerer {
             }
         }
         let usesClosureRawCapture = needsClosureParam && captureBindings.count == 1
-        let functionCaptureBindings = usesClosureRawCapture ? [] : captureBindings
+        let usesClosureObjectCapture = needsClosureParam && captureBindings.count >= 2
+        let functionCaptureBindings = (usesClosureRawCapture || usesClosureObjectCapture) ? [] : captureBindings
 
         let scopeSnapshot = driver.ctx.saveScope()
         let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
@@ -184,6 +192,32 @@ final class LambdaLowerer {
             driver.ctx.setLocalValue(closureExpr, for: closureCapture.capturedSymbol)
             if closureCapture.capturedSymbol == savedReceiverSymbol {
                 driver.ctx.setImplicitReceiver(symbol: closureParam.symbol, exprID: closureExpr)
+            }
+        }
+        // Multi-capture HOF lambda: closureRaw is a packed closure object.
+        // Load each capture from the object via kk_array_get_inbounds.
+        if usesClosureObjectCapture,
+           let closureParam = lambdaParameters.first,
+           let closureObjExpr = driver.ctx.localValue(for: closureParam.symbol)
+        {
+            let kkArrayGet = interner.intern("kk_array_get_inbounds")
+            for (captureIndex, capture) in captureBindings.enumerated() {
+                let fieldOffset = Int64(captureIndex + 2)
+                let offsetExpr = arena.appendExpr(.intLiteral(fieldOffset), type: sema.types.intType)
+                lambdaBody.append(.constValue(result: offsetExpr, value: .intLiteral(fieldOffset)))
+                let loadedExpr = arena.appendExpr(.temporary(Int32(clamping: arena.expressions.count)), type: capture.param.type)
+                lambdaBody.append(.call(
+                    symbol: nil,
+                    callee: kkArrayGet,
+                    arguments: [closureObjExpr, offsetExpr],
+                    result: loadedExpr,
+                    canThrow: false,
+                    thrownResult: nil
+                ))
+                driver.ctx.setLocalValue(loadedExpr, for: capture.capturedSymbol)
+                if capture.capturedSymbol == savedReceiverSymbol {
+                    driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: loadedExpr)
+                }
             }
         }
         // Map param names → symbols for nameRef fallback when identifierSymbols is unbound.
@@ -264,7 +298,7 @@ final class LambdaLowerer {
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: usesClosureRawCapture ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
+            captureArguments: (usesClosureRawCapture || usesClosureObjectCapture) ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
             hasClosureParam: needsClosureParam
         )
         return lambdaValueExpr
@@ -572,6 +606,7 @@ final class LambdaLowerer {
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
         let boundType = sema.bindings.exprTypes[exprID]
+        let isUnbound = sema.bindings.isUnboundCallableRef(exprID)
         var captureArguments: [KIRExprID] = []
         if let receiverExpr {
             let loweredReceiver = driver.lowerExpr(
@@ -583,7 +618,11 @@ final class LambdaLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
-            captureArguments.append(loweredReceiver)
+            // For unbound type references (Type::member), the receiver is
+            // not captured — it becomes a parameter of the function type.
+            if !isUnbound {
+                captureArguments.append(loweredReceiver)
+            }
         }
 
         let targetSymbol = resolveCallableRefTargetSymbol(
@@ -593,9 +632,94 @@ final class LambdaLowerer {
             sema: sema
         )
 
+        // REFL-003: When a callable ref is used as a collection HOF argument
+        // (e.g. `list.map(::double)`), we must generate a wrapper thunk with the
+        // HOF ABI: (closureRaw, value, outThrown) -> result.  The target function
+        // itself uses a plain ABI (value) -> result, so we cannot pass its
+        // pointer directly to the runtime HOF implementation.
+        let needsHOFWrapper = sema.bindings.isCollectionHOFLambdaExpr(exprID)
+
         let callableSymbol: SymbolID
         let callableName: InternedString
-        if let targetSymbol {
+        if let targetSymbol, needsHOFWrapper {
+            // Generate a HOF-ABI wrapper that delegates to the target function.
+            callableSymbol = driver.ctx.syntheticLambdaSymbol(for: exprID)
+            callableName = syntheticLambdaName(for: exprID, interner: interner)
+
+            let targetName = callableTargetName(for: targetSymbol, sema: sema, interner: interner)
+            let functionType = boundType.flatMap { typeID -> FunctionType? in
+                guard case let .functionType(ft) = sema.types.kind(of: typeID) else { return nil }
+                return ft
+            }
+            let valueParamTypes = functionType?.params ?? []
+            let returnType = functionType?.returnType ?? sema.types.anyType
+
+            // Build wrapper params: (closureRaw, value0, ..., valueN)
+            let closureParam = KIRParameter(
+                symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID),
+                type: sema.types.intType
+            )
+            let valueParams: [KIRParameter] = valueParamTypes.enumerated().map { index, type in
+                KIRParameter(
+                    symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: index),
+                    type: type
+                )
+            }
+            let wrapperParams = [closureParam] + valueParams
+
+            // Build wrapper body: call the target function with the value params,
+            // then return its result.
+            var body: [KIRInstruction] = [.beginBlock]
+            var callArgExprs: [KIRExprID] = []
+            // If the callable ref has a bound receiver, pass capture args first.
+            for captureArg in captureArguments {
+                let captureRef = arena.appendExpr(
+                    .symbolRef(closureParam.symbol),
+                    type: closureParam.type
+                )
+                body.append(.constValue(result: captureRef, value: .symbolRef(closureParam.symbol)))
+                callArgExprs.append(captureRef)
+            }
+            for valueParam in valueParams {
+                let paramExpr = arena.appendExpr(.symbolRef(valueParam.symbol), type: valueParam.type)
+                body.append(.constValue(result: paramExpr, value: .symbolRef(valueParam.symbol)))
+                callArgExprs.append(paramExpr)
+            }
+            let callResult = arena.appendExpr(
+                .temporary(Int32(arena.expressions.count)),
+                type: returnType
+            )
+            body.append(.call(
+                symbol: targetSymbol,
+                callee: targetName,
+                arguments: callArgExprs,
+                result: callResult,
+                canThrow: false,
+                thrownResult: nil
+            ))
+            switch sema.types.kind(of: returnType) {
+            case .unit, .nothing(.nonNull), .nothing(.nullable):
+                body.append(.returnUnit)
+            default:
+                body.append(.returnValue(callResult))
+            }
+            body.append(.endBlock)
+
+            let wrapperDecl = arena.appendDecl(
+                .function(
+                    KIRFunction(
+                        symbol: callableSymbol,
+                        name: callableName,
+                        params: wrapperParams,
+                        returnType: returnType,
+                        body: body,
+                        isSuspend: functionType?.isSuspend ?? false,
+                        isInline: false
+                    )
+                )
+            )
+            driver.ctx.appendGeneratedCallableDecl(wrapperDecl)
+        } else if let targetSymbol {
             callableSymbol = targetSymbol
             callableName = callableTargetName(for: targetSymbol, sema: sema, interner: interner)
         } else {

@@ -2,6 +2,7 @@
 ///
 /// Covers:
 /// - STDLIB-320: `File(String)` constructor, `readText`, `writeText`, `readLines`
+/// - STDLIB-664: `appendText(text: String)` member function
 /// - STDLIB-321: `name`, `path` properties; `exists()`, `isFile()`, `isDirectory()` query methods
 /// - STDLIB-322: `forEachLine(action:)` member function
 /// - STDLIB-323: `delete()`, `mkdirs()`, `listFiles()`, `walk()` filesystem operations
@@ -159,12 +160,48 @@ extension DataFlowSemaPhase {
         )
 
         registerFileMemberFunction(
+            named: "appendText",
+            externalLinkName: "kk_file_appendText",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [("text", types.stringType)],
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerFileMemberFunction(
             named: "readLines",
             externalLinkName: "kk_file_readLines",
             ownerSymbol: fileSymbol,
             ownerType: fileType,
             parameters: [],
             returnType: listOfStringType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // MARK: - File.readBytes() (STDLIB-665)
+
+        // ByteArray is represented as List<Int> in the runtime
+        let intType = types.intType
+        let listOfIntType: TypeID = if let listSym = listSymbol {
+            types.make(.classType(ClassType(
+                classSymbol: listSym,
+                args: [.out(intType)],
+                nullability: .nonNull
+            )))
+        } else {
+            types.anyType
+        }
+
+        registerFileMemberFunction(
+            named: "readBytes",
+            externalLinkName: "kk_file_readBytes",
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            parameters: [],
+            returnType: listOfIntType,
             symbols: symbols,
             interner: interner
         )

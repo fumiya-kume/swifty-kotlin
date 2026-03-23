@@ -85,6 +85,19 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+@_cdecl("kk_list_of_not_null")
+public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
+    var elements: [Int] = []
+    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
+        for element in array.elements.prefix(count) {
+            if element != runtimeNullSentinelInt {
+                elements.append(element)
+            }
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 // STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("kk_emptyList")
@@ -300,6 +313,33 @@ public func kk_list_to_set(_ listRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
 }
 
+// MARK: - Set.toSet(), toMutableSet() (STDLIB-651)
+
+@_cdecl("kk_set_to_set")
+public func kk_set_to_set(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    // Return a defensive copy (Kotlin semantics: toSet() on Set returns a new Set)
+    return registerRuntimeObject(RuntimeSetBox(elements: Array(set.elements)))
+}
+
+@_cdecl("kk_list_to_mutable_set")
+public func kk_list_to_mutable_set(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: runtimeDeduplicatePreservingOrder(list.elements)))
+}
+
+@_cdecl("kk_set_to_mutable_set")
+public func kk_set_to_mutable_set(_ setRaw: Int) -> Int {
+    guard let set = runtimeSetBox(from: setRaw) else {
+        return registerRuntimeObject(RuntimeSetBox(elements: []))
+    }
+    return registerRuntimeObject(RuntimeSetBox(elements: Array(set.elements)))
+}
+
 // MARK: - List intersect / union / subtract / toHashSet (STDLIB-510)
 
 @_cdecl("kk_list_intersect")
@@ -389,6 +429,18 @@ public func kk_list_lastOrNull(_ listRaw: Int) -> Int {
         return runtimeNullSentinelInt
     }
     return list.elements[list.elements.count - 1]
+}
+
+// MARK: - STDLIB-211: List.singleOrNull()
+
+@_cdecl("kk_list_singleOrNull")
+public func kk_list_singleOrNull(_ listRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: listRaw),
+          list.elements.count == 1
+    else {
+        return runtimeNullSentinelInt
+    }
+    return list.elements[0]
 }
 
 // STDLIB-213: List.subList(fromIndex, toIndex)
@@ -774,6 +826,28 @@ public func kk_collection_toList(_ collRaw: Int) -> Int {
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
+@_cdecl("kk_collection_size")
+public func kk_collection_size(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.count
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.count
+    }
+    return 0
+}
+
+@_cdecl("kk_collection_isEmpty")
+public func kk_collection_isEmpty(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.isEmpty ? 1 : 0
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.isEmpty ? 1 : 0
+    }
+    return 1
 }
 
 // MARK: - Set Operations (STDLIB-266)
@@ -1202,6 +1276,9 @@ public func kk_pair_new(_ first: Int, _ second: Int) -> Int {
 
 @_cdecl("kk_pair_first")
 public func kk_pair_first(_ pairRaw: Int) -> Int {
+    if pairRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {
@@ -1217,6 +1294,9 @@ public func component1(_ pairRaw: Int) -> Int {
 
 @_cdecl("kk_pair_second")
 public func kk_pair_second(_ pairRaw: Int) -> Int {
+    if pairRaw == runtimeNullSentinelInt {
+        return runtimeNullSentinelInt
+    }
     guard let pointer = UnsafeMutableRawPointer(bitPattern: pairRaw),
           let pairBox = tryCast(pointer, to: RuntimePairBox.self)
     else {

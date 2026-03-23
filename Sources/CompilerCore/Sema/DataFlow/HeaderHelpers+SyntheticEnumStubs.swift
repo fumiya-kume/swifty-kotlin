@@ -51,7 +51,7 @@ extension DataFlowSemaPhase {
             kotlinCollectionsPkg: kotlinCollectionsPkg
         )
 
-        // enumValues<T>(): Array<T> — top-level inline reified (returns List<T> for minimal impl)
+        // enumValues<T>(): Array<T> — top-level inline reified
         registerEnumValuesFunction(
             symbols: symbols,
             types: types,
@@ -66,6 +66,15 @@ extension DataFlowSemaPhase {
             types: types,
             interner: interner,
             kotlinPkg: kotlinPkg
+        )
+
+        // enumEntries<T>(): EnumEntries<T> — top-level inline reified (Kotlin 1.9+)
+        registerEnumEntriesFunction(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            kotlinPkg: kotlinPkg,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
         )
     }
 
@@ -187,15 +196,15 @@ extension DataFlowSemaPhase {
         types: TypeSystem,
         interner: StringInterner,
         kotlinPkg: [InternedString],
-        kotlinCollectionsPkg: [InternedString]
+        kotlinCollectionsPkg _: [InternedString]
     ) {
         let enumValuesName = interner.intern("enumValues")
         let enumValuesFQName = kotlinPkg + [enumValuesName]
         guard symbols.lookupAll(fqName: enumValuesFQName).isEmpty else { return }
 
-        let listName = interner.intern("List")
-        let listFQName = kotlinCollectionsPkg + [listName]
-        guard let listSymbol = symbols.lookup(fqName: listFQName) else { return }
+        let arrayName = interner.intern("Array")
+        let arrayFQName = kotlinPkg + [arrayName]
+        guard let arraySymbol = symbols.lookup(fqName: arrayFQName) else { return }
 
         let tParamName = interner.intern("T")
         let tParamFQName = enumValuesFQName + [tParamName]
@@ -209,8 +218,8 @@ extension DataFlowSemaPhase {
         )
         let tParamType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
         let arrayType = types.make(.classType(ClassType(
-            classSymbol: listSymbol,
-            args: [.out(tParamType)],
+            classSymbol: arraySymbol,
+            args: [.invariant(tParamType)],
             nullability: .nonNull
         )))
 
@@ -295,6 +304,63 @@ extension DataFlowSemaPhase {
                 typeParameterSymbols: [tParamSymbol],
                 reifiedTypeParameterIndices: [0],
                 typeParameterUpperBoundsList: [[]]
+            ),
+            for: funcSymbol
+        )
+    }
+
+    private func registerEnumEntriesFunction(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinPkg: [InternedString],
+        kotlinCollectionsPkg: [InternedString]
+    ) {
+        let enumEntriesName = interner.intern("enumEntries")
+        let enumEntriesFQName = kotlinPkg + [enumEntriesName]
+        guard symbols.lookupAll(fqName: enumEntriesFQName).isEmpty else { return }
+
+        let enumEntriesInterfaceName = interner.intern("EnumEntries")
+        let enumEntriesInterfaceFQName = kotlinCollectionsPkg + [enumEntriesInterfaceName]
+        guard let enumEntriesInterfaceSymbol = symbols.lookup(fqName: enumEntriesInterfaceFQName) else { return }
+
+        let tParamName = interner.intern("T")
+        let tParamFQName = enumEntriesFQName + [tParamName]
+        let tParamSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tParamName,
+            fqName: tParamFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: [.reifiedTypeParameter]
+        )
+        let tParamType = types.make(.typeParam(TypeParamType(symbol: tParamSymbol, nullability: .nonNull)))
+        let enumEntriesType = types.make(.classType(ClassType(
+            classSymbol: enumEntriesInterfaceSymbol,
+            args: [.invariant(tParamType)],
+            nullability: .nonNull
+        )))
+
+        let funcSymbol = symbols.define(
+            kind: .function,
+            name: enumEntriesName,
+            fqName: enumEntriesFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .inlineFunction]
+        )
+        if let pkg = symbols.lookup(fqName: kotlinPkg), pkg != .invalid {
+            symbols.setParentSymbol(pkg, for: funcSymbol)
+        }
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                parameterTypes: [],
+                returnType: enumEntriesType,
+                isSuspend: false,
+                typeParameterSymbols: [tParamSymbol],
+                reifiedTypeParameterIndices: [0],
+                typeParameterUpperBoundsList: [[]],
+                classTypeParameterCount: 0
             ),
             for: funcSymbol
         )

@@ -6,11 +6,19 @@ extension ABILoweringPass {
         types: TypeSystem,
         symbols: SymbolTable?
     ) -> TypeKind {
-        // Value class unboxing at the ABI level is disabled because the KIR
-        // emission already uses kk_array_get_inbounds for property access,
-        // which requires the value to remain a heap object. Unboxing here
-        // without also rewriting all property accesses causes crashes.
-        return kind
+        guard let symbols else { return kind }
+        guard case let .classType(classType) = kind,
+              classType.nullability == .nonNull
+        else {
+            return kind
+        }
+        guard let sym = symbols.symbol(classType.classSymbol),
+              sym.flags.contains(.valueType),
+              let underlyingType = symbols.valueClassUnderlyingType(for: classType.classSymbol)
+        else {
+            return kind
+        }
+        return types.kind(of: underlyingType)
     }
 
     func boxingCallee(
@@ -164,12 +172,15 @@ extension ABILoweringPass {
     }
 
     func isNonValueClassReference(_ kind: TypeKind, symbols: SymbolTable?) -> Bool {
-        // All class types are treated as reference types at the ABI level,
-        // including value classes (see resolveValueClassKind comment).
-        if case .classType = kind {
-            return true
+        guard case let .classType(classType) = kind else { return false }
+        // Exclude value classes — they are unboxed to their underlying primitive.
+        if let symbols,
+           let sym = symbols.symbol(classType.classSymbol),
+           sym.flags.contains(.valueType)
+        {
+            return false
         }
-        return false
+        return true
     }
 
     func needsUnboxing(

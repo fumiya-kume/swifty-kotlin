@@ -46,7 +46,20 @@ public func kk_op_rangeTo(_ lhs: Int, _ rhs: Int) -> Int {
 
 @_cdecl("kk_op_rangeUntil")
 public func kk_op_rangeUntil(_ lhs: Int, _ rhs: Int) -> Int {
-    registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 1))
+    if rhs <= lhs {
+        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: lhs, step: 0))
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 1))
+}
+
+@_cdecl("kk_op_ulong_rangeUntil")
+public func kk_op_ulong_rangeUntil(_ lhs: Int, _ rhs: Int) -> Int {
+    let lhsUnsigned = UInt(bitPattern: lhs)
+    let rhsUnsigned = UInt(bitPattern: rhs)
+    if rhsUnsigned <= lhsUnsigned {
+        return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: lhs, step: 0))
+    }
+    return registerRuntimeObject(RuntimeRangeBox(first: lhs, last: rhs &- 1, step: 1))
 }
 
 @_cdecl("kk_op_downTo")
@@ -57,6 +70,9 @@ public func kk_op_downTo(_ lhs: Int, _ rhs: Int) -> Int {
 @_cdecl("kk_op_step")
 public func kk_op_step(_ rangeRaw: Int, _ stepValue: Int) -> Int {
     guard stepValue > 0, let range = runtimeRangeBox(from: rangeRaw) else {
+        return rangeRaw
+    }
+    if range.step == 0 {
         return rangeRaw
     }
     let nextStep = range.step < 0 ? (0 &- stepValue) : stepValue
@@ -151,6 +167,40 @@ public func kk_range_count(_ rangeRaw: Int) -> Int {
         return (range.first &- range.last) / (0 &- range.step) &+ 1
     }
     return 0
+}
+
+@_cdecl("kk_range_isEmpty")
+public func kk_range_isEmpty(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_isEmpty")
+    }
+    if range.step > 0 {
+        return range.first > range.last ? 1 : 0
+    } else if range.step < 0 {
+        return range.first < range.last ? 1 : 0
+    }
+    return 1
+}
+
+@_cdecl("kk_range_sum")
+public func kk_range_sum(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_range_sum")
+    }
+    var sum = 0
+    var current = range.first
+    if range.step > 0 {
+        while current <= range.last {
+            sum &+= current
+            current &+= range.step
+        }
+    } else if range.step < 0 {
+        while current >= range.last {
+            sum &+= current
+            current &+= range.step
+        }
+    }
+    return sum
 }
 
 // MARK: - IntRange HOFs (STDLIB-091)
@@ -286,6 +336,40 @@ public func kk_char_range_forEach(_ rangeRaw: Int, _ fnPtr: Int, _ closureRaw: I
         }
     }
     return 0
+}
+
+// MARK: - ULongRange toList (STDLIB-524)
+
+@_cdecl("kk_ulong_range_toList")
+public func kk_ulong_range_toList(_ rangeRaw: Int) -> Int {
+    guard let range = runtimeRangeBox(from: rangeRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: invalid range handle in kk_ulong_range_toList")
+    }
+    // Reinterpret signed Int fields as UInt for correct unsigned comparison
+    let first = UInt(bitPattern: range.first)
+    let last = UInt(bitPattern: range.last)
+    let step = range.step
+    var elements: [Int] = []
+    var current = first
+    if step > 0 {
+        let uStep = UInt(bitPattern: step)
+        while current <= last {
+            elements.append(Int(bitPattern: current))
+            let (next, overflow) = current.addingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    } else if step < 0 {
+        // Use magnitude to avoid trapping on Int.min negation
+        let uStep = UInt(step.magnitude)
+        while current >= last {
+            elements.append(Int(bitPattern: current))
+            let (next, overflow) = current.subtractingReportingOverflow(uStep)
+            if overflow { break }
+            current = next
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
 // MARK: - IntRange reversed (STDLIB-093)

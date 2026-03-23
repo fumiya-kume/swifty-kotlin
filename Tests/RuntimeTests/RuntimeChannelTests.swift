@@ -340,4 +340,141 @@ final class RuntimeChannelTests: IsolatedRuntimeXCTestCase {
 
         _ = kk_channel_close(channelHandle)
     }
+
+    // MARK: - close() Returns Boolean (Kotlin Semantics)
+
+    func testCloseReturnsTrueOnFirstCloseFalseOnSubsequent() {
+        let ch = kk_channel_create(1)
+
+        // First close should return 1 (true).
+        let firstClose = kk_channel_close(ch)
+        XCTAssertEqual(firstClose, 1, "First close() should return 1 (true)")
+
+        // Second close should return 0 (false) -- already closed.
+        let secondClose = kk_channel_close(ch)
+        XCTAssertEqual(secondClose, 0, "Second close() should return 0 (false)")
+
+        // Third close should also return 0 (false).
+        let thirdClose = kk_channel_close(ch)
+        XCTAssertEqual(thirdClose, 0, "Subsequent close() should return 0 (false)")
+    }
+
+    // MARK: - Cancellation-Aware Send/Receive
+
+    func testSendWithCancelledContinuationReturnsSentinel() {
+        let ch = kk_channel_create(0) // rendezvous -- send would block
+
+        // Create a job handle and cancel it, then create a continuation linked to it.
+        let job = RuntimeJobHandle()
+        let contState = RuntimeContinuationState(functionID: 999)
+        contState.jobHandle = job
+        job.continuationState = contState
+
+        // Cancel the job.
+        job.cancel()
+
+        // Get the continuation as an opaque Int.
+        let contPtr = Unmanaged.passRetained(contState).toOpaque()
+        let contInt = Int(bitPattern: contPtr)
+
+        // Send with the cancelled continuation should return the sentinel immediately
+        // without blocking (even though no receiver is waiting).
+        let result = kk_channel_send(ch, 42, contInt)
+        XCTAssertEqual(kk_channel_is_closed_token(result), 1,
+                       "send() with cancelled continuation should return the closed sentinel")
+
+        // Clean up.
+        Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()
+        _ = kk_channel_close(ch)
+    }
+
+    func testReceiveWithCancelledContinuationReturnsSentinel() {
+        let ch = kk_channel_create(0) // rendezvous -- receive would block
+
+        // Create a job handle and cancel it, then create a continuation linked to it.
+        let job = RuntimeJobHandle()
+        let contState = RuntimeContinuationState(functionID: 999)
+        contState.jobHandle = job
+        job.continuationState = contState
+
+        // Cancel the job.
+        job.cancel()
+
+        // Get the continuation as an opaque Int.
+        let contPtr = Unmanaged.passRetained(contState).toOpaque()
+        let contInt = Int(bitPattern: contPtr)
+
+        // Receive with the cancelled continuation should return the sentinel immediately
+        // without blocking (even though no sender is waiting).
+        let result = kk_channel_receive(ch, contInt)
+        XCTAssertEqual(kk_channel_is_closed_token(result), 1,
+                       "receive() with cancelled continuation should return the closed sentinel")
+
+        // Clean up.
+        Unmanaged<RuntimeContinuationState>.fromOpaque(contPtr).release()
+        _ = kk_channel_close(ch)
+    }
+
+    func testSendWithZeroContinuationStillWorks() {
+        // Verify backward compatibility: continuation == 0 means no cancellation check.
+        let ch = kk_channel_create(1) // buffered -- send won't block
+
+        let result = kk_channel_send(ch, 42, 0)
+        XCTAssertEqual(result, 42, "send() with zero continuation should succeed normally")
+
+        let received = kk_channel_receive(ch, 0)
+        XCTAssertEqual(received, 42)
+
+        _ = kk_channel_close(ch)
+    }
+
+    // MARK: - cancelAllWaiters
+
+    func testCancelAllWaitersWakesSuspendedSenders() {
+        let ch = RuntimeChannelHandle(capacity: 0) // rendezvous
+
+        let sendDone = XCTestExpectation(description: "send wakes on cancel")
+        nonisolated(unsafe) var sendResult = 0
+
+        DispatchQueue.global().async {
+            sendResult = ch.send(42)
+            sendDone.fulfill()
+        }
+
+        // Give the sender time to suspend.
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Cancel all waiters.
+        ch.cancelAllWaiters()
+
+        wait(for: [sendDone], timeout: 2.0)
+        XCTAssertEqual(
+            kk_channel_is_closed_token(sendResult), 1,
+            "Cancelled sender should get the closed sentinel"
+        )
+    }
+
+    func testCancelAllWaitersWakesSuspendedReceivers() {
+        let ch = RuntimeChannelHandle(capacity: 0) // rendezvous
+
+        let recvDone = XCTestExpectation(description: "receive wakes on cancel")
+        nonisolated(unsafe) var recvResult = 0
+
+        DispatchQueue.global().async {
+            recvResult = ch.receive()
+            recvDone.fulfill()
+        }
+
+        // Give the receiver time to suspend.
+        Thread.sleep(forTimeInterval: 0.05)
+
+        // Cancel all waiters.
+        ch.cancelAllWaiters()
+
+        wait(for: [recvDone], timeout: 2.0)
+        XCTAssertEqual(
+            kk_channel_is_closed_token(recvResult), 1,
+            "Cancelled receiver should get the closed sentinel"
+        )
+    }
 }

@@ -98,6 +98,48 @@ extension DataFlowSemaPhase {
             symbols.setTypeAliasUnderlyingType(closeableType, for: aliasSymbol)
         }
 
+        // --- java.io.Closeable interface (mirrors kotlin.io.Closeable) ---
+        // On Kotlin/JVM java.io.Closeable is the canonical type; kswiftc maps it
+        // to the synthetic kotlin.io.Closeable so that `import java.io.Closeable`
+        // works in user code.
+        let javaPkg: [InternedString] = [interner.intern("java")]
+        if symbols.lookup(fqName: javaPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("java"),
+                fqName: javaPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaIOPkg: [InternedString] = javaPkg + [interner.intern("io")]
+        if symbols.lookup(fqName: javaIOPkg) == nil {
+            _ = symbols.define(
+                kind: .package,
+                name: interner.intern("io"),
+                fqName: javaIOPkg,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+        }
+        let javaCloseableFQName = javaIOPkg + [closeableName]
+        if symbols.lookup(fqName: javaCloseableFQName) == nil {
+            let javaCloseableSymbol = symbols.define(
+                kind: .interface,
+                name: closeableName,
+                fqName: javaCloseableFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            // Register java.io.Closeable → kotlin.io.Closeable supertype chain
+            // so that isNominalSubtypeSymbol traversal finds kotlin.io.Closeable.
+            symbols.setDirectSupertypes([closeableSymbol], for: javaCloseableSymbol)
+            types.setNominalDirectSupertypes([closeableSymbol], for: javaCloseableSymbol)
+        }
+
         // --- T.use(block: (T) -> R): R  where T : Closeable ---
         // Registered as a top-level extension function in kotlin.io.
         let useName = interner.intern("use")

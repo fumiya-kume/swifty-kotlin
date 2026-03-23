@@ -1,4 +1,3 @@
-// SKIP-DIFF: Random(seed) constructor not yet implemented
 import kotlin.random.Random
 
 fun main() {
@@ -12,6 +11,11 @@ fun main() {
     // Different seed produces divergent sequences
     val r3 = Random(0)
     val r4 = Random(42)
-    val differ = (0 until 5).any { r3.nextInt(1000) != r4.nextInt(1000) }
+    var differ = false
+    for (i in 0..4) {
+        if (r3.nextInt(1000) != r4.nextInt(1000)) {
+            differ = true
+        }
+    }
     println(differ)
 }

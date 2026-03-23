@@ -1095,6 +1095,13 @@ extension DataFlowSemaPhase {
             listTypeParamSymbol: listTypeParamSymbol,
             listTypeParamType: listTypeParamType
         )
+        registerListContentEqualsMember(
+            symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
         registerListTransformMembers(
             symbols: symbols, types: types, interner: interner,
             listFQName: listFQName,
@@ -1104,6 +1111,14 @@ extension DataFlowSemaPhase {
         )
         registerListAggregateMembers(
             symbols: symbols, types: types, interner: interner,
+            listFQName: listFQName,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType
+        )
+        registerListIteratorMember(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg,
             listFQName: listFQName,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
@@ -1149,6 +1164,218 @@ extension DataFlowSemaPhase {
                 classTypeParameterCount: 1
             ),
             for: listGetSymbol
+        )
+    }
+
+    /// STDLIB-538: Register `ListIterator<T>` interface extending `Iterator<T>`,
+    /// with `hasPrevious(): Boolean` and `previous(): T` members.
+    private func ensureSyntheticListIteratorStub(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString]
+    ) -> SymbolID {
+        let listIteratorName = interner.intern("ListIterator")
+        let listIteratorFQName = kotlinCollectionsPkg + [listIteratorName]
+        if let existing = symbols.lookup(fqName: listIteratorFQName) {
+            return existing
+        }
+
+        // Look up the parent Iterator<T> symbol.
+        let iteratorName = interner.intern("Iterator")
+        let iteratorFQName = kotlinCollectionsPkg + [iteratorName]
+        let iteratorSymbol = symbols.lookup(fqName: iteratorFQName)
+
+        let listIteratorSymbol = symbols.define(
+            kind: .interface,
+            name: listIteratorName,
+            fqName: listIteratorFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+
+        // Type parameter T
+        let tpName = interner.intern("T")
+        let tpFQName = listIteratorFQName + [tpName]
+        let tpSymbol = symbols.define(
+            kind: .typeParameter,
+            name: tpName,
+            fqName: tpFQName,
+            declSite: nil,
+            visibility: .private,
+            flags: []
+        )
+        let tpType = types.make(.typeParam(TypeParamType(symbol: tpSymbol, nullability: .nonNull)))
+        types.setNominalTypeParameterSymbols([tpSymbol], for: listIteratorSymbol)
+        types.setNominalTypeParameterVariances([.out], for: listIteratorSymbol)
+
+        // Supertype: Iterator<T>
+        if let iteratorSymbol {
+            symbols.setDirectSupertypes([iteratorSymbol], for: listIteratorSymbol)
+            types.setNominalDirectSupertypes([iteratorSymbol], for: listIteratorSymbol)
+            symbols.setSupertypeTypeArgs([.out(tpType)], for: listIteratorSymbol, supertype: iteratorSymbol)
+            types.setNominalSupertypeTypeArgs([.out(tpType)], for: listIteratorSymbol, supertype: iteratorSymbol)
+        }
+
+        let listIteratorReceiverType = types.make(.classType(ClassType(
+            classSymbol: listIteratorSymbol,
+            args: [.out(tpType)],
+            nullability: .nonNull
+        )))
+
+        // hasNext(): Boolean (inherited from Iterator, registered for member resolution)
+        let hasNextName = interner.intern("hasNext")
+        let hasNextFQName = listIteratorFQName + [hasNextName]
+        if symbols.lookup(fqName: hasNextFQName) == nil {
+            let hasNextSym = symbols.define(
+                kind: .function, name: hasNextName, fqName: hasNextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listIteratorSymbol, for: hasNextSym)
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
+            ))), for: hasNextSym)
+            symbols.setExternalLinkName("kk_list_iterator_hasNext", for: hasNextSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: types.booleanType,
+                    typeParameterSymbols: [tpSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: hasNextSym
+            )
+        }
+
+        // next(): T (inherited from Iterator, registered for member resolution)
+        let nextName = interner.intern("next")
+        let nextFQName = listIteratorFQName + [nextName]
+        if symbols.lookup(fqName: nextFQName) == nil {
+            let nextSym = symbols.define(
+                kind: .function, name: nextName, fqName: nextFQName,
+                declSite: nil, visibility: .public, flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listIteratorSymbol, for: nextSym)
+            symbols.setPropertyType(types.make(.functionType(FunctionType(
+                params: [], returnType: tpType, isSuspend: false, nullability: .nonNull
+            ))), for: nextSym)
+            symbols.setExternalLinkName("kk_list_iterator_next", for: nextSym)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: listIteratorReceiverType,
+                    parameterTypes: [],
+                    returnType: tpType,
+                    typeParameterSymbols: [tpSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: nextSym
+            )
+        }
+
+        // hasPrevious(): Boolean
+        let hasPreviousName = interner.intern("hasPrevious")
+        let hasPreviousFQName = listIteratorFQName + [hasPreviousName]
+        let hasPreviousSym = symbols.define(
+            kind: .function, name: hasPreviousName, fqName: hasPreviousFQName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listIteratorSymbol, for: hasPreviousSym)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: types.booleanType, isSuspend: false, nullability: .nonNull
+        ))), for: hasPreviousSym)
+        symbols.setExternalLinkName("kk_list_iterator_hasPrevious", for: hasPreviousSym)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listIteratorReceiverType,
+                parameterTypes: [],
+                returnType: types.booleanType,
+                typeParameterSymbols: [tpSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: hasPreviousSym
+        )
+
+        // previous(): T
+        let previousName = interner.intern("previous")
+        let previousFQName = listIteratorFQName + [previousName]
+        let previousSym = symbols.define(
+            kind: .function, name: previousName, fqName: previousFQName,
+            declSite: nil, visibility: .public, flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listIteratorSymbol, for: previousSym)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: tpType, isSuspend: false, nullability: .nonNull
+        ))), for: previousSym)
+        symbols.setExternalLinkName("kk_list_iterator_previous", for: previousSym)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listIteratorReceiverType,
+                parameterTypes: [],
+                returnType: tpType,
+                typeParameterSymbols: [tpSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: previousSym
+        )
+
+        return listIteratorSymbol
+    }
+
+    /// STDLIB-538: Register `List<E>.listIterator(): ListIterator<E>`.
+    private func registerListIteratorMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        kotlinCollectionsPkg: [InternedString],
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let listIteratorInterfaceSymbol = ensureSyntheticListIteratorStub(
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        let memberName = interner.intern("listIterator")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let listReceiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: listIteratorInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_iterator", for: memberSymbol)
+        symbols.setPropertyType(types.make(.functionType(FunctionType(
+            params: [], returnType: returnType, isSuspend: false, nullability: .nonNull
+        ))), for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: listReceiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
         )
     }
 
@@ -1413,6 +1640,46 @@ extension DataFlowSemaPhase {
         )
     }
 
+    private func registerListContentEqualsMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listFQName: [InternedString],
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID
+    ) {
+        let memberName = interner.intern("contentEquals")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_structural_eq", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [types.anyType],
+                returnType: types.booleanType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
     private func registerListToSetMember(
         symbols: SymbolTable,
         types: TypeSystem,
@@ -1452,6 +1719,143 @@ extension DataFlowSemaPhase {
                 parameterTypes: [],
                 returnType: setType,
                 typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// STDLIB-651: Register `List<T>.toMutableSet()` returning `MutableSet<T>`.
+    private func registerListToMutableSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        listInterfaceSymbol: SymbolID,
+        listTypeParamSymbol: SymbolID,
+        listTypeParamType: TypeID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) {
+        guard let listFQName = symbols.symbol(listInterfaceSymbol)?.fqName else { return }
+        let memberName = interner.intern("toMutableSet")
+        let memberFQName = listFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: listInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let mutableSetType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.out(listTypeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_list_to_mutable_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mutableSetType,
+                typeParameterSymbols: [listTypeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// STDLIB-651: Register `Set<E>.toSet()` returning `Set<E>`.
+    private func registerSetToSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID
+    ) {
+        let memberName = interner.intern("toSet")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let returnType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_to_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: returnType,
+                typeParameterSymbols: [typeParamSymbol],
+                classTypeParameterCount: 1
+            ),
+            for: memberSymbol
+        )
+    }
+
+    /// STDLIB-651: Register `Set<E>.toMutableSet()` returning `MutableSet<E>`.
+    private func registerSetToMutableSetMember(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner,
+        setFQName: [InternedString],
+        setInterfaceSymbol: SymbolID,
+        typeParamSymbol: SymbolID,
+        typeParamType: TypeID,
+        mutableSetInterfaceSymbol: SymbolID
+    ) {
+        let memberName = interner.intern("toMutableSet")
+        let memberFQName = setFQName + [memberName]
+        guard symbols.lookup(fqName: memberFQName) == nil else { return }
+        let receiverType = types.make(.classType(ClassType(
+            classSymbol: setInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let mutableSetType = types.make(.classType(ClassType(
+            classSymbol: mutableSetInterfaceSymbol,
+            args: [.out(typeParamType)],
+            nullability: .nonNull
+        )))
+        let memberSymbol = symbols.define(
+            kind: .function,
+            name: memberName,
+            fqName: memberFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic, .operatorFunction]
+        )
+        symbols.setParentSymbol(setInterfaceSymbol, for: memberSymbol)
+        symbols.setExternalLinkName("kk_set_to_mutable_set", for: memberSymbol)
+        symbols.setFunctionSignature(
+            FunctionSignature(
+                receiverType: receiverType,
+                parameterTypes: [],
+                returnType: mutableSetType,
+                typeParameterSymbols: [typeParamSymbol],
                 classTypeParameterCount: 1
             ),
             for: memberSymbol
@@ -1865,6 +2269,13 @@ extension DataFlowSemaPhase {
         registerMemberOverload(
             memberName: interner.intern("windowed"),
             memberFQName: listFQName + [interner.intern("windowed")],
+            parameterTypes: [types.intType],
+            externalLinkName: "kk_list_windowed_default",
+            returnTypeOverride: listOfListReturnType
+        )
+        registerMemberOverload(
+            memberName: interner.intern("windowed"),
+            memberFQName: listFQName + [interner.intern("windowed")],
             parameterTypes: [types.intType, types.intType],
             externalLinkName: "kk_list_windowed",
             returnTypeOverride: listOfListReturnType
@@ -1895,8 +2306,15 @@ extension DataFlowSemaPhase {
             return sig.parameterTypes.count == 2
         }
         if !hasTwoParamChunked {
+            // Use invariant List<T> (not List<out T>) for the transform parameter
+            // to avoid variance violations when the lambda is in contravariant position.
+            let invariantListType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.invariant(listTypeParamType)],
+                nullability: .nonNull
+            )))
             let transformType = types.make(.functionType(FunctionType(
-                params: [listReturnType],
+                params: [invariantListType],
                 returnType: types.anyType,
                 isSuspend: false,
                 nullability: .nonNull
@@ -2144,6 +2562,144 @@ extension DataFlowSemaPhase {
                 externalLinkName: "kk_list_minOfOrNull",
                 returnTypeBuilder: { selectorResultType in types.makeNullable(selectorResultType) }
             )
+
+            // maxOf / minOf (non-OrNull, throws on empty) (STDLIB-301b)
+            registerByOrNull(
+                name: "maxOf",
+                externalLinkName: "kk_list_maxOf",
+                returnTypeBuilder: { selectorResultType in selectorResultType }
+            )
+            registerByOrNull(
+                name: "minOf",
+                externalLinkName: "kk_list_minOf",
+                returnTypeBuilder: { selectorResultType in selectorResultType }
+            )
+        }
+
+        // maxWith / maxWithOrNull / minWith / minWithOrNull (comparator-based) (STDLIB-301c)
+        do {
+            let comparatorType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType, listTypeParamType],
+                returnType: types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+
+            func registerWithComparator(
+                name: String,
+                externalLinkName: String,
+                returnType: TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [comparatorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerWithComparator(name: "maxWith", externalLinkName: "kk_list_maxWith", returnType: listTypeParamType)
+            registerWithComparator(name: "maxWithOrNull", externalLinkName: "kk_list_maxWithOrNull", returnType: nullableElementType)
+            registerWithComparator(name: "minWith", externalLinkName: "kk_list_minWith", returnType: listTypeParamType)
+            registerWithComparator(name: "minWithOrNull", externalLinkName: "kk_list_minWithOrNull", returnType: nullableElementType)
+        }
+
+        // maxOfWith / maxOfWithOrNull / minOfWith / minOfWithOrNull (comparator + selector) (STDLIB-301d)
+        do {
+            func registerOfWithComparator(
+                name: String,
+                externalLinkName: String,
+                returnTypeBuilder: (TypeID) -> TypeID
+            ) {
+                let memberName = interner.intern(name)
+                let memberFQName = listFQName + [memberName]
+                guard symbols.lookup(fqName: memberFQName) == nil else { return }
+
+                // Introduce a type parameter R (no Comparable bound needed – the comparator handles ordering)
+                let rName = interner.intern("R")
+                let rSymbol = symbols.define(
+                    kind: .typeParameter,
+                    name: rName,
+                    fqName: memberFQName + [rName],
+                    declSite: nil,
+                    visibility: .private,
+                    flags: []
+                )
+                let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+
+                let comparatorType = types.make(.functionType(FunctionType(
+                    params: [rType, rType],
+                    returnType: types.intType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let selectorType = types.make(.functionType(FunctionType(
+                    params: [listTypeParamType],
+                    returnType: rType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                let returnType = returnTypeBuilder(rType)
+                let memberSymbol = symbols.define(
+                    kind: .function,
+                    name: memberName,
+                    fqName: memberFQName,
+                    declSite: nil,
+                    visibility: .public,
+                    flags: [.synthetic, .inlineFunction]
+                )
+                symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+                symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
+                symbols.setFunctionSignature(
+                    FunctionSignature(
+                        receiverType: receiverType,
+                        parameterTypes: [comparatorType, selectorType],
+                        returnType: returnType,
+                        typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                        typeParameterUpperBoundsList: [[], []],
+                        classTypeParameterCount: 1
+                    ),
+                    for: memberSymbol
+                )
+            }
+
+            registerOfWithComparator(
+                name: "maxOfWith",
+                externalLinkName: "kk_list_maxOfWith",
+                returnTypeBuilder: { rType in rType }
+            )
+            registerOfWithComparator(
+                name: "maxOfWithOrNull",
+                externalLinkName: "kk_list_maxOfWithOrNull",
+                returnTypeBuilder: { rType in types.makeNullable(rType) }
+            )
+            registerOfWithComparator(
+                name: "minOfWith",
+                externalLinkName: "kk_list_minOfWith",
+                returnTypeBuilder: { rType in rType }
+            )
+            registerOfWithComparator(
+                name: "minOfWithOrNull",
+                externalLinkName: "kk_list_minOfWithOrNull",
+                returnTypeBuilder: { rType in types.makeNullable(rType) }
+            )
         }
 
         // random / randomOrNull (STDLIB-166)
@@ -2236,6 +2792,8 @@ extension DataFlowSemaPhase {
         // firstOrNull / lastOrNull no-predicate (STDLIB-210)
         registerSimpleMember(name: "firstOrNull", returnType: nullableElementType, externalLinkName: "kk_list_firstOrNull")
         registerSimpleMember(name: "lastOrNull", returnType: nullableElementType, externalLinkName: "kk_list_lastOrNull")
+        // singleOrNull no-predicate (STDLIB-211)
+        registerSimpleMember(name: "singleOrNull", returnType: nullableElementType, externalLinkName: "kk_list_singleOrNull")
 
         // indexOf / lastIndexOf (non-HOF, element argument)
         let indexOfName = interner.intern("indexOf")
@@ -2735,6 +3293,94 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        // zipWithNext(): List<Pair<T, T>>
+        let zipWithNextName = interner.intern("zipWithNext")
+        let zipWithNextFQName = listFQName + [zipWithNextName]
+        if symbols.lookup(fqName: zipWithNextFQName) == nil {
+            let pairType: TypeID
+            if let pairSymbol = symbols.lookup(fqName: [interner.intern("kotlin"), interner.intern("Pair")])
+                ?? symbols.lookupByShortName(interner.intern("Pair")).first
+            {
+                pairType = types.make(.classType(ClassType(
+                    classSymbol: pairSymbol,
+                    args: [.out(listTypeParamType), .out(listTypeParamType)],
+                    nullability: .nonNull
+                )))
+            } else {
+                pairType = types.anyType
+            }
+            let zipWithNextResultType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(pairType)],
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: zipWithNextName,
+                fqName: zipWithNextFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_zipWithNext", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [],
+                    returnType: zipWithNextResultType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        let zipWithNextTransformFQName = zipWithNextFQName + [interner.intern("transform")]
+        if symbols.lookup(fqName: zipWithNextTransformFQName) == nil {
+            let rName = interner.intern("R")
+            let rSymbol = symbols.define(
+                kind: .typeParameter,
+                name: rName,
+                fqName: zipWithNextTransformFQName + [rName],
+                declSite: nil,
+                visibility: .private,
+                flags: []
+            )
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let transformFnType = types.make(.functionType(FunctionType(
+                params: [listTypeParamType, listTypeParamType],
+                returnType: rType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let transformResultType = types.make(.classType(ClassType(
+                classSymbol: listInterfaceSymbol,
+                args: [.out(rType)],
+                nullability: .nonNull
+            )))
+            let transformMemberSymbol = symbols.define(
+                kind: .function,
+                name: zipWithNextName,
+                fqName: zipWithNextTransformFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: transformMemberSymbol)
+            symbols.setExternalLinkName("kk_list_zipWithNextTransform", for: transformMemberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [transformFnType],
+                    returnType: transformResultType,
+                    typeParameterSymbols: [listTypeParamSymbol, rSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: transformMemberSymbol
+            )
+        }
     }
 
     private func registerListConversionMembers(
@@ -2795,6 +3441,14 @@ extension DataFlowSemaPhase {
             iterableInterfaceSymbol: iterableSymbolForOps
         )
         registerListToHashSetMember(
+            symbols: symbols, types: types, interner: interner,
+            listInterfaceSymbol: listInterfaceSymbol,
+            listTypeParamSymbol: listTypeParamSymbol,
+            listTypeParamType: listTypeParamType,
+            mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
+        )
+        // STDLIB-651: List.toMutableSet() → kk_list_to_mutable_set
+        registerListToMutableSetMember(
             symbols: symbols, types: types, interner: interner,
             listInterfaceSymbol: listInterfaceSymbol,
             listTypeParamSymbol: listTypeParamSymbol,
@@ -3612,6 +4266,15 @@ extension DataFlowSemaPhase {
             )
         }
 
+        // STDLIB-651: Set.toSet() → kk_set_to_set
+        registerSetToSetMember(
+            symbols: symbols, types: types, interner: interner,
+            setFQName: setFQName,
+            setInterfaceSymbol: setInterfaceSymbol,
+            typeParamSymbol: typeParamSymbol,
+            typeParamType: typeParamType
+        )
+
         return setInterfaceSymbol
     }
 
@@ -3855,6 +4518,26 @@ extension DataFlowSemaPhase {
             typeParamSymbol: typeParamSymbol,
             typeParamType: typeParamType
         )
+
+        // STDLIB-651: Set.toMutableSet() → kk_set_to_mutable_set
+        // Register on Set (not MutableSet) since Set.toMutableSet() returns MutableSet
+        if let setFQName = symbols.symbol(setInterfaceSymbol)?.fqName {
+            let setTypeParamName = interner.intern("E")
+            let setTypeParamFQName = setFQName + [setTypeParamName]
+            if let setTypeParamSymbol = symbols.lookup(fqName: setTypeParamFQName) {
+                let setTypeParamType = types.make(.typeParam(TypeParamType(
+                    symbol: setTypeParamSymbol, nullability: .nonNull
+                )))
+                registerSetToMutableSetMember(
+                    symbols: symbols, types: types, interner: interner,
+                    setFQName: setFQName,
+                    setInterfaceSymbol: setInterfaceSymbol,
+                    typeParamSymbol: setTypeParamSymbol,
+                    typeParamType: setTypeParamType,
+                    mutableSetInterfaceSymbol: mutableSetInterfaceSymbol
+                )
+            }
+        }
     }
 
     private func registerMutableSetAddMember(
@@ -4063,8 +4746,6 @@ extension DataFlowSemaPhase {
 
         let keyType = types.make(.typeParam(TypeParamType(symbol: keyParamSymbol, nullability: .nonNull)))
         let valueType = types.make(.typeParam(TypeParamType(symbol: valueParamSymbol, nullability: .nonNull)))
-        types.setNominalTypeParameterSymbols([keyParamSymbol, valueParamSymbol], for: mapSymbol)
-        types.setNominalTypeParameterVariances([.out, .out], for: mapSymbol)
         let receiverType = types.make(.classType(ClassType(
             classSymbol: mapSymbol,
             args: [.invariant(keyType), .out(valueType)],
@@ -4960,6 +5641,132 @@ extension DataFlowSemaPhase {
                 for: memberSymbol
             )
         }
+
+        // filterIndexed(predicate: (Int, T) -> Boolean): List<T>
+        let filterIndexedName = interner.intern("filterIndexed")
+        let filterIndexedFQName = listFQName + [filterIndexedName]
+        if symbols.lookup(fqName: filterIndexedFQName) == nil {
+            let predicateType = types.make(.functionType(FunctionType(
+                params: [types.intType, listTypeParamType],
+                returnType: types.booleanType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            let memberSymbol = symbols.define(
+                kind: .function,
+                name: filterIndexedName,
+                fqName: filterIndexedFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic, .inlineFunction]
+            )
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_filterIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: receiverType,
+                    parameterTypes: [predicateType],
+                    returnType: receiverType,
+                    typeParameterSymbols: [listTypeParamSymbol],
+                    classTypeParameterCount: 1
+                ),
+                for: memberSymbol
+            )
+        }
+
+        // foldIndexed(initial: R, operation: (Int, R, T) -> R): R
+        let foldIndexedName = interner.intern("foldIndexed")
+        let foldIndexedFQName = listFQName + [foldIndexedName]
+        if symbols.lookup(fqName: foldIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = foldIndexedFQName + [rName]
+            let rSymbol = symbols.define(kind: .typeParameter, name: rName, fqName: rFQName, declSite: nil, visibility: .private, flags: [])
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, rType, listTypeParamType], returnType: rType, isSuspend: false, nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: foldIndexedName, fqName: foldIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_foldIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [rType, operationType], returnType: rType, typeParameterSymbols: [listTypeParamSymbol, rSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
+
+        // reduceIndexed(operation: (Int, S, T) -> S): S
+        let reduceIndexedName = interner.intern("reduceIndexed")
+        let reduceIndexedFQName = listFQName + [reduceIndexedName]
+        if symbols.lookup(fqName: reduceIndexedFQName) == nil {
+            let sName = interner.intern("S")
+            let sFQName = reduceIndexedFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: reduceIndexedName, fqName: reduceIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_reduceIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: sType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
+
+        // reduceIndexedOrNull(operation: (Int, S, T) -> S): S?
+        let reduceIndexedOrNullName = interner.intern("reduceIndexedOrNull")
+        let reduceIndexedOrNullFQName = listFQName + [reduceIndexedOrNullName]
+        if symbols.lookup(fqName: reduceIndexedOrNullFQName) == nil {
+            let sName = interner.intern("S")
+            let sFQName = reduceIndexedOrNullFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
+            let nullableAccumulatorType = types.makeNullable(sType)
+            let memberSymbol = symbols.define(kind: .function, name: reduceIndexedOrNullName, fqName: reduceIndexedOrNullFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_reduceIndexedOrNull", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: nullableAccumulatorType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
+
+        // runningFoldIndexed(initial: R, operation: (Int, R, T) -> R): List<R>
+        let runningFoldIndexedName = interner.intern("runningFoldIndexed")
+        let runningFoldIndexedFQName = listFQName + [runningFoldIndexedName]
+        if symbols.lookup(fqName: runningFoldIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = runningFoldIndexedFQName + [rName]
+            let rSymbol = symbols.define(kind: .typeParameter, name: rName, fqName: rFQName, declSite: nil, visibility: .private, flags: [])
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, rType, listTypeParamType], returnType: rType, isSuspend: false, nullability: .nonNull)))
+            let listRType = types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(rType)], nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: runningFoldIndexedName, fqName: runningFoldIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_runningFoldIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [rType, operationType], returnType: listRType, typeParameterSymbols: [listTypeParamSymbol, rSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
+
+        // runningReduceIndexed(operation: (Int, S, T) -> S): List<S>
+        let runningReduceIndexedName = interner.intern("runningReduceIndexed")
+        let runningReduceIndexedFQName = listFQName + [runningReduceIndexedName]
+        if symbols.lookup(fqName: runningReduceIndexedFQName) == nil {
+            let sName = interner.intern("S")
+            let sFQName = runningReduceIndexedFQName + [sName]
+            let sSymbol = symbols.define(kind: .typeParameter, name: sName, fqName: sFQName, declSite: nil, visibility: .private, flags: [])
+            let sType = types.make(.typeParam(TypeParamType(symbol: sSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, sType, listTypeParamType], returnType: sType, isSuspend: false, nullability: .nonNull)))
+            let listSType = types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(sType)], nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: runningReduceIndexedName, fqName: runningReduceIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_runningReduceIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [operationType], returnType: listSType, typeParameterSymbols: [listTypeParamSymbol, sSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
+
+        // scanIndexed(initial: R, operation: (Int, R, T) -> R): List<R>
+        let scanIndexedName = interner.intern("scanIndexed")
+        let scanIndexedFQName = listFQName + [scanIndexedName]
+        if symbols.lookup(fqName: scanIndexedFQName) == nil {
+            let rName = interner.intern("R")
+            let rFQName = scanIndexedFQName + [rName]
+            let rSymbol = symbols.define(kind: .typeParameter, name: rName, fqName: rFQName, declSite: nil, visibility: .private, flags: [])
+            let rType = types.make(.typeParam(TypeParamType(symbol: rSymbol, nullability: .nonNull)))
+            let operationType = types.make(.functionType(FunctionType(params: [types.intType, rType, listTypeParamType], returnType: rType, isSuspend: false, nullability: .nonNull)))
+            let listRType = types.make(.classType(ClassType(classSymbol: listSymbol, args: [.out(rType)], nullability: .nonNull)))
+            let memberSymbol = symbols.define(kind: .function, name: scanIndexedName, fqName: scanIndexedFQName, declSite: nil, visibility: .public, flags: [.synthetic, .inlineFunction])
+            symbols.setParentSymbol(listInterfaceSymbol, for: memberSymbol)
+            symbols.setExternalLinkName("kk_list_scanIndexed", for: memberSymbol)
+            symbols.setFunctionSignature(FunctionSignature(receiverType: receiverType, parameterTypes: [rType, operationType], returnType: listRType, typeParameterSymbols: [listTypeParamSymbol, rSymbol], classTypeParameterCount: 1), for: memberSymbol)
+        }
     }
 
     private func registerSyntheticIndexedValueStub(
@@ -5280,7 +6087,7 @@ extension DataFlowSemaPhase {
 
     // MARK: - Collection Type Aliases (STDLIB-560)
 
-    /// Register `ArrayList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
+    /// Register `ArrayList<E>`, `LinkedList<E>`, `HashMap<K,V>`, `HashSet<E>`, `LinkedHashMap<K,V>`, `LinkedHashSet<E>`
     /// as type aliases pointing to their corresponding mutable collection types.
     private func registerSyntheticCollectionTypeAliases(
         symbols: SymbolTable,
@@ -5291,6 +6098,14 @@ extension DataFlowSemaPhase {
         // ArrayList<E> → MutableList<E>
         registerSingleTypeParamCollectionAlias(
             aliasName: "ArrayList",
+            targetName: "MutableList",
+            symbols: symbols, types: types, interner: interner,
+            kotlinCollectionsPkg: kotlinCollectionsPkg
+        )
+
+        // LinkedList<E> → MutableList<E>
+        registerSingleTypeParamCollectionAlias(
+            aliasName: "LinkedList",
             targetName: "MutableList",
             symbols: symbols, types: types, interner: interner,
             kotlinCollectionsPkg: kotlinCollectionsPkg

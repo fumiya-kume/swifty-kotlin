@@ -74,10 +74,12 @@ struct TypeCheckHelpers {
         if isRangeExpr, iterableType == sema.types.longType {
             return sema.types.longType
         }
-        // STDLIB-523: UIntRange / ULongRange support
+        // STDLIB-523: UIntRange support
         if isRangeExpr, iterableType == sema.types.uintType {
             return sema.types.uintType
         }
+        // Range expressions with element type ULong (i.e. ULong + range marker)
+        // are iterable, yielding ULong elements (STDLIB-524).
         if isRangeExpr, iterableType == sema.types.ulongType {
             return sema.types.ulongType
         }
@@ -368,5 +370,18 @@ struct TypeCheckHelpers {
         scope.lookup(name).first { symbolID in
             sema.symbols.symbol(symbolID)?.kind == .typeParameter
         }
+    }
+
+    /// Construct a non-null Throwable type from the kotlin.Throwable symbol.
+    func throwableType(sema: SemaModule, interner: StringInterner) -> TypeID? {
+        let throwableFQName: [InternedString] = [interner.intern("kotlin"), interner.intern("Throwable")]
+        guard let throwableSymbol = sema.symbols.lookup(fqName: throwableFQName) else {
+            return nil
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: throwableSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
     }
 }

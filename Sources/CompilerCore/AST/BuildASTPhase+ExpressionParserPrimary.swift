@@ -49,7 +49,7 @@ extension BuildASTPhase.ExpressionParser {
         case let .softKeyword(softKeyword):
             _ = consume()
             return astArena.appendExpr(.nameRef(interner.intern(softKeyword.rawValue), token.range))
-        case .stringQuote, .rawStringQuote:
+        case .stringQuote, .rawStringQuote, .multiDollarStringQuote, .multiDollarRawStringQuote:
             return parseStringLiteral()
         case .symbol(.doubleColon):
             return parseCallableReferenceWithoutReceiver()
@@ -69,12 +69,11 @@ extension BuildASTPhase.ExpressionParser {
         switch token.kind {
         case let .intLiteral(text):
             _ = consume()
-            let value = Int64(text.filter { $0.isNumber || $0 == "-" }) ?? 0
+            let value = parseSignedLiteral(text, range: token.range) ?? 0
             return astArena.appendExpr(.intLiteral(value, token.range))
         case let .longLiteral(text):
             _ = consume()
-            let stripped = text.filter { $0.isNumber || $0 == "-" }
-            let value = Int64(stripped) ?? 0
+            let value = parseSignedLiteral(text, range: token.range) ?? 0
             return astArena.appendExpr(.longLiteral(value, token.range))
         case let .uintLiteral(text):
             _ = consume()
@@ -140,6 +139,58 @@ extension BuildASTPhase.ExpressionParser {
             range: range
         )
         return nil
+    }
+
+    /// Parses signed literal text (e.g. "42", "0xFF", "0b1010", "42L") to Int64.
+    /// Hex/bin literals are parsed by radix instead of stripping to decimal digits.
+    private func parseSignedLiteral(_ text: String, range: SourceRange) -> Int64? {
+        var numPart = text.replacingOccurrences(of: "_", with: "")
+        let isNegative = numPart.hasPrefix("-")
+        if isNegative {
+            numPart.removeFirst()
+        }
+
+        if numPart.last == "l" || numPart.last == "L" {
+            numPart.removeLast()
+        }
+
+        let lower = numPart.lowercased()
+        let magnitude: UInt64? = if lower.hasPrefix("0x") {
+            UInt64(numPart.dropFirst(2).filter(\.isHexDigit), radix: 16)
+        } else if lower.hasPrefix("0b") {
+            UInt64(numPart.dropFirst(2).filter { $0 == "0" || $0 == "1" }, radix: 2)
+        } else {
+            UInt64(numPart.filter(\.isNumber), radix: 10)
+        }
+
+        guard let magnitude else {
+            diagnostics?.error(
+                "KSWIFTK-LEX-0002",
+                "Invalid signed literal format or overflow.",
+                range: range
+            )
+            return nil
+        }
+
+        if isNegative {
+            if magnitude == 1 << 63 {
+                return Int64.min
+            }
+            guard magnitude <= UInt64(Int64.max) else {
+                diagnostics?.error(
+                    "KSWIFTK-LEX-0002",
+                    "Signed literal overflow.",
+                    range: range
+                )
+                return nil
+            }
+            return -Int64(magnitude)
+        }
+
+        if magnitude <= UInt64(Int64.max) {
+            return Int64(magnitude)
+        }
+        return Int64(bitPattern: magnitude)
     }
 
     private func parsePrimaryIdentifier(_ token: Token) -> ExprID? {
@@ -251,7 +302,13 @@ extension BuildASTPhase.ExpressionParser {
         guard let open = consume() else { return nil }
         var end = open.range.end
         let closingKind = open.kind
-        let shouldDecodeEscapes = if case .stringQuote = open.kind { true } else { false }
+        let shouldDecodeEscapes: Bool
+        switch open.kind {
+        case .stringQuote, .multiDollarStringQuote:
+            shouldDecodeEscapes = true
+        default:
+            shouldDecodeEscapes = false
+        }
 
         var hasTemplate = false
         var scanIdx = index
@@ -386,11 +443,43 @@ extension BuildASTPhase.ExpressionParser {
                 let hexEnd = advance(hexStart, by: 4)
                 let hexDigits = String(segment[hexStart ..< hexEnd])
                 if hexDigits.count == 4,
-                   let scalarValue = UInt32(hexDigits, radix: 16),
-                   let scalar = UnicodeScalar(scalarValue)
+                   let scalarValue = UInt32(hexDigits, radix: 16)
                 {
-                    result.unicodeScalars.append(scalar)
-                    index = hexEnd
+                    if (0xD800 ... 0xDBFF).contains(scalarValue),
+                       hexEnd < segment.endIndex,
+                       segment[hexEnd] == "\\"
+                    {
+                        let nextEscapeIndex = segment.index(after: hexEnd)
+                        if nextEscapeIndex < segment.endIndex,
+                           segment[nextEscapeIndex] == "u"
+                        {
+                            let lowStart = segment.index(after: nextEscapeIndex)
+                            let lowEnd = advance(lowStart, by: 4)
+                            let lowDigits = String(segment[lowStart ..< lowEnd])
+                            if lowDigits.count == 4,
+                               let lowValue = UInt32(lowDigits, radix: 16),
+                               (0xDC00 ... 0xDFFF).contains(lowValue)
+                            {
+                                let highTenBits = scalarValue - 0xD800
+                                let lowTenBits = lowValue - 0xDC00
+                                let combined = 0x10000 + (highTenBits << 10) + lowTenBits
+                                if let scalar = UnicodeScalar(combined) {
+                                    result.unicodeScalars.append(scalar)
+                                    index = lowEnd
+                                    continue
+                                }
+                            }
+                        }
+                    }
+
+                    if let scalar = UnicodeScalar(scalarValue) {
+                        result.unicodeScalars.append(scalar)
+                        index = hexEnd
+                    } else {
+                        result.append("\\")
+                        result.append("u")
+                        index = segment.index(after: escapeIndex)
+                    }
                 } else {
                     result.append("\\")
                     result.append("u")

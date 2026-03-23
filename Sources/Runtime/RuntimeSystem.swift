@@ -3,9 +3,10 @@ import Foundation
 
 // MARK: - kotlin.system functions (STDLIB-131/132)
 
-/// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132).
+/// Runtime support for kotlin.system.exitProcess(status) (STDLIB-132/657).
+/// Returns `Never` because `exit()` never returns – matching Kotlin's `Nothing` semantics.
 @_cdecl("kk_system_exitProcess")
-public func kk_system_exitProcess(_ status: Int) -> Int {
+public func kk_system_exitProcess(_ status: Int) -> Never {
     exit(Int32(status))
 }
 

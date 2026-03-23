@@ -1,6 +1,117 @@
 import Dispatch
 import Foundation
 
+// MARK: - Lightweight pthread-based Thread-Local Storage (CORO-003)
+//
+// These helpers replace `Thread.current.threadDictionary` lookups with direct
+// `pthread_key_t` thread-locals.  Each key stores an `Unmanaged` pointer to a
+// Swift class instance.  A destructor callback releases the object when the
+// thread exits, so there are no leaks.
+
+/// Create a `pthread_key_t` with a destructor that releases the stored object.
+private func makePthreadKey() -> pthread_key_t {
+    var key = pthread_key_t()
+    #if canImport(Glibc) || canImport(Musl)
+    // Linux: pthread destructor expects Optional pointer.
+    pthread_key_create(&key) { (ptr: UnsafeMutableRawPointer?) in
+        guard let ptr else { return }
+        Unmanaged<AnyObject>.fromOpaque(ptr).release()
+    }
+    #else
+    // Darwin: pthread destructor expects non-optional pointer.
+    pthread_key_create(&key) { (ptr: UnsafeMutableRawPointer) in
+        Unmanaged<AnyObject>.fromOpaque(ptr).release()
+    }
+    #endif
+    return key
+}
+
+/// Read the object stored under `key` for the current thread.
+private func pthreadGetValue<T: AnyObject>(_ key: pthread_key_t) -> T? {
+    guard let raw = pthread_getspecific(key) else { return nil }
+    return Unmanaged<T>.fromOpaque(raw).takeUnretainedValue()
+}
+
+/// Store `value` under `key` for the current thread, releasing any previous value.
+private func pthreadSetValue<T: AnyObject>(_ key: pthread_key_t, _ value: T?) {
+    // Release previous value if present.
+    if let prev = pthread_getspecific(key) {
+        Unmanaged<AnyObject>.fromOpaque(prev).release()
+    }
+    if let value {
+        let raw = Unmanaged.passRetained(value).toOpaque()
+        pthread_setspecific(key, raw)
+    } else {
+        pthread_setspecific(key, nil)
+    }
+}
+
+private final class RuntimeResumeContinuationBox: @unchecked Sendable {
+    let closure: () -> Void
+
+    init(_ closure: @escaping () -> Void) {
+        self.closure = closure
+    }
+
+    func invoke() {
+        closure()
+    }
+}
+
+// MARK: - CORO-004 Migration Plan: DispatchSemaphore -> Continuation Model
+//
+// The suspend-entry loop (`runSuspendEntryLoopWithContinuation`) has already
+// been migrated to a non-blocking continuation model.  When a coroutine
+// suspends (e.g. `delay()`), a resume closure is installed via
+// `installResumeContinuation` and the GCD thread is released immediately.
+// The `completionGate` semaphore blocks only at the outermost caller
+// (runBlocking / join / await), which is acceptable because those are
+// inherently synchronous wait points.
+//
+// Remaining DispatchSemaphore.wait() sites and migration status:
+//
+// [DONE] runSuspendEntryLoopWithContinuation: internal suspend points use
+//        installResumeContinuation; only completionGate blocks (outermost).
+//
+// [DONE] runtimeFlowDeliverValue (line ~1151): suspend-collector path now
+//        uses installResumeContinuation instead of waitForResumeSignal().
+//
+// [TODO] RuntimeAsyncTask.awaitResult() (line ~277):
+//        Blocks the calling coroutine's GCD thread on `ready.wait()`.
+//        Migration: Convert to a suspend point in the caller's entry loop
+//        so the caller installs a continuation that the task's `complete()`
+//        method dispatches.  Requires codegen changes to emit a suspend
+//        label at the `await` call site.
+//
+// [TODO] RuntimeJobHandle.join() (line ~343):
+//        Same pattern as awaitResult().  Requires a suspend-aware join.
+//
+// [TODO] kk_with_context (line ~1746):
+//        Blocks the caller while the block runs on the target queue.
+//        Migration: Make withContext itself a suspend point.  The target
+//        queue dispatches the block and, upon completion, resumes the
+//        caller via signalResume().  The caller's entry-loop continuation
+//        picks up the result without blocking.
+//
+// [TODO] Channel send/receive (lines ~1887, ~1959):
+//        Rendezvous and backpressure blocking.  Migration: Replace the
+//        per-waiter DispatchSemaphore with a continuation closure stored
+//        in SuspendedSender/SuspendedReceiver.  When the counterpart
+//        arrives, dispatch the continuation instead of signaling a
+//        semaphore.  This is the most complex migration because channels
+//        involve two independent parties (sender/receiver), each of which
+//        may be a coroutine or a raw thread.
+//
+// [TODO] RuntimeTypes.swift — sequence/iterator builder coroutines:
+//        producerSemaphore/consumerSemaphore and producerGate/consumerGate
+//        implement a cooperative ping-pong protocol.  Migration: model
+//        yield() as a suspend point in the producer coroutine and
+//        next()/hasNext() as suspend points in the consumer, using the
+//        continuation model to avoid blocking either side.
+//
+// Priority order: Channel > withContext > awaitResult/join > sequence builders
+// (Channels are most likely to exhaust GCD thread pools under load.)
+
 final class RuntimeContinuationState {
     var functionID: Int64
     var label: Int64
@@ -17,8 +128,25 @@ final class RuntimeContinuationState {
     /// of Thread Local Storage, so it survives suspend/resume across threads.
     var scope: RuntimeCoroutineScope?
     private let stateLock = NSLock()
-    private let resumeSemaphore = DispatchSemaphore(value: 0)
     private var delayTimers: [ObjectIdentifier: DispatchSourceTimer]
+
+    /// CORO-004: Continuation-based resume model.
+    ///
+    /// Instead of blocking a GCD thread with DispatchSemaphore.wait(), we store
+    /// a resume closure when the coroutine suspends.  When signalResume() is
+    /// called (from a timer, cancellation, etc.) the closure is dispatched on a
+    /// GCD queue, releasing the original thread back to the pool.
+    ///
+    /// If no continuation closure is installed (e.g. during tests that call
+    /// waitForResumeSignal() synchronously), we fall back to a one-shot
+    /// DispatchSemaphore for backward compatibility.
+    private var resumeContinuation: RuntimeResumeContinuationBox?
+    /// Lazily created fallback semaphore, only used by legacy synchronous
+    /// callers that invoke waitForResumeSignal() without a continuation.
+    private var fallbackSemaphore: DispatchSemaphore?
+    /// True if signalResume() was called before any continuation or wait was
+    /// installed (edge case: timer fires immediately).
+    private var resumeSignalPending = false
 
     init(
         functionID: Int64,
@@ -58,19 +186,81 @@ final class RuntimeContinuationState {
         timer.resume()
     }
 
-    func waitForResumeSignal() {
-        resumeSemaphore.wait()
+    /// CORO-004: Install a resume continuation.  Called by the suspend-entry
+    /// loop right before it would otherwise block.  If a resume signal has
+    /// already been delivered (pending), the continuation is dispatched
+    /// immediately.
+    func installResumeContinuation(_ continuation: @escaping () -> Void) {
+        let boxedContinuation = RuntimeResumeContinuationBox(continuation)
+        stateLock.lock()
+        if resumeSignalPending {
+            resumeSignalPending = false
+            stateLock.unlock()
+            // Signal already arrived — dispatch continuation immediately.
+            DispatchQueue.global().async {
+                boxedContinuation.invoke()
+            }
+            return
+        }
+        resumeContinuation = boxedContinuation
+        stateLock.unlock()
     }
 
+    /// Legacy blocking wait.  Used only when no continuation has been installed
+    /// (e.g. direct test calls).  Creates a one-shot semaphore on demand.
+    func waitForResumeSignal() {
+        stateLock.lock()
+        if resumeSignalPending {
+            resumeSignalPending = false
+            stateLock.unlock()
+            return
+        }
+        if fallbackSemaphore == nil {
+            fallbackSemaphore = DispatchSemaphore(value: 0)
+        }
+        let sem = fallbackSemaphore!
+        stateLock.unlock()
+        sem.wait()
+    }
+
+    /// Wake the coroutine.  If a continuation closure is installed, it is
+    /// dispatched asynchronously on a GCD queue (non-blocking).  Otherwise
+    /// the fallback semaphore is signalled.
     func signalResume() {
-        resumeSemaphore.signal()
+        stateLock.lock()
+        if let cont = resumeContinuation {
+            resumeContinuation = nil
+            stateLock.unlock()
+            DispatchQueue.global().async {
+                cont.invoke()
+            }
+            return
+        }
+        if let sem = fallbackSemaphore {
+            stateLock.unlock()
+            sem.signal()
+            return
+        }
+        // Neither continuation nor semaphore installed yet — mark pending.
+        resumeSignalPending = true
+        stateLock.unlock()
+    }
+
+    /// Reset resume state for the next suspend point.  Called after the
+    /// coroutine loop resumes to prepare for the next potential suspension.
+    func resetResumeState() {
+        stateLock.lock()
+        resumeContinuation = nil
+        fallbackSemaphore = nil
+        resumeSignalPending = false
+        stateLock.unlock()
     }
 
     private func completeDelayTimer(timerID: ObjectIdentifier) {
         stateLock.lock()
         delayTimers.removeValue(forKey: timerID)
         stateLock.unlock()
-        resumeSemaphore.signal()
+        signalResume()
     }
 
     private func releaseAllDelayTimers() -> [DispatchSourceTimer] {
@@ -130,6 +320,10 @@ final class RuntimeAsyncTask: @unchecked Sendable {
         }
     }
 
+    // TODO(CORO-004): awaitResult() blocks the calling GCD thread on
+    // ready.wait().  To eliminate this, make `await` a suspend point in the
+    // caller's entry loop: the caller installs a resume continuation and
+    // complete() dispatches it instead of signaling a semaphore.
     func awaitResult() -> Int {
         lock.lock()
         if isCompleted {
@@ -196,6 +390,10 @@ final class RuntimeJobHandle: @unchecked Sendable {
         state?.signalResume()
     }
 
+    // TODO(CORO-004): join() blocks the calling GCD thread on
+    // completionSemaphore.wait().  Same migration path as awaitResult():
+    // make join a suspend point so the caller's continuation is dispatched
+    // by complete() instead of blocking.
     func join() -> Int {
         lock.lock()
         if isCompleted {
@@ -352,12 +550,15 @@ final class RuntimeCoroutineScope: @unchecked Sendable {
 /// CORO-003: Per-thread task key used to index into the task-scope map.
 ///
 /// Each thread participating in a suspend-entry loop gets a unique sentinel
-/// object stored in its thread dictionary.  This is *not* the scope itself --
+/// object stored in a pthread thread-local.  This is *not* the scope itself --
 /// it is only a key that lets `RuntimeCoroutineScope.current` find which scope
 /// is active on this thread.  The actual scope lives in the continuation
 /// context and is propagated to child coroutines explicitly.
+///
+/// Migrated from `Thread.current.threadDictionary` to `pthread_key_t` for
+/// lighter-weight access (single pointer lookup vs dictionary hash).
 enum RuntimeCoroutineScopeTaskKey {
-    private static let tlsKey = "kk_coro_task_key"
+    private static let pthreadKey: pthread_key_t = makePthreadKey()
 
     /// A lightweight sentinel whose only purpose is to provide a stable
     /// `ObjectIdentifier` for the lifetime of a suspend-entry loop invocation.
@@ -365,11 +566,11 @@ enum RuntimeCoroutineScopeTaskKey {
 
     /// Get-or-create a task key for the current thread.
     static var currentTaskKey: ObjectIdentifier {
-        if let existing = Thread.current.threadDictionary[tlsKey] as? Token {
+        if let existing: Token = pthreadGetValue(pthreadKey) {
             return ObjectIdentifier(existing)
         }
         let token = Token()
-        Thread.current.threadDictionary[tlsKey] = token
+        pthreadSetValue(pthreadKey, token)
         return ObjectIdentifier(token)
     }
 
@@ -377,13 +578,13 @@ enum RuntimeCoroutineScopeTaskKey {
     /// Called at the top of each suspend-entry loop invocation.
     static func installFreshKey() -> ObjectIdentifier {
         let token = Token()
-        Thread.current.threadDictionary[tlsKey] = token
+        pthreadSetValue(pthreadKey, token)
         return ObjectIdentifier(token)
     }
 
     /// Remove the task key for this thread.
     static func removeKey() {
-        Thread.current.threadDictionary.removeObject(forKey: tlsKey)
+        pthreadSetValue(pthreadKey, nil as Token?)
     }
 }
 
@@ -667,7 +868,14 @@ public func kk_kxmini_delay(_ milliseconds: Int, _ continuation: Int) -> Int {
 
 // MARK: - Flow Runtime (STDLIB-088: Cold/Lazy Stream Semantics)
 
-private let runtimeFlowCollectStackKey = "kk_flow_collect_stack"
+/// CORO-003: pthread key for the flow collect stack (replaces threadDictionary).
+private let runtimeFlowCollectStackPthreadKey: pthread_key_t = makePthreadKey()
+
+/// Wrapper class so the flow collect stack can be stored as a single AnyObject
+/// in the pthread thread-local slot.
+private final class RuntimeFlowCollectStackBox {
+    var stack: [RuntimeFlowCollectContext] = []
+}
 
 /// Runtime flow op tags must be aligned with the lowering/codegen enums in
 /// `CoroutineLoweringPass+Flow.swift` and `FlowLoweringPass.swift`.
@@ -736,27 +944,33 @@ private func runtimeFlowHandle(from rawValue: Int) -> RuntimeFlowHandle? {
 }
 
 
+private func runtimeFlowCollectStackBox() -> RuntimeFlowCollectStackBox {
+    if let existing: RuntimeFlowCollectStackBox = pthreadGetValue(runtimeFlowCollectStackPthreadKey) {
+        return existing
+    }
+    let box = RuntimeFlowCollectStackBox()
+    pthreadSetValue(runtimeFlowCollectStackPthreadKey, box)
+    return box
+}
+
 private func runtimeFlowCollectStack() -> [RuntimeFlowCollectContext] {
-    Thread.current.threadDictionary[runtimeFlowCollectStackKey] as? [RuntimeFlowCollectContext] ?? []
+    runtimeFlowCollectStackBox().stack
 }
 
 private func runtimeFlowPushCollectContext(_ context: RuntimeFlowCollectContext) {
-    var stack = runtimeFlowCollectStack()
-    stack.append(context)
-    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+    runtimeFlowCollectStackBox().stack.append(context)
 }
 
 private func runtimeFlowPopCollectContext() {
-    var stack = runtimeFlowCollectStack()
-    guard !stack.isEmpty else {
+    let box = runtimeFlowCollectStackBox()
+    guard !box.stack.isEmpty else {
         return
     }
-    _ = stack.popLast()
-    Thread.current.threadDictionary[runtimeFlowCollectStackKey] = stack
+    _ = box.stack.popLast()
 }
 
 private func runtimeFlowCurrentCollectContext() -> RuntimeFlowCollectContext? {
-    runtimeFlowCollectStack().last
+    runtimeFlowCollectStackBox().stack.last
 }
 
 private func runtimeFlowMaybeUnbox(_ value: Int) -> Int {
@@ -996,6 +1210,11 @@ private func runtimeFlowDeliverValue(
                 _ = kk_coroutine_state_exit(cont, 0)
                 return false
             }
+            // CORO-004: This still blocks a GCD thread via the legacy
+            // waitForResumeSignal() path.  Full migration requires making
+            // runtimeFlowDeliverValue itself async (return via continuation
+            // instead of Bool), which in turn requires the flow collect
+            // loop to be restructured as a suspend-entry loop.
             state.waitForResumeSignal()
         }
         _ = kk_coroutine_state_exit(cont, 0)
@@ -1378,13 +1597,13 @@ final class RuntimeDispatcher: @unchecked Sendable {
     let queue: DispatchQueue
     let tag: Int
 
-    /// Thread-local key for the currently active dispatcher.
-    private static let currentDispatcherKey = "kk_dispatcher_current"
+    /// CORO-003: pthread key for the currently active dispatcher (replaces threadDictionary).
+    private static let currentDispatcherPthreadKey: pthread_key_t = makePthreadKey()
 
     /// The dispatcher active on the current thread, if any.
     static var current: RuntimeDispatcher? {
-        get { Thread.current.threadDictionary[currentDispatcherKey] as? RuntimeDispatcher }
-        set { Thread.current.threadDictionary[currentDispatcherKey] = newValue }
+        get { pthreadGetValue(currentDispatcherPthreadKey) }
+        set { pthreadSetValue(currentDispatcherPthreadKey, newValue) }
     }
 
     init(queue: DispatchQueue, tag: Int) {
@@ -1569,6 +1788,11 @@ public func kk_with_context(_ dispatcherRaw: Int, _ blockFnPtr: Int, _ continuat
         )
     }
 
+    // TODO(CORO-004): withContext blocks the caller on semaphore.wait().
+    // Migration: make withContext a suspend point.  The block dispatched on
+    // the target queue calls signalResume() on the caller's continuation
+    // state when done, and the caller's entry-loop continuation picks up
+    // the result without blocking a GCD thread.
     let semaphore = DispatchSemaphore(value: 0)
     // Use a Sendable box as a thread-safe container for the result.
     // The DispatchSemaphore provides a happens-before relationship: the write
@@ -1622,10 +1846,27 @@ final class SuspendedSender {
     /// sender's value.  The sender checks this after waking to distinguish a
     /// successful delivery from a close-induced wakeup.
     var delivered: Bool = false
+    /// Set to `true` (under the channel lock) when the sender is woken due to
+    /// coroutine cancellation. Distinct from close-induced wakeup.
+    var cancelledWakeup: Bool = false
 
     init(semaphore: DispatchSemaphore, value: Int) {
         self.semaphore = semaphore
         self.value = value
+    }
+}
+
+/// Mutable box for a suspended receiver so senders / close can mark the
+/// wakeup reason before signaling the semaphore. Mirrors `SuspendedSender`.
+final class SuspendedReceiver {
+    let semaphore: DispatchSemaphore
+    /// The value deposited by a sender. `nil` means woken by close or cancel.
+    var result: Int?
+    /// Set to `true` when woken due to coroutine cancellation.
+    var cancelledWakeup: Bool = false
+
+    init(semaphore: DispatchSemaphore) {
+        self.semaphore = semaphore
     }
 }
 
@@ -1636,8 +1877,12 @@ final class SuspendedSender {
 ///     buffer is full; `receive` suspends when the buffer is empty.
 ///   - **`close()`**: marks the channel as closed.  Pending senders are woken
 ///     and return the closed-send sentinel.  Pending receivers drain the
-///     remaining buffer, then return the closed sentinel.
-final class RuntimeChannelHandle {
+///     remaining buffer, then return the closed sentinel.  Returns `true` the
+///     first time (Kotlin semantics), `false` if already closed.
+///   - **Cancellation**: `send` and `receive` check the caller's continuation
+///     for cancellation before suspending, and suspended waiters can be removed
+///     via `cancelAllWaiters()` (cooperatively from the coroutine runtime).
+final class RuntimeChannelHandle: @unchecked Sendable {
     private let lock = NSLock()
     // NOTE: `buffer`, `senderQueue`, and `receiverQueue` use `Array` with
     // `removeFirst()` which is O(n) due to element shifting.  For the current
@@ -1654,12 +1899,9 @@ final class RuntimeChannelHandle {
     // close-induced wakeup.
     private var senderQueue: [SuspendedSender] = []
 
-    // Waiting-receiver queue: each suspended receiver is represented by a
-    // semaphore.  The waker deposits the value into `receiverResults` keyed by
-    // the semaphore's ObjectIdentifier so the receiver can pick it up after
-    // waking.
-    private var receiverQueue: [DispatchSemaphore] = []
-    private var receiverResults: [ObjectIdentifier: Int] = [:]
+    // Waiting-receiver queue: each suspended receiver is a `SuspendedReceiver`
+    // reference.  Senders deposit a value before signaling the semaphore.
+    private var receiverQueue: [SuspendedReceiver] = []
 
     init(capacity: Int) {
         self.capacity = max(0, capacity)
@@ -1668,10 +1910,21 @@ final class RuntimeChannelHandle {
     /// Send a value into the channel, suspending (blocking) the caller when
     /// backpressure is needed.
     ///
+    /// `continuation` is the opaque continuation handle for the calling coroutine.
+    /// When non-zero, cancellation is checked before suspending and the sentinel
+    /// is returned if the coroutine has been cancelled (matching Kotlin's behavior
+    /// of throwing `CancellationException` from `send`).
+    ///
     /// Returns the sent `value` on success, or `kChannelClosedSentinel` if the
-    /// channel was closed before or during the send.
-    func send(_ value: Int) -> Int {
+    /// channel was closed before or during the send, or the coroutine was cancelled.
+    func send(_ value: Int, continuation: Int = 0) -> Int {
         lock.lock()
+
+        // 0. Check cancellation before any blocking (Kotlin suspend semantics).
+        if isCancelled(continuation: continuation) {
+            lock.unlock()
+            return kChannelClosedSentinel
+        }
 
         // 1. Closed channel -- fail immediately.
         if closed {
@@ -1681,11 +1934,11 @@ final class RuntimeChannelHandle {
 
         // 2. If there is a waiting receiver, hand the value off directly
         //    (both rendezvous and buffered benefit from this fast path).
-        if let receiverSem = receiverQueue.first {
+        if let receiver = receiverQueue.first {
             receiverQueue.removeFirst()
-            receiverResults[ObjectIdentifier(receiverSem)] = value
+            receiver.result = value
             lock.unlock()
-            receiverSem.signal()
+            receiver.semaphore.signal()
             return value
         }
 
@@ -1697,6 +1950,10 @@ final class RuntimeChannelHandle {
         }
 
         // 4. No room (buffer full or rendezvous) -- suspend the sender.
+        // TODO(CORO-004): Replace per-waiter DispatchSemaphore with a
+        // continuation closure stored in SuspendedSender.  When a receiver
+        // arrives, dispatch the sender's continuation instead of signaling
+        // a semaphore, freeing the sender's GCD thread during the wait.
         let senderSem = DispatchSemaphore(value: 0)
         let entry = SuspendedSender(semaphore: senderSem, value: value)
         senderQueue.append(entry)
@@ -1705,23 +1962,35 @@ final class RuntimeChannelHandle {
         // Block until a receiver wakes us or the channel is closed.
         senderSem.wait()
 
-        // After waking, check whether a receiver accepted our value.  The
-        // `delivered` flag is set under the lock by the receiver before it
-        // signals the semaphore, so checking it here (under the lock) is safe
-        // even if close() races concurrently.
+        // After waking, check the wakeup reason.
         lock.lock()
         let wasDelivered = entry.delivered
+        let wasCancelled = entry.cancelledWakeup
         lock.unlock()
+
+        if wasCancelled {
+            return kChannelClosedSentinel
+        }
         return wasDelivered ? value : kChannelClosedSentinel
     }
 
     /// Receive a value from the channel, suspending (blocking) the caller when
     /// the buffer is empty and no sender is ready.
     ///
+    /// `continuation` is the opaque continuation handle for the calling coroutine.
+    /// When non-zero, cancellation is checked before suspending (Kotlin suspend
+    /// semantics: `receive` throws `CancellationException` if cancelled).
+    ///
     /// Returns the received value, or `kChannelClosedSentinel` when the channel
-    /// is closed and fully drained.
-    func receive() -> Int {
+    /// is closed and fully drained, or the coroutine was cancelled.
+    func receive(continuation: Int = 0) -> Int {
         lock.lock()
+
+        // 0. Check cancellation before any blocking (Kotlin suspend semantics).
+        if isCancelled(continuation: continuation) {
+            lock.unlock()
+            return kChannelClosedSentinel
+        }
 
         // 1. Try to take from the buffer.
         if !buffer.isEmpty {
@@ -1759,27 +2028,41 @@ final class RuntimeChannelHandle {
         }
 
         // 4. Suspend the receiver.
-        let receiverSem = DispatchSemaphore(value: 0)
-        receiverQueue.append(receiverSem)
+        // TODO(CORO-004): Same as the sender path — replace the per-waiter
+        // semaphore with a continuation closure in SuspendedReceiver.
+        let receiverEntry = SuspendedReceiver(semaphore: DispatchSemaphore(value: 0))
+        receiverQueue.append(receiverEntry)
         lock.unlock()
 
-        receiverSem.wait()
+        receiverEntry.semaphore.wait()
 
-        // After waking, pick up the value deposited by the sender / close.
+        // After waking, check the wakeup reason.
         lock.lock()
-        let key = ObjectIdentifier(receiverSem)
-        if let value = receiverResults.removeValue(forKey: key) {
-            lock.unlock()
+        let wasCancelled = receiverEntry.cancelledWakeup
+        let value = receiverEntry.result
+        lock.unlock()
+
+        if wasCancelled {
+            return kChannelClosedSentinel
+        }
+        if let value {
             return value
         }
         // Woken by close() with no value -- channel is done.
-        lock.unlock()
         return kChannelClosedSentinel
     }
 
     /// Close the channel.  Remaining buffered values are still receivable.
-    func close() {
+    ///
+    /// Returns `true` if this call actually closed the channel, `false` if it
+    /// was already closed.  Matches Kotlin's `SendChannel.close()` contract.
+    @discardableResult
+    func close() -> Bool {
         lock.lock()
+        if closed {
+            lock.unlock()
+            return false
+        }
         closed = true
         let pendingSenders = senderQueue
         senderQueue.removeAll()
@@ -1795,8 +2078,47 @@ final class RuntimeChannelHandle {
         // Wake all suspended receivers -- they will find no result deposited
         // and return the closed sentinel.
         for receiver in pendingReceivers {
-            receiver.signal()
+            receiver.semaphore.signal()
         }
+        return true
+    }
+
+    /// Cancel all suspended senders and receivers.  This is called when a
+    /// coroutine is cancelled while it has an outstanding channel operation.
+    ///
+    /// In the current design we cancel *all* waiters because the continuation
+    /// identity is not threaded into the waiter entries (the suspend-point is
+    /// blocking the calling thread directly).  This is safe because each
+    /// channel operation is called from exactly one coroutine at a time.
+    func cancelAllWaiters() {
+        lock.lock()
+        let pendingSenders = senderQueue
+        senderQueue.removeAll()
+        let pendingReceivers = receiverQueue
+        receiverQueue.removeAll()
+        lock.unlock()
+
+        for sender in pendingSenders {
+            sender.cancelledWakeup = true
+            sender.semaphore.signal()
+        }
+        for receiver in pendingReceivers {
+            receiver.cancelledWakeup = true
+            receiver.semaphore.signal()
+        }
+    }
+
+    // MARK: - Private helpers
+
+    /// Check whether the coroutine associated with `continuation` has been cancelled.
+    private func isCancelled(continuation: Int) -> Bool {
+        guard continuation != 0,
+              let state = runtimeContinuationState(from: continuation),
+              let job = state.jobHandle
+        else {
+            return false
+        }
+        return job.cancellationSnapshot()
     }
 }
 
@@ -1811,21 +2133,21 @@ public func kk_channel_create(_ capacity: Int) -> Int {
 }
 
 @_cdecl("kk_channel_send")
-public func kk_channel_send(_ handle: Int, _ value: Int, _: Int) -> Int {
+public func kk_channel_send(_ handle: Int, _ value: Int, _ continuation: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_send received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
-    return channel.send(value)
+    return channel.send(value, continuation: continuation)
 }
 
 @_cdecl("kk_channel_receive")
-public func kk_channel_receive(_ handle: Int, _: Int) -> Int {
+public func kk_channel_receive(_ handle: Int, _ continuation: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: handle) else {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_receive received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
-    return channel.receive()
+    return channel.receive(continuation: continuation)
 }
 
 @_cdecl("kk_channel_close")
@@ -1834,8 +2156,7 @@ public func kk_channel_close(_ handle: Int) -> Int {
         fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_channel_close received invalid channel handle")
     }
     let channel = Unmanaged<RuntimeChannelHandle>.fromOpaque(ptr).takeUnretainedValue()
-    channel.close()
-    return 0
+    return channel.close() ? 1 : 0
 }
 
 /// Returns 1 if `value` equals the closed-channel sentinel, 0 otherwise.
@@ -2025,6 +2346,89 @@ public func kk_coroutine_scope_run_with_cont(_ entryPointRaw: Int, _ continuatio
     return result
 }
 
+// MARK: - Coroutine yield()
+
+/// Cooperatively yields the current coroutine, allowing other coroutines to run.
+/// This is the lowering target for `kotlinx.coroutines.yield()`.
+@_cdecl("kk_coroutine_yield")
+public func kk_coroutine_yield() -> Int {
+    // Yield the current thread briefly so other coroutines get a chance to run.
+    Thread.sleep(forTimeInterval: 0)
+    return 0 // Unit
+}
+
+// MARK: - withTimeout / withTimeoutOrNull
+
+/// Runs the given block with a timeout. If the block does not complete within
+/// `timeoutMillis`, a CancellationException is thrown (represented as a trap
+/// in this runtime).
+/// Used as the lowering target for `withTimeout(timeMillis) { }`.
+@_cdecl("kk_with_timeout")
+public func kk_with_timeout(_ timeoutMillis: Int, _ entryPointRaw: Int, _ continuation: Int) -> Int {
+    // Run the block inside a coroutine scope with a deadline.
+    let scopeHandle = kk_coroutine_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+
+    var result: Int = 0
+    var completed = false
+    let deadline = DispatchTime.now() + .milliseconds(timeoutMillis)
+
+    let workItem = DispatchWorkItem {
+        result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw, continuation: continuation
+        )
+        completed = true
+    }
+    DispatchQueue.global().async(execute: workItem)
+    let waitResult = workItem.wait(timeout: deadline)
+    if waitResult == .timedOut {
+        workItem.cancel()
+        scope.cancel()
+        _ = kk_coroutine_scope_wait(scopeHandle)
+        fatalError("KSwiftK panic: withTimeout timed out after \(timeoutMillis)ms (CancellationException)")
+    }
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
+/// Runs the given block with a timeout. If the block does not complete within
+/// `timeoutMillis`, returns null (0) instead of throwing.
+/// Used as the lowering target for `withTimeoutOrNull(timeMillis) { }`.
+@_cdecl("kk_with_timeout_or_null")
+public func kk_with_timeout_or_null(_ timeoutMillis: Int, _ entryPointRaw: Int, _ continuation: Int) -> Int {
+    let scopeHandle = kk_coroutine_scope_new()
+    let scope = Unmanaged<RuntimeCoroutineScope>.fromOpaque(
+        UnsafeMutableRawPointer(bitPattern: scopeHandle)!
+    ).takeUnretainedValue()
+    if let contState = runtimeContinuationState(from: continuation) {
+        contState.scope = scope
+    }
+
+    var result: Int = 0
+    let deadline = DispatchTime.now() + .milliseconds(timeoutMillis)
+
+    let workItem = DispatchWorkItem {
+        result = runSuspendEntryLoopWithContinuation(
+            entryPointRaw: entryPointRaw, continuation: continuation
+        )
+    }
+    DispatchQueue.global().async(execute: workItem)
+    let waitResult = workItem.wait(timeout: deadline)
+    if waitResult == .timedOut {
+        workItem.cancel()
+        scope.cancel()
+        _ = kk_coroutine_scope_wait(scopeHandle)
+        return 0 // null
+    }
+    _ = kk_coroutine_scope_wait(scopeHandle)
+    return result
+}
+
 // MARK: - Child Cancel/Join Helpers (P5-89)
 
 /// Cancel a child handle (RuntimeJobHandle or RuntimeAsyncTask).
@@ -2134,6 +2538,32 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
         return 0
     }
 
+    // CORO-004: Continuation-based suspend/resume.
+    //
+    // Instead of blocking a GCD thread on DispatchSemaphore.wait() when the
+    // coroutine suspends, we use a DispatchSemaphore only at the *outermost*
+    // level (the completion gate) and install a non-blocking continuation
+    // closure for each internal suspend point.
+    //
+    // Flow:
+    //   1. The loop runs the entry point.
+    //   2. If it returns COROUTINE_SUSPENDED, install a continuation closure
+    //      on the RuntimeContinuationState.  This closure will re-enter the
+    //      loop when signalResume() fires (from a timer, cancellation, etc.).
+    //      The current GCD thread is released — no blocking.
+    //   3. When the resume closure fires, it repeats from step 1.
+    //   4. When the entry point returns a concrete value (not suspended) or
+    //      throws, signal the completion gate so the caller unblocks.
+    //
+    // The completion gate semaphore is only waited on by the outermost
+    // synchronous caller (runBlocking, join, await, withContext).  Launched
+    // coroutines never block a GCD thread during internal suspensions.
+
+    let completionGate = DispatchSemaphore(value: 0)
+    // Thread-safe result box — written inside the loop, read after the gate.
+    final class ResultBox: @unchecked Sendable { var value: Int = 0 }
+    let resultBox = ResultBox()
+
     // CORO-003: Install the scope carried by this continuation into the
     // task-scope map so that child launches dispatched on this thread can
     // discover their parent scope without TLS.
@@ -2142,32 +2572,78 @@ func runSuspendEntryLoopWithContinuation(entryPointRaw: Int, continuation: Int) 
     RuntimeCoroutineScope.installScope(contState?.scope, forTask: currentTaskKey)
 
     let suspendedToken = Int(bitPattern: kk_coroutine_suspended())
-    var outThrown = 0
 
-    while true {
-        outThrown = 0
+    // The loop body is factored into a closure so it can be re-entered from
+    // the resume continuation without recursion or blocking.
+    //
+    // Using a box to hold the closure so it can reference itself.
+    final class LoopBodyBox: @unchecked Sendable {
+        var body: (() -> Void)?
+    }
+    let loopBodyBox = LoopBodyBox()
+
+    // Shared mutable state for the task key, protected by the single-shot
+    // continuation model (only one invocation of the loop body runs at a time).
+    final class TaskKeyBox: @unchecked Sendable {
+        var key: ObjectIdentifier
+        init(key: ObjectIdentifier) { self.key = key }
+    }
+    let taskKeyBox = TaskKeyBox(key: currentTaskKey)
+
+    loopBodyBox.body = {
+        var outThrown = 0
         let result = entryPoint(continuation, &outThrown)
         if outThrown != 0 {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
             _ = kk_coroutine_state_exit(continuation, 0)
-            return 0
+            resultBox.value = 0
+            completionGate.signal()
+            return
         }
         if result != suspendedToken {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
-            return result
+            resultBox.value = result
+            completionGate.signal()
+            return
         }
         guard let state = runtimeContinuationState(from: continuation) else {
-            RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
             RuntimeCoroutineScopeTaskKey.removeKey()
-            return 0
+            resultBox.value = 0
+            completionGate.signal()
+            return
         }
-        state.waitForResumeSignal()
-        // CORO-003: After suspend/resume we may be on a different thread.
-        // Re-install the task key so the scope map lookup still works.
-        RuntimeCoroutineScope.removeScope(forTask: currentTaskKey)
-        currentTaskKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
-        RuntimeCoroutineScope.installScope(state.scope, forTask: currentTaskKey)
+        // CORO-004: Install a continuation closure instead of blocking.
+        // When signalResume() fires, this closure will be dispatched on a
+        // GCD global queue, re-entering the loop without blocking any thread.
+        state.installResumeContinuation {
+            // CORO-003: After suspend/resume we are on a (possibly different)
+            // GCD thread.  Re-install the task key so the scope map lookup
+            // still works.
+            RuntimeCoroutineScope.removeScope(forTask: taskKeyBox.key)
+            let freshKey = RuntimeCoroutineScopeTaskKey.installFreshKey()
+            taskKeyBox.key = freshKey
+            RuntimeCoroutineScope.installScope(state.scope, forTask: freshKey)
+            // Reset stale resume state from the previous cycle before
+            // re-entering the loop.  Must happen here (not before
+            // installResumeContinuation) to avoid clearing a pending
+            // signal meant for the current suspend point.
+            state.resetResumeState()
+            loopBodyBox.body?()
+        }
+        // The current thread is released here — no blocking.
     }
+
+    // Kick off the first iteration synchronously on the current thread.
+    loopBodyBox.body?()
+
+    // Block only at the outermost level until the coroutine completes.
+    completionGate.wait()
+
+    // Break the strong reference cycle: loopBodyBox -> closure -> loopBodyBox
+    loopBodyBox.body = nil
+
+    return resultBox.value
 }

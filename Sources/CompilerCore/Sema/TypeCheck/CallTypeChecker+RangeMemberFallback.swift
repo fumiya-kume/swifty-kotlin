@@ -49,7 +49,7 @@ extension CallTypeChecker {
         // would require unsigned comparison helpers in the runtime.
         // Only CharRange needs separate helpers (kk_char_range_*) due to box/unbox.
         let isUIntRange = receiverType == sema.types.uintType
-        let isULongRange = receiverType == sema.types.ulongType
+        let isULongRange = sema.bindings.isULongRangeExpr(receiverID) || receiverType == sema.types.ulongType
 
         // Provide contextual function type for range HOF lambda inference.
         if let expectation = rangeMemberLambdaExpectation(
@@ -64,7 +64,7 @@ extension CallTypeChecker {
             args.indices.contains(expectation.argumentIndex)
         {
             let lambdaArgExpr = args[expectation.argumentIndex].expr
-            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), case .lambdaLiteral = lambdaExpr {
+            if let lambdaExpr = ctx.ast.arena.expr(lambdaArgExpr), lambdaExpr.isLambdaOrCallableRef {
                 sema.bindings.markCollectionHOFLambdaExpr(lambdaArgExpr)
             }
             _ = driver.inferExpr(
@@ -84,9 +84,21 @@ extension CallTypeChecker {
             if sema.bindings.isCharRangeExpr(receiverID) {
                 sema.bindings.markCharRangeExpr(id)
             }
+            // Propagate ULong range marker through reversed() (STDLIB-524)
+            if sema.bindings.isULongRangeExpr(receiverID) {
+                sema.bindings.markULongRangeExpr(id)
+            }
         }
 
-        let resultType = rangeMemberResultType(memberName: memberName, sema: sema, isCharRange: isCharRange, isLongRange: isLongRange, isUIntRange: isUIntRange, isULongRange: isULongRange)
+        let resultType = rangeMemberResultType(
+            memberName: memberName,
+            sema: sema,
+            interner: interner,
+            isCharRange: isCharRange,
+            isLongRange: isLongRange,
+            isUIntRange: isUIntRange,
+            isULongRange: isULongRange
+        )
         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
         sema.bindings.bindExprType(id, type: finalType)
         return finalType
@@ -96,14 +108,14 @@ extension CallTypeChecker {
         let rangeMembers: Set = [
             "first", "last", "count", "contains",
             "toList", "forEach", "map",
-            "reversed",
+            "reversed", "isEmpty", "sum",
         ]
         return rangeMembers.contains(memberName)
     }
 
     private func isValidRangeMemberArity(_ memberName: String, argCount: Int) -> Bool {
         switch memberName {
-        case "first", "last", "count", "toList", "reversed":
+        case "first", "last", "count", "toList", "reversed", "isEmpty", "sum":
             argCount == 0
         case "contains", "forEach", "map":
             argCount == 1
@@ -116,6 +128,7 @@ extension CallTypeChecker {
         ["toList", "map"].contains(memberName)
     }
 
+    /// Returns the element type for a range expression based on its range-kind markers.
     private func rangeMemberElementType(
         sema: SemaModule,
         isCharRange: Bool,
@@ -138,7 +151,15 @@ extension CallTypeChecker {
         return sema.types.intType
     }
 
-    private func rangeMemberResultType(memberName: String, sema: SemaModule, isCharRange: Bool = false, isLongRange: Bool = false, isUIntRange: Bool = false, isULongRange: Bool = false) -> TypeID {
+    private func rangeMemberResultType(
+        memberName: String,
+        sema: SemaModule,
+        interner: StringInterner,
+        isCharRange: Bool = false,
+        isLongRange: Bool = false,
+        isUIntRange: Bool = false,
+        isULongRange: Bool = false
+    ) -> TypeID {
         let elementType = rangeMemberElementType(
             sema: sema,
             isCharRange: isCharRange,
@@ -151,15 +172,41 @@ extension CallTypeChecker {
             return elementType
         case "count":
             return sema.types.intType
-        case "contains":
+        case "sum":
+            return elementType
+        case "contains", "isEmpty":
             return sema.types.booleanType
         case "forEach":
             return sema.types.unitType
+        case "toList":
+            return rangeMemberListType(elementType: elementType, sema: sema, interner: interner)
+        case "map":
+            return rangeMemberListType(elementType: sema.types.anyType, sema: sema, interner: interner)
         case "reversed":
             return elementType
         default:
             return sema.types.anyType
         }
+    }
+
+    private func rangeMemberListType(
+        elementType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = sema.symbols.lookup(fqName: listFQName) else {
+            return sema.types.anyType
+        }
+        return sema.types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(elementType)],
+            nullability: .nonNull
+        )))
     }
 
     private func rangeMemberLambdaExpectation(

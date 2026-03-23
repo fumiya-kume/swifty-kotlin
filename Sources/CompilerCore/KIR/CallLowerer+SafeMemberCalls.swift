@@ -517,6 +517,113 @@ extension CallLowerer {
                 finalArguments.insert(loweredReceiverID, at: 0)
             }
         }
+        if args.isEmpty {
+            let callLabel = driver.ctx.makeLoopLabel()
+            let endLabel = driver.ctx.makeLoopLabel()
+            let nullExpr = arena.appendExpr(.null, type: boundType ?? sema.types.nullableAnyType)
+            instructions.append(.jumpIfNotNull(value: loweredReceiverID, target: callLabel))
+            instructions.append(.constValue(result: nullExpr, value: .null))
+            instructions.append(.copy(from: nullExpr, to: result))
+            instructions.append(.jump(endLabel))
+            instructions.append(.label(callLabel))
+            if safeNormalized.defaultMask != 0,
+               let chosen,
+               sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
+            {
+                appendReifiedTypeTokens(
+                    chosenCallee: chosen,
+                    callBinding: callBinding,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions.instructions,
+                    arguments: &finalArguments
+                )
+                appendDefaultMaskArgument(
+                    safeNormalized.defaultMask,
+                    sema: sema,
+                    arena: arena,
+                    instructions: &instructions.instructions,
+                    arguments: &finalArguments
+                )
+                let stubName = interner.intern(interner.resolve(effectiveCalleeName) + "$default")
+                let stubSym = driver.callSupportLowerer.defaultStubSymbol(for: chosen)
+                instructions.append(.call(
+                    symbol: stubSym,
+                    callee: stubName,
+                    arguments: finalArguments,
+                    result: result,
+                    canThrow: false,
+                    thrownResult: nil,
+                    isSuperCall: isSuperCall
+                ))
+            } else {
+                appendReifiedTypeTokens(
+                    chosenCallee: chosen,
+                    callBinding: callBinding,
+                    sema: sema,
+                    interner: interner,
+                    arena: arena,
+                    instructions: &instructions.instructions,
+                    arguments: &finalArguments
+                )
+                let loweredMemberCalleeName: InternedString = if let chosen,
+                                                                 let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+                                                                 !externalLinkName.isEmpty
+                {
+                    interner.intern(externalLinkName)
+                } else if chosen == nil, isCoroutineReceiver, args.isEmpty {
+                    switch interner.resolve(effectiveCalleeName) {
+                    case "await":
+                        interner.intern("kk_kxmini_async_await")
+                    case "join":
+                        interner.intern("kk_job_join")
+                    case "cancel":
+                        interner.intern("kk_job_cancel")
+                    default:
+                        effectiveCalleeName
+                    }
+                } else {
+                    effectiveCalleeName
+                }
+                let receiverTypeForDispatch = sema.bindings.exprTypes[receiverExpr]
+                if !isSuperCall,
+                   let chosen,
+                   let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
+                {
+                    var vcArguments = finalArguments
+                    if let signature = sema.symbols.functionSignature(for: chosen),
+                       signature.receiverType != nil,
+                       !vcArguments.isEmpty
+                    {
+                        vcArguments.removeFirst()
+                    }
+                    instructions.append(.virtualCall(
+                        symbol: chosen,
+                        callee: loweredMemberCalleeName,
+                        receiver: loweredReceiverID,
+                        arguments: vcArguments,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        dispatch: dispatchKind
+                    ))
+                } else {
+                    instructions.append(.call(
+                        symbol: chosen,
+                        callee: loweredMemberCalleeName,
+                        arguments: finalArguments,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil,
+                        isSuperCall: isSuperCall
+                    ))
+                }
+            }
+            instructions.append(.label(endLabel))
+            return result
+        }
+
         if safeNormalized.defaultMask != 0,
            let chosen,
            sema.symbols.externalLinkName(for: chosen)?.isEmpty ?? true
@@ -582,8 +689,6 @@ extension CallLowerer {
                let chosen,
                let dispatchKind = resolveVirtualDispatch(callee: chosen, receiverTypeID: receiverTypeForDispatch, sema: sema)
             {
-                // For virtualCall, the receiver is a separate field, so remove it
-                // from finalArguments (it was inserted at index 0 above).
                 var vcArguments = finalArguments
                 if let signature = sema.symbols.functionSignature(for: chosen),
                    signature.receiverType != nil,

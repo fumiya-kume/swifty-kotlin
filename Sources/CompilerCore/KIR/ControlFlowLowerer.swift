@@ -738,7 +738,26 @@ final class ControlFlowLowerer {
         instructions: inout [KIRInstruction]
     ) {
         let intType = sema.types.make(.primitive(.int, .nonNull))
+        // Track nested finally-guard depth so that instructions inside
+        // an already-wrapped finally region are passed through verbatim,
+        // preventing double-wrapping (CODE-001).
+        var finallyGuardDepth = 0
         for instruction in loweredInstructions {
+            if case .beginFinallyGuard = instruction {
+                finallyGuardDepth += 1
+                instructions.append(instruction)
+                continue
+            }
+            if case .endFinallyGuard = instruction {
+                finallyGuardDepth -= 1
+                instructions.append(instruction)
+                continue
+            }
+            // Inside a finally guard region: pass through verbatim.
+            if finallyGuardDepth > 0 {
+                instructions.append(instruction)
+                continue
+            }
             switch instruction {
             case let .call(symbol, callee, arguments, result, _, thrownResult, isSuperCall)
                 where thrownResult == nil:

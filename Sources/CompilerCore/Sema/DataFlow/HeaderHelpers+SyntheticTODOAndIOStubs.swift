@@ -251,6 +251,16 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        registerSyntheticSystemMember(
+            ownerSymbol: systemSymbol,
+            ownerType: systemType,
+            name: "nanoTime",
+            externalLinkName: "kk_system_nanoTime",
+            returnType: types.longType,
+            parameters: [],
+            symbols: symbols,
+            interner: interner
+        )
 
         // --- kotlin.synchronized (STDLIB-325) ---
         registerSyntheticTopLevelFunction(
@@ -310,6 +320,18 @@ extension DataFlowSemaPhase {
             ownerType: fileType,
             name: "writeText",
             externalLinkName: "kk_file_writeText",
+            returnType: types.unitType,
+            parameters: [(name: "text", type: types.stringType)],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // appendText(text: String): Unit
+        registerSyntheticSystemMember(
+            ownerSymbol: fileSymbol,
+            ownerType: fileType,
+            name: "appendText",
+            externalLinkName: "kk_file_appendText",
             returnType: types.unitType,
             parameters: [(name: "text", type: types.stringType)],
             symbols: symbols,
@@ -391,6 +413,19 @@ extension DataFlowSemaPhase {
             isProperty: true
         )
 
+        // Register Duration.inWholeMicroseconds property (returns Long)
+        registerSyntheticDurationMember(
+            named: "inWholeMicroseconds",
+            externalLinkName: "kk_duration_inWholeMicroseconds",
+            durationSymbol: durationSymbol,
+            durationFQName: durationFQName,
+            receiverType: durationClassType,
+            returnType: types.longType,
+            symbols: symbols,
+            interner: interner,
+            isProperty: true
+        )
+
         // Register Duration.inWholeNanoseconds property (returns Long)
         registerSyntheticDurationMember(
             named: "inWholeNanoseconds",
@@ -427,6 +462,30 @@ extension DataFlowSemaPhase {
             parameters: [(name: "block", type: measureTimeBlockType)],
             returnType: durationClassType,
             externalLinkName: "kk_measureTime",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // measureTimedValue returns TimedValue (STDLIB-660)
+        let timedValueFQName = kotlinTimePkg + [interner.intern("TimedValue")]
+        let timedValueType: TypeID
+        if let timedValueSymbol = symbols.lookup(fqName: timedValueFQName) {
+            timedValueType = types.make(.classType(ClassType(
+                classSymbol: timedValueSymbol, args: [], nullability: .nonNull
+            )))
+        } else {
+            timedValueType = types.anyType
+        }
+        let measureTimedValueBlockType = types.make(.functionType(FunctionType(
+            params: [],
+            returnType: types.makeNullable(types.anyType)
+        )))
+        registerSyntheticTopLevelFunction(
+            named: "measureTimedValue",
+            packageFQName: kotlinTimePkg,
+            parameters: [(name: "block", type: measureTimedValueBlockType)],
+            returnType: timedValueType,
+            externalLinkName: "kk_measureTimedValue",
             symbols: symbols,
             interner: interner
         )

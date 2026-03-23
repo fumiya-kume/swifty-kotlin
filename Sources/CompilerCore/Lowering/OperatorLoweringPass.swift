@@ -44,6 +44,7 @@ final class OperatorLoweringPass: LoweringPass {
             rangeCallees: [
                 ctx.interner.intern("kk_op_rangeTo"),
                 ctx.interner.intern("kk_op_rangeUntil"),
+                ctx.interner.intern("kk_op_ulong_rangeUntil"),
                 ctx.interner.intern("kk_op_downTo"),
                 ctx.interner.intern("kk_op_step"),
                 ctx.interner.intern("kk_range_reversed"),
@@ -136,14 +137,17 @@ final class OperatorLoweringPass: LoweringPass {
         let useUnsignedRank0 = isUnsigned && rank == 0
         let divModCmpPrefix = useUnsignedRank0 ? "u" : prefix
         let divModOp = useUnsignedRank0 ? "rem" : "mod" // unsigned uses urem (LLVM), signed uses mod
+        // For == / != on non-primitive reference types, use structural equality
+        let needsStructuralEquality = (op == .equal || op == .notEqual) && rank == 0
+            && (isReferenceType(lhs, arena: arena, types: types) || isReferenceType(rhs, arena: arena, types: types))
         let callee: InternedString = switch op {
         case .add: interner.intern("kk_op_\(prefix)add")
         case .subtract: interner.intern("kk_op_\(prefix)sub")
         case .multiply: interner.intern("kk_op_\(prefix)mul")
         case .divide: interner.intern("kk_op_\(divModCmpPrefix)div")
         case .modulo: interner.intern("kk_op_\(divModCmpPrefix)\(divModOp)")
-        case .equal: interner.intern("kk_op_\(prefix)eq")
-        case .notEqual: interner.intern("kk_op_\(prefix)ne")
+        case .equal: interner.intern(needsStructuralEquality ? "kk_structural_eq" : "kk_op_\(prefix)eq")
+        case .notEqual: interner.intern(needsStructuralEquality ? "kk_structural_ne" : "kk_op_\(prefix)ne")
         case .lessThan: interner.intern("kk_op_\(divModCmpPrefix)lt")
         case .lessOrEqual: interner.intern("kk_op_\(divModCmpPrefix)le")
         case .greaterThan: interner.intern("kk_op_\(divModCmpPrefix)gt")
@@ -195,6 +199,7 @@ final class OperatorLoweringPass: LoweringPass {
 
         let primitiveCallee: String? = switch types.kind(of: argType) {
         case .primitive(.long, .nonNull): "kk_println_long"
+        case .primitive(.ulong, .nonNull): "kk_println_ulong"
         case .primitive(.float, .nonNull): "kk_println_float"
         case .primitive(.double, .nonNull): "kk_println_double"
         case .primitive(.char, .nonNull): "kk_println_char"
@@ -207,6 +212,16 @@ final class OperatorLoweringPass: LoweringPass {
                 arguments: arguments, result: result, canThrow: canThrow,
                 thrownResult: thrownResult, isSuperCall: isSuperCall
             )
+            return true
+        }
+        if let dataObjectString = rewriteDataObjectPrintlnArgument(
+            argument: arguments[0], arena: arena, sema: ctx.sema,
+            interner: ctx.interner, body: &newBody
+        ) {
+            newBody.append(.call(
+                symbol: symbol, callee: callee, arguments: [dataObjectString],
+                result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall
+            ))
             return true
         }
         if let dataClassString = rewriteDataClassPrintlnArgument(
@@ -295,6 +310,24 @@ final class OperatorLoweringPass: LoweringPass {
         return false
     }
 
+    /// Returns true when the expression is a reference type that requires structural
+    /// equality (e.g. List, Set, Map, String, Any, class instances).
+    /// String is classified as a primitive in the type system but is represented as a
+    /// heap-allocated RuntimeStringBox at runtime, so pointer comparison is insufficient.
+    private func isReferenceType(_ exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Bool {
+        guard let types, let typeID = arena.exprType(exprID) else { return false }
+        switch types.kind(of: typeID) {
+        case .primitive(.string, _):
+            return true
+        case .primitive:
+            return false
+        case .classType, .any:
+            return true
+        default:
+            return false
+        }
+    }
+
     private func primitiveRank(for exprID: KIRExprID, arena: KIRArena, types: TypeSystem?) -> Int {
         guard let types, let typeID = arena.exprType(exprID) else { return 0 }
         switch types.kind(of: typeID) {
@@ -350,6 +383,32 @@ final class OperatorLoweringPass: LoweringPass {
         if let result {
             body.append(.constValue(result: result, value: .unit))
         }
+    }
+
+    /// Rewrites `println(dataObject)` to `println("ObjectName")` so that data
+    /// object singletons print their name instead of the raw integer representation.
+    private func rewriteDataObjectPrintlnArgument(
+        argument: KIRExprID,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
+        body: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let sema,
+              let argumentType = arena.exprType(argument),
+              case let .classType(classType) = sema.types.kind(of: argumentType),
+              let classSymbol = sema.symbols.symbol(classType.classSymbol),
+              classSymbol.kind == .object,
+              classSymbol.flags.contains(.dataType)
+        else {
+            return nil
+        }
+
+        let stringType = sema.types.stringType
+        let objectName = interner.intern(interner.resolve(classSymbol.name))
+        let resultExpr = arena.appendExpr(.stringLiteral(objectName), type: stringType)
+        body.append(.constValue(result: resultExpr, value: .stringLiteral(objectName)))
+        return resultExpr
     }
 
     private func rewriteDataClassPrintlnArgument(

@@ -874,6 +874,17 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerSyntheticStringExtensionFunction(
+            named: "singleOrNull",
+            externalLinkName: "kk_string_singleOrNull",
+            receiverType: stringType,
+            parameters: [],
+            returnType: nullableCharType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-191: prependIndent / replaceIndent ---
 
         registerSyntheticStringExtensionFunction(
@@ -1108,6 +1119,26 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // --- STDLIB-666: String.lineSequence ---
+
+        let sequenceStringType = makeSequenceType(
+            symbols: symbols,
+            types: types,
+            interner: interner,
+            elementType: stringType
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "lineSequence",
+            externalLinkName: "kk_string_lineSequence",
+            receiverType: stringType,
+            parameters: [],
+            returnType: sequenceStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-144: String.trimStart / trimEnd ---
 
         registerSyntheticStringExtensionFunction(
@@ -1152,6 +1183,56 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-581: String.toByteArray(charset: Charset)
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset", in: kotlinTextPkg,
+            symbols: symbols, interner: interner
+        )
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        // Register Charsets singleton object with charset constants
+        let charsetsSymbol = ensureSyntheticObjectSymbol(
+            named: "Charsets",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charsetsType = types.make(.classType(ClassType(
+            classSymbol: charsetsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetsType, for: charsetsSymbol)
+
+        for charsetName in [
+            "UTF_8", "ISO_8859_1", "US_ASCII",
+            "UTF_16", "UTF_16BE", "UTF_16LE",
+            "UTF_32", "UTF_32BE", "UTF_32LE",
+        ] {
+            registerSyntheticObjectProperty(
+                ownerSymbol: charsetsSymbol,
+                ownerType: charsetsType,
+                name: charsetName,
+                propertyType: charsetType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        registerSyntheticStringExtensionFunction(
+            named: "toByteArray",
+            externalLinkName: "kk_string_toByteArray_charset",
+            receiverType: stringType,
+            parameters: [
+                ("charset", charsetType, false, false),
+            ],
+            returnType: listIntType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
         // STDLIB-573: String.encodeToByteArray()
         registerSyntheticStringExtensionFunction(
             named: "encodeToByteArray",
@@ -1164,23 +1245,108 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-574: ByteArray.decodeToString()
+        // STDLIB-573: String.encodeToByteArray(startIndex, endIndex)
+        for functionName in ["encodeToByteArray", "toByteArray"] {
+            registerSyntheticStringExtensionFunction(
+                named: functionName,
+                externalLinkName: "kk_string_encodeToByteArray_range",
+                receiverType: stringType,
+                parameters: [
+                    ("startIndex", intType, false, false),
+                    ("endIndex", intType, false, false),
+                ],
+                returnType: listIntType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        // STDLIB-573: String.encodeToByteArray(charset) — charset-aware overload
         registerSyntheticStringExtensionFunction(
-            named: "decodeToString",
-            externalLinkName: "kk_bytearray_decodeToString",
-            receiverType: listIntType,
-            parameters: [],
-            returnType: stringType,
+            named: "encodeToByteArray",
+            externalLinkName: "kk_string_encodeToByteArray_charset",
+            receiverType: stringType,
+            parameters: [
+                ("charset", charsetType, false, false),
+            ],
+            returnType: listIntType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner
         )
+
+        // STDLIB-574: ByteArray.decodeToString()
+        let byteArrayType = makeNominalType(
+            symbols: symbols,
+            types: types,
+            fqName: [interner.intern("kotlin"), interner.intern("ByteArray")]
+        )
+
+        // Register on both List<Int> (internal representation) and ByteArray (user-facing type)
+        for receiverType in [listIntType, byteArrayType] {
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString",
+                receiverType: receiverType,
+                parameters: [],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
+        for charsetPropName in ["UTF_8", "US_ASCII", "ISO_8859_1"] {
+            let propName = interner.intern(charsetPropName)
+            let propFQName = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charsets"), propName]
+            guard symbols.lookup(fqName: propFQName) == nil else { continue }
+            let propSymbol = symbols.define(
+                kind: .property,
+                name: propName,
+                fqName: propFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(charsetsSymbol, for: propSymbol)
+            symbols.setPropertyType(charsetType, for: propSymbol)
+        }
+
+        // STDLIB-574: ByteArray.decodeToString(charset: Charset) overload
+        for receiverType in [listIntType, byteArrayType] {
+            registerSyntheticStringExtensionFunction(
+                named: "decodeToString",
+                externalLinkName: "kk_bytearray_decodeToString_charset",
+                receiverType: receiverType,
+                parameters: [
+                    ("charset", charsetType, false, false),
+                ],
+                returnType: stringType,
+                packageFQName: kotlinTextPkg,
+                symbols: symbols,
+                interner: interner
+            )
+        }
 
         // --- STDLIB-316: String.chunked / String.windowed ---
 
         registerSyntheticStringExtensionFunction(
             named: "chunked",
             externalLinkName: "kk_string_chunked",
+            receiverType: stringType,
+            parameters: [
+                ("size", intType, false, false),
+            ],
+            returnType: listStringType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
+            named: "windowed",
+            externalLinkName: "kk_string_windowed_default",
             receiverType: stringType,
             parameters: [
                 ("size", intType, false, false),
@@ -1692,5 +1858,54 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func ensureSyntheticObjectSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .object,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticObjectProperty(
+        ownerSymbol: SymbolID,
+        ownerType _: TypeID,
+        name: String,
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        guard symbols.lookup(fqName: propertyFQName) == nil else {
+            return
+        }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 }

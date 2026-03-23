@@ -86,6 +86,23 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // SAM constructor calls: `Transformer { ... }` — the single lambda
+        // argument is already marked as a SAM conversion.  Lower the lambda
+        // directly; the SAM wrapper is produced by LambdaLowerer.
+        if args.count == 1,
+           sema.bindings.isSamConversion(args[0].expr)
+        {
+            return driver.lowerExpr(
+                args[0].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
         // Invoke operator calls are lowered as member calls: the callee expr
         // becomes the receiver and the invoke method is the callee.
         if sema.bindings.isInvokeOperatorCall(exprID) {
@@ -156,6 +173,19 @@ final class CallLowerer {
             return loweredMeasureTimeDuration
         }
 
+        if let loweredMeasureTimedValue = lowerMeasureTimedValueCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredMeasureTimedValue
+        }
+
         if let loweredArrayConstructor = lowerArrayConstructorCallExpr(
             exprID,
             args: args,
@@ -180,6 +210,19 @@ final class CallLowerer {
             instructions: &instructions
         ) {
             return loweredEnumValues
+        }
+
+        if let loweredEnumEntries = lowerEnumEntriesCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumEntries
         }
 
         if let loweredEnumValueOf = lowerEnumValueOfCallExpr(
@@ -315,7 +358,12 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let callBinding = sema.bindings.callBindings[exprID]
+        let chosen = callBinding?.chosenCallee
         let loweredCallable = driver.ctx.callableValueInfo(for: loweredCalleeExprID)
+            ?? chosen.flatMap { symbol in
+                driver.ctx.localValue(for: symbol).flatMap { driver.ctx.callableValueInfo(for: $0) }
+            }
         let sourceCalleeName: InternedString = if let callee = ast.arena.expr(calleeExpr), case let .nameRef(name, _) = callee {
             name
         } else if let loweredCallable {
@@ -363,9 +411,7 @@ final class CallLowerer {
             return loweredNumericConversion
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let callBinding = sema.bindings.callBindings[exprID]
         let callableValueCallBinding = sema.bindings.callableValueCalls[exprID]
-        let chosen = callBinding?.chosenCallee
         let callNormalized: NormalizedCallResult = if callBinding != nil {
             driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,
@@ -589,16 +635,25 @@ final class CallLowerer {
                 instructions.append(.constValue(result: capacityExpr, value: .intLiteral(0)))
                 finalArgIDs.append(capacityExpr)
             }
+            let callCanThrow = needsThrownChannel(calleeName: loweredCalleeName, interner: interner)
             instructions.append(.call(
                 symbol: chosen ?? loweredCallable?.symbol,
                 callee: loweredCalleeName,
                 arguments: finalArgIDs,
                 result: result,
-                canThrow: false,
+                canThrow: callCanThrow,
                 thrownResult: nil
             ))
         }
         return result
+    }
+
+    /// Returns true if the callee is a runtime function that requires a thrown
+    /// channel (outThrown) parameter in its ABI. This ensures the codegen
+    /// appends the extra `intptr_t * _Nullable` slot.
+    private func needsThrownChannel(calleeName: InternedString, interner: StringInterner) -> Bool {
+        let name = interner.resolve(calleeName)
+        return name == "kk_runCatching"
     }
 
     private func tryLowerCollectionToListCall(
@@ -629,6 +684,8 @@ final class CallLowerer {
                 nil
             case interner.intern("Range"), interner.intern("IntRange"), interner.intern("LongRange"):
                 interner.intern("kk_range_toList")
+            case interner.intern("ULongRange"):
+                interner.intern("kk_ulong_range_toList")
             case interner.intern("CharRange"):
                 interner.intern("kk_char_range_toList")
             case knownNames.string:
@@ -664,25 +721,47 @@ final class CallLowerer {
         instructions: inout [KIRInstruction]
     ) -> [KIRExprID] {
         guard let externalLinkName = sema.symbols.externalLinkName(for: chosenCallee),
-              ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"].contains(externalLinkName),
-              loweredArguments.count == originalArgs.count,
-              loweredArguments.count == 2
+              loweredArguments.count == originalArgs.count
         else {
             return loweredArguments
         }
 
-        var finalArgs = [loweredArguments[0], loweredArguments[1]]
-        if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
-           let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
-           let closureRaw = callableInfo.captureArguments.first
-        {
-            finalArgs.append(closureRaw)
-        } else {
-            let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
-            instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
-            finalArgs.append(zeroExpr)
+        let legacyNames: Set = ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy", "kk_sequence_generate"]
+        if legacyNames.contains(externalLinkName), loweredArguments.count == 2 {
+            var finalArgs = [loweredArguments[0], loweredArguments[1]]
+            if sema.bindings.isCollectionHOFLambdaExpr(originalArgs[1].expr),
+               let callableInfo = driver.ctx.callableValueInfo(for: loweredArguments[1]),
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw)
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr)
+            }
+            return finalArgs
         }
-        return finalArgs
+
+        // STDLIB-590: runCatching { block } — expand lambda arg to (fnPtr, closureRaw)
+        if externalLinkName == "kk_runCatching", loweredArguments.count == 1 {
+            var finalArgs: [KIRExprID] = []
+            let lambdaID = loweredArguments[0]
+            // The lowered lambda is a function pointer; its callableValueInfo
+            // holds (callee=fnPtr, captureArguments=[closureRaw]).
+            finalArgs.append(lambdaID) // fnPtr
+            if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID),
+               let closureRaw = callableInfo.captureArguments.first
+            {
+                finalArgs.append(closureRaw) // closureRaw
+            } else {
+                let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
+            }
+            return finalArgs
+        }
+
+        return loweredArguments
     }
 
     func appendReifiedTypeTokens(
