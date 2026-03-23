@@ -1103,6 +1103,39 @@ final class CallTypeChecker {
                     }
                 }
             }
+            // --- Typealias constructor calls ---
+            // If the callee is a typealias (e.g. `typealias IntPair = Pair<Int, Int>`),
+            // expand it to the underlying class and resolve its constructor.
+            if candidates.isEmpty {
+                let aliasSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
+                    guard let symbol = ctx.cachedSymbol(candidate) else { return false }
+                    return symbol.kind == .typeAlias
+                }
+                if let aliasSym = aliasSymbols.first {
+                    // Expand the typealias to get the underlying class type
+                    let aliasTypeArgs = explicitTypeArgs.map { TypeArg.invariant($0) }
+                    if let expanded = driver.helpers.expandTypeAlias(
+                        aliasSym,
+                        typeArgs: aliasTypeArgs,
+                        sema: sema,
+                        visited: [],
+                        depth: 0,
+                        diagnostics: ctx.semaCtx.diagnostics
+                    ),
+                       case let .classType(classType) = sema.types.kind(of: expanded),
+                       let underlyingSymbol = ctx.cachedSymbol(classType.classSymbol)
+                    {
+                        let initName = interner.intern("<init>")
+                        let ctorFQName = underlyingSymbol.fqName + [initName]
+                        let ctorSymbols = sema.symbols.lookupAll(fqName: ctorFQName)
+                        if !ctorSymbols.isEmpty {
+                            let (vis, invis) = ctx.filterByVisibility(ctorSymbols)
+                            candidates = vis
+                            callInvisible.append(contentsOf: invis)
+                        }
+                    }
+                }
+            }
         } else {
             candidates = []
         }
