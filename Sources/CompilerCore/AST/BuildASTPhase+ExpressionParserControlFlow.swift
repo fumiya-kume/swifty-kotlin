@@ -66,6 +66,13 @@ extension BuildASTPhase.ExpressionParser {
                 }
             }
 
+            // Parse optional guard condition: `if <expr>` before `->`
+            var guardExpr: ExprID?
+            if !isElseBranch, !conditions.isEmpty, matches(.keyword(.if)) {
+                _ = consume() // consume `if`
+                guardExpr = parseExpression(minPrecedence: 0)
+            }
+
             _ = consumeIf(.symbol(.arrow))
             let body = parseWhenBranchBodyExpression()
             while matches(.symbol(.semicolon)) || matches(.symbol(.comma)) {
@@ -74,7 +81,7 @@ extension BuildASTPhase.ExpressionParser {
 
             if let body {
                 let branchRange = SourceRange(start: branchStart, end: astArena.exprRange(body)?.end ?? branchStart)
-                let branch = WhenBranch(conditions: conditions, body: body, range: branchRange)
+                let branch = WhenBranch(conditions: conditions, guard: guardExpr, body: body, range: branchRange)
                 if isElseBranch {
                     elseExpr = body
                 } else if !conditions.isEmpty {

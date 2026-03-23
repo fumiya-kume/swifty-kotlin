@@ -1,4 +1,4 @@
-symbol s0 kind=package fq=golden.sema vis=public flags=_
+symbol s0 kind=package fq=_root_ vis=public flags=_
 symbol s1 kind=package fq=kotlin vis=public flags=synthetic
 symbol s2 kind=package fq=kotlin.properties vis=public flags=synthetic
 symbol s3 kind=interface fq=kotlin.properties.Lazy vis=public flags=synthetic
@@ -1032,16 +1032,26 @@ symbol s1030 kind=typeParameter fq=kotlin.io.use.T vis=private flags=_
 symbol s1031 kind=typeParameter fq=kotlin.io.use.R vis=private flags=_
 symbol s1032 kind=valueParameter fq=kotlin.io.use.block vis=private flags=synthetic
 symbol s1033 kind=function fq=kotlin.io.use vis=public flags=inlineFunction|synthetic sig=recv=T#1030 params=[(T#1030) -> T#1031] ret=T#1031 suspend=0 defaults=[0] vararg=[0]
-symbol s1034 kind=class fq=golden.sema.Widget vis=public flags=_
-symbol s1035 kind=constructor fq=golden.sema.Widget.<init> vis=public flags=_ sig=recv=Class#1034 params=[] ret=Class#1034 suspend=0 defaults=[] vararg=[]
-symbol s1036 kind=property fq=golden.sema.Widget.computed vis=public flags=_ type=String
-symbol s1037 kind=property fq=golden.sema.Widget.backed vis=public flags=mutable type=Int
-symbol s1038 kind=backingField fq=golden.sema.Widget.$backing_backed vis=private flags=mutable type=Int
-file f0 package=golden.sema
-  decl d2 class Widget sym=s1034
-expr e0 string(hello) type=String
-expr e1 name(field) type=_
-expr e2 name(value) type=Int ref=s-41037
-expr e3 localAssign field value=e2 type=Unit ref=s1038
-expr e4 name(field) type=Int ref=s1038
-expr e5 int(0) type=Int
+symbol s1034 kind=function fq=classify vis=public flags=_ sig=recv=_ params=[Any] ret=String suspend=0 defaults=[0] vararg=[0]
+symbol s1035 kind=valueParameter fq=classify.$1034.x vis=private flags=_
+file f0 package=_
+  decl d0 fun classify suspend=0 inline=0 sym=s1034
+expr e0 name(x) type=Any ref=s1035
+expr e1 isCheck expr=e0 type=t2 type=Boolean
+expr e2 name(x) type=String ref=s1035
+expr e3 memberCall recv=e2 callee=length args=[] type=Int
+expr e4 int(3) type=Int
+expr e5 binary(greaterThan) lhs=e3 rhs=e4 type=Boolean
+expr e6 string(long string) type=String
+expr e7 isCheck expr=e0 type=t3 type=Boolean
+expr e8 string(short string) type=String
+expr e9 isCheck expr=e0 type=t4 type=Boolean
+expr e10 name(x) type=Int ref=s1035
+expr e11 int(0) type=Int
+expr e12 binary(greaterThan) lhs=e10 rhs=e11 type=Boolean
+expr e13 string(positive int) type=String
+expr e14 isCheck expr=e0 type=t5 type=Boolean
+expr e15 string(non-positive int) type=String
+expr e16 string(other) type=String
+expr e17 when subject=e0 branches=[e1 if e5->e6,e7->e8,e9 if e12->e13,e14->e15] else=e16 type=String
+expr e18 return value=e17 type=Nothing
