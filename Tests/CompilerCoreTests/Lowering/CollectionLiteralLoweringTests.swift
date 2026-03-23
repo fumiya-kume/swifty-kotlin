@@ -124,7 +124,7 @@ final class CollectionLiteralLoweringTests: XCTestCase {
 
         let callees = calleesInDecl(declID, module: module, interner: interner)
         XCTAssertFalse(callees.contains("listOfNotNull"), "listOfNotNull should be rewritten")
-        XCTAssertTrue(callees.contains("kk_list_of"), "listOfNotNull should become kk_list_of")
+        XCTAssertTrue(callees.contains("kk_list_of_not_null"), "listOfNotNull should become kk_list_of_not_null")
     }
 
     // MARK: - mapOf rewriting

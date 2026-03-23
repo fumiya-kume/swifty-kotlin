@@ -744,15 +744,19 @@ extension DataFlowSemaPhase {
             }
 
             // Materialize a backing field symbol for top-level properties with
-            // custom accessors (mirrors member property backing field logic).
+            // custom accessors or explicit backing field declarations
+            // (mirrors member property backing field logic).
             // Simple properties with only an initializer don't need a separate
             // backing field — the property symbol IS the storage.
             // Getter-only computed properties never need a backing field.
+            let hasExplicitBackingField = propertyDecl.explicitBackingField != nil
             let isGetterOnlyComputed = propertyDecl.getter != nil
                 && propertyDecl.setter == nil
                 && propertyDecl.initializer == nil
-            let needsBackingField = !isGetterOnlyComputed
-                && (propertyDecl.getter != nil || propertyDecl.setter != nil)
+                && !hasExplicitBackingField
+            let needsBackingField = hasExplicitBackingField
+                || (!isGetterOnlyComputed
+                    && (propertyDecl.getter != nil || propertyDecl.setter != nil))
             if needsBackingField, propertyDecl.delegateExpression == nil, propertyDecl.receiverType == nil {
                 let fieldName = interner.intern("$backing_\(interner.resolve(propertyDecl.name))")
                 let fieldFQName = fqName.dropLast() + [fieldName]
@@ -764,7 +768,25 @@ extension DataFlowSemaPhase {
                     visibility: .private,
                     flags: propertyDecl.isVar ? [.mutable] : []
                 )
-                symbols.setPropertyType(resolvedType, for: backingFieldSymbol)
+                // When an explicit backing field declares its own type, use that
+                // type for the backing field symbol instead of the property type.
+                let backingFieldType: TypeID
+                if let explicitField = propertyDecl.explicitBackingField,
+                   let explicitType = explicitField.type
+                {
+                    backingFieldType = resolveTypeRef(
+                        explicitType,
+                        ast: ast,
+                        symbols: symbols,
+                        types: types,
+                        interner: interner,
+                        localTypeParameters: [:],
+                        diagnostics: diagnostics
+                    ) ?? resolvedType
+                } else {
+                    backingFieldType = resolvedType
+                }
+                symbols.setPropertyType(backingFieldType, for: backingFieldSymbol)
                 symbols.setBackingFieldSymbol(backingFieldSymbol, for: symbol)
             }
 
