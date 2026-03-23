@@ -1650,9 +1650,20 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                     .temporary(Int32(module.arena.expressions.count)),
                     type: boolType
                 )
+                // Use structural equality for reference types (String, class instances, etc.)
+                // to match Kotlin data class equals() semantics. Primitive types can use
+                // pointer/value equality via kk_op_eq.
+                let eqCallee: String = switch sema.types.kind(of: sema.types.makeNonNullable(propType)) {
+                case .primitive(.string, _), .classType, .any:
+                    "kk_structural_eq"
+                case .primitive:
+                    "kk_op_eq"
+                default:
+                    "kk_structural_eq"
+                }
                 body.append(.call(
                     symbol: nil,
-                    callee: interner.intern("kk_op_eq"),
+                    callee: interner.intern(eqCallee),
                     arguments: [selfProp, otherProp],
                     result: cmpResult,
                     canThrow: false,
