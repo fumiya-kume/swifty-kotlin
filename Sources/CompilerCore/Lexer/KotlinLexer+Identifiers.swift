@@ -4,10 +4,23 @@ extension KotlinLexer {
     }
 
     func scanTemplateName(leadingTrivia: [TriviaPiece], start: Int) -> Token? {
-        guard start < bytes.count, isIdentifierStart(bytes[start]) else {
+        guard start < bytes.count, isIdentifierStart(bytes[start]), bytes[start] != 0x24 else {
             return nil
         }
-        return scanIdentifierCore(start: start, leadingTrivia: leadingTrivia)
+        return scanTemplateNameCore(start: start, leadingTrivia: leadingTrivia)
+    }
+
+    /// Scans an identifier for a simple string template reference (`$name`).
+    /// Unlike `scanIdentifierCore`, this stops at `$` so that adjacent
+    /// template references like `"$i$j"` are parsed as two separate names.
+    private func scanTemplateNameCore(start: Int, leadingTrivia: [TriviaPiece]) -> Token {
+        var cursor = start
+        while cursor < bytes.count, isIdentifierContinue(bytes[cursor]), bytes[cursor] != 0x24 {
+            cursor += 1
+        }
+        let name = text(from: start ..< cursor)
+        offset = cursor
+        return Token(kind: .identifier(interner.intern(name)), range: makeRange(start: start, end: cursor), leadingTrivia: leadingTrivia)
     }
 
     private func scanIdentifierCore(start: Int, leadingTrivia: [TriviaPiece]) -> Token {
