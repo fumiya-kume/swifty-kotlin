@@ -274,6 +274,12 @@ extension BuildASTPhase {
         } else {
             declarationPropertyName(from: nodeID, in: arena, interner: interner)
         }
+
+        // Kotlin 2.0 explicit backing field: `field = expr` or `field: Type = expr`
+        let explicitField = declarationExplicitBackingField(
+            from: nodeID, in: arena, interner: interner, astArena: astArena
+        )
+
         return PropertyDecl(
             range: node.range,
             name: propertyName,
@@ -286,7 +292,8 @@ extension BuildASTPhase {
             setter: accessors.setter,
             delegateExpression: delegateExpr,
             delegateBody: delegateBody,
-            receiverType: receiverType
+            receiverType: receiverType,
+            explicitBackingField: explicitField
         )
     }
 

@@ -19,10 +19,13 @@ extension KIRLoweringDriver {
         // Getter-only computed properties (`val x: T get() = expr`) have no
         // storage — skip emitting a KIRGlobal so no backing field is generated
         // in codegen.  The getter accessor function alone is sufficient.
+        // Exception: properties with explicit backing fields always have storage.
+        let hasExplicitBackingField = propertyDecl.explicitBackingField != nil
         let isGetterOnlyComputed = propertyDecl.getter != nil
             && propertyDecl.setter == nil
             && propertyDecl.initializer == nil
             && propertyDecl.delegateExpression == nil
+            && !hasExplicitBackingField
 
         if !isExtensionProperty, !isGetterOnlyComputed {
             let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))
@@ -37,6 +40,16 @@ extension KIRLoweringDriver {
             propertyDecl, symbol: symbol, propType: propType,
             shared: shared, declIDs: &declIDs
         )
+
+        // Emit explicit backing field initializer if present.
+        if let explicitField = propertyDecl.explicitBackingField, !isExtensionProperty {
+            lowerExplicitBackingFieldInitializer(
+                explicitField, symbol: symbol, propType: propType,
+                shared: shared,
+                allTopLevelInitInstructions: &allTopLevelInitInstructions,
+                declIDs: &declIDs
+            )
+        }
 
         lowerPropertyInitializer(
             propertyDecl, symbol: symbol, propType: propType,
@@ -73,6 +86,35 @@ extension KIRLoweringDriver {
         else { return }
         let backingFieldType = shared.sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
         declIDs.append(shared.arena.appendDecl(.global(KIRGlobal(symbol: backingFieldSymbol, type: backingFieldType))))
+    }
+
+    // MARK: - Explicit Backing Field Initializer (Kotlin 2.0)
+
+    /// Emits initialization instructions for an explicit backing field.
+    /// The initializer expression comes from the `field = expr` declaration,
+    /// not from the property's own initializer.
+    private func lowerExplicitBackingFieldInitializer(
+        _ explicitField: ExplicitBackingField,
+        symbol: SymbolID,
+        propType: TypeID,
+        shared: KIRLoweringSharedContext,
+        allTopLevelInitInstructions: inout KIRLoweringEmitContext,
+        declIDs: inout [KIRDeclID]
+    ) {
+        let sema = shared.sema
+        let arena = shared.arena
+        guard let backingFieldSymbol = sema.symbols.backingFieldSymbol(for: symbol) else { return }
+        let backingFieldType = sema.symbols.propertyType(for: backingFieldSymbol) ?? propType
+
+        ctx.resetScopeForFunction()
+        ctx.beginCallableLoweringScope()
+        var initInstructions: KIRLoweringEmitContext = []
+        let initValue = lowerExpr(explicitField.initializer, shared: shared, emit: &initInstructions)
+        let globalRef = arena.appendExpr(.symbolRef(backingFieldSymbol), type: backingFieldType)
+        initInstructions.append(.constValue(result: globalRef, value: .symbolRef(backingFieldSymbol)))
+        initInstructions.append(.copy(from: initValue, to: globalRef))
+        allTopLevelInitInstructions.append(contentsOf: initInstructions)
+        declIDs.append(contentsOf: ctx.drainGeneratedCallableDecls())
     }
 
     // MARK: - Property Accessors

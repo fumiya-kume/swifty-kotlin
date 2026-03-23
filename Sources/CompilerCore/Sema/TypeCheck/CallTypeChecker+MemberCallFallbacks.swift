@@ -511,6 +511,11 @@ extension CallTypeChecker {
             interner.intern("reduce"),
             interner.intern("reduceOrNull"),
             interner.intern("reduceIndexed"),
+            interner.intern("filterIndexed"),
+            interner.intern("reduceIndexedOrNull"),
+            interner.intern("runningFoldIndexed"),
+            interner.intern("runningReduceIndexed"),
+            interner.intern("scanIndexed"),
             interner.intern("scan"),
             interner.intern("runningFold"),
             interner.intern("runningReduce"),
@@ -562,6 +567,16 @@ extension CallTypeChecker {
             interner.intern("elementAt"),
             interner.intern("single"),
             interner.intern("toMutableList"),
+            interner.intern("maxOf"),
+            interner.intern("minOf"),
+            interner.intern("maxWith"),
+            interner.intern("maxWithOrNull"),
+            interner.intern("minWith"),
+            interner.intern("minWithOrNull"),
+            interner.intern("maxOfWith"),
+            interner.intern("maxOfWithOrNull"),
+            interner.intern("minOfWith"),
+            interner.intern("minOfWithOrNull"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -640,6 +655,8 @@ extension CallTypeChecker {
             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
             interner.intern("scan"), interner.intern("runningFold"), interner.intern("runningReduce"), interner.intern("scanReduce"),
             interner.intern("toMutableList"),
+            interner.intern("filterIndexed"),
+            interner.intern("runningFoldIndexed"), interner.intern("runningReduceIndexed"), interner.intern("scanIndexed"),
         ]
         let setReturningMembers: Set = [
             interner.intern("intersect"),
@@ -694,8 +711,14 @@ extension CallTypeChecker {
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
              interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
              interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
-             interner.intern("elementAt"):
+             interner.intern("elementAt"),
+             interner.intern("maxOf"), interner.intern("minOf"),
+             interner.intern("maxWith"), interner.intern("maxWithOrNull"),
+             interner.intern("minWith"), interner.intern("minWithOrNull"):
             return argCount == 1
+        case interner.intern("maxOfWith"), interner.intern("maxOfWithOrNull"),
+             interner.intern("minOfWith"), interner.intern("minOfWithOrNull"):
+            return argCount == 2
         case interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
             return argCount == 2
         case interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"):
@@ -716,9 +739,11 @@ extension CallTypeChecker {
             return isMutableMapReceiver && argCount == 1
         case interner.intern("plus"), interner.intern("minus"):
             return isMapReceiver && argCount == 1
-        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("subList"):
+        case interner.intern("fold"), interner.intern("foldIndexed"), interner.intern("scan"), interner.intern("runningFold"), interner.intern("subList"),
+             interner.intern("runningFoldIndexed"), interner.intern("scanIndexed"):
             return argCount == 2
-        case interner.intern("reduceIndexed"):
+        case interner.intern("reduceIndexed"), interner.intern("filterIndexed"),
+             interner.intern("reduceIndexedOrNull"), interner.intern("runningReduceIndexed"):
             return argCount == 1
         case interner.intern("windowed"):
             return argCount == 1 || argCount == 2 || argCount == 3
@@ -859,6 +884,8 @@ extension CallTypeChecker {
             || memberName == interner.intern("minOrNull")
             || memberName == interner.intern("maxByOrNull")
             || memberName == interner.intern("minByOrNull")
+            || memberName == interner.intern("maxWithOrNull")
+            || memberName == interner.intern("minWithOrNull")
             || memberName == interner.intern("firstOrNull")
             || memberName == interner.intern("lastOrNull")
             || memberName == interner.intern("singleOrNull")
@@ -866,10 +893,26 @@ extension CallTypeChecker {
             return sema.types.makeNullable(receiverElementType)
         }
 
+        if memberName == interner.intern("maxWith")
+            || memberName == interner.intern("minWith")
+        {
+            return receiverElementType
+        }
+
         if memberName == interner.intern("maxOfOrNull")
             || memberName == interner.intern("minOfOrNull")
+            || memberName == interner.intern("maxOfWithOrNull")
+            || memberName == interner.intern("minOfWithOrNull")
         {
             return sema.types.nullableAnyType
+        }
+
+        if memberName == interner.intern("maxOf")
+            || memberName == interner.intern("minOf")
+            || memberName == interner.intern("maxOfWith")
+            || memberName == interner.intern("minOfWith")
+        {
+            return sema.types.anyType
         }
 
         if (memberName == interner.intern("toList") || memberName == interner.intern("subList")),
@@ -892,11 +935,12 @@ extension CallTypeChecker {
             )))
         }
 
-        if memberName == interner.intern("reduceOrNull") {
+        if memberName == interner.intern("reduceOrNull") || memberName == interner.intern("reduceIndexedOrNull") {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        if (memberName == interner.intern("runningReduce") || memberName == interner.intern("scanReduce")),
+        if (memberName == interner.intern("runningReduce") || memberName == interner.intern("scanReduce")
+            || memberName == interner.intern("runningReduceIndexed")),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
             return sema.types.make(.classType(ClassType(
@@ -906,7 +950,8 @@ extension CallTypeChecker {
             )))
         }
 
-        if (memberName == interner.intern("scan") || memberName == interner.intern("runningFold")),
+        if (memberName == interner.intern("scan") || memberName == interner.intern("runningFold")
+            || memberName == interner.intern("scanIndexed") || memberName == interner.intern("runningFoldIndexed")),
            let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
         {
             // scan/runningFold return List<R> where R is the accumulator type,
@@ -1028,6 +1073,8 @@ extension CallTypeChecker {
             interner.intern("minByOrNull"),
             interner.intern("maxOfOrNull"),
             interner.intern("minOfOrNull"),
+            interner.intern("maxOf"),
+            interner.intern("minOf"),
         ]
         let mapOnlyMembers: Set = [
             mapValues,
@@ -1137,13 +1184,18 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
-        if memberName == interner.intern("reduceIndexed"), argCount == 1 {
+        if (memberName == interner.intern("reduceIndexed") || memberName == interner.intern("reduceIndexedOrNull")), argCount == 1 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [sema.types.intType, sema.types.anyType, sema.types.anyType],
                 returnType: sema.types.anyType,
                 isSuspend: false,
                 nullability: .nonNull
             )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        if memberName == interner.intern("filterIndexed"), argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, receiverElementType], returnType: sema.types.booleanType, isSuspend: false, nullability: .nonNull)))
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
@@ -1160,6 +1212,11 @@ extension CallTypeChecker {
             return (argumentIndex: 1, expectedType: expectedType)
         }
 
+        if (memberName == interner.intern("scanIndexed") || memberName == interner.intern("runningFoldIndexed")), argCount == 2 {
+            let expectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, sema.types.anyType, receiverElementType], returnType: sema.types.anyType, isSuspend: false, nullability: .nonNull)))
+            return (argumentIndex: 1, expectedType: expectedType)
+        }
+
         if (memberName == interner.intern("runningReduce") || memberName == interner.intern("scanReduce")), argCount == 1 {
             // runningReduce/scanReduce: (acc: T, element: T) -> T
             let expectedType = sema.types.make(.functionType(FunctionType(
@@ -1171,6 +1228,11 @@ extension CallTypeChecker {
             return (argumentIndex: 0, expectedType: expectedType)
         }
 
+        if memberName == interner.intern("runningReduceIndexed"), argCount == 1 {
+            let expectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, receiverElementType, receiverElementType], returnType: receiverElementType, isSuspend: false, nullability: .nonNull)))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
         if memberName == interner.intern("sortedWith"), argCount == 1 {
             let expectedType = sema.types.make(.functionType(FunctionType(
                 params: [receiverElementType, receiverElementType],
@@ -1179,6 +1241,35 @@ extension CallTypeChecker {
                 nullability: .nonNull
             )))
             return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // maxWith / maxWithOrNull / minWith / minWithOrNull: comparator lambda (T, T) -> Int
+        if (memberName == interner.intern("maxWith") || memberName == interner.intern("maxWithOrNull")
+            || memberName == interner.intern("minWith") || memberName == interner.intern("minWithOrNull")),
+           argCount == 1
+        {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType, receiverElementType],
+                returnType: sema.types.intType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 0, expectedType: expectedType)
+        }
+
+        // maxOfWith / maxOfWithOrNull / minOfWith / minOfWithOrNull: comparator + selector (2 args)
+        // The first arg is the comparator, second is the selector; provide expected type for selector (arg index 1)
+        if (memberName == interner.intern("maxOfWith") || memberName == interner.intern("maxOfWithOrNull")
+            || memberName == interner.intern("minOfWith") || memberName == interner.intern("minOfWithOrNull")),
+           argCount == 2
+        {
+            let expectedType = sema.types.make(.functionType(FunctionType(
+                params: [receiverElementType],
+                returnType: sema.types.anyType,
+                isSuspend: false,
+                nullability: .nonNull
+            )))
+            return (argumentIndex: 1, expectedType: expectedType)
         }
 
         if memberName == knownNames.getOrPut, isMutableMapReceiver, argCount == 2 {

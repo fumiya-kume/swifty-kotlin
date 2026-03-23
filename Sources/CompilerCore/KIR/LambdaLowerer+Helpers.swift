@@ -369,7 +369,9 @@ extension LambdaLowerer {
     ) -> Bool {
         subject.map(check) ?? false
             || branches.contains { branch in
-                branch.conditions.contains(where: check) || check(branch.body)
+                branch.conditions.contains(where: check)
+                    || branch.guard_.map(check) ?? false
+                    || check(branch.body)
             }
             || elseBody.map(check) ?? false
     }
