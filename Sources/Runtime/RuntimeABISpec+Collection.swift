@@ -10,6 +10,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_list_of_not_null",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // STDLIB-410: emptyList
         RuntimeABIFunctionSpec(
             name: "kk_emptyList",

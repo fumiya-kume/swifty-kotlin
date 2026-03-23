@@ -1,6 +1,7 @@
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
+        kk_list_of_not_null,
         kk_emptyList,
         kk_list_size,
         kk_list_get,
@@ -270,6 +271,12 @@ public extension RuntimeABIExterns {
 
     static let kk_list_of = ExternDecl(
         name: "kk_list_of",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_of_not_null = ExternDecl(
+        name: "kk_list_of_not_null",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
