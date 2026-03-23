@@ -103,7 +103,9 @@ extension BuildASTPhase {
             guard isStatementLikeKind(node.kind) else { continue }
 
             let rawTokens = collectTokens(from: nodeID, in: arena)
-            let filtered = rawTokens.filter { $0.kind != .symbol(.semicolon) }
+            // Only strip semicolons at the top brace level so that
+            // semicolons inside nested blocks / lambda bodies are preserved.
+            let filtered = filterTopLevelSemicolons(rawTokens)
             guard !filtered.isEmpty else { continue }
 
             // If the first token is `.` or `?.`, merge into the previous group.
@@ -140,6 +142,25 @@ extension BuildASTPhase {
             rawGroups.append(rawTokens)
             filteredGroups.append(filtered)
         }
+    }
+
+    /// Filter out semicolons that are at the outermost brace level,
+    /// preserving those inside nested braces (e.g. lambda bodies).
+    private func filterTopLevelSemicolons(_ tokens: [Token]) -> [Token] {
+        var result: [Token] = []
+        var braceDepth = 0
+        for token in tokens {
+            switch token.kind {
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
+            default: break
+            }
+            if token.kind == .symbol(.semicolon), braceDepth == 0 {
+                continue
+            }
+            result.append(token)
+        }
+        return result
     }
 
     private func hasUnclosedStatementDelimiter(_ tokens: [Token]) -> Bool {
