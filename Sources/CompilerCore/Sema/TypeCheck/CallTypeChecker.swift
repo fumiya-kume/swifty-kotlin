@@ -674,11 +674,34 @@ final class CallTypeChecker {
                 sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumValueOf)
                 sema.bindings.bindExprType(id, type: enumType)
                 return enumType
+            case let .enumEntries(_, entriesType, stubSymbol):
+                sema.bindings.bindCall(
+                    id,
+                    binding: CallBinding(
+                        chosenCallee: stubSymbol,
+                        substitutedTypeArguments: explicitTypeArgs,
+                        parameterMapping: [:]
+                    )
+                )
+                sema.bindings.bindCallableTarget(id, target: .symbol(stubSymbol))
+                sema.bindings.markStdlibSpecialCallExpr(id, kind: .enumEntries)
+                sema.bindings.markCollectionExpr(id)
+                sema.bindings.bindExprType(id, type: entriesType)
+                return entriesType
             }
         }
 
+        // Skip numeric comparison special-casing when the first argument is a
+        // lambda literal — lambdas need contextual expected types and are never
+        // numeric comparison operands.
+        let firstArgIsLambda: Bool = if case .lambdaLiteral = ast.arena.expr(args.first?.expr ?? ExprID(rawValue: -1)) {
+            true
+        } else {
+            false
+        }
         if let calleeName,
-           (args.count == 2 || args.count == 3)
+           (args.count == 2 || args.count == 3),
+           !firstArgIsLambda
         {
             // Infer the first argument without an expected type to determine the overload.
             let firstArgType = driver.inferExpr(
@@ -1061,7 +1084,12 @@ final class CallTypeChecker {
             let (vis, invis) = ctx.filterByVisibility(dslFiltered)
             candidates = vis
             callInvisible = invis
-            // If all candidates were blocked by DslMarker, emit a specific diagnostic.
+            if candidates.isEmpty, let local = locals[calleeName] {
+                if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
+                    candidates = [local.symbol]
+                }
+            }
+            // Only emit the DslMarker diagnostic after local function fallback.
             if candidates.isEmpty, !dslBlockedCandidates.isEmpty {
                 ctx.semaCtx.diagnostics.error(
                     "KSWIFTK-SEMA-DSLMARKER",
@@ -1070,11 +1098,6 @@ final class CallTypeChecker {
                 )
                 sema.bindings.bindExprType(id, type: sema.types.errorType)
                 return sema.types.errorType
-            }
-            if candidates.isEmpty, let local = locals[calleeName] {
-                if let sym = ctx.cachedSymbol(local.symbol), sym.kind == .function {
-                    candidates = [local.symbol]
-                }
             }
             if candidates.isEmpty {
                 let classSymbols = ctx.cachedScopeLookup(calleeName).filter { candidate in
@@ -2207,6 +2230,31 @@ final class CallTypeChecker {
         locals: inout LocalBindings
     ) {
         let sema = ctx.sema
+
+        // STDLIB-591: contract { returns() implies condition } — the argument
+        // expression at conditionParameterIndex is guaranteed true after normal
+        // return, so we run branchOnCondition and apply the true-state smart casts.
+        // Only applies for bare `returns()` (returnsValue == nil); `returns(true/false)`
+        // effects are handled by branching logic at the call site.
+        if let conditionEffect = sema.symbols.contractConditionEffect(for: chosen),
+           conditionEffect.returnsValue == nil,
+           conditionEffect.conditionParameterIndex < args.count
+        {
+            let conditionExprID = args[conditionEffect.conditionParameterIndex].expr
+            let branch = ctx.dataFlow.branchOnCondition(
+                conditionExprID,
+                base: ctx.flowState,
+                locals: locals,
+                ast: ctx.ast,
+                sema: sema,
+                interner: ctx.interner,
+                scope: ctx.scope
+            )
+            driver.exprChecker.applyFlowStateToLocals(branch.trueState, locals: &locals, sema: sema)
+        }
+
+        // Existing: contract { returns() implies (param != null) } — narrow the
+        // parameter directly to non-null after normal return.
         guard let effect = sema.symbols.contractNonNullEffect(for: chosen),
               effect.appliesOnAnyReturn,
               let parameterIndex = sema.symbols.functionSignature(for: chosen)?

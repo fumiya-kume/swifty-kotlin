@@ -66,14 +66,14 @@ extension LoweringPassRegressionTests {
         let types = TypeSystem()
         let symbols = SymbolTable()
 
-        // Create a property symbol and its backing field symbol.
+        // Create a mutable property symbol and its backing field symbol.
         let propertySym = symbols.define(
             kind: .property,
             name: interner.intern("myProp"),
             fqName: [interner.intern("Foo"), interner.intern("myProp")],
             declSite: nil,
             visibility: .public,
-            flags: []
+            flags: [.mutable]
         )
         let backingFieldSym = symbols.define(
             kind: .backingField,
