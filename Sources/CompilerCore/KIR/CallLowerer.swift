@@ -195,6 +195,19 @@ final class CallLowerer {
             return loweredEnumValues
         }
 
+        if let loweredEnumEntries = lowerEnumEntriesCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumEntries
+        }
+
         if let loweredEnumValueOf = lowerEnumValueOfCallExpr(
             exprID,
             args: args,
