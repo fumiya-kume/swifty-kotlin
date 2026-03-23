@@ -106,6 +106,9 @@ struct CaptureAnalyzer {
                     for condition in branch.conditions {
                         visit(condition)
                     }
+                    if let guardExpr = branch.guard_ {
+                        visit(guardExpr)
+                    }
                     visit(branch.body)
                 }
                 if let elseExpr {

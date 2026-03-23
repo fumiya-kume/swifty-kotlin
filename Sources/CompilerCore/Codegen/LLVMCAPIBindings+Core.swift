@@ -120,4 +120,20 @@ extension LLVMCAPIBindings {
     func setInitializer(_ global: LLVMValueRef?, value: LLVMValueRef?) {
         setInitializerFn?(global, value)
     }
+
+    func constStringInContext(_ context: LLVMContextRef?, value: UnsafePointer<CChar>, length: UInt32, dontNullTerminate: Bool) -> LLVMValueRef? {
+        constStringInContextFn?(context, value, length, dontNullTerminate ? 1 : 0)
+    }
+
+    func arrayType(_ elementType: LLVMTypeRef?, count: UInt32) -> LLVMTypeRef? {
+        arrayTypeFn?(elementType, count)
+    }
+
+    func setGlobalConstant(_ global: LLVMValueRef?) {
+        setGlobalConstantFn?(global, 1)
+    }
+
+    func setUnnamedAddr(_ global: LLVMValueRef?) {
+        setUnnamedAddrFn?(global, 1)
+    }
 }

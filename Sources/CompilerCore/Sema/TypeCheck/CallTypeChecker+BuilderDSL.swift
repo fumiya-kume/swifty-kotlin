@@ -419,6 +419,9 @@ extension CallTypeChecker {
                 for condition in branch.conditions {
                     collectBuilderDSLArgumentExprs(in: condition, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
                 }
+                if let guardExpr = branch.guard_ {
+                    collectBuilderDSLArgumentExprs(in: guardExpr, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
+                }
                 collectBuilderDSLArgumentExprs(in: branch.body, kind: kind, ast: ast, interner: interner, unary: &unary, keyed: &keyed)
             }
             if let elseExpr {

@@ -1,0 +1,15 @@
+fun main() {
+    val sb = StringBuilder("Hello World")
+    sb.insert(5, ",")
+    println(sb)
+    sb.delete(5, 6)
+    println(sb)
+    sb.deleteCharAt(4)
+    println(sb)
+    println(sb.get(0))
+    sb.reverse()
+    println(sb)
+    sb.clear()
+    println(sb.length)
+    println(sb.toString())
+}
