@@ -6,6 +6,12 @@ extension KotlinParser {
             return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
         }
 
+        // The first token after `{` is treated as if it has a leading newline,
+        // because `{` acts as a statement separator in Kotlin.  This allows
+        // single-line class/interface bodies like `interface I { fun f(): T }`
+        // to parse the member function as a declaration node.
+        var atBlockStart = true
+
         while !stream.atEOF() {
             let token = stream.peek()
             if case .symbol(.rBrace) = token.kind {
@@ -14,22 +20,27 @@ extension KotlinParser {
             }
             if case .keyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                atBlockStart = false
                 continue
             }
             if case .softKeyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                atBlockStart = false
                 continue
             }
-            if isDeclarationStart(token.kind), hasLeadingNewline(token) {
+            if isDeclarationStart(token.kind), (hasLeadingNewline(token) || atBlockStart) {
                 children.append(.node(parseDeclaration()))
+                atBlockStart = false
             } else if !shouldStopStatementBefore(token, inBlock: true) {
                 children.append(.node(parseStatement(inBlock: true)))
+                atBlockStart = false
             } else {
                 let before = stream.index
                 skipToSynchronizationPoint(inBlock: true, into: &children, range: &range)
                 if stream.index == before, !stream.atEOF() {
                     _ = consumeToken(into: &children, range: &range)
                 }
+                atBlockStart = false
             }
         }
 
