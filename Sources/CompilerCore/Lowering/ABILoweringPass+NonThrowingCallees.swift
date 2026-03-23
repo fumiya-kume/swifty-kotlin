@@ -439,6 +439,8 @@ extension ABILoweringPass {
             interner.intern("kk_list_reversed"),
             interner.intern("kk_list_as_reversed"),
             interner.intern("kk_list_sorted"),
+            interner.intern("kk_set_sorted"),
+            interner.intern("kk_set_sortedDescending"),
             interner.intern("kk_list_distinct"),
             interner.intern("kk_list_shuffled"),
             interner.intern("kk_list_shuffled_random"),

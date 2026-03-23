@@ -792,6 +792,20 @@ extension CallLowerer {
         return knownNames.isArrayLikeName(symbol.name)
     }
 
+    private func isSetLikeType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        let knownNames = KnownCompilerNames(interner: interner)
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        return knownNames.isSetLikeSymbol(symbol)
+    }
+
     /// Returns `true` when the receiver type is `Iterable<Char>` (the type produced by `String.asIterable()`).
     /// This allows routing `.toList()` and `.iterator()` to the specialised string-iterable runtime functions.
     private func isStringIterableType(
@@ -3707,6 +3721,32 @@ extension CallLowerer {
                 return interner.intern("kk_array_copyOf")
             case "fill":
                 return interner.intern("kk_array_fill")
+            default:
+                break
+            }
+        }
+
+        // Set receivers: sorted/toList/contains route to set-specific runtime
+        if isSetLikeType(nonNullReceiverType, sema: sema, interner: interner) {
+            switch memberName {
+            case "sorted":
+                return interner.intern("kk_set_sorted")
+            case "sortedDescending":
+                return interner.intern("kk_set_sortedDescending")
+            case "toList":
+                return interner.intern("kk_set_toList")
+            case "contains":
+                return interner.intern("kk_set_contains")
+            case "containsAll":
+                return interner.intern("kk_set_containsAll")
+            case "first":
+                return interner.intern("kk_list_first")
+            case "firstOrNull":
+                return interner.intern("kk_list_firstOrNull")
+            case "last":
+                return interner.intern("kk_list_last")
+            case "lastOrNull":
+                return interner.intern("kk_list_lastOrNull")
             default:
                 break
             }
