@@ -691,8 +691,17 @@ final class CallTypeChecker {
             }
         }
 
+        // Skip numeric comparison special-casing when the first argument is a
+        // lambda literal — lambdas need contextual expected types and are never
+        // numeric comparison operands.
+        let firstArgIsLambda: Bool = if case .lambdaLiteral = ast.arena.expr(args.first?.expr ?? ExprID(rawValue: -1)) {
+            true
+        } else {
+            false
+        }
         if let calleeName,
-           (args.count == 2 || args.count == 3)
+           (args.count == 2 || args.count == 3),
+           !firstArgIsLambda
         {
             // Infer the first argument without an expected type to determine the overload.
             let firstArgType = driver.inferExpr(
