@@ -1734,6 +1734,52 @@ extension CallTypeChecker {
             }
         }
 
+        // String stdlib: indexOfFirst / indexOfLast HOF (pre-arg-inference intercept)
+        // Must run before argument pre-inference because the lambda argument's `it`
+        // type requires the contextual (Char) -> Boolean signature, which cannot be
+        // inferred without an expectedType.
+        if args.count == 1 {
+            let calleeStr = interner.resolve(calleeName)
+            if calleeStr == "indexOfFirst" || calleeStr == "indexOfLast" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(receiverType)
+                    : receiverType
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType) {
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    let charType = sema.types.make(.primitive(.char, .nonNull))
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [charType],
+                        returnType: sema.types.booleanType,
+                        isSuspend: false,
+                        nullability: .nonNull
+                    )))
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let inferredArgTypes = args.map { sema.bindings.exprTypes[$0.expr] ?? sema.types.anyType }
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: inferredArgTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall
+                        ? sema.types.makeNullable(sema.types.intType)
+                        : sema.types.intType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+        }
+
         // Infer argument types for the normal resolution path (scope functions and
         // collection HOFs infer their lambda args with expected type above and return).
         let argTypes = args.enumerated().map { _, arg in
@@ -3158,14 +3204,14 @@ extension CallTypeChecker {
                     : lookupReceiverType
                 let calleeStr = interner.resolve(calleeName)
                 if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
-                   ["filter", "map", "count", "any", "all", "none"].contains(calleeStr)
+                   ["filter", "map", "count", "any", "all", "none", "indexOfFirst", "indexOfLast"].contains(calleeStr)
                 {
                     if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
                         sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
                     }
                     let charType = sema.types.make(.primitive(.char, .nonNull))
                     let predicateReturnType: TypeID = switch calleeStr {
-                    case "filter", "any", "all", "none", "count": sema.types.booleanType
+                    case "filter", "any", "all", "none", "count", "indexOfFirst", "indexOfLast": sema.types.booleanType
                     case "map": charType
                     default: sema.types.anyType
                     }
@@ -3178,7 +3224,7 @@ extension CallTypeChecker {
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                     let resultType: TypeID = switch calleeStr {
                     case "filter", "map": sema.types.stringType
-                    case "count": sema.types.intType
+                    case "count", "indexOfFirst", "indexOfLast": sema.types.intType
                     case "any", "all", "none": sema.types.booleanType
                     default: sema.types.anyType
                     }
@@ -3274,6 +3320,38 @@ extension CallTypeChecker {
                    sema.types.isSubtype(newType, sema.types.stringType)
                 {
                     let finalType = safeCall ? sema.types.makeNullable(sema.types.stringType) : sema.types.stringType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
+            // String stdlib: 2-arg indexOf(String, Int) overload
+            if args.count == 2, interner.resolve(calleeName) == "indexOf" {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                let arg1Type = sema.types.makeNonNullable(argTypes[1])
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   sema.types.isSubtype(arg0Type, sema.types.stringType),
+                   sema.types.isSubtype(arg1Type, sema.types.intType)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        return boundType
+                    }
+                    let finalType = safeCall
+                        ? sema.types.makeNullable(sema.types.intType)
+                        : sema.types.intType
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }

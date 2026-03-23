@@ -1703,7 +1703,11 @@ extension CallLowerer {
                         ("kk_string_contains_str", [loweredReceiverID, loweredArgIDs[0]])
                     }
                 case "indexOf":
-                    ("kk_string_indexOf", [loweredReceiverID, loweredArgIDs[0]])
+                    if loweredArgIDs.count >= 2 {
+                        ("kk_string_indexOf_from", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
+                    } else {
+                        ("kk_string_indexOf", [loweredReceiverID, loweredArgIDs[0]])
+                    }
                 case "lastIndexOf":
                     ("kk_string_lastIndexOf", [loweredReceiverID, loweredArgIDs[0]])
                 case "get":
@@ -1716,6 +1720,10 @@ extension CallLowerer {
                     ("kk_string_repeat", [loweredReceiverID, loweredArgIDs[0]])
                 case "replaceFirstChar":
                     ("kk_string_replaceFirstChar", [loweredReceiverID] + normalizedArgIDs)
+                case "indexOfFirst":
+                    ("kk_string_indexOfFirst", [loweredReceiverID] + normalizedArgIDs)
+                case "indexOfLast":
+                    ("kk_string_indexOfLast", [loweredReceiverID] + normalizedArgIDs)
                 case "take":
                     ("kk_string_take", [loweredReceiverID, loweredArgIDs[0]])
                 case "drop":
@@ -1771,7 +1779,7 @@ extension CallLowerer {
                         callee: interner.intern(runtimeCall.callee),
                         arguments: runtimeCall.arguments,
                         result: result,
-                        canThrow: calleeStr == "repeat" || calleeStr == "replaceFirstChar",
+                        canThrow: calleeStr == "repeat" || calleeStr == "replaceFirstChar" || calleeStr == "indexOfFirst" || calleeStr == "indexOfLast",
                         thrownResult: nil
                     ))
                     return result

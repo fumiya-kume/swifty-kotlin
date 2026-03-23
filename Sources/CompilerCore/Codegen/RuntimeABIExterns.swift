@@ -821,6 +821,24 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_string_indexOf_from = ExternDecl(
+        name: "kk_string_indexOf_from",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_indexOfFirst = ExternDecl(
+        name: "kk_string_indexOfFirst",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_string_indexOfLast = ExternDecl(
+        name: "kk_string_indexOfLast",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-140
     public static let kk_string_get = ExternDecl(
         name: "kk_string_get",
@@ -2539,6 +2557,9 @@ public enum RuntimeABIExterns {
             kk_string_toFloatOrNull,
             kk_string_indexOf,
             kk_string_lastIndexOf,
+            kk_string_indexOf_from,
+            kk_string_indexOfFirst,
+            kk_string_indexOfLast,
             kk_string_get,
             kk_string_compareTo_member,
             kk_string_compareToIgnoreCase,
