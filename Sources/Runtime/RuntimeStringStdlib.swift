@@ -974,7 +974,6 @@ public func kk_string_trimEnd(_ strRaw: Int) -> Int {
 public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeListRaw(source.utf8.map { Int(Int8(bitPattern: $0)) })
-<<<<<<< HEAD
 }
 
 // STDLIB-581: Charset tag constants (mirrors Charsets.* singleton properties)
