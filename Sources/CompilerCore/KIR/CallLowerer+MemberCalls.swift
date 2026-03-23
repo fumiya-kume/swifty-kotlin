@@ -105,6 +105,67 @@ extension CallLowerer {
         "to", // FUNC-002
     ]
 
+    // MARK: - KProperty member access lowering (PROP-007)
+
+    /// Checks if the receiver type is a `kotlin.reflect.KProperty` (or related reflect interface)
+    /// and the callee is a known property like `name`, and if so emits the runtime call.
+    private func isKPropertyReceiverType(
+        _ receiverType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> Bool {
+        guard case let .classType(classType) = sema.types.kind(of: sema.types.makeNonNullable(receiverType)),
+              let symbol = sema.symbols.symbol(classType.classSymbol)
+        else {
+            return false
+        }
+        let resolvedName = interner.resolve(symbol.name)
+        return resolvedName == "KProperty" || resolvedName == "KProperty0"
+            || resolvedName == "KProperty1" || resolvedName == "KCallable"
+            || resolvedName == "KMutableProperty" || resolvedName == "KMutableProperty0"
+            || resolvedName == "KMutableProperty1"
+    }
+
+    private func tryLowerKPropertyMemberAccess(
+        _ exprID: ExprID,
+        receiverExpr: ExprID,
+        calleeName: InternedString,
+        args: [CallArgument],
+        ast: ASTModule,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        propertyConstantInitializers: [SymbolID: KIRExprKind],
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        let calleeStr = interner.resolve(calleeName)
+        guard calleeStr == "name" else { return nil }
+        let receiverType = sema.bindings.exprTypes[receiverExpr] ?? sema.types.anyType
+        guard isKPropertyReceiverType(receiverType, sema: sema, interner: interner) else { return nil }
+
+        // Lower the receiver expression.
+        let receiverID = driver.exprLowerer.lowerExpr(
+            receiverExpr, ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let resultType = sema.bindings.exprTypes[exprID]
+            ?? sema.types.make(.primitive(.string, .nonNull))
+        let result = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: resultType
+        )
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_kproperty_stub_name"),
+            arguments: [receiverID],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
     func lowerMemberCallExpr(
         _ exprID: ExprID,
         receiverExpr: ExprID,
@@ -130,6 +191,22 @@ extension CallLowerer {
             instructions: &instructions
         ) {
             return lateinitStatus
+        }
+
+        // ── KProperty<*>.name → kk_kproperty_stub_name(receiver) ────────
+        if let kPropertyResult = tryLowerKPropertyMemberAccess(
+            exprID,
+            receiverExpr: receiverExpr,
+            calleeName: calleeName,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return kPropertyResult
         }
 
         // ── T::class.simpleName / T::class.qualifiedName ──────────────

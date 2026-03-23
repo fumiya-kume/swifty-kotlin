@@ -1124,7 +1124,7 @@ extension DataFlowSemaPhase {
         return kotlinPropertiesPkg
     }
 
-    private func ensurePackage(
+    func ensurePackage(
         path: [String],
         symbols: SymbolTable,
         interner: StringInterner
