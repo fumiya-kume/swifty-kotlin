@@ -89,11 +89,13 @@ public enum CompoundAssignOp: Equatable {
 
 public struct WhenBranch: Equatable {
     public let conditions: [ExprID]
+    public let guard_: ExprID?
     public let body: ExprID
     public let range: SourceRange
 
-    public init(conditions: [ExprID], body: ExprID, range: SourceRange) {
+    public init(conditions: [ExprID], guard: ExprID? = nil, body: ExprID, range: SourceRange) {
         self.conditions = conditions
+        self.guard_ = `guard`
         self.body = body
         self.range = range
     }

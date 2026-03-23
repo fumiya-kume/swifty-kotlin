@@ -374,6 +374,9 @@ func runtimeElementToString(_ elem: Int) -> String {
         let parts = arrayBox.elements.map { runtimeElementToString($0) }
         return "[" + parts.joined(separator: ", ") + "]"
     }
+    if let sbBox = tryCast(ptr, to: RuntimeStringBuilderBox.self) {
+        return sbBox.value
+    }
     return "\(elem)"
 }
 
