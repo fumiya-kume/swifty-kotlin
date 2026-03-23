@@ -113,12 +113,20 @@ extension BuildASTPhase {
         // can collect them reliably without flat-token scanning.
         // If a propertyAccessor contains a .block child (e.g. `set(v) { ... }`),
         // process it directly using accessorBody which handles block bodies correctly.
+        // Skip propertyAccessor nodes that represent explicit backing fields
+        // (`field = expr` or `field: Type = expr`) — those are handled by
+        // `declarationExplicitBackingField`.
         var accessorTokens: [Token] = []
         var hasAccessorNode = false
         for child in arena.children(of: nodeID) {
             if case let .node(childID) = child,
                arena.node(childID).kind == .propertyAccessor
             {
+                // Skip explicit backing field nodes (start with `field` soft keyword).
+                let firstToken = collectTokens(from: childID, in: arena).first
+                if let firstToken, case .softKeyword(.field) = firstToken.kind {
+                    continue
+                }
                 hasAccessorNode = true
                 let hasBlock = arena.children(of: childID).contains { child in
                     if case let .node(grandchildID) = child {
@@ -481,5 +489,97 @@ extension BuildASTPhase {
             return .unit
         }
         return .expr(exprID, range)
+    }
+
+    // MARK: - Explicit Backing Field (Kotlin 2.0)
+
+    /// Extracts an explicit backing field declaration from a property node.
+    /// Looks for a `.propertyAccessor` child whose tokens start with the
+    /// `field` soft keyword, followed by `= expr` or `: Type = expr`.
+    func declarationExplicitBackingField(
+        from nodeID: NodeID,
+        in arena: SyntaxArena,
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExplicitBackingField? {
+        // Search for a propertyAccessor child that starts with `field`.
+        for child in arena.children(of: nodeID) {
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .propertyAccessor
+            else { continue }
+            let tokens = collectTokens(from: childID, in: arena)
+            guard let firstToken = tokens.first,
+                  case .softKeyword(.field) = firstToken.kind
+            else { continue }
+            return parseExplicitBackingFieldTokens(tokens, interner: interner, astArena: astArena)
+        }
+
+        // Also check inside a block child (e.g. `val x: T { field = ... get() = ... }`).
+        if let blockID = arena.children(of: nodeID).compactMap({ child -> NodeID? in
+            guard case let .node(childID) = child,
+                  arena.node(childID).kind == .block
+            else { return nil }
+            return childID
+        }).first {
+            for child in arena.children(of: blockID) {
+                guard case let .node(stmtID) = child,
+                      isStatementLikeKind(arena.node(stmtID).kind)
+                else { continue }
+                let tokens = collectDirectTokens(from: stmtID, in: arena)
+                guard let firstToken = tokens.first,
+                      case .softKeyword(.field) = firstToken.kind
+                else { continue }
+                let allTokens = collectTokens(from: stmtID, in: arena)
+                return parseExplicitBackingFieldTokens(allTokens, interner: interner, astArena: astArena)
+            }
+        }
+
+        return nil
+    }
+
+    /// Parse `field = expr` or `field : Type = expr` from a token sequence.
+    private func parseExplicitBackingFieldTokens(
+        _ tokens: [Token],
+        interner: StringInterner,
+        astArena: ASTArena
+    ) -> ExplicitBackingField? {
+        // tokens[0] is `field`
+        guard tokens.count >= 2 else { return nil }
+        var index = 1
+
+        // Check for optional type annotation: `field: Type = expr`
+        var fieldType: TypeRefID?
+        if tokens[index].kind == .symbol(.colon) {
+            index += 1
+            // Collect type tokens until `=`
+            var typeTokens: [Token] = []
+            var depth = BracketDepth()
+            while index < tokens.count {
+                let token = tokens[index]
+                if token.kind == .symbol(.assign), depth.isAtTopLevel {
+                    break
+                }
+                depth.track(token.kind)
+                typeTokens.append(token)
+                index += 1
+            }
+            if !typeTokens.isEmpty {
+                fieldType = parseTypeRef(from: typeTokens, interner: interner, astArena: astArena)
+            }
+        }
+
+        // Expect `=`
+        guard index < tokens.count, tokens[index].kind == .symbol(.assign) else {
+            return nil
+        }
+        index += 1
+
+        // Parse initializer expression
+        let exprTokens = tokens[index...].filter { $0.kind != .symbol(.semicolon) }
+        guard !exprTokens.isEmpty else { return nil }
+        let parser = ExpressionParser(tokens: ArraySlice(exprTokens), interner: interner, astArena: astArena)
+        guard let initExpr = parser.parse() else { return nil }
+
+        return ExplicitBackingField(type: fieldType, initializer: initExpr)
     }
 }
