@@ -192,6 +192,7 @@ public final class KIRArena {
     public private(set) var declarations: [KIRDecl] = []
     public private(set) var expressions: [KIRExprKind] = []
     public private(set) var exprTypes: [KIRExprID: TypeID] = [:]
+    public private(set) var lambdaCaptureArgsBySymbol: [SymbolID: [KIRExprID]] = [:]
 
     public init() {}
 
@@ -235,6 +236,10 @@ public final class KIRArena {
 
     public func exprType(_ id: KIRExprID) -> TypeID? {
         exprTypes[id]
+    }
+
+    public func registerLambdaCaptureArgs(_ lambdaSymbol: SymbolID, captureArgs: [KIRExprID]) {
+        lambdaCaptureArgsBySymbol[lambdaSymbol] = captureArgs
     }
 
     public func transformFunctions(_ transform: (KIRFunction) -> KIRFunction) {
