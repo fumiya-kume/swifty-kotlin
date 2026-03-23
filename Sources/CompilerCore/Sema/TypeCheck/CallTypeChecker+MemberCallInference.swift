@@ -197,7 +197,7 @@ extension CallTypeChecker {
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
 
-        // ── T::class.simpleName / T::class.qualifiedName ──────────────
+        // ── T::class.simpleName / T::class.qualifiedName / isInstance / members / constructors ──
         // Detect member access on a class-reference expression (callableRef
         // with member "class").  The result type is nullable String.
         // We eagerly infer the receiver so classRefTargetType gets bound,
@@ -215,6 +215,30 @@ extension CallTypeChecker {
                     )
                     sema.bindings.bindExprType(id, type: nullableStringType)
                     return nullableStringType
+                }
+                // REFL-005: KClass.isInstance(value) -> Boolean
+                if calleeName == knownNames.isInstanceName {
+                    _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                    let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                    sema.bindings.bindExprType(id, type: boolType)
+                    return boolType
+                }
+                // REFL-005: KClass.members / KClass.constructors -> Collection (List<Any>)
+                if calleeName == knownNames.membersName || calleeName == knownNames.constructorsName {
+                    _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                    let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner)
+                    let resultType: TypeID
+                    if let listSym = listSymbol {
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSym,
+                            args: [.invariant(sema.types.anyType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
+                    sema.bindings.bindExprType(id, type: resultType)
+                    return resultType
                 }
             }
         }
@@ -236,6 +260,40 @@ extension CallTypeChecker {
         }
 
         let receiverType = driver.inferExpr(receiverID, ctx: ctx, locals: &locals)
+
+        // REFL-005: KClass<T>.isInstance / members / constructors on a KClass-typed receiver variable
+        if case .kClassType = sema.types.kind(of: sema.types.makeNonNullable(receiverType)) {
+            if calleeName == knownNames.isInstanceName {
+                _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let boolType = sema.types.make(.primitive(.boolean, .nonNull))
+                sema.bindings.bindExprType(id, type: boolType)
+                return boolType
+            }
+            if calleeName == knownNames.membersName || calleeName == knownNames.constructorsName {
+                _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let listSymbol = lookupStdlibSymbol("List", symbols: sema.symbols, interner: interner)
+                let resultType: TypeID
+                if let listSym = listSymbol {
+                    resultType = sema.types.make(.classType(ClassType(
+                        classSymbol: listSym,
+                        args: [.invariant(sema.types.anyType)],
+                        nullability: .nonNull
+                    )))
+                } else {
+                    resultType = sema.types.anyType
+                }
+                sema.bindings.bindExprType(id, type: resultType)
+                return resultType
+            }
+            if calleeName == knownNames.simpleName || calleeName == knownNames.qualifiedName {
+                _ = args.map { driver.inferExpr($0.expr, ctx: ctx, locals: &locals) }
+                let nullableStringType = sema.types.makeNullable(
+                    sema.types.make(.primitive(.string, .nonNull))
+                )
+                sema.bindings.bindExprType(id, type: nullableStringType)
+                return nullableStringType
+            }
+        }
 
         if args.isEmpty,
            case let .nameRef(receiverName, _) = ast.arena.expr(receiverID),

@@ -139,6 +139,9 @@ struct KnownCompilerNames {
     let isInitialized: InternedString
     let simpleName: InternedString
     let qualifiedName: InternedString
+    let isInstanceName: InternedString
+    let membersName: InternedString
+    let constructorsName: InternedString
     let size: InternedString
     let isEmpty: InternedString
     let getValue: InternedString
@@ -272,6 +275,9 @@ struct KnownCompilerNames {
         isInitialized = interner.intern("isInitialized")
         simpleName = interner.intern("simpleName")
         qualifiedName = interner.intern("qualifiedName")
+        isInstanceName = interner.intern("isInstance")
+        membersName = interner.intern("members")
+        constructorsName = interner.intern("constructors")
         size = interner.intern("size")
         isEmpty = interner.intern("isEmpty")
         getValue = interner.intern("getValue")

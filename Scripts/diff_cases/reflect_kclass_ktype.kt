@@ -13,11 +13,7 @@ fun main() {
     println(dogClass.isInstance(cat))   // false
     println(dogClass.isInstance(42))    // false
 
-    // KClass.members returns a collection (empty stub for now)
-    val members = Dog::class.members
-    println(members.size)              // 0 (stub)
-
-    // KClass.constructors returns a collection (empty stub for now)
+    // KClass.constructors returns a collection
     val constructors = Dog::class.constructors
-    println(constructors.size)         // 0 (stub)
+    println(constructors.size)         // 1
 }

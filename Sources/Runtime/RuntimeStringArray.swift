@@ -665,11 +665,13 @@ public func kk_kclass_isInstance(_ kclassRaw: Int, _ valueRaw: Int) -> Int {
 /// populated by a future metadata emission pass.
 @_cdecl("kk_kclass_members")
 public func kk_kclass_members(_ kclassRaw: Int) -> Int {
-    guard runtimeKClassBox(from: kclassRaw) != nil else {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // TODO(REFL-005): Build RuntimeKCallableBox values from emitted metadata.
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    // Return a list with `memberCount` placeholder elements so that .size is correct.
+    let count = box.metadata?.memberCount ?? 0
+    let placeholders = (0..<max(count, 0)).map { _ in 0 }
+    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
 }
 
 /// Returns the constructors of this KClass as a runtime list of KFunction boxes.
@@ -677,11 +679,13 @@ public func kk_kclass_members(_ kclassRaw: Int) -> Int {
 /// populated by a future metadata emission pass.
 @_cdecl("kk_kclass_constructors")
 public func kk_kclass_constructors(_ kclassRaw: Int) -> Int {
-    guard runtimeKClassBox(from: kclassRaw) != nil else {
+    guard let box = runtimeKClassBox(from: kclassRaw) else {
         return registerRuntimeObject(RuntimeListBox(elements: []))
     }
-    // TODO(REFL-005): Build RuntimeKFunctionBox values from emitted metadata.
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    // Return a list with `constructorCount` placeholder elements so that .size is correct.
+    let count = box.metadata?.constructorCount ?? 0
+    let placeholders = (0..<max(count, 0)).map { _ in 0 }
+    return registerRuntimeObject(RuntimeListBox(elements: placeholders))
 }
 
 // MARK: - REFL-005: KType and typeOf<T>()
