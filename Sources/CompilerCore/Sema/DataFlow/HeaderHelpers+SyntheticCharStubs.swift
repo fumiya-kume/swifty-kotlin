@@ -45,6 +45,16 @@ private let syntheticCharMemberSpecs: [SyntheticCharMemberSpec] = [
         returnKind: .boolean
     ),
     SyntheticCharMemberSpec(
+        name: "isUpperCase",
+        externalLinkName: "kk_char_isUpperCase",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
+        name: "isLowerCase",
+        externalLinkName: "kk_char_isLowerCase",
+        returnKind: .boolean
+    ),
+    SyntheticCharMemberSpec(
         name: "isWhitespace",
         externalLinkName: "kk_char_isWhitespace",
         returnKind: .boolean

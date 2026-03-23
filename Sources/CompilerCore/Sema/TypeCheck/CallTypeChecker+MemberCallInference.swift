@@ -1679,6 +1679,63 @@ extension CallTypeChecker {
             }
         }
 
+        // Early String HOF fallback: String filter/map/count/any/all/none need
+        // lambda inference with expectedType so the implicit `it` parameter (Char)
+        // gets bound correctly.  Must run before argument pre-inference below.
+        if args.count == 1 {
+            let stringHOFReceiverType = safeCall
+                ? sema.types.makeNonNullable(receiverType)
+                : receiverType
+            let stringHOFCalleeStr = interner.resolve(calleeName)
+            if sema.types.isSubtype(stringHOFReceiverType, sema.types.stringType),
+               ["filter", "map", "count", "any", "all", "none"].contains(stringHOFCalleeStr)
+            {
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                }
+                let charType = sema.types.make(.primitive(.char, .nonNull))
+                let predicateReturnType: TypeID = switch stringHOFCalleeStr {
+                case "filter", "any", "all", "none", "count": sema.types.booleanType
+                case "map": sema.types.anyType
+                default: sema.types.anyType
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                    params: [charType],
+                    returnType: predicateReturnType,
+                    isSuspend: false,
+                    nullability: .nonNull
+                )))
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                let resolvedArgTypes = args.map { arg in
+                    sema.bindings.exprType(for: arg.expr) ?? sema.types.anyType
+                }
+                if let boundType = tryBindSyntheticStringMemberFallback(
+                    id,
+                    calleeName: calleeName,
+                    receiverType: stringHOFReceiverType,
+                    args: args,
+                    argTypes: resolvedArgTypes,
+                    range: range,
+                    ctx: ctx,
+                    expectedType: expectedType,
+                    explicitTypeArgs: explicitTypeArgs,
+                    safeCall: safeCall
+                ) {
+                    return boundType
+                }
+                let resultType: TypeID = switch stringHOFCalleeStr {
+                case "filter": sema.types.stringType
+                case "map": sema.types.anyType  // Kotlin String.map returns List<R>
+                case "count": sema.types.intType
+                case "any", "all", "none": sema.types.booleanType
+                default: sema.types.anyType
+                }
+                let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                sema.bindings.bindExprType(id, type: finalType)
+                return finalType
+            }
+        }
+
         // Infer argument types for the normal resolution path (scope functions and
         // collection HOFs infer their lambda args with expected type above and return).
         let argTypes = args.enumerated().map { _, arg in
@@ -3072,7 +3129,7 @@ extension CallTypeChecker {
                     let charType = sema.types.make(.primitive(.char, .nonNull))
                     let predicateReturnType: TypeID = switch calleeStr {
                     case "filter", "any", "all", "none", "count": sema.types.booleanType
-                    case "map": charType
+                    case "map": sema.types.anyType
                     default: sema.types.anyType
                     }
                     let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
@@ -3083,7 +3140,8 @@ extension CallTypeChecker {
                     )))
                     _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
                     let resultType: TypeID = switch calleeStr {
-                    case "filter", "map": sema.types.stringType
+                    case "filter": sema.types.stringType
+                    case "map": sema.types.anyType
                     case "count": sema.types.intType
                     case "any", "all", "none": sema.types.booleanType
                     default: sema.types.anyType
