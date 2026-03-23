@@ -144,6 +144,11 @@ public func kk_bits_to_double(_ value: Int) -> Double {
     Double(bitPattern: UInt64(bitPattern: Int64(value)))
 }
 
+@_cdecl("kk_op_dmul")
+public func kk_op_dmul(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) * kk_bits_to_double(rhs))
+}
+
 @_cdecl("kk_int_to_float_bits")
 public func kk_int_to_float_bits(_ value: Int) -> Int {
     kk_float_to_bits(Float(value))

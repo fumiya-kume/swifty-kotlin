@@ -401,7 +401,8 @@ extension DeclTypeChecker {
     ) {
         guard let effectExpr = ast.arena.expr(effectExprID) else { return }
 
-        // Pattern 1: `returns() implies (condition)` -- existing non-null effect
+        // Pattern 1: `returns() implies (condition)` or
+        //            `returns(true/false) implies (condition)` -- STDLIB-591
         if case let .memberCall(receiverExprID, impliesName, _, impliesArgs, _) = effectExpr,
            interner.resolve(impliesName) == "implies",
            impliesArgs.count == 1,
@@ -409,18 +410,30 @@ extension DeclTypeChecker {
            case let .call(returnsCalleeExprID, _, returnsArgs, _) = receiverExpr,
            let returnsCalleeExpr = ast.arena.expr(returnsCalleeExprID),
            case let .nameRef(returnsName, _) = returnsCalleeExpr,
-           interner.resolve(returnsName) == "returns",
-           returnsArgs.isEmpty
+           interner.resolve(returnsName) == "returns"
         {
-            // Also record the bare returns() effect for the function.
-            if sema.symbols.contractReturnsEffect(for: symbol) == nil {
-                sema.symbols.setContractReturnsEffect(
-                    .returnsNormally,
-                    for: symbol
-                )
+            // Determine the returns constraint: nil = any return,
+            // true/false = when the function returns that specific Boolean.
+            let returnsValue: Bool?
+            if returnsArgs.isEmpty {
+                returnsValue = nil
+                // Also record the bare returns() effect for the function.
+                if sema.symbols.contractReturnsEffect(for: symbol) == nil {
+                    sema.symbols.setContractReturnsEffect(
+                        .returnsNormally,
+                        for: symbol
+                    )
+                }
+            } else if returnsArgs.count == 1,
+                      let boolValue = extractBooleanLiteral(returnsArgs[0].expr, ast: ast, interner: interner)
+            {
+                returnsValue = boolValue
+            } else {
+                return
             }
             recordReturnsImpliesEffect(
                 impliesArgs: impliesArgs,
+                returnsValue: returnsValue,
                 function: function,
                 symbol: symbol,
                 signature: signature,
@@ -513,10 +526,21 @@ extension DeclTypeChecker {
         }
     }
 
-    /// Records a `returns() implies (param != null)` contract effect as a
-    /// `ContractNonNullEffect` on the given function symbol.
+    /// Records a `returns() implies (condition)` or `returns(true/false) implies (condition)`
+    /// contract effect.
+    ///
+    /// Handles two sub-patterns for the condition:
+    /// 1. `param != null` — records a `ContractNonNullEffect` that narrows the
+    ///    parameter to non-null after normal return.
+    /// 2. `param` — where `param` is a Boolean parameter, records a
+    ///    `ContractConditionEffect` so that the argument expression is analyzed
+    ///    for smart casts at the call site (STDLIB-591).
+    ///
+    /// - Parameter returnsValue: `nil` for `returns()`, `true`/`false` for
+    ///   `returns(true)` / `returns(false)`.
     private func recordReturnsImpliesEffect(
         impliesArgs: [CallArgument],
+        returnsValue: Bool?,
         function: FunDecl,
         symbol: SymbolID,
         signature: FunctionSignature,
@@ -524,38 +548,61 @@ extension DeclTypeChecker {
         interner: StringInterner,
         sema: SemaModule
     ) {
-        guard let conditionExpr = ast.arena.expr(impliesArgs[0].expr),
-              case let .binary(.notEqual, lhsExprID, rhsExprID, _) = conditionExpr
-        else {
+        guard let conditionExpr = ast.arena.expr(impliesArgs[0].expr) else {
             return
         }
 
-        let parameterName: InternedString? = if let lhsExpr = ast.arena.expr(lhsExprID),
-                                                case let .nameRef(name, _) = lhsExpr,
-                                                isNullLiteralExpr(rhsExprID, ast: ast, interner: interner)
-        {
-            name
-        } else if let rhsExpr = ast.arena.expr(rhsExprID),
-                  case let .nameRef(name, _) = rhsExpr,
-                  isNullLiteralExpr(lhsExprID, ast: ast, interner: interner)
-        {
-            name
-        } else {
-            nil
-        }
-        guard let parameterName,
-              let parameterIndex = function.valueParams.firstIndex(where: { $0.name == parameterName }),
-              parameterIndex < signature.valueParameterSymbols.count
-        else {
+        // Sub-pattern 1: `returns() implies (param != null)`
+        if case let .binary(.notEqual, lhsExprID, rhsExprID, _) = conditionExpr {
+            let parameterName: InternedString? = if let lhsExpr = ast.arena.expr(lhsExprID),
+                                                    case let .nameRef(name, _) = lhsExpr,
+                                                    isNullLiteralExpr(rhsExprID, ast: ast, interner: interner)
+            {
+                name
+            } else if let rhsExpr = ast.arena.expr(rhsExprID),
+                      case let .nameRef(name, _) = rhsExpr,
+                      isNullLiteralExpr(lhsExprID, ast: ast, interner: interner)
+            {
+                name
+            } else {
+                nil
+            }
+            guard let parameterName,
+                  let parameterIndex = function.valueParams.firstIndex(where: { $0.name == parameterName }),
+                  parameterIndex < signature.valueParameterSymbols.count
+            else {
+                return
+            }
+            // For bare `returns() implies (param != null)`, also record the legacy
+            // ContractNonNullEffect for backward compatibility.
+            if returnsValue == nil {
+                sema.symbols.setContractNonNullEffect(
+                    ContractNonNullEffect(
+                        parameterSymbol: signature.valueParameterSymbols[parameterIndex],
+                        appliesOnAnyReturn: true
+                    ),
+                    for: symbol
+                )
+            }
             return
         }
-        sema.symbols.setContractNonNullEffect(
-            ContractNonNullEffect(
-                parameterSymbol: signature.valueParameterSymbols[parameterIndex],
-                appliesOnAnyReturn: true
-            ),
-            for: symbol
-        )
+
+        // Sub-pattern 2 (STDLIB-591): `returns() implies param` where param is Boolean.
+        // This means the argument expression passed for this parameter is guaranteed
+        // true after normal return, enabling smart casts on the call-site expression.
+        if case let .nameRef(paramName, _) = conditionExpr,
+           let parameterIndex = function.valueParams.firstIndex(where: { $0.name == paramName }),
+           parameterIndex < signature.parameterTypes.count,
+           signature.parameterTypes[parameterIndex] == sema.types.booleanType
+        {
+            sema.symbols.setContractConditionEffect(
+                ContractConditionEffect(
+                    conditionParameterIndex: parameterIndex,
+                    returnsValue: returnsValue
+                ),
+                for: symbol
+            )
+        }
     }
 
     /// Resolve an `InvocationKind.*` member-access expression to an `InvocationKind` value.

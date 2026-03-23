@@ -41,10 +41,13 @@ final class MemberLowerer {
             // Getter-only computed properties (`val x: T get() = expr`) have no
             // storage — skip emitting a KIRGlobal so no backing field is generated
             // in codegen.  The getter accessor function alone is sufficient.
+            // Exception: properties with explicit backing fields always have storage.
+            let hasExplicitBackingField = propertyDecl.explicitBackingField != nil
             let isGetterOnlyComputed = propertyDecl.getter != nil
                 && propertyDecl.setter == nil
                 && propertyDecl.initializer == nil
                 && propertyDecl.delegateExpression == nil
+                && !hasExplicitBackingField
 
             if !isGetterOnlyComputed {
                 let kirID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: propType)))

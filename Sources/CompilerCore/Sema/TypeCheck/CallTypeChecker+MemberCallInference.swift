@@ -699,7 +699,9 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce",
+            "filterIndexed", "reduceIndexedOrNull", "runningFoldIndexed", "runningReduceIndexed", "scanIndexed",
+            "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -1093,6 +1095,50 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceIndexedLambdaType)
                 resultType = collectionElementType
 
+            case "filterIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "filterIndexed() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType], returnType: sema.types.booleanType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = receiverType
+
+            case "reduceIndexedOrNull":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "reduceIndexedOrNull() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType, collectionElementType], returnType: collectionElementType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.makeNullable(collectionElementType)
+
+            case "scanIndexed", "runningFoldIndexed":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "\(calleeStr)() expects 2 arguments (initial value and a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, initialType, collectionElementType], returnType: initialType)))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[1].expr) }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(classSymbol: listSymbol, args: [.invariant(initialType)], nullability: .nonNull)))
+                } else { resultType = sema.types.anyType }
+
+            case "runningReduceIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "runningReduceIndexed() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType, collectionElementType], returnType: collectionElementType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(classSymbol: listSymbol, args: [.invariant(collectionElementType)], nullability: .nonNull)))
+                } else { resultType = sema.types.anyType }
 
             case "scan", "runningFold":
                 guard args.count == 2 else {
@@ -2873,6 +2919,13 @@ extension CallTypeChecker {
                             interner: interner,
                             elementType: sema.types.stringType
                         )
+                    case "asSequence":
+                        makeSyntheticSequenceType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.make(.primitive(.char, .nonNull))
+                        )
                     case "toByteArray", "encodeToByteArray":
                         makeSyntheticListType(
                             symbols: sema.symbols,
@@ -3817,6 +3870,26 @@ extension CallTypeChecker {
                 }
             }
 
+            // HexFormat extension functions: Int.toHexString(), Long.toHexString(),
+            // String.hexToInt(), String.hexToLong(), String.hexToByteArray(),
+            // ByteArray.toHexString() (STDLIB-HEX)
+            if let hexResult = tryResolveHexFormatExtension(
+                id,
+                calleeName: calleeName,
+                receiverID: receiverID,
+                lookupReceiverType: lookupReceiverType,
+                args: args,
+                argTypes: argTypes,
+                range: range,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectedType,
+                explicitTypeArgs: explicitTypeArgs,
+                safeCall: safeCall
+            ) {
+                return hexResult
+            }
+
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
             return driver.helpers.bindAndReturnErrorType(id, sema: sema)
         }
@@ -4585,5 +4658,110 @@ extension CallTypeChecker {
             args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    // MARK: - HexFormat Extension Function Resolution (STDLIB-HEX)
+
+    /// Resolve HexFormat extension functions: Int.toHexString(), Long.toHexString(),
+    /// String.hexToInt(), String.hexToLong(), String.hexToByteArray(),
+    /// ByteArray.toHexString().
+    /// These are registered as synthetic extension functions in kotlin.text package
+    /// with an optional HexFormat parameter (has default value).
+    private func tryResolveHexFormatExtension(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverID: ExprID,
+        lookupReceiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let calleeStr = interner.resolve(calleeName)
+
+        // Only handle known HexFormat extension function names
+        guard calleeStr == "toHexString" || calleeStr == "hexToInt"
+            || calleeStr == "hexToLong" || calleeStr == "hexToByteArray"
+        else {
+            return nil
+        }
+
+        // Only 0-arg (default format) or 1-arg (explicit HexFormat) calls
+        guard args.count <= 1 else {
+            return nil
+        }
+
+        let receiverTypeForCheck = safeCall
+            ? sema.types.makeNonNullable(lookupReceiverType)
+            : lookupReceiverType
+
+        let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
+        let fqName = kotlinTextPkg + [calleeName]
+        let candidates = sema.symbols.lookupAll(fqName: fqName).filter { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID),
+                  let sigReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return sema.types.isSubtype(receiverTypeForCheck, sigReceiver)
+        }
+
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        // Infer the format argument if provided
+        if args.count == 1 {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+        }
+
+        // Try overload resolution
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverTypeForCheck,
+            ctx: ctx.semaCtx
+        )
+
+        let chosen: SymbolID
+        if let resolvedCallee = resolved.chosenCallee {
+            chosen = resolvedCallee
+        } else if let firstCandidate = candidates.first {
+            // Fall back to the first matching candidate when default-param
+            // resolution doesn't pick one (0-arg call with 1-param signature).
+            chosen = firstCandidate
+        } else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(
+            id,
+            chosen: chosen,
+            resolved: ResolvedCall(
+                chosenCallee: chosen,
+                substitutedTypeArguments: resolved.substitutedTypeArguments,
+                parameterMapping: args.isEmpty ? [:] : [0: 0],
+                diagnostic: nil
+            ),
+            sema: sema
+        )
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 }

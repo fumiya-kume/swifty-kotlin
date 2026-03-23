@@ -133,6 +133,17 @@ final class PropertyLoweringPass: LoweringPass {
                                 loweredBody.append(instruction)
                                 continue
                             }
+                            // For `val` properties with explicit backing fields
+                            // (Kotlin 2.0) that have no setter, keep the direct
+                            // backing field copy.  Check that the property is
+                            // immutable and no setter accessor was emitted.
+                            if let propInfo = sema.symbols.symbol(baseSymbol),
+                               !propInfo.flags.contains(.mutable),
+                               !emittedFunctionSymbols.contains(setterSymbol)
+                            {
+                                loweredBody.append(instruction)
+                                continue
+                            }
                             loweredBody.append(
                                 .call(
                                     symbol: setterSymbol,

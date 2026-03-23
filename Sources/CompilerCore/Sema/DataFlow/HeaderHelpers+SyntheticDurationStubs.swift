@@ -152,6 +152,16 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        registerDurationFactoryExtensionProperty(
+            named: "days",
+            externalLinkName: "kk_duration_from_days",
+            receiverType: intType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
         // --- STDLIB-660: TimedValue class ---
         let timedValueSymbol = ensureClassSymbol(
             named: "TimedValue",
@@ -236,6 +246,16 @@ extension DataFlowSemaPhase {
         registerDurationFactoryExtensionProperty(
             named: "hours",
             externalLinkName: "kk_duration_from_hours_long",
+            receiverType: longType,
+            returnType: durationType,
+            companionFQName: durationCompanionFQName,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerDurationFactoryExtensionProperty(
+            named: "days",
+            externalLinkName: "kk_duration_from_days_long",
             receiverType: longType,
             returnType: durationType,
             companionFQName: durationCompanionFQName,

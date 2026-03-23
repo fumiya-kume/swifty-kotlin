@@ -86,6 +86,23 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // SAM constructor calls: `Transformer { ... }` — the single lambda
+        // argument is already marked as a SAM conversion.  Lower the lambda
+        // directly; the SAM wrapper is produced by LambdaLowerer.
+        if args.count == 1,
+           sema.bindings.isSamConversion(args[0].expr)
+        {
+            return driver.lowerExpr(
+                args[0].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
         // Invoke operator calls are lowered as member calls: the callee expr
         // becomes the receiver and the invoke method is the callee.
         if sema.bindings.isInvokeOperatorCall(exprID) {
@@ -193,6 +210,19 @@ final class CallLowerer {
             instructions: &instructions
         ) {
             return loweredEnumValues
+        }
+
+        if let loweredEnumEntries = lowerEnumEntriesCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumEntries
         }
 
         if let loweredEnumValueOf = lowerEnumValueOfCallExpr(
