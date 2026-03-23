@@ -1,3 +1,14 @@
+let listRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.collections.List".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
 private let mapEntryRuntimeTypeID: Int64 = {
     var hash: UInt64 = 0xCBF2_9CE4_8422_2325
     for byte in "kotlin.collections.Map.Entry".utf8 {
@@ -153,6 +164,12 @@ func registerRuntimeObject(_ box: AnyObject) -> Int {
         state.objectPointers.insert(UInt(bitPattern: opaque))
     }
     return Int(bitPattern: opaque)
+}
+
+func registerRuntimeObject(_ box: AnyObject, typeID: Int64) -> Int {
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterObjectType(rawValue: raw, classID: typeID)
+    return raw
 }
 
 func maybeUnbox(_ value: Int) -> Int {
