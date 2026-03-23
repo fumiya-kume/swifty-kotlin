@@ -10,6 +10,15 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Collection"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_list_of_not_null",
+            parameters: [
+                RuntimeABIParameter(name: "arrayRaw", type: .intptr),
+                RuntimeABIParameter(name: "count", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
         // STDLIB-410: emptyList
         RuntimeABIFunctionSpec(
             name: "kk_emptyList",
@@ -265,6 +274,30 @@ public extension RuntimeABISpec {
             section: "Collection"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_collection_toList",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_collection_size",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_collection_isEmpty",
+            parameters: [
+                RuntimeABIParameter(name: "collRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Collection"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_set_sorted",
             parameters: [
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
@@ -313,49 +346,6 @@ public extension RuntimeABISpec {
                 RuntimeABIParameter(name: "setRaw", type: .intptr),
             ],
             returnType: .opaquePointer,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_toList",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_collection_toList",
-            parameters: [
-                RuntimeABIParameter(name: "collRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_intersect",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_union",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Collection"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_set_subtract",
-            parameters: [
-                RuntimeABIParameter(name: "setRaw", type: .intptr),
-                RuntimeABIParameter(name: "otherRaw", type: .intptr),
-            ],
-            returnType: .intptr,
             section: "Collection"
         ),
     ] + Self.collectionHOFFunctions + [
@@ -1574,6 +1564,12 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
+                hofSpec("kk_list_filterIndexed"),
+                RuntimeABIFunctionSpec(name: "kk_list_foldIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
+                hofSpec("kk_list_reduceIndexed"), hofSpec("kk_list_reduceIndexedOrNull"),
+                RuntimeABIFunctionSpec(name: "kk_list_runningFoldIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
+                hofSpec("kk_list_runningReduceIndexed"),
+                RuntimeABIFunctionSpec(name: "kk_list_scanIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,

@@ -522,7 +522,7 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
     }
-    var acc = list.elements[0]
+    var acc = maybeUnbox(list.elements[0])
     for idx in 1 ..< list.elements.count {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
@@ -1002,6 +1002,101 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
 }
 
+// MARK: - List *Indexed collection extensions
+
+@_cdecl("kk_list_filterIndexed")
+public func kk_list_filterIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var filtered: [Int] = []
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { filtered.append(elem) }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_list_foldIndexed")
+public func kk_list_foldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = initial
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: elem, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_reduceIndexed")
+public func kk_list_reduceIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+    }
+    var acc = list.elements[0]
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_reduceIndexedOrNull")
+public func kk_list_reduceIndexedOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(list.elements[0])
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_runningFoldIndexed")
+public func kk_list_runningFoldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_list_scanIndexed(listRaw, initial, fnPtr, closureRaw, outThrown)
+}
+
+@_cdecl("kk_list_runningReduceIndexed")
+public func kk_list_runningReduceIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var acc = maybeUnbox(list.elements[0])
+    var results: [Int] = []
+    results.reserveCapacity(list.elements.count)
+    results.append(acc)
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
+@_cdecl("kk_list_scanIndexed")
+public func kk_list_scanIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = maybeUnbox(initial)
+    var results: [Int] = []
+    results.reserveCapacity(list.elements.count + 1)
+    results.append(acc)
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: elem, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
 @_cdecl("kk_list_sumOf")
 public func kk_list_sumOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
@@ -1131,6 +1226,236 @@ public func kk_list_minOfOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int,
         let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
         if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
         if runtimeCompareValues(value, bestValue) < 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+// MARK: - maxOf / minOf (non-OrNull, throws on empty) (STDLIB-301b)
+
+@_cdecl("kk_list_maxOf")
+public func kk_list_maxOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if runtimeCompareValues(value, bestValue) > 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+@_cdecl("kk_list_minOf")
+public func kk_list_minOf(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: fnPtr, closureRaw: closureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if runtimeCompareValues(value, bestValue) < 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+// MARK: - maxWith / minWith / maxWithOrNull / minWithOrNull (comparator-based) (STDLIB-301c)
+
+@_cdecl("kk_list_maxWithOrNull")
+public func kk_list_maxWithOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var bestElem = list.elements[0]
+    for elem in list.elements.dropFirst() {
+        var thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elem, rhs: bestElem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp > 0 {
+            bestElem = elem
+        }
+    }
+    return bestElem
+}
+
+@_cdecl("kk_list_maxWith")
+public func kk_list_maxWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var bestElem = list.elements[0]
+    for elem in list.elements.dropFirst() {
+        var thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elem, rhs: bestElem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp > 0 {
+            bestElem = elem
+        }
+    }
+    return bestElem
+}
+
+@_cdecl("kk_list_minWithOrNull")
+public func kk_list_minWithOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var bestElem = list.elements[0]
+    for elem in list.elements.dropFirst() {
+        var thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elem, rhs: bestElem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp < 0 {
+            bestElem = elem
+        }
+    }
+    return bestElem
+}
+
+@_cdecl("kk_list_minWith")
+public func kk_list_minWith(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var bestElem = list.elements[0]
+    for elem in list.elements.dropFirst() {
+        var thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: elem, rhs: bestElem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp < 0 {
+            bestElem = elem
+        }
+    }
+    return bestElem
+}
+
+// MARK: - maxOfWith / minOfWith / maxOfWithOrNull / minOfWithOrNull (comparator + selector) (STDLIB-301d)
+
+@_cdecl("kk_list_maxOfWithOrNull")
+public func kk_list_maxOfWithOrNull(_ listRaw: Int, _ cmpFnPtr: Int, _ cmpClosureRaw: Int, _ selFnPtr: Int, _ selClosureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: cmpFnPtr, closureRaw: cmpClosureRaw, lhs: value, rhs: bestValue, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp > 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+@_cdecl("kk_list_maxOfWith")
+public func kk_list_maxOfWith(_ listRaw: Int, _ cmpFnPtr: Int, _ cmpClosureRaw: Int, _ selFnPtr: Int, _ selClosureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: cmpFnPtr, closureRaw: cmpClosureRaw, lhs: value, rhs: bestValue, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp > 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+@_cdecl("kk_list_minOfWithOrNull")
+public func kk_list_minOfWithOrNull(_ listRaw: Int, _ cmpFnPtr: Int, _ cmpClosureRaw: Int, _ selFnPtr: Int, _ selClosureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return runtimeNullSentinelInt
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: cmpFnPtr, closureRaw: cmpClosureRaw, lhs: value, rhs: bestValue, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp < 0 {
+            bestValue = value
+        }
+    }
+    return bestValue
+}
+
+@_cdecl("kk_list_minOfWith")
+public func kk_list_minOfWith(_ listRaw: Int, _ cmpFnPtr: Int, _ cmpClosureRaw: Int, _ selFnPtr: Int, _ selClosureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else {
+        invalidContainerPanic(#function, "list")
+    }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "NoSuchElementException: List is empty."), outThrown)
+    }
+    var thrown = 0
+    var bestValue = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: list.elements[0], outThrown: &thrown)
+    if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    for elem in list.elements.dropFirst() {
+        thrown = 0
+        let value = runtimeInvokeCollectionLambda1(fnPtr: selFnPtr, closureRaw: selClosureRaw, value: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        thrown = 0
+        let cmp = runtimeInvokeCollectionLambda2(fnPtr: cmpFnPtr, closureRaw: cmpClosureRaw, lhs: value, rhs: bestValue, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if cmp < 0 {
             bestValue = value
         }
     }
