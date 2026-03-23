@@ -2117,6 +2117,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_op_dmul = ExternDecl(
+        name: "kk_op_dmul",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_int_toString_radix = ExternDecl(
         name: "kk_int_toString_radix",
         parameterTypes: ["intptr_t", "intptr_t"],
@@ -2840,6 +2846,7 @@ public enum RuntimeABIExterns {
             kk_op_shl,
             kk_op_shr,
             kk_op_ushr,
+            kk_op_dmul,
             kk_int_toString_radix,
             kk_int_countOneBits,
             kk_int_countLeadingZeroBits,
