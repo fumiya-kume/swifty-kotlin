@@ -558,7 +558,28 @@ extension CallLowerer {
             }
         }
 
-        return lowerMemberLikeCallExpr(
+        // General safe-call: emit null guard around the member call so that
+        // when the receiver is null the entire expression short-circuits to null.
+        let boundType = sema.bindings.exprTypes[exprID] ?? sema.types.nullableAnyType
+        let result = arena.appendExpr(
+            .temporary(Int32(arena.expressions.count)),
+            type: boundType
+        )
+        let loweredReceiver = driver.lowerExpr(
+            receiverExpr,
+            ast: ast, sema: sema, arena: arena, interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        )
+        let callLabel = driver.ctx.makeLoopLabel()
+        let endLabel = driver.ctx.makeLoopLabel()
+        instructions.append(.jumpIfNotNull(value: loweredReceiver, target: callLabel))
+        let nullExpr = arena.appendExpr(.null, type: boundType)
+        instructions.append(.constValue(result: nullExpr, value: .null))
+        instructions.append(.copy(from: nullExpr, to: result))
+        instructions.append(.jump(endLabel))
+        instructions.append(.label(callLabel))
+        let innerResult = lowerMemberLikeCallExpr(
             exprID,
             receiverExpr: receiverExpr,
             calleeName: effectiveCalleeName,
@@ -572,6 +593,9 @@ extension CallLowerer {
             prependReceiverForUnresolvedCollectionCall: false,
             instructions: &instructions
         )
+        instructions.append(.copy(from: innerResult, to: result))
+        instructions.append(.label(endLabel))
+        return result
     }
 
     private func tryLowerLateinitIsInitialized(
