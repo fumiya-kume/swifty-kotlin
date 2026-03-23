@@ -65,6 +65,12 @@ public enum RuntimeABIExterns {
         returnType: "void *"
     )
 
+    public static let kk_throwable_new_with_cause = ExternDecl(
+        name: "kk_throwable_new_with_cause",
+        parameterTypes: ["void * _Nullable", "intptr_t"],
+        returnType: "void *"
+    )
+
     public static let kk_throwable_is_cancellation = ExternDecl(
         name: "kk_throwable_is_cancellation",
         parameterTypes: ["intptr_t"],
@@ -2576,6 +2582,7 @@ public enum RuntimeABIExterns {
             kk_write_barrier,
             // Exception
             kk_throwable_new,
+            kk_throwable_new_with_cause,
             kk_throwable_is_cancellation,
             kk_panic,
             kk_abort_unreachable,

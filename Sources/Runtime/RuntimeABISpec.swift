@@ -107,6 +107,15 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_throwable_new_with_cause",
+            parameters: [
+                RuntimeABIParameter(name: "message", type: .nullableOpaquePointer),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_throwable_is_cancellation",
             parameters: [
                 RuntimeABIParameter(name: "throwableRaw", type: .intptr),

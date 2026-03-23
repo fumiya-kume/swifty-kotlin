@@ -313,6 +313,7 @@ extension ABILoweringPass {
             interner.intern("kk_any_to_string"),
             interner.intern("kk_any_hashCode"),
             interner.intern("kk_any_equals"),
+            interner.intern("kk_throwable_new_with_cause"),
             interner.intern("kk_throwable_is_cancellation"),
             interner.intern("kk_throwable_message"),
             interner.intern("kk_throwable_cause"),
