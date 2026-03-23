@@ -1556,9 +1556,11 @@ extension CallLowerer {
                     return result
                 }
                 if calleeStr == "lines" || calleeStr == "lineSequence" {
+                    let rtName = calleeStr == "lineSequence"
+                        ? "kk_string_lineSequence" : "kk_string_lines"
                     instructions.append(.call(
                         symbol: nil,
-                        callee: interner.intern("kk_string_lines"),
+                        callee: interner.intern(rtName),
                         arguments: [loweredReceiverID],
                         result: result,
                         canThrow: false,
@@ -3501,8 +3503,10 @@ extension CallLowerer {
                 return interner.intern("kk_string_compareTo_member")
             case "get":
                 return interner.intern("kk_string_get")
-            case "lines", "lineSequence":
+            case "lines":
                 return interner.intern("kk_string_lines")
+            case "lineSequence":
+                return interner.intern("kk_string_lineSequence")
             case "toRegex":
                 return interner.intern("kk_string_toRegex")
             default:

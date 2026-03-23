@@ -559,6 +559,9 @@ extension CallTypeChecker {
             interner.intern("lastOrNull"),
             interner.intern("singleOrNull"),
             interner.intern("joinToString"),
+            interner.intern("elementAt"),
+            interner.intern("single"),
+            interner.intern("toMutableList"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -636,6 +639,7 @@ extension CallTypeChecker {
             interner.intern("subList"),
             interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
             interner.intern("scan"), interner.intern("runningFold"), interner.intern("runningReduce"), interner.intern("scanReduce"),
+            interner.intern("toMutableList"),
         ]
         let setReturningMembers: Set = [
             interner.intern("intersect"),
@@ -671,7 +675,8 @@ extension CallTypeChecker {
             interner.intern("asReversed"), interner.intern("sorted"),
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
-             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"):
+             interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"),
+             interner.intern("toMutableList"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
@@ -688,7 +693,8 @@ extension CallTypeChecker {
              interner.intern("sortBy"), interner.intern("sortByDescending"), interner.intern("distinctBy"),
              interner.intern("intersect"), interner.intern("union"), interner.intern("subtract"),
              interner.intern("maxByOrNull"), interner.intern("minByOrNull"),
-             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"):
+             interner.intern("maxOfOrNull"), interner.intern("minOfOrNull"),
+             interner.intern("elementAt"):
             return argCount == 1
         case interner.intern("associateByTo"), interner.intern("associateWithTo"), interner.intern("groupByTo"):
             return argCount == 2
@@ -718,7 +724,8 @@ extension CallTypeChecker {
             return argCount == 1 || argCount == 2 || argCount == 3
         case interner.intern("chunked"):
             return argCount == 1 || argCount == 2
-        case interner.intern("count"), interner.intern("first"), interner.intern("last"):
+        case interner.intern("count"), interner.intern("first"), interner.intern("last"),
+             interner.intern("single"):
             return argCount == 0 || argCount == 1
         default:
             return true
@@ -790,22 +797,10 @@ extension CallTypeChecker {
             return sema.types.makeNullable(receiverElementType)
         }
 
-        // get() on List/Array returns the element type (TYPE-103).
-        // For Map.get(key), the return type is V? (nullable value type).
-        if memberName == interner.intern("get"), !isMapReceiver {
+        if memberName == interner.intern("elementAt")
+            || memberName == interner.intern("single")
+        {
             return receiverElementType
-        }
-
-        if memberName == interner.intern("get"), isMapReceiver {
-            if case let .classType(classType) = sema.types.kind(of: receiverElementType),
-               classType.args.count >= 2
-            {
-                return switch classType.args[1] {
-                case let .invariant(t), let .out(t), let .in(t): sema.types.makeNullable(t)
-                case .star: sema.types.nullableAnyType
-                }
-            }
-            return sema.types.nullableAnyType
         }
 
         if memberName == interner.intern("getOrNull")
@@ -882,6 +877,16 @@ extension CallTypeChecker {
         {
             return sema.types.make(.classType(ClassType(
                 classSymbol: listSymbol,
+                args: [.invariant(receiverElementType)],
+                nullability: .nonNull
+            )))
+        }
+
+        if memberName == interner.intern("toMutableList"),
+           let mutableListSymbol = sema.symbols.lookupByShortName(interner.intern("MutableList")).first
+        {
+            return sema.types.make(.classType(ClassType(
+                classSymbol: mutableListSymbol,
                 args: [.invariant(receiverElementType)],
                 nullability: .nonNull
             )))
@@ -982,6 +987,7 @@ extension CallTypeChecker {
             interner.intern("count"),
             interner.intern("first"),
             interner.intern("last"),
+            interner.intern("single"),
             interner.intern("find"),
             interner.intern("indexOfFirst"),
             interner.intern("indexOfLast"),
@@ -1005,6 +1011,7 @@ extension CallTypeChecker {
             interner.intern("count"),
             interner.intern("first"),
             interner.intern("last"),
+            interner.intern("single"),
             interner.intern("find"),
             interner.intern("associateBy"),
             interner.intern("associateWith"),

@@ -950,6 +950,14 @@ public func kk_string_lines(_ strRaw: Int) -> Int {
     return runtimeMakeStringListRaw(runtimeNormalizedMultilineString(source))
 }
 
+@_cdecl("kk_string_lineSequence")
+public func kk_string_lineSequence(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let lineRaws = runtimeNormalizedMultilineString(source).map(runtimeMakeStringRaw)
+    let seq = RuntimeSequenceBox(steps: [.source(elements: lineRaws)])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_string_trimStart")
 public func kk_string_trimStart(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
