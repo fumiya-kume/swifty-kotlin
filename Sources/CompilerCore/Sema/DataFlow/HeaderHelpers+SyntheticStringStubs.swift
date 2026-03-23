@@ -1130,7 +1130,7 @@ extension DataFlowSemaPhase {
 
         registerSyntheticStringExtensionFunction(
             named: "lineSequence",
-            externalLinkName: "kk_string_lines",
+            externalLinkName: "kk_string_lineSequence",
             receiverType: stringType,
             parameters: [],
             returnType: sequenceStringType,
@@ -1183,13 +1183,49 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-573: String.toByteArray(charset) — charset-aware overload
+        // STDLIB-581: String.toByteArray(charset: Charset)
+        let charsetSymbol = ensureClassSymbol(
+            named: "Charset", in: kotlinTextPkg,
+            symbols: symbols, interner: interner
+        )
+        let charsetType = types.make(.classType(ClassType(
+            classSymbol: charsetSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetType, for: charsetSymbol)
+
+        // Register Charsets singleton object with charset constants
+        let charsetsSymbol = ensureSyntheticObjectSymbol(
+            named: "Charsets",
+            in: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let charsetsType = types.make(.classType(ClassType(
+            classSymbol: charsetsSymbol, args: [], nullability: .nonNull
+        )))
+        symbols.setPropertyType(charsetsType, for: charsetsSymbol)
+
+        for charsetName in [
+            "UTF_8", "ISO_8859_1", "US_ASCII",
+            "UTF_16", "UTF_16BE", "UTF_16LE",
+            "UTF_32", "UTF_32BE", "UTF_32LE",
+        ] {
+            registerSyntheticObjectProperty(
+                ownerSymbol: charsetsSymbol,
+                ownerType: charsetsType,
+                name: charsetName,
+                propertyType: charsetType,
+                symbols: symbols,
+                interner: interner
+            )
+        }
+
         registerSyntheticStringExtensionFunction(
             named: "toByteArray",
-            externalLinkName: "kk_string_encodeToByteArray_charset",
+            externalLinkName: "kk_string_toByteArray_charset",
             receiverType: stringType,
             parameters: [
-                ("charset", intType, false, false),
+                ("charset", charsetType, false, false),
             ],
             returnType: listIntType,
             packageFQName: kotlinTextPkg,
@@ -1232,7 +1268,7 @@ extension DataFlowSemaPhase {
             externalLinkName: "kk_string_encodeToByteArray_charset",
             receiverType: stringType,
             parameters: [
-                ("charset", intType, false, false),
+                ("charset", charsetType, false, false),
             ],
             returnType: listIntType,
             packageFQName: kotlinTextPkg,
@@ -1261,38 +1297,9 @@ extension DataFlowSemaPhase {
             )
         }
 
-        // STDLIB-574: Charset class & Charsets object for decodeToString(charset) overload
-        let charsetSymbol = ensureClassSymbol(
-            named: "Charset", in: kotlinTextPkg, symbols: symbols, interner: interner
-        )
-        let charsetType = types.make(.classType(ClassType(
-            classSymbol: charsetSymbol, args: [], nullability: .nonNull
-        )))
-        symbols.setPropertyType(charsetType, for: charsetSymbol)
-
-        let charsetsName = interner.intern("Charsets")
-        let charsetsFQName = kotlinTextPkg + [charsetsName]
-        let charsetsSymbol: SymbolID
-        if let existing = symbols.lookup(fqName: charsetsFQName) {
-            charsetsSymbol = existing
-        } else {
-            charsetsSymbol = symbols.define(
-                kind: .object,
-                name: charsetsName,
-                fqName: charsetsFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-        }
-        let charsetsType = types.make(.classType(ClassType(
-            classSymbol: charsetsSymbol, args: [], nullability: .nonNull
-        )))
-        symbols.setPropertyType(charsetsType, for: charsetsSymbol)
-
         for charsetPropName in ["UTF_8", "US_ASCII", "ISO_8859_1"] {
             let propName = interner.intern(charsetPropName)
-            let propFQName = charsetsFQName + [propName]
+            let propFQName = [interner.intern("kotlin"), interner.intern("text"), interner.intern("Charsets"), propName]
             guard symbols.lookup(fqName: propFQName) == nil else { continue }
             let propSymbol = symbols.define(
                 kind: .property,
@@ -1851,5 +1858,54 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+    }
+
+    private func ensureSyntheticObjectSymbol(
+        named name: String,
+        in pkg: [InternedString],
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) -> SymbolID {
+        let internedName = interner.intern(name)
+        let fqName = pkg + [internedName]
+        if let existing = symbols.lookup(fqName: fqName) {
+            return existing
+        }
+        return symbols.define(
+            kind: .object,
+            name: internedName,
+            fqName: fqName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+    }
+
+    private func registerSyntheticObjectProperty(
+        ownerSymbol: SymbolID,
+        ownerType _: TypeID,
+        name: String,
+        propertyType: TypeID,
+        symbols: SymbolTable,
+        interner: StringInterner
+    ) {
+        guard let ownerInfo = symbols.symbol(ownerSymbol) else {
+            return
+        }
+        let propertyName = interner.intern(name)
+        let propertyFQName = ownerInfo.fqName + [propertyName]
+        guard symbols.lookup(fqName: propertyFQName) == nil else {
+            return
+        }
+        let propertySymbol = symbols.define(
+            kind: .property,
+            name: propertyName,
+            fqName: propertyFQName,
+            declSite: nil,
+            visibility: .public,
+            flags: [.synthetic]
+        )
+        symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
+        symbols.setPropertyType(propertyType, for: propertySymbol)
     }
 }

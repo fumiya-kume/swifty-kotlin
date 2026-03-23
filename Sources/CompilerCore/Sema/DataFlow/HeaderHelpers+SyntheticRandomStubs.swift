@@ -1,9 +1,9 @@
 import Foundation
 
 /// Synthetic stdlib stubs for kotlin.random.Random
-/// (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-654).
+/// (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655).
 /// Registers the Random object, seeded constructor-style factory, and
-/// nextInt/nextLong/nextFloat/nextDouble/nextBoolean methods.
+/// nextInt/nextLong/nextFloat/nextDouble/nextBoolean/nextBytes methods.
 extension DataFlowSemaPhase {
     func registerSyntheticRandomStubs(
         symbols: SymbolTable,
@@ -156,6 +156,21 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
+        // STDLIB-655: nextFloat(from, until)
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextFloat",
+            externalLinkName: "kk_random_nextFloat_range",
+            returnType: floatType,
+            parameters: [
+                (name: "from", type: floatType),
+                (name: "until", type: floatType),
+            ],
+            symbols: symbols,
+            interner: interner
+        )
+
         registerSyntheticRandomMember(
             ownerSymbol: randomSymbol,
             ownerType: randomType,
@@ -188,6 +203,23 @@ extension DataFlowSemaPhase {
                 (name: "from", type: doubleType),
                 (name: "until", type: doubleType),
             ],
+            symbols: symbols,
+            interner: interner
+        )
+
+        // STDLIB-653: nextBytes(array: ByteArray): ByteArray
+        let byteArrayType = makeListIntType(
+            symbols: symbols,
+            types: types,
+            interner: interner
+        )
+        registerSyntheticRandomMember(
+            ownerSymbol: randomSymbol,
+            ownerType: randomType,
+            name: "nextBytes",
+            externalLinkName: "kk_random_nextBytes",
+            returnType: byteArrayType,
+            parameters: [(name: "array", type: byteArrayType)],
             symbols: symbols,
             interner: interner
         )
@@ -371,5 +403,26 @@ extension DataFlowSemaPhase {
             }
         }
         return fqName
+    }
+
+    /// Build a `List<Int>` type, which is the internal representation of ByteArray.
+    private func makeListIntType(
+        symbols: SymbolTable,
+        types: TypeSystem,
+        interner: StringInterner
+    ) -> TypeID {
+        let listFQName: [InternedString] = [
+            interner.intern("kotlin"),
+            interner.intern("collections"),
+            interner.intern("List"),
+        ]
+        guard let listSymbol = symbols.lookup(fqName: listFQName) else {
+            return types.anyType
+        }
+        return types.make(.classType(ClassType(
+            classSymbol: listSymbol,
+            args: [.out(types.intType)],
+            nullability: .nonNull
+        )))
     }
 }

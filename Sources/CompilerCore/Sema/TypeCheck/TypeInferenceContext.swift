@@ -40,13 +40,26 @@ struct TypeInferenceContext {
     var allowsValPropertyInitialization: Bool = false
     /// Sema cache context for hot-path caching.  `nil` when caching is disabled.
     let semaCacheContext: SemaCacheContext?
+    /// Set of DslMarker annotation FQ names active on the current implicit receiver.
+    /// When a nested lambda introduces a receiver whose class carries the same
+    /// DslMarker annotation as an outer receiver, the outer receiver is hidden
+    /// from implicit resolution.
+    var activeDslMarkerAnnotations: Set<String> = []
 
     func with(scope newScope: Scope) -> TypeInferenceContext {
         var copy = self; copy.scope = newScope; return copy
     }
 
     func with(implicitReceiverType newType: TypeID?) -> TypeInferenceContext {
-        var copy = self; copy.implicitReceiverType = newType; return copy
+        var copy = self
+        copy.implicitReceiverType = newType
+        // Update active DslMarker annotations for the new receiver.
+        if let newType {
+            copy.activeDslMarkerAnnotations = copy.collectDslMarkerAnnotations(for: newType)
+        } else {
+            copy.activeDslMarkerAnnotations = []
+        }
+        return copy
     }
 
     func with(loopDepth newDepth: Int) -> TypeInferenceContext {
@@ -94,7 +107,15 @@ struct TypeInferenceContext {
     ) -> TypeInferenceContext {
         var copy = self
         if let scope { copy.scope = scope }
-        if let implicitReceiverType { copy.implicitReceiverType = implicitReceiverType }
+        if let implicitReceiverType {
+            copy.implicitReceiverType = implicitReceiverType
+            // Update active DslMarker annotations when the receiver changes.
+            if let newType = implicitReceiverType {
+                copy.activeDslMarkerAnnotations = copy.collectDslMarkerAnnotations(for: newType)
+            } else {
+                copy.activeDslMarkerAnnotations = []
+            }
+        }
         if let loopDepth { copy.loopDepth = loopDepth }
         if let loopLabelStack { copy.loopLabelStack = loopLabelStack }
         if let lambdaLabelStack { copy.lambdaLabelStack = lambdaLabelStack }
@@ -148,5 +169,113 @@ struct TypeInferenceContext {
             return cache.lookupInScope(name, scope: scope)
         }
         return scope.lookup(name)
+    }
+
+    // MARK: - DslMarker helpers
+
+    /// Collects the FQ names of all @DslMarker meta-annotations that apply to
+    /// the given type.  A type carries a DslMarker if it is a class/interface
+    /// annotated with an annotation class that is itself annotated with
+    /// `@DslMarker`.
+    func collectDslMarkerAnnotations(for typeID: TypeID) -> Set<String> {
+        let nonNull = sema.types.makeNonNullable(typeID)
+        guard case let .classType(classType) = sema.types.kind(of: nonNull) else {
+            return []
+        }
+        let classSymbol = classType.classSymbol
+        let annotations = sema.symbols.annotations(for: classSymbol)
+        var dslMarkers: Set<String> = []
+        for annotation in annotations {
+            // Check if the annotation class itself is annotated with @DslMarker.
+            // First, look up the annotation class symbol by its FQ name.
+            let annotationFQName = annotation.annotationFQName
+            if isDslMarkerAnnotation(annotationFQName) {
+                dslMarkers.insert(annotationFQName)
+            }
+        }
+        return dslMarkers
+    }
+
+    /// Returns true if the annotation with the given FQ name is a DslMarker
+    /// annotation — i.e. the annotation class itself is annotated with @DslMarker.
+    private func isDslMarkerAnnotation(_ annotationFQName: String) -> Bool {
+        // Look up the annotation class by its simple or qualified name in the symbol table.
+        let parts = annotationFQName.split(separator: ".").map { String($0) }
+        let internedParts = parts.map { interner.intern($0) }
+
+        // Try qualified lookup first
+        if let annotationSymbol = sema.symbols.lookup(fqName: internedParts) {
+            let metaAnnotations = sema.symbols.annotations(for: annotationSymbol)
+            for meta in metaAnnotations {
+                if KnownCompilerAnnotation.dslMarker.matches(meta.annotationFQName) {
+                    return true
+                }
+            }
+        }
+        // Try simple name lookup (single segment)
+        if parts.count == 1 {
+            let simpleName = interner.intern(parts[0])
+            let candidates = scope.lookup(simpleName)
+            for candidateID in candidates {
+                guard let candidateSymbol = sema.symbols.symbol(candidateID),
+                      candidateSymbol.kind == .annotationClass else {
+                    continue
+                }
+                let metaAnnotations = sema.symbols.annotations(for: candidateID)
+                for meta in metaAnnotations {
+                    if KnownCompilerAnnotation.dslMarker.matches(meta.annotationFQName) {
+                        return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    /// Returns true if the given outer receiver type is blocked by DslMarker
+    /// restrictions — i.e. the current implicit receiver carries at least one
+    /// DslMarker annotation that also applies to the outer receiver.
+    func isOuterReceiverBlockedByDslMarker(_ outerReceiverType: TypeID) -> Bool {
+        guard !activeDslMarkerAnnotations.isEmpty else {
+            return false
+        }
+        let outerDslMarkers = collectDslMarkerAnnotations(for: outerReceiverType)
+        return !activeDslMarkerAnnotations.isDisjoint(with: outerDslMarkers)
+    }
+
+    /// Returns true if accessing the given candidate symbol through the scope
+    /// chain is blocked by @DslMarker restrictions.  A member symbol is blocked
+    /// when its owner class/interface carries a DslMarker annotation that also
+    /// applies to the current implicit receiver, and the owner is NOT the
+    /// current implicit receiver itself.
+    func isCandidateBlockedByDslMarker(_ candidateID: SymbolID) -> Bool {
+        guard !activeDslMarkerAnnotations.isEmpty else {
+            return false
+        }
+        guard let parentID = sema.symbols.parentSymbol(for: candidateID) else {
+            return false
+        }
+        // The parent must be a class, interface, or object to carry DslMarker.
+        guard let parentSymbol = sema.symbols.symbol(parentID),
+              parentSymbol.kind == .class || parentSymbol.kind == .interface || parentSymbol.kind == .object
+        else {
+            return false
+        }
+        // If the parent IS the current implicit receiver's class, no restriction.
+        if let receiverType = implicitReceiverType {
+            let nonNull = sema.types.makeNonNullable(receiverType)
+            if case let .classType(classType) = sema.types.kind(of: nonNull),
+               classType.classSymbol == parentID
+            {
+                return false
+            }
+        }
+        // Check if the parent class's DslMarker annotations overlap with the
+        // active ones from the current implicit receiver.
+        let parentType = sema.types.make(.classType(ClassType(
+            classSymbol: parentID, args: [], nullability: .nonNull
+        )))
+        let parentDslMarkers = collectDslMarkerAnnotations(for: parentType)
+        return !activeDslMarkerAnnotations.isDisjoint(with: parentDslMarkers)
     }
 }

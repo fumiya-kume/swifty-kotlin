@@ -144,6 +144,11 @@ public func kk_bits_to_double(_ value: Int) -> Double {
     Double(bitPattern: UInt64(bitPattern: Int64(value)))
 }
 
+@_cdecl("kk_op_dmul")
+public func kk_op_dmul(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) * kk_bits_to_double(rhs))
+}
+
 @_cdecl("kk_int_to_float_bits")
 public func kk_int_to_float_bits(_ value: Int) -> Int {
     kk_float_to_bits(Float(value))
@@ -588,6 +593,60 @@ public func kk_float_nextUp(_ value: Int) -> Int {
 @_cdecl("kk_float_nextDown")
 public func kk_float_nextDown(_ value: Int) -> Int {
     kk_float_to_bits(kk_bits_to_float(value).nextDown)
+}
+
+// MARK: - STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
+
+@_cdecl("kk_math_abs_long")
+public func kk_math_abs_long(_ value: Int) -> Int {
+    // Long is transported as Int (64-bit on supported platforms).
+    // Kotlin specifies abs(Long.MIN_VALUE) == Long.MIN_VALUE (overflow).
+    if value == Int.min { return Int.min }
+    return value < 0 ? -value : value
+}
+
+@_cdecl("kk_math_truncate")
+public func kk_math_truncate(_ value: Int) -> Int {
+    kk_double_to_bits(trunc(kk_bits_to_double(value)))
+}
+
+@_cdecl("kk_math_truncate_float")
+public func kk_math_truncate_float(_ value: Int) -> Int {
+    kk_float_to_bits(truncf(kk_bits_to_float(value)))
+}
+
+@_cdecl("kk_math_IEEErem")
+public func kk_math_IEEErem(_ x: Int, _ y: Int) -> Int {
+    kk_double_to_bits(remainder(kk_bits_to_double(x), kk_bits_to_double(y)))
+}
+
+@_cdecl("kk_math_IEEErem_float")
+public func kk_math_IEEErem_float(_ x: Int, _ y: Int) -> Int {
+    kk_float_to_bits(remainderf(kk_bits_to_float(x), kk_bits_to_float(y)))
+}
+
+@_cdecl("kk_math_withSign")
+public func kk_math_withSign(_ x: Int, _ sign: Int) -> Int {
+    kk_double_to_bits(copysign(kk_bits_to_double(x), kk_bits_to_double(sign)))
+}
+
+@_cdecl("kk_math_withSign_float")
+public func kk_math_withSign_float(_ x: Int, _ sign: Int) -> Int {
+    kk_float_to_bits(copysignf(kk_bits_to_float(x), kk_bits_to_float(sign)))
+}
+
+@_cdecl("kk_math_withSign_int")
+public func kk_math_withSign_int(_ x: Int, _ sign: Int) -> Int {
+    let d = kk_bits_to_double(x)
+    let signDouble = sign < 0 ? -1.0 : 1.0
+    return kk_double_to_bits(copysign(d, signDouble))
+}
+
+@_cdecl("kk_math_nextTowards")
+public func kk_math_nextTowards(_ from: Int, _ to: Int) -> Int {
+    let rawFrom = kk_bits_to_double(from)
+    let rawTo = kk_bits_to_double(to)
+    return kk_double_to_bits(nextafter(rawFrom, rawTo))
 }
 
 @_cdecl("kk_println_char")

@@ -173,7 +173,12 @@ extension LocalDeclTypeChecker {
                 diagnostics: ctx.semaCtx.diagnostics
             )
         } else {
-            sema.types.unitType
+            switch body {
+            case .expr:
+                sema.types.anyType
+            case .block, .unit:
+                sema.types.unitType
+            }
         }
 
         let funSymbol = sema.symbols.define(
@@ -210,19 +215,46 @@ extension LocalDeclTypeChecker {
             bodyLocals[param.name] = (parameterTypes[i], paramSymbols[i], false, true)
         }
         bodyLocals[name] = (funType, funSymbol, false, true)
+        let inferredBodyType: TypeID
         switch body {
         case let .block(exprs, _):
+            var lastType: TypeID = sema.types.unitType
             for (index, expr) in exprs.enumerated() {
                 let isLast = index == exprs.count - 1
-                let expected = isLast ? resolvedReturnType : nil
-                _ = driver.inferExpr(expr, ctx: bodyCtx, locals: &bodyLocals, expectedType: expected)
+                let expected = isLast && returnTypeRef != nil ? resolvedReturnType : nil
+                lastType = driver.inferExpr(expr, ctx: bodyCtx, locals: &bodyLocals, expectedType: expected)
             }
+            inferredBodyType = lastType
         case let .expr(exprID, _):
-            _ = driver.inferExpr(exprID, ctx: bodyCtx, locals: &bodyLocals, expectedType: resolvedReturnType)
+            inferredBodyType = driver.inferExpr(
+                exprID,
+                ctx: bodyCtx,
+                locals: &bodyLocals,
+                expectedType: returnTypeRef != nil ? resolvedReturnType : nil
+            )
         case .unit:
-            break
+            inferredBodyType = sema.types.unitType
         }
-        locals[name] = (funType, funSymbol, false, true)
+
+        if returnTypeRef == nil, case .expr = body, inferredBodyType != sema.types.errorType {
+            let inferredSignature = FunctionSignature(
+                parameterTypes: parameterTypes,
+                returnType: inferredBodyType,
+                valueParameterSymbols: paramSymbols,
+                valueParameterHasDefaultValues: valueParams.map(\.hasDefaultValue),
+                valueParameterIsVararg: valueParams.map(\.isVararg)
+            )
+            sema.symbols.setFunctionSignature(inferredSignature, for: funSymbol)
+        }
+        let finalReturnType = sema.symbols.functionSignature(for: funSymbol)?.returnType ?? resolvedReturnType
+        let finalFunType = sema.types.make(.functionType(FunctionType(
+            params: parameterTypes,
+            returnType: finalReturnType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
+
+        locals[name] = (finalFunType, funSymbol, false, true)
         sema.bindings.bindIdentifier(id, symbol: funSymbol)
         sema.bindings.bindExprType(id, type: sema.types.unitType)
         return sema.types.unitType

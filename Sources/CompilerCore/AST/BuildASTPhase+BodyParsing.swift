@@ -462,6 +462,10 @@ extension BuildASTPhase {
             "\"\(interner.resolve(interned))\""
         case .stringQuote:
             "\""
+        case let .multiDollarStringQuote(dollarCount):
+            String(repeating: "$", count: dollarCount) + "\""
+        case let .multiDollarRawStringQuote(dollarCount):
+            String(repeating: "$", count: dollarCount) + "\"\"\""
         case let .intLiteral(value):
             "\(value)"
         case let .longLiteral(value):

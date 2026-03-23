@@ -49,7 +49,7 @@ extension BuildASTPhase.ExpressionParser {
         case let .softKeyword(softKeyword):
             _ = consume()
             return astArena.appendExpr(.nameRef(interner.intern(softKeyword.rawValue), token.range))
-        case .stringQuote, .rawStringQuote:
+        case .stringQuote, .rawStringQuote, .multiDollarStringQuote, .multiDollarRawStringQuote:
             return parseStringLiteral()
         case .symbol(.doubleColon):
             return parseCallableReferenceWithoutReceiver()
@@ -302,7 +302,13 @@ extension BuildASTPhase.ExpressionParser {
         guard let open = consume() else { return nil }
         var end = open.range.end
         let closingKind = open.kind
-        let shouldDecodeEscapes = if case .stringQuote = open.kind { true } else { false }
+        let shouldDecodeEscapes: Bool
+        switch open.kind {
+        case .stringQuote, .multiDollarStringQuote:
+            shouldDecodeEscapes = true
+        default:
+            shouldDecodeEscapes = false
+        }
 
         var hasTemplate = false
         var scanIdx = index

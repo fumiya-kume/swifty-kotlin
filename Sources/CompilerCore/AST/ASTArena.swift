@@ -7,6 +7,8 @@ public final class ASTArena: @unchecked Sendable {
     private var _typeRefs: [TypeRef] = []
     /// Maps loop expression IDs (forExpr/whileExpr/doWhileExpr) to their user-defined label.
     private var _loopLabels: [ExprID: InternedString] = [:]
+    /// Maps whenExpr IDs to their subject variable name for `when (val x = expr)` syntax.
+    private var _whenSubjectVarNames: [ExprID: InternedString] = [:]
 
     public var decls: [Decl] {
         lock.lock()
@@ -145,6 +147,18 @@ public final class ASTArena: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return _loopLabels[exprID]
+    }
+
+    public func setWhenSubjectVarName(_ name: InternedString, for exprID: ExprID) {
+        lock.lock()
+        defer { lock.unlock() }
+        _whenSubjectVarNames[exprID] = name
+    }
+
+    public func whenSubjectVarName(for exprID: ExprID) -> InternedString? {
+        lock.lock()
+        defer { lock.unlock() }
+        return _whenSubjectVarNames[exprID]
     }
 
     public func appendTypeRef(_ typeRef: TypeRef) -> TypeRefID {

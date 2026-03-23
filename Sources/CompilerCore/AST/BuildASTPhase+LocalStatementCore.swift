@@ -54,13 +54,14 @@ extension BuildASTPhase {
         }
 
         static func isLocalAssignmentTokens(_ tokens: [Token]) -> Bool {
-            guard tokens.count >= 3 else {
+            guard tokens.count >= 2 else {
                 return false
             }
             let assignmentOps: [TokenKind] = [
                 .symbol(.assign),
                 .symbol(.plusAssign), .symbol(.minusAssign),
                 .symbol(.starAssign), .symbol(.slashAssign), .symbol(.percentAssign),
+                .symbol(.plusPlus), .symbol(.minusMinus),
             ]
             var depth = BuildASTPhase.BracketDepth()
             for token in tokens {
@@ -258,8 +259,16 @@ extension BuildASTPhase {
             context: LocalStatementCoreContext,
             options: LocalStatementCoreOptions
         ) -> ExprID? {
-            guard statementTokens.count >= 3 else {
+            guard statementTokens.count >= 2 else {
                 return nil
+            }
+
+            if let postfixMutation = parsePostfixMutation(
+                from: statementTokens,
+                context: context,
+                options: options
+            ) {
+                return postfixMutation
             }
 
             if let compound = parseCompoundAssignment(
@@ -340,6 +349,67 @@ extension BuildASTPhase {
                     receiver: receiver,
                     indices: indices,
                     value: valueExpr,
+                    range: range
+                ))
+
+            default:
+                return nil
+            }
+        }
+
+        private static func parsePostfixMutation(
+            from statementTokens: ArraySlice<Token>,
+            context: LocalStatementCoreContext,
+            options: LocalStatementCoreOptions
+        ) -> ExprID? {
+            let strippedTokens = stripSemicolons(statementTokens)
+            guard let lastToken = strippedTokens.last else {
+                return nil
+            }
+
+            let op: CompoundAssignOp
+            switch lastToken.kind {
+            case .symbol(.plusPlus):
+                op = .plusAssign
+            case .symbol(.minusMinus):
+                op = .minusAssign
+            default:
+                return nil
+            }
+
+            let lhsTokens = Array(strippedTokens.dropLast())
+            guard !lhsTokens.isEmpty,
+                  let lhsExpr = context.parseExpression(lhsTokens[...]),
+                  let lhs = context.astArena.expr(lhsExpr),
+                  let lhsRange = context.astArena.exprRange(lhsExpr)
+            else {
+                return nil
+            }
+
+            let oneExpr = context.astArena.appendExpr(.intLiteral(1, lastToken.range))
+            let range = SourceRange(start: lhsRange.start, end: lastToken.range.end)
+
+            switch lhs {
+            case let .nameRef(name, _):
+                if options.rejectValVarSimpleAssignLHS {
+                    let text = context.interner.resolve(name)
+                    if text == "val" || text == "var" {
+                        return nil
+                    }
+                }
+                return context.astArena.appendExpr(.compoundAssign(
+                    op: op,
+                    name: name,
+                    value: oneExpr,
+                    range: range
+                ))
+
+            case let .indexedAccess(receiver, indices, _):
+                return context.astArena.appendExpr(.indexedCompoundAssign(
+                    op: op,
+                    receiver: receiver,
+                    indices: indices,
+                    value: oneExpr,
                     range: range
                 ))
 

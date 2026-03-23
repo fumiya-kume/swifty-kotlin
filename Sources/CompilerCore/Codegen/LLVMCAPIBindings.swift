@@ -86,6 +86,16 @@ final class LLVMCAPIBindings {
     typealias LLVMSetInitializerFn = @convention(c) (LLVMValueRef?, LLVMValueRef?) -> Void
     typealias LLVMConstIntFn = @convention(c) (LLVMTypeRef?, UInt64, LLVMBool) -> LLVMValueRef?
     typealias LLVMConstPointerNullFn = @convention(c) (LLVMTypeRef?) -> LLVMValueRef?
+    // LLVMConstStringInContext(Context, Str, Length, DontNullTerminate) -> [N x i8] constant
+    typealias LLVMConstStringInContextFn = @convention(c) (LLVMContextRef?, UnsafePointer<CChar>?, UInt32, LLVMBool) -> LLVMValueRef?
+    // LLVMArrayType(ElementType, ElementCount) -> [N x ElementType]
+    typealias LLVMArrayTypeFn = @convention(c) (LLVMTypeRef?, UInt32) -> LLVMTypeRef?
+    // LLVMSetGlobalConstant(GlobalVar, IsConstant)
+    typealias LLVMSetGlobalConstantFn = @convention(c) (LLVMValueRef?, LLVMBool) -> Void
+    // LLVMSetUnnamedAddr(Global, HasUnnamedAddr)
+    typealias LLVMSetUnnamedAddrFn = @convention(c) (LLVMValueRef?, LLVMBool) -> Void
+    // LLVMBuildInBoundsGEP2(Builder, Ty, Pointer, Indices, NumIndices, Name) -> GEP value
+    typealias LLVMBuildInBoundsGEP2Fn = @convention(c) (LLVMBuilderRef?, LLVMTypeRef?, LLVMValueRef?, UnsafeMutablePointer<LLVMValueRef?>?, UInt32, UnsafePointer<CChar>?) -> LLVMValueRef?
     typealias LLVMGetDefaultTargetTripleFn = @convention(c) () -> UnsafeMutablePointer<CChar>?
     typealias LLVMGetTargetFromTripleFn = @convention(c) (
         UnsafePointer<CChar>?,
@@ -268,6 +278,11 @@ final class LLVMCAPIBindings {
     let buildCallFn: LLVMBuildCallFn?
     let constIntFn: LLVMConstIntFn
     let constPointerNullFn: LLVMConstPointerNullFn?
+    let constStringInContextFn: LLVMConstStringInContextFn?
+    let arrayTypeFn: LLVMArrayTypeFn?
+    let setGlobalConstantFn: LLVMSetGlobalConstantFn?
+    let setUnnamedAddrFn: LLVMSetUnnamedAddrFn?
+    let buildInBoundsGEP2Fn: LLVMBuildInBoundsGEP2Fn?
     let getDefaultTargetTripleFn: LLVMGetDefaultTargetTripleFn
     let getTargetFromTripleFn: LLVMGetTargetFromTripleFn
     let createTargetMachineFn: LLVMCreateTargetMachineFn
@@ -362,6 +377,11 @@ final class LLVMCAPIBindings {
         buildCallFn: LLVMBuildCallFn?,
         constIntFn: @escaping LLVMConstIntFn,
         constPointerNullFn: LLVMConstPointerNullFn?,
+        constStringInContextFn: LLVMConstStringInContextFn? = nil,
+        arrayTypeFn: LLVMArrayTypeFn? = nil,
+        setGlobalConstantFn: LLVMSetGlobalConstantFn? = nil,
+        setUnnamedAddrFn: LLVMSetUnnamedAddrFn? = nil,
+        buildInBoundsGEP2Fn: LLVMBuildInBoundsGEP2Fn? = nil,
         getDefaultTargetTripleFn: @escaping LLVMGetDefaultTargetTripleFn,
         getTargetFromTripleFn: @escaping LLVMGetTargetFromTripleFn,
         createTargetMachineFn: @escaping LLVMCreateTargetMachineFn,
@@ -456,6 +476,11 @@ final class LLVMCAPIBindings {
         self.buildCallFn = buildCallFn
         self.constIntFn = constIntFn
         self.constPointerNullFn = constPointerNullFn
+        self.constStringInContextFn = constStringInContextFn
+        self.arrayTypeFn = arrayTypeFn
+        self.setGlobalConstantFn = setGlobalConstantFn
+        self.setUnnamedAddrFn = setUnnamedAddrFn
+        self.buildInBoundsGEP2Fn = buildInBoundsGEP2Fn
         self.getDefaultTargetTripleFn = getDefaultTargetTripleFn
         self.getTargetFromTripleFn = getTargetFromTripleFn
         self.createTargetMachineFn = createTargetMachineFn

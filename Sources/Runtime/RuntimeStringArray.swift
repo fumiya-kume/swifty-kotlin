@@ -348,6 +348,14 @@ public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
         }
         return 0
     }
+    // List check
+    if let list = runtimeListBox(from: container) {
+        return list.elements.contains(element) ? 1 : 0
+    }
+    // Set check
+    if let set = runtimeSetBox(from: container) {
+        return set.elements.contains(element) ? 1 : 0
+    }
     // Array check
     guard let array = runtimeArrayBox(from: container) else {
         return 0
@@ -879,6 +887,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("[\(rendered)]")
         return
     }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        Swift.print(sbBox.value)
+        return
+    }
     Swift.print("<object \(raw)>")
 }
 
@@ -1041,6 +1053,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
     }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        return sbBox.value
+    }
     return "<object \(raw)>"
 }
 
@@ -1054,7 +1069,81 @@ private func runtimeRenderStringIterableForPrint(_ strRaw: Int) -> String {
     return "[\(rendered)]"
 }
 
-func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
+private func runtimeNormalizeScientificExponent(_ rendered: String) -> String {
+    guard let exponentIndex = rendered.firstIndex(of: "E") ?? rendered.firstIndex(of: "e") else {
+        return rendered
+    }
+    let mantissa = runtimeNormalizeScientificMantissa(String(rendered[..<exponentIndex]))
+    var exponent = String(rendered[rendered.index(after: exponentIndex)...])
+    if exponent.hasPrefix("+") {
+        exponent.removeFirst()
+    }
+    while exponent.count > 1, exponent.first == "0" {
+        exponent.removeFirst()
+    }
+    if exponent.hasPrefix("-0"), exponent.count > 2 {
+        exponent.remove(at: exponent.index(after: exponent.startIndex))
+    }
+    return "\(mantissa)E\(exponent)"
+}
+
+private func runtimeNormalizeScientificMantissa(_ mantissa: String) -> String {
+    guard let dotIndex = mantissa.firstIndex(of: ".") else {
+        return mantissa + ".0"
+    }
+    let integerPart = String(mantissa[..<dotIndex])
+    var fractionalPart = String(mantissa[mantissa.index(after: dotIndex)...])
+    while fractionalPart.last == "0" {
+        fractionalPart.removeLast()
+    }
+    if fractionalPart.isEmpty {
+        fractionalPart = "0"
+    }
+    return "\(integerPart).\(fractionalPart)"
+}
+
+private func runtimeScientificString(fromFixed rendered: String) -> String {
+    var body = rendered
+    var sign = ""
+    if body.hasPrefix("-") {
+        sign = "-"
+        body.removeFirst()
+    } else if body.hasPrefix("+") {
+        body.removeFirst()
+    }
+
+    let components = body.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+    let integerPart = String(components.first ?? "")
+    let fractionalPart = components.count > 1 ? String(components[1]) : ""
+
+    let trimmedInteger = integerPart.drop(while: { $0 == "0" })
+    let exponent: Int
+    let significantDigits: String
+
+    if !trimmedInteger.isEmpty {
+        exponent = trimmedInteger.count - 1
+        significantDigits = String(trimmedInteger) + fractionalPart
+    } else if let firstNonZeroFraction = fractionalPart.firstIndex(where: { $0 != "0" }) {
+        exponent = -fractionalPart.distance(from: fractionalPart.startIndex, to: firstNonZeroFraction) - 1
+        significantDigits = String(fractionalPart[firstNonZeroFraction...])
+    } else {
+        return sign + "0.0E0"
+    }
+
+    let firstDigit = String(significantDigits.prefix(1))
+    var mantissaFraction = String(significantDigits.dropFirst())
+    while mantissaFraction.last == "0" {
+        mantissaFraction.removeLast()
+    }
+    if mantissaFraction.isEmpty {
+        mantissaFraction = "0"
+    }
+    return "\(sign)\(firstDigit).\(mantissaFraction)E\(exponent)"
+}
+
+private func runtimeFormatFloatingPointCore(
+    _ value: Double
+) -> String {
     if value.isNaN {
         return "NaN"
     }
@@ -1064,7 +1153,36 @@ func runtimeFormatFloatingPoint(_ value: some BinaryFloatingPoint) -> String {
     if value == -.infinity {
         return "-Infinity"
     }
-    return String(describing: value)
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    let magnitude = abs(value)
+    if magnitude != 0, magnitude >= 1e7 || magnitude < 1e-3 {
+        return runtimeScientificString(fromFixed: rendered)
+    }
+    return rendered
+}
+
+func runtimeFormatFloatingPoint(_ value: Double) -> String {
+    runtimeFormatFloatingPointCore(value)
+}
+
+func runtimeFormatFloatingPoint(_ value: Float) -> String {
+    if value.isNaN {
+        return "NaN"
+    }
+    if value == .infinity {
+        return "Infinity"
+    }
+    if value == -.infinity {
+        return "-Infinity"
+    }
+    let rendered = String(describing: value)
+    if rendered.contains("e") || rendered.contains("E") {
+        return runtimeNormalizeScientificExponent(rendered)
+    }
+    return rendered
 }
 
 // MARK: - String nullable receiver helpers

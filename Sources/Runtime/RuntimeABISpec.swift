@@ -696,6 +696,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-666: String.lineSequence
+        RuntimeABIFunctionSpec(
+            name: "kk_string_lineSequence",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-144: String.trimStart/trimEnd
         RuntimeABIFunctionSpec(
             name: "kk_string_trimStart",
@@ -719,6 +728,70 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
             ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        // STDLIB-581: String.toByteArray(charset: Charset)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toByteArray_charset",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetTag", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_8",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_iso_8859_1",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_us_ascii",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16be",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16le",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32be",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32le",
+            parameters: [],
             returnType: .intptr,
             section: "String"
         ),
@@ -1902,6 +1975,32 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_yield",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_with_timeout",
+            parameters: [
+                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_with_timeout_or_null",
+            parameters: [
+                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
         // Cancellation (CORO-002)
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_check_cancellation",
@@ -1934,6 +2033,87 @@ public enum RuntimeABISpec {
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
             returnType: .void,
+            section: "Coroutine"
+        ),
+        // Mutex / Semaphore (sync primitives)
+        RuntimeABIFunctionSpec(
+            name: "kk_mutex_create",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutex_lock",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutex_unlock",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutex_tryLock",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_mutex_isLocked",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_semaphore_create",
+            parameters: [
+                RuntimeABIParameter(name: "permits", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_semaphore_acquire",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_semaphore_release",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_semaphore_tryAcquire",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_semaphore_availablePermits",
+            parameters: [
+                RuntimeABIParameter(name: "handle", type: .intptr),
+            ],
+            returnType: .intptr,
             section: "Coroutine"
         ),
     ]
@@ -2687,6 +2867,15 @@ public enum RuntimeABISpec {
             section: "Bitwise"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_op_dmul",
+            parameters: [
+                RuntimeABIParameter(name: "a", type: .intptr),
+                RuntimeABIParameter(name: "b", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Bitwise"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_int_toString_radix",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -2866,6 +3055,40 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "regexRaw", type: .intptr),
                 RuntimeABIParameter(name: "inputRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        // MatchResult.groups / MatchGroupCollection / MatchGroup
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_groups",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_collection_get",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_value",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_range",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Regex"
@@ -3273,6 +3496,14 @@ public enum RuntimeABISpec {
             section: "Duration"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_duration_from_days",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_duration_from_seconds_long",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
@@ -3320,6 +3551,14 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Duration"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_duration_from_days_long",
+            parameters: [
+                RuntimeABIParameter(name: "value", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Duration"
+        ),
     ]
 
     public static let allFunctions: [RuntimeABIFunctionSpec] =
@@ -3343,10 +3582,12 @@ public enum RuntimeABISpec {
             + collectionFunctions
             + sequenceFunctions
             + regexFunctions
+            + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions
             + stringBuilderFunctions
             + fileIOFunctions
+            + uuidFunctions
             + durationFunctions
 
     public static func generateCHeader() -> String {

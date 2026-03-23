@@ -262,6 +262,10 @@ final class GoldenHarnessTests: XCTestCase {
             "stringQuote"
         case .rawStringQuote:
             "rawStringQuote"
+        case let .multiDollarStringQuote(dollarCount):
+            "multiDollarStringQuote(\(dollarCount))"
+        case let .multiDollarRawStringQuote(dollarCount):
+            "multiDollarRawStringQuote(\(dollarCount))"
         case .templateExprStart:
             "templateExprStart"
         case .templateExprEnd:
