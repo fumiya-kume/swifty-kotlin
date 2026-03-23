@@ -166,6 +166,8 @@ struct CollectionLiteralLookupTables {
     let kkComparatorReverseOrderName: InternedString
     let kkComparatorNaturalOrderTrampolineName: InternedString
     let kkComparatorReverseOrderTrampolineName: InternedString
+    let kkComparatorReversedName: InternedString
+    let kkComparatorReversedTrampolineName: InternedString
 
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
@@ -686,6 +688,8 @@ struct CollectionLiteralLookupTables {
         kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
         kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
         kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
+        kkComparatorReversedName = interner.intern("kk_comparator_reversed")
+        kkComparatorReversedTrampolineName = interner.intern("kk_comparator_reversed_trampoline")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")
