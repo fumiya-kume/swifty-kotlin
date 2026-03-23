@@ -3573,6 +3573,7 @@ public enum RuntimeABISpec {
             + collectionFunctions
             + sequenceFunctions
             + regexFunctions
+            + hexFormatFunctions
             + comparatorFunctions
             + resultFunctions
             + stringBuilderFunctions

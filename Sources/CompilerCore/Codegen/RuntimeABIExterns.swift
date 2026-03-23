@@ -2930,6 +2930,7 @@ public enum RuntimeABIExterns {
         all += collectionExterns
         all += sequenceExterns
         all += regexExterns
+        all += hexFormatExterns
         all += comparatorExterns
         all += resultExterns
         all += stringBuilderExterns

@@ -1,6 +1,7 @@
 public extension RuntimeABIExterns {
     static let collectionExterns: [ExternDecl] = [
         kk_list_of,
+        kk_list_of_not_null,
         kk_emptyList,
         kk_list_size,
         kk_list_get,
@@ -39,6 +40,8 @@ public extension RuntimeABIExterns {
         kk_set_is_empty,
         kk_set_toList,
         kk_collection_toList,
+        kk_collection_size,
+        kk_collection_isEmpty,
         kk_set_intersect,
         kk_set_union,
         kk_set_subtract,
@@ -277,6 +280,12 @@ public extension RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    static let kk_list_of_not_null = ExternDecl(
+        name: "kk_list_of_not_null",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // STDLIB-410: emptyList/emptySet/emptyMap
     static let kk_emptyList = ExternDecl(
         name: "kk_emptyList",
@@ -500,6 +509,18 @@ public extension RuntimeABIExterns {
 
     static let kk_collection_toList = ExternDecl(
         name: "kk_collection_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_size = ExternDecl(
+        name: "kk_collection_size",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_collection_isEmpty = ExternDecl(
+        name: "kk_collection_isEmpty",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

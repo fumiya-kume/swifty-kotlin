@@ -142,6 +142,7 @@ extension CollectionLiteralLoweringPass {
                             ))
                         } else {
                             // listOf(a, b, c) → create array, populate, call kk_list_of
+                            // listOfNotNull(a, b, c) → create array, populate, call kk_list_of_not_null
                             let countExpr = module.arena.appendExpr(.intLiteral(Int64(count)), type: nil)
                             loweredBody.append(.constValue(result: countExpr, value: .intLiteral(Int64(count))))
                             let arrayExpr = module.arena.appendExpr(
@@ -170,9 +171,12 @@ extension CollectionLiteralLoweringPass {
                                     thrownResult: nil
                                 ))
                             }
+                            let runtimeCallee = callee == lookup.listOfNotNullName
+                                ? lookup.kkListOfNotNullName
+                                : lookup.kkListOfName
                             loweredBody.append(.call(
                                 symbol: nil,
-                                callee: lookup.kkListOfName,
+                                callee: runtimeCallee,
                                 arguments: [arrayExpr, countExpr],
                                 result: result,
                                 canThrow: false,

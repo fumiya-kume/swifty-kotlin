@@ -2919,6 +2919,13 @@ extension CallTypeChecker {
                             interner: interner,
                             elementType: sema.types.stringType
                         )
+                    case "asSequence":
+                        makeSyntheticSequenceType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.make(.primitive(.char, .nonNull))
+                        )
                     case "toByteArray", "encodeToByteArray":
                         makeSyntheticListType(
                             symbols: sema.symbols,
@@ -3136,6 +3143,7 @@ extension CallTypeChecker {
                         ) {
                             return boundType
                         }
+                        sema.bindings.markCollectionExpr(id)
                         let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
                         sema.bindings.bindExprType(id, type: finalType)
                         return finalType
@@ -3878,6 +3886,26 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: resultType)
                     return resultType
                 }
+            }
+
+            // HexFormat extension functions: Int.toHexString(), Long.toHexString(),
+            // String.hexToInt(), String.hexToLong(), String.hexToByteArray(),
+            // ByteArray.toHexString() (STDLIB-HEX)
+            if let hexResult = tryResolveHexFormatExtension(
+                id,
+                calleeName: calleeName,
+                receiverID: receiverID,
+                lookupReceiverType: lookupReceiverType,
+                args: args,
+                argTypes: argTypes,
+                range: range,
+                ctx: ctx,
+                locals: &locals,
+                expectedType: expectedType,
+                explicitTypeArgs: explicitTypeArgs,
+                safeCall: safeCall
+            ) {
+                return hexResult
             }
 
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)
@@ -4672,5 +4700,110 @@ extension CallTypeChecker {
             args: [.out(elementType)],
             nullability: .nonNull
         )))
+    }
+
+    // MARK: - HexFormat Extension Function Resolution (STDLIB-HEX)
+
+    /// Resolve HexFormat extension functions: Int.toHexString(), Long.toHexString(),
+    /// String.hexToInt(), String.hexToLong(), String.hexToByteArray(),
+    /// ByteArray.toHexString().
+    /// These are registered as synthetic extension functions in kotlin.text package
+    /// with an optional HexFormat parameter (has default value).
+    private func tryResolveHexFormatExtension(
+        _ id: ExprID,
+        calleeName: InternedString,
+        receiverID: ExprID,
+        lookupReceiverType: TypeID,
+        args: [CallArgument],
+        argTypes: [TypeID],
+        range: SourceRange,
+        ctx: TypeInferenceContext,
+        locals: inout LocalBindings,
+        expectedType: TypeID?,
+        explicitTypeArgs: [TypeID],
+        safeCall: Bool
+    ) -> TypeID? {
+        let sema = ctx.sema
+        let interner = ctx.interner
+        let calleeStr = interner.resolve(calleeName)
+
+        // Only handle known HexFormat extension function names
+        guard calleeStr == "toHexString" || calleeStr == "hexToInt"
+            || calleeStr == "hexToLong" || calleeStr == "hexToByteArray"
+        else {
+            return nil
+        }
+
+        // Only 0-arg (default format) or 1-arg (explicit HexFormat) calls
+        guard args.count <= 1 else {
+            return nil
+        }
+
+        let receiverTypeForCheck = safeCall
+            ? sema.types.makeNonNullable(lookupReceiverType)
+            : lookupReceiverType
+
+        let kotlinTextPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("text")]
+        let fqName = kotlinTextPkg + [calleeName]
+        let candidates = sema.symbols.lookupAll(fqName: fqName).filter { symbolID in
+            guard let signature = sema.symbols.functionSignature(for: symbolID),
+                  let sigReceiver = signature.receiverType
+            else {
+                return false
+            }
+            return sema.types.isSubtype(receiverTypeForCheck, sigReceiver)
+        }
+
+        guard !candidates.isEmpty else {
+            return nil
+        }
+
+        // Infer the format argument if provided
+        if args.count == 1 {
+            _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+        }
+
+        // Try overload resolution
+        let resolvedArgs = zip(args, argTypes).map { argument, type in
+            CallArg(label: argument.label, isSpread: argument.isSpread, type: type)
+        }
+        let resolved = ctx.resolver.resolveCall(
+            candidates: candidates,
+            call: CallExpr(
+                range: range,
+                calleeName: calleeName,
+                args: resolvedArgs,
+                explicitTypeArgs: explicitTypeArgs
+            ),
+            expectedType: expectedType,
+            implicitReceiverType: receiverTypeForCheck,
+            ctx: ctx.semaCtx
+        )
+
+        let chosen: SymbolID
+        if let resolvedCallee = resolved.chosenCallee {
+            chosen = resolvedCallee
+        } else if let firstCandidate = candidates.first {
+            // Fall back to the first matching candidate when default-param
+            // resolution doesn't pick one (0-arg call with 1-param signature).
+            chosen = firstCandidate
+        } else {
+            return nil
+        }
+
+        let returnType = bindCallAndResolveReturnType(
+            id,
+            chosen: chosen,
+            resolved: ResolvedCall(
+                chosenCallee: chosen,
+                substitutedTypeArguments: resolved.substitutedTypeArguments,
+                parameterMapping: args.isEmpty ? [:] : [0: 0],
+                diagnostic: nil
+            ),
+            sema: sema
+        )
+        let finalType = safeCall ? sema.types.makeNullable(returnType) : returnType
+        sema.bindings.bindExprType(id, type: finalType)
+        return finalType
     }
 }
