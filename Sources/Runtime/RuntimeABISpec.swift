@@ -687,6 +687,15 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-666: String.lineSequence
+        RuntimeABIFunctionSpec(
+            name: "kk_string_lineSequence",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-144: String.trimStart/trimEnd
         RuntimeABIFunctionSpec(
             name: "kk_string_trimStart",

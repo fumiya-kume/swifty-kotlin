@@ -887,6 +887,13 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-666
+    public static let kk_string_lineSequence = ExternDecl(
+        name: "kk_string_lineSequence",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     /// STDLIB-144
     public static let kk_string_trimStart = ExternDecl(
         name: "kk_string_trimStart",
@@ -2542,6 +2549,7 @@ public enum RuntimeABIExterns {
             kk_string_toBoolean,
             kk_string_toBooleanStrict,
             kk_string_lines,
+            kk_string_lineSequence,
             kk_string_trimStart,
             kk_string_trimEnd,
             kk_string_toByteArray,

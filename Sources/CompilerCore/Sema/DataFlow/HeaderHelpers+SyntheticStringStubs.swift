@@ -1130,7 +1130,7 @@ extension DataFlowSemaPhase {
 
         registerSyntheticStringExtensionFunction(
             named: "lineSequence",
-            externalLinkName: "kk_string_lines",
+            externalLinkName: "kk_string_lineSequence",
             receiverType: stringType,
             parameters: [],
             returnType: sequenceStringType,
