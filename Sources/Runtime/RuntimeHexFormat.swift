@@ -93,17 +93,11 @@ public func kk_hexformat_bytes(_ formatRaw: Int) -> Int {
 
 @_cdecl("kk_int_toHexString")
 public func kk_int_toHexString(_ receiverRaw: Int, _ formatRaw: Int) -> Int {
-    let value = Int(Int32(truncatingIfNeeded: receiverRaw))
     let format = hexFormatBoxFromRaw(formatRaw)
-    let hex: String
-    if value < 0 {
-        // Kotlin: negative Int.toHexString produces 8-char two's-complement hex
-        let unsigned = UInt32(bitPattern: Int32(truncatingIfNeeded: value))
-        hex = String(unsigned, radix: 16)
-    } else {
-        hex = String(value, radix: 16)
-    }
-    let result = (format?.upperCase ?? false) ? hex.uppercased() : hex.lowercased()
+    // Kotlin: Int.toHexString() produces zero-padded 8-char two's-complement hex
+    let unsigned = UInt32(bitPattern: Int32(truncatingIfNeeded: receiverRaw))
+    let hex = String(format: "%08x", unsigned)
+    let result = (format?.upperCase ?? false) ? hex.uppercased() : hex
     return hexFormatMakeStringRaw(result)
 }
 
