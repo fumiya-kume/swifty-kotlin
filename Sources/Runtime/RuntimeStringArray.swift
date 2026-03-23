@@ -876,6 +876,10 @@ public func kk_println_any(_ obj: UnsafeMutableRawPointer?) {
         Swift.print("[\(rendered)]")
         return
     }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        Swift.print(sbBox.value)
+        return
+    }
     Swift.print("<object \(raw)>")
 }
 
@@ -1037,6 +1041,9 @@ func runtimeRenderAnyForPrint(_ value: Int) -> String {
     }
     if let arrayBox = tryCast(raw, to: RuntimeArrayBox.self), type(of: arrayBox) == RuntimeArrayBox.self {
         return "[\(arrayBox.elements.map(runtimeRenderAnyForPrint).joined(separator: ", "))]"
+    }
+    if let sbBox = tryCast(raw, to: RuntimeStringBuilderBox.self) {
+        return sbBox.value
     }
     return "<object \(raw)>"
 }
