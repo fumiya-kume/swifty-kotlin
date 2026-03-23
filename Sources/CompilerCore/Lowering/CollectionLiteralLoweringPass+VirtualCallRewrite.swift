@@ -1751,6 +1751,60 @@ extension CollectionLiteralLoweringPass {
             return true
         }
 
+        // filterIndexed: args = [lambda]
+        if callee == lookup.filterIndexedName || callee == lookup.kkListFilterIndexedName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListFilterIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // foldIndexed: args = [initial, lambda]
+        if (callee == lookup.foldIndexedName || callee == lookup.kkListFoldIndexedName), arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListFoldIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceIndexed: args = [lambda]
+        if (callee == lookup.reduceIndexedName || callee == lookup.kkListReduceIndexedName), arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // reduceIndexedOrNull: args = [lambda]
+        if callee == lookup.reduceIndexedOrNullName || callee == lookup.kkListReduceIndexedOrNullName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            _ = emitHOFCall(kkName: lookup.kkListReduceIndexedOrNullName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            return true
+        }
+        // runningFoldIndexed: args = [initial, lambda]
+        if callee == lookup.runningFoldIndexedName || callee == lookup.kkListRunningFoldIndexedName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListRunningFoldIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // runningReduceIndexed: args = [lambda]
+        if callee == lookup.runningReduceIndexedName || callee == lookup.kkListRunningReduceIndexedName, arguments.count == 1 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListRunningReduceIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+        // scanIndexed: args = [initial, lambda]
+        if callee == lookup.scanIndexedName || callee == lookup.kkListScanIndexedName, arguments.count == 2 {
+            let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+            loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+            let hofResult = emitHOFCall(kkName: lookup.kkListScanIndexedName, receiver: receiver, arguments: arguments + [zeroExpr], result: result, origCanThrow: origCanThrow, origThrownResult: origThrownResult, module: module, loweredBody: &loweredBody)
+            if let result { listExprIDs.insert(result.rawValue); listExprIDs.insert(hofResult.rawValue) }
+            return true
+        }
+
         if callee == lookup.indexOfFirstName, arguments.count == 1 {
             let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
             loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))

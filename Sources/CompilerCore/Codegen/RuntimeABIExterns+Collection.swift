@@ -79,6 +79,13 @@ public extension RuntimeABIExterns {
         kk_list_withIndex,
         kk_list_forEachIndexed,
         kk_list_mapIndexed,
+        kk_list_filterIndexed,
+        kk_list_foldIndexed,
+        kk_list_reduceIndexed,
+        kk_list_reduceIndexedOrNull,
+        kk_list_runningFoldIndexed,
+        kk_list_runningReduceIndexed,
+        kk_list_scanIndexed,
         kk_list_sumOf,
         kk_list_maxOrNull,
         kk_list_minOrNull,
@@ -1043,6 +1050,14 @@ public extension RuntimeABIExterns {
         parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
+
+    static let kk_list_filterIndexed = ExternDecl(name: "kk_list_filterIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_foldIndexed = ExternDecl(name: "kk_list_foldIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_reduceIndexed = ExternDecl(name: "kk_list_reduceIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_reduceIndexedOrNull = ExternDecl(name: "kk_list_reduceIndexedOrNull", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_runningFoldIndexed = ExternDecl(name: "kk_list_runningFoldIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_runningReduceIndexed = ExternDecl(name: "kk_list_runningReduceIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
+    static let kk_list_scanIndexed = ExternDecl(name: "kk_list_scanIndexed", parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"], returnType: "intptr_t")
 
     static let kk_list_sumOf = ExternDecl(
         name: "kk_list_sumOf",

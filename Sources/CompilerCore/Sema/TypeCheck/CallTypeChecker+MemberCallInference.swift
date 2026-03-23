@@ -699,7 +699,9 @@ extension CallTypeChecker {
         // contextual function type (and thus implicit `it`) is available.
         let collectionHOFNames: Set = [
             "map", "filter", "mapNotNull", "forEach", "flatMap", "any", "none", "all",
-            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce", "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
+            "fold", "reduce", "reduceOrNull", "foldIndexed", "reduceIndexed", "scan", "runningFold", "runningReduce", "scanReduce",
+            "filterIndexed", "reduceIndexedOrNull", "runningFoldIndexed", "runningReduceIndexed", "scanIndexed",
+            "groupBy", "groupingBy", "sortedBy", "count", "first", "last", "find",
             "associateBy", "associateWith", "associate", "associateByTo", "associateWithTo", "groupByTo", "forEachIndexed", "mapIndexed",
             "onEach", "onEachIndexed",
             "sumOf", "maxOrNull", "minOrNull",
@@ -1090,6 +1092,50 @@ extension CallTypeChecker {
                 _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: reduceIndexedLambdaType)
                 resultType = collectionElementType
 
+            case "filterIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "filterIndexed() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType], returnType: sema.types.booleanType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = receiverType
+
+            case "reduceIndexedOrNull":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "reduceIndexedOrNull() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType, collectionElementType], returnType: collectionElementType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                resultType = sema.types.makeNullable(collectionElementType)
+
+            case "scanIndexed", "runningFoldIndexed":
+                guard args.count == 2 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "\(calleeStr)() expects 2 arguments (initial value and a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let initialType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, initialType, collectionElementType], returnType: initialType)))
+                if let lambdaExpr = ast.arena.expr(args[1].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[1].expr) }
+                _ = driver.inferExpr(args[1].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(classSymbol: listSymbol, args: [.invariant(initialType)], nullability: .nonNull)))
+                } else { resultType = sema.types.anyType }
+
+            case "runningReduceIndexed":
+                guard args.count == 1 else {
+                    ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "runningReduceIndexed() expects 1 argument (a lambda), but \(args.count) were supplied.", range: ast.arena.exprRange(id))
+                    return driver.helpers.bindAndReturnErrorType(id, sema: sema)
+                }
+                let lambdaExpectedType = sema.types.make(.functionType(FunctionType(params: [sema.types.intType, collectionElementType, collectionElementType], returnType: collectionElementType)))
+                if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef { sema.bindings.markCollectionHOFLambdaExpr(args[0].expr) }
+                _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                    resultType = sema.types.make(.classType(ClassType(classSymbol: listSymbol, args: [.invariant(collectionElementType)], nullability: .nonNull)))
+                } else { resultType = sema.types.anyType }
 
             case "scan", "runningFold":
                 guard args.count == 2 else {

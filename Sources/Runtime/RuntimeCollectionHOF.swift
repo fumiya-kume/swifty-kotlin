@@ -522,7 +522,7 @@ public func kk_list_reduce(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ ou
     guard !list.elements.isEmpty else {
         return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
     }
-    var acc = list.elements[0]
+    var acc = maybeUnbox(list.elements[0])
     for idx in 1 ..< list.elements.count {
         var thrown = 0
         acc = maybeUnbox(runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: acc, rhs: list.elements[idx], outThrown: &thrown))
@@ -1000,6 +1000,101 @@ public func kk_list_mapIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, 
         mapped.append(maybeUnbox(result))
     }
     return registerRuntimeObject(RuntimeListBox(elements: mapped))
+}
+
+// MARK: - List *Indexed collection extensions
+
+@_cdecl("kk_list_filterIndexed")
+public func kk_list_filterIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var filtered: [Int] = []
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        let result = runtimeInvokeCollectionLambda2(fnPtr: fnPtr, closureRaw: closureRaw, lhs: idx, rhs: elem, outThrown: &thrown)
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        if maybeUnbox(result) != 0 { filtered.append(elem) }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filtered))
+}
+
+@_cdecl("kk_list_foldIndexed")
+public func kk_list_foldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = initial
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: elem, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_reduceIndexed")
+public func kk_list_reduceIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else {
+        return handleCollectionLambdaThrow(runtimeAllocateThrowable(message: "Empty collection can't be reduced."), outThrown)
+    }
+    var acc = list.elements[0]
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_reduceIndexedOrNull")
+public func kk_list_reduceIndexedOrNull(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else { return runtimeNullSentinelInt }
+    var acc = maybeUnbox(list.elements[0])
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+    }
+    return acc
+}
+
+@_cdecl("kk_list_runningFoldIndexed")
+public func kk_list_runningFoldIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    return kk_list_scanIndexed(listRaw, initial, fnPtr, closureRaw, outThrown)
+}
+
+@_cdecl("kk_list_runningReduceIndexed")
+public func kk_list_runningReduceIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    guard !list.elements.isEmpty else {
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    var acc = maybeUnbox(list.elements[0])
+    var results: [Int] = []
+    results.reserveCapacity(list.elements.count)
+    results.append(acc)
+    for idx in 1 ..< list.elements.count {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: list.elements[idx], outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
+}
+
+@_cdecl("kk_list_scanIndexed")
+public func kk_list_scanIndexed(_ listRaw: Int, _ initial: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var acc = maybeUnbox(initial)
+    var results: [Int] = []
+    results.reserveCapacity(list.elements.count + 1)
+    results.append(acc)
+    for (idx, elem) in list.elements.enumerated() {
+        var thrown = 0
+        acc = maybeUnbox(runtimeInvokeCollectionLambda3(fnPtr: fnPtr, closureRaw: closureRaw, arg1: idx, arg2: acc, arg3: elem, outThrown: &thrown))
+        if thrown != 0 { return handleCollectionLambdaThrow(thrown, outThrown) }
+        results.append(acc)
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: results))
 }
 
 @_cdecl("kk_list_sumOf")

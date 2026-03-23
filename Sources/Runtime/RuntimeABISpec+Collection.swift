@@ -1558,6 +1558,12 @@ public extension RuntimeABISpec {
                     section: "Collection"
                 ),
                 zipSpec, zipWithNextSpec, zipWithNextTransformSpec, unzipSpec, withIndexSpec, forEachIndexedSpec, mapIndexedSpec,
+                hofSpec("kk_list_filterIndexed"),
+                RuntimeABIFunctionSpec(name: "kk_list_foldIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
+                hofSpec("kk_list_reduceIndexed"), hofSpec("kk_list_reduceIndexedOrNull"),
+                RuntimeABIFunctionSpec(name: "kk_list_runningFoldIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
+                hofSpec("kk_list_runningReduceIndexed"),
+                RuntimeABIFunctionSpec(name: "kk_list_scanIndexed", parameters: [RuntimeABIParameter(name: "listRaw", type: .intptr), RuntimeABIParameter(name: "initial", type: .intptr), RuntimeABIParameter(name: "fnPtr", type: .intptr), RuntimeABIParameter(name: "closureRaw", type: .intptr), RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer)], returnType: .intptr, section: "Collection"),
                 sumOfSpec, maxOrNullSpec, minOrNullSpec,
                 takeSpec, dropSpec, reversedSpec, asReversedSpec, sortedSpec, distinctSpec,
                 shuffledSpec, shuffledRandomSpec, randomSpec, randomOrNullSpec,

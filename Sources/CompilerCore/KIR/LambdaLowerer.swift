@@ -146,6 +146,13 @@ final class LambdaLowerer {
                 type: lambdaParameterTypes[1]
             )
             lambdaParameters = [closureParam, param0, param1]
+        } else if needsClosureParam, effectiveParamCount == 3 {
+            // foldIndexed/reduceIndexed/scanIndexed etc.: (closureRaw, param0, param1, param2, outThrown)
+            let closureParam = KIRParameter(symbol: syntheticLambdaClosureParamSymbol(lambdaExprID: exprID), type: sema.types.intType)
+            let param0 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 0), type: lambdaParameterTypes[0])
+            let param1 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 1), type: lambdaParameterTypes[1])
+            let param2 = KIRParameter(symbol: syntheticLambdaParamSymbol(lambdaExprID: exprID, paramIndex: 2), type: lambdaParameterTypes[2])
+            lambdaParameters = [closureParam, param0, param1, param2]
         } else {
             lambdaParameters = (0 ..< effectiveParamCount).map { index in
                 KIRParameter(
