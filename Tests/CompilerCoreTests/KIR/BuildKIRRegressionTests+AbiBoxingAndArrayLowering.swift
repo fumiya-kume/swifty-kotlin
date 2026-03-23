@@ -37,6 +37,17 @@ extension BuildKIRRegressionTests {
         XCTAssertTrue(callees.contains(interner.intern("kk_set_subtract")))
     }
 
+    func testABILoweringMarksAtomicRuntimeHelpersAsNonThrowing() {
+        let pass = ABILoweringPass()
+        let interner = StringInterner()
+        let callees = pass.nonThrowingCallees(interner: interner)
+
+        XCTAssertTrue(callees.contains(interner.intern("kk_atomic_int_load")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_atomic_int_store")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_atomic_long_compareAndExchange")))
+        XCTAssertTrue(callees.contains(interner.intern("kk_atomic_ref_exchange")))
+    }
+
     func testThisBasedMemberCallCompilesAndUsesImplicitReceiverInLowering() throws {
         let source = """
         class Vec

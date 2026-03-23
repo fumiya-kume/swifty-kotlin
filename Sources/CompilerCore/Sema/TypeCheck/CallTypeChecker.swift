@@ -1015,7 +1015,7 @@ final class CallTypeChecker {
         let coroutineLauncherName = calleeName.map { interner.resolve($0) }
         let coroutineLauncherExpectedLambdaType: TypeID?
         if let coroutineLauncherName,
-           ["runBlocking", "launch", "async", "coroutineScope"].contains(coroutineLauncherName),
+           ["runBlocking", "launch", "async", "coroutineScope", "supervisorScope"].contains(coroutineLauncherName),
            let firstArg = args.first,
            let firstArgExpr = ast.arena.expr(firstArg.expr),
            case .lambdaLiteral = firstArgExpr

@@ -3,6 +3,27 @@ import Foundation
 import XCTest
 
 final class SemanticsAndUtilitiesRegressionTests: XCTestCase {
+    func testAtomicStoreExpressionIsTypedAsUnit() throws {
+        let source = """
+        import kotlin.concurrent.AtomicInt
+
+        fun main() {
+            val ai = AtomicInt(1)
+            val x = ai.store(2)
+            val y: Unit = x
+        }
+        """
+
+        try withTemporaryFile(contents: source) { path in
+            let ctx = makeCompilationContext(inputs: [path])
+            try runToKIR(ctx)
+            XCTAssertFalse(
+                ctx.diagnostics.hasError,
+                "Atomic.store() should be typed as Unit: \(ctx.diagnostics.diagnostics.map(\.message))"
+            )
+        }
+    }
+
     func testTypeSystemLUBAndGLB() {
         let types = TypeSystem()
 

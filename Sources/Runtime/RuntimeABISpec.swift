@@ -1967,25 +1967,17 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_coroutine_yield",
-            parameters: [],
-            returnType: .intptr,
-            section: "Coroutine"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_with_timeout",
+            name: "kk_supervisor_scope_run",
             parameters: [
-                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_with_timeout_or_null",
+            name: "kk_supervisor_scope_run_with_cont",
             parameters: [
-                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
@@ -3580,6 +3572,7 @@ public enum RuntimeABISpec {
             + fileIOFunctions
             + uuidFunctions
             + durationFunctions
+            + atomicFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []
