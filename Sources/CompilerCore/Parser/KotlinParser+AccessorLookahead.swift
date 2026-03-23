@@ -11,6 +11,20 @@ extension KotlinParser {
         }
     }
 
+    /// Returns `true` when the current token is the `field` soft keyword
+    /// followed by `=` or `:`, indicating an explicit backing field declaration
+    /// (Kotlin 2.0 feature).  Example: `field = ""` or `field: String = ""`.
+    func isExplicitBackingFieldStart(_ token: Token) -> Bool {
+        guard case .softKeyword(.field) = token.kind else { return false }
+        let next = stream.peek(1)
+        switch next.kind {
+        case .symbol(.assign), .symbol(.colon):
+            return true
+        default:
+            return false
+        }
+    }
+
     /// Checks whether the tokens starting at `stream.peek(1)` form a
     /// well-formed accessor header `(...)` followed by `=` or `{`.
     private func isAccessorHeaderFollowedByBody() -> Bool {

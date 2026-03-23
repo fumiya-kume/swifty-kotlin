@@ -217,13 +217,16 @@ extension KotlinParser {
             children.append(.node(parseBlock()))
         } else {
             parseTail(inBlock: false, into: &children, range: &range)
-            // In Kotlin, `get()`/`set()` accessors on the next line are part of
-            // the property declaration.  After parseTail stops at a newline,
-            // absorb trailing accessor lines into dedicated propertyAccessor
-            // nodes so the AST builder can extract them without flat-token
-            // re-parsing.
-            while isPropertyAccessorStart(stream.peek()) {
-                parsePropertyAccessor(into: &children, range: &range)
+            // In Kotlin, `get()`/`set()` accessors and explicit backing field
+            // declarations on the next line are part of the property declaration.
+            // After parseTail stops at a newline, absorb trailing accessor and
+            // explicit field lines into dedicated CST nodes.
+            while isPropertyAccessorStart(stream.peek()) || isExplicitBackingFieldStart(stream.peek()) {
+                if isExplicitBackingFieldStart(stream.peek()) {
+                    parseExplicitBackingField(into: &children, range: &range)
+                } else {
+                    parsePropertyAccessor(into: &children, range: &range)
+                }
             }
         }
 
@@ -249,6 +252,26 @@ extension KotlinParser {
         )
         children.append(.node(nodeID))
         range.append(accessorNodeRange)
+    }
+
+    /// Parse an explicit backing field declaration (`field = expr` or
+    /// `field: Type = expr`) into a dedicated `.propertyAccessor` CST node.
+    /// We reuse the `.propertyAccessor` kind so the AST builder can detect it
+    /// via the leading `field` soft keyword.
+    private func parseExplicitBackingField(into children: inout [SyntaxChild], range: inout RangeAccumulator) {
+        var fieldChildren: [SyntaxChild] = []
+        var fieldRange = RangeAccumulator()
+
+        parseTail(inBlock: false, into: &fieldChildren, range: &fieldRange)
+
+        let nodeRange = fieldRange.value ?? invalidRange
+        let nodeID = arena.appendNode(
+            kind: .propertyAccessor,
+            range: nodeRange,
+            fieldChildren
+        )
+        children.append(.node(nodeID))
+        range.append(nodeRange)
     }
 
     func parseTypeAliasDeclaration(

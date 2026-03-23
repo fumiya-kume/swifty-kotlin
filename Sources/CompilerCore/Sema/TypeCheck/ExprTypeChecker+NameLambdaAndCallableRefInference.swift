@@ -65,6 +65,7 @@ extension ExprTypeChecker {
         // property accessed via implicit receiver (inside a class/object
         // member function).
         let allCandidateIDs = ctx.cachedScopeLookup(name)
+        let dslBlockedIDs = allCandidateIDs.filter { ctx.isCandidateBlockedByDslMarker($0) }
         let dslFilteredIDs = allCandidateIDs.filter { !ctx.isCandidateBlockedByDslMarker($0) }
         let (visibleIDs, _) = ctx.filterByVisibility(dslFilteredIDs)
         let candidates = visibleIDs.compactMap { ctx.cachedSymbol($0) }
@@ -110,7 +111,13 @@ extension ExprTypeChecker {
             return sema.types.unitType
         }
 
-        if name == KnownCompilerNames(interner: interner).field {
+        if !dslBlockedIDs.isEmpty {
+            ctx.semaCtx.diagnostics.error(
+                "KSWIFTK-SEMA-DSLMARKER",
+                "'@DslMarker' implicit access to '\(interner.resolve(name))' from outer receiver is restricted. Use explicit receiver.",
+                range: range
+            )
+        } else if name == KnownCompilerNames(interner: interner).field {
             ctx.semaCtx.diagnostics.error(
                 "KSWIFTK-SEMA-FIELD",
                 "'field' can only be used inside a property getter or setter body.",
@@ -201,14 +208,6 @@ extension ExprTypeChecker {
                 return memberType
             }
             if candidates.isEmpty, memberType == sema.types.errorType {
-                // If there were DslMarker-blocked candidates, emit a specific diagnostic.
-                if !dslBlockedIDs.isEmpty {
-                    ctx.semaCtx.diagnostics.error(
-                        "KSWIFTK-SEMA-DSLMARKER",
-                        "'@DslMarker' implicit access to '\(interner.resolve(name))' from outer receiver is restricted. Use explicit receiver.",
-                        range: nameRange
-                    )
-                }
                 return sema.types.errorType
             }
         }
@@ -544,15 +543,46 @@ extension ExprTypeChecker {
             }
         }
 
+        // ── REFL-003: Type::member — unbound callable reference ─────────
+        // When the receiver is a name that refers to a class/interface/enum
+        // (not an instance variable), treat it as an unbound member reference.
+        // The resulting function type includes the receiver type as the
+        // first parameter: `Type::method` becomes `(Type) -> ReturnType`.
+        var unboundClassType: TypeID?
+        if let receiver,
+           case let .nameRef(receiverName, _) = ast.arena.expr(receiver)
+        {
+            // Check locals first — if there's a local variable with this
+            // name, it's a bound reference, not an unbound type reference.
+            if locals[receiverName] == nil {
+                let allCandidateIDs = ctx.cachedScopeLookup(receiverName)
+                for candidateID in allCandidateIDs {
+                    guard let sym = ctx.cachedSymbol(candidateID),
+                          sym.kind == .class || sym.kind == .interface
+                          || sym.kind == .enumClass
+                    else { continue }
+                    unboundClassType = sema.types.make(
+                        .classType(ClassType(classSymbol: sym.id, args: [], nullability: .nonNull))
+                    )
+                    break
+                }
+            }
+        }
+
         let receiverType: TypeID? = if let receiver {
             driver.inferExpr(receiver, ctx: ctx, locals: &locals, expectedType: nil)
         } else {
             nil
         }
 
+        // For unbound type references, use the resolved class type for
+        // member lookup instead of the expression-inferred type (which
+        // may degrade to Any for classes without companion objects).
+        let effectiveReceiverType = unboundClassType ?? receiverType
+
         var candidates: [SymbolID] = []
-        if let receiverType {
-            let nonNullReceiver = sema.types.makeNonNullable(receiverType)
+        if let effectiveReceiverType {
+            let nonNullReceiver = sema.types.makeNonNullable(effectiveReceiverType)
             let memberCandidates = driver.helpers.collectMemberFunctionCandidates(
                 named: member,
                 receiverType: nonNullReceiver,
@@ -601,10 +631,15 @@ extension ExprTypeChecker {
             }
         }
 
+        // For unbound type references (Type::member), the receiver is not
+        // bound — it becomes a parameter of the function type.  For bound
+        // references (obj::member), the receiver is captured.
+        let isBoundReceiver = receiver != nil && unboundClassType == nil
+
         let chosen = driver.helpers.chooseCallableReferenceTarget(
             from: candidates,
             expectedType: expectedType,
-            bindReceiver: receiver != nil,
+            bindReceiver: isBoundReceiver,
             sema: sema
         )
 
@@ -613,7 +648,7 @@ extension ExprTypeChecker {
         {
             let inferredType = driver.helpers.callableFunctionType(
                 for: signature,
-                bindReceiver: receiver != nil,
+                bindReceiver: isBoundReceiver,
                 sema: sema
             )
             let resultType: TypeID
@@ -637,6 +672,9 @@ extension ExprTypeChecker {
             // REFL-003: Tag the callable reference as KFunction so KIR
             // lowering can emit type identity metadata.
             sema.bindings.bindCallableRefKind(id, kind: .functionRef)
+            if unboundClassType != nil {
+                sema.bindings.markUnboundCallableRef(id)
+            }
             let captures = receiver.map { recv in
                 driver.captureAnalyzer.collectCapturedOuterSymbols(
                     in: recv,
