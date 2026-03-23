@@ -56,7 +56,57 @@ extension KIRLoweringDriver {
             ))
         }
 
+        // Lower constructors for nested classes recursively.
+        lowerNestedClassConstructors(
+            nestedClasses: classDecl.nestedClasses,
+            shared: shared,
+            compilationCtx: compilationCtx,
+            declIDs: &declIDs
+        )
+
         return declIDs
+    }
+
+    /// Recursively lower constructors for nested (and inner) classes.
+    private func lowerNestedClassConstructors(
+        nestedClasses: [DeclID],
+        shared: KIRLoweringSharedContext,
+        compilationCtx: CompilationContext,
+        declIDs: inout [KIRDeclID]
+    ) {
+        let ast = shared.ast
+        let sema = shared.sema
+        for declID in nestedClasses {
+            guard let decl = ast.arena.decl(declID),
+                  let nestedSymbol = sema.bindings.declSymbols[declID]
+            else {
+                continue
+            }
+            switch decl {
+            case let .classDecl(nestedClass):
+                let nestedCtorFQName = (sema.symbols.symbol(nestedSymbol)?.fqName ?? []) + [compilationCtx.interner.intern("<init>")]
+                let nestedCtorSymbols = sema.symbols.lookupAll(fqName: nestedCtorFQName)
+                for ctorSymbol in nestedCtorSymbols {
+                    declIDs.append(contentsOf: lowerConstructor(
+                        ctorSymbol: ctorSymbol,
+                        ctorFQName: nestedCtorFQName,
+                        classDecl: nestedClass,
+                        ownerSymbol: nestedSymbol,
+                        shared: shared,
+                        compilationCtx: compilationCtx
+                    ))
+                }
+                // Recurse into further nested classes.
+                lowerNestedClassConstructors(
+                    nestedClasses: nestedClass.nestedClasses,
+                    shared: shared,
+                    compilationCtx: compilationCtx,
+                    declIDs: &declIDs
+                )
+            default:
+                break
+            }
+        }
     }
 
     /// CLASS-008: Synthesize forwarding method bodies for delegated interface methods.
