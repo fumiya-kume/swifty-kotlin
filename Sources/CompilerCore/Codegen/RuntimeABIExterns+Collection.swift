@@ -73,6 +73,8 @@ public extension RuntimeABIExterns {
         kk_list_associateWithTo,
         kk_list_groupByTo,
         kk_list_zip,
+        kk_list_zipWithNext,
+        kk_list_zipWithNextTransform,
         kk_list_unzip,
         kk_list_withIndex,
         kk_list_forEachIndexed,
@@ -1003,6 +1005,18 @@ public extension RuntimeABIExterns {
     static let kk_list_zip = ExternDecl(
         name: "kk_list_zip",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_zipWithNext = ExternDecl(
+        name: "kk_list_zipWithNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_zipWithNextTransform = ExternDecl(
+        name: "kk_list_zipWithNextTransform",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t", "intptr_t * _Nullable"],
         returnType: "intptr_t"
     )
 

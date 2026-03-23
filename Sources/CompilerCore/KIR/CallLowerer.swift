@@ -328,7 +328,12 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let callBinding = sema.bindings.callBindings[exprID]
+        let chosen = callBinding?.chosenCallee
         let loweredCallable = driver.ctx.callableValueInfo(for: loweredCalleeExprID)
+            ?? chosen.flatMap { symbol in
+                driver.ctx.localValue(for: symbol).flatMap { driver.ctx.callableValueInfo(for: $0) }
+            }
         let sourceCalleeName: InternedString = if let callee = ast.arena.expr(calleeExpr), case let .nameRef(name, _) = callee {
             name
         } else if let loweredCallable {
@@ -376,9 +381,7 @@ final class CallLowerer {
             return loweredNumericConversion
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let callBinding = sema.bindings.callBindings[exprID]
         let callableValueCallBinding = sema.bindings.callableValueCalls[exprID]
-        let chosen = callBinding?.chosenCallee
         let callNormalized: NormalizedCallResult = if callBinding != nil {
             driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,

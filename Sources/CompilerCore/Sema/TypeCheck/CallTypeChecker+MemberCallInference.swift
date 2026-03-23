@@ -705,7 +705,7 @@ extension CallTypeChecker {
             "sumOf", "maxOrNull", "minOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
-            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy",
+            "sortedByDescending", "sortedWith", "partition", "takeWhile", "dropWhile", "distinctBy", "zipWithNext",
             "sort", "sortBy", "sortByDescending",
         ]
         let flowHOFNames: Set = ["map", "filter", "collect"]
@@ -1365,6 +1365,61 @@ extension CallTypeChecker {
                     )))
                 } else {
                     resultType = sema.types.anyType
+                }
+
+            case "zipWithNext":
+                if args.isEmpty {
+                    guard explicitTypeArgs.isEmpty else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    // zipWithNext(): List<Pair<T, T>>
+                    if let pairSymbol = sema.symbols.lookupByShortName(interner.intern("Pair")).first,
+                       let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first
+                    {
+                        let pairType = sema.types.make(.classType(ClassType(
+                            classSymbol: pairSymbol,
+                            args: [.invariant(collectionElementType), .invariant(collectionElementType)],
+                            nullability: .nonNull
+                        )))
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(pairType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
+                } else {
+                    // zipWithNext(transform: (T, T) -> R): List<R>
+                    guard args.count == 1 else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    guard explicitTypeArgs.count <= 1 else {
+                        sema.bindings.bindExprType(id, type: sema.types.anyType)
+                        return sema.types.anyType
+                    }
+                    let lambdaReturnType = explicitTypeArgs.first ?? sema.types.anyType
+                    let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
+                        params: [collectionElementType, collectionElementType],
+                        returnType: lambdaReturnType
+                    )))
+                    if let lambdaExpr = ast.arena.expr(args[0].expr), lambdaExpr.isLambdaOrCallableRef {
+                        sema.bindings.markCollectionHOFLambdaExpr(args[0].expr)
+                    }
+                    _ = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals, expectedType: lambdaExpectedType)
+                    let bodyType = explicitTypeArgs.first
+                        ?? inferredLambdaReturnType(argExpr: args[0].expr, ast: ast, sema: sema)
+                    if let listSymbol = sema.symbols.lookupByShortName(interner.intern("List")).first {
+                        resultType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(bodyType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        resultType = sema.types.anyType
+                    }
                 }
 
             case "indexOfFirst", "indexOfLast":
@@ -2715,6 +2770,46 @@ extension CallTypeChecker {
                     }
                 }
             }
+            // STDLIB-581: String.toByteArray(charset: Charset)
+            if args.count == 1 {
+                let receiverTypeForCheck = safeCall
+                    ? sema.types.makeNonNullable(lookupReceiverType)
+                    : lookupReceiverType
+                let arg0Type = sema.types.makeNonNullable(argTypes[0])
+                // Only match when the argument is NOT a String or Int to avoid
+                // shadowing other toByteArray overloads (e.g. toByteArray(Int)).
+                if sema.types.isSubtype(receiverTypeForCheck, sema.types.stringType),
+                   interner.resolve(calleeName) == "toByteArray",
+                   !sema.types.isSubtype(arg0Type, sema.types.stringType),
+                   !sema.types.isSubtype(arg0Type, sema.types.intType)
+                {
+                    if let boundType = tryBindSyntheticStringMemberFallback(
+                        id,
+                        calleeName: calleeName,
+                        receiverType: receiverTypeForCheck,
+                        args: args,
+                        argTypes: argTypes,
+                        range: range,
+                        ctx: ctx,
+                        expectedType: expectedType,
+                        explicitTypeArgs: explicitTypeArgs,
+                        safeCall: safeCall
+                    ) {
+                        sema.bindings.markCollectionExpr(id)
+                        return boundType
+                    }
+                    let resultType = makeSyntheticListType(
+                        symbols: sema.symbols,
+                        types: sema.types,
+                        interner: interner,
+                        elementType: sema.types.intType
+                    )
+                    sema.bindings.markCollectionExpr(id)
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
+            }
             // String stdlib: 2-arg removeSurrounding(prefix, suffix) (STDLIB-185)
             if args.count == 2 {
                 let receiverTypeForCheck = safeCall
@@ -3365,6 +3460,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryFileMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryCollectionMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -3620,6 +3727,18 @@ extension CallTypeChecker {
             ) {
                 return fallbackType
             }
+            if let fallbackType = tryFileMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
             if let fallbackType = tryArrayMemberFallback(
                 id,
                 calleeName: calleeName,
@@ -3712,6 +3831,18 @@ extension CallTypeChecker {
                 return fallbackType
             }
             if let fallbackType = tryStringMemberFallback(
+                id,
+                calleeName: calleeName,
+                isClassNameReceiver: isClassNameReceiver,
+                safeCall: safeCall,
+                receiverID: receiverID,
+                args: args,
+                ctx: ctx,
+                locals: &locals
+            ) {
+                return fallbackType
+            }
+            if let fallbackType = tryFileMemberFallback(
                 id,
                 calleeName: calleeName,
                 isClassNameReceiver: isClassNameReceiver,
@@ -4236,13 +4367,6 @@ extension CallTypeChecker {
         case ("Double", "NaN"): return (types.doubleType, .doubleLiteral(Double.nan))
         case ("Double", "POSITIVE_INFINITY"): return (types.doubleType, .doubleLiteral(Double.infinity))
         case ("Double", "NEGATIVE_INFINITY"): return (types.doubleType, .doubleLiteral(-Double.infinity))
-        // Charsets (STDLIB-573): Charsets.UTF_8, etc. resolve to integer IDs
-        case ("Charsets", "UTF_8"): return (types.intType, .intLiteral(0))
-        case ("Charsets", "UTF_16"): return (types.intType, .intLiteral(1))
-        case ("Charsets", "UTF_16BE"): return (types.intType, .intLiteral(2))
-        case ("Charsets", "UTF_16LE"): return (types.intType, .intLiteral(3))
-        case ("Charsets", "US_ASCII"): return (types.intType, .intLiteral(4))
-        case ("Charsets", "ISO_8859_1"): return (types.intType, .intLiteral(5))
         default: return nil
         }
     }

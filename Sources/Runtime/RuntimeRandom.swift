@@ -100,7 +100,7 @@ public func kk_random_create_seeded(_ seed: Int) -> Int {
     return Int(bitPattern: ptr)
 }
 
-// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-654)
+// MARK: - Random (STDLIB-165, STDLIB-514, STDLIB-515, STDLIB-516, STDLIB-653, STDLIB-654, STDLIB-655)
 
 @_cdecl("kk_random_nextInt")
 public func kk_random_nextInt(_ receiver: Int) -> Int {
@@ -180,14 +180,31 @@ public func kk_random_nextFloat(_ receiver: Int) -> Int {
 
 @_cdecl("kk_random_nextFloat_until")
 public func kk_random_nextFloat_until(_ randomRaw: Int, _ untilBits: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
-    _ = randomRaw
     outThrown?.pointee = 0
-    let until = Float(bitPattern: UInt32(truncatingIfNeeded: untilBits))
-    guard until > 0 else {
+    let until = kk_bits_to_float(untilBits)
+    guard until > 0, until.isFinite else {
         outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: until must be positive, but was \(until).")
         return 0
     }
+    if let box = seededBox(from: randomRaw) {
+        return kk_float_to_bits(box.nextFloat() * until)
+    }
     return kk_float_to_bits(Float.random(in: 0 ..< until))
+}
+
+@_cdecl("kk_random_nextFloat_range")
+public func kk_random_nextFloat_range(_ randomRaw: Int, _ fromBits: Int, _ untilBits: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    let from = kk_bits_to_float(fromBits)
+    let until = kk_bits_to_float(untilBits)
+    guard until > from, from.isFinite, until.isFinite else {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IllegalArgumentException: Random range is empty: \(from)..\(until).")
+        return 0
+    }
+    if let box = seededBox(from: randomRaw) {
+        return kk_float_to_bits(from + (box.nextFloat() * (until - from)))
+    }
+    return kk_float_to_bits(Float.random(in: from ..< until))
 }
 
 @_cdecl("kk_random_nextDouble")
@@ -225,6 +242,31 @@ public func kk_random_nextDouble_range(_ randomRaw: Int, _ fromBits: Int, _ unti
         return kk_double_to_bits(from + (box.nextDouble() * (until - from)))
     }
     return kk_double_to_bits(Double.random(in: from ..< until))
+}
+
+// MARK: - nextBytes (STDLIB-653)
+
+@_cdecl("kk_random_nextBytes")
+public func kk_random_nextBytes(_ receiver: Int, _ arrayRaw: Int) -> Int {
+    guard let list = runtimeListBox(from: arrayRaw) else {
+        // If the argument is not a valid list, return an empty list.
+        return registerRuntimeObject(RuntimeListBox(elements: []))
+    }
+    // Fill each element with a random byte in [-128, 127] (Kotlin's Byte range).
+    var filled: [Int] = []
+    filled.reserveCapacity(list.elements.count)
+    if let box = seededBox(from: receiver) {
+        for _ in list.elements {
+            let b = Int(Int8(truncatingIfNeeded: box.nextBits()))
+            filled.append(b)
+        }
+    } else {
+        for _ in list.elements {
+            let b = Int(Int8.random(in: Int8.min ... Int8.max))
+            filled.append(b)
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: filled))
 }
 
 @_cdecl("kk_random_nextBoolean")

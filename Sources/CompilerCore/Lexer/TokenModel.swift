@@ -197,6 +197,8 @@ public enum TokenKind: Equatable, Sendable {
     case stringSegment(InternedString)
     case stringQuote
     case rawStringQuote
+    case multiDollarStringQuote(dollarCount: Int)
+    case multiDollarRawStringQuote(dollarCount: Int)
     case templateExprStart
     case templateExprEnd
     case templateSimpleNameStart

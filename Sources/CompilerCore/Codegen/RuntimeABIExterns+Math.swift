@@ -59,6 +59,16 @@ public extension RuntimeABIExterns {
         kk_float_ulp,
         kk_float_nextUp,
         kk_float_nextDown,
+        // STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
+        kk_math_abs_long,
+        kk_math_truncate,
+        kk_math_truncate_float,
+        kk_math_IEEErem,
+        kk_math_IEEErem_float,
+        kk_math_withSign,
+        kk_math_withSign_float,
+        kk_math_withSign_int,
+        kk_math_nextTowards,
     ]
 
     static let kk_math_abs_int = ExternDecl(
@@ -242,4 +252,16 @@ public extension RuntimeABIExterns {
     static let kk_float_ulp = ExternDecl(name: "kk_float_ulp", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_float_nextUp = ExternDecl(name: "kk_float_nextUp", parameterTypes: ["intptr_t"], returnType: "intptr_t")
     static let kk_float_nextDown = ExternDecl(name: "kk_float_nextDown", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+
+    // STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
+
+    static let kk_math_abs_long = ExternDecl(name: "kk_math_abs_long", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_truncate = ExternDecl(name: "kk_math_truncate", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_truncate_float = ExternDecl(name: "kk_math_truncate_float", parameterTypes: ["intptr_t"], returnType: "intptr_t")
+    static let kk_math_IEEErem = ExternDecl(name: "kk_math_IEEErem", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_IEEErem_float = ExternDecl(name: "kk_math_IEEErem_float", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_withSign = ExternDecl(name: "kk_math_withSign", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_withSign_float = ExternDecl(name: "kk_math_withSign_float", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_withSign_int = ExternDecl(name: "kk_math_withSign_int", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
+    static let kk_math_nextTowards = ExternDecl(name: "kk_math_nextTowards", parameterTypes: ["intptr_t", "intptr_t"], returnType: "intptr_t")
 }

@@ -9,6 +9,12 @@ extension CoroutineLoweringPass {
         let flowCollectCallee: InternedString
         let withContextCallee: InternedString
         let runtimeWithContextCallee: InternedString
+        let withTimeoutCallee: InternedString
+        let runtimeWithTimeoutCallee: InternedString
+        let withTimeoutOrNullCallee: InternedString
+        let runtimeWithTimeoutOrNullCallee: InternedString
+        let yieldCallee: InternedString
+        let runtimeYieldCallee: InternedString
         let continuationFactory: InternedString
         let launcherArgSetCallee: InternedString
         let runtimeRunBlockingWithContCallee: InternedString
@@ -197,6 +203,23 @@ extension CoroutineLoweringPass {
                 using: rewrite
             ) {
                 loweredBody.append(contentsOf: withContextInstructions)
+                continue
+            }
+
+            if let withTimeoutInstructions = rewriteWithTimeoutCall(
+                call: call,
+                symbolByExprRaw: symbolByExprRaw,
+                using: rewrite
+            ) {
+                loweredBody.append(contentsOf: withTimeoutInstructions)
+                continue
+            }
+
+            if let yieldInstruction = rewriteYieldCall(
+                call: call,
+                using: rewrite
+            ) {
+                loweredBody.append(yieldInstruction)
                 continue
             }
 
@@ -448,6 +471,123 @@ extension CoroutineLoweringPass {
                 isSuperCall: call.isSuperCall
             ),
         ]
+    }
+
+    func rewriteWithTimeoutCall(
+        call: CallRewriteInput,
+        symbolByExprRaw: [Int32: SymbolID],
+        using rewrite: SuspendRewriteContext
+    ) -> [KIRInstruction]? {
+        let runtimeCallee: InternedString
+        if call.callee == rewrite.withTimeoutCallee {
+            runtimeCallee = rewrite.runtimeWithTimeoutCallee
+        } else if call.callee == rewrite.withTimeoutOrNullCallee {
+            runtimeCallee = rewrite.runtimeWithTimeoutOrNullCallee
+        } else {
+            return nil
+        }
+
+        guard call.arguments.count >= 2,
+              let referencedSymbol = symbolReference(
+                  for: call.arguments[1],
+                  module: rewrite.module,
+                  propagatedSymbols: symbolByExprRaw
+              ),
+              let loweredTarget = rewrite.loweredBySymbol[referencedSymbol]
+        else {
+            return nil
+        }
+
+        let timeMillisExpr = call.arguments[0]
+        let extraArgs = Array(call.arguments.dropFirst(2))
+        let targetArity = rewrite.suspendFunctionArityBySymbol[referencedSymbol] ?? 0
+        guard extraArgs.count == targetArity else {
+            rewrite.ctx.diagnostics.error(
+                "KSWIFTK-CORO-0005",
+                "withTimeout block capture arity mismatch.",
+                range: nil
+            )
+            return [call.instruction]
+        }
+
+        let entryTarget: LoweredSuspendFunction
+        var rewritten: [KIRInstruction] = []
+        let continuationFunctionID = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.intType
+        )
+        let continuationExpr = rewrite.module.arena.appendExpr(
+            .temporary(Int32(rewrite.module.arena.expressions.count)),
+            type: rewrite.continuationTypeByLoweredSymbol[loweredTarget.symbol] ?? rewrite.anyType
+        )
+
+        if extraArgs.isEmpty {
+            entryTarget = loweredTarget
+        } else {
+            guard let thunk = rewrite.launcherThunkByOriginalSymbol[referencedSymbol] else {
+                return [call.instruction]
+            }
+            entryTarget = thunk
+        }
+
+        rewritten.append(.constValue(
+            result: continuationFunctionID,
+            value: .intLiteral(Int64(loweredTarget.symbol.rawValue))
+        ))
+        rewritten.append(.call(
+            symbol: nil,
+            callee: rewrite.continuationFactory,
+            arguments: [continuationFunctionID],
+            result: continuationExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        for (index, argExpr) in extraArgs.enumerated() {
+            let slotExpr = rewrite.module.arena.appendExpr(
+                .intLiteral(Int64(index)),
+                type: rewrite.intType
+            )
+            rewritten.append(.call(
+                symbol: nil,
+                callee: rewrite.launcherArgSetCallee,
+                arguments: [continuationExpr, slotExpr, argExpr],
+                result: nil,
+                canThrow: false,
+                thrownResult: nil
+            ))
+        }
+
+        let entryPointExpr = rewrite.module.arena.appendExpr(
+            .symbolRef(entryTarget.symbol),
+            type: rewrite.intType
+        )
+        rewritten.append(.call(
+            symbol: nil,
+            callee: runtimeCallee,
+            arguments: [timeMillisExpr, entryPointExpr, continuationExpr],
+            result: call.result,
+            canThrow: call.canThrow,
+            thrownResult: call.thrownResult
+        ))
+        return rewritten
+    }
+
+    func rewriteYieldCall(
+        call: CallRewriteInput,
+        using rewrite: SuspendRewriteContext
+    ) -> KIRInstruction? {
+        guard call.callee == rewrite.yieldCallee else {
+            return nil
+        }
+        return .call(
+            symbol: nil,
+            callee: rewrite.runtimeYieldCallee,
+            arguments: call.arguments,
+            result: call.result,
+            canThrow: false,
+            thrownResult: nil
+        )
     }
 
     func resolveLoweredTarget(

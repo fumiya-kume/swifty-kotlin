@@ -81,7 +81,7 @@ extension CallLowerer {
         "count", "iterator",
         "map", "filter", "mapNotNull", "filterNotNull", "forEach", "flatMap",
         "any", "none", "all",
-        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "unzip",
+        "fold", "reduce", "scan", "runningFold", "runningReduce", "groupBy", "groupingBy", "sortedBy", "find", "associateBy", "associateWith", "associate", "zip", "zipWithNext", "unzip",
         "eachCount",
         "withIndex", "forEachIndexed", "mapIndexed", "mapValues", "mapKeys",
         "getValue", "getOrDefault", "getOrElse", "getOrPut", "getOrNull", "elementAtOrNull",
@@ -1994,6 +1994,37 @@ extension CallLowerer {
             let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
             if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
                 let calleeStr = interner.resolve(calleeName)
+                if calleeStr == "get" {
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_get"),
+                        arguments: [loweredReceiverID] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
+                if calleeStr == "contains" {
+                    let listExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: nil)
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_array_toList"),
+                        arguments: [loweredReceiverID],
+                        result: listExpr,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    instructions.append(.call(
+                        symbol: nil,
+                        callee: interner.intern("kk_list_contains"),
+                        arguments: [listExpr] + normalizedArgIDs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    return result
+                }
                 let runtimeCallee: String? = switch calleeStr {
                 case "map":
                     "kk_array_map"
@@ -2011,13 +2042,21 @@ extension CallLowerer {
                     nil
                 }
                 if let runtimeCallee {
+                    let canThrow = runtimeCallee == "kk_list_partition"
+                        || runtimeCallee == "kk_list_zipWithNextTransform"
+                    let thrownResult = canThrow
+                        ? arena.appendExpr(
+                            .temporary(Int32(arena.expressions.count)),
+                            type: sema.types.nullableAnyType
+                        )
+                        : nil
                     instructions.append(.call(
                         symbol: nil,
                         callee: interner.intern(runtimeCallee),
                         arguments: [loweredReceiverID] + normalizedArgIDs,
                         result: result,
-                        canThrow: false,
-                        thrownResult: nil
+                        canThrow: canThrow,
+                        thrownResult: thrownResult
                     ))
                     return result
                 }
@@ -2107,6 +2146,8 @@ extension CallLowerer {
                     "kk_list_lastIndexOf"
                 case "partition":
                     "kk_list_partition"
+                case "zipWithNext":
+                    "kk_list_zipWithNextTransform"
                 case "getOrNull":
                     "kk_list_getOrNull"
                 case "elementAtOrNull":
@@ -2530,7 +2571,7 @@ extension CallLowerer {
             "getOrElse", "getOrPut",
             "maxByOrNull", "minByOrNull", "maxOfOrNull", "minOfOrNull",
             "indexOfFirst", "indexOfLast", "binarySearch",
-            "sortedByDescending", "sortedWith", "partition",
+            "sortedByDescending", "sortedWith", "partition", "zipWithNext",
             "takeWhile", "dropWhile",
             "replaceFirstChar",
             "sortBy", "sortByDescending",
@@ -2665,29 +2706,25 @@ extension CallLowerer {
             ))
             return result
         }
-        // STDLIB-574: Charsets.UTF_8 / US_ASCII / ISO_8859_1 → integer constants
+        // STDLIB-581: Charsets.UTF_8 / ISO_8859_1 / US_ASCII / UTF_16 / ...
         if let parentInfo = sema.symbols.symbol(parent),
            parentInfo.name == knownNames.charsets
         {
-            let charsetID: Int
-            switch interner.resolve(info.name) {
-            case "UTF_8":
-                charsetID = 0
-            case "US_ASCII":
-                charsetID = 1
-            case "ISO_8859_1":
-                charsetID = 2
-            default:
-                return nil
-            }
-            let resultType = sema.bindings.exprTypes[exprID]
-                ?? sema.symbols.propertyType(for: valueSym)
-                ?? sema.types.anyType
+            let runtimeCallee = interner.intern("kk_charset_\(interner.resolve(info.name).lowercased())")
             let result = arena.appendExpr(
-                .intLiteral(Int64(charsetID)),
-                type: resultType
+                .temporary(Int32(arena.expressions.count)),
+                type: sema.bindings.exprTypes[exprID]
+                    ?? sema.symbols.propertyType(for: valueSym)
+                    ?? sema.types.anyType
             )
-            instructions.append(.constValue(result: result, value: .intLiteral(Int64(charsetID))))
+            instructions.append(.call(
+                symbol: nil,
+                callee: runtimeCallee,
+                arguments: [],
+                result: result,
+                canThrow: false,
+                thrownResult: nil
+            ))
             return result
         }
         let propType = sema.bindings.exprTypes[exprID]
@@ -3477,6 +3514,10 @@ extension CallLowerer {
                 return interner.intern("kk_list_lastIndexOf")
             case "partition":
                 return interner.intern("kk_list_partition")
+            case "zipWithNext":
+                return interner.intern(hasHOFLambdaArg
+                    ? "kk_list_zipWithNextTransform"
+                    : "kk_list_zipWithNext")
             case "getOrNull":
                 return interner.intern("kk_list_getOrNull")
             case "elementAtOrNull":
@@ -3538,6 +3579,8 @@ extension CallLowerer {
 
         if isConcreteArrayLikeType(nonNullReceiverType, sema: sema, interner: interner) {
             switch memberName {
+            case "get":
+                return interner.intern("kk_array_get")
             case "map":
                 return interner.intern("kk_array_map")
             case "filter":
@@ -3564,6 +3607,10 @@ extension CallLowerer {
         switch memberName {
         case "partition":
             return interner.intern("kk_list_partition")
+        case "zipWithNext":
+            return interner.intern(hasHOFLambdaArg
+                ? "kk_list_zipWithNextTransform"
+                : "kk_list_zipWithNext")
         case "indexOf":
             return interner.intern("kk_list_indexOf")
         case "lastIndexOf":
