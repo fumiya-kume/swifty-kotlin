@@ -337,6 +337,14 @@ public func kk_op_contains(_ container: Int, _ element: Int) -> Int {
         }
         return 0
     }
+    // List check
+    if let list = runtimeListBox(from: container) {
+        return list.elements.contains(element) ? 1 : 0
+    }
+    // Set check
+    if let set = runtimeSetBox(from: container) {
+        return set.elements.contains(element) ? 1 : 0
+    }
     // Array check
     guard let array = runtimeArrayBox(from: container) else {
         return 0
