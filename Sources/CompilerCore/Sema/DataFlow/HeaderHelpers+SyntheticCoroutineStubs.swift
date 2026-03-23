@@ -369,6 +369,150 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+
+        // Mutex (kotlinx.coroutines.sync.Mutex)
+        let syncPkg = ensureSyntheticPackage(
+            coroutinesPkg + [interner.intern("sync")],
+            symbols: symbols,
+            interner: interner
+        )
+        let mutexSymbol = ensureInterfaceSymbol(
+            named: "Mutex",
+            in: syncPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let mutexType = types.make(.classType(ClassType(
+            classSymbol: mutexSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(mutexType, for: mutexSymbol)
+
+        // Mutex() factory function
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "Mutex",
+            packageFQName: syncPkg,
+            parameters: [],
+            returnType: mutexType,
+            externalLinkName: "kk_mutex_create",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Mutex.lock() suspend
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutexSymbol,
+            ownerType: mutexType,
+            name: "lock",
+            externalLinkName: "kk_mutex_lock",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Mutex.unlock()
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutexSymbol,
+            ownerType: mutexType,
+            name: "unlock",
+            externalLinkName: "kk_mutex_unlock",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Mutex.tryLock(): Boolean
+        registerSyntheticCoroutineMember(
+            ownerSymbol: mutexSymbol,
+            ownerType: mutexType,
+            name: "tryLock",
+            externalLinkName: "kk_mutex_tryLock",
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Mutex.isLocked property
+        registerSyntheticObjectProperty(
+            ownerSymbol: mutexSymbol,
+            ownerType: mutexType,
+            name: "isLocked",
+            propertyType: types.booleanType,
+            externalLinkName: "kk_mutex_isLocked",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Semaphore (kotlinx.coroutines.sync.Semaphore)
+        let semaphoreSymbol = ensureInterfaceSymbol(
+            named: "Semaphore",
+            in: syncPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        let semaphoreType = types.make(.classType(ClassType(
+            classSymbol: semaphoreSymbol,
+            args: [],
+            nullability: .nonNull
+        )))
+        symbols.setPropertyType(semaphoreType, for: semaphoreSymbol)
+
+        // Semaphore(permits) factory function
+        registerSyntheticCoroutineTopLevelFunction(
+            named: "Semaphore",
+            packageFQName: syncPkg,
+            parameters: [(name: "permits", type: types.intType)],
+            returnType: semaphoreType,
+            externalLinkName: "kk_semaphore_create",
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Semaphore.acquire() suspend
+        registerSyntheticCoroutineMember(
+            ownerSymbol: semaphoreSymbol,
+            ownerType: semaphoreType,
+            name: "acquire",
+            externalLinkName: "kk_semaphore_acquire",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Semaphore.release()
+        registerSyntheticCoroutineMember(
+            ownerSymbol: semaphoreSymbol,
+            ownerType: semaphoreType,
+            name: "release",
+            externalLinkName: "kk_semaphore_release",
+            returnType: types.unitType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Semaphore.tryAcquire(): Boolean
+        registerSyntheticCoroutineMember(
+            ownerSymbol: semaphoreSymbol,
+            ownerType: semaphoreType,
+            name: "tryAcquire",
+            externalLinkName: "kk_semaphore_tryAcquire",
+            returnType: types.booleanType,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // Semaphore.availablePermits property
+        registerSyntheticObjectProperty(
+            ownerSymbol: semaphoreSymbol,
+            ownerType: semaphoreType,
+            name: "availablePermits",
+            propertyType: types.intType,
+            externalLinkName: "kk_semaphore_availablePermits",
+            symbols: symbols,
+            interner: interner
+        )
+
     }
 
     private func registerSyntheticCoroutineTopLevelFunction(
@@ -402,7 +546,15 @@ extension DataFlowSemaPhase {
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
-        guard symbols.lookup(fqName: functionFQName) == nil else {
+        // Only skip if a function with this FQName already exists.
+        // A nominal type (class/interface) sharing the same FQName is allowed
+        // (Kotlin supports factory functions with the same name as a type).
+        let existingSymbols = symbols.lookupAll(fqName: functionFQName)
+        let hasExistingFunction = existingSymbols.contains { id in
+            guard let sym = symbols.symbol(id) else { return false }
+            return sym.kind == .function
+        }
+        guard !hasExistingFunction else {
             return
         }
         let functionSymbol = symbols.define(
@@ -579,6 +731,7 @@ extension DataFlowSemaPhase {
         ownerType _: TypeID,
         name: String,
         propertyType: TypeID,
+        externalLinkName: String? = nil,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -600,6 +753,9 @@ extension DataFlowSemaPhase {
         )
         symbols.setParentSymbol(ownerSymbol, for: propertySymbol)
         symbols.setPropertyType(propertyType, for: propertySymbol)
+        if let externalLinkName {
+            symbols.setExternalLinkName(externalLinkName, for: propertySymbol)
+        }
     }
 
     private func ensureObjectSymbol(

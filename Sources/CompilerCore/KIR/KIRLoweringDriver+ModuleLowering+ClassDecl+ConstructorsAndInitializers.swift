@@ -305,6 +305,26 @@ extension KIRLoweringDriver {
             return
         }
 
+        // Kotlin 2.0 explicit backing field: initialize from field's own initializer.
+        if let explicitField = prop.explicitBackingField {
+            let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol
+            let backingFieldType = sema.symbols.propertyType(for: targetSymbol) ?? sema.types.anyType
+            let initValue = lowerExpr(
+                explicitField.initializer,
+                shared: shared, emit: &body
+            )
+            let fieldRef = arena.appendExpr(.symbolRef(targetSymbol), type: backingFieldType)
+            body.append(.copy(from: initValue, to: fieldRef))
+            // Also initialize the property itself if it has a regular initializer.
+            if let initExpr = prop.initializer {
+                let propType = sema.symbols.propertyType(for: propSymbol) ?? sema.types.anyType
+                let propInitValue = lowerExpr(initExpr, shared: shared, emit: &body)
+                let propRef = arena.appendExpr(.symbolRef(propSymbol), type: propType)
+                body.append(.copy(from: propInitValue, to: propRef))
+            }
+            return
+        }
+
         guard let initExpr = prop.initializer else {
             if prop.modifiers.contains(.lateinit) {
                 let targetSymbol = sema.symbols.backingFieldSymbol(for: propSymbol) ?? propSymbol

@@ -85,6 +85,19 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: elements))
 }
 
+@_cdecl("kk_list_of_not_null")
+public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
+    var elements: [Int] = []
+    if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
+        for element in array.elements.prefix(count) {
+            if element != runtimeNullSentinelInt {
+                elements.append(element)
+            }
+        }
+    }
+    return registerRuntimeObject(RuntimeListBox(elements: elements))
+}
+
 // STDLIB-410: emptyList<T>() - allocates a fresh empty list each call to avoid
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("kk_emptyList")
@@ -813,6 +826,28 @@ public func kk_collection_toList(_ collRaw: Int) -> Int {
         }
     }
     return registerRuntimeObject(RuntimeListBox(elements: []))
+}
+
+@_cdecl("kk_collection_size")
+public func kk_collection_size(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.count
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.count
+    }
+    return 0
+}
+
+@_cdecl("kk_collection_isEmpty")
+public func kk_collection_isEmpty(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.isEmpty ? 1 : 0
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.isEmpty ? 1 : 0
+    }
+    return 1
 }
 
 // MARK: - Set Operations (STDLIB-266)

@@ -19,16 +19,14 @@ extension ControlFlowTypeChecker {
         if let subjectID {
             let subjectType = driver.inferExpr(subjectID, ctx: ctx, locals: &locals)
 
-            // Handle `when (val x = expr)` subject variable declaration.
-            // If the AST arena records a subject variable name, introduce a
-            // local val binding so that branches can reference it and smart
-            // casts apply normally.
+            // Register `when (val x = expr)` subject variable into locals so
+            // that branch bodies and guards can reference it.
             if let subjectVarName = ast.arena.whenSubjectVarName(for: id) {
                 let subjectVarSymbol = sema.symbols.define(
                     kind: .local,
                     name: subjectVarName,
                     fqName: [
-                        interner.intern("__when_subject_\(id.rawValue)"),
+                        interner.intern("__when_\(id.rawValue)"),
                         subjectVarName,
                     ],
                     declSite: range,
@@ -36,12 +34,11 @@ extension ControlFlowTypeChecker {
                     flags: []
                 )
                 locals[subjectVarName] = (subjectType, subjectVarSymbol, false, true)
-                sema.bindings.bindIdentifier(subjectID, symbol: subjectVarSymbol)
-                sema.symbols.setPropertyType(subjectType, for: subjectVarSymbol)
+                sema.bindings.bindIdentifier(id, symbol: subjectVarSymbol)
             }
 
             let subjectLocalBinding: (name: InternedString, type: TypeID, symbol: SymbolID, isStable: Bool, isMutable: Bool)? = {
-                // For `when (val x = expr)`, look up the freshly created local binding.
+                // First try the subject variable name from `when (val x = expr)`.
                 if let subjectVarName = ast.arena.whenSubjectVarName(for: id),
                    let local = locals[subjectVarName]
                 {
@@ -51,6 +48,7 @@ extension ControlFlowTypeChecker {
                         local.isMutable
                     )
                 }
+                // Fall back to the subject expression being a simple name reference.
                 guard let subjectExpr = ast.arena.expr(subjectID),
                       case let .nameRef(subjectName, _) = subjectExpr,
                       let local = locals[subjectName]
@@ -205,11 +203,13 @@ extension ControlFlowTypeChecker {
                 for cond in branch.conditions {
                     let conditionCtx = ctx.copying(flowState: cumulativeFalseState)
                     let condType = driver.inferExpr(cond, ctx: conditionCtx, locals: &branchLocals)
-                    if isNullCondition(cond) {
+                    if branch.guard_ == nil, isNullCondition(cond) {
                         hasNullCase = true
                         isNullBranch = true
                     }
-                    recordCoverage(for: cond, conditionType: condType)
+                    if branch.guard_ == nil {
+                        recordCoverage(for: cond, conditionType: condType)
+                    }
 
                     // CTRL-001: Detect duplicate conditions within a branch
                     // and across branches for diagnostic purposes.
@@ -220,18 +220,12 @@ extension ControlFlowTypeChecker {
                                 "Duplicate condition in when branch.",
                                 range: ast.arena.exprRange(cond)
                             )
-                        } else {
-                            // Track cross-branch duplicates for every covered
-                            // condition value. Comma-separated branch
-                            // conditions are lowered as an OR-chain, but each
-                            // listed condition still fully covers its own key.
-                            if !allSeenConditionKeys.insert(key).inserted {
-                                ctx.semaCtx.diagnostics.warning(
-                                    "KSWIFTK-SEMA-0073",
-                                    "Condition already covered by a previous when branch.",
-                                    range: ast.arena.exprRange(cond)
-                                )
-                            }
+                        } else if branch.guard_ == nil, !allSeenConditionKeys.insert(key).inserted {
+                            ctx.semaCtx.diagnostics.warning(
+                                "KSWIFTK-SEMA-0073",
+                                "Condition already covered by a previous when branch.",
+                                range: ast.arena.exprRange(cond)
+                            )
                         }
                     }
 
@@ -309,6 +303,21 @@ extension ControlFlowTypeChecker {
                         driver.exprChecker.applyFlowStateToLocals(nonNullState, locals: &branchLocals, sema: sema)
                     }
                 }
+
+                // Type-check guard expression as Boolean (Kotlin 2.1 when guard conditions).
+                // The guard is checked within the narrowed context so smart casts from
+                // `is` checks are available.
+                if let guardExpr = branch.guard_ {
+                    let guardType = driver.inferExpr(guardExpr, ctx: branchCtx, locals: &branchLocals)
+                    if guardType != boolType, guardType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0074",
+                            "When branch guard condition must be a Boolean expression.",
+                            range: ast.arena.exprRange(guardExpr)
+                        )
+                    }
+                }
+
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
@@ -428,9 +437,9 @@ extension ControlFlowTypeChecker {
                     driver.exprChecker.applyFlowStateToLocals(cumulativeFalseState, locals: &branchLocals, sema: sema)
                     if let condExpr = ast.arena.expr(cond) {
                         switch condExpr {
-                        case .boolLiteral(true, _):
+                        case .boolLiteral(true, _) where branch.guard_ == nil:
                             hasTrueCase = true
-                        case .boolLiteral(false, _):
+                        case .boolLiteral(false, _) where branch.guard_ == nil:
                             hasFalseCase = true
                         default:
                             break
@@ -447,6 +456,19 @@ extension ControlFlowTypeChecker {
                     branchLocals = locals
                     driver.exprChecker.applyFlowStateToLocals(joinedState, locals: &branchLocals, sema: sema)
                 }
+
+                // Type-check guard expression as Boolean (Kotlin 2.1 when guard conditions).
+                if let guardExpr = branch.guard_ {
+                    let guardType = driver.inferExpr(guardExpr, ctx: branchCtx, locals: &branchLocals)
+                    if guardType != boolType, guardType != sema.types.errorType {
+                        ctx.semaCtx.diagnostics.error(
+                            "KSWIFTK-SEMA-0074",
+                            "When branch guard condition must be a Boolean expression.",
+                            range: ast.arena.exprRange(guardExpr)
+                        )
+                    }
+                }
+
                 branchTypes.append(
                     driver.inferExpr(branch.body, ctx: branchCtx, locals: &branchLocals, expectedType: expectedType)
                 )
