@@ -419,7 +419,7 @@ extension KotlinParser {
     func parsePostDeclarationTail(into children: inout [SyntaxChild], range: inout RangeAccumulator, includeBlock: Bool) {
         if case .symbol(.lBrace) = stream.peek().kind {
             if includeBlock {
-                children.append(.node(parseBlock()))
+                children.append(.node(parseBlock(isClassBody: true)))
             } else {
                 _ = consumeToken(into: &children, range: &range)
             }
@@ -429,6 +429,6 @@ extension KotlinParser {
         if hasLeadingNewline(next), isDeclarationStart(next.kind) {
             return
         }
-        parseTail(inBlock: false, into: &children, range: &range)
+        parseTail(inBlock: false, into: &children, range: &range, isClassBody: includeBlock)
     }
 }

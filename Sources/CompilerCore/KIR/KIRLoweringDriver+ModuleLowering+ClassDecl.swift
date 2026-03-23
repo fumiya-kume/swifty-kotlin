@@ -21,7 +21,8 @@ extension KIRLoweringDriver {
             memberProperties: classDecl.memberProperties,
             nestedClasses: classDecl.nestedClasses,
             nestedObjects: allNestedObjects,
-            shared: shared
+            shared: shared,
+            compilationCtx: compilationCtx
         )
         var finalDirectMembers = directMembers
         let forwardingDeclIDs = synthesizeClassDelegationForwardingMethods(
