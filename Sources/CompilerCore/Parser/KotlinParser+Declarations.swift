@@ -206,6 +206,9 @@ extension KotlinParser {
         _ = consumeToken(into: &children, range: &range)
         if isIdentifierLike(stream.peek().kind) {
             _ = consumeToken(into: &children, range: &range)
+        } else if case .symbol(.lParen) = stream.peek().kind {
+            // Destructuring declaration: val (a, b) = expr
+            // Don't emit a missing-name diagnostic; the AST builder handles this pattern.
         } else {
             insertMissingToken(expected: .identifier(.invalid), into: &children, range: &range, code: "KSWIFTK-PARSE-0002", message: "Expected property name.")
         }
