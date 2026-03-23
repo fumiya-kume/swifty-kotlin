@@ -287,13 +287,17 @@ final class LambdaLowerer {
             )
         let lambdaValueExpr = arena.appendExpr(.symbolRef(lambdaSymbol), type: lambdaValueType)
         instructions.append(.constValue(result: lambdaValueExpr, value: .symbolRef(lambdaSymbol)))
+        let captureArgs = (usesClosureRawCapture || usesClosureObjectCapture) ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr)
         driver.ctx.registerCallableValue(
             lambdaValueExpr,
             symbol: lambdaSymbol,
             callee: lambdaName,
-            captureArguments: (usesClosureRawCapture || usesClosureObjectCapture) ? captureBindings.map(\.valueExpr) : functionCaptureBindings.map(\.valueExpr),
+            captureArguments: captureArgs,
             hasClosureParam: needsClosureParam
         )
+        if !captureArgs.isEmpty {
+            arena.registerLambdaCaptureArgs(lambdaSymbol, captureArgs: captureArgs)
+        }
         return lambdaValueExpr
     }
 
