@@ -150,6 +150,9 @@ extension LambdaLowerer {
                 for condition in branch.conditions {
                     collectBoundIdentifierSymbols(in: condition, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
                 }
+                if let guardExpr = branch.guard_ {
+                    collectBoundIdentifierSymbols(in: guardExpr, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
+                }
                 collectBoundIdentifierSymbols(in: branch.body, ast: ast, sema: sema, referenced: &referenced, seen: &seen)
             }
             if let elseExpr {
@@ -332,6 +335,11 @@ extension LambdaLowerer {
             }
             for branch in branches {
                 for condition in branch.conditions where containsImplicitReceiverReference(in: condition, ast: ast) {
+                    return true
+                }
+                if let guardExpr = branch.guard_,
+                   containsImplicitReceiverReference(in: guardExpr, ast: ast)
+                {
                     return true
                 }
                 if containsImplicitReceiverReference(in: branch.body, ast: ast) {

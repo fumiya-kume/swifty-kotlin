@@ -76,6 +76,35 @@ public func kk_file_writeText(_ fileRaw: Int, _ textRaw: Int, _ outThrown: Unsaf
     return 0
 }
 
+@_cdecl("kk_file_appendText")
+public func kk_file_appendText(_ fileRaw: Int, _ textRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
+    outThrown?.pointee = 0
+    guard let file = runtimeFileBox(from: fileRaw) else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_appendText received invalid File handle")
+    }
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: textRaw),
+          let text = extractString(from: ptr)
+    else {
+        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_file_appendText received invalid text")
+    }
+    do {
+        let url = URL(fileURLWithPath: file.path)
+        if FileManager.default.fileExists(atPath: file.path) {
+            let handle = try FileHandle(forWritingTo: url)
+            handle.seekToEndOfFile()
+            if let data = text.data(using: .utf8) {
+                handle.write(data)
+            }
+            handle.closeFile()
+        } else {
+            try text.write(toFile: file.path, atomically: true, encoding: .utf8)
+        }
+    } catch {
+        outThrown?.pointee = runtimeAllocateThrowable(message: "IOException: \(error.localizedDescription)")
+    }
+    return 0
+}
+
 @_cdecl("kk_file_readLines")
 public func kk_file_readLines(_ fileRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     outThrown?.pointee = 0

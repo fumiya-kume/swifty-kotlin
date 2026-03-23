@@ -5,6 +5,22 @@ extension NativeEmitter {
         let builder: LLVMCAPIBindings.LLVMBuilderRef
         let int64Type: LLVMCAPIBindings.LLVMTypeRef
         let zeroValue: LLVMCAPIBindings.LLVMValueRef
+        let context: LLVMCAPIBindings.LLVMContextRef?
+        let module: LLVMCAPIBindings.LLVMModuleRef?
+
+        init(
+            builder: LLVMCAPIBindings.LLVMBuilderRef,
+            int64Type: LLVMCAPIBindings.LLVMTypeRef,
+            zeroValue: LLVMCAPIBindings.LLVMValueRef,
+            context: LLVMCAPIBindings.LLVMContextRef? = nil,
+            module: LLVMCAPIBindings.LLVMModuleRef? = nil
+        ) {
+            self.builder = builder
+            self.int64Type = int64Type
+            self.zeroValue = zeroValue
+            self.context = context
+            self.module = module
+        }
     }
 
     // swiftlint:disable cyclomatic_complexity
@@ -200,8 +216,10 @@ extension NativeEmitter {
                 literalID = generatedStringLiteralCount
                 generatedStringLiteralCount += 1
             }
-            guard let globalStringPointer = bindings.buildGlobalStringPtr(
+            guard let globalStringPointer = bindings.buildGlobalStringPtrNullSafe(
                 state.builder,
+                context: state.context,
+                module: state.module,
                 value: text,
                 name: "str_lit_\(literalID)"
             ) else {

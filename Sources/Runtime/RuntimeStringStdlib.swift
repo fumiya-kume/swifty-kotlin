@@ -950,6 +950,14 @@ public func kk_string_lines(_ strRaw: Int) -> Int {
     return runtimeMakeStringListRaw(runtimeNormalizedMultilineString(source))
 }
 
+@_cdecl("kk_string_lineSequence")
+public func kk_string_lineSequence(_ strRaw: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    let lineRaws = runtimeNormalizedMultilineString(source).map(runtimeMakeStringRaw)
+    let seq = RuntimeSequenceBox(steps: [.source(elements: lineRaws)])
+    return registerRuntimeObject(seq)
+}
+
 @_cdecl("kk_string_trimStart")
 public func kk_string_trimStart(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
@@ -966,6 +974,128 @@ public func kk_string_trimEnd(_ strRaw: Int) -> Int {
 public func kk_string_toByteArray(_ strRaw: Int) -> Int {
     let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
     return runtimeMakeListRaw(source.utf8.map { Int(Int8(bitPattern: $0)) })
+<<<<<<< HEAD
+}
+
+// STDLIB-581: Charset tag constants (mirrors Charsets.* singleton properties)
+private enum CharsetTag: Int {
+    case utf8 = 0
+    case iso8859_1 = 1
+    case usASCII = 2
+    case utf16 = 3
+    case utf16be = 4
+    case utf16le = 5
+    case utf32 = 6
+    case utf32be = 7
+    case utf32le = 8
+}
+
+@_cdecl("kk_charset_utf_8")
+public func kk_charset_utf_8() -> Int { CharsetTag.utf8.rawValue }
+
+@_cdecl("kk_charset_iso_8859_1")
+public func kk_charset_iso_8859_1() -> Int { CharsetTag.iso8859_1.rawValue }
+
+@_cdecl("kk_charset_us_ascii")
+public func kk_charset_us_ascii() -> Int { CharsetTag.usASCII.rawValue }
+
+@_cdecl("kk_charset_utf_16")
+public func kk_charset_utf_16() -> Int { CharsetTag.utf16.rawValue }
+
+@_cdecl("kk_charset_utf_16be")
+public func kk_charset_utf_16be() -> Int { CharsetTag.utf16be.rawValue }
+
+@_cdecl("kk_charset_utf_16le")
+public func kk_charset_utf_16le() -> Int { CharsetTag.utf16le.rawValue }
+
+@_cdecl("kk_charset_utf_32")
+public func kk_charset_utf_32() -> Int { CharsetTag.utf32.rawValue }
+
+@_cdecl("kk_charset_utf_32be")
+public func kk_charset_utf_32be() -> Int { CharsetTag.utf32be.rawValue }
+
+@_cdecl("kk_charset_utf_32le")
+public func kk_charset_utf_32le() -> Int { CharsetTag.utf32le.rawValue }
+
+// STDLIB-581: String.toByteArray(charset: Charset)
+@_cdecl("kk_string_toByteArray_charset")
+public func kk_string_toByteArray_charset(_ strRaw: Int, _ charsetTag: Int) -> Int {
+    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
+    guard let tag = CharsetTag(rawValue: charsetTag) else {
+        // Unknown charset — fall back to UTF-8
+        return runtimeMakeListRaw(source.utf8.map(Int.init))
+    }
+    let bytes: [Int]
+    switch tag {
+    case .utf8:
+        bytes = source.utf8.map(Int.init)
+    case .iso8859_1:
+        // ISO-8859-1: each UTF-16 code unit <= 0xFF maps 1:1; others replaced with '?'
+        // Using utf16 (not unicodeScalars) to match Kotlin/JVM semantics where
+        // non-BMP characters produce two surrogate code units, each replaced.
+        bytes = source.utf16.map { unit in
+            unit <= 0xFF ? Int(unit) : Int(UInt8(ascii: "?"))
+        }
+    case .usASCII:
+        // US-ASCII: each UTF-16 code unit <= 0x7F maps 1:1; others replaced with '?'
+        bytes = source.utf16.map { unit in
+            unit <= 0x7F ? Int(unit) : Int(UInt8(ascii: "?"))
+        }
+    case .utf16:
+        // UTF-16 with BOM (big-endian BOM then big-endian data, matching Kotlin/JVM)
+        var result: [Int] = [0xFE, 0xFF] // BOM
+        for unit in source.utf16 {
+            result.append(Int(unit >> 8))
+            result.append(Int(unit & 0xFF))
+        }
+        bytes = result
+    case .utf16be:
+        var result: [Int] = []
+        for unit in source.utf16 {
+            result.append(Int(unit >> 8))
+            result.append(Int(unit & 0xFF))
+        }
+        bytes = result
+    case .utf16le:
+        var result: [Int] = []
+        for unit in source.utf16 {
+            result.append(Int(unit & 0xFF))
+            result.append(Int(unit >> 8))
+        }
+        bytes = result
+    case .utf32:
+        // UTF-32 with BOM (big-endian)
+        var result: [Int] = [0x00, 0x00, 0xFE, 0xFF] // BOM
+        for scalar in source.unicodeScalars {
+            let v = scalar.value
+            result.append(Int((v >> 24) & 0xFF))
+            result.append(Int((v >> 16) & 0xFF))
+            result.append(Int((v >> 8) & 0xFF))
+            result.append(Int(v & 0xFF))
+        }
+        bytes = result
+    case .utf32be:
+        var result: [Int] = []
+        for scalar in source.unicodeScalars {
+            let v = scalar.value
+            result.append(Int((v >> 24) & 0xFF))
+            result.append(Int((v >> 16) & 0xFF))
+            result.append(Int((v >> 8) & 0xFF))
+            result.append(Int(v & 0xFF))
+        }
+        bytes = result
+    case .utf32le:
+        var result: [Int] = []
+        for scalar in source.unicodeScalars {
+            let v = scalar.value
+            result.append(Int(v & 0xFF))
+            result.append(Int((v >> 8) & 0xFF))
+            result.append(Int((v >> 16) & 0xFF))
+            result.append(Int((v >> 24) & 0xFF))
+        }
+        bytes = result
+    }
+    return runtimeMakeListRaw(bytes)
 }
 
 // STDLIB-573: String.encodeToByteArray()
@@ -985,44 +1115,11 @@ public func kk_string_encodeToByteArray_range(_ strRaw: Int, _ startIndex: Int, 
 }
 
 // STDLIB-573: String.encodeToByteArray(charset) — charset-aware overload.
-// Charset IDs: 0=UTF_8, 1=UTF_16, 2=UTF_16BE, 3=UTF_16LE, 4=US_ASCII, 5=ISO_8859_1
+// Delegates to kk_string_toByteArray_charset which uses CharsetTag enum for
+// consistent charset ID mapping across all charset-aware runtime functions.
 @_cdecl("kk_string_encodeToByteArray_charset")
 public func kk_string_encodeToByteArray_charset(_ strRaw: Int, _ charsetID: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    let bytes: [Int]
-    switch charsetID {
-    case 0: // UTF_8 (default)
-        bytes = source.utf8.map(Int.init)
-    case 1: // UTF_16 — big-endian with BOM (0xFEFF)
-        var result: [Int] = [0xFE, 0xFF] // BOM
-        for unit in source.utf16 {
-            result.append(Int(unit >> 8))
-            result.append(Int(unit & 0xFF))
-        }
-        bytes = result
-    case 2: // UTF_16BE — big-endian, no BOM
-        var result: [Int] = []
-        for unit in source.utf16 {
-            result.append(Int(unit >> 8))
-            result.append(Int(unit & 0xFF))
-        }
-        bytes = result
-    case 3: // UTF_16LE — little-endian, no BOM
-        var result: [Int] = []
-        for unit in source.utf16 {
-            result.append(Int(unit & 0xFF))
-            result.append(Int(unit >> 8))
-        }
-        bytes = result
-    case 4: // US_ASCII — bytes > 127 become 0x3F ('?')
-        bytes = source.utf8.map { Int($0 > 127 ? 0x3F : $0) }
-    case 5: // ISO_8859_1 — Unicode code points 0..255 only; others become 0x3F
-        bytes = source.unicodeScalars.map { $0.value <= 255 ? Int($0.value) : 0x3F }
-    default:
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_encodeToByteArray_charset received unknown charset ID \(charsetID)")
-    }
-    // Convert to signed-byte semantics (Kotlin ByteArray uses signed bytes -128..127).
-    return runtimeMakeListRaw(bytes.map { $0 > 127 ? $0 - 256 : $0 })
+    kk_string_toByteArray_charset(strRaw, charsetID)
 }
 
 // STDLIB-574: ByteArray.decodeToString()

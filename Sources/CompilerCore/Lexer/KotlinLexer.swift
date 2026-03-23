@@ -186,6 +186,20 @@ public final class KotlinLexer {
             return scanString(leadingTrivia: leadingTrivia, start: start)
         }
 
+        // Multi-dollar string prefix: $$"...", $$$"...", etc.
+        if ch == 0x24 {
+            let dollarCount = countConsecutiveDollars(at: offset)
+            if dollarCount >= 2 {
+                let afterDollars = offset + dollarCount
+                if afterDollars < bytes.count, bytes[afterDollars] == 0x22 {
+                    if starts(with: "\"\"\"", at: afterDollars) {
+                        return scanMultiDollarRawString(leadingTrivia: leadingTrivia, start: start, dollarCount: dollarCount)
+                    }
+                    return scanMultiDollarString(leadingTrivia: leadingTrivia, start: start, dollarCount: dollarCount)
+                }
+            }
+        }
+
         if isIdentifierStart(ch) {
             return [scanIdentifier(leadingTrivia: leadingTrivia, start: start)]
         }

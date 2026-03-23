@@ -150,7 +150,7 @@ extension NativeEmitter {
         var values: [Int32: LLVMCAPIBindings.LLVMValueRef] = [:]
         var externalFunctions: [String: LLVMFunction] = [:]
         var generatedStringLiteralCount: Int32 = 0
-        let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue)
+        let builderState = EmissionBuilderState(builder: builder, int64Type: int64Type, zeroValue: zeroValue, context: context, module: llvmModule)
 
         func assignmentTargets(for instruction: KIRInstruction) -> [KIRExprID] {
             switch instruction {
