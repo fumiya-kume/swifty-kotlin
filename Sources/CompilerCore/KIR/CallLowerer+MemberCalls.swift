@@ -1726,8 +1726,10 @@ extension CallLowerer {
                     ("kk_string_dropLast", [loweredReceiverID, loweredArgIDs[0]])
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
-                case "encodeToByteArray", "toByteArray":
+                case "encodeToByteArray":
                     ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
+                case "toByteArray":
+                    ("kk_string_toByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
                 case "commonPrefixWith":
                     if loweredArgIDs.count >= 2 {
                         ("kk_string_commonPrefixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])

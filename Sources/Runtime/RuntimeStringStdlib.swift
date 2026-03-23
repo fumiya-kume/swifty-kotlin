@@ -1114,44 +1114,11 @@ public func kk_string_encodeToByteArray_range(_ strRaw: Int, _ startIndex: Int, 
 }
 
 // STDLIB-573: String.encodeToByteArray(charset) — charset-aware overload.
-// Charset IDs: 0=UTF_8, 1=UTF_16, 2=UTF_16BE, 3=UTF_16LE, 4=US_ASCII, 5=ISO_8859_1
+// Delegates to kk_string_toByteArray_charset which uses CharsetTag enum for
+// consistent charset ID mapping across all charset-aware runtime functions.
 @_cdecl("kk_string_encodeToByteArray_charset")
 public func kk_string_encodeToByteArray_charset(_ strRaw: Int, _ charsetID: Int) -> Int {
-    let source = runtimeStringFromRawOrPanic(strRaw, caller: #function)
-    let bytes: [Int]
-    switch charsetID {
-    case 0: // UTF_8 (default)
-        bytes = source.utf8.map(Int.init)
-    case 1: // UTF_16 — big-endian with BOM (0xFEFF)
-        var result: [Int] = [0xFE, 0xFF] // BOM
-        for unit in source.utf16 {
-            result.append(Int(unit >> 8))
-            result.append(Int(unit & 0xFF))
-        }
-        bytes = result
-    case 2: // UTF_16BE — big-endian, no BOM
-        var result: [Int] = []
-        for unit in source.utf16 {
-            result.append(Int(unit >> 8))
-            result.append(Int(unit & 0xFF))
-        }
-        bytes = result
-    case 3: // UTF_16LE — little-endian, no BOM
-        var result: [Int] = []
-        for unit in source.utf16 {
-            result.append(Int(unit & 0xFF))
-            result.append(Int(unit >> 8))
-        }
-        bytes = result
-    case 4: // US_ASCII — bytes > 127 become 0x3F ('?')
-        bytes = source.utf8.map { Int($0 > 127 ? 0x3F : $0) }
-    case 5: // ISO_8859_1 — Unicode code points 0..255 only; others become 0x3F
-        bytes = source.unicodeScalars.map { $0.value <= 255 ? Int($0.value) : 0x3F }
-    default:
-        fatalError("KSwiftK panic [\(runtimePanicDiagnosticCode)]: kk_string_encodeToByteArray_charset received unknown charset ID \(charsetID)")
-    }
-    // Convert to signed-byte semantics (Kotlin ByteArray uses signed bytes -128..127).
-    return runtimeMakeListRaw(bytes.map { $0 > 127 ? $0 - 256 : $0 })
+    kk_string_toByteArray_charset(strRaw, charsetID)
 }
 
 // STDLIB-574: ByteArray.decodeToString()
