@@ -352,7 +352,10 @@ final class CallSupportLowerer {
         }
 
         if argIndices.count == 1, allSpread {
-            return providedArguments[argIndices[0]]
+            // Single spread argument: pass the array directly, but convert to
+            // list since vararg parameters are typed as List<T>.
+            let arrayID = providedArguments[argIndices[0]]
+            return emitArrayToList(arrayID, arena: arena, interner: interner, anyType: anyType, instructions: &instructions)
         }
 
         if hasAnySpread {
@@ -394,16 +397,18 @@ final class CallSupportLowerer {
             }
             let pairCountExpr = arena.appendExpr(.intLiteral(Int64(pairsCount)), type: intType)
             instructions.append(.constValue(result: pairCountExpr, value: .intLiteral(Int64(pairsCount))))
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+            let concatResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
             instructions.append(.call(
                 symbol: nil,
                 callee: interner.intern("kk_vararg_spread_concat"),
                 arguments: [pairsArray, pairCountExpr],
-                result: result,
+                result: concatResult,
                 canThrow: false,
                 thrownResult: nil
             ))
-            return result
+            // Convert the concatenated array to a list since vararg parameters
+            // are typed as List<T>.
+            return emitArrayToList(concatResult, arena: arena, interner: interner, anyType: anyType, instructions: &instructions)
         }
 
         let count = argIndices.count
@@ -427,7 +432,28 @@ final class CallSupportLowerer {
                 thrownResult: nil
             ))
         }
-        return arrayID
+        // Convert the packed array to a list since vararg parameters are typed
+        // as List<T> and the callee uses kk_list_* operations.
+        return emitArrayToList(arrayID, arena: arena, interner: interner, anyType: anyType, instructions: &instructions)
+    }
+
+    private func emitArrayToList(
+        _ arrayID: KIRExprID,
+        arena: KIRArena,
+        interner: StringInterner,
+        anyType: TypeID,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID {
+        let listID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_toList"),
+            arguments: [arrayID],
+            result: listID,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return listID
     }
 
     func emitArrayNew(

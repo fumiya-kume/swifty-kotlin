@@ -1153,6 +1153,16 @@ public func kk_list_drop(_ listRaw: Int, _ count: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: Array(elements.dropFirst(clamped))))
 }
 
+@_cdecl("kk_list_sum")
+public func kk_list_sum(_ listRaw: Int) -> Int {
+    guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
+    var total = 0
+    for element in listBox.elements {
+        total &+= element
+    }
+    return total
+}
+
 @_cdecl("kk_list_reversed")
 public func kk_list_reversed(_ listRaw: Int) -> Int {
     guard let listBox = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }

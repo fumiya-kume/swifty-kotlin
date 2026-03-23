@@ -55,9 +55,33 @@ extension KIRLoweringDriver {
                     exprID: arena.appendExpr(.symbolRef(receiverSymbol), type: receiverType)
                 )
             }
-            params.append(contentsOf: zip(signature.valueParameterSymbols, signature.parameterTypes).map { pair in
-                KIRParameter(symbol: pair.0, type: pair.1)
-            })
+            let isVararg = callSupportLowerer.normalizeBoolFlags(signature.valueParameterIsVararg, count: signature.parameterTypes.count)
+            for (index, (paramSymbol, paramType)) in zip(signature.valueParameterSymbols, signature.parameterTypes).enumerated() {
+                let effectiveType: TypeID
+                if index < isVararg.count, isVararg[index] {
+                    // Vararg parameters are passed as lists at the call site.
+                    // Use List<T> type so the lowering pass can correctly
+                    // classify the parameter as a collection expression.
+                    let interner = shared.interner
+                    let listFQName: [InternedString] = [
+                        interner.intern("kotlin"),
+                        interner.intern("collections"),
+                        interner.intern("List"),
+                    ]
+                    if let listSymbol = sema.symbols.lookup(fqName: listFQName) {
+                        effectiveType = sema.types.make(.classType(ClassType(
+                            classSymbol: listSymbol,
+                            args: [.invariant(paramType)],
+                            nullability: .nonNull
+                        )))
+                    } else {
+                        effectiveType = paramType
+                    }
+                } else {
+                    effectiveType = paramType
+                }
+                params.append(KIRParameter(symbol: paramSymbol, type: effectiveType))
+            }
         }
         if function.isInline, let signature, !signature.reifiedTypeParameterIndices.isEmpty {
             let intType = sema.types.make(.primitive(.int, .nonNull))

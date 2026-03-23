@@ -562,6 +562,7 @@ extension CallTypeChecker {
             interner.intern("elementAt"),
             interner.intern("single"),
             interner.intern("toMutableList"),
+            interner.intern("sum"),
         ]
         let setOnlyMembers: Set = [
             interner.intern("intersect"),
@@ -676,7 +677,7 @@ extension CallTypeChecker {
              interner.intern("distinct"), interner.intern("flatten"), interner.intern("withIndex"),
              interner.intern("maxOrNull"), interner.intern("minOrNull"), interner.intern("sortedDescending"), interner.intern("filterIsInstance"),
              interner.intern("firstOrNull"), interner.intern("lastOrNull"), interner.intern("singleOrNull"), interner.intern("sort"),
-             interner.intern("toMutableList"):
+             interner.intern("toMutableList"), interner.intern("sum"):
             return argCount == 0
         case interner.intern("joinToString"):
             return (0 ... 3).contains(argCount)
@@ -754,6 +755,11 @@ extension CallTypeChecker {
         ]
         if intReturningMembers.contains(memberName) {
             return sema.types.make(.primitive(.int, .nonNull))
+        }
+
+        // sum() returns the element type (Int for List<Int>, Long for List<Long>, etc.)
+        if memberName == interner.intern("sum") {
+            return receiverElementType
         }
 
         let boolReturningMembers: Set = [

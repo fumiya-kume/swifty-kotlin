@@ -88,6 +88,7 @@ public extension RuntimeABIExterns {
         kk_list_minOfOrNull,
         kk_list_take,
         kk_list_drop,
+        kk_list_sum,
         kk_list_reversed,
         kk_list_as_reversed,
         kk_list_sorted,
@@ -1095,6 +1096,12 @@ public extension RuntimeABIExterns {
     static let kk_list_drop = ExternDecl(
         name: "kk_list_drop",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_list_sum = ExternDecl(
+        name: "kk_list_sum",
+        parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
 

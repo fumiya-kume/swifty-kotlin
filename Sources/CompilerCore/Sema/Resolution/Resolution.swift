@@ -263,16 +263,31 @@ extension OverloadResolver {
         typeVarBySymbol: [SymbolID: TypeVarID],
         typeSystem: TypeSystem
     ) -> Bool {
+        let isVararg = normalizeFlags(signature.valueParameterIsVararg, count: signature.parameterTypes.count)
+        var processedAll = true
         for argIndex in call.args.indices {
             guard let paramIndex = parameterMapping[argIndex],
                   paramIndex >= 0,
                   paramIndex < signature.parameterTypes.count
             else {
                 constraints.removeAll(keepingCapacity: false)
+                processedAll = false
                 break
             }
             let paramType = signature.parameterTypes[paramIndex]
-            let argType = call.args[argIndex].type
+            let arg = call.args[argIndex]
+            let argType = arg.type
+
+            // When a spread argument (*array) is passed to a vararg parameter,
+            // the argument type is an array/collection type (e.g. Array<String>,
+            // IntArray) while the parameter type is the element type (String, Int).
+            // Skip the type constraint for spread arguments — the parameter mapping
+            // already verified this maps to a vararg param and the runtime handles
+            // the concatenation via kk_vararg_spread_concat.
+            if arg.isSpread, isVararg[paramIndex] {
+                continue
+            }
+
             let decomposed = decomposeSubtypeConstraint(
                 subtype: argType,
                 supertype: paramType,
@@ -282,8 +297,12 @@ extension OverloadResolver {
             )
             constraints.append(contentsOf: decomposed)
         }
-        return !(constraints.isEmpty && !call.args.isEmpty)
+        if !processedAll {
+            return !(constraints.isEmpty && !call.args.isEmpty)
+        }
+        return true
     }
+
 
     private func solveConstraints(
         _ constraints: [VariableConstraint],

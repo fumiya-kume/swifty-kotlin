@@ -271,6 +271,7 @@ extension CollectionLiteralLoweringPass {
             || callee == lookup.kkStringChunkedName
             || callee == lookup.kkStringWindowedName
             || callee == lookup.kkStringAsIterableName
+            || callee == lookup.kkArrayToListName
         {
             listExprIDs.insert(result.rawValue)
         } else if lookup.setFactoryNames.contains(callee) || lookup.mutableSetConstructorNames.contains(callee)

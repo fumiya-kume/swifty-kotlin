@@ -1357,7 +1357,7 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // STDLIB-637: range sum()
+                    // STDLIB-637: range/list sum()
                     if callee == lookup.sumName {
                         if arguments.count == 1 {
                             let receiverID = arguments[0]
@@ -1365,6 +1365,17 @@ extension CollectionLiteralLoweringPass {
                                 loweredBody.append(.call(
                                     symbol: nil,
                                     callee: lookup.kkRangeSumName,
+                                    arguments: [receiverID],
+                                    result: result,
+                                    canThrow: false,
+                                    thrownResult: nil
+                                ))
+                                continue
+                            }
+                            if listExprIDs.contains(receiverID.rawValue) || arrayExprIDs.contains(receiverID.rawValue) {
+                                loweredBody.append(.call(
+                                    symbol: nil,
+                                    callee: lookup.kkListSumName,
                                     arguments: [receiverID],
                                     result: result,
                                     canThrow: false,
