@@ -351,6 +351,58 @@ extension DataFlowSemaPhase {
             symbols.setPropertyType(propertyType, for: memberSymbol)
         }
 
+        // Constructor: Pair(first: A, second: B) -> Pair<A, B>
+        let initName = interner.intern("<init>")
+        let initFQName = pairFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(pairSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_pair_new", for: initSymbol)
+
+            let firstParamName = interner.intern("first")
+            let firstParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: firstParamName,
+                fqName: initFQName + [firstParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: firstParamSymbol)
+
+            let secondParamName = interner.intern("second")
+            let secondParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: secondParamName,
+                fqName: initFQName + [secondParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: secondParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [firstType, secondType],
+                    returnType: pairType,
+                    valueParameterSymbols: [firstParamSymbol, secondParamSymbol],
+                    valueParameterHasDefaultValues: [false, false],
+                    valueParameterIsVararg: [false, false],
+                    typeParameterSymbols: [firstSymbol, secondSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: initSymbol
+            )
+        }
+
         registerFunctionMember(
             name: "component1",
             returnType: firstType,
@@ -452,6 +504,69 @@ extension DataFlowSemaPhase {
             symbols.setParentSymbol(tripleSymbol, for: memberSymbol)
             symbols.setExternalLinkName(externalLinkName, for: memberSymbol)
             symbols.setPropertyType(propertyType, for: memberSymbol)
+        }
+
+        // Constructor: Triple(first: A, second: B, third: C) -> Triple<A, B, C>
+        let initName = interner.intern("<init>")
+        let initFQName = tripleFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(tripleSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_triple_new", for: initSymbol)
+
+            let firstParamName = interner.intern("first")
+            let firstParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: firstParamName,
+                fqName: initFQName + [firstParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: firstParamSymbol)
+
+            let secondParamName = interner.intern("second")
+            let secondParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: secondParamName,
+                fqName: initFQName + [secondParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: secondParamSymbol)
+
+            let thirdParamName = interner.intern("third")
+            let thirdParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: thirdParamName,
+                fqName: initFQName + [thirdParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: thirdParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [aType, bType, cType],
+                    returnType: tripleType,
+                    valueParameterSymbols: [firstParamSymbol, secondParamSymbol, thirdParamSymbol],
+                    valueParameterHasDefaultValues: [false, false, false],
+                    valueParameterIsVararg: [false, false, false],
+                    typeParameterSymbols: [aSymbol, bSymbol, cSymbol],
+                    classTypeParameterCount: 3
+                ),
+                for: initSymbol
+            )
         }
 
         registerFunctionMember(name: "component1", returnType: aType, externalLinkName: "kk_triple_first", flags: [.synthetic, .operatorFunction])
