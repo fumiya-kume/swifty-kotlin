@@ -828,6 +828,28 @@ public func kk_collection_toList(_ collRaw: Int) -> Int {
     return registerRuntimeObject(RuntimeListBox(elements: []))
 }
 
+@_cdecl("kk_collection_size")
+public func kk_collection_size(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.count
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.count
+    }
+    return 0
+}
+
+@_cdecl("kk_collection_isEmpty")
+public func kk_collection_isEmpty(_ collRaw: Int) -> Int {
+    if let list = runtimeListBox(from: collRaw) {
+        return list.elements.isEmpty ? 1 : 0
+    }
+    if let set = runtimeSetBox(from: collRaw) {
+        return set.elements.isEmpty ? 1 : 0
+    }
+    return 1
+}
+
 // MARK: - Set Operations (STDLIB-266)
 
 @_cdecl("kk_set_intersect")
