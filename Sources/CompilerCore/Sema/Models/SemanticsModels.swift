@@ -992,6 +992,10 @@ public final class BindingTable {
     /// Maps callable reference expression IDs to their kind (function vs property)
     /// so that KIR lowering can emit KFunction / KProperty type identity (REFL-003).
     public private(set) var callableRefKinds: [ExprID: CallableRefKind] = [:]
+    /// Tracks callable reference expressions that are unbound type references
+    /// (e.g. `Type::member`).  The receiver is not captured; instead it
+    /// becomes a parameter of the resulting function type (REFL-003).
+    public private(set) var unboundCallableRefs: Set<ExprID> = []
 
     public init() {}
 
@@ -1331,6 +1335,16 @@ public final class BindingTable {
     /// Query the callable reference kind for an expression (REFL-003).
     public func callableRefKind(for expr: ExprID) -> CallableRefKind? {
         callableRefKinds[expr]
+    }
+
+    /// Mark a callable reference as an unbound type reference (REFL-003).
+    public func markUnboundCallableRef(_ expr: ExprID) {
+        unboundCallableRefs.insert(expr)
+    }
+
+    /// Query whether a callable reference is an unbound type reference (REFL-003).
+    public func isUnboundCallableRef(_ expr: ExprID) -> Bool {
+        unboundCallableRefs.contains(expr)
     }
 }
 
