@@ -418,6 +418,14 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
 
+        // Pair<A,B>.toString() → kk_pair_to_string
+        registerFunctionMember(
+            name: "toString",
+            returnType: types.stringType,
+            externalLinkName: "kk_pair_to_string",
+            flags: [.synthetic]
+        )
+
         // Pair<A,B>.toList() returns List<Any?> in Kotlin (elements can be nullable).
         // The List symbol is registered after Pair, so we initially use nullable anyType
         // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
@@ -575,6 +583,10 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
         registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
         registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
+
+        // Triple<A,B,C>.toString() → kk_triple_to_string
+        registerFunctionMember(name: "toString", returnType: types.stringType, externalLinkName: "kk_triple_to_string", flags: [.synthetic])
+
         // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be nullable).
         // The List symbol is registered after Triple, so we initially use nullable anyType
         // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.

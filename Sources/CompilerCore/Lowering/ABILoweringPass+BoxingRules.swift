@@ -32,12 +32,16 @@ extension ABILoweringPass {
         let argKind = resolveValueClassKind(rawArgKind, types: types, symbols: symbols)
         let paramKind = types.kind(of: paramType)
 
-        // Treat Any/Any? and reference types as boxing boundaries.
+        // Treat Any/Any?, reference types, and type parameters as boxing boundaries.
+        // Type parameters are erased to Any at runtime, so primitives must be boxed.
         let isReferenceBoxingBoundary: Bool = {
             if isAnyOrNullableAny(paramKind) {
                 return true
             }
             if case .classType = paramKind {
+                return true
+            }
+            if case .typeParam = paramKind {
                 return true
             }
             return false
