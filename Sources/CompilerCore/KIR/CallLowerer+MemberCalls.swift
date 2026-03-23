@@ -1727,17 +1727,9 @@ extension CallLowerer {
                 case "chunked":
                     ("kk_string_chunked", [loweredReceiverID, loweredArgIDs[0]])
                 case "encodeToByteArray":
-                    if loweredArgIDs.count == 1 {
-                        ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
-                    } else {
-                        ("kk_string_encodeToByteArray_range", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
-                    }
+                    ("kk_string_encodeToByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
                 case "toByteArray":
-                    if loweredArgIDs.count == 1 {
-                        ("kk_string_toByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
-                    } else {
-                        ("kk_string_encodeToByteArray_range", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
-                    }
+                    ("kk_string_toByteArray_charset", [loweredReceiverID, loweredArgIDs[0]])
                 case "commonPrefixWith":
                     if loweredArgIDs.count >= 2 {
                         ("kk_string_commonPrefixWith_ignoreCase", [loweredReceiverID, loweredArgIDs[0], loweredArgIDs[1]])
@@ -3234,6 +3226,8 @@ extension CallLowerer {
         )
         if loweredCallee == interner.intern("kk_channel_send")
             || loweredCallee == interner.intern("kk_channel_receive")
+            || loweredCallee == interner.intern("kk_mutex_lock")
+            || loweredCallee == interner.intern("kk_semaphore_acquire")
         {
             let continuationExpr = arena.appendExpr(
                 .intLiteral(0),
@@ -3293,6 +3287,12 @@ extension CallLowerer {
     private static func throwingMemberCalleeNames(interner: StringInterner) -> Set<InternedString> {
         Set([
             interner.intern("kk_list_random"),
+            interner.intern("kk_list_maxOf"),
+            interner.intern("kk_list_minOf"),
+            interner.intern("kk_list_maxWith"),
+            interner.intern("kk_list_minWith"),
+            interner.intern("kk_list_maxOfWith"),
+            interner.intern("kk_list_minOfWith"),
             interner.intern("kk_list_fold"),
             interner.intern("kk_list_reduce"),
             interner.intern("kk_list_reduceOrNull"),
@@ -3300,6 +3300,13 @@ extension CallLowerer {
             interner.intern("kk_list_runningFold"),
             interner.intern("kk_list_runningReduce"),
             interner.intern("kk_list_scanReduce"),
+            interner.intern("kk_list_filterIndexed"),
+            interner.intern("kk_list_foldIndexed"),
+            interner.intern("kk_list_reduceIndexed"),
+            interner.intern("kk_list_reduceIndexedOrNull"),
+            interner.intern("kk_list_runningFoldIndexed"),
+            interner.intern("kk_list_runningReduceIndexed"),
+            interner.intern("kk_list_scanIndexed"),
             interner.intern("kk_sequence_sortedBy"),
             interner.intern("kk_sequence_sumOf"),
             interner.intern("kk_sequence_associate"),
