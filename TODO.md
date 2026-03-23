@@ -169,10 +169,10 @@
 #### E. kotlin.io / java.io.File — 単一 API 単位
 
 - [ ] STDLIB-565: File メンバー呼び出しの VirtualCallRewrite 統合（readText, writeText, readLines, exists, isFile, isDirectory, name, path, forEachLine, delete, mkdirs, listFiles, walk）。`File(String)` → `kk_file_new` の ctor rewrite のみ `CollectionLiteralLoweringPass+CallRewrite` に実装済み
-- [ ] STDLIB-572: `print` の 0 引数オーバーロード
+- [x] STDLIB-572: `print` の 0 引数オーバーロード — PASS（stub / runtime / codegen 統合テスト済み）
 - [x] STDLIB-621: `readLine()` の stdin / EOF kotlinc 挙動 diff 検証（`Scripts/diff_cases/readline_basic.kt`）— PASS
-- [ ] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）
-- [ ] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）
+- [x] STDLIB-658: `readln()` の stub / Lowering / Runtime と kotlinc 一致（`HeaderHelpers+SyntheticTODOAndIOStubs.swift`, `RuntimeStringArray.swift`）— PASS
+- [x] STDLIB-659: `readlnOrNull()` の stub / Lowering / Runtime と kotlinc 一致（同上）— PASS
 - [ ] STDLIB-664: `java.io.File.appendText(String)` の Sema stub / Runtime / Lowering / diff（`Scripts/diff_cases/file_readtext.kt` 周辺）
 - [ ] STDLIB-665: `java.io.File.readBytes(): ByteArray` の Sema stub / Runtime / Lowering / diff
 
@@ -289,7 +289,9 @@
 - [ ] CODE-001: **例外経路**でインラインした `finally` のスロー先を Kotlin に合わせる
   - 現状: `return` / `break` / `continue` 前の enclosing `finally` インラインは実装済み（`ExprLowerer+ControlFlowAndBlocks.swift` の `TODO(CODE-001)` は例外ルーティング）
 - [ ] CORO-004: サスペンドを `DispatchSemaphore` 待ちではない継続モデルにする
-  - 現状: `waitForResumeSignal` 等（`RuntimeCoroutine.swift`）
+  - 進捗: `runSuspendEntryLoopWithContinuation` の内部サスペンド（delay等）は `installResumeContinuation` ベースのノンブロッキングモデルに移行済み。`completionGate` は最外の同期待ちポイントのみでブロック（許容範囲）
+  - 残り: `awaitResult` / `join` / `withContext` / Channel send&receive / sequence builder の semaphore 待ちを continuation モデルに移行（優先順: Channel > withContext > await/join > sequence builders）
+  - 詳細: `RuntimeCoroutine.swift` 先頭の CORO-004 Migration Plan コメントブロック参照
 - [x] CORO-003: スコープを TLS / `threadDictionary` 依存から減らす
   - 完了: 全 `threadDictionary` 使用を `pthread_key_t` ベースの軽量 TLS に移行（タスクキー / Flow collect スタック / ディスパッチャー）
 - [ ] REFL-004: 実行時 `KClass` から読めるバイナリメタデータ（`MetadataSerializer` 等の活用）

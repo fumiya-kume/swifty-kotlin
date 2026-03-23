@@ -87,6 +87,17 @@ extension KotlinLexer {
         return (scalar: scalar, length: 5)
     }
 
+    /// Counts consecutive `$` characters starting at the given position.
+    func countConsecutiveDollars(at position: Int) -> Int {
+        var count = 0
+        var cursor = position
+        while cursor < bytes.count, bytes[cursor] == 0x24 {
+            count += 1
+            cursor += 1
+        }
+        return count
+    }
+
     func hexValue(of ascii: UInt8) -> Int? {
         switch ascii {
         case 0x30 ... 0x39:

@@ -233,4 +233,93 @@ extension LLVMCAPIBindings {
     func constPointerNull(_ type: LLVMTypeRef?) -> LLVMValueRef? {
         constPointerNullFn?(type)
     }
+
+    func buildInBoundsGEP2(
+        _ builder: LLVMBuilderRef?,
+        type: LLVMTypeRef?,
+        pointer: LLVMValueRef?,
+        indices: [LLVMValueRef?],
+        name: String
+    ) -> LLVMValueRef? {
+        guard let buildInBoundsGEP2Fn else { return nil }
+        var mutable = indices
+        return name.withCString { buildInBoundsGEP2Fn(builder, type, pointer, &mutable, UInt32(mutable.count), $0) }
+    }
+
+    /// Build a global string pointer that correctly handles embedded null bytes.
+    /// Falls back to LLVMBuildGlobalStringPtr for strings without null bytes.
+    func buildGlobalStringPtrNullSafe(
+        _ builder: LLVMBuilderRef?,
+        context: LLVMContextRef?,
+        module: LLVMModuleRef?,
+        value: String,
+        name: String
+    ) -> LLVMValueRef? {
+        let utf8 = Array(value.utf8)
+        let containsNull = utf8.contains(0)
+
+        // Fast path: no embedded null bytes — use the standard C-string API.
+        if !containsNull {
+            return buildGlobalStringPtr(builder, value: value, name: name)
+        }
+
+        // Slow path: construct a [N+1 x i8] global constant manually using
+        // LLVMConstStringInContext which accepts an explicit length.
+        guard let constStringFn = constStringInContextFn,
+              let arrayTypeFn = arrayTypeFn,
+              let int8Ty = int8TypeInContextFn(context)
+        else {
+            // Fallback: use the C-string API anyway (data after null will be wrong).
+            return buildGlobalStringPtr(builder, value: value, name: name)
+        }
+
+        let length = UInt32(utf8.count)
+
+        // Create the constant: [length+1 x i8] with null terminator appended.
+        let constStr: LLVMValueRef? = utf8.withUnsafeBufferPointer { buf in
+            buf.baseAddress!.withMemoryRebound(to: CChar.self, capacity: utf8.count) { ptr in
+                constStringFn(context, ptr, length, 0) // 0 = do null-terminate
+            }
+        }
+        guard let constStr else { return nil }
+
+        let arrTy = arrayTypeFn(int8Ty, length + 1) // +1 for null terminator
+        guard let arrTy else { return nil }
+
+        let globalName = ".str.\(name)"
+        let global: LLVMValueRef? = globalName.withCString { addGlobalFn?(module, arrTy, $0) }
+        guard let global else { return nil }
+
+        setInitializerFn?(global, constStr)
+        setGlobalConstantFn?(global, 1)
+        setUnnamedAddrFn?(global, 1)
+        setInternalLinkage(global)
+
+        // GEP to get i8* pointing to the first element.
+        let zero = constInt(int8TypeInContextFn(context), value: 0)
+        // We need i32 type for GEP indices. Use i64 and hope LLVM accepts it,
+        // or use int32 if available.
+        let zeroIdx: LLVMValueRef?
+        if let int32Fn = int32TypeFn, let i32Ty = int32Fn(context) {
+            zeroIdx = constIntFn(i32Ty, 0, 0)
+        } else {
+            // Fallback: use i64 zero.
+            if let i64Ty = int64TypeFn(context) {
+                zeroIdx = constIntFn(i64Ty, 0, 0)
+            } else {
+                zeroIdx = zero
+            }
+        }
+
+        if let buildInBoundsGEP2Fn, let zeroIdx {
+            var indices: [LLVMValueRef?] = [zeroIdx, zeroIdx]
+            return name.withCString { cName in
+                buildInBoundsGEP2Fn(builder, arrTy, global, &indices, 2, cName)
+            }
+        }
+
+        // If GEP2 is not available, the global pointer itself can be cast.
+        // This is a last-resort fallback.
+        return global
+    }
 }

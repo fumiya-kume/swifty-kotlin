@@ -86,6 +86,23 @@ final class CallLowerer {
         propertyConstantInitializers: [SymbolID: KIRExprKind],
         instructions: inout [KIRInstruction]
     ) -> KIRExprID {
+        // SAM constructor calls: `Transformer { ... }` — the single lambda
+        // argument is already marked as a SAM conversion.  Lower the lambda
+        // directly; the SAM wrapper is produced by LambdaLowerer.
+        if args.count == 1,
+           sema.bindings.isSamConversion(args[0].expr)
+        {
+            return driver.lowerExpr(
+                args[0].expr,
+                ast: ast,
+                sema: sema,
+                arena: arena,
+                interner: interner,
+                propertyConstantInitializers: propertyConstantInitializers,
+                instructions: &instructions
+            )
+        }
+
         // Invoke operator calls are lowered as member calls: the callee expr
         // becomes the receiver and the invoke method is the callee.
         if sema.bindings.isInvokeOperatorCall(exprID) {
@@ -193,6 +210,19 @@ final class CallLowerer {
             instructions: &instructions
         ) {
             return loweredEnumValues
+        }
+
+        if let loweredEnumEntries = lowerEnumEntriesCallExpr(
+            exprID,
+            args: args,
+            ast: ast,
+            sema: sema,
+            arena: arena,
+            interner: interner,
+            propertyConstantInitializers: propertyConstantInitializers,
+            instructions: &instructions
+        ) {
+            return loweredEnumEntries
         }
 
         if let loweredEnumValueOf = lowerEnumValueOfCallExpr(
@@ -328,7 +358,12 @@ final class CallLowerer {
             propertyConstantInitializers: propertyConstantInitializers,
             instructions: &instructions
         )
+        let callBinding = sema.bindings.callBindings[exprID]
+        let chosen = callBinding?.chosenCallee
         let loweredCallable = driver.ctx.callableValueInfo(for: loweredCalleeExprID)
+            ?? chosen.flatMap { symbol in
+                driver.ctx.localValue(for: symbol).flatMap { driver.ctx.callableValueInfo(for: $0) }
+            }
         let sourceCalleeName: InternedString = if let callee = ast.arena.expr(calleeExpr), case let .nameRef(name, _) = callee {
             name
         } else if let loweredCallable {
@@ -376,9 +411,7 @@ final class CallLowerer {
             return loweredNumericConversion
         }
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.anyType)
-        let callBinding = sema.bindings.callBindings[exprID]
         let callableValueCallBinding = sema.bindings.callableValueCalls[exprID]
-        let chosen = callBinding?.chosenCallee
         let callNormalized: NormalizedCallResult = if callBinding != nil {
             driver.callSupportLowerer.normalizedCallArguments(
                 providedArguments: loweredArgIDs,

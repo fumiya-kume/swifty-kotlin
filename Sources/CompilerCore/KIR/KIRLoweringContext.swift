@@ -8,6 +8,7 @@ final class KIRLoweringContext {
     // MARK: - Scope State (saved/restored per function/lambda)
 
     var localValuesBySymbol: [SymbolID: KIRExprID] = [:]
+    var mutableCaptureCellsBySymbol: [SymbolID: KIRExprID] = [:]
     /// Lambda param name → symbol for resolving nameRef when identifierSymbols is unbound
     /// (e.g. collection HOF lambdas inferred via fallback).
     var lambdaParamNameToSymbol: [InternedString: SymbolID] = [:]
@@ -49,6 +50,7 @@ final class KIRLoweringContext {
 
     struct ScopeSnapshot {
         let localValuesBySymbol: [SymbolID: KIRExprID]
+        let mutableCaptureCellsBySymbol: [SymbolID: KIRExprID]
         let lambdaParamNameToSymbol: [InternedString: SymbolID]
         let currentImplicitReceiverExprID: KIRExprID?
         let currentImplicitReceiverSymbol: SymbolID?
@@ -61,6 +63,7 @@ final class KIRLoweringContext {
     func saveScope() -> ScopeSnapshot {
         ScopeSnapshot(
             localValuesBySymbol: localValuesBySymbol,
+            mutableCaptureCellsBySymbol: mutableCaptureCellsBySymbol,
             lambdaParamNameToSymbol: lambdaParamNameToSymbol,
             currentImplicitReceiverExprID: currentImplicitReceiverExprID,
             currentImplicitReceiverSymbol: currentImplicitReceiverSymbol,
@@ -73,6 +76,7 @@ final class KIRLoweringContext {
 
     func restoreScope(_ snapshot: ScopeSnapshot) {
         localValuesBySymbol = snapshot.localValuesBySymbol
+        mutableCaptureCellsBySymbol = snapshot.mutableCaptureCellsBySymbol
         lambdaParamNameToSymbol = snapshot.lambdaParamNameToSymbol
         currentImplicitReceiverExprID = snapshot.currentImplicitReceiverExprID
         currentImplicitReceiverSymbol = snapshot.currentImplicitReceiverSymbol
@@ -93,6 +97,7 @@ final class KIRLoweringContext {
 
     func resetScopeForFunction() {
         localValuesBySymbol.removeAll(keepingCapacity: true)
+        mutableCaptureCellsBySymbol.removeAll(keepingCapacity: true)
         lambdaParamNameToSymbol.removeAll(keepingCapacity: true)
         currentImplicitReceiverExprID = nil
         currentImplicitReceiverSymbol = nil
@@ -112,6 +117,20 @@ final class KIRLoweringContext {
 
     func clearLocalValue(for symbol: SymbolID) {
         localValuesBySymbol.removeValue(forKey: symbol)
+        mutableCaptureCellsBySymbol.removeValue(forKey: symbol)
+    }
+
+    func mutableCaptureCell(for symbol: SymbolID) -> KIRExprID? {
+        mutableCaptureCellsBySymbol[symbol]
+    }
+
+    func setMutableCaptureCell(_ exprID: KIRExprID, for symbol: SymbolID) {
+        mutableCaptureCellsBySymbol[symbol] = exprID
+        localValuesBySymbol[symbol] = exprID
+    }
+
+    func isMutableCaptureBoxed(_ symbol: SymbolID) -> Bool {
+        mutableCaptureCellsBySymbol[symbol] != nil
     }
 
     func allLocalValues() -> [SymbolID: KIRExprID] {

@@ -70,11 +70,14 @@ final class ValueClassUnboxingPass: LoweringPass {
         let kk_object_new = ctx.interner.intern("kk_object_new")
         let kk_array_get_inbounds = ctx.interner.intern("kk_array_get_inbounds")
 
+        let interner = ctx.interner
+
         module.arena.transformFunctions { function in
             var updated = function
             let newBody = self.rewriteBody(
                 function.body,
                 arena: module.arena,
+                interner: interner,
                 types: types,
                 valueClassCtors: valueClassCtors,
                 valueClassSymbols: valueClassSymbols,
@@ -109,6 +112,7 @@ final class ValueClassUnboxingPass: LoweringPass {
     private func rewriteBody(
         _ body: [KIRInstruction],
         arena: KIRArena,
+        interner: StringInterner,
         types: TypeSystem,
         valueClassCtors: Set<SymbolID>,
         valueClassSymbols: Set<SymbolID>,
@@ -165,7 +169,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             if case let .call(_, callee, arguments, result, _, _, _) = instruction,
                let result
             {
-                let calleeName = String(callee.rawValue)
+                let calleeName = interner.resolve(callee)
                 if calleeName.hasPrefix("kk_type_register_") {
                     // arguments[0] = childExpr (classID), arguments[1] = parentExpr
                     if arguments.count >= 1 {
@@ -209,7 +213,7 @@ final class ValueClassUnboxingPass: LoweringPass {
             // Remove kk_type_register_* calls for value class allocations
             case let .call(_, callee, arguments, _, _, _, _)
                 where {
-                    let name = String(callee.rawValue)
+                    let name = interner.resolve(callee)
                     guard name.hasPrefix("kk_type_register_") else { return false }
                     guard arguments.count >= 1 else { return false }
                     for classIDExpr in classIDExprs {

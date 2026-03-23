@@ -214,6 +214,16 @@ final class OperatorLoweringPass: LoweringPass {
             )
             return true
         }
+        if let dataObjectString = rewriteDataObjectPrintlnArgument(
+            argument: arguments[0], arena: arena, sema: ctx.sema,
+            interner: ctx.interner, body: &newBody
+        ) {
+            newBody.append(.call(
+                symbol: symbol, callee: callee, arguments: [dataObjectString],
+                result: result, canThrow: canThrow, thrownResult: thrownResult, isSuperCall: isSuperCall
+            ))
+            return true
+        }
         if let dataClassString = rewriteDataClassPrintlnArgument(
             argument: arguments[0], arena: arena, sema: ctx.sema,
             interner: ctx.interner, body: &newBody
@@ -373,6 +383,32 @@ final class OperatorLoweringPass: LoweringPass {
         if let result {
             body.append(.constValue(result: result, value: .unit))
         }
+    }
+
+    /// Rewrites `println(dataObject)` to `println("ObjectName")` so that data
+    /// object singletons print their name instead of the raw integer representation.
+    private func rewriteDataObjectPrintlnArgument(
+        argument: KIRExprID,
+        arena: KIRArena,
+        sema: SemaModule?,
+        interner: StringInterner,
+        body: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let sema,
+              let argumentType = arena.exprType(argument),
+              case let .classType(classType) = sema.types.kind(of: argumentType),
+              let classSymbol = sema.symbols.symbol(classType.classSymbol),
+              classSymbol.kind == .object,
+              classSymbol.flags.contains(.dataType)
+        else {
+            return nil
+        }
+
+        let stringType = sema.types.stringType
+        let objectName = interner.intern(interner.resolve(classSymbol.name))
+        let resultExpr = arena.appendExpr(.stringLiteral(objectName), type: stringType)
+        body.append(.constValue(result: resultExpr, value: .stringLiteral(objectName)))
+        return resultExpr
     }
 
     private func rewriteDataClassPrintlnArgument(

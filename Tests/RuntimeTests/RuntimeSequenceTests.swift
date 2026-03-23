@@ -2,6 +2,14 @@ import Foundation
 @testable import Runtime
 import XCTest
 
+/// STDLIB-563: Global counter used by laziness verification tests.
+/// Tracks how many times the yield side-effects in the builder thunk execute.
+/// Must be global (not a class property) because `@convention(c)` closures
+/// cannot capture context.
+/// Access is safe because the tests run sequentially and the counter is only
+/// mutated from one thread at a time (the producer thread).
+nonisolated(unsafe) private var _lazyTestYieldCounter = 0
+
 private let stringKeySelector: @convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int = { _, value, _ in
     switch value {
     case 1:
@@ -669,6 +677,63 @@ final class RuntimeSequenceTests: XCTestCase {
         XCTAssertEqual(result.count, 100)
         XCTAssertEqual(result.first, 0)
         XCTAssertEqual(result.last, 99)
+    }
+
+    // MARK: - STDLIB-563: Lazy evaluation verification
+
+    func testSequenceBuilderLazyTakeDoesNotEvaluateEntireBlock() {
+        // STDLIB-563: Verify that take(2) on a lazy sequence builder
+        // only computes the first 2 elements, not all 5.
+        // We use a global counter to track how many yields actually execute.
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 1)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 2)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 3)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 4)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 5)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        let taken = kk_sequence_take(seqHandle, 2)
+        let result = sequenceElements(taken)
+        XCTAssertEqual(result, [1, 2])
+        // The producer should have yielded at most 3 times (2 consumed + 1 ahead
+        // before take detects the limit), not all 5. In the truly lazy model,
+        // the counter should be <= 3.
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 3,
+            "STDLIB-563: take(2) should not force evaluation of all 5 elements; got \(_lazyTestYieldCounter) yields")
+    }
+
+    func testSequenceBuilderLazyFirstDoesNotEvaluateEntireBlock() {
+        // STDLIB-563: first() on a lazy sequence builder should only evaluate
+        // until the first element is produced.
+        _lazyTestYieldCounter = 0
+        let thunk: @convention(c) (Int, UnsafeMutablePointer<Int>?) -> Int = { builderRaw, _ in
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 100)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 200)
+            _lazyTestYieldCounter += 1
+            _ = kk_sequence_builder_yield(builderRaw, 300)
+            return 0
+        }
+        let fnPtr = unsafeBitCast(thunk, to: Int.self)
+        let seqHandle = kk_sequence_builder_build(fnPtr)
+        var thrown = 0
+        let first = kk_sequence_first(seqHandle, &thrown)
+        XCTAssertEqual(first, 100)
+        XCTAssertEqual(thrown, 0)
+        // The producer should have yielded at most 2 times (1 consumed +
+        // possibly 1 ahead), not all 3.
+        XCTAssertLessThanOrEqual(_lazyTestYieldCounter, 2,
+            "STDLIB-563: first() should not force evaluation of all 3 elements; got \(_lazyTestYieldCounter) yields")
     }
 
     // MARK: - Helpers
