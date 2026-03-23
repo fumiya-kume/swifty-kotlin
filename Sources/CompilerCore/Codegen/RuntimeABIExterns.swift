@@ -247,6 +247,12 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_duration_from_days = ExternDecl(
+        name: "kk_duration_from_days",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_duration_from_seconds_long = ExternDecl(
         name: "kk_duration_from_seconds_long",
         parameterTypes: ["intptr_t"],
@@ -279,6 +285,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_duration_from_hours_long = ExternDecl(
         name: "kk_duration_from_hours_long",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_duration_from_days_long = ExternDecl(
+        name: "kk_duration_from_days_long",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1608,6 +1620,68 @@ public enum RuntimeABIExterns {
         returnType: "void"
     )
 
+    // MARK: - Mutex / Semaphore (sync primitives)
+
+    public static let kk_mutex_create = ExternDecl(
+        name: "kk_mutex_create",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_lock = ExternDecl(
+        name: "kk_mutex_lock",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_unlock = ExternDecl(
+        name: "kk_mutex_unlock",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_tryLock = ExternDecl(
+        name: "kk_mutex_tryLock",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_mutex_isLocked = ExternDecl(
+        name: "kk_mutex_isLocked",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_create = ExternDecl(
+        name: "kk_semaphore_create",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_acquire = ExternDecl(
+        name: "kk_semaphore_acquire",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_release = ExternDecl(
+        name: "kk_semaphore_release",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_tryAcquire = ExternDecl(
+        name: "kk_semaphore_tryAcquire",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_semaphore_availablePermits = ExternDecl(
+        name: "kk_semaphore_availablePermits",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - Boxing
 
     public static let kk_box_int = ExternDecl(
@@ -2119,6 +2193,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_op_ushr = ExternDecl(
         name: "kk_op_ushr",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_op_dmul = ExternDecl(
+        name: "kk_op_dmul",
         parameterTypes: ["intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
@@ -2748,6 +2828,17 @@ public enum RuntimeABIExterns {
             kk_is_cancellation_exception,
             kk_job_cancel,
             kk_coroutine_cancel,
+            // Mutex / Semaphore (sync primitives)
+            kk_mutex_create,
+            kk_mutex_lock,
+            kk_mutex_unlock,
+            kk_mutex_tryLock,
+            kk_mutex_isLocked,
+            kk_semaphore_create,
+            kk_semaphore_acquire,
+            kk_semaphore_release,
+            kk_semaphore_tryAcquire,
+            kk_semaphore_availablePermits,
             // Boxing
             kk_box_int,
             kk_box_bool,
@@ -2849,6 +2940,7 @@ public enum RuntimeABIExterns {
             kk_op_shl,
             kk_op_shr,
             kk_op_ushr,
+            kk_op_dmul,
             kk_int_toString_radix,
             kk_int_countOneBits,
             kk_int_countLeadingZeroBits,
@@ -2859,10 +2951,12 @@ public enum RuntimeABIExterns {
         all += collectionExterns
         all += sequenceExterns
         all += regexExterns
+        all += hexFormatExterns
         all += comparatorExterns
         all += resultExterns
         all += stringBuilderExterns
         all += fileIOExterns
+        all += uuidExterns
         // Duration / measureTime / measureTimedValue (STDLIB-230/231/660)
         all += [
             kk_measureTime,
@@ -2879,12 +2973,14 @@ public enum RuntimeABIExterns {
             kk_duration_from_nanoseconds,
             kk_duration_from_minutes,
             kk_duration_from_hours,
+            kk_duration_from_days,
             kk_duration_from_seconds_long,
             kk_duration_from_milliseconds_long,
             kk_duration_from_microseconds_long,
             kk_duration_from_nanoseconds_long,
             kk_duration_from_minutes_long,
             kk_duration_from_hours_long,
+            kk_duration_from_days_long,
             kk_timedvalue_new,
             kk_timedvalue_value,
             kk_timedvalue_duration,

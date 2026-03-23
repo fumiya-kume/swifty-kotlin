@@ -28,8 +28,11 @@ extension ControlFlowLowerer {
             )
             // Register `when (val x = expr)` subject variable as a local value
             // so that branch bodies can reference it by symbol.
+            // The subject variable symbol is bound to the whenExpr ID (not the
+            // subject expression ID), because `bindIdentifier` in sema uses the
+            // when expression's own ExprID.
             if let loweredSubject = subjectID,
-               let subjectSymbol = sema.bindings.identifierSymbols[subject]
+               let subjectSymbol = sema.bindings.identifierSymbols[exprID]
             {
                 driver.ctx.setLocalValue(loweredSubject, for: subjectSymbol)
             }
@@ -100,6 +103,20 @@ extension ControlFlowLowerer {
                     instructions: &instructions
                 )
                 instructions.append(.jumpIfEqual(lhs: matchesID, rhs: falseID, target: nextBranchLabels[index]))
+            }
+
+            // Emit guard condition: if the guard evaluates to false, skip to next branch.
+            if let guardExprID = branch.guard_ {
+                let guardID = driver.lowerExpr(
+                    guardExprID,
+                    ast: ast,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    propertyConstantInitializers: propertyConstantInitializers,
+                    instructions: &instructions
+                )
+                instructions.append(.jumpIfEqual(lhs: guardID, rhs: falseID, target: nextBranchLabels[index]))
             }
 
             let bodyID = driver.lowerExpr(

@@ -915,28 +915,10 @@ final class DataEnumSealedSynthesisPass: LoweringPass {
                         thrownResult: nil
                     ))
                 } else {
-                    let nullExpr = module.arena.appendExpr(.null, type: sema.types.nullableAnyType)
-                    body.append(.constValue(result: nullExpr, value: .null))
-                    body.append(.call(
-                        symbol: nil,
-                        callee: interner.intern("kk_abort_unreachable"),
-                        arguments: [nullExpr],
-                        result: resolvedExpr,
-                        canThrow: false,
-                        thrownResult: nil
-                    ))
+                    body.append(.copy(from: providedExpr, to: resolvedExpr))
                 }
             } else {
-                let nullExpr = module.arena.appendExpr(.null, type: sema.types.nullableAnyType)
-                body.append(.constValue(result: nullExpr, value: .null))
-                body.append(.call(
-                    symbol: nil,
-                    callee: interner.intern("kk_abort_unreachable"),
-                    arguments: [nullExpr],
-                    result: resolvedExpr,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
+                body.append(.copy(from: providedExpr, to: resolvedExpr))
             }
 
             body.append(.jump(afterLabel))
