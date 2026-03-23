@@ -568,6 +568,15 @@ private func runtimeCoroutineIsThrowableResult(_ result: Int) -> Bool {
     guard let pointer = UnsafeMutableRawPointer(bitPattern: result) else {
         return false
     }
+    // Only attempt the dynamic cast if the pointer is a known runtime object.
+    // Raw integer results (e.g. 3 from `async { 1 + 2 }`) are not valid
+    // object pointers and would crash swift_retain inside tryCast.
+    let isRegistered = runtimeStorage.withLock { state in
+        state.objectPointers.contains(UInt(bitPattern: pointer))
+    }
+    guard isRegistered else {
+        return false
+    }
     return tryCast(pointer, to: RuntimeThrowableBox.self) != nil
 }
 
