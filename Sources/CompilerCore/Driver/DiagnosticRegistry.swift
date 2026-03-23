@@ -502,6 +502,12 @@ public enum DiagnosticRegistry {
             summary: "Platform-typed expression used without null check; may throw NullPointerException at runtime.",
             codeActions: [DiagnosticCodeAction(title: "Add null check before use")]
         ),
+        DiagnosticDescriptor(
+            code: "KSWIFTK-SEMA-DSLMARKER",
+            pass: "SEMA",
+            defaultSeverity: .error,
+            summary: "@DslMarker restriction: implicit access to outer receiver is prohibited when an inner receiver shares the same DSL marker."
+        ),
     ]
 
     // MARK: - Type resolution pass (TYPE)

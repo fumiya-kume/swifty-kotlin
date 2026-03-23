@@ -2,6 +2,102 @@
 import Foundation
 
 extension ExprLowerer {
+    private func ensureMutableCaptureCell(
+        for symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        if let existingCell = driver.ctx.mutableCaptureCell(for: symbol) {
+            return existingCell
+        }
+        guard let semanticSymbol = sema.symbols.symbol(symbol),
+              semanticSymbol.kind == .local,
+              semanticSymbol.flags.contains(.mutable),
+              let currentValue = driver.ctx.localValue(for: symbol)
+        else {
+            return nil
+        }
+
+        let countExpr = arena.appendExpr(.intLiteral(1), type: sema.types.intType)
+        instructions.append(.constValue(result: countExpr, value: .intLiteral(1)))
+
+        let cellExpr = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_new"),
+            arguments: [countExpr],
+            result: cellExpr,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [cellExpr, zeroExpr, currentValue],
+            result: setResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+
+        driver.ctx.setMutableCaptureCell(cellExpr, for: symbol)
+        return cellExpr
+    }
+
+    private func loadMutableCaptureCellValue(
+        symbol: SymbolID,
+        resultType: TypeID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> KIRExprID? {
+        guard let cellExpr = driver.ctx.mutableCaptureCell(for: symbol) else {
+            return nil
+        }
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_get_inbounds"),
+            arguments: [cellExpr, zeroExpr],
+            result: result,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return result
+    }
+
+    private func storeMutableCaptureCellValue(
+        _ valueID: KIRExprID,
+        for symbol: SymbolID,
+        sema: SemaModule,
+        arena: KIRArena,
+        interner: StringInterner,
+        instructions: inout [KIRInstruction]
+    ) -> Bool {
+        guard let cellExpr = driver.ctx.mutableCaptureCell(for: symbol) else {
+            return false
+        }
+        let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+        instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+        let setResult = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: arena.exprType(valueID) ?? sema.types.anyType)
+        instructions.append(.call(
+            symbol: nil,
+            callee: interner.intern("kk_array_set"),
+            arguments: [cellExpr, zeroExpr, valueID],
+            result: setResult,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return true
+    }
 
     // MARK: - Finally Block Inlining Helper (CODE-001)
 
@@ -489,12 +585,25 @@ extension ExprLowerer {
 
                 // General fallback: try to find a getter symbol for the property
                 if let symbol = sema.bindings.identifierSymbols[exprID],
+                   !driver.ctx.isMutableCaptureBoxed(symbol),
                    let localValue = driver.ctx.localValue(for: symbol)
                 {
                     return localValue
                 }
             }
             if let symbol = sema.bindings.identifierSymbols[exprID] {
+                if driver.ctx.isMutableCaptureBoxed(symbol),
+                   let loadedValue = loadMutableCaptureCellValue(
+                       symbol: symbol,
+                       resultType: boundType ?? sema.types.anyType,
+                       sema: sema,
+                       arena: arena,
+                       interner: interner,
+                       instructions: &instructions
+                   )
+                {
+                    return loadedValue
+                }
                 if let localValue = driver.ctx.localValue(for: symbol) {
                     return localValue
                 }
@@ -784,6 +893,18 @@ extension ExprLowerer {
                 var captureBindings: [(capturedSymbol: SymbolID, param: KIRParameter, valueExpr: KIRExprID)] = []
                 captureBindings.reserveCapacity(captureSymbols.count)
                 for (index, capturedSymbol) in captureSymbols.enumerated() {
+                    if let semanticSymbol = sema.symbols.symbol(capturedSymbol),
+                       semanticSymbol.kind == .local,
+                       semanticSymbol.flags.contains(.mutable)
+                    {
+                        _ = ensureMutableCaptureCell(
+                            for: capturedSymbol,
+                            sema: sema,
+                            arena: arena,
+                            interner: interner,
+                            instructions: &instructions
+                        )
+                    }
                     guard let captureValue = driver.lambdaLowerer.captureValueExpr(
                         for: capturedSymbol,
                         sema: sema,
@@ -813,6 +934,11 @@ extension ExprLowerer {
                 )
 
                 let scopeSnapshot = driver.ctx.saveScope()
+                let boxedCaptureSymbols = Set(
+                    captureBindings.compactMap { binding in
+                        driver.ctx.isMutableCaptureBoxed(binding.capturedSymbol) ? binding.capturedSymbol : nil
+                    }
+                )
                 let savedReceiverSymbol = scopeSnapshot.currentImplicitReceiverSymbol
                 defer { driver.ctx.restoreScope(scopeSnapshot) }
                 driver.ctx.resetScopeForFunction()
@@ -823,7 +949,11 @@ extension ExprLowerer {
                 for capture in captureBindings {
                     let captureExpr = arena.appendExpr(.symbolRef(capture.param.symbol), type: capture.param.type)
                     localFunBodyInstructions.append(.constValue(result: captureExpr, value: .symbolRef(capture.param.symbol)))
-                    driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
+                    if boxedCaptureSymbols.contains(capture.capturedSymbol) {
+                        driver.ctx.setMutableCaptureCell(captureExpr, for: capture.capturedSymbol)
+                    } else {
+                        driver.ctx.setLocalValue(captureExpr, for: capture.capturedSymbol)
+                    }
                     if capture.capturedSymbol == savedReceiverSymbol {
                         driver.ctx.setImplicitReceiver(symbol: capture.param.symbol, exprID: captureExpr)
                     }
@@ -1037,6 +1167,14 @@ extension ExprLowerer {
                     let globalRef = arena.appendExpr(.symbolRef(symbol), type: propType)
                     instructions.append(.constValue(result: globalRef, value: .symbolRef(symbol)))
                     instructions.append(.copy(from: valueID, to: globalRef))
+                } else if storeMutableCaptureCellValue(
+                    valueID,
+                    for: symbol,
+                    sema: sema,
+                    arena: arena,
+                    interner: interner,
+                    instructions: &instructions
+                ) {
                 } else if let receiverExprID = driver.ctx.activeImplicitReceiverExprID(),
                           let ownerSymbol = sema.symbols.parentSymbol(for: symbol),
                           let fieldOffset = sema.symbols.nominalLayout(for: ownerSymbol)?.fieldOffsets[
@@ -1400,6 +1538,27 @@ extension ExprLowerer {
                     let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: propType)
                     instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
                     instructions.append(.copy(from: resultID, to: globalRef))
+                } else if driver.ctx.isMutableCaptureBoxed(symbol),
+                          let loadedValue = loadMutableCaptureCellValue(
+                              symbol: symbol,
+                              resultType: boundType ?? sema.types.anyType,
+                              sema: sema,
+                              arena: arena,
+                              interner: interner,
+                              instructions: &instructions
+                          )
+                {
+                    let resultType = arena.exprType(loadedValue) ?? sema.types.intType
+                    let resultID = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: resultType)
+                    instructions.append(.binary(op: kirOp, lhs: loadedValue, rhs: rhsID, result: resultID))
+                    _ = storeMutableCaptureCellValue(
+                        resultID,
+                        for: symbol,
+                        sema: sema,
+                        arena: arena,
+                        interner: interner,
+                        instructions: &instructions
+                    )
                 } else {
                     if let storageID = driver.ctx.localValue(for: symbol) {
                         // Compute lhs op rhs and update storage in place so the value

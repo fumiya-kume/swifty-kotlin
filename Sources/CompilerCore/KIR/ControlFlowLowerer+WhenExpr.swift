@@ -26,6 +26,13 @@ extension ControlFlowLowerer {
                 propertyConstantInitializers: propertyConstantInitializers,
                 instructions: &instructions
             )
+            // Register `when (val x = expr)` subject variable as a local value
+            // so that branch bodies can reference it by symbol.
+            if let loweredSubject = subjectID,
+               let subjectSymbol = sema.bindings.identifierSymbols[subject]
+            {
+                driver.ctx.setLocalValue(loweredSubject, for: subjectSymbol)
+            }
         }
         let endLabel = driver.ctx.makeLoopLabel()
         let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType ?? sema.types.errorType)

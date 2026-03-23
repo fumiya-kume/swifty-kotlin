@@ -713,6 +713,70 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "String"
         ),
+        // STDLIB-581: String.toByteArray(charset: Charset)
+        RuntimeABIFunctionSpec(
+            name: "kk_string_toByteArray_charset",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "charsetTag", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_8",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_iso_8859_1",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_us_ascii",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16be",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_16le",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32be",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_charset_utf_32le",
+            parameters: [],
+            returnType: .intptr,
+            section: "String"
+        ),
         // STDLIB-573: String.encodeToByteArray
         RuntimeABIFunctionSpec(
             name: "kk_string_encodeToByteArray",
@@ -1893,6 +1957,32 @@ public enum RuntimeABISpec {
             returnType: .intptr,
             section: "Coroutine"
         ),
+        RuntimeABIFunctionSpec(
+            name: "kk_coroutine_yield",
+            parameters: [],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_with_timeout",
+            parameters: [
+                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_with_timeout_or_null",
+            parameters: [
+                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
+                RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
+                RuntimeABIParameter(name: "continuation", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Coroutine"
+        ),
         // Cancellation (CORO-002)
         RuntimeABIFunctionSpec(
             name: "kk_coroutine_check_cancellation",
@@ -2857,6 +2947,40 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "regexRaw", type: .intptr),
                 RuntimeABIParameter(name: "inputRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        // MatchResult.groups / MatchGroupCollection / MatchGroup
+        RuntimeABIFunctionSpec(
+            name: "kk_match_result_groups",
+            parameters: [
+                RuntimeABIParameter(name: "matchRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_collection_get",
+            parameters: [
+                RuntimeABIParameter(name: "collectionRaw", type: .intptr),
+                RuntimeABIParameter(name: "nameRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_value",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "Regex"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_match_group_range",
+            parameters: [
+                RuntimeABIParameter(name: "groupRaw", type: .intptr),
             ],
             returnType: .intptr,
             section: "Regex"

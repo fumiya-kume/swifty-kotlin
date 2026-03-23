@@ -907,6 +907,42 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    /// STDLIB-581: String.toByteArray(charset: Charset)
+    public static let kk_string_toByteArray_charset = ExternDecl(
+        name: "kk_string_toByteArray_charset",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    /// STDLIB-581: Charsets.* charset tag factories
+    public static let kk_charset_utf_8 = ExternDecl(
+        name: "kk_charset_utf_8", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_iso_8859_1 = ExternDecl(
+        name: "kk_charset_iso_8859_1", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_us_ascii = ExternDecl(
+        name: "kk_charset_us_ascii", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_16 = ExternDecl(
+        name: "kk_charset_utf_16", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_16be = ExternDecl(
+        name: "kk_charset_utf_16be", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_16le = ExternDecl(
+        name: "kk_charset_utf_16le", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_32 = ExternDecl(
+        name: "kk_charset_utf_32", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_32be = ExternDecl(
+        name: "kk_charset_utf_32be", parameterTypes: [], returnType: "intptr_t"
+    )
+    public static let kk_charset_utf_32le = ExternDecl(
+        name: "kk_charset_utf_32le", parameterTypes: [], returnType: "intptr_t"
+    )
+
     /// STDLIB-573: String.encodeToByteArray
     public static let kk_string_encodeToByteArray = ExternDecl(
         name: "kk_string_encodeToByteArray",
@@ -1500,6 +1536,24 @@ public enum RuntimeABIExterns {
     public static let kk_coroutine_scope_run_with_cont = ExternDecl(
         name: "kk_coroutine_scope_run_with_cont",
         parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_coroutine_yield = ExternDecl(
+        name: "kk_coroutine_yield",
+        parameterTypes: [],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_with_timeout = ExternDecl(
+        name: "kk_with_timeout",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_with_timeout_or_null = ExternDecl(
+        name: "kk_with_timeout_or_null",
+        parameterTypes: ["intptr_t", "intptr_t", "intptr_t"],
         returnType: "intptr_t"
     )
 
@@ -2197,6 +2251,34 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    // MatchResult.groups
+    public static let kk_match_result_groups = ExternDecl(
+        name: "kk_match_result_groups",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroupCollection.get(name)
+    public static let kk_match_group_collection_get = ExternDecl(
+        name: "kk_match_group_collection_get",
+        parameterTypes: ["intptr_t", "intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroup.value
+    public static let kk_match_group_value = ExternDecl(
+        name: "kk_match_group_value",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    // MatchGroup.range
+    public static let kk_match_group_range = ExternDecl(
+        name: "kk_match_group_range",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     // MARK: - File I/O (STDLIB-320/321/322/323)
 
     // IMPORTANT: The raw parameter type strings here (e.g. "intptr_t",
@@ -2223,6 +2305,12 @@ public enum RuntimeABIExterns {
 
     public static let kk_file_writeText = ExternDecl(
         name: "kk_file_writeText",
+        parameterTypes: [intptr, intptr, nullableIntptrPtr],
+        returnType: intptr
+    )
+
+    public static let kk_file_appendText = ExternDecl(
+        name: "kk_file_appendText",
         parameterTypes: [intptr, intptr, nullableIntptrPtr],
         returnType: intptr
     )
@@ -2334,6 +2422,7 @@ public enum RuntimeABIExterns {
         kk_file_new,
         kk_file_readText,
         kk_file_writeText,
+        kk_file_appendText,
         kk_file_readLines,
         kk_file_readBytes,
         kk_file_forEachLine,
@@ -2370,6 +2459,10 @@ public enum RuntimeABIExterns {
         kk_regex_create_with_option,
         kk_regex_create_with_options,
         kk_regex_containsMatchIn,
+        kk_match_result_groups,
+        kk_match_group_collection_get,
+        kk_match_group_value,
+        kk_match_group_range,
     ]
 
     // MARK: - All Functions (canonical list)
@@ -2452,6 +2545,16 @@ public enum RuntimeABIExterns {
             kk_string_trimStart,
             kk_string_trimEnd,
             kk_string_toByteArray,
+            kk_string_toByteArray_charset,
+            kk_charset_utf_8,
+            kk_charset_iso_8859_1,
+            kk_charset_us_ascii,
+            kk_charset_utf_16,
+            kk_charset_utf_16be,
+            kk_charset_utf_16le,
+            kk_charset_utf_32,
+            kk_charset_utf_32be,
+            kk_charset_utf_32le,
             kk_string_encodeToByteArray,
             kk_string_encodeToByteArray_range,
             kk_string_encodeToByteArray_charset,
@@ -2608,6 +2711,9 @@ public enum RuntimeABIExterns {
             kk_job_join,
             kk_coroutine_scope_run,
             kk_coroutine_scope_run_with_cont,
+            kk_coroutine_yield,
+            kk_with_timeout,
+            kk_with_timeout_or_null,
             // Cancellation (CORO-002)
             kk_coroutine_check_cancellation,
             kk_is_cancellation_exception,

@@ -8,6 +8,7 @@ enum KnownCompilerAnnotation {
     case jvmOverloads
     case throws_
     case suppress
+    case dslMarker
 
     var simpleName: String {
         switch self {
@@ -25,6 +26,8 @@ enum KnownCompilerAnnotation {
             "Throws"
         case .suppress:
             "Suppress"
+        case .dslMarker:
+            "DslMarker"
         }
     }
 
@@ -44,6 +47,8 @@ enum KnownCompilerAnnotation {
             "kotlin.jvm.Throws"
         case .suppress:
             "kotlin.Suppress"
+        case .dslMarker:
+            "kotlin.DslMarker"
         }
     }
 
@@ -121,6 +126,8 @@ struct KnownCompilerNames {
     let run: InternedString
     let runCatching: InternedString
     let withContext: InternedString
+    let withTimeout: InternedString
+    let withTimeoutOrNull: InternedString
     let flow: InternedString
     let emit: InternedString
     let to: InternedString
@@ -254,6 +261,8 @@ struct KnownCompilerNames {
         run = interner.intern("run")
         runCatching = interner.intern("runCatching")
         withContext = interner.intern("withContext")
+        withTimeout = interner.intern("withTimeout")
+        withTimeoutOrNull = interner.intern("withTimeoutOrNull")
         flow = interner.intern("flow")
         emit = interner.intern("emit")
         to = interner.intern("to")

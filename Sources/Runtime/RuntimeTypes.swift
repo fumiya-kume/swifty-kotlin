@@ -359,6 +359,11 @@ final class RuntimeSequenceBuilderBox {
 ///   Consumer thread (caller):
 ///     1. materializeAll(): signal producer, wait on consumer semaphore, read value
 ///     2. Returns when producer has finished
+// TODO(CORO-004): The producer/consumer semaphore ping-pong blocks two GCD
+// threads (one producer, one consumer) for the entire iteration.  To migrate:
+// model yield() as a suspend point in the producer's coroutine entry loop and
+// next()/hasNext() as suspend points in the consumer, using the continuation
+// model so neither side blocks a thread while waiting for the other.
 final class RuntimeSequenceCoroutine: @unchecked Sendable {
     /// The builder lambda function pointer (closureThunk convention).
     let fnPtr: Int
@@ -412,6 +417,66 @@ final class RuntimeSequenceCoroutine: @unchecked Sendable {
         finished = true
         stateLock.unlock()
         consumerSemaphore.signal()
+    }
+
+    /// Result type for `nextElement()`: either a value or end-of-sequence.
+    enum NextResult {
+        case value(Int)
+        case done
+    }
+
+    /// Request the next element from the coroutine, one at a time.
+    ///
+    /// If there are already-materialized elements beyond the current
+    /// consumption index, return the cached element. Otherwise, resume the
+    /// producer to compute the next value.
+    ///
+    /// Returns `.done` when the producer has finished and all cached
+    /// elements have been consumed.
+    private var consumptionIndex: Int = 0
+
+    func nextElement() -> NextResult {
+        stateLock.lock()
+        // If we have cached elements beyond the current index, return them.
+        if consumptionIndex < materializedElements.count {
+            let elem = materializedElements[consumptionIndex]
+            consumptionIndex += 1
+            stateLock.unlock()
+            return .value(elem)
+        }
+        // If fully materialized and no more cached elements, we're done.
+        if fullyMaterialized {
+            stateLock.unlock()
+            return .done
+        }
+        stateLock.unlock()
+
+        ensureStarted()
+
+        // Request next element from producer
+        producerSemaphore.signal()
+        consumerSemaphore.wait()
+
+        stateLock.lock()
+        if finished {
+            fullyMaterialized = true
+            stateLock.unlock()
+            return .done
+        }
+        let value = yieldedValue
+        materializedElements.append(value)
+        consumptionIndex += 1
+        stateLock.unlock()
+        return .value(value)
+    }
+
+    /// Reset the consumption index so re-iteration over the same coroutine
+    /// replays from the beginning (using cached elements first, then resuming
+    /// the producer if needed).
+    func resetIteration() {
+        stateLock.lock()
+        consumptionIndex = 0
+        stateLock.unlock()
     }
 
     /// Materialize all elements from the coroutine and return them.
@@ -507,6 +572,8 @@ final class RuntimeSequenceCoroutineBuilderProxy {
 /// Memory: The box is registered in the runtime object table; the background
 /// thread retains the box via its closure capture. The thread exits naturally
 /// when the builder lambda returns.
+// TODO(CORO-004): Same semaphore ping-pong pattern as RuntimeSequenceCoroutine.
+// Migrate to continuation model so neither producer nor consumer blocks a GCD thread.
 final class RuntimeIteratorBuilderBox: @unchecked Sendable {
     /// Semaphore the producer blocks on; signalled by the consumer (`hasNext`).
     let producerGate = DispatchSemaphore(value: 0)
