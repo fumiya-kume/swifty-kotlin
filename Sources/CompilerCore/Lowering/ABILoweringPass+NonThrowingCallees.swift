@@ -585,6 +585,11 @@ extension ABILoweringPass {
             interner.intern("kk_string_builder_deleteCharAt"),
             interner.intern("kk_string_builder_get"),
             interner.intern("kk_string_builder_appendRange_obj"),
+            // REFL-003: Callable reference type identity tagging — pure metadata
+            // annotation that cannot throw.
+            interner.intern("kk_callable_ref_tag_kfunction"),
+            interner.intern("kk_callable_ref_tag_kproperty"),
+            interner.intern("kk_callable_ref_name"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }
