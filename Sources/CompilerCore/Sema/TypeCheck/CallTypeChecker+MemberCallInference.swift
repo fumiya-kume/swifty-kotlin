@@ -2635,6 +2635,13 @@ extension CallTypeChecker {
                             interner: interner,
                             elementType: sema.types.stringType
                         )
+                    case "asSequence":
+                        makeSyntheticSequenceType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: sema.types.make(.primitive(.char, .nonNull))
+                        )
                     case "toByteArray", "encodeToByteArray":
                         makeSyntheticListType(
                             symbols: sema.symbols,
