@@ -1,12 +1,19 @@
-abstract class Shape { abstract fun area(): Double; open fun describe() = "I am a shape" }
+abstract class Shape {
+    abstract fun area(): Double
+    open fun describe(): String = "I am a shape"
+}
 class Circle(val r: Double) : Shape() {
-    override fun area() = 3.14159 * r * r
-    override fun describe() = "Circle(r=$r)"
+    override fun area(): Double = 3.14159 * r * r
+    override fun describe(): String = "Circle"
 }
 class Rect(val w: Double, val h: Double) : Shape() {
-    override fun area() = w * h
+    override fun area(): Double = w * h
 }
 fun main() {
-    val shapes: List<Shape> = listOf(Circle(5.0), Rect(3.0, 4.0))
-    for (s in shapes) { println("${s.describe()} area=${s.area()}") }
+    val c = Circle(5.0)
+    println(c.describe())
+    println(c.area())
+    val r = Rect(3.0, 4.0)
+    println(r.describe())
+    println(r.area())
 }

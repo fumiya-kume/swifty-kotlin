@@ -6,6 +6,13 @@ extension KotlinParser {
             return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
         }
 
+        // Track whether we are at a position where a declaration should be
+        // recognised even without a leading newline.  This is true right after
+        // the opening brace (to handle single-line class bodies like
+        // `abstract class Shape { abstract fun area(): Double; open fun describe() = "..." }`)
+        // and after any statement that ends with a semicolon.
+        var afterStatementBoundary = true
+
         while !stream.atEOF() {
             let token = stream.peek()
             if case .symbol(.rBrace) = token.kind {
@@ -14,26 +21,45 @@ extension KotlinParser {
             }
             if case .keyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                afterStatementBoundary = false
                 continue
             }
             if case .softKeyword(.constructor) = token.kind {
                 children.append(.node(parseConstructorDeclaration()))
+                afterStatementBoundary = false
                 continue
             }
-            if isDeclarationStart(token.kind), hasLeadingNewline(token) {
+            if isDeclarationStart(token.kind), hasLeadingNewline(token) || afterStatementBoundary {
                 children.append(.node(parseDeclaration()))
+                afterStatementBoundary = lastConsumedTokenEndedWithSemicolon(children.last)
             } else if !shouldStopStatementBefore(token, inBlock: true) {
                 children.append(.node(parseStatement(inBlock: true)))
+                // Check if the statement we just parsed ended with a semicolon.
+                afterStatementBoundary = lastConsumedTokenEndedWithSemicolon(children.last)
             } else {
                 let before = stream.index
                 skipToSynchronizationPoint(inBlock: true, into: &children, range: &range)
                 if stream.index == before, !stream.atEOF() {
                     _ = consumeToken(into: &children, range: &range)
                 }
+                afterStatementBoundary = false
             }
         }
 
         return arena.appendNode(kind: .block, range: range.value ?? invalidRange, children)
+    }
+
+    /// Returns `true` when the last token in `child` is a semicolon.
+    private func lastConsumedTokenEndedWithSemicolon(_ child: SyntaxChild?) -> Bool {
+        guard let child else { return false }
+        switch child {
+        case let .token(tokenID):
+            guard let token = arena.token(tokenID) else { return false }
+            return token.kind == .symbol(.semicolon)
+        case let .node(nodeID):
+            guard let lastChild = arena.children(of: nodeID).last else { return false }
+            return lastConsumedTokenEndedWithSemicolon(lastChild)
+        }
     }
 
     func parseStatement(inBlock: Bool) -> NodeID {

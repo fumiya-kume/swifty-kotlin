@@ -784,11 +784,17 @@ extension CallLowerer {
         // Only use virtual dispatch if the class actually has subtypes.
         // In Kotlin, classes are final by default; virtual dispatch is only
         // needed when the class is open/abstract (has known subtypes).
+        //
+        // GEN-VTABLE-DISABLE: Vtable dispatch is disabled until runtime
+        // heap-allocated objects carry type-info headers (kk_alloc).
+        // Without that, kk_vtable_lookup always fails because the
+        // receiver is not registered as a heap object.  Fall back to
+        // direct (static) dispatch for now – this is correct for
+        // single-compilation-unit programs where all concrete types
+        // are visible.
         let subtypes = sema.symbols.directSubtypes(of: parentID)
         guard !subtypes.isEmpty else { return nil }
-        if let vtableSlot = layout.vtableSlots[callee] {
-            return .vtable(slot: vtableSlot)
-        }
+        // TODO: Re-enable once kk_alloc-based object allocation is in place.
         return nil
     }
 }
