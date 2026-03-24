@@ -1377,6 +1377,21 @@ final class CallTypeChecker {
             let name = interner.resolve(calleeName)
             if KnownCompilerNames.stdlibCollectionFactoryNames.contains(name) {
                 sema.bindings.markCollectionExpr(id)
+                let expectedCollectionArgs: [TypeID] = if let expectedType,
+                                                      expectedType != sema.types.errorType,
+                                                      case let .classType(expectedClassType) = sema.types.kind(of: expectedType)
+                {
+                    expectedClassType.args.compactMap { arg in
+                        switch arg {
+                        case let .invariant(type), let .in(type), let .out(type):
+                            type
+                        case .star:
+                            sema.types.anyType
+                        }
+                    }
+                } else {
+                    []
+                }
                 // Prefer the expected type from context (e.g. a type annotation
                 // on the receiving variable) so that `val list: List<String?> =
                 // listOf(...)` propagates the full generic type.
@@ -1585,6 +1600,13 @@ final class CallTypeChecker {
                             interner: interner,
                             elementType: explicitTypeArg
                         )
+                    } else if !expectedCollectionArgs.isEmpty {
+                        collectionType = makeSyntheticMutableListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: expectedCollectionArgs[0]
+                        )
                     } else {
                         collectionType = makeSyntheticMutableListType(
                             symbols: sema.symbols,
@@ -1600,6 +1622,13 @@ final class CallTypeChecker {
                             types: sema.types,
                             interner: interner,
                             elementType: explicitTypeArg
+                        )
+                    } else if !expectedCollectionArgs.isEmpty {
+                        collectionType = makeSyntheticMutableSetType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: expectedCollectionArgs[0]
                         )
                     } else {
                         collectionType = makeSyntheticMutableSetType(
@@ -1617,6 +1646,14 @@ final class CallTypeChecker {
                             interner: interner,
                             keyType: explicitTypeArgs[0],
                             valueType: explicitTypeArgs[1]
+                        )
+                    } else if expectedCollectionArgs.count >= 2 {
+                        collectionType = makeSyntheticMutableMapType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            keyType: expectedCollectionArgs[0],
+                            valueType: expectedCollectionArgs[1]
                         )
                     } else {
                         collectionType = makeSyntheticMutableMapType(
