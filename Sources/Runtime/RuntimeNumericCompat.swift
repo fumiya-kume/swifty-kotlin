@@ -144,11 +144,6 @@ public func kk_bits_to_double(_ value: Int) -> Double {
     Double(bitPattern: UInt64(bitPattern: Int64(value)))
 }
 
-@_cdecl("kk_op_dmul")
-public func kk_op_dmul(_ lhs: Int, _ rhs: Int) -> Int {
-    kk_double_to_bits(kk_bits_to_double(lhs) * kk_bits_to_double(rhs))
-}
-
 @_cdecl("kk_int_to_float_bits")
 public func kk_int_to_float_bits(_ value: Int) -> Int {
     kk_float_to_bits(Float(value))
@@ -952,4 +947,118 @@ private func runtimeMakeStringPointer(_ value: String) -> UnsafeMutableRawPointe
 
 private func runtimeNormalizedShift(_ value: Int) -> Int {
     Int(UInt(bitPattern: value) & UInt(Int.bitWidth - 1))
+}
+
+// MARK: - Double arithmetic ops (bit-encoded intptr_t ABI)
+
+@_cdecl("kk_op_dadd")
+public func kk_op_dadd(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) + kk_bits_to_double(rhs))
+}
+
+@_cdecl("kk_op_dsub")
+public func kk_op_dsub(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) - kk_bits_to_double(rhs))
+}
+
+@_cdecl("kk_op_dmul")
+public func kk_op_dmul(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) * kk_bits_to_double(rhs))
+}
+
+@_cdecl("kk_op_ddiv")
+public func kk_op_ddiv(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs) / kk_bits_to_double(rhs))
+}
+
+@_cdecl("kk_op_dmod")
+public func kk_op_dmod(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_double_to_bits(kk_bits_to_double(lhs).truncatingRemainder(dividingBy: kk_bits_to_double(rhs)))
+}
+
+@_cdecl("kk_op_deq")
+public func kk_op_deq(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) == kk_bits_to_double(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_dne")
+public func kk_op_dne(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) != kk_bits_to_double(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_dlt")
+public func kk_op_dlt(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) < kk_bits_to_double(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_dle")
+public func kk_op_dle(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) <= kk_bits_to_double(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_dgt")
+public func kk_op_dgt(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) > kk_bits_to_double(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_dge")
+public func kk_op_dge(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_double(lhs) >= kk_bits_to_double(rhs) ? 1 : 0
+}
+
+// MARK: - Float arithmetic ops (bit-encoded intptr_t ABI)
+
+@_cdecl("kk_op_fadd")
+public func kk_op_fadd(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(lhs) + kk_bits_to_float(rhs))
+}
+
+@_cdecl("kk_op_fsub")
+public func kk_op_fsub(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(lhs) - kk_bits_to_float(rhs))
+}
+
+@_cdecl("kk_op_fmul")
+public func kk_op_fmul(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(lhs) * kk_bits_to_float(rhs))
+}
+
+@_cdecl("kk_op_fdiv")
+public func kk_op_fdiv(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(lhs) / kk_bits_to_float(rhs))
+}
+
+@_cdecl("kk_op_fmod")
+public func kk_op_fmod(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_float_to_bits(kk_bits_to_float(lhs).truncatingRemainder(dividingBy: kk_bits_to_float(rhs)))
+}
+
+@_cdecl("kk_op_feq")
+public func kk_op_feq(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) == kk_bits_to_float(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_fne")
+public func kk_op_fne(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) != kk_bits_to_float(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_flt")
+public func kk_op_flt(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) < kk_bits_to_float(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_fle")
+public func kk_op_fle(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) <= kk_bits_to_float(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_fgt")
+public func kk_op_fgt(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) > kk_bits_to_float(rhs) ? 1 : 0
+}
+
+@_cdecl("kk_op_fge")
+public func kk_op_fge(_ lhs: Int, _ rhs: Int) -> Int {
+    kk_bits_to_float(lhs) >= kk_bits_to_float(rhs) ? 1 : 0
 }
