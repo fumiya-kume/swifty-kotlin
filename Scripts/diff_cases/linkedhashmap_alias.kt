@@ -1,5 +1,5 @@
 fun main() {
-    val lhm: MutableMap<String, Int> = LinkedHashMap()
+    val lhm: MutableMap<String, Int> = LinkedHashMap<String, Int>()
     lhm["z"] = 26
     lhm["a"] = 1
     lhm["m"] = 13
