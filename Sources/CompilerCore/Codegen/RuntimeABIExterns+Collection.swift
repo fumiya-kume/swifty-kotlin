@@ -39,6 +39,8 @@ public extension RuntimeABIExterns {
         kk_set_containsAll,
         kk_set_is_empty,
         kk_set_toList,
+        kk_set_sorted,
+        kk_set_sortedDescending,
         kk_collection_toList,
         kk_collection_size,
         kk_collection_isEmpty,
@@ -80,6 +82,9 @@ public extension RuntimeABIExterns {
         kk_list_zipWithNextTransform,
         kk_list_unzip,
         kk_list_withIndex,
+        kk_indexing_iterable_iterator,
+        kk_indexing_iterable_hasNext,
+        kk_indexing_iterable_next,
         kk_list_forEachIndexed,
         kk_list_mapIndexed,
         kk_list_filterIndexed,
@@ -500,6 +505,18 @@ public extension RuntimeABIExterns {
 
     static let kk_set_toList = ExternDecl(
         name: "kk_set_toList",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_sorted = ExternDecl(
+        name: "kk_set_sorted",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_set_sortedDescending = ExternDecl(
+        name: "kk_set_sortedDescending",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )
@@ -1066,6 +1083,24 @@ public extension RuntimeABIExterns {
 
     static let kk_list_withIndex = ExternDecl(
         name: "kk_list_withIndex",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_indexing_iterable_iterator = ExternDecl(
+        name: "kk_indexing_iterable_iterator",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_indexing_iterable_hasNext = ExternDecl(
+        name: "kk_indexing_iterable_hasNext",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    static let kk_indexing_iterable_next = ExternDecl(
+        name: "kk_indexing_iterable_next",
         parameterTypes: ["intptr_t"],
         returnType: "intptr_t"
     )

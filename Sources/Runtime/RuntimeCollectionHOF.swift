@@ -973,6 +973,43 @@ public func kk_list_withIndex(_ listRaw: Int) -> Int {
     return registerRuntimeObject(box)
 }
 
+// MARK: - IndexingIterable iterator (for destructuring `for ((i, v) in list.withIndex())`)
+
+@_cdecl("kk_indexing_iterable_iterator")
+public func kk_indexing_iterable_iterator(_ iterableRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: iterableRaw),
+          let box = tryCast(ptr, to: RuntimeIndexingIterableBox.self),
+          let list = runtimeListBox(from: box.listRaw)
+    else {
+        return 0
+    }
+    return registerRuntimeObject(RuntimeIndexingIteratorBox(elements: list.elements))
+}
+
+@_cdecl("kk_indexing_iterable_hasNext")
+public func kk_indexing_iterable_hasNext(_ iterRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: iterRaw),
+          let iter = tryCast(ptr, to: RuntimeIndexingIteratorBox.self) else {
+        return 0
+    }
+    return iter.index < iter.elements.count ? 1 : 0
+}
+
+@_cdecl("kk_indexing_iterable_next")
+public func kk_indexing_iterable_next(_ iterRaw: Int) -> Int {
+    guard let ptr = UnsafeMutableRawPointer(bitPattern: iterRaw),
+          let iter = tryCast(ptr, to: RuntimeIndexingIteratorBox.self),
+          iter.index < iter.elements.count
+    else {
+        return 0
+    }
+    let idx = iter.index
+    let elem = iter.elements[idx]
+    iter.index += 1
+    // Return IndexedValue(index, value) as a Pair
+    return kk_pair_new(idx, elem)
+}
+
 @_cdecl("kk_list_forEachIndexed")
 public func kk_list_forEachIndexed(_ listRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?) -> Int {
     guard let list = runtimeListBox(from: listRaw) else { invalidContainerPanic(#function, "list") }
@@ -1760,6 +1797,36 @@ public func kk_list_filterIsInstance(_ listRaw: Int, _ typeToken: Int) -> Int {
         result.append(elem)
     }
     return registerRuntimeObject(RuntimeListBox(elements: result))
+}
+
+// MARK: - Set sorted (STDLIB-115)
+
+@_cdecl("kk_set_sorted")
+public func kk_set_sorted(_ setRaw: Int) -> Int {
+    guard let setBox = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    let elements = setBox.elements
+    let sorted = elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison < 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    return registerRuntimeObject(RuntimeListBox(elements: sorted))
+}
+
+@_cdecl("kk_set_sortedDescending")
+public func kk_set_sortedDescending(_ setRaw: Int) -> Int {
+    guard let setBox = runtimeSetBox(from: setRaw) else { invalidContainerPanic(#function, "set") }
+    let elements = setBox.elements
+    let sorted = elements.enumerated().sorted { lhs, rhs in
+        let comparison = runtimeCompareValues(lhs.element, rhs.element)
+        if comparison != 0 {
+            return comparison > 0
+        }
+        return lhs.offset < rhs.offset
+    }.map(\.element)
+    return registerRuntimeObject(RuntimeListBox(elements: sorted))
 }
 
 // MARK: - Sorting variants (STDLIB-115)

@@ -106,6 +106,21 @@ extension DataFlowSemaPhase {
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
         symbols.setDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
 
+        // Register nominal supertypes in TypeSystem for subtype checking
+        types.setNominalDirectSupertypes([throwableSymbol], for: exceptionSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: runtimeExceptionSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: uninitializedSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: nullPointerSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: numberFormatSymbol)
+        types.setNominalDirectSupertypes([exceptionSymbol], for: cancellationSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalArgumentSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: illegalStateSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: indexOutOfBoundsSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: unsupportedOperationSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: noSuchElementSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: arithmeticSymbol)
+        types.setNominalDirectSupertypes([runtimeExceptionSymbol], for: classCastSymbol)
+
         for symbol in [
             throwableSymbol,
             exceptionSymbol,
@@ -132,7 +147,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: false
+            includeMessageOverload: false,
+            throwableSymbol: throwableSymbol
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: runtimeExceptionSymbol,
@@ -140,7 +156,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: true
+            includeMessageOverload: true,
+            throwableSymbol: throwableSymbol
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: uninitializedSymbol,
@@ -148,7 +165,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: true
+            includeMessageOverload: true,
+            throwableSymbol: throwableSymbol
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: nullPointerSymbol,
@@ -156,7 +174,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: false
+            includeMessageOverload: false,
+            throwableSymbol: throwableSymbol
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: numberFormatSymbol,
@@ -164,7 +183,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: true
+            includeMessageOverload: true,
+            throwableSymbol: throwableSymbol
         )
         registerSyntheticExceptionConstructors(
             ownerSymbol: cancellationSymbol,
@@ -172,7 +192,8 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             types: types,
             interner: interner,
-            includeMessageOverload: true
+            includeMessageOverload: true,
+            throwableSymbol: throwableSymbol
         )
         for exSymbol in [
             illegalArgumentSymbol,
@@ -189,7 +210,8 @@ extension DataFlowSemaPhase {
                 symbols: symbols,
                 types: types,
                 interner: interner,
-                includeMessageOverload: true
+                includeMessageOverload: true,
+                throwableSymbol: throwableSymbol
             )
         }
 
@@ -269,12 +291,14 @@ extension DataFlowSemaPhase {
         symbols: SymbolTable,
         types: TypeSystem,
         interner: StringInterner,
-        includeMessageOverload: Bool
+        includeMessageOverload: Bool,
+        throwableSymbol: SymbolID? = nil
     ) {
         registerSyntheticExceptionConstructor(
             ownerSymbol: ownerSymbol,
             ownerType: ownerType,
             parameters: [],
+            externalLinkName: "kk_throwable_new",
             symbols: symbols,
             interner: interner
         )
@@ -283,6 +307,21 @@ extension DataFlowSemaPhase {
                 ownerSymbol: ownerSymbol,
                 ownerType: ownerType,
                 parameters: [("message", types.stringType)],
+                externalLinkName: "kk_throwable_new",
+                symbols: symbols,
+                interner: interner
+            )
+        }
+        // (message: String, cause: Throwable?) overload
+        if includeMessageOverload, let throwableSymbol {
+            let nullableThrowableType = types.make(.classType(ClassType(
+                classSymbol: throwableSymbol, args: [], nullability: .nullable
+            )))
+            registerSyntheticExceptionConstructor(
+                ownerSymbol: ownerSymbol,
+                ownerType: ownerType,
+                parameters: [("message", types.stringType), ("cause", nullableThrowableType)],
+                externalLinkName: "kk_throwable_new_with_cause",
                 symbols: symbols,
                 interner: interner
             )
@@ -293,6 +332,7 @@ extension DataFlowSemaPhase {
         ownerSymbol: SymbolID,
         ownerType: TypeID,
         parameters: [(name: String, type: TypeID)],
+        externalLinkName: String,
         symbols: SymbolTable,
         interner: StringInterner
     ) {
@@ -323,7 +363,7 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
         symbols.setParentSymbol(ownerSymbol, for: ctorSymbol)
-        symbols.setExternalLinkName("kk_throwable_new", for: ctorSymbol)
+        symbols.setExternalLinkName(externalLinkName, for: ctorSymbol)
 
         var valueParameterSymbols: [SymbolID] = []
         for parameter in parameters {

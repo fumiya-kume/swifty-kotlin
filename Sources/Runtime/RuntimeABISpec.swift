@@ -107,6 +107,15 @@ public enum RuntimeABISpec {
             section: "Exception"
         ),
         RuntimeABIFunctionSpec(
+            name: "kk_throwable_new_with_cause",
+            parameters: [
+                RuntimeABIParameter(name: "message", type: .nullableOpaquePointer),
+                RuntimeABIParameter(name: "causeRaw", type: .intptr),
+            ],
+            returnType: .opaquePointer,
+            section: "Exception"
+        ),
+        RuntimeABIFunctionSpec(
             name: "kk_throwable_is_cancellation",
             parameters: [
                 RuntimeABIParameter(name: "throwableRaw", type: .intptr),
@@ -587,6 +596,38 @@ public enum RuntimeABISpec {
             parameters: [
                 RuntimeABIParameter(name: "strRaw", type: .intptr),
                 RuntimeABIParameter(name: "otherRaw", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_indexOf_from",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "otherRaw", type: .intptr),
+                RuntimeABIParameter(name: "startIndex", type: .intptr),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_indexOfFirst",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
+            ],
+            returnType: .intptr,
+            section: "String"
+        ),
+        RuntimeABIFunctionSpec(
+            name: "kk_string_indexOfLast",
+            parameters: [
+                RuntimeABIParameter(name: "strRaw", type: .intptr),
+                RuntimeABIParameter(name: "fnPtr", type: .intptr),
+                RuntimeABIParameter(name: "closureRaw", type: .intptr),
+                RuntimeABIParameter(name: "outThrown", type: .nullableIntptrPointer),
             ],
             returnType: .intptr,
             section: "String"
@@ -1967,25 +2008,17 @@ public enum RuntimeABISpec {
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_coroutine_yield",
-            parameters: [],
-            returnType: .intptr,
-            section: "Coroutine"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_with_timeout",
+            name: "kk_supervisor_scope_run",
             parameters: [
-                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
-                RuntimeABIParameter(name: "continuation", type: .intptr),
+                RuntimeABIParameter(name: "functionID", type: .intptr),
             ],
             returnType: .intptr,
             section: "Coroutine"
         ),
         RuntimeABIFunctionSpec(
-            name: "kk_with_timeout_or_null",
+            name: "kk_supervisor_scope_run_with_cont",
             parameters: [
-                RuntimeABIParameter(name: "timeoutMillis", type: .intptr),
                 RuntimeABIParameter(name: "entryPointRaw", type: .intptr),
                 RuntimeABIParameter(name: "continuation", type: .intptr),
             ],
@@ -3580,6 +3613,7 @@ public enum RuntimeABISpec {
             + fileIOFunctions
             + uuidFunctions
             + durationFunctions
+            + atomicFunctions
 
     public static func generateCHeader() -> String {
         var lines: [String] = []

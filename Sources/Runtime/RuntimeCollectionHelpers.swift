@@ -1,3 +1,14 @@
+let listRuntimeTypeID: Int64 = {
+    var hash: UInt64 = 0xCBF2_9CE4_8422_2325
+    for byte in "kotlin.collections.List".utf8 {
+        hash ^= UInt64(byte)
+        hash &*= 0x100_0000_01B3
+    }
+    let payloadMask: Int64 = (1 << 55) - 1
+    let payload = Int64(bitPattern: hash) & payloadMask
+    return payload == 0 ? 1 : payload
+}()
+
 private let mapEntryRuntimeTypeID: Int64 = {
     var hash: UInt64 = 0xCBF2_9CE4_8422_2325
     for byte in "kotlin.collections.Map.Entry".utf8 {
@@ -155,6 +166,12 @@ func registerRuntimeObject(_ box: AnyObject) -> Int {
     return Int(bitPattern: opaque)
 }
 
+func registerRuntimeObject(_ box: AnyObject, typeID: Int64) -> Int {
+    let raw = registerRuntimeObject(box)
+    runtimeRegisterObjectType(rawValue: raw, classID: typeID)
+    return raw
+}
+
 func maybeUnbox(_ value: Int) -> Int {
     guard let ptr = UnsafeMutableRawPointer(bitPattern: value) else {
         return value
@@ -274,6 +291,21 @@ func runtimeValuesEqual(_ lhs: Int, _ rhs: Int) -> Bool {
                 return false
             }
             if !runtimeValuesEqual(lhsMap.values[i], rhsMap.values[rhsIdx]) {
+                return false
+            }
+        }
+        return true
+    }
+    // Data class / user-defined object structural equality: compare classID and elements.
+    if let lhsObj = tryCast(lhsPtr, to: RuntimeObjectBox.self),
+       let rhsObj = tryCast(rhsPtr, to: RuntimeObjectBox.self)
+    {
+        guard lhsObj.classID == rhsObj.classID else { return false }
+        let lhsElems = lhsObj.elements
+        let rhsElems = rhsObj.elements
+        guard lhsElems.count == rhsElems.count else { return false }
+        for i in lhsElems.indices {
+            if !runtimeValuesEqual(lhsElems[i], rhsElems[i]) {
                 return false
             }
         }

@@ -155,6 +155,7 @@ struct CaptureAnalyzer {
                 }
 
             case let .compoundAssign(_, _, value, _):
+                recordCapture(for: currentExprID)
                 visit(value)
 
             case let .indexedCompoundAssign(_, receiver, indices, value, _):
