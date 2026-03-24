@@ -179,6 +179,7 @@ extension KIRLoweringDriver {
         symbol: SymbolID,
         shared: KIRLoweringSharedContext
     ) -> [KIRDeclID] {
+        let sema = shared.sema
         let arena = shared.arena
         let (directMembers, allDecls) = memberLowerer.lowerMemberDecls(
             memberFunctions: objectDecl.memberFunctions,
@@ -190,6 +191,20 @@ extension KIRLoweringDriver {
         let kirID = arena.appendDecl(.nominalType(KIRNominalType(symbol: symbol, memberDecls: directMembers)))
         var declIDs = [kirID]
         declIDs.append(contentsOf: allDecls)
+
+        // When the object implements interfaces, it needs a global slot to hold
+        // its heap-allocated pointer for interface-typed virtual dispatch.
+        let hasInterfaceSupertypes = sema.symbols.directSupertypes(for: symbol).contains { superSym in
+            sema.symbols.symbol(superSym)?.kind == .interface
+        }
+        if hasInterfaceSupertypes {
+            let objectType = sema.types.make(.classType(ClassType(
+                classSymbol: symbol, args: [], nullability: .nonNull
+            )))
+            let globalID = arena.appendDecl(.global(KIRGlobal(symbol: symbol, type: objectType)))
+            declIDs.append(globalID)
+        }
+
         // Synthesise an initializer for the top-level object so that
         // property initializers and init blocks run during module init
         // (property initializers first, then init blocks).

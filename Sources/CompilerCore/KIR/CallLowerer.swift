@@ -761,6 +761,31 @@ final class CallLowerer {
             return finalArgs
         }
 
+        // compareValuesBy: expand selector lambda args to (fnPtr, closureRaw) pairs.
+        // kk_compareValuesBy1(a, b, selector) → (a, b, selectorFn, selectorClosureRaw)
+        // kk_compareValuesBy(a, b, sel1, sel2) → (a, b, sel1Fn, sel1Closure, sel2Fn, sel2Closure)
+        // kk_compareValuesBy3(a, b, sel1, sel2, sel3) → (a, b, sel1Fn, sel1Closure, sel2Fn, sel2Closure, sel3Fn, sel3Closure)
+        let compareValuesbyNames: Set = ["kk_compareValuesBy1", "kk_compareValuesBy", "kk_compareValuesBy3"]
+        if compareValuesbyNames.contains(externalLinkName), loweredArguments.count >= 3 {
+            // First 2 arguments (a, b) pass through unchanged
+            var finalArgs = [loweredArguments[0], loweredArguments[1]]
+            // Remaining arguments are selector lambdas that need expansion
+            for i in 2..<loweredArguments.count {
+                let lambdaID = loweredArguments[i]
+                finalArgs.append(lambdaID) // fnPtr
+                if let callableInfo = driver.ctx.callableValueInfo(for: lambdaID),
+                   let closureRaw = callableInfo.captureArguments.first
+                {
+                    finalArgs.append(closureRaw) // closureRaw
+                } else {
+                    let zeroExpr = arena.appendExpr(.intLiteral(0), type: sema.types.intType)
+                    instructions.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                    finalArgs.append(zeroExpr) // closureRaw = 0 (no captures)
+                }
+            }
+            return finalArgs
+        }
+
         return loweredArguments
     }
 
