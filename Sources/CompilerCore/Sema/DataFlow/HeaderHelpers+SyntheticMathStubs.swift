@@ -262,7 +262,7 @@ extension DataFlowSemaPhase {
             interner: interner
         )
 
-        // STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
+        // STDLIB-514: abs(Long), truncate
 
         registerSyntheticMathTopLevelFunction(
             named: "abs",
@@ -293,84 +293,6 @@ extension DataFlowSemaPhase {
             parameterType: floatType,
             returnType: floatType,
             externalLinkName: "kk_math_truncate_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "IEEErem",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "x", type: types.doubleType),
-                (name: "y", type: types.doubleType),
-            ],
-            returnType: types.doubleType,
-            externalLinkName: "kk_math_IEEErem",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "IEEErem",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "x", type: floatType),
-                (name: "y", type: floatType),
-            ],
-            returnType: floatType,
-            externalLinkName: "kk_math_IEEErem_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "withSign",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "x", type: types.doubleType),
-                (name: "sign", type: types.doubleType),
-            ],
-            returnType: types.doubleType,
-            externalLinkName: "kk_math_withSign",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "withSign",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "x", type: floatType),
-                (name: "sign", type: floatType),
-            ],
-            returnType: floatType,
-            externalLinkName: "kk_math_withSign_float",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "withSign",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "x", type: types.doubleType),
-                (name: "sign", type: types.intType),
-            ],
-            returnType: types.doubleType,
-            externalLinkName: "kk_math_withSign_int",
-            symbols: symbols,
-            interner: interner
-        )
-
-        registerSyntheticMathTopLevelFunction(
-            named: "nextTowards",
-            packageFQName: kotlinMathPkg,
-            parameters: [
-                (name: "from", type: types.doubleType),
-                (name: "to", type: types.doubleType),
-            ],
-            returnType: types.doubleType,
-            externalLinkName: "kk_math_nextTowards",
             symbols: symbols,
             interner: interner
         )

@@ -1627,6 +1627,18 @@ final class CallTypeChecker {
                             interner: interner,
                             elementType: explicitTypeArg
                         )
+                    } else if let inferredFromExpected = inferSyntheticSingleTypeArgFromExpectedType(
+                        expectedType,
+                        kind: .list,
+                        sema: sema,
+                        interner: interner
+                    ) {
+                        collectionType = makeSyntheticMutableListType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: inferredFromExpected
+                        )
                     } else {
                         collectionType = makeSyntheticMutableListType(
                             symbols: sema.symbols,
@@ -1642,6 +1654,18 @@ final class CallTypeChecker {
                             types: sema.types,
                             interner: interner,
                             elementType: explicitTypeArg
+                        )
+                    } else if let inferredFromExpected = inferSyntheticSingleTypeArgFromExpectedType(
+                        expectedType,
+                        kind: .set,
+                        sema: sema,
+                        interner: interner
+                    ) {
+                        collectionType = makeSyntheticMutableSetType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            elementType: inferredFromExpected
                         )
                     } else {
                         collectionType = makeSyntheticMutableSetType(
@@ -1659,6 +1683,32 @@ final class CallTypeChecker {
                             interner: interner,
                             keyType: explicitTypeArgs[0],
                             valueType: explicitTypeArgs[1]
+                        )
+                    } else if let inferredFromExpected = inferSyntheticMapTypeArgsFromExpectedType(
+                        expectedType,
+                        sema: sema,
+                        interner: interner
+                    ) {
+                        collectionType = makeSyntheticMutableMapType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            keyType: inferredFromExpected.keyType,
+                            valueType: inferredFromExpected.valueType
+                        )
+                    } else if args.count == 1,
+                              let inferredFromArg = inferSyntheticMapTypeArgsFromSingleArgType(
+                                  argTypes.first,
+                                  sema: sema,
+                                  interner: interner
+                              )
+                    {
+                        collectionType = makeSyntheticMutableMapType(
+                            symbols: sema.symbols,
+                            types: sema.types,
+                            interner: interner,
+                            keyType: inferredFromArg.keyType,
+                            valueType: inferredFromArg.valueType
                         )
                     } else {
                         collectionType = makeSyntheticMutableMapType(
@@ -2140,6 +2190,107 @@ final class CallTypeChecker {
             return nil
         }
         return (sema.types.lub(keyTypes), sema.types.lub(valueTypes))
+    }
+
+    private func inferSyntheticSingleTypeArgFromExpectedType(
+        _ expectedType: TypeID?,
+        kind: KnownCollectionKind,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard let expectedType, expectedType != sema.types.errorType,
+              case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+              expectedClassType.args.count == 1,
+              let symbol = sema.symbols.symbol(expectedClassType.classSymbol)
+        else {
+            return nil
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        let isExpectedCollection: Bool = switch kind {
+        case .list:
+            let arrayListName = interner.intern("ArrayList")
+            let linkedListName = interner.intern("LinkedList")
+            knownNames.isConcreteListLikeSymbol(symbol)
+                || symbol.name == arrayListName
+                || symbol.name == linkedListName
+        case .set:
+            let hashSetName = interner.intern("HashSet")
+            let linkedHashSetName = interner.intern("LinkedHashSet")
+            knownNames.isSetLikeSymbol(symbol)
+                || symbol.name == hashSetName
+                || symbol.name == linkedHashSetName
+        default:
+            false
+        }
+        guard isExpectedCollection else {
+            return nil
+        }
+        return makeConcreteType(from: expectedClassType.args[0], sema: sema.types)
+    }
+
+    private func inferSyntheticMapTypeArgsFromExpectedType(
+        _ expectedType: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (keyType: TypeID, valueType: TypeID)? {
+        guard let expectedType, expectedType != sema.types.errorType,
+              case let .classType(expectedClassType) = sema.types.kind(of: expectedType),
+              let symbol = sema.symbols.symbol(expectedClassType.classSymbol)
+        else {
+            return nil
+        }
+        let knownNames = KnownCompilerNames(interner: interner)
+        let hashMapName = interner.intern("HashMap")
+        let linkedHashMapName = interner.intern("LinkedHashMap")
+        let isExpectedMap = (
+            knownNames.isMapLikeSymbol(symbol)
+                || symbol.name == hashMapName
+                || symbol.name == linkedHashMapName
+        )
+        guard isExpectedMap, expectedClassType.args.count == 2 else {
+            return nil
+        }
+        return (
+            makeConcreteType(from: expectedClassType.args[0], sema: sema),
+            makeConcreteType(from: expectedClassType.args[1], sema: sema)
+        )
+    }
+
+    private func inferSyntheticMapTypeArgsFromSingleArgType(
+        _ argType: TypeID?,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> (keyType: TypeID, valueType: TypeID)? {
+        guard let argType else { return nil }
+        let knownNames = KnownCompilerNames(interner: interner)
+        let hashMapName = interner.intern("HashMap")
+        let linkedHashMapName = interner.intern("LinkedHashMap")
+        guard case let .classType(argClassType) = sema.types.kind(of: argType),
+              let symbol = sema.symbols.symbol(argClassType.classSymbol)
+        else {
+            return nil
+        }
+        let isMapArg = (
+            knownNames.isMapLikeSymbol(symbol)
+                || symbol.name == hashMapName
+                || symbol.name == linkedHashMapName
+        )
+        guard isMapArg, argClassType.args.count == 2 else {
+            return nil
+        }
+        return (
+            makeConcreteType(from: argClassType.args[0], sema: sema),
+            makeConcreteType(from: argClassType.args[1], sema: sema)
+        )
+    }
+
+    private func makeConcreteType(from arg: TypeArg, sema: TypeSystem) -> TypeID {
+        switch arg {
+        case let .invariant(type), let .in(type), let .out(type):
+            type
+        case .star:
+            sema.anyType
+        }
     }
 
     private func makeSyntheticMutableListType(
