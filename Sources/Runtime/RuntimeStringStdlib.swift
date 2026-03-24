@@ -259,18 +259,17 @@ public func kk_string_filter(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let scalars = runtimeStringScalars(strRaw)
     guard fnPtr != 0 else { return runtimeMakeStringRaw(runtimeStringFromRawOrPanic(strRaw, caller: #function)) }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var filtered: [Int] = []
-    for charRaw in charRaws {
+    var filtered: [UnicodeScalar] = []
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
-        if maybeUnbox(result) != 0 { filtered.append(charRaw) }
+        if result != 0 { filtered.append(scalar) }
     }
-    let scalars = filtered.compactMap { runtimeUnicodeScalarFromRaw($0) }
-    return runtimeMakeStringRaw(runtimeStringFromScalars(scalars))
+    return runtimeMakeStringRaw(runtimeStringFromScalars(filtered))
 }
 
 @_cdecl("kk_string_map")
@@ -278,20 +277,17 @@ public func kk_string_map(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let scalars = runtimeStringScalars(strRaw)
     guard fnPtr != 0 else { return strRaw }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    var mapped: [UnicodeScalar] = []
-    for charRaw in charRaws {
+    var mappedElements: [Int] = []
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return runtimeMakeStringRaw("") }
-        let mappedChar = maybeUnbox(result)
-        if let scalar = runtimeUnicodeScalarFromRaw(mappedChar) {
-            mapped.append(scalar)
-        }
+        mappedElements.append(result)
     }
-    return runtimeMakeStringRaw(runtimeStringFromScalars(mapped))
+    return runtimeMakeListRaw(mappedElements)
 }
 
 @_cdecl("kk_string_count")
@@ -299,15 +295,15 @@ public func kk_string_count(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    if fnPtr == 0 { return charRaws.count }
+    let scalars = runtimeStringScalars(strRaw)
+    if fnPtr == 0 { return scalars.count }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var count = 0
-    for charRaw in charRaws {
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        if maybeUnbox(result) != 0 { count += 1 }
+        if result != 0 { count += 1 }
     }
     return count
 }
@@ -317,14 +313,14 @@ public func kk_string_any(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    if fnPtr == 0 { return charRaws.isEmpty ? 0 : 1 }
+    let scalars = runtimeStringScalars(strRaw)
+    if fnPtr == 0 { return scalars.isEmpty ? 0 : 1 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    for charRaw in charRaws {
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        if maybeUnbox(result) != 0 { return 1 }
+        if result != 0 { return 1 }
     }
     return 0
 }
@@ -334,14 +330,14 @@ public func kk_string_all(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
+    let scalars = runtimeStringScalars(strRaw)
     if fnPtr == 0 { return 1 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    for charRaw in charRaws {
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        if maybeUnbox(result) == 0 { return 0 }
+        if result == 0 { return 0 }
     }
     return 1
 }
@@ -351,14 +347,14 @@ public func kk_string_none(
     _ strRaw: Int, _ fnPtr: Int, _ closureRaw: Int, _ outThrown: UnsafeMutablePointer<Int>?
 ) -> Int {
     outThrown?.pointee = 0
-    let charRaws = runtimeStringScalars(strRaw).map { kk_box_char(Int($0.value)) }
-    if fnPtr == 0 { return charRaws.isEmpty ? 1 : 0 }
+    let scalars = runtimeStringScalars(strRaw)
+    if fnPtr == 0 { return scalars.isEmpty ? 1 : 0 }
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
-    for charRaw in charRaws {
+    for scalar in scalars {
         var thrown = 0
-        let result = lambda(closureRaw, charRaw, &thrown)
+        let result = lambda(closureRaw, Int(scalar.value), &thrown)
         if thrown != 0 { outThrown?.pointee = thrown; return 0 }
-        if maybeUnbox(result) != 0 { return 0 }
+        if result != 0 { return 0 }
     }
     return 1
 }
@@ -373,7 +369,7 @@ public func kk_string_replaceFirstChar(
     let scalars = runtimeStringScalars(strRaw)
     guard !scalars.isEmpty else { return runtimeMakeStringRaw("") }
     guard fnPtr != 0 else { return strRaw }
-    let firstCharRaw = kk_box_char(Int(scalars[0].value))
+    let firstCharRaw = Int(scalars[0].value)
     let lambda = unsafeBitCast(fnPtr, to: (@convention(c) (Int, Int, UnsafeMutablePointer<Int>?) -> Int).self)
     var thrown = 0
     let result = lambda(closureRaw, firstCharRaw, &thrown)
@@ -385,8 +381,7 @@ public func kk_string_replaceFirstChar(
         )
         return runtimeMakeStringRaw("")
     }
-    let mappedChar = maybeUnbox(result)
-    let replacement = runtimeUnicodeScalarFromRaw(mappedChar) ?? scalars[0]
+    let replacement = runtimeUnicodeScalarFromRaw(result) ?? scalars[0]
     let tail = scalars.dropFirst()
     var rebuilt = String.UnicodeScalarView()
     rebuilt.append(replacement)

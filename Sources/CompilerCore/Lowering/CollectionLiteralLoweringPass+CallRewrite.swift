@@ -3723,6 +3723,40 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    // --- STDLIB-189: String HOF closureRaw injection ---
+                    // String higher-order functions (filter, map, count, any, all, none)
+                    // are called with args = [receiver, lambdaRef] but the runtime
+                    // expects (strRaw, fnPtr, closureRaw, outThrown).  Insert the
+                    // missing closureRaw=0 argument so the ABI lowering pass only
+                    // needs to append the outThrown slot.
+                    if arguments.count == 2,
+                       callee == lookup.kkStringFilterName
+                        || callee == lookup.kkStringMapName
+                        || callee == lookup.kkStringCountName
+                        || callee == lookup.kkStringAnyName
+                        || callee == lookup.kkStringAllName
+                        || callee == lookup.kkStringNoneName
+                    {
+                        let receiverID = arguments[0]
+                        let lambdaID = arguments[1]
+                        let zeroExpr = module.arena.appendExpr(.intLiteral(0), type: nil)
+                        loweredBody.append(.constValue(result: zeroExpr, value: .intLiteral(0)))
+                        let isStringResult = callee == lookup.kkStringFilterName
+                            || callee == lookup.kkStringMapName
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: callee,
+                            arguments: [receiverID, lambdaID, zeroExpr],
+                            result: result,
+                            canThrow: canThrow,
+                            thrownResult: thrownResult
+                        ))
+                        if isStringResult, let result {
+                            stringExprIDs.insert(result.rawValue)
+                        }
+                        continue
+                    }
+
                     // Default: keep instruction as-is
                     loweredBody.append(instruction)
 

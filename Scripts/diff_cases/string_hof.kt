@@ -1,6 +1,3 @@
-// SKIP-DIFF
-// String higher-order functions not yet implemented in kswiftc
-// This test documents the gap between kotlinc and kswiftc for String HOFs
 fun main() {
     val s = "Hello, World!"
     println(s.filter { it.isUpperCase() })

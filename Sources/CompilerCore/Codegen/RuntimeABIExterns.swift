@@ -1104,6 +1104,18 @@ public enum RuntimeABIExterns {
         returnType: "intptr_t"
     )
 
+    public static let kk_char_isUpperCase = ExternDecl(
+        name: "kk_char_isUpperCase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
+    public static let kk_char_isLowerCase = ExternDecl(
+        name: "kk_char_isLowerCase",
+        parameterTypes: ["intptr_t"],
+        returnType: "intptr_t"
+    )
+
     public static let kk_char_isWhitespace = ExternDecl(
         name: "kk_char_isWhitespace",
         parameterTypes: ["intptr_t"],
@@ -2743,6 +2755,8 @@ public enum RuntimeABIExterns {
             kk_char_isDigit,
             kk_char_isLetter,
             kk_char_isLetterOrDigit,
+            kk_char_isUpperCase,
+            kk_char_isLowerCase,
             kk_char_isWhitespace,
             kk_char_uppercase,
             kk_char_lowercase,

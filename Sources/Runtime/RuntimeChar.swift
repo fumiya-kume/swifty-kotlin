@@ -29,6 +29,22 @@ public func kk_char_isLetterOrDigit(_ value: Int) -> Int {
     return kk_box_bool(isLetterOrDigit ? 1 : 0)
 }
 
+@_cdecl("kk_char_isUpperCase")
+public func kk_char_isUpperCase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(CharacterSet.uppercaseLetters.contains(scalar) ? 1 : 0)
+}
+
+@_cdecl("kk_char_isLowerCase")
+public func kk_char_isLowerCase(_ value: Int) -> Int {
+    guard let scalar = runtimeUnicodeScalar(value) else {
+        return kk_box_bool(0)
+    }
+    return kk_box_bool(CharacterSet.lowercaseLetters.contains(scalar) ? 1 : 0)
+}
+
 @_cdecl("kk_char_isWhitespace")
 public func kk_char_isWhitespace(_ value: Int) -> Int {
     guard let scalar = runtimeUnicodeScalar(value) else {

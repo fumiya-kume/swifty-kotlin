@@ -1023,6 +1023,12 @@ extension DataFlowSemaPhase {
             isSuspend: false,
             nullability: .nonNull
         )))
+        let charToAnyType = types.make(.functionType(FunctionType(
+            params: [charType],
+            returnType: types.anyType,
+            isSuspend: false,
+            nullability: .nonNull
+        )))
         registerSyntheticStringExtensionFunction(
             named: "filter",
             externalLinkName: "kk_string_filter",
@@ -1033,12 +1039,14 @@ extension DataFlowSemaPhase {
             symbols: symbols,
             interner: interner
         )
+        // String.map returns List<R> in Kotlin; use (Char) -> Any transform
+        // and Any return type to allow arbitrary mapping.
         registerSyntheticStringExtensionFunction(
             named: "map",
             externalLinkName: "kk_string_map",
             receiverType: stringType,
-            parameters: [("transform", charToCharType, false, false)],
-            returnType: stringType,
+            parameters: [("transform", charToAnyType, false, false)],
+            returnType: types.anyType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

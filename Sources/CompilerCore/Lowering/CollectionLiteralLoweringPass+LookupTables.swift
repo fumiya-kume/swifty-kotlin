@@ -1167,7 +1167,6 @@ struct CollectionLiteralLookupTables {
             interner.intern("kk_string_replaceIndent_default"),
             interner.intern("kk_string_replaceIndent"),
             kkStringFilterName,
-            kkStringMapName,
             interner.intern("kk_build_string"),
         ]
     }
