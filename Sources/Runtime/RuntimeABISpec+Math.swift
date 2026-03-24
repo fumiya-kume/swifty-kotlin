@@ -420,7 +420,7 @@ public extension RuntimeABISpec {
             returnType: .intptr,
             section: "Math"
         ),
-        // STDLIB-514: abs(Long), truncate, IEEErem, withSign, nextTowards
+        // STDLIB-514: abs(Long), truncate
         RuntimeABIFunctionSpec(
             name: "kk_math_abs_long",
             parameters: [
@@ -441,60 +441,6 @@ public extension RuntimeABISpec {
             name: "kk_math_truncate_float",
             parameters: [
                 RuntimeABIParameter(name: "value", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_IEEErem",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "y", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_IEEErem_float",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "y", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign_float",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_withSign_int",
-            parameters: [
-                RuntimeABIParameter(name: "x", type: .intptr),
-                RuntimeABIParameter(name: "sign", type: .intptr),
-            ],
-            returnType: .intptr,
-            section: "Math"
-        ),
-        RuntimeABIFunctionSpec(
-            name: "kk_math_nextTowards",
-            parameters: [
-                RuntimeABIParameter(name: "from", type: .intptr),
-                RuntimeABIParameter(name: "to", type: .intptr),
             ],
             returnType: .intptr,
             section: "Math"
