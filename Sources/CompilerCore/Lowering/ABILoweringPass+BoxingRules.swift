@@ -24,7 +24,9 @@ extension ABILoweringPass {
     func boxingCallee(
         argType: TypeID,
         paramType: TypeID,
+        callee: InternedString?,
         types: TypeSystem,
+        interner: StringInterner,
         boxCallees: BoxingCalleeNames,
         symbols: SymbolTable? = nil
     ) -> InternedString? {
@@ -42,7 +44,16 @@ extension ABILoweringPass {
                 return true
             }
             if case .typeParam = paramKind {
-                return true
+                // Surgical fix for Pair/Triple to ensure their arguments are boxed.
+                // In swifty-kotlin, these are currently the primary generic containers
+                // that expect boxed primitives for compatibility with toList() etc.
+                if let callee {
+                    let calleeName = interner.resolve(callee)
+                    if calleeName == "kk_pair_new" || calleeName == "kk_triple_new" {
+                        return true
+                    }
+                }
+                return false
             }
             return false
         }()
