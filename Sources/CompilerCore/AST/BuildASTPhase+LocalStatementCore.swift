@@ -501,7 +501,22 @@ extension BuildASTPhase {
         }
 
         private static func stripSemicolons(_ tokens: ArraySlice<Token>) -> [Token] {
-            tokens.filter { $0.kind != .symbol(.semicolon) }
+            // Only strip semicolons at the outermost brace level so that
+            // semicolons inside nested blocks / lambda bodies are preserved.
+            var result: [Token] = []
+            var braceDepth = 0
+            for token in tokens {
+                switch token.kind {
+                case .symbol(.lBrace): braceDepth += 1
+                case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
+                default: break
+                }
+                if token.kind == .symbol(.semicolon), braceDepth == 0 {
+                    continue
+                }
+                result.append(token)
+            }
+            return result
         }
     }
 }

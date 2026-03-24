@@ -155,6 +155,25 @@ extension BuildASTPhase {
         }
     }
 
+    /// Filter out semicolons that are at the outermost brace level,
+    /// preserving those inside nested braces (e.g. lambda bodies).
+    private func filterTopLevelSemicolons(_ tokens: [Token]) -> [Token] {
+        var result: [Token] = []
+        var braceDepth = 0
+        for token in tokens {
+            switch token.kind {
+            case .symbol(.lBrace): braceDepth += 1
+            case .symbol(.rBrace): braceDepth = max(0, braceDepth - 1)
+            default: break
+            }
+            if token.kind == .symbol(.semicolon), braceDepth == 0 {
+                continue
+            }
+            result.append(token)
+        }
+        return result
+    }
+
     private func hasUnclosedStatementDelimiter(_ tokens: [Token]) -> Bool {
         var parenDepth = 0
         var bracketDepth = 0

@@ -9,7 +9,7 @@ private struct RuntimeMutableListFrame {
 }
 
 private struct RuntimeMutableSetFrame {
-    var elements: Set<Int> = []
+    var elements: Set<RuntimeElementKey> = []
     var insertionOrder: [Int] = []
 }
 
@@ -145,7 +145,8 @@ private final class RuntimeBuilderState: @unchecked Sendable {
                 return
             }
             let index = state.setFrames.count - 1
-            if state.setFrames[index].elements.insert(value).inserted {
+            let key = RuntimeElementKey(value: value)
+            if state.setFrames[index].elements.insert(key).inserted {
                 state.setFrames[index].insertionOrder.append(value)
             }
         }
