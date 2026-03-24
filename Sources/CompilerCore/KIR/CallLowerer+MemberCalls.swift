@@ -186,54 +186,85 @@ extension CallLowerer {
 
         // Receiver-lambda invocation: `receiver.localVar()` where localVar has
         // a function-with-receiver type (e.g. `sb.action()` with action: StringBuilder.() -> Unit).
+        // Some frontends may also encode the receiver as the first parameter of a regular
+        // function type (`(StringBuilder) -> Unit`), so we mirror the type-checker
+        // fallback here when needed.
         if let callableBinding = sema.bindings.callableValueCalls[exprID],
            case let .functionType(fnType) = sema.types.kind(of: callableBinding.functionType),
-           fnType.receiver != nil,
-           case let .localValue(localSym) = callableBinding.target
-        {
-            let boundType = sema.bindings.exprTypes[exprID] ?? fnType.returnType
-            let loweredReceiver = driver.lowerExpr(
-                receiverExpr,
-                ast: ast, sema: sema, arena: arena, interner: interner,
-                propertyConstantInitializers: propertyConstantInitializers,
-                instructions: &instructions
-            )
-            let loweredArgIDs = args.map { argument in
-                driver.lowerExpr(
-                    argument.expr,
+           case let .localValue(localSym) = callableBinding.target,
+           let receiverExprType = sema.bindings.exprType(for: receiverExpr) {
+            let maybeReceiverFnType = if fnType.receiver != nil {
+                (fnType, fnType.params.count == args.count)
+            } else if !fnType.params.isEmpty && args.count == fnType.params.count - 1 {
+                let syntheticReceiverType = fnType.params[0]
+                let syntheticFunction = FunctionType(
+                    receiver: syntheticReceiverType,
+                    params: Array(fnType.params.dropFirst()),
+                    returnType: fnType.returnType,
+                    isSuspend: fnType.isSuspend,
+                    nullability: fnType.nullability
+                )
+                (syntheticFunction, true)
+            } else {
+                (FunctionType(
+                    params: fnType.params,
+                    returnType: fnType.returnType,
+                    isSuspend: fnType.isSuspend,
+                    nullability: fnType.nullability
+                ), false)
+            }
+            if maybeReceiverFnType.1,
+               let receiverType = maybeReceiverFnType.0.receiver,
+               sema.types.isSubtype(
+                   sema.types.makeNonNullable(receiverExprType),
+                   receiverType
+               )
+            {
+                let effectiveFnType = maybeReceiverFnType.0
+                let boundType = sema.bindings.exprTypes[exprID] ?? effectiveFnType.returnType
+                let loweredReceiver = driver.lowerExpr(
+                    receiverExpr,
                     ast: ast, sema: sema, arena: arena, interner: interner,
                     propertyConstantInitializers: propertyConstantInitializers,
                     instructions: &instructions
                 )
+                let loweredArgIDs = args.map { argument in
+                    driver.lowerExpr(
+                        argument.expr,
+                        ast: ast, sema: sema, arena: arena, interner: interner,
+                        propertyConstantInitializers: propertyConstantInitializers,
+                        instructions: &instructions
+                    )
+                }
+                let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
+                if let localExprID = driver.ctx.localValue(for: localSym),
+                   let info = driver.ctx.callableValueInfo(for: localExprID)
+                {
+                    var allArgs = info.captureArguments
+                    allArgs.append(loweredReceiver)
+                    allArgs.append(contentsOf: loweredArgIDs)
+                    instructions.append(.call(
+                        symbol: info.symbol,
+                        callee: info.callee,
+                        arguments: allArgs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                } else {
+                    var allArgs = [loweredReceiver] + loweredArgIDs
+                    instructions.append(.call(
+                        symbol: localSym,
+                        callee: calleeName,
+                        arguments: allArgs,
+                        result: result,
+                        canThrow: false,
+                        thrownResult: nil
+                    ))
+                    _ = allArgs
+                }
+                return result
             }
-            let result = arena.appendExpr(.temporary(Int32(arena.expressions.count)), type: boundType)
-            if let localExprID = driver.ctx.localValue(for: localSym),
-               let info = driver.ctx.callableValueInfo(for: localExprID)
-            {
-                var allArgs = info.captureArguments
-                allArgs.append(loweredReceiver)
-                allArgs.append(contentsOf: loweredArgIDs)
-                instructions.append(.call(
-                    symbol: info.symbol,
-                    callee: info.callee,
-                    arguments: allArgs,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-            } else {
-                var allArgs = [loweredReceiver] + loweredArgIDs
-                instructions.append(.call(
-                    symbol: localSym,
-                    callee: calleeName,
-                    arguments: allArgs,
-                    result: result,
-                    canThrow: false,
-                    thrownResult: nil
-                ))
-                _ = allArgs
-            }
-            return result
         }
 
         let effectiveCalleeName = if sema.bindings.isInvokeOperatorCall(exprID) {

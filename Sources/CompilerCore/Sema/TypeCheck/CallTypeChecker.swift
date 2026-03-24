@@ -117,7 +117,15 @@ final class CallTypeChecker {
             // First arg is the receiver object
             let withReceiverType = driver.inferExpr(args[0].expr, ctx: ctx, locals: &locals)
             // Second arg is the lambda with receiver
-            let receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            var receiverCtx = ctx.with(implicitReceiverType: withReceiverType)
+            let nonNullWithReceiverType = sema.types.makeNonNullable(withReceiverType)
+            if case let .classType(classType) = sema.types.kind(of: nonNullWithReceiverType),
+               let receiverSymbol = sema.symbols.symbol(classType.classSymbol),
+               knownNames.isStringBuilderSymbol(receiverSymbol)
+            {
+                receiverCtx.isBuilderLambdaScope = true
+                receiverCtx.builderKind = .buildString
+            }
             let lambdaExpectedType = sema.types.make(.functionType(FunctionType(
                 receiver: withReceiverType,
                 params: [],
@@ -2250,21 +2258,21 @@ final class CallTypeChecker {
         else {
             return
         }
-        guard let argumentExpr = ctx.ast.arena.expr(args[parameterIndex].expr),
-              case let .nameRef(argumentName, _) = argumentExpr,
-              let local = locals[argumentName]
-        else {
-            return
-        }
-        let narrowed = ctx.dataFlow.narrowToNonNull(
-            symbol: local.symbol,
-            type: argTypes[parameterIndex],
+        let conditionExpr = args[parameterIndex].expr
+        let branch = ctx.dataFlow.branchOnCondition(
+            conditionExpr,
             base: ctx.flowState,
-            types: sema.types
+            locals: locals,
+            ast: ctx.ast,
+            sema: sema,
+            interner: ctx.interner,
+            scope: ctx.scope
         )
-        if let narrowedType = narrowed.variables[local.symbol]?.possibleTypes.first {
-            locals[argumentName] = (narrowedType, local.symbol, local.isMutable, local.isInitialized)
-        }
+        driver.exprChecker.applyFlowStateToLocals(
+            branch.trueState,
+            locals: &locals,
+            sema: sema
+        )
     }
 
     func inferMemberCallExpr(

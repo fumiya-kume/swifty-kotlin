@@ -3678,6 +3678,47 @@ extension CallTypeChecker {
                     sema.bindings.bindExprType(id, type: finalType)
                     return finalType
                 }
+                // Support function values that were represented as a regular
+                // function type where the first parameter is the receiver.
+                // Example: `val f: StringBuilder.() -> Unit` may be encoded as
+                // `(StringBuilder) -> Unit` in some contexts.
+                if case let .functionType(fnType) = sema.types.kind(of: localType),
+                   !fnType.params.isEmpty,
+                   args.count == fnType.params.count - 1,
+                   sema.types.isSubtype(
+                       sema.types.makeNonNullable(receiverType),
+                       fnType.params[0]
+                   )
+                {
+                    for (index, argument) in args.enumerated() {
+                        let expectedArgumentType = fnType.params[index + 1]
+                        _ = driver.inferExpr(
+                            argument.expr,
+                            ctx: ctx,
+                            locals: &locals,
+                            expectedType: expectedArgumentType
+                        )
+                    }
+                    let boundFunctionType = sema.types.make(.functionType(FunctionType(
+                        receiver: fnType.params[0],
+                        params: Array(fnType.params.dropFirst()),
+                        returnType: fnType.returnType,
+                        isSuspend: fnType.isSuspend,
+                        nullability: fnType.nullability
+                    )))
+                    let resultType = fnType.returnType
+                    let finalType = safeCall ? sema.types.makeNullable(resultType) : resultType
+                    sema.bindings.bindCallableValueCall(
+                        id,
+                        binding: CallableValueCallBinding(
+                            target: .localValue(local.symbol),
+                            functionType: boundFunctionType,
+                            parameterMapping: [:]
+                        )
+                    )
+                    sema.bindings.bindExprType(id, type: finalType)
+                    return finalType
+                }
             }
 
             ctx.semaCtx.diagnostics.error("KSWIFTK-SEMA-0024", "Unresolved member function '\(interner.resolve(calleeName))'.", range: range)

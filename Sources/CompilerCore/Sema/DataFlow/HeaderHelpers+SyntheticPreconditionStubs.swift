@@ -20,7 +20,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_require",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         registerSyntheticPreconditionTopLevelFunction(
             named: "require",
@@ -38,7 +39,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_require_lazy",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         registerSyntheticPreconditionTopLevelFunction(
             named: "check",
@@ -48,7 +50,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_check",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         registerSyntheticPreconditionTopLevelFunction(
             named: "check",
@@ -66,7 +69,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_check_lazy",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         // STDLIB-258: assert(condition) and assert(condition, lazyMessage)
         registerSyntheticPreconditionTopLevelFunction(
@@ -77,7 +81,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_precondition_assert",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         registerSyntheticPreconditionTopLevelFunction(
             named: "assert",
@@ -95,7 +100,8 @@ extension DataFlowSemaPhase {
             returnType: types.unitType,
             externalLinkName: "kk_precondition_assert_lazy",
             symbols: symbols,
-            interner: interner
+            interner: interner,
+            contractNonNullParameterIndex: 0
         )
         registerSyntheticPreconditionTopLevelFunction(
             named: "error",
@@ -137,7 +143,8 @@ extension DataFlowSemaPhase {
         returnType: TypeID,
         externalLinkName: String,
         symbols: SymbolTable,
-        interner: StringInterner
+        interner: StringInterner,
+        contractNonNullParameterIndex: Int? = nil
     ) {
         let functionName = interner.intern(name)
         let functionFQName = packageFQName + [functionName]
@@ -149,6 +156,19 @@ extension DataFlowSemaPhase {
                 && existingSignature.returnType == returnType
         }) {
             symbols.setExternalLinkName(externalLinkName, for: existing)
+            if let contractNonNullParameterIndex,
+               let signature = symbols.functionSignature(for: existing),
+               contractNonNullParameterIndex < signature.valueParameterSymbols.count
+            {
+                let parameterSymbol = signature.valueParameterSymbols[contractNonNullParameterIndex]
+                symbols.setContractNonNullEffect(
+                    ContractNonNullEffect(
+                        parameterSymbol: parameterSymbol,
+                        appliesOnAnyReturn: true
+                    ),
+                    for: existing
+                )
+            }
             return
         }
 
@@ -190,5 +210,17 @@ extension DataFlowSemaPhase {
             ),
             for: functionSymbol
         )
+        if let contractNonNullParameterIndex,
+           contractNonNullParameterIndex < valueParameterSymbols.count
+        {
+            let parameterSymbol = valueParameterSymbols[contractNonNullParameterIndex]
+            symbols.setContractNonNullEffect(
+                ContractNonNullEffect(
+                    parameterSymbol: parameterSymbol,
+                    appliesOnAnyReturn: true
+                ),
+                for: functionSymbol
+            )
+        }
     }
 }
