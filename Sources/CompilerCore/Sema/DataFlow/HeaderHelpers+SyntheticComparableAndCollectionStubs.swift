@@ -376,48 +376,30 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
 
-        // Register Pair(first, second) constructor
-        do {
-            let initName = interner.intern("<init>")
-            let ctorFQName = pairFQName + [initName]
-            if symbols.lookupAll(fqName: ctorFQName).isEmpty {
-                let ctorSymbol = symbols.define(
-                    kind: .constructor,
-                    name: initName,
-                    fqName: ctorFQName,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-                symbols.setParentSymbol(pairSymbol, for: ctorSymbol)
-                symbols.setExternalLinkName("kk_pair_new", for: ctorSymbol)
-                let firstParamName = interner.intern("first")
-                let secondParamName = interner.intern("second")
-                let firstParam = symbols.define(
-                    kind: .valueParameter, name: firstParamName,
-                    fqName: ctorFQName + [firstParamName],
-                    declSite: nil, visibility: .private, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(ctorSymbol, for: firstParam)
-                let secondParam = symbols.define(
-                    kind: .valueParameter, name: secondParamName,
-                    fqName: ctorFQName + [secondParamName],
-                    declSite: nil, visibility: .private, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(ctorSymbol, for: secondParam)
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        parameterTypes: [firstType, secondType],
-                        returnType: pairType,
-                        valueParameterSymbols: [firstParam, secondParam],
-                        valueParameterHasDefaultValues: [false, false],
-                        valueParameterIsVararg: [false, false],
-                        typeParameterSymbols: [firstSymbol, secondSymbol],
-                        classTypeParameterCount: 2
-                    ),
-                    for: ctorSymbol
-                )
-            }
+        // Constructor: Pair(first, second) -> kk_pair_new
+        let initName = interner.intern("<init>")
+        let initFQName = pairFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(pairSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_pair_new", for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [firstType, secondType],
+                    returnType: pairType,
+                    typeParameterSymbols: [firstSymbol, secondSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: initSymbol
+            )
         }
     }
 
@@ -509,55 +491,30 @@ extension DataFlowSemaPhase {
         // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
         registerFunctionMember(name: "toList", returnType: types.makeNullable(types.anyType), externalLinkName: "kk_triple_toList", flags: [.synthetic])
 
-        // Register Triple(first, second, third) constructor
-        do {
-            let initName = interner.intern("<init>")
-            let ctorFQName = tripleFQName + [initName]
-            if symbols.lookupAll(fqName: ctorFQName).isEmpty {
-                let ctorSymbol = symbols.define(
-                    kind: .constructor,
-                    name: initName,
-                    fqName: ctorFQName,
-                    declSite: nil,
-                    visibility: .public,
-                    flags: [.synthetic]
-                )
-                symbols.setParentSymbol(tripleSymbol, for: ctorSymbol)
-                symbols.setExternalLinkName("kk_triple_new", for: ctorSymbol)
-                let firstParamName = interner.intern("first")
-                let secondParamName = interner.intern("second")
-                let thirdParamName = interner.intern("third")
-                let firstParam = symbols.define(
-                    kind: .valueParameter, name: firstParamName,
-                    fqName: ctorFQName + [firstParamName],
-                    declSite: nil, visibility: .private, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(ctorSymbol, for: firstParam)
-                let secondParam = symbols.define(
-                    kind: .valueParameter, name: secondParamName,
-                    fqName: ctorFQName + [secondParamName],
-                    declSite: nil, visibility: .private, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(ctorSymbol, for: secondParam)
-                let thirdParam = symbols.define(
-                    kind: .valueParameter, name: thirdParamName,
-                    fqName: ctorFQName + [thirdParamName],
-                    declSite: nil, visibility: .private, flags: [.synthetic]
-                )
-                symbols.setParentSymbol(ctorSymbol, for: thirdParam)
-                symbols.setFunctionSignature(
-                    FunctionSignature(
-                        parameterTypes: [aType, bType, cType],
-                        returnType: tripleType,
-                        valueParameterSymbols: [firstParam, secondParam, thirdParam],
-                        valueParameterHasDefaultValues: [false, false, false],
-                        valueParameterIsVararg: [false, false, false],
-                        typeParameterSymbols: [aSymbol, bSymbol, cSymbol],
-                        classTypeParameterCount: 3
-                    ),
-                    for: ctorSymbol
-                )
-            }
+        // Constructor: Triple(first, second, third) -> kk_triple_new
+        let initName = interner.intern("<init>")
+        let initFQName = tripleFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(tripleSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_triple_new", for: initSymbol)
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [aType, bType, cType],
+                    returnType: tripleType,
+                    typeParameterSymbols: [aSymbol, bSymbol, cSymbol],
+                    classTypeParameterCount: 3
+                ),
+                for: initSymbol
+            )
         }
     }
 

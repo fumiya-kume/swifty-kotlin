@@ -32,6 +32,57 @@ extension DataFlowSemaPhase {
             named: "ReadOnlyProperty", in: kotlinPropertiesPkg, symbols: symbols, interner: interner
         )
 
+        // Register kotlin.reflect.KProperty<out V> interface stub so that
+        // `import kotlin.reflect.KProperty` and `KProperty<*>` type references resolve.
+        let kotlinReflectPkg = ensurePackage(
+            path: ["kotlin", "reflect"], symbols: symbols, interner: interner
+        )
+        let kPropertySymbol = ensureInterfaceSymbol(
+            named: "KProperty", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+
+        // Register `name` property on KProperty (inherited from KCallable).
+        let stringType = types.make(.primitive(.string, .nonNull))
+        if let kPropertyInfo = symbols.symbol(kPropertySymbol) {
+            let namePropName = interner.intern("name")
+            let namePropFQ = kPropertyInfo.fqName + [namePropName]
+            if symbols.lookup(fqName: namePropFQ) == nil {
+                let namePropSymbol = symbols.define(
+                    kind: .property, name: namePropName, fqName: namePropFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kPropertySymbol, for: namePropSymbol)
+                symbols.setPropertyType(stringType, for: namePropSymbol)
+            }
+        }
+
+        // Also register KProperty0, KProperty1, KMutableProperty, KMutableProperty0, KMutableProperty1
+        // as they are commonly used reflect types.
+        let kCallableSymbol = ensureInterfaceSymbol(
+            named: "KCallable", in: kotlinReflectPkg, symbols: symbols, interner: interner
+        )
+        // Register `name` property on KCallable as well.
+        if let kCallableInfo = symbols.symbol(kCallableSymbol) {
+            let namePropName = interner.intern("name")
+            let namePropFQ = kCallableInfo.fqName + [namePropName]
+            if symbols.lookup(fqName: namePropFQ) == nil {
+                let namePropSymbol = symbols.define(
+                    kind: .property, name: namePropName, fqName: namePropFQ,
+                    declSite: nil, visibility: .public, flags: [.synthetic]
+                )
+                symbols.setParentSymbol(kCallableSymbol, for: namePropSymbol)
+                symbols.setPropertyType(stringType, for: namePropSymbol)
+            }
+        }
+        for reflectTypeName in [
+            "KProperty0", "KProperty1",
+            "KMutableProperty", "KMutableProperty0", "KMutableProperty1",
+        ] {
+            _ = ensureInterfaceSymbol(
+                named: reflectTypeName, in: kotlinReflectPkg, symbols: symbols, interner: interner
+            )
+        }
+
         // Register `lazy` as a top-level function in the kotlin package.
         // Kotlin signature: fun <T> lazy(initializer: () -> T): Lazy<T>
         let lazyName = interner.intern("lazy")

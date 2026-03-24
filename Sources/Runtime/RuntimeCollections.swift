@@ -82,7 +82,7 @@ public func kk_list_of(_ arrayRaw: Int, _ count: Int) -> Int {
     if count > 0, let array = runtimeArrayBox(from: arrayRaw) {
         elements = Array(array.elements.prefix(count))
     }
-    return registerRuntimeObject(RuntimeListBox(elements: elements))
+    return registerRuntimeObject(RuntimeListBox(elements: elements), typeID: listRuntimeTypeID)
 }
 
 @_cdecl("kk_list_of_not_null")
@@ -102,7 +102,7 @@ public func kk_list_of_not_null(_ arrayRaw: Int, _ count: Int) -> Int {
 // aliasing with mutable collection operations (e.g., kk_mutable_list_add).
 @_cdecl("kk_emptyList")
 public func kk_emptyList() -> Int {
-    return registerRuntimeObject(RuntimeListBox(elements: []))
+    return registerRuntimeObject(RuntimeListBox(elements: []), typeID: listRuntimeTypeID)
 }
 
 @_cdecl("kk_list_size")

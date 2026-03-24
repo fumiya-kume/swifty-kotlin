@@ -1015,7 +1015,7 @@ final class CallTypeChecker {
         let coroutineLauncherName = calleeName.map { interner.resolve($0) }
         let coroutineLauncherExpectedLambdaType: TypeID?
         if let coroutineLauncherName,
-           ["runBlocking", "launch", "async", "coroutineScope"].contains(coroutineLauncherName),
+           ["runBlocking", "launch", "async", "coroutineScope", "supervisorScope"].contains(coroutineLauncherName),
            let firstArg = args.first,
            let firstArgExpr = ast.arena.expr(firstArg.expr),
            case .lambdaLiteral = firstArgExpr
@@ -1248,6 +1248,16 @@ final class CallTypeChecker {
                ["kk_require_lazy", "kk_check_lazy", "kk_precondition_assert_lazy"].contains(externalLinkName)
             {
                 sema.bindings.markCollectionHOFLambdaExpr(args[1].expr)
+            }
+            // Mark selector lambdas for compareValuesBy variants as collection HOF lambdas
+            // so closure conversion adds the closureRaw parameter.
+            if let externalLinkName = sema.symbols.externalLinkName(for: chosen),
+               ["kk_compareValuesBy1", "kk_compareValuesBy", "kk_compareValuesBy3"].contains(externalLinkName)
+            {
+                // Selector lambdas start at index 2 (after a, b arguments)
+                for i in 2..<args.count {
+                    sema.bindings.markCollectionHOFLambdaExpr(args[i].expr)
+                }
             }
             applyContractEffects(
                 chosen: chosen,

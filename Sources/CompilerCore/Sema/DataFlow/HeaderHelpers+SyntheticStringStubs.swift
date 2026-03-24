@@ -374,6 +374,20 @@ extension DataFlowSemaPhase {
         )
 
         registerSyntheticStringExtensionFunction(
+            named: "indexOf",
+            externalLinkName: "kk_string_indexOf_from",
+            receiverType: stringType,
+            parameters: [
+                ("string", stringType, false, false),
+                ("startIndex", intType, false, false),
+            ],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        registerSyntheticStringExtensionFunction(
             named: "repeat",
             externalLinkName: "kk_string_repeat",
             receiverType: stringType,
@@ -1065,6 +1079,28 @@ extension DataFlowSemaPhase {
             receiverType: stringType,
             parameters: [("predicate", charToBoolType, false, false)],
             returnType: boolType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+
+        // --- String.indexOfFirst / indexOfLast ---
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfFirst",
+            externalLinkName: "kk_string_indexOfFirst",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: intType,
+            packageFQName: kotlinTextPkg,
+            symbols: symbols,
+            interner: interner
+        )
+        registerSyntheticStringExtensionFunction(
+            named: "indexOfLast",
+            externalLinkName: "kk_string_indexOfLast",
+            receiverType: stringType,
+            parameters: [("predicate", charToBoolType, false, false)],
+            returnType: intType,
             packageFQName: kotlinTextPkg,
             symbols: symbols,
             interner: interner

@@ -83,7 +83,61 @@ struct TypeCheckHelpers {
         if isRangeExpr, iterableType == sema.types.ulongType {
             return sema.types.ulongType
         }
+        // Map/MutableMap iteration yields Map.Entry<K, V>, not the first type argument.
+        if let entryType = mapEntryElementType(for: iterableType, sema: sema, interner: interner) {
+            return entryType
+        }
         return arrayElementType(for: iterableType, sema: sema, interner: interner)
+    }
+
+    /// For Map<K, V> and MutableMap<K, V>, return Map.Entry<K, V> as the element type.
+    private func mapEntryElementType(
+        for mapType: TypeID,
+        sema: SemaModule,
+        interner: StringInterner
+    ) -> TypeID? {
+        guard case let .classType(classType) = sema.types.kind(of: mapType),
+              let symbol = sema.symbols.symbol(classType.classSymbol),
+              classType.args.count >= 2
+        else {
+            return nil
+        }
+        let mapName = interner.intern("Map")
+        let mutableMapName = interner.intern("MutableMap")
+        guard symbol.name == mapName || symbol.name == mutableMapName else {
+            return nil
+        }
+
+        // Look up the Map.Entry type
+        let kotlinCollectionsPkg: [InternedString] = [interner.intern("kotlin"), interner.intern("collections")]
+        let entryFQName = kotlinCollectionsPkg + [mapName, interner.intern("Entry")]
+        guard let entrySymbol = sema.symbols.lookup(fqName: entryFQName) else {
+            return nil
+        }
+
+        // Extract K and V type arguments from Map<K, V>
+        let keyArg = classType.args[0]
+        let valueArg = classType.args[1]
+        let keyType: TypeID
+        let valueType: TypeID
+        switch keyArg {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            keyType = inner
+        case .star:
+            keyType = sema.types.nullableAnyType
+        }
+        switch valueArg {
+        case let .invariant(inner), let .out(inner), let .in(inner):
+            valueType = inner
+        case .star:
+            valueType = sema.types.nullableAnyType
+        }
+
+        return sema.types.make(.classType(ClassType(
+            classSymbol: entrySymbol,
+            args: [.out(keyType), .out(valueType)],
+            nullability: .nonNull
+        )))
     }
 
     func arrayElementType(

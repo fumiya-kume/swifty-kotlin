@@ -120,7 +120,7 @@ final class ABIMismatchTests: XCTestCase {
     func testCoroutineFunctionCount() {
         // Keep this in sync with RuntimeABISpec.coroutineFunctions entries.
         // Includes CORO-001 channel suspend, CORO-002 cancellation and CORO-003 flow ownership helpers.
-        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 45)
+        XCTAssertEqual(RuntimeABISpec.coroutineFunctions.count, 53)
     }
 
     func testBoxingFunctionCount() {
@@ -192,6 +192,7 @@ final class ABIMismatchTests: XCTestCase {
             RuntimeABISpec.stringBuilderFunctions,
             RuntimeABISpec.fileIOFunctions,
             RuntimeABISpec.durationFunctions,
+            RuntimeABISpec.atomicFunctions,
         ]
         let expected = sections.reduce(0) { partial, section in
             partial + section.count

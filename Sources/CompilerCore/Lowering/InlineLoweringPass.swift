@@ -354,6 +354,18 @@ final class InlineLoweringPass: LoweringPass {
             return result
         }()
 
+        let lambdaParamByCalleeName: [InternedString: SymbolID] = {
+            guard let sema = ctx.sema else { return [:] }
+            var result: [InternedString: SymbolID] = [:]
+            for param in inlineTarget.params {
+                if case .functionType = sema.types.kind(of: param.type),
+                   let symbolInfo = sema.symbols.symbol(param.symbol) {
+                    result[symbolInfo.name] = param.symbol
+                }
+            }
+            return result
+        }()
+
         var localExprMap: [KIRExprID: KIRExprID] = [:]
         var lowered: [KIRInstruction] = []
         lowered.reserveCapacity(inlineTarget.body.count)
@@ -448,38 +460,42 @@ final class InlineLoweringPass: LoweringPass {
 
             case let .call(symbol, callee, args, result, canThrow, thrownResult, isSuperCall):
                 // Attempt to inline a lambda argument passed to this inline function.
-                // When the call target is a parameter with function type, and the
-                // caller passed a known lambda function, we expand the lambda body
-                // in place instead of emitting an indirect call.
-                if let symbol, lambdaParamSymbols.contains(symbol),
-                   canThrow == false, thrownResult == nil,
-                   let argExpr = parameterValues[symbol],
+                let resolvedLambdaParamSymbol: SymbolID? = if let symbol, lambdaParamSymbols.contains(symbol) {
+                    symbol
+                } else if symbol == nil, let matched = lambdaParamByCalleeName[callee] {
+                    matched
+                } else {
+                    nil
+                }
+                if let lambdaParamSym = resolvedLambdaParamSymbol,
+                   let argExpr = parameterValues[lambdaParamSym],
                    let lambdaFunction = resolveLambdaFunction(
                        argExpr: argExpr,
                        arena: module.arena,
                        allFunctionsBySymbol: allFunctionsBySymbol,
                        callerBody: callerBody
-                   ),
-                   let lambdaExpansion = expandLambdaBody(
-                       lambdaFunction: lambdaFunction,
-                       arguments: args.map { resolveAlias(of: $0, aliases: localExprMap) },
-                       module: module
                    )
                 {
-                    lowered.append(contentsOf: lambdaExpansion.instructions)
-                    if let result {
-                        if let lambdaReturn = lambdaExpansion.returnedExpr {
-                            localExprMap[result] = lambdaReturn
-                        } else {
-                            // Unit-returning lambda: synthesize a unit constant
-                            // so that downstream references to the result resolve
-                            // to a valid expression instead of dangling.
-                            let unitExpr = module.arena.appendExpr(.unit, type: nil)
-                            lowered.append(.constValue(result: unitExpr, value: .unit))
-                            localExprMap[result] = unitExpr
+                    let resolvedArgs = args.map { resolveAlias(of: $0, aliases: localExprMap) }
+                    let captureArgs = module.arena.lambdaCaptureArgsBySymbol[lambdaFunction.symbol] ?? []
+                    let fullArgs = captureArgs + resolvedArgs
+                    if let lambdaExpansion = expandLambdaBody(
+                        lambdaFunction: lambdaFunction,
+                        arguments: fullArgs,
+                        module: module
+                    ) {
+                        lowered.append(contentsOf: lambdaExpansion.instructions)
+                        if let result {
+                            if let lambdaReturn = lambdaExpansion.returnedExpr {
+                                localExprMap[result] = lambdaReturn
+                            } else {
+                                let unitExpr = module.arena.appendExpr(.unit, type: nil)
+                                lowered.append(.constValue(result: unitExpr, value: .unit))
+                                localExprMap[result] = unitExpr
+                            }
                         }
+                        break
                     }
-                    break
                 }
 
                 let loweredResult = result.map { expr -> KIRExprID in
