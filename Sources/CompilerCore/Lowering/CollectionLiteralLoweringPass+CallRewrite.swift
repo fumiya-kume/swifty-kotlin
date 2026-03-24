@@ -645,10 +645,14 @@ extension CollectionLiteralLoweringPass {
                         }
                     }
 
-                    // --- Rewrite `to` infix → kk_pair_new (FUNC-002) ---
+                    // --- Rewrite `to` infix → Pair constructor (STDLIB-120) ---
                     if callee == lookup.toName, arguments.count == 2 {
+                        let initFQName: [InternedString] = [
+                            lookup.kotlinName, lookup.pairName, lookup.initName
+                        ]
+                        let initSymbol = ctx.sema?.symbols.lookup(fqName: initFQName)
                         loweredBody.append(.call(
-                            symbol: nil,
+                            symbol: initSymbol,
                             callee: lookup.kkPairNewName,
                             arguments: arguments,
                             result: result,
@@ -658,10 +662,14 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
-                    // --- Rewrite Triple(a, b, c) → kk_triple_new (STDLIB-120) ---
+                    // --- Rewrite Triple(a, b, c) → Triple constructor (STDLIB-120) ---
                     if callee == lookup.tripleName, arguments.count == 3 {
+                        let initFQName: [InternedString] = [
+                            lookup.kotlinName, lookup.tripleName, lookup.initName
+                        ]
+                        let initSymbol = ctx.sema?.symbols.lookup(fqName: initFQName)
                         loweredBody.append(.call(
-                            symbol: nil,
+                            symbol: initSymbol,
                             callee: lookup.kkTripleNewName,
                             arguments: arguments,
                             result: result,

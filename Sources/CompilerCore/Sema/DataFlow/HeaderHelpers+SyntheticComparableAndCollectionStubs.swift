@@ -351,6 +351,58 @@ extension DataFlowSemaPhase {
             symbols.setPropertyType(propertyType, for: memberSymbol)
         }
 
+        // Constructor: Pair(first: A, second: B) -> Pair<A, B>
+        let initName = interner.intern("<init>")
+        let initFQName = pairFQName + [initName]
+        if symbols.lookup(fqName: initFQName) == nil {
+            let initSymbol = symbols.define(
+                kind: .constructor,
+                name: initName,
+                fqName: initFQName,
+                declSite: nil,
+                visibility: .public,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(pairSymbol, for: initSymbol)
+            symbols.setExternalLinkName("kk_pair_new", for: initSymbol)
+
+            let firstParamName = interner.intern("first")
+            let firstParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: firstParamName,
+                fqName: initFQName + [firstParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: firstParamSymbol)
+
+            let secondParamName = interner.intern("second")
+            let secondParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: secondParamName,
+                fqName: initFQName + [secondParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: secondParamSymbol)
+
+            symbols.setFunctionSignature(
+                FunctionSignature(
+                    receiverType: nil,
+                    parameterTypes: [firstType, secondType],
+                    returnType: pairType,
+                    valueParameterSymbols: [firstParamSymbol, secondParamSymbol],
+                    valueParameterHasDefaultValues: [false, false],
+                    valueParameterIsVararg: [false, false],
+                    typeParameterSymbols: [firstSymbol, secondSymbol],
+                    classTypeParameterCount: 2
+                ),
+                for: initSymbol
+            )
+        }
+
         registerFunctionMember(
             name: "component1",
             returnType: firstType,
@@ -366,6 +418,14 @@ extension DataFlowSemaPhase {
         registerPropertyMember(name: "first", propertyType: firstType, externalLinkName: "kk_pair_first")
         registerPropertyMember(name: "second", propertyType: secondType, externalLinkName: "kk_pair_second")
 
+        // Pair<A,B>.toString() → kk_pair_to_string
+        registerFunctionMember(
+            name: "toString",
+            returnType: types.stringType,
+            externalLinkName: "kk_pair_to_string",
+            flags: [.synthetic]
+        )
+
         // Pair<A,B>.toList() returns List<Any?> in Kotlin (elements can be nullable).
         // The List symbol is registered after Pair, so we initially use nullable anyType
         // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
@@ -376,31 +436,6 @@ extension DataFlowSemaPhase {
             flags: [.synthetic]
         )
 
-        // Constructor: Pair(first, second) -> kk_pair_new
-        let initName = interner.intern("<init>")
-        let initFQName = pairFQName + [initName]
-        if symbols.lookup(fqName: initFQName) == nil {
-            let initSymbol = symbols.define(
-                kind: .constructor,
-                name: initName,
-                fqName: initFQName,
-                declSite: nil,
-                visibility: .public,
-                flags: [.synthetic]
-            )
-            symbols.setParentSymbol(pairSymbol, for: initSymbol)
-            symbols.setExternalLinkName("kk_pair_new", for: initSymbol)
-            symbols.setFunctionSignature(
-                FunctionSignature(
-                    receiverType: nil,
-                    parameterTypes: [firstType, secondType],
-                    returnType: pairType,
-                    typeParameterSymbols: [firstSymbol, secondSymbol],
-                    classTypeParameterCount: 2
-                ),
-                for: initSymbol
-            )
-        }
     }
 
     private func registerSyntheticTripleStub(
@@ -480,18 +515,7 @@ extension DataFlowSemaPhase {
             symbols.setPropertyType(propertyType, for: memberSymbol)
         }
 
-        registerFunctionMember(name: "component1", returnType: aType, externalLinkName: "kk_triple_first", flags: [.synthetic, .operatorFunction])
-        registerFunctionMember(name: "component2", returnType: bType, externalLinkName: "kk_triple_second", flags: [.synthetic, .operatorFunction])
-        registerFunctionMember(name: "component3", returnType: cType, externalLinkName: "kk_triple_third", flags: [.synthetic, .operatorFunction])
-        registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
-        registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
-        registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
-        // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be nullable).
-        // The List symbol is registered after Triple, so we initially use nullable anyType
-        // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
-        registerFunctionMember(name: "toList", returnType: types.makeNullable(types.anyType), externalLinkName: "kk_triple_toList", flags: [.synthetic])
-
-        // Constructor: Triple(first, second, third) -> kk_triple_new
+        // Constructor: Triple(first: A, second: B, third: C) -> Triple<A, B, C>
         let initName = interner.intern("<init>")
         let initFQName = tripleFQName + [initName]
         if symbols.lookup(fqName: initFQName) == nil {
@@ -505,17 +529,70 @@ extension DataFlowSemaPhase {
             )
             symbols.setParentSymbol(tripleSymbol, for: initSymbol)
             symbols.setExternalLinkName("kk_triple_new", for: initSymbol)
+
+            let firstParamName = interner.intern("first")
+            let firstParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: firstParamName,
+                fqName: initFQName + [firstParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: firstParamSymbol)
+
+            let secondParamName = interner.intern("second")
+            let secondParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: secondParamName,
+                fqName: initFQName + [secondParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: secondParamSymbol)
+
+            let thirdParamName = interner.intern("third")
+            let thirdParamSymbol = symbols.define(
+                kind: .valueParameter,
+                name: thirdParamName,
+                fqName: initFQName + [thirdParamName],
+                declSite: nil,
+                visibility: .private,
+                flags: [.synthetic]
+            )
+            symbols.setParentSymbol(initSymbol, for: thirdParamSymbol)
+
             symbols.setFunctionSignature(
                 FunctionSignature(
                     receiverType: nil,
                     parameterTypes: [aType, bType, cType],
                     returnType: tripleType,
+                    valueParameterSymbols: [firstParamSymbol, secondParamSymbol, thirdParamSymbol],
+                    valueParameterHasDefaultValues: [false, false, false],
+                    valueParameterIsVararg: [false, false, false],
                     typeParameterSymbols: [aSymbol, bSymbol, cSymbol],
                     classTypeParameterCount: 3
                 ),
                 for: initSymbol
             )
         }
+
+        registerFunctionMember(name: "component1", returnType: aType, externalLinkName: "kk_triple_first", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component2", returnType: bType, externalLinkName: "kk_triple_second", flags: [.synthetic, .operatorFunction])
+        registerFunctionMember(name: "component3", returnType: cType, externalLinkName: "kk_triple_third", flags: [.synthetic, .operatorFunction])
+        registerPropertyMember(name: "first", propertyType: aType, externalLinkName: "kk_triple_first")
+        registerPropertyMember(name: "second", propertyType: bType, externalLinkName: "kk_triple_second")
+        registerPropertyMember(name: "third", propertyType: cType, externalLinkName: "kk_triple_third")
+
+        // Triple<A,B,C>.toString() → kk_triple_to_string
+        registerFunctionMember(name: "toString", returnType: types.stringType, externalLinkName: "kk_triple_to_string", flags: [.synthetic])
+
+        // Triple<A,B,C>.toList() returns List<Any?> in Kotlin (elements can be nullable).
+        // The List symbol is registered after Triple, so we initially use nullable anyType
+        // as a placeholder; patchPairTripleToListReturnTypes() refines this to List<Any?>.
+        registerFunctionMember(name: "toList", returnType: types.makeNullable(types.anyType), externalLinkName: "kk_triple_toList", flags: [.synthetic])
+
     }
 
     /// Patch the provisional `Any?` return types of `Pair.toList()` and `Triple.toList()`

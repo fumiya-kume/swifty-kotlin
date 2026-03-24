@@ -626,6 +626,8 @@ extension ABILoweringPass {
             interner.intern("kk_callable_ref_tag_kfunction"),
             interner.intern("kk_callable_ref_tag_kproperty"),
             interner.intern("kk_callable_ref_name"),
+            interner.intern("kk_pair_new"),
+            interner.intern("kk_triple_new"),
         ]).union(Self.kPropertyStubCallees(interner))
     }
 }

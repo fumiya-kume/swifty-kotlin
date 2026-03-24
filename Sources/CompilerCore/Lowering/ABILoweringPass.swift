@@ -97,6 +97,8 @@ final class ABILoweringPass: LoweringPass {
                             types: types,
                             symbols: symbols,
                             boxCallees: boxCallees,
+                            callee: vcCallee,
+                            interner: ctx.interner,
                             newBody: &newBody
                         )
                     } else {
@@ -256,6 +258,8 @@ final class ABILoweringPass: LoweringPass {
                         types: types,
                         symbols: symbols,
                         boxCallees: boxCallees,
+                        callee: callee,
+                        interner: ctx.interner,
                         newBody: &newBody
                     )
                 } else {

@@ -486,9 +486,12 @@ struct CollectionLiteralLookupTables {
     let printlnName: InternedString
     let kkPrintlnAnyName: InternedString
     let kkAnyToStringName: InternedString
+    let kotlinName: InternedString
+    let initName: InternedString
 
     // Pair / `to` infix (FUNC-002)
     let toName: InternedString
+    let pairName: InternedString
     let kkPairNewName: InternedString
     let kkPairFirstName: InternedString
     let kkPairSecondName: InternedString
@@ -1041,8 +1044,11 @@ struct CollectionLiteralLookupTables {
         printlnName = interner.intern("println")
         kkPrintlnAnyName = interner.intern("kk_println_any")
         kkAnyToStringName = interner.intern("kk_any_to_string")
+        kotlinName = interner.intern("kotlin")
+        initName = interner.intern("<init>")
 
         toName = interner.intern("to")
+        pairName = interner.intern("Pair")
         kkPairNewName = interner.intern("kk_pair_new")
         kkPairFirstName = interner.intern("kk_pair_first")
         kkPairSecondName = interner.intern("kk_pair_second")

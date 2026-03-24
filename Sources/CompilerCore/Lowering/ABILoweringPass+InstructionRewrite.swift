@@ -9,6 +9,8 @@ extension ABILoweringPass {
         types: TypeSystem,
         symbols: SymbolTable?,
         boxCallees: BoxingCalleeNames,
+        callee: InternedString?,
+        interner: StringInterner,
         newBody: inout [KIRInstruction]
     ) -> [KIRExprID] {
         var boxedArguments = arguments
@@ -30,7 +32,9 @@ extension ABILoweringPass {
             if let boxCallee = boxingCallee(
                 argType: argType,
                 paramType: paramType,
+                callee: callee,
                 types: types,
+                interner: interner,
                 boxCallees: boxCallees,
                 symbols: symbols
             ) {
