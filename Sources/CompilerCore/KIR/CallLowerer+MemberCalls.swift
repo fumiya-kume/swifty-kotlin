@@ -3659,6 +3659,13 @@ extension CallLowerer {
         interner: StringInterner
     ) -> InternedString? {
         let nonNullReceiverType = sema.types.makeNonNullable(receiverType)
+        if memberName == "toString",
+           argumentCount == 0,
+           isStringBuilderLikeType(nonNullReceiverType, sema: sema, interner: interner)
+        {
+            return interner.intern("kk_string_builder_toString")
+        }
+
         if memberName == "length",
            sema.types.isSubtype(nonNullReceiverType, sema.types.stringType)
         {
