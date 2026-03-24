@@ -173,6 +173,10 @@ extension CollectionLiteralLoweringPass {
             kkCallee = lookup.kkFileDeleteName
         case lookup.mkdirsName:
             kkCallee = lookup.kkFileMkdirsName
+        case lookup.readBytesName:
+            kkCallee = lookup.kkFileReadBytesName
+        case lookup.appendTextName:
+            kkCallee = lookup.kkFileAppendTextName
         default:
             kkCallee = nil
         }
@@ -183,6 +187,7 @@ extension CollectionLiteralLoweringPass {
         let needsExtraArgs = callee == lookup.forEachLineName
             || callee == lookup.useLinesName
             || callee == lookup.writeTextName
+            || callee == lookup.appendTextName
         let memberArgs = needsExtraArgs ?
             [receiver] + arguments :
             [receiver]
@@ -196,8 +201,8 @@ extension CollectionLiteralLoweringPass {
             thrownResult: origThrownResult
         ))
 
-        // Track results that produce lists (readLines returns List<String>)
-        if callee == lookup.readLinesName, let result {
+        // Track results that produce lists (readLines/readBytes return List)
+        if (callee == lookup.readLinesName || callee == lookup.readBytesName), let result {
             listExprIDs.insert(result.rawValue)
         }
 

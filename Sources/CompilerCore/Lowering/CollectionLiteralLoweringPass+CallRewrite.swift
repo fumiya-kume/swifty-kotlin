@@ -718,6 +718,22 @@ extension CollectionLiteralLoweringPass {
                         continue
                     }
 
+                    if callee == lookup.appendTextName,
+                       arguments.count == 2,
+                       fileExprIDs.contains(arguments[0].rawValue),
+                       isJavaIOFileMember(symbol: symbol, ctx: ctx, interner: ctx.interner)
+                    {
+                        loweredBody.append(.call(
+                            symbol: nil,
+                            callee: lookup.kkFileAppendTextName,
+                            arguments: arguments,
+                            result: result,
+                            canThrow: true,
+                            thrownResult: thrownResult
+                        ))
+                        continue
+                    }
+
                     if callee == lookup.readLinesName,
                        arguments.count == 1,
                        fileExprIDs.contains(arguments[0].rawValue),
@@ -778,6 +794,8 @@ extension CollectionLiteralLoweringPass {
                             kkCallee = lookup.kkFileMkdirsName
                         case lookup.readBytesName:
                             kkCallee = lookup.kkFileReadBytesName
+                        case lookup.appendTextName:
+                            kkCallee = lookup.kkFileAppendTextName
                         default:
                             kkCallee = nil
                         }
@@ -800,7 +818,7 @@ extension CollectionLiteralLoweringPass {
                             // Track walk()/listFiles()/readLines() results as lists
                             // so chained operations (forEach, sortedBy, etc.) are rewritten correctly
                             if let result,
-                               callee == lookup.walkName || callee == lookup.listFilesName || callee == lookup.readLinesName
+                               callee == lookup.walkName || callee == lookup.listFilesName || callee == lookup.readLinesName || callee == lookup.readBytesName
                             {
                                 listExprIDs.insert(result.rawValue)
                             }
