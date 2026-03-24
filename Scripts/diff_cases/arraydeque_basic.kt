@@ -1,0 +1,15 @@
+fun main() {
+    val deque = ArrayDeque<Int>()
+    deque.addFirst(1)
+    deque.addLast(2)
+    deque.addFirst(0)
+    println(deque.first())
+    println(deque.last())
+    println(deque.size)
+    println(deque.isEmpty())
+    deque.removeFirst()
+    println(deque.first())
+    deque.removeLast()
+    println(deque.last())
+    println(deque.toString())
+}

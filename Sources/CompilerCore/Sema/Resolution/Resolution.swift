@@ -93,11 +93,17 @@ extension OverloadResolver {
         let typeVarBySymbol = ctx.types.makeTypeVarBySymbol(signature.typeParameterSymbols)
 
         // Apply explicit type argument constraints if provided.
-        // Only compare against the function's own type params (skip leading
-        // class type params that are inferred from the receiver).
+        // For constructors, explicit type args map to the class type params
+        // (e.g. ArrayDeque<Int>() — <Int> binds the class's E parameter).
+        // For regular functions, only compare against the function's own type
+        // params (skip leading class type params inferred from the receiver).
         let funcOwnTypeParamCount = signature.typeParameterSymbols.count - signature.classTypeParameterCount
+        let isConstructor = symbol.kind == .constructor
         if !call.explicitTypeArgs.isEmpty {
-            guard call.explicitTypeArgs.count == funcOwnTypeParamCount else {
+            let expectedTypeArgCount = isConstructor
+                ? signature.classTypeParameterCount
+                : funcOwnTypeParamCount
+            guard call.explicitTypeArgs.count == expectedTypeArgCount else {
                 return .rejected
             }
         }
@@ -106,7 +112,7 @@ extension OverloadResolver {
         // the receiver constraint check that would reject them when there is no
         // implicit receiver in scope (e.g. `Dog()` called from a free function).
         var constraints: [VariableConstraint]
-        if symbol.kind == .constructor {
+        if isConstructor {
             constraints = []
         } else {
             guard let receiverConstraints = buildReceiverConstraints(
@@ -141,9 +147,11 @@ extension OverloadResolver {
         }
 
         // Add equality constraints for explicit type arguments.
-        // Map to function-own type params (after the class type params).
+        // For constructors, explicit type args bind class type params (offset 0).
+        // For regular functions, map to function-own type params (after class type params).
+        let typeArgOffset = isConstructor ? 0 : signature.classTypeParameterCount
         for (index, explicitArg) in call.explicitTypeArgs.enumerated() {
-            let typeParamSymbol = signature.typeParameterSymbols[signature.classTypeParameterCount + index]
+            let typeParamSymbol = signature.typeParameterSymbols[typeArgOffset + index]
             if let typeVar = typeVarBySymbol[typeParamSymbol] {
                 constraints.append(
                     VariableConstraint(
