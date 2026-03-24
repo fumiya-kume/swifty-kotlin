@@ -226,6 +226,47 @@ extension ABILoweringPass {
         return false
     }
 
+    /// Unbox a binary operand if its intrinsic type is Any/reference but the
+    /// result expression expects a primitive (smart-cast scenario).
+    func unboxBinaryOperandIfNeeded(
+        operand: KIRExprID,
+        resultExpr: KIRExprID,
+        module: KIRModule,
+        types: TypeSystem,
+        symbols: SymbolTable?,
+        unboxCallees: UnboxingCalleeNames,
+        newBody: inout [KIRInstruction]
+    ) -> KIRExprID {
+        guard let operandType = intrinsicArgType(operand, arena: module.arena, types: types),
+              let resultType = module.arena.exprType(resultExpr)
+        else {
+            return operand
+        }
+        let operandKind = resolveValueClassKind(types.kind(of: operandType), types: types, symbols: symbols)
+        let resultKind = resolveValueClassKind(types.kind(of: resultType), types: types, symbols: symbols)
+        guard needsUnboxing(sourceKind: operandKind, targetKind: resultKind, symbols: symbols),
+              let callee = unboxingCallee(
+                  sourceKind: operandKind, targetKind: resultKind,
+                  unboxCallees: unboxCallees, types: types, symbols: symbols
+              )
+        else {
+            return operand
+        }
+        let unboxed = module.arena.appendExpr(
+            .temporary(Int32(module.arena.expressions.count)),
+            type: resultType
+        )
+        newBody.append(.call(
+            symbol: nil,
+            callee: callee,
+            arguments: [operand],
+            result: unboxed,
+            canThrow: false,
+            thrownResult: nil
+        ))
+        return unboxed
+    }
+
     func boxCalleeForPrimitive(
         _ kind: TypeKind,
         boxCallees: BoxingCalleeNames
