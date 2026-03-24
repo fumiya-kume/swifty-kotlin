@@ -12,10 +12,10 @@ KOTLINC_COROUTINES_JAR="${KOTLINC_COROUTINES_JAR:-$KOTLINC_DEP_DIR/kotlinx-corou
 KEEP_TEMP=0
 REPORT_PATH=""
 DIFF_PARALLEL="${DIFF_PARALLEL:-1}"
-DIFF_WORKERS="${DIFF_WORKERS:-4}"
+DIFF_WORKERS="${DIFF_WORKERS:-}"
 LAST_ARTIFACT_DIR=""
-COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-120}"
-RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-30}"
+COMPILE_TIMEOUT="${DIFF_COMPILE_TIMEOUT:-30}"
+RUN_TIMEOUT="${DIFF_RUN_TIMEOUT:-10}"
 TIMEOUT_CMD="${TIMEOUT:-timeout}"
 
 usage() {
@@ -212,7 +212,7 @@ if ! [[ "$DIFF_PARALLEL" =~ ^[01]$ ]]; then
   exit 1
 fi
 
-if ! [[ "$DIFF_WORKERS" =~ ^[1-9][0-9]*$ ]]; then
+if [[ -n "$DIFF_WORKERS" ]] && ! [[ "$DIFF_WORKERS" =~ ^[1-9][0-9]*$ ]]; then
   echo "DIFF_WORKERS must be a positive integer: $DIFF_WORKERS" >&2
   exit 1
 fi
@@ -285,7 +285,12 @@ jar_main_class() {
     | awk -F': ' '/^Main-Class:/ { print $2; exit }'
 }
 
-WORKER_COUNT="$DIFF_WORKERS"
+WORKER_COUNT="${DIFF_WORKERS:-}"
+if [[ -z "$WORKER_COUNT" ]]; then
+  WORKER_COUNT="$(detect_workers)"
+  [[ -z "$WORKER_COUNT" ]] && WORKER_COUNT=4
+fi
+
 if [[ "$DIFF_PARALLEL" -eq 1 ]]; then
   CPU_LIMIT="$(detect_workers)"
   if [[ -n "$CPU_LIMIT" && "$WORKER_COUNT" -gt "$CPU_LIMIT" ]]; then
@@ -298,6 +303,13 @@ fi
 if [[ "$WORKER_COUNT" -lt 1 ]]; then
   WORKER_COUNT=1
 fi
+
+echo "=== diff_kotlinc Configuration ==="
+echo "Workers: $WORKER_COUNT"
+echo "Compile timeout: ${COMPILE_TIMEOUT}s"
+echo "Run timeout: ${RUN_TIMEOUT}s"
+echo "Target: $TARGET"
+echo "=================================="
 
 collect_cases() {
   local path="$1"
