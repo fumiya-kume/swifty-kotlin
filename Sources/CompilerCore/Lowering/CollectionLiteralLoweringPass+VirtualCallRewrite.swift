@@ -26,6 +26,7 @@ extension CollectionLiteralLoweringPass {
         charRangeExprIDs: inout Set<Int32>,
         ulongRangeExprIDs: inout Set<Int32>,
         fileExprIDs: inout Set<Int32>,
+        indexingIterableExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -69,6 +70,7 @@ extension CollectionLiteralLoweringPass {
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, context: context,
             listExprIDs: &listExprIDs, mapExprIDs: &mapExprIDs,
+            indexingIterableExprIDs: &indexingIterableExprIDs,
             loweredBody: &loweredBody
         ) { return true }
 
@@ -822,6 +824,7 @@ extension CollectionLiteralLoweringPass {
         context: VirtualCallRewriteContext,
         listExprIDs: inout Set<Int32>,
         mapExprIDs: inout Set<Int32>,
+        indexingIterableExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         let module = context.module
@@ -861,7 +864,8 @@ extension CollectionLiteralLoweringPass {
             callee: callee, receiver: receiver, arguments: arguments,
             result: result, origCanThrow: origCanThrow,
             origThrownResult: origThrownResult, module: module, lookup: lookup,
-            listExprIDs: &listExprIDs, loweredBody: &loweredBody
+            listExprIDs: &listExprIDs, indexingIterableExprIDs: &indexingIterableExprIDs,
+            loweredBody: &loweredBody
         ) { return true }
 
         if rewriteCountFirstLastFoldReduceHOF(
@@ -1359,6 +1363,7 @@ extension CollectionLiteralLoweringPass {
         module: KIRModule,
         lookup: CollectionLiteralLookupTables,
         listExprIDs: inout Set<Int32>,
+        indexingIterableExprIDs: inout Set<Int32>,
         loweredBody: inout [KIRInstruction]
     ) -> Bool {
         guard listExprIDs.contains(receiver.rawValue) else { return false }
@@ -1376,9 +1381,10 @@ extension CollectionLiteralLoweringPass {
                 thrownResult: nil
             ))
             if let result {
+                indexingIterableExprIDs.insert(result.rawValue)
+                indexingIterableExprIDs.insert(hofResult.rawValue)
                 loweredBody.append(.copy(from: hofResult, to: result))
             }
-            // withIndex returns IndexingIterable, not List — do not add to listExprIDs
             return true
         }
 

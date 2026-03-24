@@ -112,6 +112,9 @@ struct CollectionLiteralLookupTables {
     let kkListZipWithNextTransformName: InternedString
     let kkListUnzipName: InternedString
     let kkListWithIndexName: InternedString
+    let kkIndexingIterableIteratorName: InternedString
+    let kkIndexingIterableHasNextName: InternedString
+    let kkIndexingIterableNextName: InternedString
     let kkListForEachIndexedName: InternedString
     let kkListOnEachName: InternedString
     let kkListOnEachIndexedName: InternedString
@@ -186,6 +189,10 @@ struct CollectionLiteralLookupTables {
     let kkComparatorReverseOrderName: InternedString
     let kkComparatorNaturalOrderTrampolineName: InternedString
     let kkComparatorReverseOrderTrampolineName: InternedString
+    let kkCompareValuesName: InternedString
+    let kkCompareValuesBy1Name: InternedString
+    let kkCompareValuesByName: InternedString
+    let kkCompareValuesBy3Name: InternedString
 
     // Sequence ABI names (STDLIB-003)
     let kkSequenceFromListName: InternedString
@@ -673,6 +680,9 @@ struct CollectionLiteralLookupTables {
         kkListZipWithNextTransformName = interner.intern("kk_list_zipWithNextTransform")
         kkListUnzipName = interner.intern("kk_list_unzip")
         kkListWithIndexName = interner.intern("kk_list_withIndex")
+        kkIndexingIterableIteratorName = interner.intern("kk_indexing_iterable_iterator")
+        kkIndexingIterableHasNextName = interner.intern("kk_indexing_iterable_hasNext")
+        kkIndexingIterableNextName = interner.intern("kk_indexing_iterable_next")
         kkListForEachIndexedName = interner.intern("kk_list_forEachIndexed")
         kkListOnEachName = interner.intern("kk_list_onEach")
         kkListOnEachIndexedName = interner.intern("kk_list_onEachIndexed")
@@ -746,6 +756,10 @@ struct CollectionLiteralLookupTables {
         kkComparatorReverseOrderName = interner.intern("kk_comparator_reverse_order")
         kkComparatorNaturalOrderTrampolineName = interner.intern("kk_comparator_natural_order_trampoline")
         kkComparatorReverseOrderTrampolineName = interner.intern("kk_comparator_reverse_order_trampoline")
+        kkCompareValuesName = interner.intern("kk_compareValues")
+        kkCompareValuesBy1Name = interner.intern("kk_compareValuesBy1")
+        kkCompareValuesByName = interner.intern("kk_compareValuesBy")
+        kkCompareValuesBy3Name = interner.intern("kk_compareValuesBy3")
 
         kkSequenceFromListName = interner.intern("kk_sequence_from_list")
         kkSequenceMapName = interner.intern("kk_sequence_map")
